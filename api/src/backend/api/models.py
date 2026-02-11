@@ -12,7 +12,6 @@ from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
-from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
@@ -288,6 +287,7 @@ class Provider(RowLevelSecurityProtectedModel):
         IAC = "iac", _("IaC")
         ORACLECLOUD = "oraclecloud", _("Oracle Cloud Infrastructure")
         ALIBABACLOUD = "alibabacloud", _("Alibaba Cloud")
+        CLOUDFLARE = "cloudflare", _("Cloudflare")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -398,6 +398,15 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="Alibaba Cloud account ID must be exactly 16 digits.",
                 code="alibabacloud-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_cloudflare_uid(value):
+        if not re.match(r"^[a-f0-9]{32}$", value):
+            raise ModelValidationError(
+                detail="Cloudflare Account ID must be a 32-character hexadecimal string.",
+                code="cloudflare-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -741,10 +750,6 @@ class ResourceTag(RowLevelSecurityProtectedModel):
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "resource_tags"
 
-        indexes = [
-            GinIndex(fields=["text_search"], name="gin_resource_tags_search_idx"),
-        ]
-
         constraints = [
             models.UniqueConstraint(
                 fields=("tenant_id", "key", "value"),
@@ -853,7 +858,6 @@ class Resource(RowLevelSecurityProtectedModel):
                 fields=["tenant_id", "service", "region", "type"],
                 name="resource_tenant_metadata_idx",
             ),
-            GinIndex(fields=["text_search"], name="gin_resources_search_idx"),
             models.Index(fields=["tenant_id", "id"], name="resources_tenant_id_idx"),
             models.Index(
                 fields=["tenant_id", "provider_id"],
@@ -1038,23 +1042,19 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
 
         indexes = [
             models.Index(fields=["tenant_id", "id"], name="findings_tenant_and_id_idx"),
-            GinIndex(fields=["text_search"], name="gin_findings_search_idx"),
             models.Index(fields=["tenant_id", "scan_id"], name="find_tenant_scan_idx"),
             models.Index(
                 fields=["tenant_id", "scan_id", "id"], name="find_tenant_scan_id_idx"
             ),
             models.Index(
-                fields=["tenant_id", "id"],
-                condition=Q(delta="new"),
-                name="find_delta_new_idx",
+                condition=models.Q(status=StatusChoices.FAIL, delta="new"),
+                fields=["tenant_id", "scan_id"],
+                name="find_tenant_scan_fail_new_idx",
             ),
             models.Index(
                 fields=["tenant_id", "uid", "-inserted_at"],
                 name="find_tenant_uid_inserted_idx",
             ),
-            GinIndex(fields=["resource_services"], name="gin_find_service_idx"),
-            GinIndex(fields=["resource_regions"], name="gin_find_region_idx"),
-            GinIndex(fields=["resource_types"], name="gin_find_rtype_idx"),
             models.Index(
                 fields=["tenant_id", "scan_id", "check_id"],
                 name="find_tenant_scan_check_idx",
@@ -1122,10 +1122,6 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
         #   - id
 
         indexes = [
-            models.Index(
-                fields=["tenant_id", "finding_id"],
-                name="rfm_tenant_finding_idx",
-            ),
             models.Index(
                 fields=["tenant_id", "resource_id"],
                 name="rfm_tenant_resource_idx",
@@ -1442,14 +1438,6 @@ class ComplianceOverview(RowLevelSecurityProtectedModel):
                 statements=["SELECT", "INSERT", "DELETE"],
             ),
         ]
-        indexes = [
-            models.Index(fields=["compliance_id"], name="comp_ov_cp_id_idx"),
-            models.Index(fields=["requirements_failed"], name="comp_ov_req_fail_idx"),
-            models.Index(
-                fields=["compliance_id", "requirements_failed"],
-                name="comp_ov_cp_id_req_fail_idx",
-            ),
-        ]
 
     class JSONAPIMeta:
         resource_name = "compliance-overviews"
@@ -1614,10 +1602,6 @@ class ScanSummary(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "scan_id"],
                 name="scan_summaries_tenant_scan_idx",
-            ),
-            models.Index(
-                fields=["tenant_id", "scan_id", "service"],
-                name="ss_tenant_scan_service_idx",
             ),
             models.Index(
                 fields=["tenant_id", "scan_id", "severity"],
@@ -2033,7 +2017,7 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
 
 class ResourceScanSummary(RowLevelSecurityProtectedModel):
     scan_id = models.UUIDField(default=uuid7, db_index=True)
-    resource_id = models.UUIDField(default=uuid4, db_index=True)
+    resource_id = models.UUIDField(default=uuid4)
     service = models.CharField(max_length=100)
     region = models.CharField(max_length=100)
     resource_type = models.CharField(max_length=100)

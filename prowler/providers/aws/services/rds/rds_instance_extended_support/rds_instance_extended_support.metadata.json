@@ -1,0 +1,41 @@
+{
+    "Provider": "aws",
+    "CheckID": "rds_instance_extended_support",
+    "CheckTitle": "RDS instance is not enrolled in RDS Extended Support",
+    "CheckType": [
+        "Software and Configuration Checks/Patch Management",
+        "Software and Configuration Checks/AWS Security Best Practices"
+    ],
+    "ServiceName": "rds",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Severity": "medium",
+    "ResourceType": "AwsRdsDbInstance",
+    "ResourceGroup": "database",
+    "Description": "**RDS DB instances** are evaluated for enrollment in Amazon RDS Extended Support. The check fails if `EngineLifecycleSupportis` set to `open-source-rds-extended-support`, indicating the instance will incur additional charges after standard support ends.",
+    "Risk": "DB instances enrolled in RDS Extended Support can incur additional charges after the end of standard support for the running database major version. Remaining on older major versions can also delay necessary upgrades, increasing operational and security risk.",
+    "RelatedUrl": "",
+    "AdditionalURLs": [
+        "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/extended-support-viewing.html",
+        "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/extended-support-charges.html",
+        "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/extended-support-creating-db-instance.html"
+    ],
+    "Remediation": {
+        "Code": {
+            "CLI": "aws rds modify-db-instance --db-instance-identifier <DB_INSTANCE_IDENTIFIER> --engine-version <TARGET_ENGINE_VERSION> --allow-major-version-upgrade --apply-immediately\n# For new DB instances created via automation, prevent enrollment by setting the lifecycle option:\naws rds create-db-instance ... --engine-lifecycle-support open-source-rds-extended-support-disabled",
+            "NativeIaC": "```yaml\n# CloudFormation: upgrade RDS engine version for an existing instance\nResources:\n  <example_resource_name>:\n    Type: AWS::RDS::DBInstance\n    Properties:\n      DBInstanceIdentifier: <example_resource_id>\n      Engine: <engine>\n      DBInstanceClass: db.t3.micro\n      EngineVersion: <SUPPORTED_ENGINE_VERSION>  # CRITICAL: move to a supported engine version\n      AllowMajorVersionUpgrade: true             # CRITICAL: required if upgrading major version\n      ApplyImmediately: true                     # CRITICAL: apply change now to pass the check\n```",
+            "Other": "If your automation (CloudFormation/Terraform/SDK) creates or restores DB instances, set EngineLifecycleSupport/LifeCycleSupport to open-source-rds-extended-support-disabled where supported, and ensure your upgrade process keeps engines within standard support.",
+            "Terraform": "```hcl\n# Upgrade RDS engine version\nresource \"aws_db_instance\" \"<example_resource_name>\" {\n  identifier         = \"<example_resource_id>\"\n  engine             = \"<engine>\"\n  instance_class     = \"db.t3.micro\"\n  allocated_storage  = 20\n\n  engine_version               = \"<SUPPORTED_ENGINE_VERSION>\"  # CRITICAL: use a supported version\n  allow_major_version_upgrade  = true                           # CRITICAL: needed for major upgrades\n  apply_immediately            = true                           # CRITICAL: apply now to pass the check\n}\n```"
+        },
+        "Recommendation": {
+            "Text": "Upgrade enrolled DB instances to an engine version covered under standard support to stop Extended Support charges. For new DB instances and restores created via automation, explicitly set the engine lifecycle support option to avoid unintended enrollment in RDS Extended Support when that is your policy.",
+            "Url": "https://hub.prowler.com/check/rds_instance_extended_support"
+        }
+    },
+    "Categories": [
+        "vulnerabilities"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

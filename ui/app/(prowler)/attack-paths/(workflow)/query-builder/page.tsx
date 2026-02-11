@@ -340,6 +340,33 @@ export default function AttackPathAnalysisPage() {
                   onQueryChange={handleQueryChange}
                 />
 
+                {queryBuilder.selectedQueryData && (
+                  <div className="bg-bg-neutral-tertiary text-text-neutral-secondary dark:text-text-neutral-secondary rounded-md p-3 text-sm">
+                    <p className="whitespace-pre-line">
+                      {queryBuilder.selectedQueryData.attributes.description}
+                    </p>
+                    {queryBuilder.selectedQueryData.attributes.attribution && (
+                      <p className="mt-2 text-xs">
+                        Source:{" "}
+                        <a
+                          href={
+                            queryBuilder.selectedQueryData.attributes
+                              .attribution.link
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline"
+                        >
+                          {
+                            queryBuilder.selectedQueryData.attributes
+                              .attribution.text
+                          }
+                        </a>
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {queryBuilder.selectedQuery && (
                   <QueryParametersForm
                     selectedQuery={queryBuilder.selectedQueryData}

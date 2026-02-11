@@ -1,4 +1,4 @@
-const COMPLIANCE_WATCHLIST_OVERVIEW_TYPE = {
+export const COMPLIANCE_WATCHLIST_OVERVIEW_TYPE = {
   WATCHLIST_OVERVIEW: "compliance-watchlist-overviews",
 } as const;
 

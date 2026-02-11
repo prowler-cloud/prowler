@@ -779,7 +779,10 @@ class CheckReportCloudflare(Check_Report):
 
     @property
     def zone_name(self) -> str:
-        """Zone name."""
+        """Zone name - for DNS records use zone_name attribute, for zones use name."""
+        zone_name = getattr(self._zone, "zone_name", None)
+        if zone_name:
+            return zone_name
         return getattr(self._zone, "name", "")
 
     @property
@@ -792,7 +795,10 @@ class CheckReportCloudflare(Check_Report):
 
     @property
     def region(self) -> str:
-        """Cloudflare is a global service."""
+        """Return zone_name as region for zone-scoped resources, otherwise global."""
+        zone_name = getattr(self._zone, "zone_name", None)
+        if zone_name:
+            return zone_name
         return "global"
 
 
@@ -905,6 +911,25 @@ class CheckReportNHN(Check_Report):
         )
         self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
         self.location = getattr(resource, "location", "kr1")
+
+
+@dataclass
+class CheckReportOpenStack(Check_Report):
+    """Contains the OpenStack Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    project_id: str
+    region: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "default")
+        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.project_id = getattr(resource, "project_id", "")
+        self.region = getattr(resource, "region", "global")
 
 
 @dataclass

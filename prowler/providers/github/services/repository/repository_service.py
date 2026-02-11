@@ -121,15 +121,22 @@ class Repository(GithubService):
                     )
                 ):
                     if self.provider.repositories:
-                        logger.info(
-                            f"Filtering for specific repositories: {self.provider.repositories}"
-                        )
+                        qualified_repos = []
                         for repo_name in self.provider.repositories:
-                            if not self._validate_repository_format(repo_name):
+                            if self._validate_repository_format(repo_name):
+                                qualified_repos.append(repo_name)
+                            elif self.provider.organizations:
+                                for org_name in self.provider.organizations:
+                                    qualified_repos.append(f"{org_name}/{repo_name}")
+                            else:
                                 logger.warning(
                                     f"Repository name '{repo_name}' should be in 'owner/repo-name' format. Skipping."
                                 )
-                                continue
+
+                        logger.info(
+                            f"Filtering for specific repositories: {qualified_repos}"
+                        )
+                        for repo_name in qualified_repos:
                             try:
                                 repo = client.get_repo(repo_name)
                                 self._process_repository(repo, repos)
@@ -138,7 +145,7 @@ class Repository(GithubService):
                                     error, "accessing repository", repo_name
                                 )
 
-                    if self.provider.organizations:
+                    elif self.provider.organizations:
                         logger.info(
                             f"Filtering for repositories in organizations: {self.provider.organizations}"
                         )
