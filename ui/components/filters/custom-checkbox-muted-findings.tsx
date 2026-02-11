@@ -17,11 +17,9 @@ export const CustomCheckboxMutedFindings = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Use shared transition context if available, otherwise fall back to local
-  const sharedTransition = useFilterTransitionOptional();
-  const [, localStartTransition] = useTransition();
-  const startTransition =
-    sharedTransition?.startTransition ?? localStartTransition;
+  // Signal shared pending state for DataTable loading indicator
+  const filterTransition = useFilterTransitionOptional();
+  const [, startTransition] = useTransition();
 
   // Get the current muted filter value from URL
   // Middleware ensures filter[muted] is always present when navigating to /findings
@@ -49,6 +47,7 @@ export const CustomCheckboxMutedFindings = () => {
       params.set("page", "1");
     }
 
+    filterTransition?.signalFilterChange();
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     });
