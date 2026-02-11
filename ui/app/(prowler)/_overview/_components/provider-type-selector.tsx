@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { lazy, Suspense, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
+import { lazy, Suspense } from "react";
 
 import {
   MultiSelect,
@@ -10,7 +10,7 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
-import { useFilterTransitionOptional } from "@/contexts";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 import { type ProviderProps, ProviderType } from "@/types/providers";
 
 const AWSProviderBadge = lazy(() =>
@@ -123,13 +123,8 @@ type ProviderTypeSelectorProps = {
 export const ProviderTypeSelector = ({
   providers,
 }: ProviderTypeSelectorProps) => {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
-
-  // Signal shared pending state for DataTable loading indicator
-  const filterTransition = useFilterTransitionOptional();
-  const [, startTransition] = useTransition();
+  const { navigateWithParams } = useUrlFilters();
 
   const currentProviders = searchParams.get("filter[provider_type__in]") || "";
   const selectedTypes = currentProviders
@@ -137,27 +132,17 @@ export const ProviderTypeSelector = ({
     : [];
 
   const handleMultiValueChange = (values: string[]) => {
-    const params = new URLSearchParams(searchParams.toString());
+    navigateWithParams((params) => {
+      // Update provider_type__in
+      if (values.length > 0) {
+        params.set("filter[provider_type__in]", values.join(","));
+      } else {
+        params.delete("filter[provider_type__in]");
+      }
 
-    // Update provider_type__in
-    if (values.length > 0) {
-      params.set("filter[provider_type__in]", values.join(","));
-    } else {
-      params.delete("filter[provider_type__in]");
-    }
-
-    // Clear account selection when changing provider types
-    // User should manually select accounts if they want to filter by specific accounts
-    params.delete("filter[provider_id__in]");
-
-    // Reset to page 1 when changing filter
-    if (params.has("page")) {
-      params.set("page", "1");
-    }
-
-    filterTransition?.signalFilterChange();
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      // Clear account selection when changing provider types
+      // User should manually select accounts if they want to filter by specific accounts
+      params.delete("filter[provider_id__in]");
     });
   };
 
