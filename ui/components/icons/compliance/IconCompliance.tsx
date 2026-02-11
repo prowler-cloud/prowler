@@ -2,6 +2,7 @@ import AWSLogo from "./aws.svg";
 import C5Logo from "./c5.svg";
 import CCCLogo from "./ccc.svg";
 import CISLogo from "./cis.svg";
+import CSALogo from "./csa.svg";
 import CISALogo from "./cisa.svg";
 import ENSLogo from "./ens.png";
 import FedRAMPLogo from "./fedramp.svg";
@@ -40,6 +41,7 @@ const COMPLIANCE_LOGOS = {
   nis2: NIS2Logo,
   c5: C5Logo,
   ccc: CCCLogo,
+  csa: CSALogo,
 } as const;
 
 export const getComplianceIcon = (complianceTitle: string) => {

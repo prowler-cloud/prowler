@@ -3,6 +3,7 @@ import { createElement, ReactNode } from "react";
 import { AWSWellArchitectedCustomDetails } from "@/components/compliance/compliance-custom-details/aws-well-architected-details";
 import { C5CustomDetails } from "@/components/compliance/compliance-custom-details/c5-details";
 import { CCCCustomDetails } from "@/components/compliance/compliance-custom-details/ccc-details";
+import { CSACustomDetails } from "@/components/compliance/compliance-custom-details/csa-details";
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
 import { GenericCustomDetails } from "@/components/compliance/compliance-custom-details/generic-details";
@@ -32,6 +33,10 @@ import {
   mapComplianceData as mapCCCComplianceData,
   toAccordionItems as toCCCAccordionItems,
 } from "./ccc";
+import {
+  mapComplianceData as mapCSAComplianceData,
+  toAccordionItems as toCSAAccordionItems,
+} from "./csa";
 import {
   mapComplianceData as mapCISComplianceData,
   toAccordionItems as toCISAccordionItems,
@@ -178,6 +183,15 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
       calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
       createElement(CCCCustomDetails, { requirement }),
+  },
+  "CSA-CCM": {
+    mapComplianceData: mapCSAComplianceData,
+    toAccordionItems: toCSAAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      createElement(CSACustomDetails, { requirement }),
   },
 });
 
