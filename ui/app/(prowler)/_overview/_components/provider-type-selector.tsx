@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { lazy, Suspense, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
+import { lazy, Suspense } from "react";
 
 import {
   MultiSelect,
@@ -10,7 +10,7 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
-import { useFilterTransitionOptional } from "@/contexts";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 import { type ProviderProps, ProviderType } from "@/types/providers";
 
 const AWSProviderBadge = lazy(() =>
@@ -123,15 +123,17 @@ type ProviderTypeSelectorProps = {
 export const ProviderTypeSelector = ({
   providers,
 }: ProviderTypeSelectorProps) => {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
+<<<<<<< HEAD
 
   // Use shared transition context if available, otherwise fall back to local
   const sharedTransition = useFilterTransitionOptional();
   const [, localStartTransition] = useTransition();
   const startTransition =
     sharedTransition?.startTransition ?? localStartTransition;
+=======
+  const { navigateWithParams } = useUrlFilters();
+>>>>>>> 86946f3a8 (fix(ui): fix findings filter silent reverts by replacing useRelatedFilters effect with pure derivation (#10021))
 
   const currentProviders = searchParams.get("filter[provider_type__in]") || "";
   const selectedTypes = currentProviders
@@ -139,8 +141,15 @@ export const ProviderTypeSelector = ({
     : [];
 
   const handleMultiValueChange = (values: string[]) => {
-    const params = new URLSearchParams(searchParams.toString());
+    navigateWithParams((params) => {
+      // Update provider_type__in
+      if (values.length > 0) {
+        params.set("filter[provider_type__in]", values.join(","));
+      } else {
+        params.delete("filter[provider_type__in]");
+      }
 
+<<<<<<< HEAD
     // Update provider_type__in
     if (values.length > 0) {
       params.set("filter[provider_type__in]", values.join(","));
@@ -159,6 +168,11 @@ export const ProviderTypeSelector = ({
 
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
+=======
+      // Clear account selection when changing provider types
+      // User should manually select accounts if they want to filter by specific accounts
+      params.delete("filter[provider_id__in]");
+>>>>>>> 86946f3a8 (fix(ui): fix findings filter silent reverts by replacing useRelatedFilters effect with pure derivation (#10021))
     });
   };
 

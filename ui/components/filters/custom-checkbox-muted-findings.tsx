@@ -1,10 +1,9 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { Checkbox } from "@/components/shadcn";
-import { useFilterTransitionOptional } from "@/contexts";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 
 // Constants for muted filter URL values
 const MUTED_FILTER_VALUES = {
@@ -13,18 +12,19 @@ const MUTED_FILTER_VALUES = {
 } as const;
 
 export const CustomCheckboxMutedFindings = () => {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
+<<<<<<< HEAD
 
   // Use shared transition context if available, otherwise fall back to local
   const sharedTransition = useFilterTransitionOptional();
   const [, localStartTransition] = useTransition();
   const startTransition =
     sharedTransition?.startTransition ?? localStartTransition;
+=======
+  const { navigateWithParams } = useUrlFilters();
+>>>>>>> 86946f3a8 (fix(ui): fix findings filter silent reverts by replacing useRelatedFilters effect with pure derivation (#10021))
 
   // Get the current muted filter value from URL
-  // Middleware ensures filter[muted] is always present when navigating to /findings
   const mutedFilterValue = searchParams.get("filter[muted]");
 
   // URL states:
@@ -34,8 +34,8 @@ export const CustomCheckboxMutedFindings = () => {
 
   const handleMutedChange = (checked: boolean | "indeterminate") => {
     const isChecked = checked === true;
-    const params = new URLSearchParams(searchParams.toString());
 
+<<<<<<< HEAD
     if (isChecked) {
       // Include muted: set special value (API will ignore invalid value and show all)
       params.set("filter[muted]", MUTED_FILTER_VALUES.INCLUDE);
@@ -51,6 +51,16 @@ export const CustomCheckboxMutedFindings = () => {
 
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
+=======
+    navigateWithParams((params) => {
+      if (isChecked) {
+        // Include muted: set special value (API will ignore invalid value and show all)
+        params.set("filter[muted]", MUTED_FILTER_VALUES.INCLUDE);
+      } else {
+        // Exclude muted: apply filter to show only non-muted
+        params.set("filter[muted]", MUTED_FILTER_VALUES.EXCLUDE);
+      }
+>>>>>>> 86946f3a8 (fix(ui): fix findings filter silent reverts by replacing useRelatedFilters effect with pure derivation (#10021))
     });
   };
 

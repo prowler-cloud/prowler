@@ -105,11 +105,33 @@ export const useUrlFilters = () => {
     );
   }, [searchParams]);
 
+  /**
+   * Low-level navigation function for complex filter updates that need
+   * to modify multiple params atomically (e.g., setting provider_type
+   * while clearing provider_id). The modifier receives a mutable
+   * URLSearchParams; page is auto-reset if already present.
+   */
+  const navigateWithParams = (modifier: (params: URLSearchParams) => void) => {
+    const params = new URLSearchParams(searchParams.toString());
+    modifier(params);
+
+    // Only reset page to 1 if page parameter already exists
+    if (params.has("page")) {
+      params.set("page", "1");
+    }
+
+    filterTransition?.signalFilterChange();
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    });
+  };
+
   return {
     updateFilter,
     clearFilter,
     clearAllFilters,
     hasFilters,
     isPending,
+    navigateWithParams,
   };
 };
