@@ -387,7 +387,9 @@
     {
       "Id": "2.1.4",
       "Description": "The Safe Attachments policy helps protect users from malware in email attachments by scanning attachments for viruses, malware, and other malicious content. When an email attachment is received by a user, Safe Attachments will scan the attachment in a secure environment and provide a verdict on whether the attachment is safe or not.",
-      "Checks": [],
+      "Checks": [
+        "defender_safe_attachments_policy_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",
