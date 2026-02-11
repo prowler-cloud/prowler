@@ -1,0 +1,18 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "prowler.fullname" . }}-ui
+data:
+  PROWLER_UI_VERSION: "stable"
+  {{- if .Values.ui.ingress.enabled }}
+  {{- with (first .Values.ui.ingress.hosts) }}
+  AUTH_URL: "https://{{ .host }}"
+  {{- end }}
+  {{- else }}
+  AUTH_URL: {{ .Values.ui.authUrl | quote }}
+  {{- end }}
+  API_BASE_URL: "http://{{ include "prowler.fullname" . }}-api:{{ .Values.api.service.port }}/api/v1"
+  NEXT_PUBLIC_API_BASE_URL: "http://{{ include "prowler.fullname" . }}-api:{{ .Values.api.service.port }}/api/v1"
+  NEXT_PUBLIC_API_DOCS_URL: "http://{{ include "prowler.fullname" . }}-api:{{ .Values.api.service.port }}/api/v1/docs"
+  AUTH_TRUST_HOST: "true"
+  UI_PORT: {{ .Values.ui.service.port | quote }}

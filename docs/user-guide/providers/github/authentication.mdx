@@ -38,6 +38,7 @@ GitHub has deprecated Personal Access Tokens (classic) in favor of fine-grained 
 
 4. **Configure Token Settings**
     - **Token name**: Give your token a descriptive name (e.g., "Prowler Security Scanner")
+    - **Resource owner**: Select the account that owns the resources to scan — either a personal account or a specific organization
     - **Expiration**: Set an appropriate expiration date (recommended: 90 days or less)
     - **Repository access**: Choose "All repositories" or "Only select repositories" based on your needs
 
@@ -56,11 +57,11 @@ GitHub has deprecated Personal Access Tokens (classic) in favor of fine-grained 
         - **Metadata**: Read-only access
         - **Pull requests**: Read-only access
 
-    - **Organization permissions:**
+    - **Organization permissions** (available when an organization is selected as Resource Owner):
         - **Administration**: Read-only access
         - **Members**: Read-only access
 
-    - **Account permissions:**
+    - **Account permissions** (available when a personal account is selected as Resource Owner):
         - **Email addresses**: Read-only access
 
 6. **Copy and Store the Token**
