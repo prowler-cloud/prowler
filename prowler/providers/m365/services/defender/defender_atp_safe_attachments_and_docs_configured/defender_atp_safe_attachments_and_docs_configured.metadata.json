@@ -1,6 +1,6 @@
 {
   "Provider": "m365",
-  "CheckID": "defender_atp_safe_attachments_policy_enabled",
+  "CheckID": "defender_atp_safe_attachments_and_docs_configured",
   "CheckTitle": "ATP Safe Attachments policy has Safe Documents enabled and click-through blocked for SharePoint, OneDrive, and Microsoft Teams",
   "CheckType": [],
   "ServiceName": "defender",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Enable **Safe Attachments** for SharePoint, OneDrive, and Microsoft Teams along with **Safe Documents** to protect users from malicious files. Block users from bypassing **Protected View** warnings for files identified as malicious to maintain **defense-in-depth**.",
-      "Url": "https://hub.prowler.com/check/defender_atp_safe_attachments_policy_enabled"
+      "Url": "https://hub.prowler.com/check/defender_atp_safe_attachments_and_docs_configured"
     }
   },
   "Categories": [

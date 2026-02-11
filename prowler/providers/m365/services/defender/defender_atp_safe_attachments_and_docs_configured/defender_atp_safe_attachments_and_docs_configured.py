@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.defender.defender_client import defender_client
 
 
-class defender_atp_safe_attachments_policy_enabled(Check):
+class defender_atp_safe_attachments_and_docs_configured(Check):
     """
     Check if Safe Attachments for SharePoint, OneDrive, and Teams is properly configured.
 

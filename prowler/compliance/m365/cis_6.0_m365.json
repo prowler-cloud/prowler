@@ -426,7 +426,7 @@
       "Id": "2.1.5",
       "Description": "Safe Attachments for SharePoint, OneDrive, and Microsoft Teams scans these services for malicious files.",
       "Checks": [
-        "defender_atp_safe_attachments_policy_enabled"
+        "defender_atp_safe_attachments_and_docs_configured"
       ],
       "Attributes": [
         {

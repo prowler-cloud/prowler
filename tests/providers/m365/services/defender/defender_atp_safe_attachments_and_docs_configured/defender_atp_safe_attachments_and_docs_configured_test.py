@@ -1,20 +1,20 @@
 from unittest import mock
 
 from prowler.providers.m365.services.defender.defender_service import (
-    AtpPolicyForO365,
+    AdvancedThreatProtectionPolicy,
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
-class Test_defender_atp_safe_attachments_policy_enabled:
-    """Tests for defender_atp_safe_attachments_policy_enabled check."""
+class Test_defender_atp_safe_attachments_and_docs_configured:
+    """Tests for defender_atp_safe_attachments_and_docs_configured check."""
 
     def test_no_atp_policy(self):
-        """Test when no ATP policy exists (atp_policy_for_o365 is None)."""
+        """Test when no ATP policy exists (advanced_threat_protection_policy is None)."""
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
-        defender_client.atp_policy_for_o365 = None
+        defender_client.advanced_threat_protection_policy = None
 
         with (
             mock.patch(
@@ -25,15 +25,15 @@ class Test_defender_atp_safe_attachments_policy_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_atp_safe_attachments_policy_enabled.defender_atp_safe_attachments_policy_enabled.defender_client",
+                "prowler.providers.m365.services.defender.defender_atp_safe_attachments_and_docs_configured.defender_atp_safe_attachments_and_docs_configured.defender_client",
                 new=defender_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_atp_safe_attachments_policy_enabled.defender_atp_safe_attachments_policy_enabled import (
-                defender_atp_safe_attachments_policy_enabled,
+            from prowler.providers.m365.services.defender.defender_atp_safe_attachments_and_docs_configured.defender_atp_safe_attachments_and_docs_configured import (
+                defender_atp_safe_attachments_and_docs_configured,
             )
 
-            check = defender_atp_safe_attachments_policy_enabled()
+            check = defender_atp_safe_attachments_and_docs_configured()
             result = check.execute()
 
             assert len(result) == 0
@@ -43,7 +43,7 @@ class Test_defender_atp_safe_attachments_policy_enabled:
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
-        defender_client.atp_policy_for_o365 = AtpPolicyForO365(
+        defender_client.advanced_threat_protection_policy = AdvancedThreatProtectionPolicy(
             identity="Default",
             enable_atp_for_spo_teams_odb=True,
             enable_safe_docs=True,
@@ -59,15 +59,15 @@ class Test_defender_atp_safe_attachments_policy_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_atp_safe_attachments_policy_enabled.defender_atp_safe_attachments_policy_enabled.defender_client",
+                "prowler.providers.m365.services.defender.defender_atp_safe_attachments_and_docs_configured.defender_atp_safe_attachments_and_docs_configured.defender_client",
                 new=defender_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_atp_safe_attachments_policy_enabled.defender_atp_safe_attachments_policy_enabled import (
-                defender_atp_safe_attachments_policy_enabled,
+            from prowler.providers.m365.services.defender.defender_atp_safe_attachments_and_docs_configured.defender_atp_safe_attachments_and_docs_configured import (
+                defender_atp_safe_attachments_and_docs_configured,
             )
 
-            check = defender_atp_safe_attachments_policy_enabled()
+            check = defender_atp_safe_attachments_and_docs_configured()
             result = check.execute()
 
             assert len(result) == 1
@@ -85,7 +85,7 @@ class Test_defender_atp_safe_attachments_policy_enabled:
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
-        defender_client.atp_policy_for_o365 = AtpPolicyForO365(
+        defender_client.advanced_threat_protection_policy = AdvancedThreatProtectionPolicy(
             identity="Default",
             enable_atp_for_spo_teams_odb=False,
             enable_safe_docs=True,
@@ -101,15 +101,15 @@ class Test_defender_atp_safe_attachments_policy_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_atp_safe_attachments_policy_enabled.defender_atp_safe_attachments_policy_enabled.defender_client",
+                "prowler.providers.m365.services.defender.defender_atp_safe_attachments_and_docs_configured.defender_atp_safe_attachments_and_docs_configured.defender_client",
                 new=defender_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_atp_safe_attachments_policy_enabled.defender_atp_safe_attachments_policy_enabled import (
-                defender_atp_safe_attachments_policy_enabled,
+            from prowler.providers.m365.services.defender.defender_atp_safe_attachments_and_docs_configured.defender_atp_safe_attachments_and_docs_configured import (
+                defender_atp_safe_attachments_and_docs_configured,
             )
 
-            check = defender_atp_safe_attachments_policy_enabled()
+            check = defender_atp_safe_attachments_and_docs_configured()
             result = check.execute()
 
             assert len(result) == 1
@@ -127,7 +127,7 @@ class Test_defender_atp_safe_attachments_policy_enabled:
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
-        defender_client.atp_policy_for_o365 = AtpPolicyForO365(
+        defender_client.advanced_threat_protection_policy = AdvancedThreatProtectionPolicy(
             identity="Default",
             enable_atp_for_spo_teams_odb=True,
             enable_safe_docs=False,
@@ -143,15 +143,15 @@ class Test_defender_atp_safe_attachments_policy_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_atp_safe_attachments_policy_enabled.defender_atp_safe_attachments_policy_enabled.defender_client",
+                "prowler.providers.m365.services.defender.defender_atp_safe_attachments_and_docs_configured.defender_atp_safe_attachments_and_docs_configured.defender_client",
                 new=defender_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_atp_safe_attachments_policy_enabled.defender_atp_safe_attachments_policy_enabled import (
-                defender_atp_safe_attachments_policy_enabled,
+            from prowler.providers.m365.services.defender.defender_atp_safe_attachments_and_docs_configured.defender_atp_safe_attachments_and_docs_configured import (
+                defender_atp_safe_attachments_and_docs_configured,
             )
 
-            check = defender_atp_safe_attachments_policy_enabled()
+            check = defender_atp_safe_attachments_and_docs_configured()
             result = check.execute()
 
             assert len(result) == 1
@@ -169,7 +169,7 @@ class Test_defender_atp_safe_attachments_policy_enabled:
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
-        defender_client.atp_policy_for_o365 = AtpPolicyForO365(
+        defender_client.advanced_threat_protection_policy = AdvancedThreatProtectionPolicy(
             identity="Default",
             enable_atp_for_spo_teams_odb=True,
             enable_safe_docs=True,
@@ -185,15 +185,15 @@ class Test_defender_atp_safe_attachments_policy_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_atp_safe_attachments_policy_enabled.defender_atp_safe_attachments_policy_enabled.defender_client",
+                "prowler.providers.m365.services.defender.defender_atp_safe_attachments_and_docs_configured.defender_atp_safe_attachments_and_docs_configured.defender_client",
                 new=defender_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_atp_safe_attachments_policy_enabled.defender_atp_safe_attachments_policy_enabled import (
-                defender_atp_safe_attachments_policy_enabled,
+            from prowler.providers.m365.services.defender.defender_atp_safe_attachments_and_docs_configured.defender_atp_safe_attachments_and_docs_configured import (
+                defender_atp_safe_attachments_and_docs_configured,
             )
 
-            check = defender_atp_safe_attachments_policy_enabled()
+            check = defender_atp_safe_attachments_and_docs_configured()
             result = check.execute()
 
             assert len(result) == 1
@@ -211,7 +211,7 @@ class Test_defender_atp_safe_attachments_policy_enabled:
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
-        defender_client.atp_policy_for_o365 = AtpPolicyForO365(
+        defender_client.advanced_threat_protection_policy = AdvancedThreatProtectionPolicy(
             identity="Default",
             enable_atp_for_spo_teams_odb=False,
             enable_safe_docs=False,
@@ -227,15 +227,15 @@ class Test_defender_atp_safe_attachments_policy_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_atp_safe_attachments_policy_enabled.defender_atp_safe_attachments_policy_enabled.defender_client",
+                "prowler.providers.m365.services.defender.defender_atp_safe_attachments_and_docs_configured.defender_atp_safe_attachments_and_docs_configured.defender_client",
                 new=defender_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_atp_safe_attachments_policy_enabled.defender_atp_safe_attachments_policy_enabled import (
-                defender_atp_safe_attachments_policy_enabled,
+            from prowler.providers.m365.services.defender.defender_atp_safe_attachments_and_docs_configured.defender_atp_safe_attachments_and_docs_configured import (
+                defender_atp_safe_attachments_and_docs_configured,
             )
 
-            check = defender_atp_safe_attachments_policy_enabled()
+            check = defender_atp_safe_attachments_and_docs_configured()
             result = check.execute()
 
             assert len(result) == 1
@@ -253,7 +253,7 @@ class Test_defender_atp_safe_attachments_policy_enabled:
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
-        defender_client.atp_policy_for_o365 = AtpPolicyForO365(
+        defender_client.advanced_threat_protection_policy = AdvancedThreatProtectionPolicy(
             identity="CustomPolicy",
             enable_atp_for_spo_teams_odb=True,
             enable_safe_docs=True,
@@ -269,15 +269,15 @@ class Test_defender_atp_safe_attachments_policy_enabled:
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_atp_safe_attachments_policy_enabled.defender_atp_safe_attachments_policy_enabled.defender_client",
+                "prowler.providers.m365.services.defender.defender_atp_safe_attachments_and_docs_configured.defender_atp_safe_attachments_and_docs_configured.defender_client",
                 new=defender_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_atp_safe_attachments_policy_enabled.defender_atp_safe_attachments_policy_enabled import (
-                defender_atp_safe_attachments_policy_enabled,
+            from prowler.providers.m365.services.defender.defender_atp_safe_attachments_and_docs_configured.defender_atp_safe_attachments_and_docs_configured import (
+                defender_atp_safe_attachments_and_docs_configured,
             )
 
-            check = defender_atp_safe_attachments_policy_enabled()
+            check = defender_atp_safe_attachments_and_docs_configured()
             result = check.execute()
 
             assert len(result) == 1
