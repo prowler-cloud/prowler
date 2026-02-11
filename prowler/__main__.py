@@ -66,6 +66,7 @@ from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
 from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
+from prowler.lib.outputs.compliance.csa.csa_azure import AzureCSA
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
@@ -742,6 +743,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(c5_azure)
                 c5_azure.batch_write_data_to_file()
+            elif compliance_name == "csa_ccm_4.0_azure":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                csa_ccm_4_0_azure = AzureCSA(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(csa_ccm_4_0_azure)
+                csa_ccm_4_0_azure.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
