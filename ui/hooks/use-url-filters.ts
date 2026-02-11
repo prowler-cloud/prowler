@@ -1,30 +1,25 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
-
-import { useFilterTransitionOptional } from "@/contexts";
 
 /**
  * Custom hook to handle URL filters and automatically reset
  * pagination when filters change.
  *
- * Uses useTransition to prevent full page reloads when filters change,
- * keeping the current UI visible while the new data loads.
- *
- * When used within a FilterTransitionProvider, the transition state is shared
- * across all components using this hook, enabling coordinated loading indicators.
+ * Uses client-side router navigation to update query params without
+ * full page reloads when filters change.
  */
 export const useUrlFilters = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const isPending = false;
 
-  // Signal shared pending state for DataTable loading indicator
-  const filterTransition = useFilterTransitionOptional();
-  const [localIsPending, startTransition] = useTransition();
-
-  const isPending = filterTransition?.isPending ?? localIsPending;
+  const navigate = (params: URLSearchParams) => {
+    const queryString = params.toString();
+    const targetUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    router.push(targetUrl, { scroll: false });
+  };
 
   const updateFilter = (key: string, value: string | string[] | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -54,10 +49,7 @@ export const useUrlFilters = () => {
       params.set(filterKey, nextValue);
     }
 
-    filterTransition?.signalFilterChange();
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    });
+    navigate(params);
   };
 
   const clearFilter = (key: string) => {
@@ -71,10 +63,7 @@ export const useUrlFilters = () => {
       params.set("page", "1");
     }
 
-    filterTransition?.signalFilterChange();
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    });
+    navigate(params);
   };
 
   const clearAllFilters = () => {
@@ -87,10 +76,7 @@ export const useUrlFilters = () => {
 
     params.delete("page");
 
-    filterTransition?.signalFilterChange();
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    });
+    navigate(params);
   };
 
   const hasFilters = () => {
@@ -115,10 +101,7 @@ export const useUrlFilters = () => {
       params.set("page", "1");
     }
 
-    filterTransition?.signalFilterChange();
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    });
+    navigate(params);
   };
 
   return {
