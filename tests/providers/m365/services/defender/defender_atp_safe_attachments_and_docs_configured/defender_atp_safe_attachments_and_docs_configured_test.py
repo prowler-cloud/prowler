@@ -43,11 +43,13 @@ class Test_defender_atp_safe_attachments_and_docs_configured:
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
-        defender_client.advanced_threat_protection_policy = AdvancedThreatProtectionPolicy(
-            identity="Default",
-            enable_atp_for_spo_teams_odb=True,
-            enable_safe_docs=True,
-            allow_safe_docs_open=False,
+        defender_client.advanced_threat_protection_policy = (
+            AdvancedThreatProtectionPolicy(
+                identity="Default",
+                enable_atp_for_spo_teams_odb=True,
+                enable_safe_docs=True,
+                allow_safe_docs_open=False,
+            )
         )
 
         with (
@@ -85,11 +87,13 @@ class Test_defender_atp_safe_attachments_and_docs_configured:
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
-        defender_client.advanced_threat_protection_policy = AdvancedThreatProtectionPolicy(
-            identity="Default",
-            enable_atp_for_spo_teams_odb=False,
-            enable_safe_docs=True,
-            allow_safe_docs_open=False,
+        defender_client.advanced_threat_protection_policy = (
+            AdvancedThreatProtectionPolicy(
+                identity="Default",
+                enable_atp_for_spo_teams_odb=False,
+                enable_safe_docs=True,
+                allow_safe_docs_open=False,
+            )
         )
 
         with (
@@ -127,11 +131,13 @@ class Test_defender_atp_safe_attachments_and_docs_configured:
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
-        defender_client.advanced_threat_protection_policy = AdvancedThreatProtectionPolicy(
-            identity="Default",
-            enable_atp_for_spo_teams_odb=True,
-            enable_safe_docs=False,
-            allow_safe_docs_open=False,
+        defender_client.advanced_threat_protection_policy = (
+            AdvancedThreatProtectionPolicy(
+                identity="Default",
+                enable_atp_for_spo_teams_odb=True,
+                enable_safe_docs=False,
+                allow_safe_docs_open=False,
+            )
         )
 
         with (
@@ -169,11 +175,13 @@ class Test_defender_atp_safe_attachments_and_docs_configured:
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
-        defender_client.advanced_threat_protection_policy = AdvancedThreatProtectionPolicy(
-            identity="Default",
-            enable_atp_for_spo_teams_odb=True,
-            enable_safe_docs=True,
-            allow_safe_docs_open=True,
+        defender_client.advanced_threat_protection_policy = (
+            AdvancedThreatProtectionPolicy(
+                identity="Default",
+                enable_atp_for_spo_teams_odb=True,
+                enable_safe_docs=True,
+                allow_safe_docs_open=True,
+            )
         )
 
         with (
@@ -211,11 +219,13 @@ class Test_defender_atp_safe_attachments_and_docs_configured:
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
-        defender_client.advanced_threat_protection_policy = AdvancedThreatProtectionPolicy(
-            identity="Default",
-            enable_atp_for_spo_teams_odb=False,
-            enable_safe_docs=False,
-            allow_safe_docs_open=True,
+        defender_client.advanced_threat_protection_policy = (
+            AdvancedThreatProtectionPolicy(
+                identity="Default",
+                enable_atp_for_spo_teams_odb=False,
+                enable_safe_docs=False,
+                allow_safe_docs_open=True,
+            )
         )
 
         with (
@@ -253,11 +263,13 @@ class Test_defender_atp_safe_attachments_and_docs_configured:
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
-        defender_client.advanced_threat_protection_policy = AdvancedThreatProtectionPolicy(
-            identity="CustomPolicy",
-            enable_atp_for_spo_teams_odb=True,
-            enable_safe_docs=True,
-            allow_safe_docs_open=False,
+        defender_client.advanced_threat_protection_policy = (
+            AdvancedThreatProtectionPolicy(
+                identity="CustomPolicy",
+                enable_atp_for_spo_teams_odb=True,
+                enable_safe_docs=True,
+                allow_safe_docs_open=False,
+            )
         )
 
         with (
