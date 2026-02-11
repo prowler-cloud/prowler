@@ -47,11 +47,9 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Use shared transition context if available, otherwise fall back to local
-  const sharedTransition = useFilterTransitionOptional();
-  const [, localStartTransition] = useTransition();
-  const startTransition =
-    sharedTransition?.startTransition ?? localStartTransition;
+  // Signal shared pending state for DataTable loading indicator
+  const filterTransition = useFilterTransitionOptional();
+  const [, startTransition] = useTransition();
 
   const filterKey = "filter[provider_id__in]";
   const current = searchParams.get(filterKey) || "";
@@ -105,6 +103,7 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
       params.set("page", "1");
     }
 
+    filterTransition?.signalFilterChange();
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     });

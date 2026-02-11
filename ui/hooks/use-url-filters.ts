@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import { useTransition } from "react";
 
 import { useFilterTransitionOptional } from "@/contexts";
 
@@ -20,70 +20,64 @@ export const useUrlFilters = () => {
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  // Use shared context if available, otherwise fall back to local transition
-  const sharedTransition = useFilterTransitionOptional();
-  const [localIsPending, localStartTransition] = useTransition();
+  // Signal shared pending state for DataTable loading indicator
+  const filterTransition = useFilterTransitionOptional();
+  const [localIsPending, startTransition] = useTransition();
 
-  const isPending = sharedTransition?.isPending ?? localIsPending;
-  const startTransition =
-    sharedTransition?.startTransition ?? localStartTransition;
+  const isPending = filterTransition?.isPending ?? localIsPending;
 
-  const updateFilter = useCallback(
-    (key: string, value: string | string[] | null) => {
-      const params = new URLSearchParams(searchParams.toString());
+  const updateFilter = (key: string, value: string | string[] | null) => {
+    const params = new URLSearchParams(searchParams.toString());
 
-      const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
+    const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
 
-      const currentValue = params.get(filterKey);
-      const nextValue = Array.isArray(value)
-        ? value.length > 0
-          ? value.join(",")
-          : null
-        : value === null
-          ? null
-          : value;
+    const currentValue = params.get(filterKey);
+    const nextValue = Array.isArray(value)
+      ? value.length > 0
+        ? value.join(",")
+        : null
+      : value === null
+        ? null
+        : value;
 
-      // If effective value is unchanged, do nothing (avoids redundant fetches)
-      if (currentValue === nextValue) return;
+    // If effective value is unchanged, do nothing (avoids redundant fetches)
+    if (currentValue === nextValue) return;
 
-      // Only reset page to 1 if page parameter already exists
-      if (params.has("page")) {
-        params.set("page", "1");
-      }
+    // Only reset page to 1 if page parameter already exists
+    if (params.has("page")) {
+      params.set("page", "1");
+    }
 
-      if (nextValue === null) {
-        params.delete(filterKey);
-      } else {
-        params.set(filterKey, nextValue);
-      }
-
-      startTransition(() => {
-        router.push(`${pathname}?${params.toString()}`, { scroll: false });
-      });
-    },
-    [router, searchParams, pathname, startTransition],
-  );
-
-  const clearFilter = useCallback(
-    (key: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
-
+    if (nextValue === null) {
       params.delete(filterKey);
+    } else {
+      params.set(filterKey, nextValue);
+    }
 
-      // Only reset page to 1 if page parameter already exists
-      if (params.has("page")) {
-        params.set("page", "1");
-      }
+    filterTransition?.signalFilterChange();
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    });
+  };
 
-      startTransition(() => {
-        router.push(`${pathname}?${params.toString()}`, { scroll: false });
-      });
-    },
-    [router, searchParams, pathname, startTransition],
-  );
+  const clearFilter = (key: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
 
-  const clearAllFilters = useCallback(() => {
+    params.delete(filterKey);
+
+    // Only reset page to 1 if page parameter already exists
+    if (params.has("page")) {
+      params.set("page", "1");
+    }
+
+    filterTransition?.signalFilterChange();
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    });
+  };
+
+  const clearAllFilters = () => {
     const params = new URLSearchParams(searchParams.toString());
     Array.from(params.keys()).forEach((key) => {
       if (key.startsWith("filter[") || key === "sort") {
@@ -93,17 +87,18 @@ export const useUrlFilters = () => {
 
     params.delete("page");
 
+    filterTransition?.signalFilterChange();
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     });
-  }, [router, searchParams, pathname, startTransition]);
+  };
 
-  const hasFilters = useCallback(() => {
+  const hasFilters = () => {
     const params = new URLSearchParams(searchParams.toString());
     return Array.from(params.keys()).some(
       (key) => key.startsWith("filter[") || key === "sort",
     );
-  }, [searchParams]);
+  };
 
   return {
     updateFilter,
