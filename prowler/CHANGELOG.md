@@ -7,6 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - `--repository` and `--organization` flags combined interaction in GitHub provider, qualifying unqualified repository names with organization [(#10001)](https://github.com/prowler-cloud/prowler/pull/10001)
+- HPACK library logging tokens in debug mode for Azure, M365, and Cloudflare providers [(#10010)](https://github.com/prowler-cloud/prowler/pull/10010)
 
 ---
 
