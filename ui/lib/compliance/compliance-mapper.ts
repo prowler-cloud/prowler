@@ -3,8 +3,8 @@ import { createElement, ReactNode } from "react";
 import { AWSWellArchitectedCustomDetails } from "@/components/compliance/compliance-custom-details/aws-well-architected-details";
 import { C5CustomDetails } from "@/components/compliance/compliance-custom-details/c5-details";
 import { CCCCustomDetails } from "@/components/compliance/compliance-custom-details/ccc-details";
-import { CSACustomDetails } from "@/components/compliance/compliance-custom-details/csa-details";
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
+import { CSACustomDetails } from "@/components/compliance/compliance-custom-details/csa-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
 import { GenericCustomDetails } from "@/components/compliance/compliance-custom-details/generic-details";
 import { ISOCustomDetails } from "@/components/compliance/compliance-custom-details/iso-details";
@@ -34,13 +34,13 @@ import {
   toAccordionItems as toCCCAccordionItems,
 } from "./ccc";
 import {
-  mapComplianceData as mapCSAComplianceData,
-  toAccordionItems as toCSAAccordionItems,
-} from "./csa";
-import {
   mapComplianceData as mapCISComplianceData,
   toAccordionItems as toCISAccordionItems,
 } from "./cis";
+import {
+  mapComplianceData as mapCSAComplianceData,
+  toAccordionItems as toCSAAccordionItems,
+} from "./csa";
 import { calculateCategoryHeatmapData, getTopFailedSections } from "./commons";
 import {
   mapComplianceData as mapENSComplianceData,
