@@ -1,8 +1,10 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTransition } from "react";
 
 import { Checkbox } from "@/components/shadcn";
+import { useFilterTransitionOptional } from "@/contexts";
 
 // Constants for muted filter URL values
 const MUTED_FILTER_VALUES = {
@@ -14,6 +16,12 @@ export const CustomCheckboxMutedFindings = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  // Use shared transition context if available, otherwise fall back to local
+  const sharedTransition = useFilterTransitionOptional();
+  const [, localStartTransition] = useTransition();
+  const startTransition =
+    sharedTransition?.startTransition ?? localStartTransition;
 
   // Get the current muted filter value from URL
   // Middleware ensures filter[muted] is always present when navigating to /findings
@@ -41,7 +49,9 @@ export const CustomCheckboxMutedFindings = () => {
       params.set("page", "1");
     }
 
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    });
   };
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { ReactNode } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ReactNode, useTransition } from "react";
 
 import {
   AlibabaCloudProviderBadge,
@@ -22,6 +22,7 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
+import { useFilterTransitionOptional } from "@/contexts";
 import type { ProviderProps, ProviderType } from "@/types/providers";
 
 const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
@@ -43,7 +44,14 @@ interface AccountsSelectorProps {
 
 export function AccountsSelector({ providers }: AccountsSelectorProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  // Use shared transition context if available, otherwise fall back to local
+  const sharedTransition = useFilterTransitionOptional();
+  const [, localStartTransition] = useTransition();
+  const startTransition =
+    sharedTransition?.startTransition ?? localStartTransition;
 
   const filterKey = "filter[provider_id__in]";
   const current = searchParams.get(filterKey) || "";
@@ -92,7 +100,14 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
       }
     }
 
-    router.push(`?${params.toString()}`, { scroll: false });
+    // Reset to page 1 when changing filter
+    if (params.has("page")) {
+      params.set("page", "1");
+    }
+
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    });
   };
 
   const selectedLabel = () => {
