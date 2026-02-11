@@ -25,7 +25,10 @@ export const getFindings = async ({
   if (sort) url.searchParams.append("sort", sort);
 
   Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
+    // Skip filter[search] since it's already added via the `query` param above
+    if (key !== "filter[search]") {
+      url.searchParams.append(key, String(value));
+    }
   });
 
   try {
@@ -63,7 +66,10 @@ export const getLatestFindings = async ({
   if (sort) url.searchParams.append("sort", sort);
 
   Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
+    // Skip filter[search] since it's already added via the `query` param above
+    if (key !== "filter[search]") {
+      url.searchParams.append(key, String(value));
+    }
   });
 
   try {

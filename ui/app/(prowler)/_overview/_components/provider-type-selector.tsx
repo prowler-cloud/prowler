@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { lazy, Suspense } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { lazy, Suspense, useTransition } from "react";
 
 import {
   MultiSelect,
@@ -10,6 +10,7 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
+import { useFilterTransitionOptional } from "@/contexts";
 import { type ProviderProps, ProviderType } from "@/types/providers";
 
 const AWSProviderBadge = lazy(() =>
@@ -123,7 +124,14 @@ export const ProviderTypeSelector = ({
   providers,
 }: ProviderTypeSelectorProps) => {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  // Use shared transition context if available, otherwise fall back to local
+  const sharedTransition = useFilterTransitionOptional();
+  const [, localStartTransition] = useTransition();
+  const startTransition =
+    sharedTransition?.startTransition ?? localStartTransition;
 
   const currentProviders = searchParams.get("filter[provider_type__in]") || "";
   const selectedTypes = currentProviders
@@ -144,7 +152,14 @@ export const ProviderTypeSelector = ({
     // User should manually select accounts if they want to filter by specific accounts
     params.delete("filter[provider_id__in]");
 
-    router.push(`?${params.toString()}`, { scroll: false });
+    // Reset to page 1 when changing filter
+    if (params.has("page")) {
+      params.set("page", "1");
+    }
+
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    });
   };
 
   const availableTypes = Array.from(
@@ -153,7 +168,7 @@ export const ProviderTypeSelector = ({
         // .filter((p) => p.attributes.connection?.connected)
         .map((p) => p.attributes.provider),
     ),
-  ) as ProviderType[];
+  ).filter((type): type is ProviderType => type in PROVIDER_DATA);
 
   const renderIcon = (providerType: ProviderType) => {
     const IconComponent = PROVIDER_DATA[providerType].icon;

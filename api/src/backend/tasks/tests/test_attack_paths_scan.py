@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 from tasks.jobs.attack_paths import findings as findings_module
+from tasks.jobs.attack_paths import internet as internet_module
 from tasks.jobs.attack_paths.scan import run as attack_paths_run
 
 from api.models import (
@@ -37,6 +38,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.sync.sync_graph")
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph")
     @patch("tasks.jobs.attack_paths.scan.sync.create_sync_indexes")
+    @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.findings.analysis")
     @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
@@ -67,6 +69,7 @@ class TestAttackPathsRun:
         mock_cartography_ontology,
         mock_findings_indexes,
         mock_findings_analysis,
+        mock_internet_analysis,
         mock_sync_indexes,
         mock_drop_subgraph,
         mock_sync,
@@ -139,6 +142,7 @@ class TestAttackPathsRun:
         # These use tmp_cartography_config (neo4j_database="db-scan-id")
         mock_cartography_analysis.assert_called_once()
         mock_cartography_ontology.assert_called_once()
+        mock_internet_analysis.assert_called_once()
         mock_findings_analysis.assert_called_once()
         mock_drop_subgraph.assert_called_once_with(
             database="tenant-db",
@@ -207,6 +211,7 @@ class TestAttackPathsRun:
             patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run"),
             patch("tasks.jobs.attack_paths.scan.cartography_analysis.run"),
             patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes"),
+            patch("tasks.jobs.attack_paths.scan.internet.analysis"),
             patch("tasks.jobs.attack_paths.scan.findings.analysis"),
             patch(
                 "tasks.jobs.attack_paths.scan.db_utils.retrieve_attack_paths_scan",
@@ -757,3 +762,45 @@ class TestAttackPathsFindingsHelpers:
             findings_module.load_findings(mock_session, empty_gen(), provider, config)
 
         mock_session.run.assert_not_called()
+
+
+class TestInternetAnalysis:
+    def _make_provider_and_config(self):
+        provider = MagicMock()
+        provider.provider = "aws"
+        provider.uid = "123456789012"
+        config = SimpleNamespace(update_tag=1234567890)
+        return provider, config
+
+    def test_analysis_creates_node_and_relationships(self):
+        """Verify both Cypher statements are executed and relationship count returned."""
+        mock_session = MagicMock()
+        mock_result = MagicMock()
+        mock_result.single.return_value = {"relationships_merged": 3}
+        mock_session.run.side_effect = [None, mock_result]
+        provider, config = self._make_provider_and_config()
+
+        with patch(
+            "tasks.jobs.attack_paths.internet.get_root_node_label",
+            return_value="AWSAccount",
+        ):
+            result = internet_module.analysis(mock_session, provider, config)
+
+        assert mock_session.run.call_count == 2
+        assert result == 3
+
+    def test_analysis_zero_exposed_resources(self):
+        """When no resources are exposed, zero relationships are created."""
+        mock_session = MagicMock()
+        mock_result = MagicMock()
+        mock_result.single.return_value = {"relationships_merged": 0}
+        mock_session.run.side_effect = [None, mock_result]
+        provider, config = self._make_provider_and_config()
+
+        with patch(
+            "tasks.jobs.attack_paths.internet.get_root_node_label",
+            return_value="AWSAccount",
+        ):
+            result = internet_module.analysis(mock_session, provider, config)
+
+        assert result == 0

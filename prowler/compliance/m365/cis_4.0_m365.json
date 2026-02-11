@@ -318,7 +318,9 @@
     {
       "Id": "2.1.1",
       "Description": "Enabling Safe Links policy for Office applications allows URL's that exist inside of Office documents and email applications opened by Office, Office Online and Office mobile to be processed against Defender for Office time-of-click verification and rewritten if required.**Note:** E5 Licensing includes a number of Built-in Protection policies. When auditing policies note which policy you are viewing, and keep in mind CIS recommendations often extend the Default or Build-in Policies provided by MS. In order to **Pass** the highest priority policy must match all settings recommended.",
-      "Checks": [],
+      "Checks": [
+        "defender_safelinks_policy_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",

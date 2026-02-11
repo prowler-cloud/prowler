@@ -1176,6 +1176,14 @@ class AttackPathsScanSerializer(RLSSerializer):
         return provider.uid if provider else None
 
 
+class AttackPathsQueryAttributionSerializer(BaseSerializerV1):
+    text = serializers.CharField()
+    link = serializers.CharField()
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-attributions"
+
+
 class AttackPathsQueryParameterSerializer(BaseSerializerV1):
     name = serializers.CharField()
     label = serializers.CharField()
@@ -1190,7 +1198,9 @@ class AttackPathsQueryParameterSerializer(BaseSerializerV1):
 class AttackPathsQuerySerializer(BaseSerializerV1):
     id = serializers.CharField()
     name = serializers.CharField()
+    short_description = serializers.CharField()
     description = serializers.CharField()
+    attribution = AttackPathsQueryAttributionSerializer(allow_null=True, required=False)
     provider = serializers.CharField()
     parameters = AttackPathsQueryParameterSerializer(many=True)
 

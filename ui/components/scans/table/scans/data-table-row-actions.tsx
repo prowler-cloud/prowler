@@ -1,22 +1,15 @@
 "use client";
 
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownSection,
-  DropdownTrigger,
-} from "@heroui/dropdown";
-import {
-  // DeleteDocumentBulkIcon,
-  EditDocumentBulkIcon,
-} from "@heroui/shared-icons";
 import { Row } from "@tanstack/react-table";
-import { DownloadIcon } from "lucide-react";
+import { Download, Pencil } from "lucide-react";
 import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
+import {
+  ActionDropdown,
+  ActionDropdownItem,
+} from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { downloadScanZip } from "@/lib/helper";
@@ -26,7 +19,6 @@ import { EditScanForm } from "../../forms";
 interface DataTableRowActionsProps<ScanProps> {
   row: Row<ScanProps>;
 }
-const iconClasses = "text-2xl text-default-500 pointer-events-none shrink-0";
 
 export function DataTableRowActions<ScanProps>({
   row,
@@ -52,46 +44,26 @@ export function DataTableRowActions<ScanProps>({
       </Modal>
 
       <div className="relative flex items-center justify-end gap-2">
-        <Dropdown
-          className="border-border-neutral-secondary bg-bg-neutral-secondary border shadow-xl"
-          placement="bottom"
-        >
-          <DropdownTrigger>
+        <ActionDropdown
+          trigger={
             <Button variant="ghost" size="icon-sm" className="rounded-full">
               <VerticalDotsIcon className="text-slate-400" />
             </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            closeOnSelect
-            aria-label="Actions"
-            color="default"
-            variant="flat"
-          >
-            <DropdownSection title="Download reports">
-              <DropdownItem
-                key="export"
-                description="Available only for completed scans"
-                textValue="Download .zip"
-                startContent={<DownloadIcon className={iconClasses} />}
-                onPress={() => downloadScanZip(scanId, toast)}
-                isDisabled={scanState !== "completed"}
-              >
-                Download .zip
-              </DropdownItem>
-            </DropdownSection>
-            <DropdownSection title="Actions">
-              <DropdownItem
-                key="edit"
-                description="Allows you to edit the scan name"
-                textValue="Edit Scan Name"
-                startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                onPress={() => setIsEditOpen(true)}
-              >
-                Edit scan name
-              </DropdownItem>
-            </DropdownSection>
-          </DropdownMenu>
-        </Dropdown>
+          }
+        >
+          <ActionDropdownItem
+            icon={<Download />}
+            label="Download .zip"
+            description="Available only for completed scans"
+            onSelect={() => downloadScanZip(scanId, toast)}
+            disabled={scanState !== "completed"}
+          />
+          <ActionDropdownItem
+            icon={<Pencil />}
+            label="Edit Scan Name"
+            onSelect={() => setIsEditOpen(true)}
+          />
+        </ActionDropdown>
       </div>
     </>
   );

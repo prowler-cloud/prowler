@@ -59,6 +59,14 @@ export function ScansTableWithPolling({
   const [scansData, setScansData] = useState<ScanProps[]>(initialData);
   const [meta, setMeta] = useState<MetaDataProps | undefined>(initialMeta);
 
+  // Sync state with server data when props change (e.g., pagination or filter changes).
+  // useState only uses its argument on first mount, so without this effect,
+  // navigating to page 2 would change the URL but keep showing page 1 data.
+  useEffect(() => {
+    setScansData(initialData);
+    setMeta(initialMeta);
+  }, [initialData, initialMeta]);
+
   const hasExecutingScan = scansData.some((scan) =>
     EXECUTING_STATES.includes(
       scan.attributes.state as (typeof EXECUTING_STATES)[number],

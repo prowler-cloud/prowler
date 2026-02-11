@@ -16,7 +16,7 @@ from api.models import (
     StateChoices,
 )
 from api.utils import initialize_prowler_provider
-from tasks.jobs.attack_paths import db_utils, findings, sync, utils
+from tasks.jobs.attack_paths import db_utils, findings, internet, sync, utils
 from tasks.jobs.attack_paths.config import get_cartography_ingestion_function
 
 # Without this Celery goes crazy with Cartography logging
@@ -135,7 +135,15 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             cartography_analysis.run(tmp_neo4j_session, tmp_cartography_config)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 96)
 
-            # Adding Prowler nodes and relationships
+            # Creating Internet node and CAN_ACCESS relationships
+            logger.info(
+                f"Creating Internet graph for AWS account {prowler_api_provider.uid}"
+            )
+            internet.analysis(
+                tmp_neo4j_session, prowler_api_provider, tmp_cartography_config
+            )
+
+            # Adding Prowler Finding nodes and relationships
             logger.info(
                 f"Syncing Prowler analysis for AWS account {prowler_api_provider.uid}"
             )

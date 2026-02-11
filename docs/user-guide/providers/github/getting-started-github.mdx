@@ -54,7 +54,7 @@ title: 'Getting Started with GitHub'
 </Tabs>
 ## Prowler CLI
 
-### Automatic Login Method Detection
+### Authentication
 
 If no login method is explicitly provided, Prowler will automatically attempt to authenticate using environment variables in the following order of precedence:
 
@@ -68,15 +68,15 @@ Ensure the corresponding environment variables are set up before running Prowler
 </Note>
 For more details on how to set up authentication with GitHub, see [Authentication > GitHub](/user-guide/providers/github/authentication).
 
-### Personal Access Token (PAT)
+#### Personal Access Token (PAT)
 
-Use this method by providing your personal access token directly.
+Use this method by providing a personal access token directly.
 
 ```console
 prowler github --personal-access-token pat
 ```
 
-### OAuth App Token
+#### OAuth App Token
 
 Authenticate using an OAuth app token.
 
@@ -84,9 +84,62 @@ Authenticate using an OAuth app token.
 prowler github --oauth-app-token oauth_token
 ```
 
-### GitHub App Credentials
+#### GitHub App Credentials
+
 Use GitHub App credentials by specifying the App ID and the private key path.
 
 ```console
 prowler github --github-app-id app_id --github-app-key-path app_key_path
 ```
+
+### Scan Scoping
+
+By default, Prowler scans all repositories accessible to the authenticated user or organization. To limit the scan to specific repositories or organizations, use the following flags.
+
+#### Scanning Specific Repositories
+
+To restrict the scan to one or more repositories, use the `--repository` flag followed by the repository name(s) in `owner/repo-name` format:
+
+```console
+prowler github --repository owner/repo-name
+```
+
+To scan multiple repositories, specify them as space-separated arguments:
+
+```console
+prowler github --repository owner/repo-name-1 owner/repo-name-2
+```
+
+#### Scanning Specific Organizations
+
+To restrict the scan to one or more organizations or user accounts, use the `--organization` flag:
+
+```console
+prowler github --organization my-organization
+```
+
+To scan multiple organizations, specify them as space-separated arguments:
+
+```console
+prowler github --organization org-1 org-2
+```
+
+#### Scanning Specific Repositories Within an Organization
+
+To scan specific repositories within an organization, combine the `--organization` and `--repository` flags. The `--organization` flag qualifies unqualified repository names automatically:
+
+```console
+prowler github --organization my-organization --repository my-repo
+```
+
+This scans only `my-organization/my-repo`. Fully qualified repository names (`owner/repo-name`) are also supported alongside `--organization`:
+
+```console
+prowler github --organization my-org --repository my-repo other-owner/other-repo
+```
+
+In this case, `my-repo` is qualified as `my-org/my-repo`, while `other-owner/other-repo` is used as-is.
+
+<Note>
+The `--repository` and `--organization` flags can be combined with any authentication method.
+</Note>

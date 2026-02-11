@@ -18,9 +18,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, Task
 
 ## Overview
 
-Attack Paths queries are openCypher queries that analyze cloud infrastructure graphs
-(ingested via Cartography) to detect security risks like privilege escalation paths,
-network exposure, and misconfigurations.
+Attack Paths queries are openCypher queries that analyze cloud infrastructure graphs (ingested via Cartography) to detect security risks like privilege escalation paths, network exposure, and misconfigurations.
 
 Queries are written in **openCypher Version 9** to ensure compatibility with both Neo4j and Amazon Neptune.
 
@@ -34,10 +32,11 @@ Queries can be created from:
    - The JSON index contains: `id`, `name`, `description`, `services`, `permissions`, `exploitationSteps`, `prerequisites`, etc.
    - Reference: https://github.com/DataDog/pathfinding.cloud
 
-   **Fetching a single path by ID** — The aggregated `paths.json` is too large for WebFetch
+   **Fetching a single path by ID** - The aggregated `paths.json` is too large for WebFetch
    (content gets truncated). Use Bash with `curl` and a JSON parser instead:
 
    Prefer `jq` (concise), fall back to `python3` (guaranteed in this Python project):
+
    ```bash
    # With jq
    curl -s https://raw.githubusercontent.com/DataDog/pathfinding.cloud/main/docs/paths.json \
@@ -50,6 +49,7 @@ Queries can be created from:
 
 2. **Listing Available Attack Paths**
    - Use Bash to list available paths from the JSON index:
+
    ```bash
    # List all path IDs and names (jq)
    curl -s https://raw.githubusercontent.com/DataDog/pathfinding.cloud/main/docs/paths.json \
@@ -84,6 +84,7 @@ Example: `api/src/backend/api/attack_paths/queries/aws.py`
 
 ```python
 from api.attack_paths.queries.types import (
+    AttackPathsQueryAttribution,
     AttackPathsQueryDefinition,
     AttackPathsQueryParameterDefinition,
 )
@@ -92,8 +93,13 @@ from tasks.jobs.attack_paths.config import PROWLER_FINDING_LABEL
 # {REFERENCE_ID} (e.g., EC2-001, GLUE-001)
 AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
     id="aws-{kebab-case-name}",
-    name="Privilege Escalation: {permission1} + {permission2}",
-    description="{Detailed description of the Attack Paths}.",
+    name="{Human-friendly label} ({REFERENCE_ID})",
+    short_description="{Brief explanation of the attack, no technical permissions.}",
+    description="{Detailed description of the attack vector and impact.}",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - {REFERENCE_ID} - {permission1} + {permission2}",
+        link="https://pathfinding.cloud/paths/{reference_id_lowercase}",
+    ),
     provider="aws",
     cypher=f"""
         // Find principals with {permission1}
@@ -114,7 +120,7 @@ AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
                 OR action = '*'
             )
 
-        // Find target resources
+        // Find target resources (MUST chain from `aws` for provider isolation)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: '{service}.amazonaws.com'}})
         WHERE any(resource IN stmt.resource WHERE
             resource = '*'
@@ -231,11 +237,13 @@ This informs query design by showing what data is actually available to query.
 Use the standard pattern (see above) with:
 
 - **id**: Auto-generated as `{provider}-{kebab-case-description}`
-- **name**: Human-readable, e.g., "Privilege Escalation: {perm1} + {perm2}"
-- **description**: Explain the attack vector and impact
+- **name**: Short, human-friendly label. No raw IAM permissions. For sourced queries (e.g., pathfinding.cloud), append the reference ID in parentheses: `"EC2 Instance Launch with Privileged Role (EC2-001)"`. If the name already has parentheses, prepend the ID inside them: `"ECS Service Creation with Privileged Role (ECS-003 - Existing Cluster)"`.
+- **short_description**: Brief explanation of the attack, no technical permissions. E.g., "Launch EC2 instances with privileged IAM roles to gain their permissions via IMDS."
+- **description**: Full technical explanation of the attack vector and impact. Plain text only, no HTML or technical permissions here.
 - **provider**: Provider identifier (aws, azure, gcp, kubernetes, github)
 - **cypher**: The openCypher query with proper escaping
 - **parameters**: Optional list of user-provided parameters (use `parameters=[]` if none needed)
+- **attribution**: Optional `AttackPathsQueryAttribution(text, link)` for sourced queries. The `text` includes the source, reference ID, and technical permissions (e.g., `"pathfinding.cloud - EC2-001 - iam:PassRole + ec2:RunInstances"`). The `link` is the URL with a lowercase ID (e.g., `"https://pathfinding.cloud/paths/ec2-001"`). Omit (defaults to `None`) for non-sourced queries.
 
 ### 5. Add Query to Provider List
 
@@ -396,6 +404,16 @@ parameters=[
 5. **Comment the query purpose**: Add inline comments explaining each MATCH clause
 
 6. **Validate schema first**: Ensure all node labels and properties exist in Cartography schema
+
+7. **Chain all MATCHes from the root account node**: Every `MATCH` clause must connect to the `aws` variable (or another variable already bound to the account's subgraph). The tenant database contains data from multiple providers — an unanchored `MATCH` would return nodes from all providers, breaking provider isolation.
+
+   ```cypher
+   // WRONG: matches ALL AWSRoles across all providers in the tenant DB
+   MATCH (role:AWSRole) WHERE role.name = 'admin'
+
+   // CORRECT: scoped to the specific account's subgraph
+   MATCH (aws)--(role:AWSRole) WHERE role.name = 'admin'
+   ```
 
 ---
 
