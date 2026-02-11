@@ -3,8 +3,6 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
-import { useFilterTransitionOptional } from "@/contexts";
-
 /**
  * Custom hook to handle URL filters and automatically reset
  * pagination when filters change.
@@ -12,19 +10,16 @@ import { useFilterTransitionOptional } from "@/contexts";
  * Uses useTransition to prevent full page reloads when filters change,
  * keeping the current UI visible while the new data loads.
  *
- * When used within a FilterTransitionProvider, the transition state is shared
- * across all components using this hook, enabling coordinated loading indicators.
+ * Each instance owns its own useTransition — no shared state updates
+ * during navigation. This avoids a production bug where urgent state
+ * updates (from a shared context) caused re-render cascades that
+ * silently aborted pending router.push transitions.
  */
 export const useUrlFilters = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-
-  // Signal shared pending state for DataTable loading indicator
-  const filterTransition = useFilterTransitionOptional();
-  const [localIsPending, startTransition] = useTransition();
-
-  const isPending = filterTransition?.isPending ?? localIsPending;
+  const [isPending, startTransition] = useTransition();
 
   const updateFilter = (key: string, value: string | string[] | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -54,7 +49,6 @@ export const useUrlFilters = () => {
       params.set(filterKey, nextValue);
     }
 
-    filterTransition?.signalFilterChange();
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     });
@@ -71,7 +65,6 @@ export const useUrlFilters = () => {
       params.set("page", "1");
     }
 
-    filterTransition?.signalFilterChange();
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     });
@@ -87,7 +80,6 @@ export const useUrlFilters = () => {
 
     params.delete("page");
 
-    filterTransition?.signalFilterChange();
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     });
@@ -115,7 +107,6 @@ export const useUrlFilters = () => {
       params.set("page", "1");
     }
 
-    filterTransition?.signalFilterChange();
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     });
