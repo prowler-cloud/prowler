@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from prowler.lib.logger import logger
 from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
 
 MAX_WORKERS = 10
@@ -30,7 +31,13 @@ class CloudflareService:
                 result = future.result()
                 if result is not None:
                     results.append(result)
-            except Exception:
-                pass
+            except Exception as error:
+                # Log unhandled exceptions from threaded calls
+                item = futures[future]
+                item_id = getattr(item, "id", str(item))
+                logger.error(
+                    f"{self.service} - Threading error processing {item_id}: "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
         return results
