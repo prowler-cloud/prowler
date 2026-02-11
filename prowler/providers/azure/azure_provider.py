@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import re
 from argparse import ArgumentTypeError
@@ -218,8 +219,6 @@ class AzureProvider(Provider):
         logger.info("Setting Azure provider ...")
 
         # Mute HPACK library logs to prevent token leakage in debug mode
-        import logging
-
         logging.getLogger("hpack").setLevel(logging.CRITICAL)
 
         logger.info("Checking if any credentials mode is set ...")

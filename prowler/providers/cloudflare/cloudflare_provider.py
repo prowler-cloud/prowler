@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Iterable
 
@@ -56,8 +57,6 @@ class CloudflareProvider(Provider):
         logger.info("Instantiating Cloudflare provider...")
 
         # Mute HPACK library logs to prevent token leakage in debug mode
-        import logging
-
         logging.getLogger("hpack").setLevel(logging.CRITICAL)
 
         if config_content:
