@@ -7,6 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - `defender_safe_attachments_policy_enabled` check for M365 provider [(#9833)](https://github.com/prowler-cloud/prowler/pull/9833)
+- `defender_safelinks_policy_enabled` check for M365 provider [(#9832)](https://github.com/prowler-cloud/prowler/pull/9832)
 - AI Skills: Added a skill for creating new Attack Paths queries in openCypher, compatible with Neo4j and Neptune [(#9975)](https://github.com/prowler-cloud/prowler/pull/9975)
 
 ### 🔄 Changed
@@ -18,6 +19,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - `--repository` and `--organization` flags combined interaction in GitHub provider, qualifying unqualified repository names with organization [(#10001)](https://github.com/prowler-cloud/prowler/pull/10001)
+- HPACK library logging tokens in debug mode for Azure, M365, and Cloudflare providers [(#10010)](https://github.com/prowler-cloud/prowler/pull/10010)
 
 ---
 
@@ -36,6 +38,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `OpenStack` documentation for the support in the CLI [(#9848)](https://github.com/prowler-cloud/prowler/pull/9848)
 - Add HIPAA compliance framework for the Azure provider [(#9957)](https://github.com/prowler-cloud/prowler/pull/9957)
 - Cloudflare provider credentials as constructor parameters (`api_token`, `api_key`, `api_email`) [(#9907)](https://github.com/prowler-cloud/prowler/pull/9907)
+- CIS 3.1 for the Oracle Cloud provider [(#9971)](https://github.com/prowler-cloud/prowler/pull/9971)
 
 ### 🔄 Changed
 
