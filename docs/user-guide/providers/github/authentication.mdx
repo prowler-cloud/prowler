@@ -14,11 +14,21 @@ Prowler for GitHub supports multiple authentication types across Prowler Cloud a
 
 ### Authentication Methods Overview
 
-Prowler supports three authentication methods. We recommend Fine-Grained Personal Access Tokens for most use cases.
+Prowler supports three authentication methods. Choose based on your use case:
 
-- [**Fine-Grained Personal Access Token**](#fine-grained-personal-access-token-recommended) (**Recommended**)
-- [**OAuth App Token**](#oauth-app-token)
-- [**GitHub App Credentials**](#github-app-credentials-not-recommended) (**Not Recommended**)
+| Method | Best For | Key Benefit |
+|--------|----------|-------------|
+| [**Fine-Grained Personal Access Token**](#fine-grained-personal-access-token-recommended) | Individual users, quick setup | Simple, user-scoped access |
+| [**GitHub App**](#github-app-credentials) | Organizations, automation, CI/CD | Organization-scoped, no personal account dependency |
+| [**OAuth App Token**](#oauth-app-token) | Delegated user authorization | User-consented access flows |
+
+<Note>
+**Which should I choose?**
+
+- **Personal scanning or quick setup**: Use Fine-Grained PAT
+- **Organization-wide scanning or CI/CD pipelines**: Use GitHub App (recommended for production)
+- **Building apps with user authorization**: Use OAuth App
+</Note>
 
 
 <Warning>
@@ -30,76 +40,87 @@ GitHub has deprecated classic Personal Access Tokens. Use Fine-Grained Tokens in
 
 ### Required Permissions
 
-The permissions you need depend on your scan scope: user repositories, organization repositories, or both.
+The permissions below apply to **both Fine-Grained Personal Access Tokens and GitHub Apps** - they use the same permission model.
 
 #### Repository Permissions
 
 Required for scanning repository security settings:
 
-| Permission | Access Level | Purpose |
-|------------|-------------|---------|
-| **Administration** | Read-only | Branch protection settings, repository configuration |
-| **Contents** | Read-only | SECURITY.md, CODEOWNERS files |
-| **Metadata** | Read-only | Basic repository information (automatically selected) |
-| **Pull requests** | Read-only | PR review requirements |
+| Permission | Access Level | Purpose | Checks Enabled |
+|------------|-------------|---------|----------------|
+| **Administration** | Read | Branch protection, security settings | All branch protection checks, secret scanning status |
+| **Contents** | Read | File existence checks | `repository_public_has_securitymd_file`, `repository_has_codeowners_file` |
+| **Metadata** | Read | Basic repository information | All checks (automatically granted) |
+| **Dependabot alerts** | Read | Dependency vulnerability scanning | `repository_dependency_scanning_enabled` |
+
+<Note>
+**Pull requests permission is optional.** It's only needed if you want to audit PR-specific settings beyond what branch protection provides.
+</Note>
 
 #### Organization Permissions
 
 Required for scanning organization-level security settings:
 
 <Note>
-Organization permissions only appear when creating a Fine-Grained Token with an organization as the **Resource Owner**.
+**For Fine-Grained PATs:** Organization permissions only appear when the **Resource Owner** is set to an organization (not your personal account).
 
+**For GitHub Apps:** Organization permissions are configured during app creation and apply to all organizations where the app is installed.
 </Note>
 
+| Permission | Access Level | Purpose | Checks Enabled |
+|------------|-------------|---------|----------------|
+| **Administration** | Read | Organization security policies | `organization_members_mfa_required`, `organization_repository_creation_limited`, `organization_default_repository_permission_strict` |
+| **Members** | Read | Member access reviews | Organization membership auditing |
+
+#### Account Permissions (Fine-Grained PAT only)
+
 | Permission | Access Level | Purpose |
 |------------|-------------|---------|
-| **Administration** | Read-only | MFA requirements, security policies |
-| **Members** | Read-only | Member access reviews |
+| **Email addresses** | Read | User email verification |
 
-#### Account Permissions
-
-| Permission | Access Level | Purpose |
-|------------|-------------|---------|
-| **Email addresses** | Read-only | User email verification |
+<Note>
+GitHub Apps don't have account-level permissions - they operate at the organization/repository level.
+</Note>
 
 ### Permissions and Check Coverage
 
-With **Read-only permissions** (recommended), Prowler can run:
+With the **Read-only permissions** listed above, Prowler can run:
 
-- All repository security checks except merge-related settings
-- All organization checks (if token has organization permissions)
-- All compliance framework checks
+| Check Category | Coverage | Notes |
+|----------------|----------|-------|
+| Branch protection checks (12 checks) | ✅ Full | Signed commits, status checks, PR reviews, etc. |
+| Repository security checks | ✅ Full | Secret scanning, Dependabot, SECURITY.md, CODEOWNERS |
+| Organization checks (3 checks) | ✅ Full | MFA, repo creation policies, default permissions |
+| Compliance frameworks | ✅ Full | CIS GitHub Benchmark and others |
+| Merge settings (`delete_branch_on_merge`) | ⚠️ MANUAL | Requires write permission (see below) |
 
-**Checks that return `MANUAL` status with Read-only permissions:**
+**Check that returns `MANUAL` status with Read-only permissions:**
 - `repository_branch_delete_on_merge_enabled`
-- Any check requiring merge settings
 
 <Warning>
 **About Write Permissions**
 
-Some GitHub merge settings (`delete_branch_on_merge`, `allow_squash_merge`, etc.) are only returned by the GitHub API when the token has **Administration: Read and write** permission.
+The `delete_branch_on_merge` setting is only returned by the GitHub API when the token has **Administration: Read and write** permission.
 
-**We DO NOT recommend granting Write permissions under any circumstances:**
+**We DO NOT recommend granting Write permissions:**
 - Token can modify repository settings
 - Token can change branch protection rules
 - Violates principle of least privilege
 
-**Recommendation:** Accept `MANUAL` status for these checks rather than granting write access.
-
+**Recommendation:** Accept `MANUAL` status for this single check rather than granting write access. This limitation applies equally to Fine-Grained PATs and GitHub Apps.
 </Warning>
 
 ### Step-by-Step Permission Assignment
 
-#### Fine-Grained Personal Access Token (Recommended)
+#### Fine-Grained Personal Access Token (Recommended for Individual Use)
 
 **Why Fine-Grained Tokens?**
 
-Fine-Grained Personal Access Tokens provide the best balance of security and functionality:
-- Granular permission control
-- Resource-specific access (specific repositories or organizations)
-- Mandatory expiration
-- Complete data access (unlike GitHub Apps)
+Fine-Grained Personal Access Tokens are ideal for:
+- **Individual users** scanning their own repositories
+- **Quick setup** without app registration overhead
+- **Temporary access** with mandatory expiration
+- **Repository-specific access** when you only need to scan certain repos
 
 **Create a Fine-Grained Token:**
 
@@ -115,11 +136,18 @@ Fine-Grained Personal Access Tokens provide the best balance of security and fun
      - Organization name (for organization scanning - requires admin approval)
    - **Repository access**: "All repositories" (recommended)
 
-4. Configure **Repository permissions** (see table above for required permissions).
+4. Configure **Repository permissions**:
+   - Administration: Read
+   - Contents: Read
+   - Metadata: Read (auto-selected)
+   - Dependabot alerts: Read
 
-5. Configure **Organization permissions** if scanning organizations (only appears when Resource owner is an organization).
+5. Configure **Organization permissions** (only appears when Resource owner is an organization):
+   - Administration: Read
+   - Members: Read
 
-6. Configure **Account permissions** (see table above).
+6. Configure **Account permissions**:
+   - Email addresses: Read (optional)
 
 7. Click **Generate token** and copy the token immediately.
 
@@ -161,54 +189,80 @@ Use OAuth App Tokens when building applications that need delegated user permiss
    https://github.com/login/oauth/access_token?code={code}&client_id={app_id}&client_secret={secret}
    ```
 
-#### GitHub App Credentials (Not Recommended)
+#### GitHub App Credentials
 
-<Warning>
-**Most Limited Authentication Method**
+<Note>
+**When to Use GitHub Apps**
 
-GitHub Apps provide the most limited access to GitHub data:
-- Cannot access user-level data
-- More restricted API access than Personal Access Tokens
-- Additional setup complexity
-- Installation approval required per organization
+GitHub Apps are ideal for:
+- **Organization-wide scanning** without tying access to a personal account
+- **CI/CD pipelines** where you need machine identity (not user-based)
+- **Multi-organization setups** with centralized app management
+- **Audit compliance** where you need to track app-level access separately from users
 
-**Use Fine-Grained Personal Access Tokens instead.** Only use GitHub Apps if your organization's security policies explicitly require them.
-
-</Warning>
+GitHub Apps use the same permission model as Fine-Grained PATs - both provide full access to all Prowler checks.
+</Note>
 
 **GitHub App Permissions:**
 
-If you must use a GitHub App:
+Configure these permissions when creating your GitHub App:
 
 **Repository permissions:**
-- Administration: Read
-- Contents: Read
-- Metadata: Read
-- Pull requests: Read
+
+| Permission | Access Level | Purpose | Checks Enabled |
+|------------|-------------|---------|----------------|
+| **Administration** | Read | Branch protection, security settings | All branch protection checks, `repository_secret_scanning_enabled` |
+| **Contents** | Read | File existence checks | `repository_public_has_securitymd_file`, `repository_has_codeowners_file` |
+| **Metadata** | Read | Basic repository information | All checks (automatically granted) |
+| **Dependabot alerts** | Read | Dependency vulnerability scanning | `repository_dependency_scanning_enabled` |
 
 **Organization permissions:**
-- Administration: Read
-- Members: Read
+
+| Permission | Access Level | Purpose | Checks Enabled |
+|------------|-------------|---------|----------------|
+| **Administration** | Read | Organization security policies | `organization_members_mfa_required`, `organization_repository_creation_limited`, `organization_default_repository_permission_strict` |
+| **Members** | Read | Member access reviews | Organization membership auditing |
 
 **Create a GitHub App:**
 
 1. Navigate to **GitHub Settings** > **Developer settings** > **GitHub Apps**.
 
 2. Click **New GitHub App** and complete:
-   - GitHub App name
-   - Homepage URL
-   - Webhook URL (can be left blank - Prowler doesn't need webhooks)
+   - **GitHub App name**: Descriptive name (e.g., "Prowler Security Scanner")
+   - **Homepage URL**: Your organization's URL or Prowler documentation
+   - **Webhook**: Uncheck "Active" (Prowler doesn't need webhooks)
 
-3. Configure permissions (see above).
+3. Configure **Repository permissions** (see table above):
+   - Administration: Read
+   - Contents: Read
+   - Metadata: Read (auto-selected)
+   - Dependabot alerts: Read
 
-4. Click **Generate a private key** and download the `.pem` file.
+4. Configure **Organization permissions** (see table above):
+   - Administration: Read
+   - Members: Read
 
-5. Record the **App ID** from the settings page.
+5. Under **Where can this GitHub App be installed?**, select:
+   - "Only on this account" for single-organization use
+   - "Any account" if you need to install across multiple organizations
 
-6. Install the GitHub App:
-   - Click **Install App**
+6. Click **Create GitHub App**.
+
+7. On the app settings page:
+   - Record the **App ID** (displayed at the top)
+   - Click **Generate a private key** and download the `.pem` file
+
+8. Install the GitHub App:
+   - Click **Install App** in the left sidebar
    - Select target account/organization
-   - Choose repository access
+   - Choose "All repositories" or select specific repositories
+   - Click **Install**
+
+<Warning>
+**Private Key Security**
+
+Store the `.pem` private key securely. Anyone with this key can authenticate as your GitHub App. Never commit it to version control.
+</Warning>
 
 ---
 
