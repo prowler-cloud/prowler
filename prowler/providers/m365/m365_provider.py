@@ -157,6 +157,11 @@ class M365Provider(Provider):
         """
         logger.info("Setting M365 provider ...")
 
+        # Mute HPACK library logs to prevent token leakage in debug mode
+        import logging
+
+        logging.getLogger("hpack").setLevel(logging.CRITICAL)
+
         logger.info("Checking if any credentials mode is set ...")
 
         # Validate the authentication arguments
