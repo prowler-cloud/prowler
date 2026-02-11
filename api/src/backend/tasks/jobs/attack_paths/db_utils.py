@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from django.db.models import Q
 from cartography.config import Config as CartographyConfig
 
 from api.db_utils import rls_transaction
@@ -10,7 +9,7 @@ from api.models import (
     Provider as ProwlerAPIProvider,
     StateChoices,
 )
-from tasks.jobs.attack_paths.providers import is_provider_available
+from tasks.jobs.attack_paths.config import is_provider_available
 
 
 def can_provider_run_attack_paths_scan(tenant_id: str, provider_id: int) -> bool:
@@ -145,24 +144,3 @@ def update_old_attack_paths_scan(
     with rls_transaction(old_attack_paths_scan.tenant_id):
         old_attack_paths_scan.is_graph_database_deleted = True
         old_attack_paths_scan.save(update_fields=["is_graph_database_deleted"])
-
-
-def get_provider_graph_database_names(tenant_id: str, provider_id: str) -> list[str]:
-    """
-    Return existing graph database names for a tenant/provider.
-
-    Note: For accesing the `AttackPathsScan` we need to use `all_objects` manager because the provider is soft-deleted.
-    """
-    with rls_transaction(tenant_id):
-        graph_databases_names_qs = (
-            ProwlerAPIAttackPathsScan.all_objects.filter(
-                ~Q(graph_database=""),
-                graph_database__isnull=False,
-                provider_id=provider_id,
-                is_graph_database_deleted=False,
-            )
-            .values_list("graph_database", flat=True)
-            .distinct()
-        )
-
-        return list(graph_databases_names_qs)

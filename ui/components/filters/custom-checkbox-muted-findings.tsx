@@ -1,8 +1,9 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 import { Checkbox } from "@/components/shadcn";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 
 // Constants for muted filter URL values
 const MUTED_FILTER_VALUES = {
@@ -11,12 +12,10 @@ const MUTED_FILTER_VALUES = {
 } as const;
 
 export const CustomCheckboxMutedFindings = () => {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { navigateWithParams } = useUrlFilters();
 
   // Get the current muted filter value from URL
-  // Middleware ensures filter[muted] is always present when navigating to /findings
   const mutedFilterValue = searchParams.get("filter[muted]");
 
   // URL states:
@@ -26,22 +25,16 @@ export const CustomCheckboxMutedFindings = () => {
 
   const handleMutedChange = (checked: boolean | "indeterminate") => {
     const isChecked = checked === true;
-    const params = new URLSearchParams(searchParams.toString());
 
-    if (isChecked) {
-      // Include muted: set special value (API will ignore invalid value and show all)
-      params.set("filter[muted]", MUTED_FILTER_VALUES.INCLUDE);
-    } else {
-      // Exclude muted: apply filter to show only non-muted
-      params.set("filter[muted]", MUTED_FILTER_VALUES.EXCLUDE);
-    }
-
-    // Reset to page 1 when changing filter
-    if (params.has("page")) {
-      params.set("page", "1");
-    }
-
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    navigateWithParams((params) => {
+      if (isChecked) {
+        // Include muted: set special value (API will ignore invalid value and show all)
+        params.set("filter[muted]", MUTED_FILTER_VALUES.INCLUDE);
+      } else {
+        // Exclude muted: apply filter to show only non-muted
+        params.set("filter[muted]", MUTED_FILTER_VALUES.EXCLUDE);
+      }
+    });
   };
 
   return (
