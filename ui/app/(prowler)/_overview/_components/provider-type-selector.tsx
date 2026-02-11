@@ -127,11 +127,9 @@ export const ProviderTypeSelector = ({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Use shared transition context if available, otherwise fall back to local
-  const sharedTransition = useFilterTransitionOptional();
-  const [, localStartTransition] = useTransition();
-  const startTransition =
-    sharedTransition?.startTransition ?? localStartTransition;
+  // Signal shared pending state for DataTable loading indicator
+  const filterTransition = useFilterTransitionOptional();
+  const [, startTransition] = useTransition();
 
   const currentProviders = searchParams.get("filter[provider_type__in]") || "";
   const selectedTypes = currentProviders
@@ -157,6 +155,7 @@ export const ProviderTypeSelector = ({
       params.set("page", "1");
     }
 
+    filterTransition?.signalFilterChange();
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     });

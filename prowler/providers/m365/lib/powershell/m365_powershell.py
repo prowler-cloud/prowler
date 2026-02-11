@@ -897,6 +897,29 @@ class M365PowerShell(PowerShellSession):
             "Get-SafeAttachmentRule | ConvertTo-Json -Depth 10", json_parse=True
         )
 
+    def get_advanced_threat_protection_policy(self) -> dict:
+        """
+        Get Advanced Threat Protection Policy.
+
+        Retrieves the current Advanced Threat Protection policy settings,
+        including Safe Attachments for SharePoint, OneDrive, and Teams, and Safe Documents settings.
+
+        Returns:
+            dict: Advanced Threat Protection policy settings in JSON format.
+
+        Example:
+            >>> get_advanced_threat_protection_policy()
+            {
+                "Identity": "Default",
+                "EnableATPForSPOTeamsODB": true,
+                "EnableSafeDocs": true,
+                "AllowSafeDocsOpen": false
+            }
+        """
+        return self.execute(
+            "Get-AtpPolicyForO365 | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
     def get_teams_protection_policy(self) -> dict:
         """
         Get Teams Protection Policy.

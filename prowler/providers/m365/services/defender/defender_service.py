@@ -11,8 +11,28 @@ class Defender(M365Service):
     """
     Microsoft Defender for Office 365 service class.
 
-    This class provides methods to retrieve various Defender policies and configurations
-    including malware, antiphishing, spam, DKIM, Safe Attachments, Safe Links, and Teams protection settings.
+    This class provides methods to retrieve and manage Microsoft Defender for Office 365
+    security policies and configurations, including malware filters, spam policies,
+    anti-phishing settings, Safe Attachments, Safe Links, ATP (Advanced Threat Protection),
+    and Teams protection policies.
+
+    Attributes:
+        malware_policies (list): List of malware filter policies.
+        outbound_spam_policies (dict): Dictionary of outbound spam filter policies.
+        outbound_spam_rules (dict): Dictionary of outbound spam filter rules.
+        antiphishing_policies (dict): Dictionary of anti-phishing policies.
+        antiphishing_rules (dict): Dictionary of anti-phishing rules.
+        connection_filter_policy: Connection filter policy configuration.
+        dkim_configurations (list): List of DKIM signing configurations.
+        inbound_spam_policies (list): List of inbound spam filter policies.
+        inbound_spam_rules (dict): Dictionary of inbound spam filter rules.
+        report_submission_policy: Report submission policy configuration.
+        safe_attachments_policies (dict): Dictionary of Safe Attachments policies.
+        safe_attachments_rules (dict): Dictionary of Safe Attachments rules.
+        advanced_threat_protection_policy: Advanced Threat Protection policy configuration.
+        safe_links_policies (dict): Dictionary of Safe Links policies.
+        safe_links_rules (dict): Dictionary of Safe Links rules.
+        teams_protection_policy: Teams protection policy configuration.
     """
 
     def __init__(self, provider: M365Provider):
@@ -35,6 +55,7 @@ class Defender(M365Service):
         self.report_submission_policy = None
         self.safe_attachments_policies = {}
         self.safe_attachments_rules = {}
+        self.advanced_threat_protection_policy = None
         self.safe_links_policies = {}
         self.safe_links_rules = {}
         self.teams_protection_policy = None
@@ -53,6 +74,9 @@ class Defender(M365Service):
                 self.report_submission_policy = self._get_report_submission_policy()
                 self.safe_attachments_policies = self._get_safe_attachments_policies()
                 self.safe_attachments_rules = self._get_safe_attachments_rules()
+                self.advanced_threat_protection_policy = (
+                    self._get_advanced_threat_protection_policy()
+                )
                 self.safe_links_policies = self._get_safe_links_policy()
                 self.safe_links_rules = self._get_safe_links_rule()
                 self.teams_protection_policy = self._get_teams_protection_policy()
@@ -482,6 +506,35 @@ class Defender(M365Service):
             )
         return safe_attachments_rules
 
+    def _get_advanced_threat_protection_policy(self):
+        """
+        Get the Advanced Threat Protection policy.
+
+        Retrieves the ATP policy settings including Safe Attachments for SharePoint,
+        OneDrive, and Teams, as well as Safe Documents configuration.
+
+        Returns:
+            AdvancedThreatProtectionPolicy: The Advanced Threat Protection policy configuration.
+        """
+        logger.info("Microsoft365 - Getting Advanced Threat Protection policy...")
+        atp_policy = None
+        try:
+            policy = self.powershell.get_advanced_threat_protection_policy()
+            if policy:
+                atp_policy = AdvancedThreatProtectionPolicy(
+                    identity=policy.get("Identity", "Default"),
+                    enable_atp_for_spo_teams_odb=policy.get(
+                        "EnableATPForSPOTeamsODB", False
+                    ),
+                    enable_safe_docs=policy.get("EnableSafeDocs", False),
+                    allow_safe_docs_open=policy.get("AllowSafeDocsOpen", True),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return atp_policy
+
     def _get_safe_links_policy(self):
         """
         Get Safe Links policies from Microsoft Defender for Office 365.
@@ -665,7 +718,7 @@ class InboundSpamRule(BaseModel):
 
 
 class ReportSubmissionPolicy(BaseModel):
-    """Model for Defender Report Submission Policy configuration."""
+    """Model for Defender report submission policy configuration."""
 
     report_junk_to_customized_address: bool
     report_not_junk_to_customized_address: bool
@@ -719,6 +772,25 @@ class SafeAttachmentsRule(BaseModel):
     users: Optional[list[str]]
     groups: Optional[list[str]]
     domains: Optional[list[str]]
+
+
+class AdvancedThreatProtectionPolicy(BaseModel):
+    """
+    Model for Advanced Threat Protection policy.
+
+    Attributes:
+        identity: The identity of the ATP policy.
+        enable_atp_for_spo_teams_odb: Whether Safe Attachments is enabled for
+            SharePoint, OneDrive, and Microsoft Teams.
+        enable_safe_docs: Whether Safe Documents is enabled for clients in Protected View.
+        allow_safe_docs_open: Whether users can click through Protected View
+            even if Safe Documents identifies the file as malicious.
+    """
+
+    identity: str
+    enable_atp_for_spo_teams_odb: bool
+    enable_safe_docs: bool
+    allow_safe_docs_open: bool
 
 
 class SafeLinksPolicy(BaseModel):
