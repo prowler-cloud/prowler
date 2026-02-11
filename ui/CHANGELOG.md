@@ -11,6 +11,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Filter navigations not coordinating with Suspense boundaries due to missing startTransition in ProviderTypeSelector, AccountsSelector, and muted findings checkbox [(#10013)](https://github.com/prowler-cloud/prowler/pull/10013)
 - Scans page pagination not updating table data because ScansTableWithPolling kept stale state from initial mount [(#10013)](https://github.com/prowler-cloud/prowler/pull/10013)
 - Duplicate `filter[search]` parameter in findings and scans API calls [(#10013)](https://github.com/prowler-cloud/prowler/pull/10013)
+<<<<<<< HEAD
+=======
+- All filters on `/findings` silently reverting on first click in production [(#10034)](https://github.com/prowler-cloud/prowler/pull/10034)
+>>>>>>> 592c7bac8 (fix(ui): move default muted filter from middleware to client-side hook (#10034))
 
 ---
 

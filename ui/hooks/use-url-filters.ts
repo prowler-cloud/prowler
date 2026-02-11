@@ -5,6 +5,9 @@ import { useCallback, useTransition } from "react";
 
 import { useFilterTransitionOptional } from "@/contexts";
 
+const FINDINGS_PATH = "/findings";
+const DEFAULT_MUTED_FILTER = "false";
+
 /**
  * Custom hook to handle URL filters and automatically reset
  * pagination when filters change.
@@ -20,9 +23,26 @@ export const useUrlFilters = () => {
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
+<<<<<<< HEAD
   // Use shared context if available, otherwise fall back to local transition
   const sharedTransition = useFilterTransitionOptional();
   const [localIsPending, localStartTransition] = useTransition();
+=======
+  const ensureFindingsDefaultMuted = (params: URLSearchParams) => {
+    // Findings defaults to excluding muted findings unless user sets it explicitly.
+    if (pathname === FINDINGS_PATH && !params.has("filter[muted]")) {
+      params.set("filter[muted]", DEFAULT_MUTED_FILTER);
+    }
+  };
+
+  const navigate = (params: URLSearchParams) => {
+    ensureFindingsDefaultMuted(params);
+
+    const queryString = params.toString();
+    const targetUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    router.push(targetUrl, { scroll: false });
+  };
+>>>>>>> 592c7bac8 (fix(ui): move default muted filter from middleware to client-side hook (#10034))
 
   const isPending = sharedTransition?.isPending ?? localIsPending;
   const startTransition =
