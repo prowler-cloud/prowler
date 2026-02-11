@@ -118,6 +118,7 @@ from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
+from prowler.providers.googleworkspace.models import GoogleWorkspaceOutputOptions
 from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 from prowler.providers.llm.models import LLMOutputOptions
@@ -340,6 +341,10 @@ def prowler():
         )
     elif provider == "m365":
         output_options = M365OutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "googleworkspace":
+        output_options = GoogleWorkspaceOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     elif provider == "mongodbatlas":
