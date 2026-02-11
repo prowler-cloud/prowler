@@ -39,6 +39,15 @@ interface FilterTransitionProviderProps {
   children: ReactNode;
 }
 
+<<<<<<< HEAD
+=======
+/**
+ * Provides a shared pending state for filter changes.
+ *
+ * Filter navigation calls signalFilterChange() before router.push().
+ * The pending state auto-resets when searchParams change.
+ */
+>>>>>>> 02f3e77ea (fix(ui): re-integrate signalFilterChange into useUrlFilters and always reset page on filter change (#10028))
 export const FilterTransitionProvider = ({
   children,
 }: FilterTransitionProviderProps) => {

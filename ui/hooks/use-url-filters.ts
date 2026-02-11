@@ -5,6 +5,8 @@ import { useCallback, useTransition } from "react";
 
 import { useFilterTransitionOptional } from "@/contexts";
 
+import { useFilterTransitionOptional } from "@/contexts";
+
 /**
  * Custom hook to handle URL filters and automatically reset
  * pagination when filters change.
@@ -19,10 +21,23 @@ export const useUrlFilters = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+<<<<<<< HEAD
 
   // Use shared context if available, otherwise fall back to local transition
   const sharedTransition = useFilterTransitionOptional();
   const [localIsPending, localStartTransition] = useTransition();
+=======
+  const filterTransition = useFilterTransitionOptional();
+
+  const navigate = (params: URLSearchParams) => {
+    const queryString = params.toString();
+    if (queryString === searchParams.toString()) return;
+
+    const targetUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    filterTransition?.signalFilterChange();
+    router.push(targetUrl, { scroll: false });
+  };
+>>>>>>> 02f3e77ea (fix(ui): re-integrate signalFilterChange into useUrlFilters and always reset page on filter change (#10028))
 
   const isPending = sharedTransition?.isPending ?? localIsPending;
   const startTransition =
@@ -43,6 +58,7 @@ export const useUrlFilters = () => {
           ? null
           : value;
 
+<<<<<<< HEAD
       // If effective value is unchanged, do nothing (avoids redundant fetches)
       if (currentValue === nextValue) return;
 
@@ -68,6 +84,11 @@ export const useUrlFilters = () => {
     (key: string) => {
       const params = new URLSearchParams(searchParams.toString());
       const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
+=======
+    // Always reset to first page when filters change.
+    // This also guarantees a query-string change on page 1 (no existing page param).
+    params.set("page", "1");
+>>>>>>> 02f3e77ea (fix(ui): re-integrate signalFilterChange into useUrlFilters and always reset page on filter change (#10028))
 
       params.delete(filterKey);
 
@@ -83,7 +104,19 @@ export const useUrlFilters = () => {
     [router, searchParams, pathname, startTransition],
   );
 
+<<<<<<< HEAD
   const clearAllFilters = useCallback(() => {
+=======
+    params.delete(filterKey);
+
+    // Always reset to first page when filters change.
+    params.set("page", "1");
+
+    navigate(params);
+  };
+
+  const clearAllFilters = () => {
+>>>>>>> 02f3e77ea (fix(ui): re-integrate signalFilterChange into useUrlFilters and always reset page on filter change (#10028))
     const params = new URLSearchParams(searchParams.toString());
     Array.from(params.keys()).forEach((key) => {
       if (key.startsWith("filter[") || key === "sort") {
@@ -103,13 +136,37 @@ export const useUrlFilters = () => {
     return Array.from(params.keys()).some(
       (key) => key.startsWith("filter[") || key === "sort",
     );
+<<<<<<< HEAD
   }, [searchParams]);
+=======
+  };
+
+  /**
+   * Low-level navigation function for complex filter updates that need
+   * to modify multiple params atomically (e.g., setting provider_type
+   * while clearing provider_id). The modifier receives a mutable
+   * URLSearchParams; page is auto-reset if already present.
+   */
+  const navigateWithParams = (modifier: (params: URLSearchParams) => void) => {
+    const params = new URLSearchParams(searchParams.toString());
+    modifier(params);
+
+    // Always reset to first page when filters change.
+    params.set("page", "1");
+
+    navigate(params);
+  };
+>>>>>>> 02f3e77ea (fix(ui): re-integrate signalFilterChange into useUrlFilters and always reset page on filter change (#10028))
 
   return {
     updateFilter,
     clearFilter,
     clearAllFilters,
     hasFilters,
+<<<<<<< HEAD
     isPending,
+=======
+    navigateWithParams,
+>>>>>>> 02f3e77ea (fix(ui): re-integrate signalFilterChange into useUrlFilters and always reset page on filter change (#10028))
   };
 };
