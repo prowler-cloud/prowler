@@ -37,7 +37,10 @@ export const getScans = async ({
 
   // Add dynamic filters (e.g., "filter[state]", "fields[scans]")
   Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
+    // Skip filter[search] since it's already added via the `query` param above
+    if (key !== "filter[search]") {
+      url.searchParams.append(key, String(value));
+    }
   });
 
   try {
