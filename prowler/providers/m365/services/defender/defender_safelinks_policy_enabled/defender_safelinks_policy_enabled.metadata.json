@@ -1,0 +1,40 @@
+{
+  "Provider": "m365",
+  "CheckID": "defender_safelinks_policy_enabled",
+  "CheckTitle": "Safe Links policy is enabled and properly configured in Microsoft Defender for Office 365.",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Defender Safe Links Policy",
+  "ResourceGroup": "security",
+  "Description": "Safe Links is a Microsoft Defender for Office 365 feature that provides URL scanning and rewriting of inbound email messages, as well as time-of-click verification of URLs and links in email messages, Teams, and Office apps.\n\nThis check verifies that the Safe Links policy is properly configured with all recommended settings enabled.",
+  "Risk": "Without properly configured Safe Links protection, users may be vulnerable to **phishing attacks** and **malicious URLs** in emails, Teams messages, and Office documents.\n\nAttackers could bypass security by using URLs that redirect to malicious content after initial scanning.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/defender-office-365/safe-links-about",
+    "https://learn.microsoft.com/en-us/defender-office-365/safe-links-policies-configure"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-SafeLinksPolicy -Identity 'Built-In Protection Policy' -EnableSafeLinksForEmail $true -EnableSafeLinksForTeams $true -EnableSafeLinksForOffice $true -TrackClicks $true -AllowClickThrough $false -ScanUrls $true -EnableForInternalSenders $true -DeliverMessageAfterScan $true -DisableUrlRewrite $false",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft 365 Defender at https://security.microsoft.com\n2. Click to expand Email & collaboration and select Policies & rules\n3. Select Threat policies\n4. Under Policies, select Safe Links\n5. Select or create a policy and configure these settings:\n   - Enable Safe Links for Email: On\n   - Enable Safe Links for Teams: On\n   - Enable Safe Links for Office: On\n   - Track user clicks: On\n   - Let users click through to the original URL: Off\n   - Scan URLs: On\n   - Apply Safe Links to messages sent within the organization: On\n   - Wait for URL scanning to complete before delivering the message: On\n   - Do not rewrite URLs: Off\n6. Save the policy",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable and properly configure Safe Links policies to protect users from malicious URLs in emails, Teams, and Office applications. Ensure URL scanning and time-of-click verification are enabled across all communication channels.",
+      "Url": "https://hub.prowler.com/check/defender_safelinks_policy_enabled"
+    }
+  },
+  "Categories": [
+    "email-security",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "defender_antiphishing_policy_configured"
+  ],
+  "Notes": "Safe Links requires Microsoft Defender for Office 365 Plan 1 (P1) or higher licensing."
+}
