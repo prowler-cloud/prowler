@@ -95,10 +95,7 @@ def display_summary_table(
             )
         elif provider.type == "image":
             entity_type = "Image"
-            if len(provider.images) == 1:
-                audited_entities = provider.images[0]
-            else:
-                audited_entities = f"{len(provider.images)} images"
+            audited_entities = ", ".join(provider.images)
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):

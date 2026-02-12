@@ -387,7 +387,7 @@ class Finding(BaseModel):
                 output_data["resource_name"] = getattr(
                     check_output, "resource_name", ""
                 )
-                output_data["resource_uid"] = getattr(check_output, "resource_name", "")
+                output_data["resource_uid"] = getattr(check_output, "resource_id", "")
                 output_data["region"] = getattr(check_output, "region", "container")
                 output_data["package_name"] = getattr(check_output, "package_name", "")
                 output_data["installed_version"] = getattr(

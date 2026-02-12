@@ -77,6 +77,7 @@ Patterns tailored for Prowler development:
 | `prowler-provider` | Add new cloud providers |
 | `prowler-pr` | Pull request conventions |
 | `prowler-docs` | Documentation style guide |
+| `prowler-attack-paths-query` | Create Attack Paths openCypher queries |
 
 ### Meta Skills
 
