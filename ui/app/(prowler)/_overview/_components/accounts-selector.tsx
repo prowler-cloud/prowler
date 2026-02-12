@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ReactNode, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
+import { ReactNode } from "react";
 
 import {
   AlibabaCloudProviderBadge,
@@ -22,7 +22,7 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
-import { useFilterTransitionOptional } from "@/contexts";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 import type { ProviderProps, ProviderType } from "@/types/providers";
 
 const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
@@ -43,15 +43,8 @@ interface AccountsSelectorProps {
 }
 
 export function AccountsSelector({ providers }: AccountsSelectorProps) {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
-
-  // Use shared transition context if available, otherwise fall back to local
-  const sharedTransition = useFilterTransitionOptional();
-  const [, localStartTransition] = useTransition();
-  const startTransition =
-    sharedTransition?.startTransition ?? localStartTransition;
+  const { navigateWithParams } = useUrlFilters();
 
   const filterKey = "filter[provider_id__in]";
   const current = searchParams.get(filterKey) || "";
@@ -69,44 +62,36 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
     );
 
   const handleMultiValueChange = (ids: string[]) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete(filterKey);
+    navigateWithParams((params) => {
+      params.delete(filterKey);
 
-    if (ids.length > 0) {
-      params.set(filterKey, ids.join(","));
-    }
-
-    // Auto-deselect provider types that no longer have any selected accounts
-    if (selectedTypesList.length > 0) {
-      // Get provider types of currently selected accounts
-      const selectedProviders = providers.filter((p) => ids.includes(p.id));
-      const selectedProviderTypes = new Set(
-        selectedProviders.map((p) => p.attributes.provider),
-      );
-
-      // Keep only provider types that still have selected accounts
-      const remainingProviderTypes = selectedTypesList.filter((type) =>
-        selectedProviderTypes.has(type as ProviderType),
-      );
-
-      // Update provider_type__in filter
-      if (remainingProviderTypes.length > 0) {
-        params.set(
-          "filter[provider_type__in]",
-          remainingProviderTypes.join(","),
-        );
-      } else {
-        params.delete("filter[provider_type__in]");
+      if (ids.length > 0) {
+        params.set(filterKey, ids.join(","));
       }
-    }
 
-    // Reset to page 1 when changing filter
-    if (params.has("page")) {
-      params.set("page", "1");
-    }
+      // Auto-deselect provider types that no longer have any selected accounts
+      if (selectedTypesList.length > 0) {
+        // Get provider types of currently selected accounts
+        const selectedProviders = providers.filter((p) => ids.includes(p.id));
+        const selectedProviderTypes = new Set(
+          selectedProviders.map((p) => p.attributes.provider),
+        );
 
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        // Keep only provider types that still have selected accounts
+        const remainingProviderTypes = selectedTypesList.filter((type) =>
+          selectedProviderTypes.has(type as ProviderType),
+        );
+
+        // Update provider_type__in filter
+        if (remainingProviderTypes.length > 0) {
+          params.set(
+            "filter[provider_type__in]",
+            remainingProviderTypes.join(","),
+          );
+        } else {
+          params.delete("filter[provider_type__in]");
+        }
+      }
     });
   };
 
