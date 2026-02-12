@@ -15,8 +15,12 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
-- ProviderTypeSelector crash when an unknown provider type is not present in PROVIDER_DATA [(#9991)](https://github.com/prowler-cloud/prowler/pull/9991)
-- Infinite memory loop when opening modals from table row action dropdowns caused by HeroUI (React Aria) and Radix Dialog overlay conflict [(#9996)](https://github.com/prowler-cloud/prowler/pull/9996)
+- ProviderTypeSelector crashing when an unknown provider type is missing from PROVIDER_DATA [(#9991)](https://github.com/prowler-cloud/prowler/pull/9991)
+- Infinite memory loop when opening modals from table row action dropdowns due to HeroUI and Radix Dialog overlay conflict [(#9996)](https://github.com/prowler-cloud/prowler/pull/9996)
+- Filter changes not coordinating with Suspense boundaries in ProviderTypeSelector, AccountsSelector, and muted findings checkbox [(#10013)](https://github.com/prowler-cloud/prowler/pull/10013)
+- Scans page pagination not refreshing table data after page change [(#10013)](https://github.com/prowler-cloud/prowler/pull/10013)
+- Duplicate `filter[search]` parameter in findings and scans API calls [(#10013)](https://github.com/prowler-cloud/prowler/pull/10013)
+- Filters on `/findings` silently reverting on first click in production [(#10034)](https://github.com/prowler-cloud/prowler/pull/10034)
 
 ---
 
