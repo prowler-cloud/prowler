@@ -10,6 +10,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack Paths: Internet node is created while scan [(#9992)](https://github.com/prowler-cloud/prowler/pull/9992)
 - Attack Paths: Add full paths set from [pathfinding.cloud](https://pathfinding.cloud/) [(#10008)](https://github.com/prowler-cloud/prowler/pull/10008)
 - Support CSA CCM for the AWS provider [(#10018)](https://github.com/prowler-cloud/prowler/pull/10018)
+- Support CSA CCM for the Azure provider [(#10039)](https://github.com/prowler-cloud/prowler/pull/10039)
 
 ---
 
