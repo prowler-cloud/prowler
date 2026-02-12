@@ -1,0 +1,72 @@
+---
+title: 'Security Best Practices'
+---
+
+This guide outlines security best practices for developing Checks and Providers in Prowler. Following these guidelines helps prevent common vulnerabilities such as Command Injection, Cross-Site Scripting (XSS), and sensitive data leakage.
+
+## Input Sanitization
+
+When processing user input or data from external APIs, always assume it could be malicious.
+
+### File Paths
+Avoid using unsanitized input to construct file paths. Use `os.path.basename` to extract filenames and validate paths against an allowlist if possible.
+
+```python
+# BAD
+filename = input_data["filename"]
+with open(f"/tmp/{filename}", "r") as f: ...
+
+# GOOD
+import os
+filename = os.path.basename(input_data["filename"])
+safe_path = os.path.join("/tmp", filename)
+```
+
+## Subprocess Safety
+
+Prowler often uses `subprocess` to run CLI tools. Improper usage can lead to shell injection vulnerabilities.
+
+### Avoid `shell=True`
+Never use `shell=True` unless absolutely necessary (which is rare). It allows shell operators (`;`, `|`, `&`) to be executed.
+
+```python
+# BAD - Vulnerable to "echo hello; rm -rf /"
+subprocess.run(f"echo {user_input}", shell=True)
+
+# GOOD - Arguments are passed as a list
+subprocess.run(["echo", user_input])
+```
+
+## Secret Handling
+
+When passing secrets (passwords, API keys) to subprocesses or PowerShell commands, ensure they are handled securely to prevent leakage or injection.
+
+### PowerShell & Bash
+When constructing commands for shells like PowerShell:
+1.  **Use Single Quotes**: Single quotes (`'`) prevent variable expansion (interpolation). Double quotes (`"`) allow variables like `$password` to be expanded, which can corrupt the secret or lead to injection if the secret contains `$`.
+2.  **Escape Quotes**: If the secret itself contains a single quote, it must be escaped (e.g., in PowerShell, `'` becomes `''`).
+
+```python
+# BAD
+# If secret is "Pass$word", PowerShell tries to expand $word
+self.execute(f'$secret = "{secret}"') 
+
+# GOOD
+# Using single quotes treats content literally
+sanitized_secret = secret.replace("'", "''")
+self.execute(f"$secret = '{sanitized_secret}'")
+```
+
+### Logging
+**NEVER** log secrets. When logging command execution, redact sensitive arguments.
+
+## Regular Expressions
+
+Avoid **ReDoS** (Regular Expression Denial of Service) by writing efficient regex patterns.
+- Avoid nested quantifiers like `(a+)+`.
+- Set timeouts for regex operations if processing untrusted input.
+
+## XML and YAML Parsing
+
+- **XML**: Use `defusedxml` or disable entity resolution to prevent **XXE** (XML External Entity) attacks.
+- **YAML**: Use `yaml.safe_load()` instead of `yaml.load()` to prevent arbitrary code execution during deserialization.
