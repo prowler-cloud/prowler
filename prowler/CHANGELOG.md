@@ -21,6 +21,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
 - Parallelize Cloudflare zone API calls with threading to improve scan performance [(#9982)](https://github.com/prowler-cloud/prowler/pull/9982)
 
+### 🔐 Security
+
+- Bumped `py-ocsf-models` to 0.8.1 and `cryptography` to 44.0.3 [(#10059)](https://github.com/prowler-cloud/prowler/pull/10059)
+
+---
+
 ## [5.18.2] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
