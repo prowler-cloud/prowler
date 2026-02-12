@@ -57,7 +57,7 @@ Prowler CLI supports the following scanners:
 
 By default, only vulnerability and secret scanners run during a scan. To specify which scanners to use, refer to the [Specify Scanners](#specify-scanners) section below.
 
-### Usage
+### Scan Container Images
 
 Use the `image` argument to run Prowler with the Image provider. Specify the images to scan using the `-I` flag or an image list file.
 
@@ -106,9 +106,9 @@ Image names must follow the Open Container Initiative (OCI) reference format. Va
 </Warning>
 
 Valid examples:
-* `alpine:3.18`
-* `myregistry.io/myapp:v1.0`
-* `ghcr.io/org/image@sha256:abc123...`
+* **Standard tag:** `alpine:3.18`
+* **Custom registry:** `myregistry.io/myapp:v1.0`
+* **SHA digest:** `ghcr.io/org/image@sha256:abc123...`
 
 #### Specify Scanners
 
