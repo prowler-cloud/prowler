@@ -9,11 +9,13 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `defender_safe_attachments_policy_enabled` check for M365 provider [(#9833)](https://github.com/prowler-cloud/prowler/pull/9833)
 - `defender_safelinks_policy_enabled` check for M365 provider [(#9832)](https://github.com/prowler-cloud/prowler/pull/9832)
 - AI Skills: Added a skill for creating new Attack Paths queries in openCypher, compatible with Neo4j and Neptune [(#9975)](https://github.com/prowler-cloud/prowler/pull/9975)
+- CSA CCM 4.0 for the AWS provider [(#10018)](https://github.com/prowler-cloud/prowler/pull/10018)
 
 ### 🔄 Changed
 
 - Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
 - GitHub provider enhanced documentation and `repository_branch_delete_on_merge_enabled` logic [(#9830)](https://github.com/prowler-cloud/prowler/pull/9830)
+- Parallelize Cloudflare zone API calls with threading to improve scan performance [(#9982)](https://github.com/prowler-cloud/prowler/pull/9982)
 
 ## [5.18.2] (Prowler UNRELEASED)
 
