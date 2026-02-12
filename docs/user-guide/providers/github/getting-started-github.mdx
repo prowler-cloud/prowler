@@ -90,3 +90,21 @@ Use GitHub App credentials by specifying the App ID and the private key path.
 ```console
 prowler github --github-app-id app_id --github-app-key-path app_key_path
 ```
+
+### Scan Scoping
+
+#### Scan Specific Repositories
+
+To scan only specific repositories, use the `--repository` flag with repository names in `owner/repo-name` format:
+
+```console
+prowler github --repository owner/repo-name owner/another-repo
+```
+
+#### Scan Specific Organizations
+
+To scan all repositories belonging to one or more organizations or users, use the `--organization` flag:
+
+```console
+prowler github --organization my-org another-org
+```
