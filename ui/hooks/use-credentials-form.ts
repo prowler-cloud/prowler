@@ -192,6 +192,12 @@ export const useCredentialsForm = ({
           [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: "",
           [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: "",
         };
+      case "openstack":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]: "",
+          [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]: "",
+        };
       default:
         return baseDefaults;
     }
