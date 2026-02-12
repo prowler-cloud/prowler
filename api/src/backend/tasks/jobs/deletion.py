@@ -38,7 +38,6 @@ def delete_provider(tenant_id: str, pk: str):
         tenant_database_name = graph_database.get_database_name(tenant_id)
         try:
             graph_database.drop_subgraph(tenant_database_name, str(pk))
-
         except graph_database.GraphDatabaseQueryException as gdb_error:
             logger.error(f"Error deleting Provider graph data: {gdb_error}")
             raise
