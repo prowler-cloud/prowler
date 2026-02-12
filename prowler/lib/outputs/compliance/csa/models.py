@@ -34,6 +34,7 @@ class GCPCSAModel(BaseModel):
     """
     GCPCSAModel generates a finding's output in CSV CSA format for GCP.
     """
+
     Provider: str
     Description: str
     ProjectId: str
