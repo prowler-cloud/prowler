@@ -8,6 +8,7 @@ from colorama import Fore, Style
 from colorama import init as colorama_init
 
 from prowler.config.config import (
+    EXTERNAL_TOOL_PROVIDERS,
     csv_file_suffix,
     get_available_compliance_frameworks,
     html_file_suffix,
@@ -208,8 +209,8 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
-    # Skip compliance frameworks for IAC, LLM, and Image providers
-    if provider not in ("iac", "llm", "image"):
+    # Skip compliance frameworks for external-tool providers
+    if provider not in EXTERNAL_TOOL_PROVIDERS:
         bulk_compliance_frameworks = Compliance.get_bulk(provider)
         # Complete checks metadata with the compliance framework specification
         bulk_checks_metadata = update_checks_metadata_with_compliance(
@@ -266,8 +267,8 @@ def prowler():
     if not args.only_logs:
         global_provider.print_credentials()
 
-    # Skip service and check loading for IAC, LLM, and Image providers
-    if provider not in ("iac", "llm", "image"):
+    # Skip service and check loading for external-tool providers
+    if provider not in EXTERNAL_TOOL_PROVIDERS:
         # Import custom checks from folder
         if checks_folder:
             custom_checks = parse_checks_from_folder(global_provider, checks_folder)
@@ -379,8 +380,8 @@ def prowler():
     # Execute checks
     findings = []
 
-    if provider in ("iac", "llm", "image"):
-        # For IAC, LLM, and Image providers, run the scan directly
+    if provider in EXTERNAL_TOOL_PROVIDERS:
+        # For external-tool providers, run the scan directly
         if provider == "llm":
 
             def streaming_callback(findings_batch):
