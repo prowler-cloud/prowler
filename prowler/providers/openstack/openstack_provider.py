@@ -6,6 +6,7 @@ from colorama import Fore, Style
 from openstack import config, connect
 from openstack import exceptions as openstack_exceptions
 from openstack.connection import Connection as OpenStackConnection
+from yaml import YAMLError, safe_load
 
 from prowler.config.config import (
     default_config_file_path,
@@ -49,6 +50,7 @@ class OpenstackProvider(Provider):
     def __init__(
         self,
         clouds_yaml_file: Optional[str] = None,
+        clouds_yaml_content: Optional[str] = None,
         clouds_yaml_cloud: Optional[str] = None,
         auth_url: Optional[str] = None,
         identity_api_version: Optional[str] = None,
@@ -68,6 +70,7 @@ class OpenstackProvider(Provider):
 
         self._session = self.setup_session(
             clouds_yaml_file=clouds_yaml_file,
+            clouds_yaml_content=clouds_yaml_content,
             clouds_yaml_cloud=clouds_yaml_cloud,
             auth_url=auth_url,
             identity_api_version=identity_api_version,
@@ -132,6 +135,7 @@ class OpenstackProvider(Provider):
     @staticmethod
     def setup_session(
         clouds_yaml_file: Optional[str] = None,
+        clouds_yaml_content: Optional[str] = None,
         clouds_yaml_cloud: Optional[str] = None,
         auth_url: Optional[str] = None,
         identity_api_version: Optional[str] = None,
@@ -145,10 +149,16 @@ class OpenstackProvider(Provider):
         """Collect authentication information from clouds.yaml, explicit parameters, or environment variables.
 
         Authentication priority:
-        1. clouds.yaml file (if clouds_yaml_file or clouds_yaml_cloud provided)
+        1. clouds.yaml content/file (if clouds_yaml_content, clouds_yaml_file, or clouds_yaml_cloud provided)
         2. Explicit parameters + environment variable fallback
         """
         # Priority 1: clouds.yaml authentication
+        if clouds_yaml_content:
+            logger.info("Using clouds.yaml content string for authentication")
+            return OpenstackProvider._setup_session_from_clouds_yaml_content(
+                clouds_yaml_content=clouds_yaml_content,
+                clouds_yaml_cloud=clouds_yaml_cloud,
+            )
         if clouds_yaml_file or clouds_yaml_cloud:
             logger.info("Using clouds.yaml configuration for authentication")
             return OpenstackProvider._setup_session_from_clouds_yaml(
@@ -201,6 +211,73 @@ class OpenstackProvider(Provider):
             region_name=region_name or environ.get("OS_REGION_NAME"),
             user_domain_name=resolved_user_domain,
             project_domain_name=resolved_project_domain,
+        )
+
+    @staticmethod
+    def _setup_session_from_clouds_yaml_content(
+        clouds_yaml_content: str,
+        clouds_yaml_cloud: Optional[str] = None,
+    ) -> OpenStackSession:
+        """Setup session from clouds.yaml content provided as a string.
+
+        Parses the YAML content directly instead of writing to a temporary file,
+        following the same pattern as KubernetesProvider.setup_session().
+
+        Args:
+            clouds_yaml_content: The full YAML content of a clouds.yaml file.
+            clouds_yaml_cloud: Cloud name to use from the clouds.yaml content.
+
+        Returns:
+            OpenStackSession configured from the provided clouds.yaml content.
+
+        Raises:
+            OpenStackInvalidConfigError: If the YAML is malformed or missing required fields.
+            OpenStackCloudNotFoundError: If the specified cloud is not found in the content.
+        """
+        if not clouds_yaml_cloud:
+            raise OpenStackInvalidConfigError(
+                message="Cloud name (--clouds-yaml-cloud) is required when using clouds.yaml content",
+            )
+
+        try:
+            parsed = safe_load(clouds_yaml_content)
+        except YAMLError as error:
+            raise OpenStackInvalidConfigError(
+                original_exception=error,
+                message=f"Failed to parse clouds.yaml content: {error}",
+            )
+
+        if not isinstance(parsed, dict) or "clouds" not in parsed:
+            raise OpenStackInvalidConfigError(
+                message="Invalid clouds.yaml content: missing 'clouds' key",
+            )
+
+        cloud_config = parsed["clouds"].get(clouds_yaml_cloud)
+        if not cloud_config:
+            raise OpenStackCloudNotFoundError(
+                message=f"Cloud '{clouds_yaml_cloud}' not found in clouds.yaml content",
+            )
+
+        auth_dict = cloud_config.get("auth", {})
+
+        required_fields = ["auth_url", "username", "password"]
+        missing_fields = [
+            field for field in required_fields if not auth_dict.get(field)
+        ]
+        if missing_fields:
+            raise OpenStackInvalidConfigError(
+                message=f"Missing required fields in clouds.yaml for cloud '{clouds_yaml_cloud}': {', '.join(missing_fields)}",
+            )
+
+        return OpenStackSession(
+            auth_url=auth_dict.get("auth_url"),
+            identity_api_version=str(cloud_config.get("identity_api_version", "3")),
+            username=auth_dict.get("username"),
+            password=auth_dict.get("password"),
+            project_id=auth_dict.get("project_id") or auth_dict.get("project_name"),
+            region_name=cloud_config.get("region_name"),
+            user_domain_name=auth_dict.get("user_domain_name", "Default"),
+            project_domain_name=auth_dict.get("project_domain_name", "Default"),
         )
 
     @staticmethod
@@ -394,6 +471,7 @@ class OpenstackProvider(Provider):
     @staticmethod
     def test_connection(
         clouds_yaml_file: Optional[str] = None,
+        clouds_yaml_content: Optional[str] = None,
         clouds_yaml_cloud: Optional[str] = None,
         auth_url: Optional[str] = None,
         identity_api_version: Optional[str] = None,
@@ -412,6 +490,7 @@ class OpenstackProvider(Provider):
 
         Args:
             clouds_yaml_file: Path to clouds.yaml configuration file
+            clouds_yaml_content: The full content of a clouds.yaml file as a string
             clouds_yaml_cloud: Cloud name from clouds.yaml to use
             auth_url: OpenStack Keystone authentication URL
             identity_api_version: Keystone API version (default: "3")
@@ -456,6 +535,7 @@ class OpenstackProvider(Provider):
             # Setup session with provided credentials
             session = OpenstackProvider.setup_session(
                 clouds_yaml_file=clouds_yaml_file,
+                clouds_yaml_content=clouds_yaml_content,
                 clouds_yaml_cloud=clouds_yaml_cloud,
                 auth_url=auth_url,
                 identity_api_version=identity_api_version,
