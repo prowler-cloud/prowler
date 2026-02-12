@@ -373,6 +373,21 @@ from rest_framework_json_api import serializers
                 },
                 "required": ["api_key", "api_email"],
             },
+            {
+                "type": "object",
+                "title": "OpenStack clouds.yaml Credentials",
+                "properties": {
+                    "clouds_yaml_content": {
+                        "type": "string",
+                        "description": "The full content of a clouds.yaml configuration file.",
+                    },
+                    "clouds_yaml_cloud": {
+                        "type": "string",
+                        "description": "The name of the cloud to use from the clouds.yaml file.",
+                    },
+                },
+                "required": ["clouds_yaml_content", "clouds_yaml_cloud"],
+            },
         ]
     }
 )
