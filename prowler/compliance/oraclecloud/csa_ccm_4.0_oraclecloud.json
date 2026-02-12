@@ -1491,12 +1491,7 @@
           ]
         }
       ],
-      "Checks": [
-        "blockstorage_block_volume_encrypted_with_cmk",
-        "blockstorage_boot_volume_encrypted_with_cmk",
-        "filestorage_file_system_encrypted_with_cmk",
-        "objectstorage_bucket_encrypted_with_cmk"
-      ]
+      "Checks": []
     },
     {
       "Id": "CEK-12",
@@ -1784,9 +1779,7 @@
           ]
         }
       ],
-      "Checks": [
-        "cloudguard_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "DSP-02",
@@ -1995,9 +1988,7 @@
           ]
         }
       ],
-      "Checks": [
-        "cloudguard_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "DSP-04",
@@ -2942,7 +2933,8 @@
       "Checks": [
         "identity_user_api_keys_rotated_90_days",
         "identity_user_auth_tokens_rotated_90_days",
-        "identity_user_customer_secret_keys_rotated_90_days"
+        "identity_user_customer_secret_keys_rotated_90_days",
+        "identity_user_valid_email_address"
       ]
     },
     {
@@ -3704,9 +3696,7 @@
         }
       ],
       "Checks": [
-        "audit_log_retention_period_365_days",
-        "objectstorage_bucket_not_publicly_accessible",
-        "objectstorage_bucket_encrypted_with_cmk"
+        "audit_log_retention_period_365_days"
       ]
     },
     {
@@ -3808,7 +3798,8 @@
         }
       ],
       "Checks": [
-        "identity_user_mfa_enabled_console_access"
+        "identity_user_mfa_enabled_console_access",
+        "identity_user_valid_email_address"
       ]
     },
     {
@@ -5175,9 +5166,7 @@
         }
       ],
       "Checks": [
-        "audit_log_retention_period_365_days",
-        "objectstorage_bucket_not_publicly_accessible",
-        "objectstorage_bucket_encrypted_with_cmk"
+        "audit_log_retention_period_365_days"
       ]
     },
     {
@@ -5409,9 +5398,7 @@
           ]
         }
       ],
-      "Checks": [
-        "objectstorage_bucket_not_publicly_accessible"
-      ]
+      "Checks": []
     },
     {
       "Id": "LOG-05",
@@ -5837,9 +5824,7 @@
         }
       ],
       "Checks": [
-        "audit_log_retention_period_365_days",
-        "objectstorage_bucket_not_publicly_accessible",
-        "objectstorage_bucket_encrypted_with_cmk"
+        "audit_log_retention_period_365_days"
       ]
     },
     {
@@ -6009,8 +5994,7 @@
         }
       ],
       "Checks": [
-        "audit_log_retention_period_365_days",
-        "objectstorage_bucket_logging_enabled"
+        "audit_log_retention_period_365_days"
       ]
     },
     {
@@ -6475,9 +6459,7 @@
           ]
         }
       ],
-      "Checks": [
-        "identity_user_valid_email_address"
-      ]
+      "Checks": []
     },
     {
       "Id": "TVM-02",
@@ -6630,9 +6612,7 @@
           ]
         }
       ],
-      "Checks": [
-        "cloudguard_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "TVM-03",
