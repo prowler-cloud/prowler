@@ -8,6 +8,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - AI Skills: Added a skill for creating new Attack Paths queries in openCypher, compatible with Neo4j and Neptune [(#9975)](https://github.com/prowler-cloud/prowler/pull/9975)
 - CSA CCM 4.0 for the AWS provider [(#10018)](https://github.com/prowler-cloud/prowler/pull/10018)
+- CSA CCM 4.0 for the GCP provider [(#10042)](https://github.com/prowler-cloud/prowler/pull/10042)
 
 ### 🔄 Changed
 
