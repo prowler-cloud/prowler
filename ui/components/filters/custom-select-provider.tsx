@@ -16,6 +16,7 @@ import {
   CustomProviderInputKubernetes,
   CustomProviderInputM365,
   CustomProviderInputMongoDBAtlas,
+  CustomProviderInputOpenStack,
   CustomProviderInputOracleCloud,
 } from "./custom-provider-inputs";
 
@@ -62,6 +63,10 @@ const providerDisplayData: Record<
   alibabacloud: {
     label: "Alibaba Cloud",
     component: <CustomProviderInputAlibabaCloud />,
+  },
+  openstack: {
+    label: "OpenStack",
+    component: <CustomProviderInputOpenStack />,
   },
 };
 
