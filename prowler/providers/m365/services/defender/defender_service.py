@@ -9,10 +9,30 @@ from prowler.providers.m365.m365_provider import M365Provider
 
 class Defender(M365Service):
     """
-    Microsoft Defender for Office 365 service client.
+    Microsoft Defender for Office 365 service class.
 
-    Provides access to Defender security policies including malware filtering,
-    anti-spam, anti-phishing, Safe Links, Teams protection, and DKIM configurations.
+    This class provides methods to retrieve and manage Microsoft Defender for Office 365
+    security policies and configurations, including malware filters, spam policies,
+    anti-phishing settings, Safe Attachments, Safe Links, ATP (Advanced Threat Protection),
+    and Teams protection policies.
+
+    Attributes:
+        malware_policies (list): List of malware filter policies.
+        outbound_spam_policies (dict): Dictionary of outbound spam filter policies.
+        outbound_spam_rules (dict): Dictionary of outbound spam filter rules.
+        antiphishing_policies (dict): Dictionary of anti-phishing policies.
+        antiphishing_rules (dict): Dictionary of anti-phishing rules.
+        connection_filter_policy: Connection filter policy configuration.
+        dkim_configurations (list): List of DKIM signing configurations.
+        inbound_spam_policies (list): List of inbound spam filter policies.
+        inbound_spam_rules (dict): Dictionary of inbound spam filter rules.
+        report_submission_policy: Report submission policy configuration.
+        safe_attachments_policies (dict): Dictionary of Safe Attachments policies.
+        safe_attachments_rules (dict): Dictionary of Safe Attachments rules.
+        advanced_threat_protection_policy: Advanced Threat Protection policy configuration.
+        safe_links_policies (dict): Dictionary of Safe Links policies.
+        safe_links_rules (dict): Dictionary of Safe Links rules.
+        teams_protection_policy: Teams protection policy configuration.
     """
 
     def __init__(self, provider: M365Provider):
@@ -20,7 +40,7 @@ class Defender(M365Service):
         Initialize the Defender service client.
 
         Args:
-            provider: The M365Provider instance for authentication and connection.
+            provider: The M365Provider instance for authentication and configuration.
         """
         super().__init__(provider)
         self.malware_policies = []
@@ -33,6 +53,9 @@ class Defender(M365Service):
         self.inbound_spam_policies = []
         self.inbound_spam_rules = {}
         self.report_submission_policy = None
+        self.safe_attachments_policies = {}
+        self.safe_attachments_rules = {}
+        self.advanced_threat_protection_policy = None
         self.safe_links_policies = {}
         self.safe_links_rules = {}
         self.teams_protection_policy = None
@@ -49,6 +72,11 @@ class Defender(M365Service):
                 self.inbound_spam_policies = self._get_inbound_spam_filter_policy()
                 self.inbound_spam_rules = self._get_inbound_spam_filter_rule()
                 self.report_submission_policy = self._get_report_submission_policy()
+                self.safe_attachments_policies = self._get_safe_attachments_policies()
+                self.safe_attachments_rules = self._get_safe_attachments_rules()
+                self.advanced_threat_protection_policy = (
+                    self._get_advanced_threat_protection_policy()
+                )
                 self.safe_links_policies = self._get_safe_links_policy()
                 self.safe_links_rules = self._get_safe_links_rule()
                 self.teams_protection_policy = self._get_teams_protection_policy()
@@ -412,6 +440,101 @@ class Defender(M365Service):
             )
         return report_submission_policy
 
+    def _get_safe_attachments_policies(self):
+        """
+        Retrieve Safe Attachments policies from Microsoft Defender for Office 365.
+
+        Returns:
+            dict[str, SafeAttachmentsPolicy]: A dictionary of Safe Attachments policies keyed by name.
+        """
+        logger.info("Microsoft365 - Getting Defender Safe Attachments policies...")
+        safe_attachments_policies = {}
+        try:
+            policies_data = self.powershell.get_safe_attachments_policy()
+            if not policies_data:
+                return safe_attachments_policies
+            if isinstance(policies_data, dict):
+                policies_data = [policies_data]
+            for policy in policies_data:
+                if policy:
+                    policy_name = policy.get("Name", "")
+                    is_built_in = policy_name == "Built-In Protection Policy"
+                    safe_attachments_policies[policy_name] = SafeAttachmentsPolicy(
+                        name=policy_name,
+                        identity=policy.get("Identity", ""),
+                        enable=policy.get("Enable", False),
+                        action=policy.get("Action", ""),
+                        quarantine_tag=policy.get("QuarantineTag", ""),
+                        redirect=policy.get("Redirect", False),
+                        redirect_address=policy.get("RedirectAddress", ""),
+                        is_built_in_protection=is_built_in,
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return safe_attachments_policies
+
+    def _get_safe_attachments_rules(self):
+        """
+        Retrieve Safe Attachments rules from Microsoft Defender for Office 365.
+
+        Returns:
+            dict[str, SafeAttachmentsRule]: A dictionary of Safe Attachments rules keyed by policy name.
+        """
+        logger.info("Microsoft365 - Getting Defender Safe Attachments rules...")
+        safe_attachments_rules = {}
+        try:
+            rules_data = self.powershell.get_safe_attachments_rule()
+            if not rules_data:
+                return safe_attachments_rules
+            if isinstance(rules_data, dict):
+                rules_data = [rules_data]
+            for rule in rules_data:
+                if rule:
+                    policy_name = rule.get("SafeAttachmentPolicy", "")
+                    safe_attachments_rules[policy_name] = SafeAttachmentsRule(
+                        state=rule.get("State", ""),
+                        priority=rule.get("Priority", 0),
+                        users=rule.get("SentTo"),
+                        groups=rule.get("SentToMemberOf"),
+                        domains=rule.get("RecipientDomainIs"),
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return safe_attachments_rules
+
+    def _get_advanced_threat_protection_policy(self):
+        """
+        Get the Advanced Threat Protection policy.
+
+        Retrieves the ATP policy settings including Safe Attachments for SharePoint,
+        OneDrive, and Teams, as well as Safe Documents configuration.
+
+        Returns:
+            AdvancedThreatProtectionPolicy: The Advanced Threat Protection policy configuration.
+        """
+        logger.info("Microsoft365 - Getting Advanced Threat Protection policy...")
+        atp_policy = None
+        try:
+            policy = self.powershell.get_advanced_threat_protection_policy()
+            if policy:
+                atp_policy = AdvancedThreatProtectionPolicy(
+                    identity=policy.get("Identity", "Default"),
+                    enable_atp_for_spo_teams_odb=policy.get(
+                        "EnableATPForSPOTeamsODB", False
+                    ),
+                    enable_safe_docs=policy.get("EnableSafeDocs", False),
+                    allow_safe_docs_open=policy.get("AllowSafeDocsOpen", True),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return atp_policy
+
     def _get_safe_links_policy(self):
         """
         Get Safe Links policies from Microsoft Defender for Office 365.
@@ -595,7 +718,7 @@ class InboundSpamRule(BaseModel):
 
 
 class ReportSubmissionPolicy(BaseModel):
-    """Model for Defender Report Submission Policy configuration."""
+    """Model for Defender report submission policy configuration."""
 
     report_junk_to_customized_address: bool
     report_not_junk_to_customized_address: bool
@@ -605,6 +728,69 @@ class ReportSubmissionPolicy(BaseModel):
     report_phish_addresses: list[str]
     report_chat_message_enabled: bool
     report_chat_message_to_customized_address_enabled: bool
+
+
+class SafeAttachmentsPolicy(BaseModel):
+    """
+    Data model for Safe Attachments policy settings.
+
+    Attributes:
+        name: The name of the policy.
+        identity: The unique identifier of the policy.
+        enable: Whether the policy is enabled.
+        action: The action to take on malicious attachments (Allow, Block, Replace, DynamicDelivery).
+        quarantine_tag: The quarantine policy applied to detected messages.
+        redirect: Whether to redirect messages with detected attachments.
+        redirect_address: The email address to redirect messages to.
+        is_built_in_protection: Whether this is the Built-in Protection Policy.
+    """
+
+    name: str
+    identity: str
+    enable: bool
+    action: str
+    quarantine_tag: str
+    redirect: bool
+    redirect_address: str
+    is_built_in_protection: bool = False
+
+
+class SafeAttachmentsRule(BaseModel):
+    """
+    Data model for Safe Attachments rule settings.
+
+    Attributes:
+        state: The state of the rule (Enabled/Disabled).
+        priority: The priority of the rule (0 is highest).
+        users: List of users the rule applies to.
+        groups: List of groups the rule applies to.
+        domains: List of domains the rule applies to.
+    """
+
+    state: str
+    priority: int
+    users: Optional[list[str]]
+    groups: Optional[list[str]]
+    domains: Optional[list[str]]
+
+
+class AdvancedThreatProtectionPolicy(BaseModel):
+    """
+    Model for Advanced Threat Protection policy.
+
+    Attributes:
+        identity: The identity of the ATP policy.
+        enable_atp_for_spo_teams_odb: Whether Safe Attachments is enabled for
+            SharePoint, OneDrive, and Microsoft Teams.
+        enable_safe_docs: Whether Safe Documents is enabled for clients in Protected View.
+        allow_safe_docs_open: Whether users can click through Protected View
+            even if Safe Documents identifies the file as malicious.
+    """
+
+    identity: str
+    enable_atp_for_spo_teams_odb: bool
+    enable_safe_docs: bool
+    allow_safe_docs_open: bool
 
 
 class SafeLinksPolicy(BaseModel):

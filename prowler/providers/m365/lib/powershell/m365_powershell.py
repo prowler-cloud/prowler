@@ -65,7 +65,7 @@ class M365PowerShell(PowerShellSession):
             cmdlet_name = cmdlet_match.group(1) if cmdlet_match else "Unknown"
             logger.warning(
                 f"PowerShell cmdlet '{cmdlet_name}' is not available. "
-                f"This may indicate missing licensing (e.g., Microsoft Defender for Office 365) "
+                f"This may indicate missing module, licensing (e.g., Microsoft Defender for Office 365) "
                 f"or insufficient permissions. Related checks will be skipped."
             )
         else:
@@ -846,6 +846,78 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute(
             "Get-SharingPolicy | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
+    def get_safe_attachments_policy(self) -> dict:
+        """
+        Get Safe Attachments Policy.
+
+        Retrieves the Safe Attachments policy settings for Microsoft Defender for Office 365.
+
+        Returns:
+            dict: Safe Attachments policy settings in JSON format.
+
+        Example:
+            >>> get_safe_attachments_policy()
+            {
+                "Name": "Built-In Protection Policy",
+                "Identity": "Built-In Protection Policy",
+                "Enable": true,
+                "Action": "Block",
+                "QuarantineTag": "AdminOnlyAccessPolicy"
+            }
+        """
+        return self.execute(
+            "Get-SafeAttachmentPolicy | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
+    def get_safe_attachments_rule(self) -> dict:
+        """
+        Get Safe Attachments Rules.
+
+        Retrieves the Safe Attachments rules that define which users, groups,
+        and domains are targeted by Safe Attachments policies.
+
+        Returns:
+            dict: Safe Attachments rules in JSON format.
+
+        Example:
+            >>> get_safe_attachments_rule()
+            {
+                "Name": "Custom Safe Attachments Rule",
+                "SafeAttachmentPolicy": "Custom Policy",
+                "State": "Enabled",
+                "Priority": 0,
+                "SentTo": ["user@contoso.com"],
+                "SentToMemberOf": ["group@contoso.com"],
+                "RecipientDomainIs": ["contoso.com"]
+            }
+        """
+        return self.execute(
+            "Get-SafeAttachmentRule | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
+    def get_advanced_threat_protection_policy(self) -> dict:
+        """
+        Get Advanced Threat Protection Policy.
+
+        Retrieves the current Advanced Threat Protection policy settings,
+        including Safe Attachments for SharePoint, OneDrive, and Teams, and Safe Documents settings.
+
+        Returns:
+            dict: Advanced Threat Protection policy settings in JSON format.
+
+        Example:
+            >>> get_advanced_threat_protection_policy()
+            {
+                "Identity": "Default",
+                "EnableATPForSPOTeamsODB": true,
+                "EnableSafeDocs": true,
+                "AllowSafeDocsOpen": false
+            }
+        """
+        return self.execute(
+            "Get-AtpPolicyForO365 | ConvertTo-Json -Depth 10", json_parse=True
         )
 
     def get_teams_protection_policy(self) -> dict:
