@@ -18,9 +18,7 @@ const SUPPORTED_PROVIDER_TYPES_CSV = PROVIDER_TYPES.join(",");
 export const PROVIDER_IN_FILTER_KEY = "filter[provider__in]";
 export const PROVIDER_TYPE_IN_FILTER_KEY = "filter[provider_type__in]";
 
-const PROVIDER_IN_KEYS = new Set([
-  PROVIDER_IN_FILTER_KEY,
-  "provider__in",
+const PROVIDER_TYPE_IN_KEYS = new Set([
   PROVIDER_TYPE_IN_FILTER_KEY,
   "provider_type__in",
 ]);
@@ -76,7 +74,7 @@ export const sanitizeProviderFilters = (
   const sanitizedFilters: ProviderFilters = { ...filters };
 
   Object.keys(sanitizedFilters).forEach((key) => {
-    if (PROVIDER_IN_KEYS.has(key)) {
+    if (PROVIDER_TYPE_IN_KEYS.has(key)) {
       sanitizedFilters[key] = sanitizeProviderTypesCsv(sanitizedFilters[key]);
       return;
     }
@@ -108,7 +106,7 @@ export const appendSanitizedProviderFilters = (
     excludedKeys = ["filter[search]"],
     excludedKeyIncludes = [],
   }: AppendProviderFiltersOptions = {},
-): ProviderFilters => {
+): void => {
   const sanitizedFilters = sanitizeProviderFilters(filters, ensuredInFilterKey);
   const excludedKeysSet = new Set(excludedKeys);
 
@@ -123,15 +121,13 @@ export const appendSanitizedProviderFilters = (
 
     url.searchParams.append(key, String(value));
   });
-
-  return sanitizedFilters;
 };
 
 export const appendSanitizedProviderTypeFilters = (
   url: URL,
   filters: ProviderFilters = {},
   options: AppendSanitizedProviderTypeFiltersOptions = {},
-): ProviderFilters =>
+): void =>
   appendSanitizedProviderFilters(url, filters, {
     ...options,
     ensuredInFilterKey: PROVIDER_TYPE_IN_FILTER_KEY,
@@ -141,7 +137,7 @@ export const appendSanitizedProviderInFilters = (
   url: URL,
   filters: ProviderFilters = {},
   options: AppendSanitizedProviderTypeFiltersOptions = {},
-): ProviderFilters =>
+): void =>
   appendSanitizedProviderFilters(url, filters, {
     ...options,
     ensuredInFilterKey: PROVIDER_IN_FILTER_KEY,
