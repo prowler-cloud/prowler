@@ -245,19 +245,61 @@ class Test_Repository_Scoping:
         self.mock_repo2.get_branch.side_effect = Exception("404 Not Found")
         self.mock_repo2.get_dependabot_alerts.side_effect = Exception("404 Not Found")
 
-    def test_combined_repository_and_organization_scoping(self):
-        """Test that both repository and organization scoping can be used together"""
+    def test_qualified_repo_with_organization_skips_org_fetch(self):
+        """Test that a fully qualified repo with --organization does not fetch all org repos"""
         provider = set_mocked_github_provider()
         provider.repositories = ["owner1/repo1"]
         provider.organizations = ["org2"]
 
         mock_client = MagicMock()
-        # Repository lookup
         mock_client.get_repo.return_value = self.mock_repo1
-        # Organization lookup
-        mock_org = MagicMock()
-        mock_org.get_repos.return_value = [self.mock_repo2]
-        mock_client.get_organization.return_value = mock_org
+
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.clients = [mock_client]
+            repository_service.provider = provider
+
+            repos = repository_service._list_repositories()
+
+            assert len(repos) == 1
+            assert 1 in repos
+            assert repos[1].name == "repo1"
+            mock_client.get_repo.assert_called_once_with("owner1/repo1")
+            mock_client.get_organization.assert_not_called()
+
+    def test_unqualified_repo_qualified_with_organization(self):
+        """Test that an unqualified repo name is qualified with the organization"""
+        provider = set_mocked_github_provider()
+        provider.repositories = ["repo1"]
+        provider.organizations = ["owner1"]
+
+        mock_client = MagicMock()
+        mock_client.get_repo.return_value = self.mock_repo1
+
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.clients = [mock_client]
+            repository_service.provider = provider
+
+            repos = repository_service._list_repositories()
+
+            assert len(repos) == 1
+            assert 1 in repos
+            assert repos[1].name == "repo1"
+            mock_client.get_repo.assert_called_once_with("owner1/repo1")
+
+    def test_unqualified_repo_qualified_with_multiple_organizations(self):
+        """Test that an unqualified repo is qualified with each organization"""
+        provider = set_mocked_github_provider()
+        provider.repositories = ["repo1"]
+        provider.organizations = ["org1", "org2"]
+
+        mock_client = MagicMock()
+        mock_client.get_repo.side_effect = [self.mock_repo1, self.mock_repo2]
 
         with patch(
             "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
@@ -269,12 +311,56 @@ class Test_Repository_Scoping:
             repos = repository_service._list_repositories()
 
             assert len(repos) == 2
-            assert 1 in repos
-            assert 2 in repos
-            assert repos[1].name == "repo1"
-            assert repos[2].name == "repo2"
-            mock_client.get_repo.assert_called_once_with("owner1/repo1")
-            mock_client.get_organization.assert_called_once_with("org2")
+            mock_client.get_repo.assert_any_call("org1/repo1")
+            mock_client.get_repo.assert_any_call("org2/repo1")
+
+    def test_unqualified_repo_without_organization_is_skipped(self):
+        """Test that an unqualified repo without --organization is skipped with a warning"""
+        provider = set_mocked_github_provider()
+        provider.repositories = ["repo1"]
+        provider.organizations = []
+
+        mock_client = MagicMock()
+
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.clients = [mock_client]
+            repository_service.provider = provider
+
+            with patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger:
+                repos = repository_service._list_repositories()
+
+                assert len(repos) == 0
+                mock_logger.warning.assert_called_with(
+                    "Repository name 'repo1' should be in 'owner/repo-name' format. Skipping."
+                )
+                mock_client.get_repo.assert_not_called()
+
+    def test_mixed_qualified_and_unqualified_repos_with_organization(self):
+        """Test mix of qualified and unqualified repos with --organization"""
+        provider = set_mocked_github_provider()
+        provider.repositories = ["repo1", "owner2/repo2"]
+        provider.organizations = ["org1"]
+
+        mock_client = MagicMock()
+        mock_client.get_repo.side_effect = [self.mock_repo1, self.mock_repo2]
+
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.clients = [mock_client]
+            repository_service.provider = provider
+
+            repos = repository_service._list_repositories()
+
+            assert len(repos) == 2
+            mock_client.get_repo.assert_any_call("org1/repo1")
+            mock_client.get_repo.assert_any_call("owner2/repo2")
 
 
 class Test_Repository_Validation:

@@ -65,6 +65,10 @@ jobs:
       E2E_OCI_KEY_CONTENT: ${{ secrets.E2E_OCI_KEY_CONTENT }}
       E2E_OCI_REGION: ${{ secrets.E2E_OCI_REGION }}
       E2E_NEW_USER_PASSWORD: ${{ secrets.E2E_NEW_USER_PASSWORD }}
+      E2E_ALIBABACLOUD_ACCOUNT_ID: ${{ secrets.E2E_ALIBABACLOUD_ACCOUNT_ID }}
+      E2E_ALIBABACLOUD_ACCESS_KEY_ID: ${{ secrets.E2E_ALIBABACLOUD_ACCESS_KEY_ID }}
+      E2E_ALIBABACLOUD_ACCESS_KEY_SECRET: ${{ secrets.E2E_ALIBABACLOUD_ACCESS_KEY_SECRET }}
+      E2E_ALIBABACLOUD_ROLE_ARN: ${{ secrets.E2E_ALIBABACLOUD_ROLE_ARN }}
       # Pass E2E paths from impact analysis
       E2E_TEST_PATHS: ${{ needs.impact-analysis.outputs.ui-e2e }}
       RUN_ALL_TESTS: ${{ needs.impact-analysis.outputs.run-all }}

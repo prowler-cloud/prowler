@@ -616,7 +616,7 @@ paths:
       operationId: attack_paths_scans_queries_retrieve
       description: Retrieve the catalog of Attack Paths queries available for this
         Attack Paths scan.
-      summary: List attack paths queries
+      summary: List Attack Paths queries
       parameters:
       - in: query
         name: fields[attack-paths-scans]
@@ -714,7 +714,7 @@ paths:
           description: Bad request (e.g., Unknown Attack Paths query for the selected
             provider)
         '404':
-          description: No attack paths found for the given query and parameters
+          description: No Attack Paths found for the given query and parameters
         '500':
           description: Attack Paths query execution failed due to a database error
   /api/v1/compliance-overviews:
@@ -12438,6 +12438,8 @@ components:
               type: string
             name:
               type: string
+            short_description:
+              type: string
             description:
               type: string
             provider:
@@ -12446,12 +12448,42 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/AttackPathsQueryParameter'
+            attribution:
+              allOf:
+              - $ref: '#/components/schemas/AttackPathsQueryAttribution'
+              nullable: true
           required:
           - id
           - name
+          - short_description
           - description
           - provider
           - parameters
+    AttackPathsQueryAttribution:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-query-attributions
+        id: {}
+        attributes:
+          type: object
+          properties:
+            text:
+              type: string
+            link:
+              type: string
+          required:
+          - text
+          - link
     AttackPathsQueryParameter:
       type: object
       required:

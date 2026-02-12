@@ -2,6 +2,23 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.20.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Attack Paths: Queries definition now has short description and attribution [(#9983)](https://github.com/prowler-cloud/prowler/pull/9983)
+- Attack Paths: Internet node is created while scan [(#9992)](https://github.com/prowler-cloud/prowler/pull/9992)
+
+---
+
+## [1.19.2] (Prowler v5.18.2)
+
+### 🐞 Fixed
+
+- SAML role mapping now prevents removing the last MANAGE_ACCOUNT user [(#10007)](https://github.com/prowler-cloud/prowler/pull/10007)
+
+---
+
 ## [1.19.0] (Prowler v5.18.0)
 
 ### 🚀 Added
