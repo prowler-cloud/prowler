@@ -5,12 +5,12 @@
   "CheckType": [],
   "ServiceName": "organization",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:github:organization::{OrganizationName}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "GitHubOrganization",
   "Description": "Checks whether a GitHub organization has a verified badge.",
   "Risk": "Unverified organizations may be easier to impersonate, increasing the risk of phishing or trust abuse.",
-  "RelatedUrl": "https://docs.github.com/en/organizations/managing-organization-settings/verifying-or-approving-a-domain-for-your-organization",
+  "RelatedUrl": "",
   "Remediation": {
     "Recommendation": {
       "Text": "Verify the organization identity by completing GitHub organization verification.",

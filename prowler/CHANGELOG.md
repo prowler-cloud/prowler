@@ -4,6 +4,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ## [5.19.0] (Prowler UNRELEASED)
 
+### Added
+
+- `organization_verified_badge` check for GitHub provider [(#8663)](https://github.com/prowler-cloud/prowler/issues/8663)
+
 ### 🚀 Added
 
 - `defender_safe_attachments_policy_enabled` check for M365 provider [(#9833)](https://github.com/prowler-cloud/prowler/pull/9833)

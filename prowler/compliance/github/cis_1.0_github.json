@@ -779,7 +779,7 @@
       "Id": "1.3.9",
       "Description": "Confirm the domains an organization owns with a \"Verified\" badge.",
       "Checks": [
-        "organization_domain_verified"
+        "organization_verified_badge"
       ],
       "Attributes": [
         {
