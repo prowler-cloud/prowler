@@ -63,7 +63,12 @@ class Provider(str, Enum):
     ORACLECLOUD = "oraclecloud"
     ALIBABACLOUD = "alibabacloud"
     OPENSTACK = "openstack"
+    IMAGE = "image"
 
+
+# Providers that delegate scanning to an external tool (e.g. Trivy, promptfoo)
+# and bypass standard check/service loading.
+EXTERNAL_TOOL_PROVIDERS = frozenset({"iac", "llm", "image"})
 
 # Compliance
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
@@ -75,7 +80,10 @@ def get_available_compliance_frameworks(provider=None):
     if provider:
         providers = [provider]
     for provider in providers:
-        with os.scandir(f"{actual_directory}/../compliance/{provider}") as files:
+        compliance_dir = f"{actual_directory}/../compliance/{provider}"
+        if not os.path.isdir(compliance_dir):
+            continue
+        with os.scandir(compliance_dir) as files:
             for file in files:
                 if file.is_file() and file.name.endswith(".json"):
                     available_compliance_frameworks.append(
