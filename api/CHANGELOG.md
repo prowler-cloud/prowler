@@ -12,6 +12,10 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support CSA CCM 4.0 for the GCP provider [(#10042)](https://github.com/prowler-cloud/prowler/pull/10042)
 - Support CSA CCM for the Azure provider [(#10039)](https://github.com/prowler-cloud/prowler/pull/10039)
 
+### 🔐 Security
+
+- Pillow 12.1.1 (CVE-2021-25289) [(#10027)](https://github.com/prowler-cloud/prowler/pull/10027)
+
 ---
 
 ## [1.19.2] (Prowler v5.18.2)
