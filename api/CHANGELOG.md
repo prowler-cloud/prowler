@@ -9,6 +9,10 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack Paths: Queries definition now has short description and attribution [(#9983)](https://github.com/prowler-cloud/prowler/pull/9983)
 - Attack Paths: Internet node is created while scan [(#9992)](https://github.com/prowler-cloud/prowler/pull/9992)
 
+### 🔐 Security
+
+- Pillow 12.1.1 (CVE-2021-25289) [(#10027)](https://github.com/prowler-cloud/prowler/pull/10027)
+
 ---
 
 ## [1.19.2] (Prowler v5.18.2)
