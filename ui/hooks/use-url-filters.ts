@@ -2,6 +2,11 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { useFilterTransitionOptional } from "@/contexts";
+
+const FINDINGS_PATH = "/findings";
+const DEFAULT_MUTED_FILTER = "false";
+
 /**
  * Custom hook to handle URL filters and automatically reset
  * pagination when filters change.
@@ -13,11 +18,24 @@ export const useUrlFilters = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const filterTransition = useFilterTransitionOptional();
   const isPending = false;
 
+  const ensureFindingsDefaultMuted = (params: URLSearchParams) => {
+    // Findings defaults to excluding muted findings unless user sets it explicitly.
+    if (pathname === FINDINGS_PATH && !params.has("filter[muted]")) {
+      params.set("filter[muted]", DEFAULT_MUTED_FILTER);
+    }
+  };
+
   const navigate = (params: URLSearchParams) => {
+    ensureFindingsDefaultMuted(params);
+
     const queryString = params.toString();
+    if (queryString === searchParams.toString()) return;
+
     const targetUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    filterTransition?.signalFilterChange();
     router.push(targetUrl, { scroll: false });
   };
 
