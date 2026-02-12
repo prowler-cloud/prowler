@@ -2,7 +2,7 @@
 title: 'Getting Started with GitHub'
 ---
 
-This guide walks you through setting up GitHub security scanning with Prowler. Choose your preferred interface below:
+This guide covers setting up GitHub security scanning with Prowler. Choose a preferred interface below:
 
 <Note>
 **Understanding GitHub Scan Scope**
@@ -76,12 +76,12 @@ Before adding GitHub to Prowler Cloud/App, ensure you have:
 <Note>
 **Recommended: Fine-Grained Personal Access Token**
 
-We strongly recommend using **Fine-Grained Personal Access Tokens** because they provide:
+**Fine-Grained Personal Access Tokens** are strongly recommended because they provide:
 - Best data access for comprehensive security scanning
 - Granular permission control
 - Resource-specific access
 
-**GitHub Apps are NOT recommended** - they provide the most limited access to GitHub data for security scanning purposes.
+**GitHub Apps are not recommended** — they provide the most limited access to GitHub data for security scanning purposes.
 </Note>
 
 7. Select your preferred authentication method:
@@ -210,9 +210,9 @@ prowler github --github-app-id 123456 --github-app-key-path /path/to/private-key
 ### Scan Scope: Understanding What Gets Scanned
 
 <Warning>
-**Critical: User Scans vs Organization Scans**
+**Distinguishing User Scans from Organization Scans**
 
-The scan scope depends entirely on how you invoke Prowler CLI:
+The scan scope depends entirely on the Prowler CLI invocation method:
 
 | Command | What Gets Scanned | Organization Checks Included? |
 |---------|------------------|-------------------------------|
@@ -223,8 +223,8 @@ The scan scope depends entirely on how you invoke Prowler CLI:
 
 **Key Points:**
 - Scanning **user repositories** does NOT run organization-level checks
-- To audit organization MFA, security policies, etc., you MUST use `--organization`
-- If you're a member of multiple organizations, specify each one explicitly
+- To audit organization MFA, security policies, etc., the `--organization` flag is required
+- Members of multiple organizations should specify each one explicitly
 
 </Warning>
 
@@ -397,7 +397,7 @@ prowler github \
   </Tab>
 </Tabs>
 
-### Viewing Results
+### Viewing Prowler CLI Scan Results
 
 Prowler CLI generates results in multiple formats:
 

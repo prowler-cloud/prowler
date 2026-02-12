@@ -2,19 +2,13 @@
 title: "GitHub Authentication in Prowler"
 ---
 
-Prowler for GitHub supports multiple authentication types across Prowler Cloud and Prowler CLI.
-
-## Navigation
-- [Common Setup](#common-setup)
-- [Prowler Cloud Authentication](#prowler-cloud-authentication)
-- [Prowler CLI Authentication](#prowler-cli-authentication)
-- [Troubleshooting](#troubleshooting)
+Prowler for GitHub offers multiple authentication types across Prowler Cloud and Prowler CLI.
 
 ## Common Setup
 
 ### Authentication Methods Overview
 
-Prowler supports three authentication methods. We recommend Fine-Grained Personal Access Tokens for most use cases.
+Prowler offers three authentication methods. Fine-Grained Personal Access Tokens are recommended for most use cases.
 
 - [**Fine-Grained Personal Access Token**](#fine-grained-personal-access-token-recommended) (**Recommended**)
 - [**OAuth App Token**](#oauth-app-token)
@@ -30,7 +24,7 @@ GitHub has deprecated classic Personal Access Tokens. Use Fine-Grained Tokens in
 
 ### Required Permissions
 
-The permissions you need depend on your scan scope: user repositories, organization repositories, or both.
+Required permissions depend on the scan scope: user repositories, organization repositories, or both.
 
 #### Repository Permissions
 
@@ -80,10 +74,10 @@ With **Read-only permissions** (recommended), Prowler can run:
 
 Some GitHub merge settings (`delete_branch_on_merge`, `allow_squash_merge`, etc.) are only returned by the GitHub API when the token has **Administration: Read and write** permission.
 
-**We DO NOT recommend granting Write permissions under any circumstances:**
+**Granting Write permissions is not recommended under any circumstances:**
 - Token can modify repository settings
 - Token can change branch protection rules
-- Violates principle of least privilege
+- Violates the principle of least privilege
 
 **Recommendation:** Accept `MANUAL` status for these checks rather than granting write access.
 
@@ -93,7 +87,7 @@ Some GitHub merge settings (`delete_branch_on_merge`, `allow_squash_merge`, etc.
 
 #### Fine-Grained Personal Access Token (Recommended)
 
-**Why Fine-Grained Tokens?**
+**Benefits of Fine-Grained Tokens**
 
 Fine-Grained Personal Access Tokens provide the best balance of security and functionality:
 - Granular permission control
@@ -111,7 +105,7 @@ Fine-Grained Personal Access Tokens provide the best balance of security and fun
    - **Token name**: Descriptive name (e.g., "Prowler Security Scanner")
    - **Expiration**: 90 days or less (recommended)
    - **Resource owner**:
-     - Your personal account (for user repositories)
+     - Personal account (for user repositories)
      - Organization name (for organization scanning - requires admin approval)
    - **Repository access**: "All repositories" (recommended)
 
@@ -132,7 +126,7 @@ GitHub shows the token only once. Store it securely.
 
 #### OAuth App Token
 
-**When to Use OAuth:**
+**Recommended OAuth App Use Cases:**
 
 Use OAuth App Tokens when building applications that need delegated user permissions and explicit user authorization.
 
@@ -178,7 +172,7 @@ GitHub Apps provide the most limited access to GitHub data:
 
 **GitHub App Permissions:**
 
-If you must use a GitHub App:
+If a GitHub App is required:
 
 **Repository permissions:**
 - Administration: Read
@@ -293,7 +287,7 @@ prowler github --github-app-id 123456 --github-app-key-path /path/to/private-key
 <Warning>
 **Understanding Scan Scope**
 
-What Prowler scans depends on how you invoke it:
+What Prowler scans depends on the invocation method:
 
 | Command | What Gets Scanned | Organization Checks? |
 |---------|------------------|---------------------|
@@ -333,7 +327,7 @@ For complete step-by-step instructions, see the [Getting Started Guide](/user-gu
 
 ## Troubleshooting
 
-### "Insufficient permissions" errors
+### "Insufficient Permissions" Errors
 
 **Symptom:** Checks fail or return `MANUAL` status.
 
@@ -342,7 +336,7 @@ For complete step-by-step instructions, see the [Getting Started Guide](/user-gu
 2. For organization scans, ensure organization approved the Fine-Grained Token
 3. For merge settings checks, accept `MANUAL` status (Write permission not recommended)
 
-### "No organizations found"
+### "No Organizations Found"
 
 **Symptom:** Prowler doesn't find organizations even though you're a member.
 
@@ -350,7 +344,7 @@ For complete step-by-step instructions, see the [Getting Started Guide](/user-gu
 
 **Solution:** Create a new token with Resource Owner set to the organization and get it approved by an admin.
 
-### Organization checks return `MANUAL`
+### Organization Checks Return `MANUAL`
 
 **Symptom:** Checks like `organization_members_mfa_required` return `MANUAL`.
 
@@ -361,7 +355,7 @@ For complete step-by-step instructions, see the [Getting Started Guide](/user-gu
 2. Ensure token's **Resource owner** is the organization (not personal account)
 3. Get organization admin approval
 
-### Token not showing Organization permissions
+### Token Not Showing Organization Permissions
 
 **Symptom:** Can't find Organization permissions section when creating token.
 
@@ -369,7 +363,7 @@ For complete step-by-step instructions, see the [Getting Started Guide](/user-gu
 
 **Solution:** Change **Resource owner** dropdown to the organization name. Organization permissions section will appear.
 
-### Rate limiting
+### Rate Limiting
 
 **Symptom:** "API rate limit exceeded" errors.
 
@@ -378,7 +372,7 @@ For complete step-by-step instructions, see the [Getting Started Guide](/user-gu
 - Use `--repository` to scan specific repos instead of all
 - Implement delays between scans
 
-### Token expired or revoked
+### Token Expired or Revoked
 
 **Symptom:** Authentication fails with valid-looking token.
 
