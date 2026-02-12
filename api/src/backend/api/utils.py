@@ -216,6 +216,10 @@ def get_prowler_provider_kwargs(
             "filter_accounts": [provider.uid],
         }
     elif provider.provider == Provider.ProviderChoices.OPENSTACK.value:
+        # No extra kwargs needed: clouds_yaml_content and clouds_yaml_cloud from the
+        # secret are sufficient. Validating project_id (provider.uid) against the
+        # clouds.yaml is not feasible because not all auth methods include it and the
+        # Keystone API is unavailable on public clouds.
         pass
 
     if mutelist_processor:

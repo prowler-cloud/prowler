@@ -1,4 +1,3 @@
-import tempfile
 from os import environ
 from pathlib import Path
 from typing import Optional
@@ -7,6 +6,7 @@ from colorama import Fore, Style
 from openstack import config, connect
 from openstack import exceptions as openstack_exceptions
 from openstack.connection import Connection as OpenStackConnection
+from yaml import YAMLError, safe_load
 
 from prowler.config.config import (
     default_config_file_path,
@@ -220,31 +220,65 @@ class OpenstackProvider(Provider):
     ) -> OpenStackSession:
         """Setup session from clouds.yaml content provided as a string.
 
+        Parses the YAML content directly instead of writing to a temporary file,
+        following the same pattern as KubernetesProvider.setup_session().
+
         Args:
             clouds_yaml_content: The full YAML content of a clouds.yaml file.
             clouds_yaml_cloud: Cloud name to use from the clouds.yaml content.
 
         Returns:
             OpenStackSession configured from the provided clouds.yaml content.
+
+        Raises:
+            OpenStackInvalidConfigError: If the YAML is malformed or missing required fields.
+            OpenStackCloudNotFoundError: If the specified cloud is not found in the content.
         """
-        tmp_file = None
+        if not clouds_yaml_cloud:
+            raise OpenStackInvalidConfigError(
+                message="Cloud name (--clouds-yaml-cloud) is required when using clouds.yaml content",
+            )
+
         try:
-            tmp_file = tempfile.NamedTemporaryFile(
-                mode="w", suffix=".yaml", delete=False
+            parsed = safe_load(clouds_yaml_content)
+        except YAMLError as error:
+            raise OpenStackInvalidConfigError(
+                original_exception=error,
+                message=f"Failed to parse clouds.yaml content: {error}",
             )
-            tmp_file.write(clouds_yaml_content)
-            tmp_file.flush()
-            tmp_file.close()
-            return OpenstackProvider._setup_session_from_clouds_yaml(
-                clouds_yaml_file=tmp_file.name,
-                clouds_yaml_cloud=clouds_yaml_cloud,
+
+        if not isinstance(parsed, dict) or "clouds" not in parsed:
+            raise OpenStackInvalidConfigError(
+                message="Invalid clouds.yaml content: missing 'clouds' key",
             )
-        finally:
-            if tmp_file:
-                try:
-                    Path(tmp_file.name).unlink(missing_ok=True)
-                except OSError:
-                    pass
+
+        cloud_config = parsed["clouds"].get(clouds_yaml_cloud)
+        if not cloud_config:
+            raise OpenStackCloudNotFoundError(
+                message=f"Cloud '{clouds_yaml_cloud}' not found in clouds.yaml content",
+            )
+
+        auth_dict = cloud_config.get("auth", {})
+
+        required_fields = ["auth_url", "username", "password"]
+        missing_fields = [
+            field for field in required_fields if not auth_dict.get(field)
+        ]
+        if missing_fields:
+            raise OpenStackInvalidConfigError(
+                message=f"Missing required fields in clouds.yaml for cloud '{clouds_yaml_cloud}': {', '.join(missing_fields)}",
+            )
+
+        return OpenStackSession(
+            auth_url=auth_dict.get("auth_url"),
+            identity_api_version=str(cloud_config.get("identity_api_version", "3")),
+            username=auth_dict.get("username"),
+            password=auth_dict.get("password"),
+            project_id=auth_dict.get("project_id") or auth_dict.get("project_name"),
+            region_name=cloud_config.get("region_name"),
+            user_domain_name=auth_dict.get("user_domain_name", "Default"),
+            project_domain_name=auth_dict.get("project_domain_name", "Default"),
+        )
 
     @staticmethod
     def _setup_session_from_clouds_yaml(
