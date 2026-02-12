@@ -248,6 +248,15 @@ class Provider(ABC):
                         repositories=arguments.repository,
                         organizations=arguments.organization,
                     )
+                elif "googleworkspace" in provider_class_name.lower():
+                    provider_class(
+                        credentials_file=arguments.credentials_file,
+                        credentials_content=arguments.credentials_content,
+                        delegated_user=arguments.delegated_user,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
                 elif "cloudflare" in provider_class_name.lower():
                     provider_class(
                         filter_zones=arguments.region,
