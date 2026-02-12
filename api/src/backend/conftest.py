@@ -537,6 +537,12 @@ def providers_fixture(tenants_fixture):
         alias="cloudflare_testing",
         tenant_id=tenant.id,
     )
+    provider11 = Provider.objects.create(
+        provider="openstack",
+        uid="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        alias="openstack_testing",
+        tenant_id=tenant.id,
+    )
 
     return (
         provider1,
@@ -549,6 +555,7 @@ def providers_fixture(tenants_fixture):
         provider8,
         provider9,
         provider10,
+        provider11,
     )
 
 
@@ -1663,6 +1670,7 @@ def attack_paths_query_definition_factory():
         definition_payload = {
             "id": "aws-test",
             "name": "Attack Paths Test Query",
+            "short_description": "Synthetic short description for tests.",
             "description": "Synthetic Attack Paths definition for tests.",
             "provider": "aws",
             "cypher": "RETURN 1",

@@ -1176,6 +1176,14 @@ class AttackPathsScanSerializer(RLSSerializer):
         return provider.uid if provider else None
 
 
+class AttackPathsQueryAttributionSerializer(BaseSerializerV1):
+    text = serializers.CharField()
+    link = serializers.CharField()
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-attributions"
+
+
 class AttackPathsQueryParameterSerializer(BaseSerializerV1):
     name = serializers.CharField()
     label = serializers.CharField()
@@ -1190,7 +1198,9 @@ class AttackPathsQueryParameterSerializer(BaseSerializerV1):
 class AttackPathsQuerySerializer(BaseSerializerV1):
     id = serializers.CharField()
     name = serializers.CharField()
+    short_description = serializers.CharField()
     description = serializers.CharField()
+    attribution = AttackPathsQueryAttributionSerializer(allow_null=True, required=False)
     provider = serializers.CharField()
     parameters = AttackPathsQueryParameterSerializer(many=True)
 
@@ -1515,6 +1525,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                             "or both 'api_key' and 'api_email'."
                         }
                     )
+            elif provider_type == Provider.ProviderChoices.OPENSTACK.value:
+                serializer = OpenStackCloudsYamlProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1676,6 +1688,14 @@ class CloudflareTokenProviderSecret(serializers.Serializer):
 class CloudflareApiKeyProviderSecret(serializers.Serializer):
     api_key = serializers.CharField()
     api_email = serializers.EmailField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class OpenStackCloudsYamlProviderSecret(serializers.Serializer):
+    clouds_yaml_content = serializers.CharField()
+    clouds_yaml_cloud = serializers.CharField()
 
     class Meta:
         resource_name = "provider-secrets"

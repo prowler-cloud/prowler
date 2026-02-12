@@ -43,6 +43,12 @@ export interface OCIProviderData {
   alias?: string;
 }
 
+// AlibabaCloud provider data
+export interface AlibabaCloudProviderData {
+  accountId: string;
+  alias?: string;
+}
+
 // AWS credential options
 export const AWS_CREDENTIAL_OPTIONS = {
   AWS_ROLE_ARN: "role",
@@ -167,6 +173,25 @@ export interface OCIProviderCredential {
   region?: string;
 }
 
+// AlibabaCloud credential options
+export const ALIBABACLOUD_CREDENTIAL_OPTIONS = {
+  ALIBABACLOUD_CREDENTIALS: "credentials",
+  ALIBABACLOUD_ROLE: "role",
+} as const;
+
+// AlibabaCloud credential type
+type AlibabaCloudCredentialType =
+  (typeof ALIBABACLOUD_CREDENTIAL_OPTIONS)[keyof typeof ALIBABACLOUD_CREDENTIAL_OPTIONS];
+
+// AlibabaCloud provider credential
+export interface AlibabaCloudProviderCredential {
+  type: AlibabaCloudCredentialType;
+  accessKeyId: string;
+  accessKeySecret: string;
+  roleArn?: string;
+  roleSessionName?: string;
+}
+
 // Providers page
 export class ProvidersPage extends BasePage {
   // Alias input
@@ -184,6 +209,7 @@ export class ProvidersPage extends BasePage {
   readonly kubernetesProviderRadio: Locator;
   readonly githubProviderRadio: Locator;
   readonly ociProviderRadio: Locator;
+  readonly alibabacloudProviderRadio: Locator;
 
   // AWS provider form elements
   readonly accountIdInput: Locator;
@@ -247,6 +273,15 @@ export class ProvidersPage extends BasePage {
   readonly ociKeyContentInput: Locator;
   readonly ociRegionInput: Locator;
 
+  // AlibabaCloud provider form elements
+  readonly alibabacloudAccountIdInput: Locator;
+  readonly alibabacloudAccessKeyIdInput: Locator;
+  readonly alibabacloudAccessKeySecretInput: Locator;
+  readonly alibabacloudRoleArnInput: Locator;
+  readonly alibabacloudRoleSessionNameInput: Locator;
+  readonly alibabacloudStaticCredentialsRadio: Locator;
+  readonly alibabacloudRoleCredentialsRadio: Locator;
+
   // Delete button
   readonly deleteProviderConfirmationButton: Locator;
 
@@ -289,6 +324,10 @@ export class ProvidersPage extends BasePage {
     // Oracle Cloud Infrastructure
     this.ociProviderRadio = page.getByRole("option", {
       name: /Oracle Cloud Infrastructure/i,
+    });
+    // Alibaba Cloud
+    this.alibabacloudProviderRadio = page.getByRole("option", {
+      name: /Alibaba Cloud/i,
     });
 
     // AWS provider form inputs
@@ -353,6 +392,30 @@ export class ProvidersPage extends BasePage {
       name: /Private Key Content/i,
     });
     this.ociRegionInput = page.getByRole("textbox", { name: /Region/i });
+
+    // AlibabaCloud provider form inputs
+    this.alibabacloudAccountIdInput = page.getByRole("textbox", {
+      name: "Account ID",
+    });
+    this.alibabacloudAccessKeyIdInput = page.getByRole("textbox", {
+      name: "Access Key ID",
+    });
+    this.alibabacloudAccessKeySecretInput = page.getByRole("textbox", {
+      name: "Access Key Secret",
+    });
+    this.alibabacloudRoleArnInput = page.getByRole("textbox", {
+      name: "Role ARN",
+    });
+    this.alibabacloudRoleSessionNameInput = page.getByRole("textbox", {
+      name: "Role Session Name",
+    });
+    // Radios for selecting AlibabaCloud credentials method
+    this.alibabacloudStaticCredentialsRadio = page.getByRole("radio", {
+      name: /Connect via Access Keys/i,
+    });
+    this.alibabacloudRoleCredentialsRadio = page.getByRole("radio", {
+      name: /Connect assuming RAM Role/i,
+    });
 
     // Alias input
     this.aliasInput = page.getByRole("textbox", {
@@ -878,6 +941,101 @@ export class ProvidersPage extends BasePage {
     await expect(this.ociRegionInput).toBeVisible();
   }
 
+  async selectAlibabaCloudProvider(): Promise<void> {
+    await this.selectProviderRadio(this.alibabacloudProviderRadio);
+  }
+
+  async fillAlibabaCloudProviderDetails(
+    data: AlibabaCloudProviderData,
+  ): Promise<void> {
+    // Fill the AlibabaCloud provider details
+
+    await this.alibabacloudAccountIdInput.fill(data.accountId);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async selectAlibabaCloudCredentialsType(
+    type: AlibabaCloudCredentialType,
+  ): Promise<void> {
+    // Ensure we are on the add-credentials page where the selector exists
+
+    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+
+    if (type === ALIBABACLOUD_CREDENTIAL_OPTIONS.ALIBABACLOUD_CREDENTIALS) {
+      await this.alibabacloudStaticCredentialsRadio.click({ force: true });
+    } else if (type === ALIBABACLOUD_CREDENTIAL_OPTIONS.ALIBABACLOUD_ROLE) {
+      await this.alibabacloudRoleCredentialsRadio.click({ force: true });
+    } else {
+      throw new Error(`Invalid AlibabaCloud credential type: ${type}`);
+    }
+  }
+
+  async fillAlibabaCloudStaticCredentials(
+    credentials: AlibabaCloudProviderCredential,
+  ): Promise<void> {
+    // Fill the AlibabaCloud static credentials form
+
+    if (credentials.accessKeyId) {
+      await this.alibabacloudAccessKeyIdInput.fill(credentials.accessKeyId);
+    }
+    if (credentials.accessKeySecret) {
+      await this.alibabacloudAccessKeySecretInput.fill(
+        credentials.accessKeySecret,
+      );
+    }
+  }
+
+  async fillAlibabaCloudRoleCredentials(
+    credentials: AlibabaCloudProviderCredential,
+  ): Promise<void> {
+    // Fill the AlibabaCloud RAM Role credentials form
+
+    if (credentials.roleArn) {
+      await this.alibabacloudRoleArnInput.fill(credentials.roleArn);
+    }
+    if (credentials.accessKeyId) {
+      await this.alibabacloudAccessKeyIdInput.fill(credentials.accessKeyId);
+    }
+    if (credentials.accessKeySecret) {
+      await this.alibabacloudAccessKeySecretInput.fill(
+        credentials.accessKeySecret,
+      );
+    }
+    if (credentials.roleSessionName) {
+      await this.alibabacloudRoleSessionNameInput.fill(
+        credentials.roleSessionName,
+      );
+    }
+  }
+
+  async verifyAlibabaCloudCredentialsPageLoaded(): Promise<void> {
+    // Verify the AlibabaCloud credentials page is loaded
+
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.alibabacloudStaticCredentialsRadio).toBeVisible();
+    await expect(this.alibabacloudRoleCredentialsRadio).toBeVisible();
+  }
+
+  async verifyAlibabaCloudStaticCredentialsPageLoaded(): Promise<void> {
+    // Verify the AlibabaCloud static credentials page is loaded
+
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.alibabacloudAccessKeyIdInput).toBeVisible();
+    await expect(this.alibabacloudAccessKeySecretInput).toBeVisible();
+  }
+
+  async verifyAlibabaCloudRoleCredentialsPageLoaded(): Promise<void> {
+    // Verify the AlibabaCloud RAM Role credentials page is loaded
+
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.alibabacloudRoleArnInput).toBeVisible();
+    await expect(this.alibabacloudAccessKeyIdInput).toBeVisible();
+    await expect(this.alibabacloudAccessKeySecretInput).toBeVisible();
+  }
+
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
 
@@ -896,6 +1054,7 @@ export class ProvidersPage extends BasePage {
     await expect(this.m365ProviderRadio).toBeVisible();
     await expect(this.kubernetesProviderRadio).toBeVisible();
     await expect(this.githubProviderRadio).toBeVisible();
+    await expect(this.alibabacloudProviderRadio).toBeVisible();
   }
 
   async verifyCredentialsPageLoaded(): Promise<void> {

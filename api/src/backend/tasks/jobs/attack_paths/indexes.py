@@ -6,6 +6,7 @@ from cartography.client.core.tx import run_write_query
 from celery.utils.log import get_task_logger
 
 from tasks.jobs.attack_paths.config import (
+    INTERNET_NODE_LABEL,
     PROWLER_FINDING_LABEL,
     PROVIDER_RESOURCE_LABEL,
 )
@@ -30,6 +31,8 @@ FINDINGS_INDEX_STATEMENTS = [
     f"CREATE INDEX prowler_finding_provider_uid IF NOT EXISTS FOR (n:{PROWLER_FINDING_LABEL}) ON (n.provider_uid);",
     f"CREATE INDEX prowler_finding_lastupdated IF NOT EXISTS FOR (n:{PROWLER_FINDING_LABEL}) ON (n.lastupdated);",
     f"CREATE INDEX prowler_finding_status IF NOT EXISTS FOR (n:{PROWLER_FINDING_LABEL}) ON (n.status);",
+    # Internet node index for MERGE lookups
+    f"CREATE INDEX internet_id IF NOT EXISTS FOR (n:{INTERNET_NODE_LABEL}) ON (n.id);",
 ]
 
 # Indexes for provider resource sync operations

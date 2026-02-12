@@ -763,27 +763,40 @@ class TenantFinishACSView(FinishACSView):
             .tenant
         )
 
-        # Check if tenant has only one user with MANAGE_ACCOUNT role
-        users_with_manage_account = (
+        role_name = (
+            extra.get("userType", ["no_permissions"])[0].strip()
+            if extra.get("userType")
+            else "no_permissions"
+        )
+        role = (
+            Role.objects.using(MainRouter.admin_db)
+            .filter(name=role_name, tenant=tenant)
+            .first()
+        )
+
+        # Only skip mapping if it would remove the last MANAGE_ACCOUNT user
+        remaining_manage_account_users = (
             UserRoleRelationship.objects.using(MainRouter.admin_db)
             .filter(role__manage_account=True, tenant_id=tenant.id)
+            .exclude(user_id=user_id)
             .values("user")
             .distinct()
             .count()
         )
+        user_has_manage_account = (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(role__manage_account=True, tenant_id=tenant.id, user_id=user_id)
+            .exists()
+        )
+        role_manage_account = role.manage_account if role else False
+        would_remove_last_manage_account = (
+            user_has_manage_account
+            and remaining_manage_account_users == 0
+            and not role_manage_account
+        )
 
-        # Only apply role mapping from userType if tenant does NOT have exactly one user with MANAGE_ACCOUNT
-        if users_with_manage_account != 1:
-            role_name = (
-                extra.get("userType", ["no_permissions"])[0].strip()
-                if extra.get("userType")
-                else "no_permissions"
-            )
-            try:
-                role = Role.objects.using(MainRouter.admin_db).get(
-                    name=role_name, tenant=tenant
-                )
-            except Role.DoesNotExist:
+        if not would_remove_last_manage_account:
+            if role is None:
                 role = Role.objects.using(MainRouter.admin_db).create(
                     name=role_name,
                     tenant=tenant,
