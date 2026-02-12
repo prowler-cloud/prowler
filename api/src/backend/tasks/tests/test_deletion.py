@@ -3,6 +3,7 @@ from unittest.mock import call, patch
 import pytest
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.test import override_settings
 
 from api.models import Provider, Tenant
 from tasks.jobs.deletion import delete_provider, delete_tenant
@@ -55,6 +56,29 @@ class TestDeleteProvider:
                 "tenant-db",
                 non_existent_pk,
             )
+
+    @override_settings(ATTACK_PATHS_ENABLED=False)
+    def test_delete_provider_skips_neo4j_when_attack_paths_disabled(
+        self, providers_fixture
+    ):
+        with (
+            patch(
+                "tasks.jobs.deletion.graph_database.get_database_name",
+            ) as mock_get_database_name,
+            patch(
+                "tasks.jobs.deletion.graph_database.drop_subgraph"
+            ) as mock_drop_subgraph,
+        ):
+            instance = providers_fixture[0]
+            tenant_id = str(instance.tenant_id)
+            result = delete_provider(tenant_id, instance.id)
+
+            assert result
+            with pytest.raises(ObjectDoesNotExist):
+                Provider.objects.get(pk=instance.id)
+
+            mock_get_database_name.assert_not_called()
+            mock_drop_subgraph.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -142,3 +166,31 @@ class TestDeleteTenant:
             mock_get_database_name.assert_called_once_with(tenant.id)
             mock_drop_subgraph.assert_not_called()
             mock_drop_database.assert_called_once_with("tenant-db")
+
+    @override_settings(ATTACK_PATHS_ENABLED=False)
+    def test_delete_tenant_skips_neo4j_when_attack_paths_disabled(
+        self, tenants_fixture, providers_fixture
+    ):
+        with (
+            patch(
+                "tasks.jobs.deletion.graph_database.get_database_name",
+            ) as mock_get_database_name,
+            patch(
+                "tasks.jobs.deletion.graph_database.drop_subgraph"
+            ) as mock_drop_subgraph,
+            patch(
+                "tasks.jobs.deletion.graph_database.drop_database"
+            ) as mock_drop_database,
+        ):
+            tenant = tenants_fixture[0]
+
+            assert Tenant.objects.filter(id=tenant.id).exists()
+
+            deletion_summary = delete_tenant(tenant.id)
+
+            assert deletion_summary is not None
+            assert not Tenant.objects.filter(id=tenant.id).exists()
+
+            mock_get_database_name.assert_not_called()
+            mock_drop_subgraph.assert_not_called()
+            mock_drop_database.assert_not_called()

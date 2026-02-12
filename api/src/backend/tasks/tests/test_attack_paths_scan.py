@@ -3,8 +3,10 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, call, patch
 
 import pytest
+from django.test import override_settings
 from tasks.jobs.attack_paths import findings as findings_module
 from tasks.jobs.attack_paths import internet as internet_module
+from tasks.jobs.attack_paths.db_utils import can_provider_run_attack_paths_scan
 from tasks.jobs.attack_paths.scan import run as attack_paths_run
 
 from api.models import (
@@ -18,6 +20,17 @@ from api.models import (
     StatusChoices,
 )
 from prowler.lib.check.models import Severity
+
+
+@pytest.mark.django_db
+class TestCanProviderRunAttackPathsScan:
+    @override_settings(ATTACK_PATHS_ENABLED=False)
+    def test_returns_false_when_attack_paths_disabled(self, providers_fixture):
+        provider = providers_fixture[0]
+        result = can_provider_run_attack_paths_scan(
+            str(provider.tenant_id), provider.id
+        )
+        assert result is False
 
 
 @pytest.mark.django_db
