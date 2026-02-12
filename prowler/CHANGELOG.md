@@ -13,6 +13,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🔄 Changed
 
 - Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
+- GitHub provider enhanced documentation and `repository_branch_delete_on_merge_enabled` logic [(#9830)](https://github.com/prowler-cloud/prowler/pull/9830)
 
 ## [5.18.2] (Prowler UNRELEASED)
 
@@ -58,7 +59,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure SQL Server service metadata to new format [(#9627)](https://github.com/prowler-cloud/prowler/pull/9627)
 - Update Azure Network service metadata to new format [(#9624)](https://github.com/prowler-cloud/prowler/pull/9624)
 - Update Azure Storage service metadata to new format [(#9628)](https://github.com/prowler-cloud/prowler/pull/9628)
-- GitHub provider enhanced documentation and `repository_branch_delete_on_merge_enabled` logic [(#9830)](https://github.com/prowler-cloud/prowler/pull/9830)
 
 ### 🐞 Fixed
 

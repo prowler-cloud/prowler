@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Attack Paths: Query list now shows their name and short description, when one is selected it also shows a longer description and an attribution if it has it [(#9983)](https://github.com/prowler-cloud/prowler/pull/9983)
+- Updated GitHub provider form placeholder to clarify both username and organization names are valid inputs [(#9830)](https://github.com/prowler-cloud/prowler/pull/9830)
 
 ---
 
@@ -60,7 +61,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
-- Updated GitHub provider form placeholder to clarify both username and organization names are valid inputs [(#9830)](https://github.com/prowler-cloud/prowler/pull/9830)
 - Refactor Lighthouse AI MCP tool filtering from blacklist to whitelist approach for improved security [(#9802)](https://github.com/prowler-cloud/prowler/pull/9802)
 - Refactor ScatterPlot as reusable generic component with TypeScript generics [(#9664)](https://github.com/prowler-cloud/prowler/pull/9664)
 - Rename resource_group filter to group in Resources page and Overview cards [(#9492)](https://github.com/prowler-cloud/prowler/pull/9492)
