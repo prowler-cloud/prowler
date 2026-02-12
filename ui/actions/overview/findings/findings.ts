@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
 import { FindingsSeverityOverviewResponse } from "./types";
@@ -28,17 +29,8 @@ export const getFindingsByStatus = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  // Handle multiple filters, but exclude muted filter as overviews endpoint doesn't support it
-  Object.entries(filters).forEach(([key, value]) => {
-    // The overviews/findings endpoint does not support status or muted filters
-    // (allowed filters include date, region, provider fields). Exclude unsupported ones.
-    if (
-      key !== "filter[search]" &&
-      key !== "filter[muted]" &&
-      key !== "filter[status]"
-    ) {
-      url.searchParams.append(key, String(value));
-    }
+  appendSanitizedProviderTypeFilters(url, filters, {
+    excludedKeys: ["filter[search]", "filter[muted]", "filter[status]"],
   });
 
   try {
@@ -62,15 +54,8 @@ export const getFindingsBySeverity = async ({
 
   const url = new URL(`${apiBaseUrl}/overviews/findings_severity`);
 
-  // Handle multiple filters, but exclude unsupported filters
-  Object.entries(filters).forEach(([key, value]) => {
-    if (
-      key !== "filter[search]" &&
-      key !== "filter[muted]" &&
-      value !== undefined
-    ) {
-      url.searchParams.append(key, String(value));
-    }
+  appendSanitizedProviderTypeFilters(url, filters, {
+    excludedKeys: ["filter[search]", "filter[muted]"],
   });
 
   try {

@@ -36,6 +36,7 @@ from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
 from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
+from prowler.lib.outputs.compliance.csa.csa_gcp import GCPCSA
 from prowler.lib.outputs.compliance.csa.csa_azure import AzureCSA
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
@@ -112,6 +113,7 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name == "prowler_threatscore_gcp", ProwlerThreatScoreGCP),
         (lambda name: name == "ccc_gcp", CCC_GCP),
         (lambda name: name == "c5_gcp", GCPC5),
+        (lambda name: name.startswith("csa_"), GCPCSA),
     ],
     "kubernetes": [
         (lambda name: name.startswith("cis_"), KubernetesCIS),
