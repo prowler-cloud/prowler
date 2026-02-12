@@ -135,3 +135,16 @@ prowler gcp --impersonate-service-account <service-account-email>
 ```
 
 More details on authentication methods in the [Authentication](/user-guide/providers/gcp/authentication) page.
+
+### Skip API Check
+
+By default, Prowler verifies which Google Cloud APIs are enabled before running checks for each service. To skip this verification and assume all APIs are active, use the `--skip-api-check` flag:
+
+```console
+prowler gcp --skip-api-check
+```
+
+<Note>
+This is useful when the authenticated principal lacks the `serviceusage.services.list` permission but has access to individual service APIs.
+
+</Note>
