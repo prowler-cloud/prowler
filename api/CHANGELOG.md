@@ -4,6 +4,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.20.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- OpenStack provider support [(#10003)](https://github.com/prowler-cloud/prowler/pull/10003)
+
 ### 🔄 Changed
 
 - Attack Paths: Queries definition now has short description and attribution [(#9983)](https://github.com/prowler-cloud/prowler/pull/9983)
@@ -12,6 +16,10 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support CSA CCM 4.0 for the GCP provider [(#10042)](https://github.com/prowler-cloud/prowler/pull/10042)
 - Support CSA CCM 4.0 for the Azure provider [(#10039)](https://github.com/prowler-cloud/prowler/pull/10039)
 - Support CSA CCM 4.0 for the Oracle Cloud provider [(#10057)](https://github.com/prowler-cloud/prowler/pull/10057)
+
+### 🔐 Security
+
+- Pillow 12.1.1 (CVE-2021-25289) [(#10027)](https://github.com/prowler-cloud/prowler/pull/10027)
 
 ---
 
