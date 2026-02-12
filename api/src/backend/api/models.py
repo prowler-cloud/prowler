@@ -288,6 +288,7 @@ class Provider(RowLevelSecurityProtectedModel):
         ORACLECLOUD = "oraclecloud", _("Oracle Cloud Infrastructure")
         ALIBABACLOUD = "alibabacloud", _("Alibaba Cloud")
         CLOUDFLARE = "cloudflare", _("Cloudflare")
+        OPENSTACK = "openstack", _("OpenStack")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -407,6 +408,15 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="Cloudflare Account ID must be a 32-character hexadecimal string.",
                 code="cloudflare-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_openstack_uid(value):
+        if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,254}$", value):
+            raise ModelValidationError(
+                detail="OpenStack provider ID must be a valid project ID (UUID or project name).",
+                code="openstack-uid",
                 pointer="/data/attributes/uid",
             )
 
