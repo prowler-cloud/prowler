@@ -189,6 +189,18 @@ export interface GenericAttributesMetadata {
   Type: string | null;
 }
 
+export interface CSAAttributesMetadata {
+  Section: string;
+  CCMLite: string;
+  IaaS: string;
+  PaaS: string;
+  SaaS: string;
+  ScopeApplicability: Array<{
+    ReferenceId: string;
+    Identifiers: string[];
+  }>;
+}
+
 export interface CCCAttributesMetadata {
   FamilyName: string;
   FamilyDescription: string;
@@ -227,6 +239,7 @@ export interface AttributesItemData {
         | C5AttributesMetadata[]
         | MITREAttributesMetadata[]
         | CCCAttributesMetadata[]
+        | CSAAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
       // MITRE structure
