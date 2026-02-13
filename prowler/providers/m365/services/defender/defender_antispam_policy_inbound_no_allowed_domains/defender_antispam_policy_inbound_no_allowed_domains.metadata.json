@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Defender Anti-Spam Policy",
+  "ResourceGroup": "security",
   "Description": "Ensure that inbound anti-spam policies do not have any domains listed in the AllowedSenderDomains. Messages from these domains bypass most email protections, increasing the risk of successful phishing attacks.",
   "Risk": "Having domains in the AllowedSenderDomains list allows emails from these domains to bypass essential security checks, increasing the risk of phishing attacks and other malicious activities.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/anti-spam-protection-about#allow-and-block-lists-in-anti-spam-policies",

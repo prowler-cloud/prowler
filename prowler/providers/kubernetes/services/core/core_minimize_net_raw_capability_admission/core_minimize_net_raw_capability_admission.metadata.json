@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
+  "ResourceGroup": "container",
   "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers with the potentially dangerous NET_RAW capability, which can be exploited by malicious containers.",
   "Risk": "Allowing containers with NET_RAW capability increases the risk of network attacks and privilege escalation.",
   "RelatedUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context",

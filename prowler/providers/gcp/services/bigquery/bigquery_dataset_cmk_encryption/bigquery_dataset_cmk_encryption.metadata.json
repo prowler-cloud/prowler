@@ -12,9 +12,6 @@
   "Risk": "Without **CMEK**, organizations lose **cryptographic control** of data at rest, weakening **confidentiality** and **access governance**. Lack of custom **key rotation**, **revocation** (kill switch), and location control hinders incident response and may conflict with data-sovereignty requirements.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/BigQuery/enable-table-encryption-with-cmks.html",
-    "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/ensure-gcp-big-query-tables-are-encrypted-with-customer-supplied-encryption-keys-csek-1#terraform",
-    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11",
     "https://cloud.google.com/bigquery/docs/customer-managed-encryption"
   ],
   "Remediation": {

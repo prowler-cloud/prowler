@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "database",
   "Description": "**ElastiCache for Redis replication groups** have **Multi-AZ automatic failover** enabled, distributing primary and replicas across distinct Availability Zones",
   "Risk": "Without **Multi-AZ failover**, a node or AZ outage can make Redis endpoints unreachable, reducing **availability**. Cold-cache rebuilds shift load to databases, risking saturation and cascading timeouts. Recent writes may be lost during failures, impacting **integrity**.",
   "RelatedUrl": "",

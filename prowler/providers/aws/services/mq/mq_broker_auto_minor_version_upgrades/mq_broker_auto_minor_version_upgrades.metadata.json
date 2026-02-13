@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsAmazonMQBroker",
+  "ResourceGroup": "messaging",
   "Description": "**Amazon MQ brokers** have `autoMinorVersionUpgrade` enabled to automatically apply supported minor and patch engine updates during the scheduled maintenance window.",
   "Risk": "Without automatic minor upgrades, brokers may run **known-vulnerable engine versions**, enabling exploits that impact:\n- **Confidentiality**: message disclosure\n- **Integrity**: tampering or replay\n- **Availability**: crashes/DoS and instability\n\nDelayed patches also increase operational risk and drift.",
   "RelatedUrl": "",

@@ -1,0 +1,112 @@
+name: Test Impact Analysis
+
+on:
+  workflow_call:
+    outputs:
+      run-all:
+        description: "Whether to run all tests (critical path changed)"
+        value: ${{ jobs.analyze.outputs.run-all }}
+      sdk-tests:
+        description: "SDK test paths to run"
+        value: ${{ jobs.analyze.outputs.sdk-tests }}
+      api-tests:
+        description: "API test paths to run"
+        value: ${{ jobs.analyze.outputs.api-tests }}
+      ui-e2e:
+        description: "UI E2E test paths to run"
+        value: ${{ jobs.analyze.outputs.ui-e2e }}
+      modules:
+        description: "Comma-separated list of affected modules"
+        value: ${{ jobs.analyze.outputs.modules }}
+      has-tests:
+        description: "Whether there are any tests to run"
+        value: ${{ jobs.analyze.outputs.has-tests }}
+      has-sdk-tests:
+        description: "Whether there are SDK tests to run"
+        value: ${{ jobs.analyze.outputs.has-sdk-tests }}
+      has-api-tests:
+        description: "Whether there are API tests to run"
+        value: ${{ jobs.analyze.outputs.has-api-tests }}
+      has-ui-e2e:
+        description: "Whether there are UI E2E tests to run"
+        value: ${{ jobs.analyze.outputs.has-ui-e2e }}
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run-all: ${{ steps.impact.outputs.run-all }}
+      sdk-tests: ${{ steps.impact.outputs.sdk-tests }}
+      api-tests: ${{ steps.impact.outputs.api-tests }}
+      ui-e2e: ${{ steps.impact.outputs.ui-e2e }}
+      modules: ${{ steps.impact.outputs.modules }}
+      has-tests: ${{ steps.impact.outputs.has-tests }}
+      has-sdk-tests: ${{ steps.set-flags.outputs.has-sdk-tests }}
+      has-api-tests: ${{ steps.set-flags.outputs.has-api-tests }}
+      has-ui-e2e: ${{ steps.set-flags.outputs.has-ui-e2e }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+
+      - name: Setup Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: '3.12'
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Analyze test impact
+        id: impact
+        run: |
+          echo "Changed files:"
+          echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n'
+          echo ""
+          python .github/scripts/test-impact.py ${{ steps.changed-files.outputs.all_changed_files }}
+
+      - name: Set convenience flags
+        id: set-flags
+        run: |
+          if [[ -n "${{ steps.impact.outputs.sdk-tests }}" ]]; then
+            echo "has-sdk-tests=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-sdk-tests=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if [[ -n "${{ steps.impact.outputs.api-tests }}" ]]; then
+            echo "has-api-tests=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-api-tests=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if [[ -n "${{ steps.impact.outputs.ui-e2e }}" ]]; then
+            echo "has-ui-e2e=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-ui-e2e=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Summary
+        run: |
+          echo "## Test Impact Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ steps.impact.outputs.run-all }}" == "true" ]]; then
+            echo "🚨 **Critical path changed - running ALL tests**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Affected Modules" >> $GITHUB_STEP_SUMMARY
+            echo "\`${{ steps.impact.outputs.modules }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            echo "### Tests to Run" >> $GITHUB_STEP_SUMMARY
+            echo "| Category | Paths |" >> $GITHUB_STEP_SUMMARY
+            echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| SDK Tests | \`${{ steps.impact.outputs.sdk-tests || 'none' }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| API Tests | \`${{ steps.impact.outputs.api-tests || 'none' }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| UI E2E | \`${{ steps.impact.outputs.ui-e2e || 'none' }}\` |" >> $GITHUB_STEP_SUMMARY
+          fi

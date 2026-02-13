@@ -4,12 +4,12 @@ import { Snippet } from "@heroui/snippet";
 import { Trash2Icon } from "lucide-react";
 
 import { revokeApiKey } from "@/actions/api-keys/api-keys";
+import { Modal } from "@/components/shadcn/modal";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert/Alert";
-import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
 import { ModalButtons } from "@/components/ui/custom/custom-modal-buttons";
 
 import { FALLBACK_VALUES } from "./api-keys/constants";
@@ -49,8 +49,8 @@ export const RevokeApiKeyModal = ({
   });
 
   return (
-    <CustomAlertModal
-      isOpen={isOpen}
+    <Modal
+      open={isOpen}
       onOpenChange={(open) => !open && handleClose()}
       title="Revoke API Key"
       size="lg"
@@ -95,6 +95,6 @@ export const RevokeApiKeyModal = ({
         submitColor="danger"
         submitIcon={<Trash2Icon size={24} />}
       />
-    </CustomAlertModal>
+    </Modal>
   );
 };

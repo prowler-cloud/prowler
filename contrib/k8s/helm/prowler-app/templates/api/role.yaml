@@ -1,0 +1,29 @@
+# https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-44-kubernetes-credentials
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "prowler.fullname" . }}-api
+  labels:
+    {{- include "prowler.labels" . | nindent 4 }}
+rules:
+- apiGroups: [""]
+  resources: ["pods", "configmaps", "nodes", "namespaces"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["clusterrolebindings", "rolebindings", "clusterroles", "roles"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "prowler.fullname" . }}-api
+  labels:
+    {{- include "prowler.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "prowler.fullname" . }}-api
+subjects:
+- kind: ServiceAccount
+  name: {{ include "prowler.api.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}

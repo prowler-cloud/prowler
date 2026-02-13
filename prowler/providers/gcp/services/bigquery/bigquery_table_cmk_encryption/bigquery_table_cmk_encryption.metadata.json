@@ -12,8 +12,6 @@
   "Risk": "Without `CMEK`, encryption keys are not under your control, reducing **key custody** and auditability. You can't enforce **region-bound keys**, custom **rotation**, or revoke access by disabling a key, weakening **confidentiality** and **compliance**. A compromised account may retain data access without an external KMS gate.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/BigQuery/enable-table-encryption-with-cmks.html",
-    "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/ensure-gcp-big-query-tables-are-encrypted-with-customer-supplied-encryption-keys-csek#terraform",
     "https://cloud.google.com/bigquery/docs/customer-managed-encryption"
   ],
   "Remediation": {

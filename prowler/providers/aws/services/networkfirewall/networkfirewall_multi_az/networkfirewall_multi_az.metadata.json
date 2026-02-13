@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsNetworkFirewallFirewall",
+  "ResourceGroup": "network",
   "Description": "**AWS Network Firewall firewalls** are assessed for **multi-AZ deployment**, expecting subnet mappings in more than one Availability Zone.\n\nA configuration with only one subnet mapping indicates a single-AZ firewall.",
   "Risk": "Single-AZ firewalls are a single point of failure. An AZ outage can drop or blackhole traffic, degrading **availability**, or prompt route changes that bypass inspection, exposing **confidentiality** and **integrity** to unfiltered access, data exfiltration, and lateral movement.",
   "RelatedUrl": "",

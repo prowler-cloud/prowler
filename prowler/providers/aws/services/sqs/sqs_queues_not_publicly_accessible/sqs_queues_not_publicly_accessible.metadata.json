@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsSqsQueue",
+  "ResourceGroup": "messaging",
   "Description": "Amazon SQS queue policies are assessed for **public access**. The finding highlights queues with `Allow` statements using a wildcard `Principal` without restrictive conditions, compared to queues that only grant access to the owning account or explicitly trusted principals.",
   "Risk": "**Public SQS access** can expose message data (**confidentiality**), enable unauthorized send/receive or tampering (**integrity**), and allow purge/delete operations that disrupt processing (**availability**). It may also trigger unbounded message ingestion, causing cost spikes and consumer overload.",
   "RelatedUrl": "",

@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbLoadBalancer",
+  "ResourceGroup": "network",
   "Description": "Classic Load Balancer with **cross-zone load balancing** distributes requests across registered targets in all enabled Availability Zones.\n\nThis evaluates whether that setting is `enabled`, instead of restricting distribution to targets within only the same zone.",
   "Risk": "Without **cross-zone load balancing**, traffic can concentrate in one AZ due to DNS skew or uneven capacity, creating **hot spots**, timeouts, and latency. This degrades service **availability** and increases the chance of cascading failures during AZ impairment or instance loss.",
   "RelatedUrl": "",

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsKmsKey",
+  "ResourceGroup": "security",
   "Description": "**AWS KMS customer-managed keys** in an `Enabled` state are assessed for the `multi-Region` setting. The finding highlights keys with the `multi-Region` property enabled.",
   "Risk": "Shared key material across Regions lets access in one Region decrypt data from another, eroding **confidentiality** and **data residency**. A misconfigured policy or weaker controls in a replica expand the blast radius. For signing/HMAC keys, compromise enables cross-Region signature forgery, impacting **integrity** and **auditability**.",
   "RelatedUrl": "",

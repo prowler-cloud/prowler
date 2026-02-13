@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbLoadBalancer",
+  "ResourceGroup": "network",
   "Description": "**Classic Load Balancers** are evaluated for association with **AWS Shield Advanced** as a protected resource.\n\nIdentifies load balancers without an active Shield Advanced protection when the subscription is enabled.",
   "Risk": "Unprotected ELB Classic endpoints are more exposed to large L3/L4 DDoS (e.g., SYN/UDP floods), risking **availability loss** from connection exhaustion and failed health checks, plus operational impact from autoscaling and data transfer surges.",
   "RelatedUrl": "",
