@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsKmsKey",
+  "ResourceGroup": "security",
   "Description": "**KMS keys** are assessed for **excessive access** in key policies or grants, including `*` principals and broadly scoped permissions to multiple identities.",
   "Risk": "Broad access to a **KMS key** enables unauthorized `kms:Decrypt` and data-key generation, breaking **confidentiality**. With admin rights, attackers can change policies or schedule deletion, undermining control **integrity** and threatening **availability** of data dependent on the key.",
   "RelatedUrl": "",

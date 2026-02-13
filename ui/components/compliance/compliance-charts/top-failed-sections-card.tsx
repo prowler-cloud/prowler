@@ -34,10 +34,7 @@ export function TopFailedSectionsCard({
       : "Top Failed Sections";
 
   return (
-    <Card
-      variant="base"
-      className="flex min-h-[372px] w-full flex-col sm:min-w-[500px]"
-    >
+    <Card variant="base" className="flex h-full min-h-[372px] w-full flex-col">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>

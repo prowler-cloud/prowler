@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
   "Description": "It is recommended to enforce all incoming connections to SQL database instances to use **SSL**.\n\nSQL database connections if successfully intercepted (MITM) can reveal sensitive data like credentials, database queries, and query outputs. For security, it is recommended to always use SSL encryption when connecting to your instance.",
   "Risk": "If **SSL is not enabled**, data in transit (including credentials and query results) can be intercepted by attackers performing **Man-in-the-Middle (MITM) attacks**.\n\nThis compromises data confidentiality and integrity.",
   "RelatedUrl": "",

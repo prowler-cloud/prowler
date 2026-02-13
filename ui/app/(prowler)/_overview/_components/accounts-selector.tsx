@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
 
 import {
@@ -22,6 +22,7 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 import type { ProviderProps, ProviderType } from "@/types/providers";
 
 const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
@@ -42,10 +43,11 @@ interface AccountsSelectorProps {
 }
 
 export function AccountsSelector({ providers }: AccountsSelectorProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const { navigateWithParams } = useUrlFilters();
 
-  const current = searchParams.get("filter[provider_id__in]") || "";
+  const filterKey = "filter[provider_id__in]";
+  const current = searchParams.get(filterKey) || "";
   const selectedTypes = searchParams.get("filter[provider_type__in]") || "";
   const selectedTypesList = selectedTypes
     ? selectedTypes.split(",").filter(Boolean)
@@ -60,38 +62,37 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
     );
 
   const handleMultiValueChange = (ids: string[]) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (ids.length > 0) {
-      params.set("filter[provider_id__in]", ids.join(","));
-    } else {
-      params.delete("filter[provider_id__in]");
-    }
+    navigateWithParams((params) => {
+      params.delete(filterKey);
 
-    // Auto-deselect provider types that no longer have any selected accounts
-    if (selectedTypesList.length > 0) {
-      // Get provider types of currently selected accounts
-      const selectedProviders = providers.filter((p) => ids.includes(p.id));
-      const selectedProviderTypes = new Set(
-        selectedProviders.map((p) => p.attributes.provider),
-      );
-
-      // Keep only provider types that still have selected accounts
-      const remainingProviderTypes = selectedTypesList.filter((type) =>
-        selectedProviderTypes.has(type as ProviderType),
-      );
-
-      // Update provider_type__in filter
-      if (remainingProviderTypes.length > 0) {
-        params.set(
-          "filter[provider_type__in]",
-          remainingProviderTypes.join(","),
-        );
-      } else {
-        params.delete("filter[provider_type__in]");
+      if (ids.length > 0) {
+        params.set(filterKey, ids.join(","));
       }
-    }
 
-    router.push(`?${params.toString()}`, { scroll: false });
+      // Auto-deselect provider types that no longer have any selected accounts
+      if (selectedTypesList.length > 0) {
+        // Get provider types of currently selected accounts
+        const selectedProviders = providers.filter((p) => ids.includes(p.id));
+        const selectedProviderTypes = new Set(
+          selectedProviders.map((p) => p.attributes.provider),
+        );
+
+        // Keep only provider types that still have selected accounts
+        const remainingProviderTypes = selectedTypesList.filter((type) =>
+          selectedProviderTypes.has(type as ProviderType),
+        );
+
+        // Update provider_type__in filter
+        if (remainingProviderTypes.length > 0) {
+          params.set(
+            "filter[provider_type__in]",
+            remainingProviderTypes.join(","),
+          );
+        } else {
+          params.delete("filter[provider_type__in]");
+        }
+      }
+    });
   };
 
   const selectedLabel = () => {

@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsCloudTrailTrail",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudTrail activity** is analyzed for AWS identities executing a broad mix of discovery APIs like `List*`, `Describe*`, and `Get*` within a recent time window.\n\nAn identity exceeding a configurable ratio of these actions indicates potential enumeration behavior by that principal.",
   "Risk": "Concentrated discovery activity signals **reconnaissance** with valid credentials. Adversaries can map assets and policies to enable **privilege escalation**, target data stores for **exfiltration** (confidentiality), and identify services to disrupt (availability), supporting stealthy lateral movement.",
   "RelatedUrl": "",

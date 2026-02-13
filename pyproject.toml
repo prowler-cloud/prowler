@@ -40,8 +40,9 @@ dependencies = [
   "azure-mgmt-loganalytics==12.0.0",
   "azure-monitor-query==2.0.0",
   "azure-storage-blob==12.24.1",
-  "boto3==1.39.15",
-  "botocore==1.39.15",
+  "cloudflare==4.3.1",
+  "boto3==1.40.61",
+  "botocore==1.40.61",
   "colorama==0.4.6",
   "cryptography==44.0.1",
   "dash==3.1.1",
@@ -56,6 +57,7 @@ dependencies = [
   "microsoft-kiota-abstractions==1.9.2",
   "msgraph-sdk==1.23.0",
   "numpy==2.0.2",
+  "openstacksdk==4.2.0",
   "pandas==2.2.3",
   "py-ocsf-models==0.5.0",
   "pydantic (>=2.0,<3.0)",
@@ -64,7 +66,7 @@ dependencies = [
   "pytz==2025.1",
   "schema==0.7.5",
   "shodan==1.31.0",
-  "slack-sdk==3.34.0",
+  "slack-sdk==3.39.0",
   "tabulate==0.9.0",
   "tzlocal==5.3.1",
   "py-iam-expand==0.1.0",
@@ -90,7 +92,7 @@ maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}
 name = "prowler"
 readme = "README.md"
 requires-python = ">3.9.1,<3.13"
-version = "5.17.0"
+version = "5.19.0"
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"
@@ -113,6 +115,10 @@ bandit = "1.8.3"
 black = "25.1.0"
 coverage = "7.6.12"
 docker = "7.1.0"
+filelock = [
+  {version = "3.20.3", python = ">=3.10"},
+  {version = "3.19.1", python = "<3.10"}
+]
 flake8 = "7.1.2"
 freezegun = "1.5.1"
 marshmallow = ">=3.15.0,<4.0.0"
@@ -127,7 +133,7 @@ pytest-cov = "6.0.0"
 pytest-env = "1.1.5"
 pytest-randomly = "3.16.0"
 pytest-xdist = "3.6.1"
-safety = "3.2.9"
+safety = "3.7.0"
 vulture = "2.14"
 
 [tool.poetry-version-plugin]
