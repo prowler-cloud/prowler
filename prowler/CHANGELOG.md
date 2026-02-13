@@ -25,6 +25,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update GCP API Keys service metadata to new format [(#9637)](https://github.com/prowler-cloud/prowler/pull/9637)
 - Update GCP BigQuery service metadata to new format [(#9638)](https://github.com/prowler-cloud/prowler/pull/9638)
 
+### 🔐 Security
+
+- Bumped `py-ocsf-models` to 0.8.1 and `cryptography` to 44.0.3 [(#10059)](https://github.com/prowler-cloud/prowler/pull/10059)
+
+---
+
 ## [5.18.3] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
