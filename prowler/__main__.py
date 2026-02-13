@@ -66,6 +66,7 @@ from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
 from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
+from prowler.lib.outputs.compliance.csa.csa_alibabacloud import AlibabaCloudCSA
 from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
 from prowler.lib.outputs.compliance.csa.csa_azure import AzureCSA
 from prowler.lib.outputs.compliance.csa.csa_gcp import GCPCSA
@@ -1113,6 +1114,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
+            elif compliance_name == "csa_ccm_4.0_alibabacloud":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                csa_ccm_4_0_alibabacloud = AlibabaCloudCSA(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(csa_ccm_4_0_alibabacloud)
+                csa_ccm_4_0_alibabacloud.batch_write_data_to_file()
             elif compliance_name == "prowler_threatscore_alibabacloud":
                 filename = (
                     f"{output_options.output_directory}/compliance/"
