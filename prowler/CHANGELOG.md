@@ -6,6 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- `defender_identity_health_issues_resolved` check for M365 provider [(#10060)](https://github.com/prowler-cloud/prowler/pull/10060)
 - OpenStack provider `clouds_yaml_content` parameter for API integration [(#10003)](https://github.com/prowler-cloud/prowler/pull/10003)
 - `defender_safe_attachments_policy_enabled` check for M365 provider [(#9833)](https://github.com/prowler-cloud/prowler/pull/9833)
 - `defender_safelinks_policy_enabled` check for M365 provider [(#9832)](https://github.com/prowler-cloud/prowler/pull/9832)
