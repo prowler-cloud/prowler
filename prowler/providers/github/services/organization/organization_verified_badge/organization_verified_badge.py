@@ -15,18 +15,7 @@ class organization_verified_badge(Check):
         for org in organization_client.organizations.values():
             report = CheckReportGithub(metadata=self.metadata(), resource=org)
 
-            is_verified = getattr(org, "is_verified", None)
-
-            # Treat None as False (edge case)
-            if is_verified is None:
-                is_verified = False
-
-            if is_verified is False:
-                raw = getattr(org, "raw_data", None)
-                if isinstance(raw, dict):
-                    is_verified = bool(raw.get("is_verified", False))
-
-            if is_verified:
+            if org.is_verified:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Organization {org.name} is verified on GitHub."
