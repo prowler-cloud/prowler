@@ -14,8 +14,7 @@
   "AdditionalURLs": [
     "https://cloud.google.com/load-balancing/docs/https/https-logging-monitoring#gcloud:-global-mode",
     "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudLoadBalancing/https-load-balancer-logging-enabled.html",
-    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudLoadBalancing/https-load-balancer-logging-enabled.html",
-    "https://docs.cloud.google.com/load-balancing/docs/l7-internal/monitoring"
+    "https://cloud.google.com/load-balancing/docs/l7-internal/monitoring"
   ],
   "Remediation": {
     "Code": {
