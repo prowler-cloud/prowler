@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "GitHubOrganization",
+  "ResourceGroup": "governance",
   "Description": "Ensure that repository creation is restricted so that only trusted owners or specific teams can create new repositories within the organization.",
   "Risk": "Allowing all members to create repositories increases the likelihood of shadow repositories, data leakage, or malicious projects being introduced without oversight.",
   "RelatedUrl": "https://docs.github.com/en/organizations/managing-organization-settings/restricting-repository-creation-in-your-organization",

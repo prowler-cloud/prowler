@@ -1,4 +1,3 @@
-import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
@@ -26,20 +25,20 @@ export default async function Providers({
 
   return (
     <ContentLayout title="Cloud Providers" icon="lucide:cloud-cog">
-      <FilterControls search customFilters={filterProviders || []} />
-      <Spacer y={8} />
-      <ProvidersActions />
-      <Spacer y={8} />
-      <Suspense key={searchParamsKey} fallback={<ProvidersTableFallback />}>
-        <ProvidersTable searchParams={resolvedSearchParams} />
-      </Suspense>
+      <div className="flex flex-col gap-6">
+        <FilterControls search customFilters={filterProviders || []} />
+        <ProvidersActions />
+        <Suspense key={searchParamsKey} fallback={<ProvidersTableFallback />}>
+          <ProvidersTable searchParams={resolvedSearchParams} />
+        </Suspense>
+      </div>
     </ContentLayout>
   );
 }
 
 const ProvidersActions = () => {
   return (
-    <div className="flex items-center gap-4 md:justify-end">
+    <div className="flex flex-wrap gap-4 md:justify-end">
       <ManageGroupsButton />
       <MutedFindingsConfigButton />
       <AddProviderButton />

@@ -105,13 +105,24 @@ export class ScansPage extends BasePage {
     await expect(this.scanTable).toBeVisible();
 
     // Find a row that contains the account ID (provider UID in Cloud Provider column)
+    // Note: Use a more specific locator strategy if possible in the future
     const rowWithAccountId = this.scanTable
       .locator("tbody tr")
       .filter({ hasText: accountId })
       .first();
 
-    // Verify the row with the account ID is visible (provider exists)
-    await expect(rowWithAccountId).toBeVisible();
+    try {
+      // Verify the row with the account ID is visible (provider exists)
+      // Use a short timeout first to allow for a quick check
+      await expect(rowWithAccountId).toBeVisible({ timeout: 5000 });
+    } catch {
+      // If not visible immediately (likely due to async backend processing),
+      // reload the page to fetch the latest data
+      await this.page.reload();
+      await this.verifyPageLoaded();
+      // Wait longer after reload
+      await expect(rowWithAccountId).toBeVisible({ timeout: 15000 });
+    }
 
     // Verify the row contains "scheduled scan" in the Scan name column
     // The scan name "Daily scheduled scan" is displayed as "scheduled scan" in the table

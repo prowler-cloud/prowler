@@ -1,0 +1,38 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_snapshot_not_outdated",
+  "CheckTitle": "Compute Engine disk snapshot is not outdated",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "compute.googleapis.com/Snapshot",
+  "ResourceGroup": "storage",
+  "Description": "Compute Engine **disk snapshots** are evaluated against a configurable age threshold (default `90` days) to identify snapshots exceeding the organization's retention policy.",
+  "Risk": "Outdated snapshots containing **sensitive data** expand the **attack surface** and risk data exposure if compromised.\n\nStale snapshots may violate compliance requirements, complicate disaster recovery efforts, and introduce configuration drift that affects system **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/remove-old-disk-snapshots.html",
+    "https://cloud.google.com/compute/docs/disks/create-snapshots",
+    "https://cloud.google.com/compute/docs/disks/snapshot-best-practices"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud compute snapshots delete SNAPSHOT_NAME --project=PROJECT_ID",
+      "NativeIaC": "",
+      "Other": "1. Open Google Cloud Console and navigate to Compute Engine > Snapshots\n2. Identify snapshots older than your retention policy\n3. Select outdated snapshots and click **Delete**\n4. Confirm the deletion\n\nTo automate cleanup, create a snapshot schedule with auto-delete policies under Compute Engine > Snapshots > Snapshot schedules.",
+      "Terraform": "```hcl\nresource \"google_compute_resource_policy\" \"snapshot_schedule\" {\n  name   = \"snapshot-schedule-with-retention\"\n  region = var.region\n\n  snapshot_schedule_policy {\n    schedule {\n      daily_schedule {\n        days_in_cycle = 1\n        start_time    = \"04:00\"\n      }\n    }\n\n    # Automatically delete snapshots older than 90 days\n    retention_policy {\n      max_retention_days    = 90\n      on_source_disk_delete = \"KEEP_AUTO_SNAPSHOTS\"\n    }\n  }\n}\n\nresource \"google_compute_disk_resource_policy_attachment\" \"attachment\" {\n  name = google_compute_resource_policy.snapshot_schedule.name\n  disk = google_compute_disk.example.name\n  zone = var.zone\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Implement a snapshot lifecycle policy to automatically delete snapshots older than your organization's retention requirements. Regularly review and clean up outdated snapshots to reduce storage costs and minimize data exposure risks. Consider using scheduled snapshots with automatic deletion policies.",
+      "Url": "https://hub.prowler.com/check/compute_snapshot_not_outdated"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The age threshold is configurable via the `max_snapshot_age_days` parameter in the configuration file (default: 90 days). Snapshots without a creation timestamp will be flagged for manual review."
+}

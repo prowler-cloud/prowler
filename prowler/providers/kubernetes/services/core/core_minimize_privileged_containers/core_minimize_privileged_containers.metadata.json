@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
+  "ResourceGroup": "container",
   "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of privileged containers, which have access to all Linux Kernel capabilities and devices. The use of privileged containers should be controlled and restricted to specific use-cases.",
   "Risk": "Permitting privileged containers by default can lead to security vulnerabilities as these containers have elevated privileges equivalent to the host.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",

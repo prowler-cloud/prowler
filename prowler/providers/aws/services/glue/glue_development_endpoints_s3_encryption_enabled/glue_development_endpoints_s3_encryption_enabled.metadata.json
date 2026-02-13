@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "analytics",
   "Description": "**AWS Glue development endpoints** are evaluated for an attached **security configuration** with **S3 encryption**. Endpoints lacking a security configuration, or with `s3_encryption` set to `DISABLED`, are flagged by this check.",
   "Risk": "Unencrypted S3 writes from dev endpoints leave ETL outputs, temp data, and scripts readable at rest. A misconfigured bucket or stolen creds can expose sensitive content, harming **confidentiality** and triggering compliance issues.",
   "RelatedUrl": "",
