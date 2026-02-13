@@ -11,11 +11,12 @@ except ImportError:
 import re
 import sys
 import tempfile
+import zipfile
 from datetime import datetime
 from hashlib import sha512
 from io import TextIOWrapper
 from ipaddress import ip_address
-from os.path import exists
+from os.path import abspath, exists, join, normpath
 from time import mktime
 from typing import Any, Optional
 
@@ -324,3 +325,25 @@ def get_nested_attribute(obj: Any, attr: str) -> Any:
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
         return ""
+
+
+def safe_extract_zip(zip_file: zipfile.ZipFile, target_dir: str):
+    """
+    Extracts files from a zip archive safely, preventing Zip Slip attacks.
+    Args:
+        zip_file (zipfile.ZipFile): The zip file object to extract.
+        target_dir (str): The directory where files should be extracted.
+    """
+    try:
+        target_dir = abspath(target_dir)
+        for member in zip_file.namelist():
+            member_path = abspath(join(target_dir, member))
+            if not member_path.startswith(target_dir):
+                logger.warning(
+                    f"Attempted Zip Slip attack detected! Skipping extraction of {member} to {member_path}"
+                )
+                continue
+            zip_file.extract(member, target_dir)
+    except Exception as error:
+        logger.error(f"Error extracting zip file safely: {error}")
+
