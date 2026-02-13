@@ -18,7 +18,7 @@
     "https://docs.cloud.google.com/vpc/docs/access-flow-logs",
     "https://cloud.google.com/blog/products/networking/how-to-use-vpc-flow-logs-in-gcp-for-network-traffic-analysis",
     "https://docs.cloud.google.com/vpc/docs/using-flow-logs",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/enable-vpc-flow-logs.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudVPC/enable-vpc-flow-logs.html"
   ],
   "Remediation": {
     "Code": {

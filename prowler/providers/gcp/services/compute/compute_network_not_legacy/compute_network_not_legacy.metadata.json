@@ -6,14 +6,14 @@
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "compute.googleapis.com/Network",
   "Description": "**Google Cloud networks** are evaluated for **legacy mode** (`subnet_mode: legacy`). The finding highlights networks using the older, non-subnetted design instead of **VPC with regional subnets**.",
   "Risk": "Legacy networks lack subnets, peering, and private access. This reduces isolation and forces public IP paths, weakening **confidentiality** and enabling lateral movement/data exfiltration. Coarse controls and routing limits threaten **integrity**. A single global range and gateway create contention that can degrade **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/legacy-vpc-in-use.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/legacy-vpc-in-use.html#",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudVPC/legacy-vpc-in-use.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudVPC/legacy-vpc-in-use.html#",
     "https://cloud.google.com/vpc/docs/using-legacy#deleting_a_legacy_network"
   ],
   "Remediation": {

@@ -6,15 +6,15 @@
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "compute.googleapis.com/BackendService",
   "Description": "**Application Load Balancer** (HTTP/S) backend services have **Cloud Logging for requests** enabled at the backend service level.\n\n*Only load balancers with a backend service support this setting.*",
   "Risk": "Without **request logs**, visibility into HTTP(S) traffic is reduced, hindering detection of credential stuffing, path traversal, WAF bypass, and data exfiltration. This impacts **confidentiality** and **integrity**, and delays incident response; availability issues (surges in `5xx`) may go unnoticed.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/load-balancing/docs/https/https-logging-monitoring#gcloud:-global-mode",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLoadBalancing/enableLoad-balancing-backend-service-logging.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLoadBalancing/https-load-balancer-logging-enabled.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudLoadBalancing/https-load-balancer-logging-enabled.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudLoadBalancing/https-load-balancer-logging-enabled.html",
     "https://docs.cloud.google.com/load-balancing/docs/l7-internal/monitoring"
   ],
   "Remediation": {

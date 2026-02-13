@@ -6,14 +6,14 @@
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "compute.googleapis.com/Instance",
   "Description": "Compute Engine VM disks use **Customer-Supplied Encryption Keys** (`CSEK`) rather than provider-managed keys. The finding flags instances where any attached disk is not protected with the customer-provided key.",
   "Risk": "Without **CSEK**, encryption depends on provider-managed keys, reducing control over key lifecycle and access. This weakens confidentiality, impedes separation of duties, and can delay key revocation, increasing exposure to unauthorized data access and regulatory gaps.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/storage/docs/encryption/using-customer-supplied-keys",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-encryption-with-csek.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/ComputeEngine/enable-encryption-with-csek.html"
   ],
   "Remediation": {
     "Code": {

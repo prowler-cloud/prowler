@@ -6,14 +6,14 @@
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "compute.googleapis.com/Instance",
   "Description": "**Compute Engine VMs** are evaluated for the metadata key `block-project-ssh-keys` set to `true`, indicating **project-wide SSH keys** are blocked and only instance-level or OS Login credentials are honored.",
   "Risk": "Allowing **project-wide SSH keys** lets a single compromised key reach many VMs, amplifying blast radius. This endangers **confidentiality** (data exposure) and **integrity** (unauthorized changes) and enables **lateral movement**. Per-instance revocation and accountability are weakened.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-block-project-wide-ssh-keys.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/ComputeEngine/enable-block-project-wide-ssh-keys.html"
   ],
   "Remediation": {
     "Code": {

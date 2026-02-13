@@ -6,14 +6,14 @@
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "critical",
   "ResourceType": "compute.googleapis.com/Firewall",
   "Description": "**VPC firewall rules** permitting inbound **RDP** (`TCP 3389`) from `0.0.0.0/0` are flagged, including ingress rules that allow all TCP ports or `all` protocols",
   "Risk": "Exposed **RDP** enables Internet-wide scanning and **brute force**. Exploits can yield **remote code execution**, followed by **lateral movement** and data theft.\n\nThis endangers **confidentiality**, **integrity**, and **availability** (e.g., ransomware, service disruption).",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/vpc/docs/using-firewalls",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/unrestricted-rdp-access.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudVPC/unrestricted-rdp-access.html"
   ],
   "Remediation": {
     "Code": {

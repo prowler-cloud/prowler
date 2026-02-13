@@ -6,14 +6,14 @@
   "ServiceName": "compute",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "critical",
   "ResourceType": "compute.googleapis.com/Firewall",
   "Description": "**VPC firewall rules** allowing Internet-sourced **ingress** (`0.0.0.0/0`) to `TCP port 22 (SSH)` are identified, including rules using protocol `all` or `tcp` whose ports or ranges include `22`.",
   "Risk": "Exposed **SSH (22)** enables Internet-wide scanning, **brute force** and **credential stuffing**. Compromise can yield shell access for **data exfiltration**, command execution, and **lateral movement**, undermining **confidentiality** and **integrity**, and risking **availability** through abuse or lockouts.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/vpc/docs/using-firewalls",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/unrestricted-ssh-access.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudVPC/unrestricted-ssh-access.html"
   ],
   "Remediation": {
     "Code": {

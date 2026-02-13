@@ -12,7 +12,7 @@
   "Risk": "Absent **Confidential Computing**, plaintext data in RAM can be exposed via host introspection, hypervisor compromise, or cold-boot/DMA attacks, undermining **confidentiality** and enabling **in-memory tampering** that impacts **integrity** of computations, models, and secrets.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/confidential-computing.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/ComputeEngine/confidential-computing.html",
     "https://cloud.google.com/compute/confidential-vm/docs/creating-cvm-instance:https://cloud.google.com/compute/confidential-vm/docs/about-cvm:https://cloud.google.com/confidential-computing:https://cloud.google.com/blog/products/identity-security/introducing-google-cloud-confidential-computing-with-confidential-vms"
   ],
   "Remediation": {

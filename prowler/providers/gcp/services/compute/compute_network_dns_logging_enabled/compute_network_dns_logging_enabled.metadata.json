@@ -14,7 +14,7 @@
   "AdditionalURLs": [
     "https://cloud.google.com/dns/docs/monitoring",
     "https://docs.cloud.google.com/compute/docs/networking/monitor-dns-failures",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/dns-logging-for-vpcs.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudVPC/dns-logging-for-vpcs.html"
   ],
   "Remediation": {
     "Code": {

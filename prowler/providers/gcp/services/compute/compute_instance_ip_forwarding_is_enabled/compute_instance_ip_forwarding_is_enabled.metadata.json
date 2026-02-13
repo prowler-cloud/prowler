@@ -13,7 +13,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/compute/docs/instances/create-start-instance",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/disable-ip-forwarding.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/ComputeEngine/disable-ip-forwarding.html"
   ],
   "Remediation": {
     "Code": {
