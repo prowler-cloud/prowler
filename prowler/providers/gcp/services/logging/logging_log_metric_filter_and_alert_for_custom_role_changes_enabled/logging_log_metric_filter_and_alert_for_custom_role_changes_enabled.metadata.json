@@ -13,8 +13,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudLogging/enable-custom-role-changes-monitoring.html",
-    "https://cloud.google.com/monitoring/alerts",
-    "https://security.snyk.io/rules/cloud/SNYK-CC-00436"
+    "https://cloud.google.com/monitoring/alerts"
   ],
   "Remediation": {
     "Code": {

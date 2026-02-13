@@ -13,7 +13,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudLogging/enable-vpc-network-changes-monitoring.html",
-    "https://www.gcpweekly.com/gcp-resources/tag/cloud-monitoring/",
     "https://cloud.google.com/monitoring/alerts"
   ],
   "Remediation": {
