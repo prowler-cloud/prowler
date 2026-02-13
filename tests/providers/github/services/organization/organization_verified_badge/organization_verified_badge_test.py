@@ -58,7 +58,10 @@ class Test_organization_verified_badge:
             assert result[0].resource_id == 1
             assert result[0].resource_name == org_name
             assert result[0].status == "PASS"
-            assert result[0].status_extended == f"Organization {org_name} is verified on GitHub."
+            assert (
+                result[0].status_extended
+                == f"Organization {org_name} is verified on GitHub."
+            )
 
     def test_organization_is_verified_false_fail(self):
         organization_client = mock.MagicMock
@@ -91,7 +94,10 @@ class Test_organization_verified_badge:
             assert result[0].resource_id == 1
             assert result[0].resource_name == org_name
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == f"Organization {org_name} is not verified on GitHub."
+            assert (
+                result[0].status_extended
+                == f"Organization {org_name} is not verified on GitHub."
+            )
 
     def test_organization_is_verified_none_edge_case(self):
         organization_client = mock.MagicMock
@@ -125,4 +131,7 @@ class Test_organization_verified_badge:
             assert result[0].resource_name == org_name
             # Treat none like not verified (false)
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == f"Organization {org_name} is not verified on GitHub."
+            assert (
+                result[0].status_extended
+                == f"Organization {org_name} is not verified on GitHub."
+            )
