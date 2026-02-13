@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
 import { ProvidersOverviewResponse } from "./types";
@@ -28,11 +29,7 @@ export const getProvidersOverview = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  Object.entries(filters).forEach(([key, value]) => {
-    if (key !== "filter[search]" && value !== undefined) {
-      url.searchParams.append(key, String(value));
-    }
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const response = await fetch(url.toString(), {

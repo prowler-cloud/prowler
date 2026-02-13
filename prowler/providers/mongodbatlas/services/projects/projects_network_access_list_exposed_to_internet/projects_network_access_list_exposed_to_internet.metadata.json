@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "MongoDBAtlasProject",
+  "ResourceGroup": "governance",
   "Description": "**MongoDB Atlas project network access list** configuration is evaluated for entries that allow access from anywhere (`0.0.0.0/0`, `::/0`, `0.0.0.0`, `::`) or for missing access lists, instead of restricting connections to specific IPs or CIDRs.",
   "Risk": "Internet-wide access enables scanning, brute force, and credential stuffing against database endpoints. A successful compromise can cause data exfiltration (**confidentiality**), unauthorized writes or drops (**integrity**), and service disruption or lockout (**availability**).",
   "RelatedUrl": "",

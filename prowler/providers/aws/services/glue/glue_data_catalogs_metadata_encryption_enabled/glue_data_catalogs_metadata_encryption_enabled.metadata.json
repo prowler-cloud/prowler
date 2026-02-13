@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "analytics",
   "Description": "**AWS Glue Data Catalog** metadata is encrypted at rest when catalog settings use **SSE-KMS** with a KMS key.\n\nCatalogs that do not configure `SSE-KMS` for metadata are considered unencrypted.",
   "Risk": "Unencrypted catalog metadata exposes schemas, partitions, and data locations, reducing **confidentiality**.\n\nAdversaries or over-privileged users can conduct **reconnaissance** and plan lateral movement; tampering with definitions can corrupt queries and results, impacting **integrity**.",
   "RelatedUrl": "",
