@@ -13,9 +13,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/sql/docs/mysql/configure-private-ip",
-    "https://github.com/paladincloud/ce/wiki/gcp-policy",
-    "https://groups.google.com/g/google-appengine/c/qx8TsP1R034",
-    "https://stackoverflow.com/questions/60207375/how-to-deploy-a-private-google-cloudsql-instance-assigning-exiting-vpc-network",
     "https://cloud.google.com/sql/docs/mysql/recommender-disable-public-ip"
   ],
   "Remediation": {

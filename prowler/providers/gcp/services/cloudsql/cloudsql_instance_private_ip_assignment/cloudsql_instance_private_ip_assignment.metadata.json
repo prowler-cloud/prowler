@@ -13,11 +13,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/sql/docs/mysql/configure-private-ip",
-    "https://medium.com/google-cloud/cloud-sql-with-private-ip-only-the-good-the-bad-and-the-ugly-de4ac23ce98a",
-    "https://github.com/gruntwork-io/terraform-google-sql/blob/master/examples/postgres-private-ip/main.tf",
-    "https://stackoverflow.com/questions/70625753/in-dataprep-how-to-create-connection-with-instance-of-sql-without-public-ip-on/71122701",
-    "https://docs.cloud.google.com/sql/docs/sqlserver/recommender-disable-public-ip",
-    "https://serverfault.com/questions/999967/how-to-connect-to-postgres-cloud-sql-without-public-ip-from-cloud-run"
+    "https://docs.cloud.google.com/sql/docs/sqlserver/recommender-disable-public-ip"
   ],
   "Remediation": {
     "Code": {

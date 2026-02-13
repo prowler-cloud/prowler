@@ -13,8 +13,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/configure-user-connection-flag.html",
-    "https://cloud.google.com/sql/docs/sqlserver/flags",
-    "https://www.mssqltips.com/sqlservertip/5766/managing-maximum-number-of-concurrent-connections-in-sql-server/"
+    "https://cloud.google.com/sql/docs/sqlserver/flags"
   ],
   "Remediation": {
     "Code": {

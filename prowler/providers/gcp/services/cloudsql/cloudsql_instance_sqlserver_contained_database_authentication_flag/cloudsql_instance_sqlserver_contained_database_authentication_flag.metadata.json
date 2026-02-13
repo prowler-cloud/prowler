@@ -13,8 +13,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/disable-contained-database-authentication-flag.html",
-    "https://www.cloudanix.com/docs/gcp/audit/gcpsqlmonitoring/rules/sql_contained_database_authentication_flag_remediation",
-    "https://guides.spectralops.io/docs/d9_gcp_vln_04",
     "https://cloud.google.com/sql/docs/sqlserver/flags"
   ],
   "Remediation": {

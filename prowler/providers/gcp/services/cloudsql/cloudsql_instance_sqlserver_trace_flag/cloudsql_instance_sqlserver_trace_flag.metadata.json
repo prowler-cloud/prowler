@@ -13,12 +13,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/disable-3625-trace-flag.html",
-    "https://docs.datadoghq.com/security/default_rules/def-000-6vu/",
-    "https://learn.microsoft.com/en-us/sql/relational-databases/security/metadata-visibility-configuration?view=sql-server-ver17",
-    "https://www.patrickkeisler.com/2023/12/how-to-test-trace-flag-3625/",
-    "https://guides.spectralops.io/docs/d9_gcp_vln_08",
-    "https://cloud.google.com/sql/docs/sqlserver/flags",
-    "https://www.sqlservercentral.com/blogs/trace-flag-3625-follow-up"
+    "https://cloud.google.com/sql/docs/sqlserver/flags"
   ],
   "Remediation": {
     "Code": {

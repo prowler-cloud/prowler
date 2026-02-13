@@ -13,9 +13,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/disable-remote-access-flag.html",
-    "https://avd.aquasec.com/misconfig/google/sql/sql-server-remote-access-flag-disabled/",
-    "https://www.mssqltips.com/sqlservertip/2340/resolving-could-not-open-a-connection-to-sql-server-errors/",
-    "https://github.com/paladincloud/ce/wiki/gcp-policy",
     "https://cloud.google.com/sql/docs/sqlserver/flags"
   ],
   "Remediation": {

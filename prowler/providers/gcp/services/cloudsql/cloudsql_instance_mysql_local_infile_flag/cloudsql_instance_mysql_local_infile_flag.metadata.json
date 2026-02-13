@@ -13,11 +13,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/disable-local-infile-flag.html",
-    "https://cloud-kb.sentinelone.com/mysql-local-infile-enabled",
-    "https://support.icompaas.com/support/solutions/articles/62000233031-6-1-3-ensure-that-the-local-infile-database-flag-for-a-cloud-sql-mysql-instance-is-set-to-off-au",
-    "https://www.cloudanix.com/misconfig/gcp/gcpsqlmonitoring",
-    "https://cloud.google.com/sql/docs/mysql/flags",
-    "https://stackoverflow.com/questions/56799504/loading-csv-into-cloudsql"
+    "https://cloud.google.com/sql/docs/mysql/flags"
   ],
   "Remediation": {
     "Code": {

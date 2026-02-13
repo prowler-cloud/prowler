@@ -13,12 +13,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/disable-cross-db-ownership-chaining-flag.html",
-    "https://hub.powerpipe.io/mods/turbot/gcp_compliance/controls/control.cis_v130_6_3_2",
-    "https://github.com/PaladinCloud/CE/wiki/GCP-Policy",
-    "https://www.cloudanix.com/misconfig/gcp/gcpsqlmonitoring",
-    "https://guides.spectralops.io/docs/d9_gcp_vln_03",
-    "https://cloud.google.com/sql/docs/sqlserver/flags",
-    "https://docs.datadoghq.com/security/code_security/iac_security/iac_rules/terraform/gcp/sql_database_has_cross_db_ownership_chaining/"
+    "https://cloud.google.com/sql/docs/sqlserver/flags"
   ],
   "Remediation": {
     "Code": {
