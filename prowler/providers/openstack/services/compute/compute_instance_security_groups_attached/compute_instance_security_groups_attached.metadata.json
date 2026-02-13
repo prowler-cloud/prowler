@@ -1,0 +1,40 @@
+{
+  "Provider": "openstack",
+  "CheckID": "compute_instance_security_groups_attached",
+  "CheckTitle": "Compute instances have security groups attached",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OpenStackInstance",
+  "ResourceGroup": "compute",
+  "Description": "**OpenStack compute instances** (VMs) are evaluated to verify that at least one **security group** is attached. Security groups act as virtual firewalls, controlling ingress and egress traffic. Instances without security groups may have **unrestricted network access**, violating defense-in-depth principles.",
+  "Risk": "Compute instances without security groups are exposed to unrestricted network traffic, enabling:\n- **Confidentiality**: unauthorized access to services and data exfiltration\n- **Integrity**: injection attacks, tampering, and lateral movement across workloads\n- **Availability**: DDoS, port scanning, and resource exhaustion\nAttackers can probe open ports, exploit vulnerable services, and establish persistence without firewall barriers.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/nova/latest/user/security-groups.html",
+    "https://docs.openstack.org/api-ref/compute/",
+    "https://docs.openstack.org/neutron/latest/admin/intro-os-networking.html",
+    "https://docs.openstack.org/security-guide/networking/architecture.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack server add security group <instance_id> <security_group_name>",
+      "NativeIaC": "",
+      "Other": "1. Access the Horizon dashboard\n2. Navigate to **Compute > Instances**\n3. Locate instances without security groups (check the Security Groups column)\n4. Select the instance, then **Actions > Edit Security Groups**\n5. Add at least one security group (e.g., `default` or a custom group with least-privilege rules)\n6. Click **Save** and verify the attachment\n7. Test connectivity to ensure proper ingress/egress rules",
+      "Terraform": "```hcl\n# Terraform: ensure compute instance has security groups attached\nresource \"openstack_compute_instance_v2\" \"instance\" {\n  name            = \"example-instance\"\n  image_id        = var.image_id\n  flavor_id       = var.flavor_id\n  key_pair        = var.key_pair_name\n  # Critical: attach at least one security group\n  security_groups = [\"default\", \"web-sg\", \"app-sg\"]\n\n  network {\n    name = var.network_name\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply **defense-in-depth** for network security:\n- Attach **security groups** to all instances; never deploy without firewall rules\n- Follow **least privilege**: allow only required ports and sources; deny all by default\n- Use **separate security groups** per tier (web, app, database) with explicit rules\n- Avoid overly permissive rules like `0.0.0.0/0` ingress on sensitive ports\n- Implement **network segmentation** with isolated networks or VLANs\n- Enable **flow logs** for traffic analysis and anomaly detection\n- Regularly **audit** security group rules and remove stale or overly broad permissions",
+      "Url": "https://hub.prowler.com/check/compute_instance_security_groups_attached"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

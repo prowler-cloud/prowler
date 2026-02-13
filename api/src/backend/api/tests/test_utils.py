@@ -20,12 +20,14 @@ from prowler.providers.alibabacloud.alibabacloud_provider import AlibabacloudPro
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
 from prowler.providers.azure.azure_provider import AzureProvider
+from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.github.github_provider import GithubProvider
 from prowler.providers.iac.iac_provider import IacProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.m365.m365_provider import M365Provider
 from prowler.providers.mongodbatlas.mongodbatlas_provider import MongodbatlasProvider
+from prowler.providers.openstack.openstack_provider import OpenstackProvider
 from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 
 
@@ -118,6 +120,8 @@ class TestReturnProwlerProvider:
             (Provider.ProviderChoices.ORACLECLOUD.value, OraclecloudProvider),
             (Provider.ProviderChoices.IAC.value, IacProvider),
             (Provider.ProviderChoices.ALIBABACLOUD.value, AlibabacloudProvider),
+            (Provider.ProviderChoices.CLOUDFLARE.value, CloudflareProvider),
+            (Provider.ProviderChoices.OPENSTACK.value, OpenstackProvider),
         ],
     )
     def test_return_prowler_provider(self, provider_type, expected_provider):
@@ -220,6 +224,14 @@ class TestGetProwlerProviderKwargs:
             (
                 Provider.ProviderChoices.MONGODBATLAS.value,
                 {"atlas_organization_id": "provider_uid"},
+            ),
+            (
+                Provider.ProviderChoices.CLOUDFLARE.value,
+                {"filter_accounts": ["provider_uid"]},
+            ),
+            (
+                Provider.ProviderChoices.OPENSTACK.value,
+                {},
             ),
         ],
     )

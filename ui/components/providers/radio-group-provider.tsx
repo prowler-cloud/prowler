@@ -1,10 +1,11 @@
 "use client";
 
-import { RadioGroup } from "@heroui/radio";
-import { FC } from "react";
+import { FC, useState } from "react";
 import { Control, Controller } from "react-hook-form";
 import { z } from "zod";
 
+import { SearchInput } from "@/components/shadcn";
+import { cn } from "@/lib/utils";
 import { addProviderFormSchema } from "@/types";
 
 import {
@@ -19,8 +20,60 @@ import {
   MongoDBAtlasProviderBadge,
   OracleCloudProviderBadge,
 } from "../icons/providers-badge";
-import { CustomRadio } from "../ui/custom";
 import { FormMessage } from "../ui/form";
+
+const PROVIDERS = [
+  {
+    value: "aws",
+    label: "Amazon Web Services",
+    badge: AWSProviderBadge,
+  },
+  {
+    value: "gcp",
+    label: "Google Cloud Platform",
+    badge: GCPProviderBadge,
+  },
+  {
+    value: "azure",
+    label: "Microsoft Azure",
+    badge: AzureProviderBadge,
+  },
+  {
+    value: "m365",
+    label: "Microsoft 365",
+    badge: M365ProviderBadge,
+  },
+  {
+    value: "mongodbatlas",
+    label: "MongoDB Atlas",
+    badge: MongoDBAtlasProviderBadge,
+  },
+  {
+    value: "kubernetes",
+    label: "Kubernetes",
+    badge: KS8ProviderBadge,
+  },
+  {
+    value: "github",
+    label: "GitHub",
+    badge: GitHubProviderBadge,
+  },
+  {
+    value: "iac",
+    label: "Infrastructure as Code",
+    badge: IacProviderBadge,
+  },
+  {
+    value: "oraclecloud",
+    label: "Oracle Cloud Infrastructure",
+    badge: OracleCloudProviderBadge,
+  },
+  {
+    value: "alibabacloud",
+    label: "Alibaba Cloud",
+    badge: AlibabaCloudProviderBadge,
+  },
+] as const;
 
 interface RadioGroupProviderProps {
   control: Control<z.infer<typeof addProviderFormSchema>>;
@@ -33,90 +86,90 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
   isInvalid,
   errorMessage,
 }) => {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const lowerSearch = searchTerm.trim().toLowerCase();
+  const filteredProviders = lowerSearch
+    ? PROVIDERS.filter(
+        (provider) =>
+          provider.label.toLowerCase().includes(lowerSearch) ||
+          provider.value.toLowerCase().includes(lowerSearch),
+      )
+    : PROVIDERS;
+
   return (
     <Controller
       name="providerType"
       control={control}
       render={({ field }) => (
-        <>
-          <RadioGroup
-            className="flex flex-wrap"
-            isInvalid={isInvalid}
-            {...field}
-            value={field.value || ""}
-          >
-            <div className="flex flex-col gap-4">
-              <CustomRadio description="Amazon Web Services" value="aws">
-                <div className="flex items-center">
-                  <AWSProviderBadge size={26} />
-                  <span className="ml-2">Amazon Web Services</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio description="Google Cloud Platform" value="gcp">
-                <div className="flex items-center">
-                  <GCPProviderBadge size={26} />
-                  <span className="ml-2">Google Cloud Platform</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio description="Microsoft Azure" value="azure">
-                <div className="flex items-center">
-                  <AzureProviderBadge size={26} />
-                  <span className="ml-2">Microsoft Azure</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio description="Microsoft 365" value="m365">
-                <div className="flex items-center">
-                  <M365ProviderBadge size={26} />
-                  <span className="ml-2">Microsoft 365</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio description="MongoDB Atlas" value="mongodbatlas">
-                <div className="flex items-center">
-                  <MongoDBAtlasProviderBadge size={26} />
-                  <span className="ml-2">MongoDB Atlas</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio description="Kubernetes" value="kubernetes">
-                <div className="flex items-center">
-                  <KS8ProviderBadge size={26} />
-                  <span className="ml-2">Kubernetes</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio description="GitHub" value="github">
-                <div className="flex items-center">
-                  <GitHubProviderBadge size={26} />
-                  <span className="ml-2">GitHub</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio description="Infrastructure as Code" value="iac">
-                <div className="flex items-center">
-                  <IacProviderBadge size={26} />
-                  <span className="ml-2">Infrastructure as Code</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio
-                description="Oracle Cloud Infrastructure"
-                value="oraclecloud"
-              >
-                <div className="flex items-center">
-                  <OracleCloudProviderBadge size={26} />
-                  <span className="ml-2">Oracle Cloud Infrastructure</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio description="Alibaba Cloud" value="alibabacloud">
-                <div className="flex items-center">
-                  <AlibabaCloudProviderBadge size={26} />
-                  <span className="ml-2">Alibaba Cloud</span>
-                </div>
-              </CustomRadio>
+        <div className="flex h-[calc(100vh-200px)] flex-col px-4">
+          <div className="relative z-10 shrink-0 pb-4">
+            <SearchInput
+              aria-label="Search providers"
+              placeholder="Search providers..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onClear={() => setSearchTerm("")}
+            />
+          </div>
+
+          <div className="minimal-scrollbar relative flex-1 overflow-y-auto pr-3">
+            <div
+              role="listbox"
+              aria-label="Select a provider"
+              className="flex flex-col gap-3"
+              style={{
+                maskImage:
+                  "linear-gradient(to bottom, transparent, black 24px)",
+                WebkitMaskImage:
+                  "linear-gradient(to bottom, transparent, black 24px)",
+                paddingTop: "24px",
+                marginTop: "-24px",
+              }}
+            >
+              {filteredProviders.length > 0 ? (
+                filteredProviders.map((provider) => {
+                  const BadgeComponent = provider.badge;
+                  const isSelected = field.value === provider.value;
+
+                  return (
+                    <button
+                      key={provider.value}
+                      type="button"
+                      role="option"
+                      aria-selected={isSelected}
+                      onClick={() => field.onChange(provider.value)}
+                      className={cn(
+                        "flex w-full cursor-pointer items-center gap-3 rounded-lg border p-4 text-left transition-all",
+                        "hover:border-button-primary",
+                        "focus-visible:border-button-primary focus-visible:ring-button-primary focus:outline-none focus-visible:ring-1",
+                        isSelected
+                          ? "border-button-primary bg-bg-neutral-tertiary"
+                          : "border-border-neutral-secondary bg-bg-neutral-secondary",
+                        isInvalid && "border-bg-fail",
+                      )}
+                    >
+                      <BadgeComponent size={26} />
+                      <span className="text-text-neutral-primary text-sm font-medium">
+                        {provider.label}
+                      </span>
+                    </button>
+                  );
+                })
+              ) : (
+                <p className="text-text-neutral-tertiary py-4 text-sm">
+                  No providers found matching &quot;{searchTerm}&quot;
+                </p>
+              )}
             </div>
-          </RadioGroup>
+          </div>
+
           {errorMessage && (
             <FormMessage className="text-text-error">
               {errorMessage}
             </FormMessage>
           )}
-        </>
+        </div>
       )}
     />
   );

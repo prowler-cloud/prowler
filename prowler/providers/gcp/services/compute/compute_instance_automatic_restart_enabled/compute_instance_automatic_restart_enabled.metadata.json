@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "compute.googleapis.com/Instance",
+  "ResourceGroup": "compute",
   "Description": "**Google Compute Engine virtual machine instances** are evaluated to ensure that **Automatic Restart** is enabled. This feature allows the Google Cloud Compute Engine service to automatically restart VM instances when they are terminated due to non-user-initiated reasons such as maintenance events, hardware failures, or software failures.",
   "Risk": "VM instances without Automatic Restart enabled will not recover automatically from host maintenance events or unexpected failures, potentially leading to prolonged service downtime and requiring manual intervention to restore services.",
   "RelatedUrl": "",

@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_challenge_passage_configured",
+  "CheckTitle": "Cloudflare Zone Challenge Passage Is Configured Between 15 and 45 Minutes",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **Challenge Passage** (challenge TTL) configuration by checking if it is set between **15 minutes** and **45 minutes** to balance security with user experience.",
+  "Risk": "Improperly configured **Challenge Passage** can impact security or user experience.\n- **Confidentiality**: TTL set too long may allow attackers extended access after passing initial challenge\n- **Integrity**: security controls become less effective with overly permissive TTL settings\n- **Availability**: TTL set too short causes excessive challenges degrading user experience",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/waf/tools/challenge-passage/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to Security > Settings\n3. Scroll to Challenge Passage\n4. Set the value between 15 and 45 minutes\n5. The default value of 30 minutes is recommended for most use cases",
+      "Terraform": "```hcl\n# Configure Challenge Passage between 15-45 minutes\nresource \"cloudflare_zone_settings_override\" \"challenge_passage\" {\n  zone_id = \"<ZONE_ID>\"\n  settings {\n    challenge_ttl = 1800 # 30 minutes - recommended default\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure **Challenge Passage** between 15 and 45 minutes.\n- Values below 15 minutes may frustrate legitimate users with excessive challenges\n- Values above 45 minutes give attackers too much time after passing challenges\n- The default Cloudflare value of 30 minutes is recommended for most use cases\n- Adjust based on your specific threat model and user experience requirements",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_challenge_passage_configured"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Challenge Passage determines how long a visitor who passes a challenge can access the site without being challenged again. Setting this value too low can frustrate legitimate users with excessive security challenges, while setting it too high reduces security effectiveness. The default value is 30 minutes."
+}

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "MetricFilter",
+  "ResourceGroup": "monitoring",
   "Description": "Ensure That the Log Metric Filter and Alerts Exist for Custom Role Changes.",
   "Risk": "Google Cloud IAM provides predefined roles that give granular access to specific Google Cloud Platform resources and prevent unwanted access to other resources.",
   "RelatedUrl": "",

@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_waf_owasp_ruleset_enabled",
+  "CheckTitle": "Cloudflare Zone OWASP Managed WAF Rulesets Are Enabled",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **OWASP managed rulesets** by checking if they are enabled to protect against common web application vulnerabilities including **SQL injection**, **XSS**, and other **OWASP Top 10** threats.",
+  "Risk": "Without **OWASP managed rulesets**, web applications are exposed to well-known attack vectors.\n- **Confidentiality**: SQL injection attacks can exfiltrate sensitive database contents\n- **Integrity**: XSS attacks can modify page content and steal session tokens\n- **Availability**: remote code execution can compromise server availability",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/waf/managed-rules/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to Security > WAF > Managed rules\n3. Enable the Cloudflare OWASP Core Ruleset\n4. Review and configure rule sensitivity based on your application\n5. Monitor WAF analytics to tune rules and reduce false positives",
+      "Terraform": "```hcl\n# Enable OWASP managed WAF rulesets\nresource \"cloudflare_ruleset\" \"waf_owasp\" {\n  zone_id = \"<ZONE_ID>\"\n  name    = \"OWASP Managed Rules\"\n  kind    = \"zone\"\n  phase   = \"http_request_firewall_managed\"\n  rules {\n    action = \"execute\"\n    action_parameters {\n      id = \"4814384a9e5d4991b9815dcfc25d2f1f\" # Cloudflare OWASP Core Ruleset\n    }\n    expression  = \"true\"\n    description = \"Execute Cloudflare OWASP Core Ruleset\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **OWASP Core Ruleset** managed rules as part of a defense in depth strategy.\n- Protects against OWASP Top 10 vulnerabilities including SQLi and XSS\n- Regularly review and tune rule sensitivity based on application requirements\n- Monitor WAF analytics to identify and address false positives\n- Combine with custom rules for application-specific protection",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_waf_owasp_ruleset_enabled"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "OWASP managed rulesets are available on Pro, Business, and Enterprise plans. The Cloudflare OWASP Core Ruleset provides protection against common web application vulnerabilities."
+}
