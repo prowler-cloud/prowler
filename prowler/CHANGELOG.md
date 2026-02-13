@@ -21,6 +21,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
 - Parallelize Cloudflare zone API calls with threading to improve scan performance [(#9982)](https://github.com/prowler-cloud/prowler/pull/9982)
+- Update GCP API Keys service metadata to new format [(#9637)](https://github.com/prowler-cloud/prowler/pull/9637)
 
 ## [5.18.2] (Prowler UNRELEASED)
 
