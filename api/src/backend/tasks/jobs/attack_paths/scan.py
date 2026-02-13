@@ -228,10 +228,16 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     except Exception as e:
         exception_message = utils.stringify_exception(e, "Cartography failed")
         logger.error(exception_message)
-        ingestion_exceptions["global_cartography_error"] = exception_message
+        ingestion_exceptions["global_error"] = exception_message
 
         # Handling databases changes
-        graph_database.drop_database(tmp_cartography_config.neo4j_database)
+        try:
+            graph_database.drop_database(tmp_cartography_config.neo4j_database)
+        except Exception:
+            logger.exception(
+                f"Failed to drop temporary Neo4j database {tmp_cartography_config.neo4j_database} during cleanup"
+            )
+
         db_utils.finish_attack_paths_scan(
             attack_paths_scan, StateChoices.FAILED, ingestion_exceptions
         )
