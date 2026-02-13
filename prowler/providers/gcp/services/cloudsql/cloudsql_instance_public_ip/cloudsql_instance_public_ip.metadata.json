@@ -12,14 +12,11 @@
   "Risk": "**Public DB endpoints** expand attack surface:\n- Credential brute force and SQL injection threaten **confidentiality** and **integrity**\n- Internet DDoS reduces **availability**\n- Exposure bypasses VPC controls, easing **lateral movement** and data exfiltration",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/sql-database-instances-with-public-ips.html",
     "https://cloud.google.com/sql/docs/mysql/configure-private-ip",
     "https://github.com/paladincloud/ce/wiki/gcp-policy",
-    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11",
     "https://groups.google.com/g/google-appengine/c/qx8TsP1R034",
     "https://stackoverflow.com/questions/60207375/how-to-deploy-a-private-google-cloudsql-instance-assigning-exiting-vpc-network",
-    "https://docs.cloud.google.com/sql/docs/mysql/recommender-disable-public-ip",
-    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11#terraform"
+    "https://cloud.google.com/sql/docs/mysql/recommender-disable-public-ip"
   ],
   "Remediation": {
     "Code": {

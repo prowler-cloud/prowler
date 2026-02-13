@@ -12,7 +12,6 @@
   "Risk": "Insufficient `log_min_messages` severity degrades **audit log integrity**, causing real failures to be treated as non-errors or lack context. This delays detection and impairs **forensics**, enabling unnoticed data tampering or repeated faulty operations, impacting the **integrity** and **availability** of the service.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_4#terraform",
     "https://cloud.google.com/sql/docs/postgres/flags"
   ],
   "Remediation": {

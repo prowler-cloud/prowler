@@ -12,9 +12,7 @@
   "Risk": "Without **disconnection logs**, session lifecycles lack visibility, obscuring **credential misuse**, **session hijacking**, and short-lived data exfiltration.\n\nWeak audit trails hinder correlation and forensics, undermining confidentiality and integrity and slowing incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_4#terraform",
-    "https://cloud.google.com/sql/docs/postgres/flags",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-log-connections-flag.html"
+    "https://cloud.google.com/sql/docs/postgres/flags"
   ],
   "Remediation": {
     "Code": {

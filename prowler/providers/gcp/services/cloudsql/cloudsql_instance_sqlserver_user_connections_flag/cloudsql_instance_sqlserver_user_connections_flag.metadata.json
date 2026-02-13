@@ -12,7 +12,6 @@
   "Risk": "A capped `user connections` value can exhaust available sessions, causing login failures, aborted transactions, and timeouts. This reduces **availability**, can delay administrative access, and may lead to **integrity** issues from failed or inconsistent retries under load.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/configure-user-connection-flag.html",
     "https://cloud.google.com/sql/docs/sqlserver/flags",
     "https://www.mssqltips.com/sqlservertip/5766/managing-maximum-number-of-concurrent-connections-in-sql-server/"
   ],

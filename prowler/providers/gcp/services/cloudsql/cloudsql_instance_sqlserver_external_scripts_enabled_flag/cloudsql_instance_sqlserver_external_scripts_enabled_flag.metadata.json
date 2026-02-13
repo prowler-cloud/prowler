@@ -12,9 +12,7 @@
   "Risk": "Allowing **external scripts** lets SQL invoke language extensions (e.g., R/Python), enabling arbitrary code execution. This can cause data exfiltration (**confidentiality**), tampered query results (**integrity**), and resource exhaustion or service degradation (**availability**), and may facilitate lateral movement from the database layer.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.cloud.google.com/sql/docs/sqlserver/flags?hl=it",
-    "https://cloud.google.com/sql/docs/sqlserver/flags",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-external-scripts-enabled-flag.html"
+    "https://cloud.google.com/sql/docs/sqlserver/flags"
   ],
   "Remediation": {
     "Code": {

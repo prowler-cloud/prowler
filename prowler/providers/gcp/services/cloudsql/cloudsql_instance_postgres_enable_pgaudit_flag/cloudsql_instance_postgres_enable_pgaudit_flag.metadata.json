@@ -15,9 +15,8 @@
     "https://cloud.google.com/sql/docs/postgres/flags",
     "https://www.skills.google/focuses/22793?parent=catalog",
     "https://stackoverflow.com/questions/65291896/gcp-cloud-sql-query-logging-for-postgres",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/postgre-sql-audit-flag.html",
     "https://medium.com/google-cloud/audit-logs-on-steroids-with-cloud-sql-for-postgresql-and-pgaudit-d1fdf8725faf",
-    "https://docs.cloud.google.com/sql/docs/postgres/pg-audit"
+    "https://cloud.google.com/sql/docs/postgres/pg-audit"
   ],
   "Remediation": {
     "Code": {

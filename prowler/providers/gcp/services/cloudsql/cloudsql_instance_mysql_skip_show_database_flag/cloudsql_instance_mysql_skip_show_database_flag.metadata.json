@@ -17,8 +17,7 @@
     "https://guides.spectralops.io/docs/d9_gcp_vln_05",
     "https://docs.datadoghq.com/security/default_rules/def-000-ht8/",
     "https://cloud.google.com/sql/docs/mysql/flags",
-    "https://www.cloudanix.com/docs/gcp/audit/gcpsqlmonitoring/rules/sql_skip_show_database_flag",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/enable-skip-show-database-flag.html"
+    "https://www.cloudanix.com/docs/gcp/audit/gcpsqlmonitoring/rules/sql_skip_show_database_flag"
   ],
   "Remediation": {
     "Code": {

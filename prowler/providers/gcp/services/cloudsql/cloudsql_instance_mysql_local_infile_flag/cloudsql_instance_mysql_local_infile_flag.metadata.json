@@ -12,14 +12,11 @@
   "Risk": "With `local_infile` enabled, clients can send local files via `LOAD DATA LOCAL`. A stolen credential or SQL injection can coerce clients to leak files and mass-ingest unvetted data, compromising **confidentiality** and **integrity**, and aiding lateral movement through secrets imported into the database.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_1#terraform",
     "https://cloud-kb.sentinelone.com/mysql-local-infile-enabled",
     "https://support.icompaas.com/support/solutions/articles/62000233031-6-1-3-ensure-that-the-local-infile-database-flag-for-a-cloud-sql-mysql-instance-is-set-to-off-au",
     "https://www.cloudanix.com/misconfig/gcp/gcpsqlmonitoring",
     "https://cloud.google.com/sql/docs/mysql/flags",
-    "https://stackoverflow.com/questions/56799504/loading-csv-into-cloudsql",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/disable-local-infile-flag.html",
-    "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_1/"
+    "https://stackoverflow.com/questions/56799504/loading-csv-into-cloudsql"
   ],
   "Remediation": {
     "Code": {
