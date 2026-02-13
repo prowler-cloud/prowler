@@ -6,12 +6,13 @@
   "ServiceName": "kms",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "low",
   "ResourceType": "cloudkms.googleapis.com/CryptoKey",
   "Description": "Google Cloud KMS customer-managed keys have **automatic rotation** enabled or a rotation interval  `365` days.\n\nThe evaluation reviews each key's rotation settings to confirm periodic creation of new key versions.",
   "Risk": "Without timely rotation, a stolen key can decrypt an expanding volume of data, eroding **confidentiality**. Prolonged key lifetimes widen windows for misuse, impact **integrity** of protected workloads, and make emergency rollover harder, risking **availability** disruptions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudKMS/rotate-kms-encryption-keys.html",
     "https://cloud.google.com/iam/docs/manage-access-service-accounts"
   ],
   "Remediation": {

@@ -6,12 +6,13 @@
   "ServiceName": "kms",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
+  "Severity": "high",
   "ResourceType": "cloudkms.googleapis.com/CryptoKey",
   "Description": "**Cloud KMS crypto keys** are evaluated for **public principals** in their IAM bindings, specifically `allUsers` and `allAuthenticatedUsers`.\n\nThe finding reflects whether these memberships are present on a key.",
   "Risk": "Granting **public principals** access lets anyone on the Internet or any Google account use permissions on the key.\n- **Confidentiality** loss via unauthorized `decrypt`\n- **Integrity** compromise via illicit `sign`\n- **Availability** impact from disable, rotation, or destruction",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudKMS/publicly-accessible-kms-cryptokeys.html",
     "https://cloud.google.com/kms/docs/iam"
   ],
   "Remediation": {
