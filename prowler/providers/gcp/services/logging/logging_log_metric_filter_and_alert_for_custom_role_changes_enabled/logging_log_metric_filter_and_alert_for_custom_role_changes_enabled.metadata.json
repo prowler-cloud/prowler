@@ -12,6 +12,7 @@
   "Risk": "Without alerts on custom role changes, privilege modifications can go unnoticed, enabling **privilege escalation**, unauthorized data access (confidentiality), permission tampering (integrity), and accidental revocations that disrupt services (availability). Insider misuse or compromised admins can silently reshape access across projects.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudLogging/enable-custom-role-changes-monitoring.html",
     "https://cloud.google.com/monitoring/alerts",
     "https://security.snyk.io/rules/cloud/SNYK-CC-00436"
   ],

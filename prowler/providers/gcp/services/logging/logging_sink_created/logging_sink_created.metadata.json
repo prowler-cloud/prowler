@@ -6,12 +6,13 @@
   "ServiceName": "logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "logging.googleapis.com/LogSink",
   "Description": "**Cloud Logging** project contains at least one **sink** that exports a copy of **all log entries** to a destination for centralized retention or processing",
   "Risk": "Without exporting all logs, audit evidence can expire or be altered in-project, reducing the **availability** and **integrity** of telemetry. This hinders threat detection and forensics, prevents cross-project correlation, and can let attacker actions evade scrutiny after log rotation or deletion.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudLogging/export-all-log-entries.html",
     "https://cloud.google.com/logging/docs/export"
   ],
   "Remediation": {

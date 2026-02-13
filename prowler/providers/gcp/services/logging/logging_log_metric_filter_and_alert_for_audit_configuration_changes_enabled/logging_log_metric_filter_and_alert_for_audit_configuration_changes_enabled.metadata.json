@@ -6,12 +6,13 @@
   "ServiceName": "logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "logging.googleapis.com/LogMetric",
   "Description": "**Cloud Logging** log-based metrics capture **audit configuration changes** (e.g., `SetIamPolicy` with `auditConfigDeltas`), and an associated **Cloud Monitoring alert policy** notifies when such log entries occur.",
   "Risk": "Unmonitored **Audit Config** changes can reduce or disable **Admin Activity/Data Access** logging, creating blind spots. Adversaries could suppress evidence, evade detection, and alter permissions unnoticed, degrading **confidentiality**, **integrity**, and the **availability** of forensic telemetry.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudLogging/enable-audit-configuration-changes-monitoring.html",
     "https://cloud.google.com/monitoring/alerts"
   ],
   "Remediation": {

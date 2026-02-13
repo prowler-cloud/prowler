@@ -6,12 +6,13 @@
   "ServiceName": "logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "logging.googleapis.com/LogMetric",
   "Description": "**Cloud Logging** includes a **log-based metric** for **VPC route modifications** and a linked **Cloud Monitoring alert**.\n\nIt targets `gce_route` entries for `compute.routes.insert` and `compute.routes.delete` so route creations or deletions generate alertable signals.",
   "Risk": "Without visibility into **route changes**, attackers or mistakes can:\n- Reroute traffic to bypass inspection  **data exfiltration** (confidentiality)\n- Alter paths enabling **lateral movement** (integrity)\n- Blackhole networks causing **outages** (availability)",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudLogging/enable-network-route-changes-monitoring.html",
     "https://turbot.com/guardrails/changelog/gcp-cisv2-0-v5-0-0",
     "https://cloud.google.com/monitoring/alerts"
   ],

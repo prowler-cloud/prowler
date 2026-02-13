@@ -12,6 +12,7 @@
   "Risk": "Without this visibility, **unauthorized or accidental Cloud SQL configuration changes** can persist undetected. Attackers or insiders might open public access, relax TLS, alter authorized networks, or disable backups, degrading **confidentiality**, **integrity**, and **availability** and delaying containment.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudLogging/enable-network-route-changes-monitoring.html",
     "https://cloud.google.com/monitoring/alerts"
   ],
   "Remediation": {

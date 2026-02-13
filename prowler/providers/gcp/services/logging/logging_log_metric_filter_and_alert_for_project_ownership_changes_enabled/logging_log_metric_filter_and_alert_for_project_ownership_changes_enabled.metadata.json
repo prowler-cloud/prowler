@@ -6,12 +6,13 @@
   "ServiceName": "logging",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "logging.googleapis.com/LogMetric",
   "Description": "Cloud Logging contains a **log-based metric** targeting project ownership changes in Cloud Resource Manager events, and Cloud Monitoring has an **alerting policy** tied to that metric. It detects metrics matching `roles/owner` additions/removals or ownership invites, and whether an alert references that metric.",
   "Risk": "Lack of alerts on ownership changes enables **privilege escalation** and **project takeover**. Attackers can add/remove `roles/owner`, causing unauthorized data access (confidentiality), unauthorized config/billing changes (integrity), and resource deletion or lockout (availability) without timely detection.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudLogging/enable-ownership-assignments-monitoring.html",
     "https://cloud.google.com/monitoring/alerts"
   ],
   "Remediation": {
