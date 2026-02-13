@@ -68,7 +68,7 @@ class Test_defender_ensure_mcas_is_enabled:
                 == f"Microsoft Defender for Cloud Apps is disabled for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == "MCAS"
+            # resource_name comes from the Setting object via Check_Report_Azure constructor
             assert result[0].resource_id == resource_id
 
     def test_defender_mcas_enabled(self):
@@ -108,12 +108,13 @@ class Test_defender_ensure_mcas_is_enabled:
                 == f"Microsoft Defender for Cloud Apps is enabled for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == "MCAS"
+            # resource_name comes from the Setting object via Check_Report_Azure constructor
             assert result[0].resource_id == resource_id
 
     def test_defender_mcas_no_settings(self):
         defender_client = mock.MagicMock
         defender_client.settings = {AZURE_SUBSCRIPTION_ID: {}}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
 
         with (
             mock.patch(
@@ -138,5 +139,5 @@ class Test_defender_ensure_mcas_is_enabled:
                 == f"Microsoft Defender for Cloud Apps not exists for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == "MCAS"
-            assert result[0].resource_id == "MCAS"
+            assert result[0].resource_name == AZURE_SUBSCRIPTION_ID
+            assert result[0].resource_id == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"

@@ -20,6 +20,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CSA CCM 4.0 for the Alibaba Cloud provider [(#10061)](https://github.com/prowler-cloud/prowler/pull/10061)
 - ECS Exec (ECS-006) privilege escalation detection via `ecs:ExecuteCommand` + `ecs:DescribeTasks` [(#10066)](https://github.com/prowler-cloud/prowler/pull/10066)
 
+### 🐞 Fixed
+
+- Standardize resource_id values across Azure checks to use actual Azure resource IDs and prevent duplicate resource entries [(#9994)](https://github.com/prowler-cloud/prowler/pull/9994)
+
 ### 🔄 Changed
 
 - Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)

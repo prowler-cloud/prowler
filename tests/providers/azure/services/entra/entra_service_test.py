@@ -41,6 +41,7 @@ async def mock_entra_get_group_settings(_):
     return {
         DOMAIN: {
             "id-1": GroupSetting(
+                id="id-1",
                 name="Test",
                 template_id="id-group-setting",
                 settings=[],
