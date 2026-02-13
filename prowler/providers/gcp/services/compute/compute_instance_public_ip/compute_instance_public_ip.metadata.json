@@ -12,11 +12,7 @@
   "Risk": "**Internet-exposed VMs** face automated scanning, **brute force**, and **remote exploit** attempts.\n\nCompromise can enable **data exfiltration**, **service account abuse**, and **lateral movement** within the VPC, while public endpoints invite **DDoS**, degrading availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_2",
-    "https://docs.inkeep.com/self-hosting/gcp-compute-engine",
-    "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_2#terraform",
-    "https://cloud.google.com/compute/docs/instances/connecting-to-instance",
-    "https://stackoverflow.com/questions/69488409/gce-node-api-use-custom-network-with-no-external-ip/69506942"
+    "https://cloud.google.com/compute/docs/instances/connecting-to-instance"
   ],
   "Remediation": {
     "Code": {

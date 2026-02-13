@@ -13,8 +13,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/compute/docs/instances/modifying-shielded-vm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-shielded-vm.html",
-    "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_y#terraform"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-shielded-vm.html"
   ],
   "Remediation": {
     "Code": {

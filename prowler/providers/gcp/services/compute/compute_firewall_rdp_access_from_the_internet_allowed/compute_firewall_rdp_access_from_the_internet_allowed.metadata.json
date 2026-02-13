@@ -12,7 +12,6 @@
   "Risk": "Exposed **RDP** enables Internet-wide scanning and **brute force**. Exploits can yield **remote code execution**, followed by **lateral movement** and data theft.\n\nThis endangers **confidentiality**, **integrity**, and **availability** (e.g., ransomware, service disruption).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_2#terraform",
     "https://cloud.google.com/vpc/docs/using-firewalls",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/unrestricted-rdp-access.html"
   ],

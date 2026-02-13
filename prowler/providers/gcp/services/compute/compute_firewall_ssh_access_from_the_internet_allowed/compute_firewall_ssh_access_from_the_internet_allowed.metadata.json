@@ -13,10 +13,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/vpc/docs/using-firewalls",
-    "https://cloud-kb.sentinelone.com/open-ssh",
-    "https://www.youstable.com/blog/how-to-monitor-secure-firewalld-on-linux-server/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/unrestricted-ssh-access.html",
-    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_1#terraform"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/unrestricted-ssh-access.html"
   ],
   "Remediation": {
     "Code": {

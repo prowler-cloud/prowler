@@ -13,10 +13,8 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/legacy-vpc-in-use.html",
-    "https://stackoverflow.com/questions/73843490/vpc-network-upgrade",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/legacy-vpc-in-use.html#",
-    "https://cloud.google.com/vpc/docs/using-legacy#deleting_a_legacy_network",
-    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/ensure-legacy-networks-do-not-exist-for-a-project#terraform"
+    "https://cloud.google.com/vpc/docs/using-legacy#deleting_a_legacy_network"
   ],
   "Remediation": {
     "Code": {

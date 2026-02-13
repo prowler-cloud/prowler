@@ -12,8 +12,6 @@
   "Risk": "Using the **default VPC** can weaken segmentation and expose services via **permissive firewall rules** (e.g., broad internal trust or public admin ports). This increases likelihood of **unauthorized access**, **lateral movement**, and data exfiltration, impacting **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_7",
-    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_7#terraform",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/default-vpc-in-use.html",
     "https://cloud.google.com/vpc/docs/using-vpc"
   ],

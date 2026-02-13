@@ -12,7 +12,6 @@
   "Risk": "Enabling the **serial console** creates **out-of-band access** that can bypass network controls. Abuse can grant low-level OS interaction, expose sensitive boot logs, alter configuration, or disrupt services, degrading **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_11#terraform",
     "https://cloud.google.com/compute",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/disable-interactive-serial-console-support.html"
   ],

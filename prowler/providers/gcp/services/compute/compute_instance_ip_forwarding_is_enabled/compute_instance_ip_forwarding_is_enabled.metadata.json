@@ -12,13 +12,7 @@
   "Risk": "With **IP forwarding** a VM can route traffic for other addresses. If compromised, it can:\n- Spoof or tamper flows (**integrity**)\n- Intercept/redirect internal traffic (**confidentiality**)\n- Mask egress for exfiltration and enable lateral movement, degrading **availability**",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.datadoghq.com/security/default_rules/def-000-tqp/",
-    "https://stackoverflow.com/questions/45994148/google-cloud-vm-instance-how-to-turn-on-ip-forwarding",
-    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_12#terraform",
     "https://cloud.google.com/compute/docs/instances/create-start-instance",
-    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_12/",
-    "https://serverfault.com/questions/887843/how-to-turn-on-ip-forwarding-for-interface-if-forwarding-rule-was-already-create",
-    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_12",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/disable-ip-forwarding.html"
   ],
   "Remediation": {

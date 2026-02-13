@@ -13,8 +13,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/dns/docs/monitoring",
-    "https://viao.co.uk/blog/add-new-gcp-check-to",
-    "https://www.cloudquery.io/docs/plugins/sources/gcp/tables/gcp_dns_policies",
     "https://docs.cloud.google.com/compute/docs/networking/monitor-dns-failures",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/dns-logging-for-vpcs.html"
   ],

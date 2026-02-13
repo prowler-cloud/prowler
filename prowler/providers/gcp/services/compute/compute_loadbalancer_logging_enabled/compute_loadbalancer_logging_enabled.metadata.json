@@ -12,12 +12,10 @@
   "Risk": "Without **request logs**, visibility into HTTP(S) traffic is reduced, hindering detection of credential stuffing, path traversal, WAF bypass, and data exfiltration. This impacts **confidentiality** and **integrity**, and delays incident response; availability issues (surges in `5xx`) may go unnoticed.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://serverfault.com/questions/977992/how-to-monitor-https-and-tcp-load-balancers-on-gcp",
     "https://cloud.google.com/load-balancing/docs/https/https-logging-monitoring#gcloud:-global-mode",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLoadBalancing/enableLoad-balancing-backend-service-logging.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLoadBalancing/https-load-balancer-logging-enabled.html",
-    "https://docs.cloud.google.com/load-balancing/docs/l7-internal/monitoring",
-    "https://medium.com/google-cloud/load-balancer-backend-logs-and-me-6a8fd9ec193d"
+    "https://docs.cloud.google.com/load-balancing/docs/l7-internal/monitoring"
   ],
   "Remediation": {
     "Code": {

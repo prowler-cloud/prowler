@@ -13,8 +13,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-block-project-wide-ssh-keys.html",
-    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_8#terraform"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-block-project-wide-ssh-keys.html"
   ],
   "Remediation": {
     "Code": {

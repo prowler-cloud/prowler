@@ -13,8 +13,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/storage/docs/encryption/using-customer-supplied-keys",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-encryption-with-csek.html",
-    "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_x#terraform"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-encryption-with-csek.html"
   ],
   "Remediation": {
     "Code": {

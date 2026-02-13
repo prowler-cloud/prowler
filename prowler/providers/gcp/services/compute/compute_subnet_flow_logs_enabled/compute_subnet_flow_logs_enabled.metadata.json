@@ -13,7 +13,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/vpc/docs/using-flow-logs#enabling_vpc_flow_logging",
-    "https://docs.prowler.com/checks/gcp/logging-policies-1/bc_gcp_logging_1#terraform",
     "https://docs.cloud.google.com/vpc/docs/flow-logs",
     "https://docs.cloud.google.com/vpc/docs/org-policy-flow-logs",
     "https://docs.cloud.google.com/vpc/docs/access-flow-logs",
