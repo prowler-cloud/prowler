@@ -13,6 +13,7 @@
   "Risk": "Without a locked retention policy, exported logs can be deleted early or retention reduced, undermining log **integrity** and **availability**. An attacker or malicious insider could purge evidence to evade detection, hindering **forensics** and weakening **non-repudiation** across the environment.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudStorage/retention-policies-with-bucket-lock.html",
     "https://docs.cloud.google.com/storage/docs/bucket-lock",
     "https://docs.cloud.google.com/storage/docs/using-bucket-lock",
     "https://docs.cloud.google.com/storage/docs/samples/storage-lock-retention-policy",

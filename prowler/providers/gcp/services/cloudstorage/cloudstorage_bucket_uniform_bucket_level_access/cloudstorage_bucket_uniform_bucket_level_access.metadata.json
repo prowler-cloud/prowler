@@ -13,6 +13,7 @@
   "Risk": "Without **UBLA**, object ACLs can bypass bucket IAM, enabling unintended public reads or unauthorized writes. This threatens **confidentiality** through data exposure, undermines **integrity** via object tampering, and reduces **auditability** with fragmented, hard-to-review permissions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudStorage/enable-uniform-bucket-level-access.html",
     "https://docs.cloud.google.com/storage/docs/using-uniform-bucket-level-access",
     "https://docs.cloud.google.com/storage/docs/public-access-prevention",
     "https://docs.cloud.google.com/storage/docs/access-control/iam"

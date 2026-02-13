@@ -13,13 +13,14 @@
   "Risk": "Without lifecycle rules, data and object versions persist indefinitely, expanding the attack surface and hindering mandated erasure. Stale data amplifies exfiltration impact (**confidentiality**) and complicates **integrity** controls, while also driving avoidable cost and retention noncompliance.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudStorage/enable-lifecycle-management.html",
     "https://docs.cloud.google.com/storage/docs/managing-lifecycles",
     "https://docs.cloud.google.com/storage/docs/lifecycle",
     "https://docs.cloud.google.com/storage/docs/samples/storage-enable-bucket-lifecycle-management"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "curl -X PATCH -H \"Authorization: Bearer $(gcloud auth print-access-token)\" -H \"Content-Type: application/json\" --data '{\"lifecycle\":{\"rule\":[{\"action\":{\"type\":\"Delete\"},\"condition\":{\"age\":1}}]}}' \"https://storage.googleapis.com/storage/v1/b/<BUCKET_NAME>?fields=lifecycle\"",
+      "CLI": "gcloud storage buckets update gs://<BUCKET_NAME> --lifecycle-file=<PATH_TO_JSON>",
       "NativeIaC": "",
       "Other": "1. In Google Cloud Console, go to Storage > Buckets and open <BUCKET_NAME>\n2. Click the Lifecycle tab\n3. Click Add a rule\n4. Action: Delete\n5. Condition: Age = 1 day\n6. Click Create/Save",
       "Terraform": "```hcl\nresource \"google_storage_bucket\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"US\"\n\n  # Critical: add at least one lifecycle rule with a condition to pass the check\n  lifecycle_rule {\n    action { type = \"Delete\" }      # Critical: defines a supported action\n    condition { age = 1 }            # Critical: ensures the rule has a valid condition\n  }\n}\n```"

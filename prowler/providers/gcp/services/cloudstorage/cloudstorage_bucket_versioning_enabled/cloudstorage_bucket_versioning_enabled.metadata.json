@@ -13,6 +13,7 @@
   "Risk": "Without **Object Versioning**, deleted or overwritten objects can't be restored, reducing **availability** and **integrity**. Compromised credentials or faulty processes can irreversibly delete or corrupt data, enabling ransomware-style destruction, accidental loss, and weakening forensic reconstruction.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudStorage/enable-versioning.html",
     "https://docs.cloud.google.com/storage/docs/object-versioning",
     "https://docs.cloud.google.com/storage/docs/using-object-versioning",
     "https://docs.cloud.google.com/storage/docs/deleting-objects#restoring_noncurrent_versions",

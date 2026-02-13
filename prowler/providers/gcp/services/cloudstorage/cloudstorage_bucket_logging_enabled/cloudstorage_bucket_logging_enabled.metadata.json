@@ -13,7 +13,7 @@
   "Risk": "Buckets without Usage and Storage Logs enabled lack visibility into access and storage activity, which increases the risk of undetected data exfiltration, misuse, or configuration errors.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/enable-usage-and-storage-logs.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudStorage/enable-usage-and-storage-logs.html",
     "https://cloud.google.com/storage/docs/access-logs"
   ],
   "Remediation": {
