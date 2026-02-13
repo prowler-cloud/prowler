@@ -1,3 +1,4 @@
+import os
 import sys
 from argparse import Namespace
 from importlib import import_module
@@ -70,3 +71,33 @@ def validate_asff_usage(
         False,
         f"json-asff output format is only available for the aws provider, but {provider} was selected",
     )
+
+
+def validate_elasticsearch_arguments(arguments: Namespace) -> tuple[bool, str]:
+    """Validate Elasticsearch-related arguments."""
+    if getattr(arguments, "elasticsearch", False):
+        es_url = getattr(arguments, "elasticsearch_url", None) or os.environ.get(
+            "ELASTICSEARCH_URL"
+        )
+        if not es_url:
+            return (
+                False,
+                "Elasticsearch URL is required when --elasticsearch is set (use --elasticsearch-url or ELASTICSEARCH_URL env var)",
+            )
+
+        api_key = getattr(arguments, "elasticsearch_api_key", None) or os.environ.get(
+            "ELASTICSEARCH_API_KEY"
+        )
+        username = getattr(arguments, "elasticsearch_username", None) or os.environ.get(
+            "ELASTICSEARCH_USERNAME"
+        )
+        password = getattr(arguments, "elasticsearch_password", None) or os.environ.get(
+            "ELASTICSEARCH_PASSWORD"
+        )
+
+        if not api_key and not (username and password):
+            return (
+                False,
+                "Elasticsearch requires either --elasticsearch-api-key or both --elasticsearch-username and --elasticsearch-password",
+            )
+    return (True, "")
