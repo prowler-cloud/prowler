@@ -24,7 +24,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Parallelize Cloudflare zone API calls with threading to improve scan performance [(#9982)](https://github.com/prowler-cloud/prowler/pull/9982)
 - Update GCP API Keys service metadata to new format [(#9637)](https://github.com/prowler-cloud/prowler/pull/9637)
 
-## [5.18.2] (Prowler UNRELEASED)
+## [5.18.3] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- `pip install prowler` failing on systems without C compiler due to `netifaces` transitive dependency from `openstacksdk` [(#10055)](https://github.com/prowler-cloud/prowler/pull/10055)
+
+---
+
+## [5.18.2] (Prowler v5.18.2)
 
 ### 🐞 Fixed
 
