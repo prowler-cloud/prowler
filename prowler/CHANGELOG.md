@@ -25,8 +25,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Parallelize Cloudflare zone API calls with threading to improve scan performance [(#9982)](https://github.com/prowler-cloud/prowler/pull/9982)
 - Update GCP API Keys service metadata to new format [(#9637)](https://github.com/prowler-cloud/prowler/pull/9637)
 - Update GCP BigQuery service metadata to new format [(#9638)](https://github.com/prowler-cloud/prowler/pull/9638)
-- Update GCP Cloud Storage service metadata to new format [(#9640)](https://github.com/prowler-cloud/prowler/pull/9640)
 - Update GCP Cloud SQL service metadata to new format [(#9639)](https://github.com/prowler-cloud/prowler/pull/9639)
+- Update GCP Cloud Storage service metadata to new format [(#9640)](https://github.com/prowler-cloud/prowler/pull/9640)
+- Update GCP Compute Engine service metadata to new format [(#9641)](https://github.com/prowler-cloud/prowler/pull/9641)
 
 ### 🔐 Security
 
