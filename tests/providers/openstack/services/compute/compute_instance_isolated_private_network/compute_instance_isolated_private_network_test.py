@@ -113,11 +113,11 @@ class Test_compute_instance_isolated_private_network:
                 user_id="",
                 access_ipv4="",
                 access_ipv6="",
-                public_v4="203.0.113.10",
+                public_v4="8.8.4.4",
                 public_v6="",
                 private_v4="10.0.0.10",
                 private_v6="",
-                networks={"public": ["203.0.113.10"], "private": ["10.0.0.10"]},
+                networks={"public": ["8.8.4.4"], "private": ["10.0.0.10"]},
                 has_config_drive=False,
                 metadata={},
                 user_data="",
@@ -171,11 +171,11 @@ class Test_compute_instance_isolated_private_network:
                 user_id="",
                 access_ipv4="",
                 access_ipv6="",
-                public_v4="203.0.113.20",
+                public_v4="1.1.1.1",
                 public_v6="",
                 private_v4="",
                 private_v6="",
-                networks={"public": ["203.0.113.20"]},
+                networks={"public": ["1.1.1.1"]},
                 has_config_drive=False,
                 metadata={},
                 user_data="",
@@ -491,3 +491,111 @@ class Test_compute_instance_isolated_private_network:
                 "mixed public and private network exposure" in result[0].status_extended
             )
             assert result[0].resource_id == "instance-fallback-3"
+
+    def test_instance_access_ipv4_private_treated_as_private(self):
+        """Test that access_ipv4 set to a private IP is not treated as public exposure."""
+        compute_client = mock.MagicMock()
+        compute_client.instances = [
+            ComputeInstance(
+                id="instance-access-priv",
+                name="Access Private",
+                status="ACTIVE",
+                flavor_id="flavor-1",
+                security_groups=["default"],
+                region=OPENSTACK_REGION,
+                project_id=OPENSTACK_PROJECT_ID,
+                is_locked=False,
+                locked_reason="",
+                key_name="",
+                user_id="",
+                access_ipv4="10.0.0.50",
+                access_ipv6="",
+                public_v4="",
+                public_v6="",
+                private_v4="10.0.0.50",
+                private_v6="",
+                networks={"private-net": ["10.0.0.50"]},
+                has_config_drive=False,
+                metadata={},
+                user_data="",
+                trusted_image_certificates=[],
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network.compute_client",
+                new=compute_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network import (
+                compute_instance_isolated_private_network,
+            )
+
+            check = compute_instance_isolated_private_network()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert "properly isolated in private network" in result[0].status_extended
+            assert result[0].resource_id == "instance-access-priv"
+
+    def test_instance_network_ips_validated_as_public(self):
+        """Test that IPs from networks dict are validated as truly public."""
+        compute_client = mock.MagicMock()
+        compute_client.instances = [
+            ComputeInstance(
+                id="instance-net-pub",
+                name="Network Public",
+                status="ACTIVE",
+                flavor_id="flavor-1",
+                security_groups=["default"],
+                region=OPENSTACK_REGION,
+                project_id=OPENSTACK_PROJECT_ID,
+                is_locked=False,
+                locked_reason="",
+                key_name="",
+                user_id="",
+                access_ipv4="",
+                access_ipv6="",
+                public_v4="",
+                public_v6="",
+                private_v4="",
+                private_v6="",
+                networks={
+                    "my-net": ["10.0.0.5", "8.8.8.8"],
+                },
+                has_config_drive=False,
+                metadata={},
+                user_data="",
+                trusted_image_certificates=[],
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network.compute_client",
+                new=compute_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.compute.compute_instance_isolated_private_network.compute_instance_isolated_private_network import (
+                compute_instance_isolated_private_network,
+            )
+
+            check = compute_instance_isolated_private_network()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                "mixed public and private network exposure" in result[0].status_extended
+            )
+            assert result[0].resource_id == "instance-net-pub"

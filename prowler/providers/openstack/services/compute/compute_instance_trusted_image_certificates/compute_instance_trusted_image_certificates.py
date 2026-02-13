@@ -12,10 +12,7 @@ class compute_instance_trusted_image_certificates(Check):
 
         for instance in compute_client.instances:
             report = CheckReportOpenStack(metadata=self.metadata(), resource=instance)
-            if (
-                instance.trusted_image_certificates
-                and len(instance.trusted_image_certificates) > 0
-            ):
+            if instance.trusted_image_certificates:
                 report.status = "PASS"
                 cert_ids = ", ".join(instance.trusted_image_certificates)
                 report.status_extended = f"Instance {instance.name} ({instance.id}) uses trusted image certificates: {cert_ids}."

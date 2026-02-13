@@ -1,27 +1,12 @@
-import ipaddress
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportOpenStack
 from prowler.providers.openstack.services.compute.compute_client import compute_client
+from prowler.providers.openstack.services.compute.lib.ip import is_public_ip
 
 
 class compute_instance_public_ip_exposed(Check):
     """Ensure compute instances are not exposed to the internet via public IP addresses."""
-
-    def _is_public_ip(self, ip_str: str) -> bool:
-        """Check if an IP address is public (not private/RFC1918)."""
-        try:
-            ip = ipaddress.ip_address(ip_str)
-            # Check if IP is not in private ranges
-            return not (
-                ip.is_private
-                or ip.is_loopback
-                or ip.is_link_local
-                or ip.is_reserved
-                or ip.is_multicast
-            )
-        except ValueError:
-            return False
 
     def execute(self) -> List[CheckReportOpenStack]:
         findings: List[CheckReportOpenStack] = []
@@ -51,7 +36,7 @@ class compute_instance_public_ip_exposed(Check):
             for network_name, ip_list in instance.networks.items():
                 for ip in ip_list:
                     # Check if IP is public and not already captured in SDK attributes
-                    if self._is_public_ip(ip) and ip not in sdk_ips:
+                    if is_public_ip(ip) and ip not in sdk_ips:
                         public_ips.append(
                             f"{network_name} network: {ip} (public range)"
                         )

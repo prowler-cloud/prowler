@@ -2,6 +2,7 @@ from typing import List
 
 from prowler.lib.check.models import Check, CheckReportOpenStack
 from prowler.providers.openstack.services.compute.compute_client import compute_client
+from prowler.providers.openstack.services.compute.lib.ip import is_public_ip
 
 
 class compute_instance_isolated_private_network(Check):
@@ -13,33 +14,39 @@ class compute_instance_isolated_private_network(Check):
         for instance in compute_client.instances:
             report = CheckReportOpenStack(metadata=self.metadata(), resource=instance)
 
-            # Check SDK computed attributes (now populated by service with fallback)
-            has_private_ips = bool(instance.private_v4 or instance.private_v6)
-            has_public_ips = bool(
-                instance.public_v4
-                or instance.public_v6
-                or instance.access_ipv4
-                or instance.access_ipv6
-            )
-
-            # Collect IPs for status message
             private_ip_list = []
             public_ip_list = []
 
-            if instance.private_v4:
-                private_ip_list.append(instance.private_v4)
-            if instance.private_v6:
-                private_ip_list.append(instance.private_v6)
-            if instance.public_v4:
-                public_ip_list.append(instance.public_v4)
-            if instance.public_v6:
-                public_ip_list.append(instance.public_v6)
+            # Classify IPs from networks dict using actual IP validation
+            for ip_list in instance.networks.values():
+                for ip in ip_list:
+                    if is_public_ip(ip):
+                        public_ip_list.append(ip)
+                    else:
+                        private_ip_list.append(ip)
+
+            # Also check SDK fields for IPs not present in networks
+            seen_ips = set(private_ip_list + public_ip_list)
+            for ip in [
+                instance.public_v4,
+                instance.public_v6,
+                instance.access_ipv4,
+                instance.access_ipv6,
+            ]:
+                if ip and ip not in seen_ips and is_public_ip(ip):
+                    public_ip_list.append(ip)
+            for ip in [instance.private_v4, instance.private_v6]:
+                if ip and ip not in seen_ips and not is_public_ip(ip):
+                    private_ip_list.append(ip)
+
+            has_private_ips = bool(private_ip_list)
+            has_public_ips = bool(public_ip_list)
 
             # Determine status based on IP classification
             if has_private_ips and not has_public_ips:
                 report.status = "PASS"
-                ip_list = ", ".join(private_ip_list)
-                report.status_extended = f"Instance {instance.name} ({instance.id}) is properly isolated in private network with private IPs ({ip_list}) and no public exposure."
+                ip_display = ", ".join(private_ip_list)
+                report.status_extended = f"Instance {instance.name} ({instance.id}) is properly isolated in private network with private IPs ({ip_display}) and no public exposure."
             elif has_public_ips and has_private_ips:
                 report.status = "FAIL"
                 report.status_extended = f"Instance {instance.name} ({instance.id}) has mixed public and private network exposure (not properly isolated)."
