@@ -1,0 +1,38 @@
+{
+  "Provider": "m365",
+  "CheckID": "defender_identity_health_issues_resolved",
+  "CheckTitle": "Microsoft Defender for Identity monitors hybrid identity infrastructure without open health issues",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Defender for Identity",
+  "ResourceGroup": "security",
+  "Description": "Microsoft Defender for Identity (MDI) monitors the health of your hybrid identity infrastructure including **sensors** and **global configuration**.\n\nHealth issues indicate problems that may impact MDI's ability to detect identity-based threats and lateral movement attacks in your environment.",
+  "Risk": "Unresolved health issues in Microsoft Defender for Identity can:\n\n- **Disable threat detection** - Sensors may fail to monitor domain controller activity\n- **Create visibility gaps** - Missed lateral movement and credential theft attacks\n- **Compromise incident response** - Incomplete data for security investigations\n\nThis leaves hybrid identity infrastructure vulnerable to advanced persistent threats.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/defender-for-identity/health-alerts",
+    "https://learn.microsoft.com/en-us/defender-for-identity/health-alerts#health-issues"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Defender XDR portal: https://security.microsoft.com/\n2. Go to Settings > Identities > Health issues\n3. Review each open health issue\n4. Follow the recommendations provided for each issue\n5. Address sensor connectivity, configuration, or deployment problems as indicated",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Regularly monitor and resolve Microsoft Defender for Identity health issues to maintain full visibility into identity-based threats. Prioritize sensor health to ensure continuous monitoring of domain controllers.",
+      "Url": "https://hub.prowler.com/check/defender_identity_health_issues_resolved"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check requires Microsoft Defender for Identity to be deployed and the appropriate Graph API permissions (SecurityIdentitiesHealth.Read.All or SecurityIdentitiesHealth.ReadWrite.All). If MDI is not configured, the check will pass with no issues reported."
+}

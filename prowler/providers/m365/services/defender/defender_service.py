@@ -1,3 +1,6 @@
+import asyncio
+from datetime import datetime
+from enum import Enum
 from typing import List, Optional
 
 from pydantic.v1 import BaseModel
@@ -14,7 +17,7 @@ class Defender(M365Service):
     This class provides methods to retrieve and manage Microsoft Defender for Office 365
     security policies and configurations, including malware filters, spam policies,
     anti-phishing settings, Safe Attachments, Safe Links, ATP (Advanced Threat Protection),
-    and Teams protection policies.
+    Teams protection policies, and Microsoft Defender for Identity health issues.
 
     Attributes:
         malware_policies (list): List of malware filter policies.
@@ -33,6 +36,7 @@ class Defender(M365Service):
         safe_links_policies (dict): Dictionary of Safe Links policies.
         safe_links_rules (dict): Dictionary of Safe Links rules.
         teams_protection_policy: Teams protection policy configuration.
+        identity_health_issues (list): List of Microsoft Defender for Identity health issues.
     """
 
     def __init__(self, provider: M365Provider):
@@ -43,6 +47,7 @@ class Defender(M365Service):
             provider: The M365Provider instance for authentication and configuration.
         """
         super().__init__(provider)
+        self.tenant_domain = provider.identity.tenant_domain
         self.malware_policies = []
         self.outbound_spam_policies = {}
         self.outbound_spam_rules = {}
@@ -59,6 +64,11 @@ class Defender(M365Service):
         self.safe_links_policies = {}
         self.safe_links_rules = {}
         self.teams_protection_policy = None
+        self.identity_health_issues = []
+
+        # Fetch identity health issues using Graph API
+        self.identity_health_issues = self._get_identity_health_issues()
+
         if self.powershell:
             if self.powershell.connect_exchange_online():
                 self.malware_policies = self._get_malware_filter_policy()
@@ -634,6 +644,204 @@ class Defender(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return teams_protection_policy
+
+    def _get_identity_health_issues(self):
+        """
+        Retrieve Microsoft Defender for Identity health issues using the Graph API.
+
+        This method fetches health issues from the security/identities/healthIssues endpoint
+        which monitors the health of MDI configuration and installed sensors.
+
+        Returns:
+            list[IdentityHealthIssue]: List of health issues, or empty list if none found
+                or if MDI is not configured.
+        """
+        logger.info("Microsoft365 - Getting Defender for Identity health issues...")
+        health_issues = []
+
+        async def fetch_health_issues():
+            try:
+                response = await self.client.security.identities.health_issues.get()
+                return response
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                return None
+
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                import concurrent.futures
+
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(asyncio.run, fetch_health_issues())
+                    response = future.result()
+            else:
+                response = loop.run_until_complete(fetch_health_issues())
+
+            if response and hasattr(response, "value") and response.value:
+                # Deduplicate issues by display_name, taking the most recent one
+                seen_issues = {}
+                for issue in response.value:
+                    display_name = getattr(issue, "display_name", "") or ""
+                    domain_names = getattr(issue, "domain_names", []) or []
+                    sensor_dns_names = getattr(issue, "sensor_d_n_s_names", []) or []
+
+                    # Create a key for deduplication
+                    key = (
+                        display_name,
+                        tuple(domain_names) if domain_names else (),
+                        tuple(sensor_dns_names) if sensor_dns_names else (),
+                    )
+
+                    created_date = getattr(issue, "created_date_time", None)
+                    existing = seen_issues.get(key)
+
+                    # Keep the most recently created issue
+                    if existing is None or (
+                        created_date
+                        and existing["created_date"]
+                        and created_date > existing["created_date"]
+                    ):
+                        status_value = getattr(issue, "status", None)
+                        if status_value:
+                            status_str = (
+                                status_value.value
+                                if hasattr(status_value, "value")
+                                else str(status_value)
+                            )
+                        else:
+                            status_str = ""
+
+                        health_issue_type_value = getattr(
+                            issue, "health_issue_type", None
+                        )
+                        if health_issue_type_value:
+                            health_issue_type_str = (
+                                health_issue_type_value.value
+                                if hasattr(health_issue_type_value, "value")
+                                else str(health_issue_type_value)
+                            )
+                        else:
+                            health_issue_type_str = ""
+
+                        severity_value = getattr(issue, "severity", None)
+                        if severity_value:
+                            severity_str = (
+                                severity_value.value
+                                if hasattr(severity_value, "value")
+                                else str(severity_value)
+                            )
+                        else:
+                            severity_str = ""
+
+                        seen_issues[key] = {
+                            "created_date": created_date,
+                            "issue": IdentityHealthIssue(
+                                id=getattr(issue, "id", "") or "",
+                                display_name=display_name,
+                                health_issue_type=(
+                                    HealthIssueType(health_issue_type_str)
+                                    if health_issue_type_str
+                                    in [e.value for e in HealthIssueType]
+                                    else HealthIssueType.GLOBAL
+                                ),
+                                status=(
+                                    HealthIssueStatus(status_str)
+                                    if status_str
+                                    in [e.value for e in HealthIssueStatus]
+                                    else HealthIssueStatus.OPEN
+                                ),
+                                severity=(
+                                    HealthIssueSeverity(severity_str)
+                                    if severity_str
+                                    in [e.value for e in HealthIssueSeverity]
+                                    else HealthIssueSeverity.MEDIUM
+                                ),
+                                description=getattr(issue, "description", "") or "",
+                                recommendations=getattr(issue, "recommendations", [])
+                                or [],
+                                domain_names=domain_names,
+                                sensor_dns_names=sensor_dns_names,
+                                created_date_time=created_date,
+                                last_modified_date_time=getattr(
+                                    issue, "last_modified_date_time", None
+                                ),
+                                additional_information=getattr(
+                                    issue, "additional_information", []
+                                )
+                                or [],
+                                issue_type_id=getattr(issue, "issue_type_id", "") or "",
+                            ),
+                        }
+
+                health_issues = [v["issue"] for v in seen_issues.values()]
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return health_issues
+
+
+class HealthIssueStatus(str, Enum):
+    """Status of a health issue."""
+
+    OPEN = "open"
+    CLOSED = "closed"
+    SUPPRESSED = "suppressed"
+
+
+class HealthIssueType(str, Enum):
+    """Type of health issue."""
+
+    GLOBAL = "global"
+    SENSOR = "sensor"
+
+
+class HealthIssueSeverity(str, Enum):
+    """Severity of a health issue."""
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+class IdentityHealthIssue(BaseModel):
+    """
+    Model for Microsoft Defender for Identity health issue.
+
+    Attributes:
+        id: Unique identifier for the health issue.
+        display_name: Display name of the health issue.
+        health_issue_type: Type of health issue (global or sensor).
+        status: Current status of the health issue (open, closed, suppressed).
+        severity: Severity level of the health issue (low, medium, high).
+        description: Detailed description of the health issue.
+        recommendations: List of recommended actions to resolve the issue.
+        domain_names: List of affected domain names.
+        sensor_dns_names: List of affected sensor DNS names.
+        created_date_time: When the health issue was created.
+        last_modified_date_time: When the health issue was last modified.
+        additional_information: Additional context about the health issue.
+        issue_type_id: Identifier for the type of issue.
+    """
+
+    id: str
+    display_name: str
+    health_issue_type: HealthIssueType
+    status: HealthIssueStatus
+    severity: HealthIssueSeverity
+    description: str
+    recommendations: List[str]
+    domain_names: List[str]
+    sensor_dns_names: List[str]
+    created_date_time: Optional[datetime]
+    last_modified_date_time: Optional[datetime]
+    additional_information: List[str]
+    issue_type_id: str
 
 
 class MalwarePolicy(BaseModel):

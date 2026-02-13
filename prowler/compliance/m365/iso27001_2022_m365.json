@@ -114,6 +114,7 @@
       "Checks": [
         "defender_antiphishing_policy_configured",
         "defender_antispam_outbound_policy_configured",
+        "defender_identity_health_issues_resolved",
         "defender_malware_policy_notifications_internal_users_malware_enabled",
         "defender_safelinks_policy_enabled",
         "defender_zap_for_teams_enabled",
@@ -351,6 +352,7 @@
         "defender_antispam_outbound_policy_configured",
         "defender_antispam_outbound_policy_forwarding_disabled",
         "defender_antispam_policy_inbound_no_allowed_domains",
+        "defender_identity_health_issues_resolved",
         "defender_malware_policy_common_attachments_filter_enabled",
         "defender_malware_policy_comprehensive_attachments_filter_applied",
         "defender_malware_policy_notifications_internal_users_malware_enabled",
@@ -371,6 +373,7 @@
       ],
       "Checks": [
         "defender_antispam_outbound_policy_configured",
+        "defender_identity_health_issues_resolved",
         "defender_malware_policy_common_attachments_filter_enabled",
         "defender_malware_policy_comprehensive_attachments_filter_applied",
         "defender_malware_policy_notifications_internal_users_malware_enabled",
@@ -713,6 +716,7 @@
         }
       ],
       "Checks": [
+        "defender_identity_health_issues_resolved",
         "defender_malware_policy_common_attachments_filter_enabled",
         "defender_malware_policy_comprehensive_attachments_filter_applied",
         "defender_malware_policy_notifications_internal_users_malware_enabled"
