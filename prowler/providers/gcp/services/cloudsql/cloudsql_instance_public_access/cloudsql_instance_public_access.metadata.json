@@ -12,6 +12,7 @@
   "Risk": "Allowing `0.0.0.0/0` makes the database reachable from the Internet, degrading **confidentiality** and **availability**. Attackers can brute-force credentials, probe for vulnerable endpoints, exfiltrate data via unauthorized queries, and trigger resource exhaustion through automated scanning.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/publicly-accessible-cloud-sql-instances.html",
     "https://cloud.google.com/sql/docs/mysql/connection-org-policy"
   ],
   "Remediation": {

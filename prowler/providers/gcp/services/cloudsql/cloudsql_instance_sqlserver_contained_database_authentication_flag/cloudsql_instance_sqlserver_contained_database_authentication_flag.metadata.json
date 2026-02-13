@@ -12,6 +12,7 @@
   "Risk": "Enabling contained authentication moves identity checks to the database, bypassing server-level logins and policies. This weakens centralized controls and auditing, enables password spraying on contained users, and can persist users across copies, increasing unauthorized data access and tampering risk to **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/disable-contained-database-authentication-flag.html",
     "https://www.cloudanix.com/docs/gcp/audit/gcpsqlmonitoring/rules/sql_contained_database_authentication_flag_remediation",
     "https://guides.spectralops.io/docs/d9_gcp_vln_04",
     "https://cloud.google.com/sql/docs/sqlserver/flags"

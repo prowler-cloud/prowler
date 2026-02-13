@@ -12,6 +12,7 @@
   "Risk": "Without `3625` enabled, SQL errors can reveal parameters and object names to non-admins, weakening **confidentiality** and aiding targeted **injection**, account enumeration, and data discovery. Leaked context helps craft exploits and pivot attacks, ultimately risking data integrity and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/disable-3625-trace-flag.html",
     "https://docs.datadoghq.com/security/default_rules/def-000-6vu/",
     "https://learn.microsoft.com/en-us/sql/relational-databases/security/metadata-visibility-configuration?view=sql-server-ver17",
     "https://www.patrickkeisler.com/2023/12/how-to-test-trace-flag-3625/",

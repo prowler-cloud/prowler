@@ -12,6 +12,7 @@
   "Risk": "Global `user options` changes affect all sessions, impacting **data integrity** and **availability**. Disabling safe **ANSI behaviors** or enabling **implicit transactions** can alter NULL comparisons and error handling, leading to inconsistent results, lock contention, and application failures, reducing predictability and complicating auditing.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/user-options-flag-not-configured.html",
     "https://cloud.google.com/sql/docs/sqlserver/flags"
   ],
   "Remediation": {

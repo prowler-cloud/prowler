@@ -12,6 +12,7 @@
   "Risk": "An incorrect threshold skews visibility and exposure:\n- Lower than `error`: logs excessive SQL, risking **confidentiality** loss and alert noise (monitoring availability).\n- Higher than `error`: omits query context for real errors, weakening audit trail **integrity** and incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/configure-log-min-error-statement-flag.html",
     "https://cloud.google.com/sql/docs/postgres/flags"
   ],
   "Remediation": {

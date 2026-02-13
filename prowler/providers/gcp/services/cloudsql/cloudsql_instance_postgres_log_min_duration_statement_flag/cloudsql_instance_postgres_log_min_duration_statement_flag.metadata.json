@@ -12,6 +12,7 @@
   "Risk": "When duration-based statement logging is enabled, logs can capture full SQL with literals, exposing **confidential data** in log stores. Adversaries or over-privileged users could harvest secrets/PII, profile schemas, and support **lateral movement**. Heavy logging can also raise costs and impact availability under load.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/configure-log-min-error-statement-flag.html",
     "https://cloud.google.com/sql/docs/postgres/flags"
   ],
   "Remediation": {

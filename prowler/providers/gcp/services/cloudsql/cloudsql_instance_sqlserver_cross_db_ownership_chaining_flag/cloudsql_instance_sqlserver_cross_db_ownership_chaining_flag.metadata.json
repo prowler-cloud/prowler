@@ -12,6 +12,7 @@
   "Risk": "Allowing cross-database ownership chaining erodes database boundaries, impacting **confidentiality** and **integrity**. Users with privileges in one database can traverse ownership chains to access or modify objects in others, enabling **privilege escalation**, **lateral movement**, and unauthorized data exposure.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/disable-cross-db-ownership-chaining-flag.html",
     "https://hub.powerpipe.io/mods/turbot/gcp_compliance/controls/control.cis_v130_6_3_2",
     "https://github.com/PaladinCloud/CE/wiki/GCP-Policy",
     "https://www.cloudanix.com/misconfig/gcp/gcpsqlmonitoring",

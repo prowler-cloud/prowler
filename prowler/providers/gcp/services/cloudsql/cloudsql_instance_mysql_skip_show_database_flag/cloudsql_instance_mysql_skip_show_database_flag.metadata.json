@@ -12,6 +12,7 @@
   "Risk": "Without `skip_show_database` set to `on`, database names can be exposed to unprivileged users, reducing **confidentiality**. Attackers can perform schema **enumeration** and targeted probing, enabling **lateral movement** and privilege escalation against specific datasets.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/enable-skip-show-database-flag.html",
     "https://support.icompaas.com/support/solutions/articles/62000233030-6-1-2-ensure-skip-show-database-database-flag-for-cloud-sql-mysql-instance-is-set-to-on-automate",
     "https://hub.steampipe.io/mods/turbot/gcp_compliance/controls/control.sql_instance_mysql_skip_show_database_flag_on",
     "https://guides.spectralops.io/docs/d9_gcp_vln_05",

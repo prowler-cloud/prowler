@@ -12,6 +12,7 @@
   "Risk": "Without enforced TLS, database traffic is exposed to interception.\n- **MITM** can read creds and query results (**confidentiality**)\n- Inject/alter statements to corrupt data (**integrity**)\n\nMixed modes cause accidental plaintext use on public or untrusted networks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/enable-ssl-for-incoming-connections.html",
     "https://cloud.google.com/sql/docs/postgres/configure-ssl-instance/"
   ],
   "Remediation": {

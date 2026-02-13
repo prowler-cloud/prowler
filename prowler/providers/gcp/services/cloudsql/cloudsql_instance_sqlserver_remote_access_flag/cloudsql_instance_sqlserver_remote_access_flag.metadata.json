@@ -12,6 +12,7 @@
   "Risk": "Enabling **remote procedure calls** expands exposure: untrusted servers can invoke stored procedures, leading to **data exfiltration** (confidentiality), unauthorized changes (**integrity**), and **DoS** via resource-heavy remote execution (**availability**). It can also enable lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/disable-remote-access-flag.html",
     "https://avd.aquasec.com/misconfig/google/sql/sql-server-remote-access-flag-disabled/",
     "https://www.mssqltips.com/sqlservertip/2340/resolving-could-not-open-a-connection-to-sql-server-errors/",
     "https://github.com/paladincloud/ce/wiki/gcp-policy",

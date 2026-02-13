@@ -12,6 +12,7 @@
   "Risk": "Without `cloudsql.enable_pgaudit`, **database activity** lacks granular audit trails. Undetected reads/writes enable insider abuse, credential reuse, or SQL injection without evidence, harming **confidentiality** and **integrity**. Poor traceability slows incident response, forensics, and undermines compliance.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/postgre-sql-audit-flag.html",
     "https://cloud.google.com/sql/docs/postgres/flags",
     "https://www.skills.google/focuses/22793?parent=catalog",
     "https://stackoverflow.com/questions/65291896/gcp-cloud-sql-query-logging-for-postgres",

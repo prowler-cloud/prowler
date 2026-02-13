@@ -12,6 +12,7 @@
   "Risk": "Absent **automated backups**, unintended deletes, corruption, or ransomware can become irreversible. This degrades data **integrity** and **availability**, removes point-in-time recovery options, and widens `RPO`/`RTO`, causing prolonged outages and incomplete restoration after incidents or schema changes.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudSQL/enable-automated-backups.html",
     "https://cloud.google.com/sql/docs/mysql/backup-recovery/backups",
     "https://cloud.google.com/sql/docs/postgres/configure-ssl-instance/"
   ],
