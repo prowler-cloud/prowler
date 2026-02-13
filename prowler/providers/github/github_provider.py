@@ -1,3 +1,4 @@
+import logging
 import os
 from os import environ
 from typing import Union
@@ -134,8 +135,6 @@ class GithubProvider(Provider):
         logger.info("Instantiating GitHub Provider...")
 
         # Mute GitHub library logs to reduce noise since it is already handled by the Prowler logger
-        import logging
-
         logging.getLogger("github").setLevel(logging.CRITICAL)
         logging.getLogger("github.GithubRetry").setLevel(logging.CRITICAL)
 
