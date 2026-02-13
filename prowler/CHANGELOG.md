@@ -29,6 +29,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update GCP Cloud SQL service metadata to new format [(#9639)](https://github.com/prowler-cloud/prowler/pull/9639)
 - Update GCP Cloud Storage service metadata to new format [(#9640)](https://github.com/prowler-cloud/prowler/pull/9640)
 - Update GCP Compute Engine service metadata to new format [(#9641)](https://github.com/prowler-cloud/prowler/pull/9641)
+- Update GCP Dataproc service metadata to new format [(#9642)](https://github.com/prowler-cloud/prowler/pull/9642)
 
 ### 🔐 Security
 
