@@ -17,6 +17,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - OCI regions updater script and CI workflow [(#10020)](https://github.com/prowler-cloud/prowler/pull/10020)
 - `image` provider for container image scanning with Trivy integration [(#9984)](https://github.com/prowler-cloud/prowler/pull/9984)
 - CSA CCM 4.0 for the Alibaba Cloud provider [(#10061)](https://github.com/prowler-cloud/prowler/pull/10061)
+- `entra_policy_unknown_unsupported_device_platforms_blocked` check for M365 provider [(#10063)](https://github.com/prowler-cloud/prowler/pull/10063)
 
 ### 🔄 Changed
 

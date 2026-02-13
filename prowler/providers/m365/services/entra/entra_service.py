@@ -235,6 +235,30 @@ class Entra(M365Service):
                                 [],
                             )
                         ],
+                        platform_conditions=(
+                            PlatformConditions(
+                                included_platforms=[
+                                    DevicePlatform(platform.value)
+                                    for platform in getattr(
+                                        policy.conditions.platforms,
+                                        "include_platforms",
+                                        [],
+                                    )
+                                    or []
+                                ],
+                                excluded_platforms=[
+                                    DevicePlatform(platform.value)
+                                    for platform in getattr(
+                                        policy.conditions.platforms,
+                                        "exclude_platforms",
+                                        [],
+                                    )
+                                    or []
+                                ],
+                            )
+                            if getattr(policy.conditions, "platforms", None)
+                            else None
+                        ),
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=(
@@ -503,12 +527,33 @@ class ClientAppType(Enum):
     OTHER_CLIENTS = "other"
 
 
+class DevicePlatform(Enum):
+    """Device platforms for Conditional Access policies."""
+
+    ANDROID = "android"
+    IOS = "iOS"
+    WINDOWS = "windows"
+    WINDOWS_PHONE = "windowsPhone"
+    MAC_OS = "macOS"
+    LINUX = "linux"
+    ALL = "all"
+    UNKNOWN_FUTURE_VALUE = "unknownFutureValue"
+
+
+class PlatformConditions(BaseModel):
+    """Platform conditions for Conditional Access policies."""
+
+    included_platforms: List[DevicePlatform] = []
+    excluded_platforms: List[DevicePlatform] = []
+
+
 class Conditions(BaseModel):
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
     client_app_types: Optional[List[ClientAppType]]
     user_risk_levels: List[RiskLevel] = []
     sign_in_risk_levels: List[RiskLevel] = []
+    platform_conditions: Optional[PlatformConditions] = None
 
 
 class PersistentBrowser(BaseModel):
