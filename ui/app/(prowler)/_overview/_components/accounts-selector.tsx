@@ -7,6 +7,7 @@ import {
   AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
+  CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
   IacProviderBadge,
@@ -36,6 +37,7 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   oraclecloud: <OracleCloudProviderBadge width={18} height={18} />,
   mongodbatlas: <MongoDBAtlasProviderBadge width={18} height={18} />,
   alibabacloud: <AlibabaCloudProviderBadge width={18} height={18} />,
+  cloudflare: <CloudflareProviderBadge width={18} height={18} />,
 };
 
 interface AccountsSelectorProps {

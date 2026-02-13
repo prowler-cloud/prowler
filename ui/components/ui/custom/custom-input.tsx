@@ -94,30 +94,30 @@ export const CustomInput = <T extends FieldValues>({
         <>
           <FormControl>
             <Input
-              id={name}
-              classNames={{
-                label:
-                  "tracking-tight font-light !text-text-neutral-secondary text-xs z-0!",
-                input: "text-text-neutral-secondary text-small",
-              }}
-              isRequired={inputIsRequired}
-              label={inputLabel}
-              labelPlacement={labelPlacement}
-              placeholder={inputPlaceholder}
-              type={inputType}
-              variant={variant}
-              size={size}
-              defaultValue={defaultValue}
-              endContent={endContent}
-              isDisabled={isDisabled}
-              isReadOnly={isReadOnly}
-              isInvalid={!!fieldState.error}
-              errorMessage={fieldState.error?.message}
-              {...field}
-              value={field.value ?? ""}
-            />
-          </FormControl>
-        </>
+                id={name}
+                classNames={{
+                  label:
+                    "tracking-tight font-light !text-text-neutral-secondary text-xs z-0!",
+                  input: "text-text-neutral-secondary text-small",
+                }}
+                isRequired={inputIsRequired}
+                label={inputLabel}
+                labelPlacement={labelPlacement}
+                placeholder={inputPlaceholder}
+                type={inputType}
+                variant={variant}
+                size={size}
+                defaultValue={defaultValue}
+                endContent={endContent}
+                isDisabled={isDisabled}
+                isReadOnly={isReadOnly}
+                isInvalid={!!fieldState.error}
+                errorMessage={fieldState.error?.message}
+                {...field}
+                value={field.value ?? ""}
+              />
+            </FormControl>
+          </>
       )}
     />
   );
