@@ -61,10 +61,7 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
                     new=entra_client,
                 ),
             ):
-                from prowler.providers.azure.services.entra.entra_service import (
-                    AuthMethod,
-                    User,
-                )
+                from prowler.providers.azure.services.entra.entra_service import User
                 from prowler.providers.azure.services.entra.entra_user_with_vm_access_has_mfa.entra_user_with_vm_access_has_mfa import (
                     entra_user_with_vm_access_has_mfa,
                 )
@@ -90,12 +87,7 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
                         f"test@{DOMAIN}": User(
                             id=user_id,
                             name="test",
-                            authentication_methods=[
-                                AuthMethod(id=str(uuid4()), type="Password"),
-                                AuthMethod(
-                                    id=str(uuid4()), type="MicrosoftAuthenticator"
-                                ),
-                            ],
+                            is_mfa_capable=True,
                         )
                     }
                 }
@@ -138,10 +130,7 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
                     new=entra_client,
                 ),
             ):
-                from prowler.providers.azure.services.entra.entra_service import (
-                    AuthMethod,
-                    User,
-                )
+                from prowler.providers.azure.services.entra.entra_service import User
                 from prowler.providers.azure.services.entra.entra_user_with_vm_access_has_mfa.entra_user_with_vm_access_has_mfa import (
                     entra_user_with_vm_access_has_mfa,
                 )
@@ -167,9 +156,7 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
                         f"test@{DOMAIN}": User(
                             id=user_id,
                             name="test",
-                            authentication_methods=[
-                                AuthMethod(id=str(uuid4()), type="Password"),
-                            ],
+                            is_mfa_capable=False,
                         )
                     }
                 }
@@ -264,10 +251,7 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
                     new=entra_client,
                 ),
             ):
-                from prowler.providers.azure.services.entra.entra_service import (
-                    AuthMethod,
-                    User,
-                )
+                from prowler.providers.azure.services.entra.entra_service import User
                 from prowler.providers.azure.services.entra.entra_user_with_vm_access_has_mfa.entra_user_with_vm_access_has_mfa import (
                     entra_user_with_vm_access_has_mfa,
                 )
@@ -293,12 +277,7 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
                         f"test@{DOMAIN}": User(
                             id=user_id,
                             name="test",
-                            authentication_methods=[
-                                AuthMethod(id=str(uuid4()), type="Password"),
-                                AuthMethod(
-                                    id=str(uuid4()), type="MicrosoftAuthenticator"
-                                ),
-                            ],
+                            is_mfa_capable=True,
                         )
                     }
                 }

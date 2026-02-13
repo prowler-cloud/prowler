@@ -11,8 +11,8 @@ import {
   updateMutedFindingsConfig,
 } from "@/actions/processors";
 import { Button, Card, Skeleton } from "@/components/shadcn";
+import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
-import { CustomAlertModal } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { fontMono } from "@/config/fonts";
 import {
@@ -152,8 +152,8 @@ export function AdvancedMutelistForm() {
   return (
     <>
       {/* Delete Confirmation Modal */}
-      <CustomAlertModal
-        isOpen={showDeleteConfirmation}
+      <Modal
+        open={showDeleteConfirmation}
         onOpenChange={setShowDeleteConfirmation}
         title="Delete Mutelist Configuration"
         size="md"
@@ -185,7 +185,7 @@ export function AdvancedMutelistForm() {
             </Button>
           </div>
         </div>
-      </CustomAlertModal>
+      </Modal>
 
       <Card variant="base" className="p-6">
         <form action={formAction} className="flex flex-col gap-4">

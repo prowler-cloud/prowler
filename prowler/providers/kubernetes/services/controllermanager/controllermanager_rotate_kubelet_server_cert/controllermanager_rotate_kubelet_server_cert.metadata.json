@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesControllerManager",
+  "ResourceGroup": "container",
   "Description": "This check ensures that the Kubernetes Controller Manager is configured with the RotateKubeletServerCertificate argument set to true, enabling automated rotation of kubelet server certificates.",
   "Risk": "Not enabling kubelet server certificate rotation could lead to downtime due to expired certificates.",
   "RelatedUrl": "https://kubernetes.io/docs/tasks/tls/certificate-rotation/",

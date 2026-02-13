@@ -268,7 +268,6 @@ export const VerticalSteps = React.forwardRef<
                       "pointer-events-none absolute top-[calc(64px*var(--idx)+1)] left-3 flex h-1/2 -translate-y-1/3 items-center px-4",
                     )}
                     style={{
-                      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                       // @ts-expect-error
                       "--idx": stepIdx,
                     }}

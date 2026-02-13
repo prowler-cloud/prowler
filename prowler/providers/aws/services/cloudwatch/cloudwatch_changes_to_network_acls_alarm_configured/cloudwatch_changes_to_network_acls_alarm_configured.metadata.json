@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
   "Description": "CloudTrail records for **Network ACL changes** are matched by a CloudWatch Logs metric filter with an associated alarm for events like `CreateNetworkAcl`, `CreateNetworkAclEntry`, `DeleteNetworkAcl`, `DeleteNetworkAclEntry`, `ReplaceNetworkAclEntry`, and `ReplaceNetworkAclAssociation`.",
   "Risk": "Absent monitoring of **NACL changes** reduces detection of policy tampering, risking loss of **confidentiality** (opened ingress/egress), degraded network **integrity** (lateral movement, bypassed segmentation), and reduced **availability** (traffic blackholes or lockouts).",
   "RelatedUrl": "",

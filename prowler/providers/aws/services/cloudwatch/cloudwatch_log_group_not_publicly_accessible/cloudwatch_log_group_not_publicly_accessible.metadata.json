@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudWatch Log Groups** with resource policies that grant access to any principal are identified. Statements using `Principal:\"*\"` or wildcard `Resource` that reference a log group ARN indicate that the log group is exposed through a public policy.",
   "Risk": "Public access to log groups enables unauthorized reading of logs, revealing secrets and operational metadata, harming **confidentiality**. If broad actions are allowed, attackers can modify subscriptions or logs, undermining **integrity** and disrupting **availability** of audit evidence.",
   "RelatedUrl": "",
