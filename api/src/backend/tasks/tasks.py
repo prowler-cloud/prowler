@@ -10,6 +10,7 @@ from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIR
 from django_celery_beat.models import PeriodicTask
 from tasks.jobs.attack_paths import (
     attack_paths_scan,
+    db_utils as attack_paths_db_utils,
     can_provider_run_attack_paths_scan,
 )
 from tasks.jobs.backfill import (
@@ -359,8 +360,25 @@ def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
 
 
+class AttackPathsScanRLSTask(RLSTask):
+    """
+    RLS task that marks the `AttackPathsScan` DB row as `FAILED` when the Celery task fails.
+
+    Covers failures that happen outside the job's own try/except (e.g. provider lookup,
+    SDK initialization, or Neo4j configuration errors during setup).
+    """
+
+    def on_failure(self, exc, task_id, args, kwargs, _einfo):
+        tenant_id = kwargs.get("tenant_id")
+        scan_id = kwargs.get("scan_id")
+
+        if tenant_id and scan_id:
+            logger.error(f"Attack paths scan task {task_id} failed: {exc}")
+            attack_paths_db_utils.fail_attack_paths_scan(tenant_id, scan_id, str(exc))
+
+
 @shared_task(
-    base=RLSTask,
+    base=AttackPathsScanRLSTask,
     bind=True,
     name="attack-paths-scan-perform",
     queue="attack-paths-scans",
