@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "security",
   "Description": "**AWS Global Accelerator** accelerators are assessed for enrollment in **Shield Advanced** as `protected resources`, indicating whether enhanced DDoS coverage is configured for each accelerator.",
   "Risk": "Without **Shield Advanced**, Global Accelerators are more vulnerable to volumetric and protocol **DDoS** that can exhaust capacity, causing **availability** loss, elevated **latency**, and disrupted failover. Limited visibility and no SRT support prolong incidents and can trigger unexpected **cost** spikes from malicious traffic.",
   "RelatedUrl": "",

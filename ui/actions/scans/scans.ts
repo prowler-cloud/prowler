@@ -7,6 +7,10 @@ import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
   type ComplianceReportType,
 } from "@/lib/compliance/compliance-report-types";
+import {
+  appendSanitizedProviderTypeFilters,
+  sanitizeProviderTypesCsv,
+} from "@/lib/provider-filters";
 import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 export const getScans = async ({
@@ -35,10 +39,7 @@ export const getScans = async ({
     url.searchParams.append(`fields[${key}]`, String(value));
   });
 
-  // Add dynamic filters (e.g., "filter[state]", "fields[scans]")
-  Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const response = await fetch(url.toString(), { headers });
@@ -55,6 +56,10 @@ export const getScansByState = async () => {
   const url = new URL(`${apiBaseUrl}/scans`);
   // Request only the necessary fields to optimize the response
   url.searchParams.append("fields[scans]", "state");
+  url.searchParams.append(
+    "filter[provider_type__in]",
+    sanitizeProviderTypesCsv(),
+  );
 
   try {
     const response = await fetch(url.toString(), {

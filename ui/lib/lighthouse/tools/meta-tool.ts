@@ -6,7 +6,7 @@ import { addBreadcrumb, captureException } from "@sentry/nextjs";
 import { z } from "zod";
 
 import { getMCPTools, isMCPAvailable } from "@/lib/lighthouse/mcp-client";
-import { isBlockedTool } from "@/lib/lighthouse/workflow";
+import { isAllowedTool } from "@/lib/lighthouse/workflow";
 
 /** Input type for describe_tool */
 interface DescribeToolInput {
@@ -34,8 +34,8 @@ function getAllTools(): StructuredTool[] {
  */
 export const describeTool = tool(
   async ({ toolName }: DescribeToolInput) => {
-    // Block destructive tools from being described
-    if (isBlockedTool(toolName)) {
+    // Only allow whitelisted tools to be described
+    if (!isAllowedTool(toolName)) {
       return {
         found: false,
         message: `Tool '${toolName}' is not available.`,
@@ -116,11 +116,11 @@ Returns:
  */
 export const executeTool = tool(
   async ({ toolName, toolInput }: ExecuteToolInput) => {
-    // Block destructive tools from being executed
-    if (isBlockedTool(toolName)) {
+    // Only allow whitelisted tools to be executed
+    if (!isAllowedTool(toolName)) {
       addBreadcrumb({
         category: "meta-tool",
-        message: `execute_tool: Blocked tool attempted: ${toolName}`,
+        message: `execute_tool: Non-whitelisted tool attempted: ${toolName}`,
         level: "warning",
         data: { toolName, toolInput },
       });

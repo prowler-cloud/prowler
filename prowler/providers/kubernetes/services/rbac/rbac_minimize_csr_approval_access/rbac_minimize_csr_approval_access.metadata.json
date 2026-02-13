@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "CertificateSigningRequestApproval",
+  "ResourceGroup": "security",
   "Description": "This check ensures that access to the approval sub-resource of certificate signing request (CSR) objects is restricted. Access to update the approval sub-resource can lead to privilege escalation, allowing creation of new high-privileged user accounts in the cluster.",
   "Risk": "Unauthorized access to update the approval sub-resource of CSR objects can lead to significant security vulnerabilities, including unauthorized user creation and privilege escalation.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#csrs-and-certificate-issuing",

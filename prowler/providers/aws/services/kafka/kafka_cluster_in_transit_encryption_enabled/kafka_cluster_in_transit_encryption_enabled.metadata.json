@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsMskCluster",
+  "ResourceGroup": "messaging",
   "Description": "**Amazon MSK clusters** are evaluated for **encryption in transit** on both paths: **clientbroker** set to `TLS` only and **inter-broker** encryption enabled. *Serverless clusters provide this by default*.\n\nThe finding highlights clusters where client-broker traffic isn't `TLS`-only or inter-broker encryption is turned off.",
   "Risk": "Unencrypted or mixed (`TLS_PLAINTEXT`/`PLAINTEXT`) traffic enables interception of records, credentials, and metadata, supporting **MITM**, replay, and message tampering.\n\nPlaintext inter-broker links expose replication data within the VPC, enabling **lateral movement** and topic poisoning, degrading data **confidentiality** and **integrity**.",
   "RelatedUrl": "",

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceGroup": "monitoring",
   "Description": "Real-time monitoring of API calls can be achieved by directing **ActionTrail Logs** to Log Service and establishing corresponding query and alarms.\n\n**Security Groups** are a stateful packet filter that controls ingress and egress traffic within a VPC. It is recommended that a query and alarm be established for changes to Security Groups.",
   "Risk": "Monitoring changes to **security groups** will help ensure that resources and services are not unintentionally exposed.\n\nUnauthorized security group modifications could lead to **network exposure** and **unauthorized access**.",
   "RelatedUrl": "",

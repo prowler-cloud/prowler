@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsWafRuleGroup",
+  "ResourceGroup": "security",
   "Description": "**AWS WAF Classic global rule groups** are assessed for the presence of **one or more rules**. Empty groups are identified even when referenced by a web ACL, meaning the group adds no match logic.",
   "Risk": "An empty rule group performs no inspection, so web requests pass without WAF scrutiny. This creates blind spots enabling:\n- **Confidentiality**: data exfiltration via SQLi/XSS\n- **Integrity**: parameter tampering\n- **Availability**: bot abuse and layer-7 DoS\n\nIt also creates a false sense of protection when attached.",
   "RelatedUrl": "",

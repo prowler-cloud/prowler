@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudFrontDistribution",
+  "ResourceGroup": "network",
   "Description": "CloudFront distributions require viewer connections over **HTTPS** when the default cache behavior `viewer_protocol_policy` is `https-only` or `redirect-to-https`. Configurations that use `allow-all` permit HTTP.",
   "Risk": "Allowing HTTP exposes traffic to **man-in-the-middle** interception and **session hijacking**, enabling theft of cookies, tokens, or PII. Attackers can **tamper** with responses, inject malware, or perform **downgrade/strip** attacks, undermining confidentiality and integrity.",
   "RelatedUrl": "",

@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsCloudFrontDistribution",
+  "ResourceGroup": "network",
   "Description": "**CloudFront distributions** have **geographic restrictions** configured to limit access by country using an allowlist or blocklist (`RestrictionType` not `none`).",
   "Risk": "Absent geo restrictions, content is globally reachable, enabling:\n- Access from sanctioned or unlicensed regions (confidentiality/compliance)\n- Broader bot abuse, scraping, and DDoS staging (availability)\n- More credential-stuffing and fraud attempts against apps",
   "RelatedUrl": "",

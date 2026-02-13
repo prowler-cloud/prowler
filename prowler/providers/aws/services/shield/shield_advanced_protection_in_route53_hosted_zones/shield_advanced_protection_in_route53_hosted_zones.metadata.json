@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRoute53HostedZone",
+  "ResourceGroup": "network",
   "Description": "**Route 53 hosted zones** have an active **AWS Shield Advanced** protection registered to the zone's `ARN`.",
   "Risk": "Without **Shield Advanced**, authoritative DNS is vulnerable to:\n- **Volumetric/reflection** floods\n- **Query/application** layer attacks\n\nEffects: disrupted resolution and app outages (**availability**), latency spikes, and unexpected cost from attack traffic.",
   "RelatedUrl": "",

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
   "Description": "Enable `log_connections` on **PostgreSQL Servers**. Enabling `log_connections` helps PostgreSQL Database log attempted connections to the server, as well as successful completion of client authentication.\n\nLog data can be used to identify, troubleshoot, and repair configuration errors and suboptimal performance.",
   "Risk": "Without **connection logging**, unauthorized access attempts might go unnoticed, and troubleshooting connection issues becomes more difficult.\n\nThis data is essential for **security monitoring** and **incident investigation**.",
   "RelatedUrl": "",

@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "analytics",
   "Description": "**AWS Glue connections** require **TLS/SSL** for JDBC when the `JDBC_ENFORCE_SSL` property is set to `true`.\n\nThis evaluates connection definitions to confirm SSL is enforced for traffic to external data stores.",
   "Risk": "Absent TLS enforcement, JDBC traffic-including credentials, queries, and results-can be **intercepted or modified** in transit.\n\nThis enables:\n- Confidentiality loss via sniffing/MITM\n- Integrity tampering of queries/results\n- Credential theft leading to broader database access",
   "RelatedUrl": "",

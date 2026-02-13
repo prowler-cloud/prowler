@@ -6,3 +6,4 @@ export * from "./processors";
 export * from "./providers";
 export * from "./resources";
 export * from "./scans";
+export * from "./tree";
