@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsCertificateManagerCertificate",
+  "ResourceGroup": "security",
   "Description": "**ACM certificates** are assessed for **time to expiration** against a configurable threshold. Certificates close to end of validity or already expired are surfaced, covering those attached to services and, *if in scope*, unused ones.",
   "Risk": "Expired or near-expiry **TLS certificates** can break handshakes, causing **service outages** and failed API calls (**availability**). Emergency fixes raise misconfiguration risk, enabling disabled verification or weak ciphers, which allows **MITM** and data exposure (**confidentiality**/**integrity**).",
   "RelatedUrl": "",

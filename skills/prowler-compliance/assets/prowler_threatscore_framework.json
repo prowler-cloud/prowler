@@ -1,0 +1,189 @@
+{
+  "Framework": "ProwlerThreatScore",
+  "Name": "Prowler ThreatScore Compliance Framework for AWS",
+  "Version": "1.0",
+  "Provider": "AWS",
+  "Description": "Prowler ThreatScore Compliance Framework for AWS ensures that the AWS account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Logging and Monitoring, and Encryption. Each check has a LevelOfRisk (1-5) and Weight that contribute to calculating the overall threat score.",
+  "Requirements": [
+    {
+      "Id": "1.1.1",
+      "Description": "Ensure MFA is enabled for the 'root' user account",
+      "Checks": [
+        "iam_root_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "MFA enabled for 'root'",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The root user account holds the highest level of privileges within an AWS account. Enabling Multi-Factor Authentication (MFA) enhances security by adding an additional layer of protection beyond just a username and password.",
+          "AdditionalInformation": "Enabling MFA enhances console security by requiring the authenticating user to both possess a time-sensitive key-generating device and have knowledge of their credentials.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.1.2",
+      "Description": "Ensure hardware MFA is enabled for the 'root' user account",
+      "Checks": [
+        "iam_root_hardware_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Hardware MFA enabled for 'root'",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The root user account in AWS has the highest level of privileges. A hardware MFA has a smaller attack surface compared to a virtual MFA.",
+          "AdditionalInformation": "Unlike a virtual MFA, which relies on a mobile device that may be vulnerable to malware, a hardware MFA operates independently, reducing exposure to potential security threats.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.1.13",
+      "Description": "Ensure no root account access key exists",
+      "Checks": [
+        "iam_no_root_access_key"
+      ],
+      "Attributes": [
+        {
+          "Title": "No root access key",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The root account in AWS has unrestricted administrative privileges. It is recommended that no access keys be associated with the root account.",
+          "AdditionalInformation": "Eliminating root access keys reduces the risk of unauthorized access and enforces the use of role-based IAM accounts with least privilege.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "2.1.1",
+      "Description": "Ensure EC2 instances do not have public IP addresses",
+      "Checks": [
+        "ec2_instance_public_ip"
+      ],
+      "Attributes": [
+        {
+          "Title": "EC2 without public IP",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network Exposure",
+          "AttributeDescription": "EC2 instances with public IP addresses are directly accessible from the internet, increasing the attack surface.",
+          "AdditionalInformation": "Use private subnets and NAT gateways or VPC endpoints for internet access when needed.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.2.1",
+      "Description": "Ensure S3 buckets are not publicly accessible",
+      "Checks": [
+        "s3_bucket_public_access"
+      ],
+      "Attributes": [
+        {
+          "Title": "S3 bucket not public",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.2 Storage Exposure",
+          "AttributeDescription": "Publicly accessible S3 buckets can lead to data breaches and unauthorized access to sensitive information.",
+          "AdditionalInformation": "Enable S3 Block Public Access settings at the account and bucket level.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "3.1.1",
+      "Description": "Ensure CloudTrail is enabled in all regions",
+      "Checks": [
+        "cloudtrail_multi_region_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "CloudTrail multi-region enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.1 Audit Logging",
+          "AttributeDescription": "CloudTrail provides a record of API calls made in your AWS account. Multi-region trails ensure all activity is captured.",
+          "AdditionalInformation": "Without comprehensive logging, security incidents may go undetected and forensic analysis becomes impossible.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "3.2.1",
+      "Description": "Ensure GuardDuty is enabled",
+      "Checks": [
+        "guardduty_is_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "GuardDuty enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.2 Threat Detection",
+          "AttributeDescription": "Amazon GuardDuty is a threat detection service that continuously monitors for malicious activity and unauthorized behavior.",
+          "AdditionalInformation": "GuardDuty analyzes CloudTrail, VPC Flow Logs, and DNS logs to identify threats.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "4.1.1",
+      "Description": "Ensure S3 buckets have default encryption enabled",
+      "Checks": [
+        "s3_bucket_default_encryption"
+      ],
+      "Attributes": [
+        {
+          "Title": "S3 default encryption",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 Data at Rest",
+          "AttributeDescription": "Enabling default encryption on S3 buckets ensures all objects are encrypted when stored.",
+          "AdditionalInformation": "Use SSE-S3, SSE-KMS, or SSE-C depending on your key management requirements.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "4.1.2",
+      "Description": "Ensure EBS volumes are encrypted",
+      "Checks": [
+        "ec2_ebs_volume_encryption"
+      ],
+      "Attributes": [
+        {
+          "Title": "EBS volume encryption",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 Data at Rest",
+          "AttributeDescription": "EBS volume encryption protects data at rest on EC2 instance storage.",
+          "AdditionalInformation": "Enable default EBS encryption at the account level to ensure all new volumes are encrypted.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "4.2.1",
+      "Description": "Ensure data in transit is encrypted using TLS",
+      "Checks": [
+        "s3_bucket_secure_transport_policy"
+      ],
+      "Attributes": [
+        {
+          "Title": "S3 secure transport",
+          "Section": "4. Encryption",
+          "SubSection": "4.2 Data in Transit",
+          "AttributeDescription": "Requiring HTTPS for S3 bucket access ensures data is encrypted during transmission.",
+          "AdditionalInformation": "Use bucket policies to deny requests that do not use TLS.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    }
+  ]
+}

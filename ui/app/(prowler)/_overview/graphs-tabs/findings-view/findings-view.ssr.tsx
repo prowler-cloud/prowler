@@ -1,14 +1,11 @@
 "use server";
 
-import { Spacer } from "@heroui/spacer";
-
 import { getLatestFindings } from "@/actions/findings/findings";
 import { LighthouseBanner } from "@/components/lighthouse/banner";
 import { LinkToFindings } from "@/components/overview";
 import { ColumnNewFindingsToDate } from "@/components/overview/new-findings-table/table/column-new-findings-to-date";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib/helper";
-import { mapProviderFiltersForFindingsObject } from "@/lib/provider-helpers";
 import { FindingProps, SearchParamsProps } from "@/types";
 
 import { pickFilterParams } from "../../_lib/filter-params";
@@ -27,8 +24,7 @@ export async function FindingsViewSSR({ searchParams }: FindingsViewSSRProps) {
   };
 
   const filters = pickFilterParams(searchParams);
-  const mappedFilters = mapProviderFiltersForFindingsObject(filters);
-  const combinedFilters = { ...defaultFilters, ...mappedFilters };
+  const combinedFilters = { ...defaultFilters, ...filters };
 
   const findingsData = await getLatestFindings({
     query: undefined,
@@ -61,22 +57,19 @@ export async function FindingsViewSSR({ searchParams }: FindingsViewSSRProps) {
   };
 
   return (
-    <div className="flex w-full flex-col">
+    <div className="flex w-full flex-col gap-6">
       <LighthouseBanner />
-      <div className="relative flex w-full">
-        <div className="flex w-full items-center gap-2">
-          <h3 className="text-sm font-bold uppercase">
+      <div className="relative w-full flex-col justify-between md:flex-row">
+        <div className="flex w-full flex-col items-start gap-2 md:flex-row md:items-center">
+          <h3 className="text-sm font-bold text-nowrap whitespace-nowrap uppercase">
             Latest new failing findings
           </h3>
-          <p className="text-text-neutral-tertiary text-xs">
+          <p className="text-text-neutral-tertiary text-xs whitespace-nowrap">
             Showing the latest 10 new failing findings by severity.
           </p>
-        </div>
-        <div className="absolute -top-6 right-0">
           <LinkToFindings />
         </div>
       </div>
-      <Spacer y={4} />
 
       <DataTable
         key={`dashboard-findings-${Date.now()}`}

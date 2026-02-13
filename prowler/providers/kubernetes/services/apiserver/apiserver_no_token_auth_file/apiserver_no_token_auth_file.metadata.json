@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
+  "ResourceGroup": "container",
   "Description": "This check ensures that the Kubernetes API server is not using static token-based authentication, which is less secure. Static tokens are stored in clear-text and lack features like revocation or rotation without restarting the API server.",
   "Risk": "Using static token-based authentication exposes the cluster to security risks due to the static nature of the tokens, their clear-text storage, and the inability to revoke or rotate them easily.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/authentication/",

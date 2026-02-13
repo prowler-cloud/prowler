@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
+  "ResourceGroup": "database",
   "Description": "Neptune DB cluster automated backup is enabled and retention days are more than the required minimum retention period (default to `7` days).",
   "Risk": "**Insufficient backup retention** reduces the ability to recover from data corruption, accidental deletion, or ransomware, impacting **availability** and **integrity**.\n\n- Prevents point-in-time recovery to required dates\n- Increases downtime, irreversible data loss, and compliance violations",
   "RelatedUrl": "",

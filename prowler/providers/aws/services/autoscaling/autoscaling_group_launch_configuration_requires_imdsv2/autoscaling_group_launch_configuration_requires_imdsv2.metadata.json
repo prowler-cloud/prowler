@@ -14,6 +14,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsAutoScalingAutoScalingGroup",
+  "ResourceGroup": "compute",
   "Description": "Amazon EC2 Auto Scaling launch configurations are evaluated for **Instance Metadata Service** settings. Instances should have the metadata endpoint `enabled` with `http_tokens=required` (enforcing **IMDSv2**), or have the metadata service `disabled`.\n\nAllowing `http_tokens=optional` or omitting the version leaves legacy access enabled.",
   "Risk": "Without enforced **IMDSv2**, **SSRF** and local escape paths can access **IAM role credentials**, enabling unauthorized API calls.\n\nAttackers could:\n- Exfiltrate data with stolen tokens\n- Move laterally and modify resources, degrading confidentiality and integrity",
   "RelatedUrl": "",

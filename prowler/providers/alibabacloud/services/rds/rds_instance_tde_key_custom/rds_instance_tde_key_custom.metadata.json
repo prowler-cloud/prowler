@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
   "Description": "**TDE with BYOK** support provides increased transparency and control, increased security with an HSM-backed KMS service, and promotion of separation of duties.\n\nBased on business needs or criticality of data, it is recommended that the TDE protector is encrypted by a key that is managed by the data owner (**BYOK**).",
   "Risk": "Using **service-managed keys** means the cloud provider manages the encryption keys. **BYOK (Bring Your Own Key)** gives you full control over the key lifecycle and permissions.\n\nThis ensures that even the cloud provider cannot access your data without your explicit permission.",
   "RelatedUrl": "",

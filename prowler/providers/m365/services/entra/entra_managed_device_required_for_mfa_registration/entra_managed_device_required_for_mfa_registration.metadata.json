@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
   "Description": "Ensure that only managed devices are required for MFA registration. This ensures that users enroll MFA using secure, organization-controlled devices.",
   "Risk": "If users are allowed to register MFA on unmanaged or potentially compromised devices, attackers with stolen credentials may register their own MFA methods, effectively locking out legitimate users and taking over accounts. This increases the risk of unauthorized access, data breaches, and privilege escalation.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",

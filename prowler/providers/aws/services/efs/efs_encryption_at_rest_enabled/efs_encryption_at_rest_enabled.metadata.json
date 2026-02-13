@@ -17,6 +17,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEfsFileSystem",
+  "ResourceGroup": "storage",
   "Description": "**Amazon EFS file system** has **encryption at rest** enabled using AWS KMS to protect file data and metadata stored on the service",
   "Risk": "Without encryption at rest, EFS contents can be read from storage media, backups, or compromised hosts, eroding **confidentiality** and enabling offline exfiltration. Privileged compromise also allows covert data harvesting or manipulation, threatening **integrity** of files.",
   "RelatedUrl": "",

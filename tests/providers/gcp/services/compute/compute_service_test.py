@@ -60,6 +60,7 @@ class TestComputeService:
             assert not compute_client.instances[0].automatic_restart
             assert not compute_client.instances[0].preemptible
             assert compute_client.instances[0].provisioning_model == "STANDARD"
+            assert len(compute_client.instances[0].network_interfaces) == 1
 
             assert compute_client.instances[1].name == "instance2"
             assert compute_client.instances[1].id.__class__.__name__ == "str"
@@ -84,6 +85,7 @@ class TestComputeService:
             assert not compute_client.instances[1].automatic_restart
             assert not compute_client.instances[1].preemptible
             assert compute_client.instances[1].provisioning_model == "STANDARD"
+            assert len(compute_client.instances[1].network_interfaces) == 0
 
             assert len(compute_client.networks) == 3
             assert compute_client.networks[0].name == "network1"
@@ -191,7 +193,6 @@ class TestComputeService:
             # We expect 3 MIGs: 2 regional (from region europe-west1-b) and 1 zonal (from zone1)
             assert len(compute_client.instance_groups) == 3
 
-            # First regional MIG - multiple zones
             regional_mig_1 = next(
                 (
                     mig
@@ -211,8 +212,13 @@ class TestComputeService:
             assert regional_mig_1.is_regional
             assert regional_mig_1.target_size == 3
             assert regional_mig_1.project_id == GCP_PROJECT_ID
+            assert len(regional_mig_1.auto_healing_policies) == 1
+            assert (
+                regional_mig_1.auto_healing_policies[0].health_check
+                == "http-health-check"
+            )
+            assert regional_mig_1.auto_healing_policies[0].initial_delay_sec == 300
 
-            # Second regional MIG - single zone
             regional_mig_2 = next(
                 (
                     mig
@@ -230,8 +236,8 @@ class TestComputeService:
             assert regional_mig_2.is_regional
             assert regional_mig_2.target_size == 1
             assert regional_mig_2.project_id == GCP_PROJECT_ID
+            assert len(regional_mig_2.auto_healing_policies) == 0
 
-            # Zonal MIG
             zonal_mig = next(
                 (
                     mig
@@ -251,3 +257,23 @@ class TestComputeService:
             assert not zonal_mig.is_regional
             assert zonal_mig.target_size == 2
             assert zonal_mig.project_id == GCP_PROJECT_ID
+            assert len(zonal_mig.auto_healing_policies) == 1
+            assert zonal_mig.auto_healing_policies[0].health_check == "tcp-health-check"
+            assert zonal_mig.auto_healing_policies[0].initial_delay_sec == 120
+
+            # Test images
+            assert len(compute_client.images) == 3
+            assert compute_client.images[0].name == "test-image-1"
+            assert compute_client.images[0].id.__class__.__name__ == "str"
+            assert compute_client.images[0].project_id == GCP_PROJECT_ID
+            assert not compute_client.images[0].publicly_shared
+
+            assert compute_client.images[1].name == "test-image-2"
+            assert compute_client.images[1].id.__class__.__name__ == "str"
+            assert compute_client.images[1].project_id == GCP_PROJECT_ID
+            assert compute_client.images[1].publicly_shared
+
+            assert compute_client.images[2].name == "test-image-3"
+            assert compute_client.images[2].id.__class__.__name__ == "str"
+            assert compute_client.images[2].project_id == GCP_PROJECT_ID
+            assert not compute_client.images[2].publicly_shared
