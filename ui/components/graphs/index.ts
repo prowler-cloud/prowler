@@ -7,3 +7,4 @@ export { RadialChart } from "./radial-chart";
 export { SankeyChart } from "./sankey-chart";
 export { ScatterPlot } from "./scatter-plot";
 export { ChartLegend, type ChartLegendItem } from "./shared/chart-legend";
+export { ThreatMap } from "./threat-map";

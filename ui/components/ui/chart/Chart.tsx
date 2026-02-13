@@ -3,14 +3,8 @@
 import * as React from "react";
 import * as RechartsPrimitive from "recharts";
 
-// import {
-//   NameType,
-//   Payload,
-//   ValueType,
-// } from "recharts/types/component/DefaultTooltipContent";
 import { cn } from "@/lib/utils";
 
-// Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const;
 
 export type ChartConfig = {
@@ -357,8 +351,7 @@ function getPayloadConfigFromPayload(
   }
 
   return configLabelKey in config
-    ? // eslint-disable-next-line security/detect-object-injection
-      config[configLabelKey]
+    ? config[configLabelKey]
     : config[key as keyof typeof config];
 }
 

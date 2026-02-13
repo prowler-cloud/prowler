@@ -1,0 +1,31 @@
+{
+  "Provider": "github",
+  "CheckID": "organization_repository_creation_limited",
+  "CheckTitle": "Ensure repository creation is limited to trusted organization members.",
+  "CheckType": [],
+  "ServiceName": "organization",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "GitHubOrganization",
+  "ResourceGroup": "governance",
+  "Description": "Ensure that repository creation is restricted so that only trusted owners or specific teams can create new repositories within the organization.",
+  "Risk": "Allowing all members to create repositories increases the likelihood of shadow repositories, data leakage, or malicious projects being introduced without oversight.",
+  "RelatedUrl": "https://docs.github.com/en/organizations/managing-organization-settings/restricting-repository-creation-in-your-organization",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable repository creation for members or limit it to specific trusted teams by adjusting Member privileges in the organization's settings.",
+      "Url": "https://docs.github.com/en/organizations/managing-organization-settings/restricting-repository-creation-in-your-organization"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

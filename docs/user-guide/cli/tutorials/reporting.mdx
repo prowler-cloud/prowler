@@ -22,7 +22,7 @@ prowler <provider> --output-formats json-asff
 
 All compliance-related reports are automatically generated when Prowler is executed. These outputs are stored in the `/output/compliance` directory.
 
-## Custom Output Flags
+## Custom Output Flags
 
 By default, Prowler creates a file inside the `output` directory named: `prowler-output-ACCOUNT_NUM-OUTPUT_DATE.format`.
 
@@ -53,13 +53,13 @@ Both flags can be used simultaneously to provide a custom directory and filename
 
 By default, the timestamp format of the output files is ISO 8601. This can be changed with the flag `--unix-timestamp` generating the timestamp fields in pure unix timestamp format.
 
-## Supported Output Formats
+## Supported Output Formats
 
 Prowler natively supports the following reporting output formats:
 
 - CSV
 - JSON-OCSF
-- JSON-ASFF
+- JSON-ASFF (AWS only)
 - HTML
 
 Hereunder is the structure for each of the supported report formats by Prowler:
@@ -285,10 +285,10 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
 Each finding is a `json` object within a list.
 
 </Note>
-### JSON-ASFF
+### JSON-ASFF (AWS Only)
 
 <Note>
-Only available when using `--security-hub` or `--output-formats json-asff`
+Only available when using `--security-hub` or `--output-formats json-asff` with the AWS provider.
 
 </Note>
 The following code is an example output of the [JSON-ASFF](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html) format:

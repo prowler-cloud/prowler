@@ -9,6 +9,7 @@ from tasks.jobs.integrations import (
     upload_security_hub_integration,
 )
 
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.models import Integration
 from api.utils import prowler_integration_connection_test
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
@@ -416,9 +417,8 @@ class TestProwlerIntegrationConnectionTest:
             raise_on_exception=False,
         )
 
-    @patch("api.utils.AwsProvider")
     @patch("api.utils.S3")
-    def test_s3_integration_connection_failure(self, mock_s3_class, mock_aws_provider):
+    def test_s3_integration_connection_failure(self, mock_s3_class):
         """Test S3 integration connection failure."""
         integration = MagicMock()
         integration.integration_type = Integration.IntegrationChoices.AMAZON_S3
@@ -427,9 +427,6 @@ class TestProwlerIntegrationConnectionTest:
             "aws_secret_access_key": "test_secret_key",
         }
         integration.configuration = {"bucket_name": "test-bucket"}
-
-        mock_session = MagicMock()
-        mock_aws_provider.return_value.session.current_session = mock_session
 
         mock_connection = Connection(
             is_connected=False, error=Exception("Bucket not found")
@@ -880,7 +877,8 @@ class TestSecurityHubIntegrationUploads:
         # Verify RLS transaction was used correctly
         # Should be called twice: once for getting provider info, once for resetting regions
         assert mock_rls.call_count == 2
-        mock_rls.assert_any_call(tenant_id)
+        mock_rls.assert_any_call(tenant_id, using=READ_REPLICA_ALIAS)
+        mock_rls.assert_any_call(tenant_id, using=MainRouter.default_db)
 
         # Verify test_connection was called with integration credentials (not provider's)
         mock_test_connection.assert_called_once_with(
@@ -1197,9 +1195,6 @@ class TestSecurityHubIntegrationUploads:
                     )
 
         assert result is False
-        # Integration should be marked as disconnected
-        integration.save.assert_called_once()
-        assert integration.connected is False
 
     @patch("tasks.jobs.integrations.ASFF")
     @patch("tasks.jobs.integrations.FindingOutput")

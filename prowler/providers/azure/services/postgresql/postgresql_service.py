@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from azure.mgmt.rdbms.postgresql_flexibleservers import PostgreSQLManagementClient
+from azure.mgmt.postgresqlflexibleservers import PostgreSQLManagementClient
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -21,7 +21,17 @@ class PostgreSQL(AzureService):
                 flexible_servers_list = client.servers.list()
                 for postgresql_server in flexible_servers_list:
                     resource_group = self._get_resource_group(postgresql_server.id)
+                    # Fetch full server object once to extract multiple properties
+                    server_details = client.servers.get(
+                        resource_group, postgresql_server.name
+                    )
                     require_secure_transport = self._get_require_secure_transport(
+                        subscription, resource_group, postgresql_server.name
+                    )
+                    active_directory_auth = self._extract_active_directory_auth(
+                        server_details
+                    )
+                    entra_id_admins = self._get_entra_id_admins(
                         subscription, resource_group, postgresql_server.name
                     )
                     log_checkpoints = self._get_log_checkpoints(
@@ -42,22 +52,22 @@ class PostgreSQL(AzureService):
                     firewall = self._get_firewall(
                         subscription, resource_group, postgresql_server.name
                     )
-                    location = self._get_location(
-                        subscription, resource_group, postgresql_server.name
-                    )
+                    location = server_details.location
                     flexible_servers[subscription].append(
                         Server(
                             id=postgresql_server.id,
                             name=postgresql_server.name,
                             resource_group=resource_group,
+                            location=location,
                             require_secure_transport=require_secure_transport,
+                            active_directory_auth=active_directory_auth,
+                            entra_id_admins=entra_id_admins,
                             log_checkpoints=log_checkpoints,
                             log_connections=log_connections,
                             log_disconnections=log_disconnections,
                             connection_throttling=connection_throttling,
                             log_retention_days=log_retention_days,
                             firewall=firewall,
-                            location=location,
                         )
                     )
             except Exception as error:
@@ -100,10 +110,47 @@ class PostgreSQL(AzureService):
         )
         return log_disconnections.value.upper()
 
-    def _get_location(self, subscription, resouce_group_name, server_name):
+    def _extract_active_directory_auth(self, server):
+        """Extract active directory auth from a server object (no API call)."""
+        try:
+            auth_config = getattr(server, "auth_config", None)
+            active_directory_auth = (
+                getattr(auth_config, "active_directory_auth", None)
+                if auth_config is not None
+                else None
+            )
+            # Normalize enum/string to upper string
+            if hasattr(active_directory_auth, "value"):
+                return str(active_directory_auth.value).upper()
+            return (
+                str(active_directory_auth).upper()
+                if active_directory_auth is not None
+                else None
+            )
+        except Exception as e:
+            logger.error(f"Error extracting active directory auth: {e}")
+            return None
+
+    def _get_entra_id_admins(self, subscription, resource_group_name, server_name):
         client = self.clients[subscription]
-        location = client.servers.get(resouce_group_name, server_name).location
-        return location
+        try:
+            admins = client.administrators.list_by_server(
+                resource_group_name, server_name
+            )
+            admin_list = []
+            for admin in admins:
+                admin_list.append(
+                    EntraIdAdmin(
+                        object_id=admin.object_id,
+                        principal_name=admin.principal_name,
+                        principal_type=admin.principal_type,
+                        tenant_id=admin.tenant_id,
+                    )
+                )
+            return admin_list
+        except Exception as e:
+            logger.error(f"Error getting Entra ID admins for {server_name}: {e}")
+            return []
 
     def _get_connection_throttling(self, subscription, resouce_group_name, server_name):
         client = self.clients[subscription]
@@ -148,15 +195,25 @@ class Firewall:
 
 
 @dataclass
+class EntraIdAdmin:
+    object_id: str
+    principal_name: str
+    principal_type: str
+    tenant_id: str
+
+
+@dataclass
 class Server:
     id: str
     name: str
     resource_group: str
+    location: str
     require_secure_transport: str
+    active_directory_auth: str
+    entra_id_admins: list[EntraIdAdmin]
     log_checkpoints: str
     log_connections: str
     log_disconnections: str
     connection_throttling: str
     log_retention_days: str
     firewall: list[Firewall]
-    location: str

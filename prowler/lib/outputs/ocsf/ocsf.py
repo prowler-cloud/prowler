@@ -201,7 +201,7 @@ class OCSF(Output):
                 for finding in self._data:
                     try:
                         self._file_descriptor.write(
-                            finding.json(exclude_none=True, indent=4)
+                            finding.model_dump_json(exclude_none=True, indent=4)
                         )
                         self._file_descriptor.write(",")
                     except Exception as error:

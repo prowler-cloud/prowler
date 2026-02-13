@@ -1,29 +1,40 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudstorage_bucket_log_retention_policy_lock",
-  "CheckTitle": "Ensure That Retention Policies on Cloud Storage Buckets Used for Exporting Logs Are Configured Using Bucket Lock",
+  "CheckTitle": "Cloud Storage log sink bucket has a retention policy with Bucket Lock enabled",
   "CheckType": [],
   "ServiceName": "cloudstorage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Bucket",
-  "Description": "Enabling retention policies on log buckets will protect logs stored in cloud storage buckets from being overwritten or accidentally deleted.",
-  "Risk": "Sinks can be configured to export logs in storage buckets. It is recommended to configure a data retention policy for these cloud storage buckets and to lock the data retention policy, thus permanently preventing the policy from being reduced or removed. This way, if the system is ever compromised by an attacker or a malicious insider who wants to cover their tracks, the activity logs are definitely preserved for forensics and security investigations.",
+  "Severity": "high",
+  "ResourceType": "storage.googleapis.com/Bucket",
+  "ResourceGroup": "storage",
+  "Description": "**Cloud Storage log sink buckets** have a configured **retention period** with **Bucket Lock** applied, ensuring the retention policy cannot be shortened or removed.",
+  "Risk": "Without a locked retention policy, exported logs can be deleted early or retention reduced, undermining log **integrity** and **availability**. An attacker or malicious insider could purge evidence to evade detection, hindering **forensics** and weakening **non-repudiation** across the environment.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudStorage/retention-policies-with-bucket-lock.html",
+    "https://docs.cloud.google.com/storage/docs/bucket-lock",
+    "https://docs.cloud.google.com/storage/docs/using-bucket-lock",
+    "https://docs.cloud.google.com/storage/docs/samples/storage-lock-retention-policy",
+    "https://docs.cloud.google.com/logging/docs/export/configure_export_v2"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud storage buckets lock-retention-policy gs://<LOG_BUCKET_NAME>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/retention-policies-with-bucket-lock.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/logging-policies-1/ensure-that-retention-policies-on-log-buckets-are-configured-using-bucket-lock#terraform"
+      "Other": "1. In Google Cloud Console, go to Storage > Buckets and open the bucket used by your Logs Router sink\n2. Click the Configuration tab\n3. Under Retention policy, click Edit, set any required retention duration, and click Save\n4. Click Lock retention policy, type LOCK to confirm, and confirm to permanently lock it",
+      "Terraform": "```hcl\nresource \"google_storage_bucket\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"<LOCATION>\"\n\n  retention_policy {\n    retention_period = 86400         # Required: enable a retention policy (1 day)\n    is_locked        = true          # CRITICAL: locks the retention policy (Bucket Lock) to pass the check\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to set up retention policies and configure Bucket Lock on all storage buckets that are used as log sinks.",
-      "Url": "https://cloud.google.com/storage/docs/using-uniform-bucket-level-access"
+      "Text": "Set a **retention policy** on every log sink bucket and enable **Bucket Lock**. Choose durations that meet investigative and regulatory needs. Enforce **least privilege** and **separation of duties** for bucket and logging administration, and apply **defense in depth** so no single actor can weaken log retention.",
+      "Url": "https://hub.prowler.com/check/cloudstorage_bucket_log_retention_policy_lock"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

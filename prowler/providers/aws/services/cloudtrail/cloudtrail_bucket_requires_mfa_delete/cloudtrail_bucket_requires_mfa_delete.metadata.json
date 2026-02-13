@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudTrailTrail",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudTrail log buckets** for actively logging trails are evaluated for **MFA Delete** on the associated S3 bucket. The assessment determines whether `MFA Delete` is configured on the in-account log bucket; *if the bucket resides in another account, its configuration should be verified separately*.",
   "Risk": "Without **MFA Delete**, stolen or over-privileged credentials can permanently delete log versions or change versioning, compromising log **integrity** and **availability**. This enables attacker cover-ups, hinders **forensics**, and weakens evidence for investigations.",
   "RelatedUrl": "",

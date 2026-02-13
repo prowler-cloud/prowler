@@ -193,9 +193,20 @@ class PowerShellSession:
             result = default
 
         if error_result:
-            logger.error(f"PowerShell error output: {error_result}")
+            self._process_error(error_result)
 
         return result
+
+    def _process_error(self, error_result: str) -> None:
+        """
+        Process error output from the PowerShell command.
+
+        Subclasses can override this to provide custom error handling.
+
+        Args:
+            error_result (str): The error output from the PowerShell command.
+        """
+        logger.error(f"PowerShell error output: {error_result}")
 
     def json_parse_output(self, output: str) -> dict:
         """
@@ -220,18 +231,19 @@ class PowerShellSession:
         if output == "":
             return {}
 
-        json_match = re.search(r"(\[.*\]|\{.*\})", output, re.DOTALL)
-        if not json_match:
-            logger.error(
-                f"Unexpected PowerShell output: {output}\n",
-            )
-        else:
+        decoder = json.JSONDecoder()
+        for index, character in enumerate(output):
+            if character not in ("{", "["):
+                continue
             try:
-                return json.loads(json_match.group(1))
-            except json.JSONDecodeError as error:
-                logger.error(
-                    f"Error parsing PowerShell output as JSON: {str(error)}\n",
-                )
+                parsed_json, _ = decoder.raw_decode(output[index:])
+                return parsed_json
+            except json.JSONDecodeError:
+                continue
+
+        logger.error(
+            f"Unexpected PowerShell output: {output}\n",
+        )
 
         return {}
 

@@ -111,7 +111,22 @@ export const addProviderFormSchema = z
         providerUid: z.string(),
       }),
       z.object({
-        providerType: z.literal("oci"),
+        providerType: z.literal("iac"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
+      z.object({
+        providerType: z.literal("oraclecloud"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
+      z.object({
+        providerType: z.literal("mongodbatlas"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
+      z.object({
+        providerType: z.literal("alibabacloud"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
       }),
@@ -196,27 +211,57 @@ export const addCredentialsFormSchema = (
                         .string()
                         .optional(),
                     }
-                  : providerType === "oci"
+                  : providerType === "iac"
                     ? {
-                        [ProviderCredentialFields.OCI_USER]: z
+                        [ProviderCredentialFields.REPOSITORY_URL]: z
                           .string()
-                          .min(1, "User OCID is required"),
-                        [ProviderCredentialFields.OCI_FINGERPRINT]: z
+                          .optional(),
+                        [ProviderCredentialFields.ACCESS_TOKEN]: z
                           .string()
-                          .min(1, "Fingerprint is required"),
-                        [ProviderCredentialFields.OCI_KEY_CONTENT]: z
-                          .string()
-                          .min(1, "Private Key Content is required"),
-                        [ProviderCredentialFields.OCI_REGION]: z
-                          .string()
-                          .min(1, "Region is required"),
-                        [ProviderCredentialFields.OCI_PASS_PHRASE]: z
-                          .union([z.string(), z.literal("")])
                           .optional(),
                       }
-                    : {}),
+                    : providerType === "oraclecloud"
+                      ? {
+                          [ProviderCredentialFields.OCI_USER]: z
+                            .string()
+                            .min(1, "User OCID is required"),
+                          [ProviderCredentialFields.OCI_FINGERPRINT]: z
+                            .string()
+                            .min(1, "Fingerprint is required"),
+                          [ProviderCredentialFields.OCI_KEY_CONTENT]: z
+                            .string()
+                            .min(1, "Private Key Content is required"),
+                          [ProviderCredentialFields.OCI_TENANCY]: z
+                            .string()
+                            .min(1, "Tenancy OCID is required"),
+                          [ProviderCredentialFields.OCI_REGION]: z
+                            .string()
+                            .min(1, "Region is required"),
+                          [ProviderCredentialFields.OCI_PASS_PHRASE]: z
+                            .union([z.string(), z.literal("")])
+                            .optional(),
+                        }
+                      : providerType === "mongodbatlas"
+                        ? {
+                            [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: z
+                              .string()
+                              .min(1, "Atlas Public Key is required"),
+                            [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: z
+                              .string()
+                              .min(1, "Atlas Private Key is required"),
+                          }
+                        : providerType === "alibabacloud"
+                          ? {
+                              [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]:
+                                z.string().min(1, "Access Key ID is required"),
+                              [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]:
+                                z
+                                  .string()
+                                  .min(1, "Access Key Secret is required"),
+                            }
+                          : {}),
     })
-    .superRefine((data: Record<string, any>, ctx) => {
+    .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {
         // Validate based on the via parameter
         if (via === "app_client_secret") {
@@ -308,10 +353,27 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
             path: [ProviderCredentialFields.AWS_ACCESS_KEY_ID],
           },
         )
-    : z.object({
-        providerId: z.string(),
-        providerType: z.string(),
-      });
+    : providerType === "alibabacloud"
+      ? z.object({
+          [ProviderCredentialFields.PROVIDER_ID]: z.string(),
+          [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
+          [ProviderCredentialFields.ALIBABACLOUD_ROLE_ARN]: z
+            .string()
+            .min(1, "RAM Role ARN is required"),
+          [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: z
+            .string()
+            .min(1, "Access Key ID is required"),
+          [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: z
+            .string()
+            .min(1, "Access Key Secret is required"),
+          [ProviderCredentialFields.ALIBABACLOUD_ROLE_SESSION_NAME]: z
+            .string()
+            .optional(),
+        })
+      : z.object({
+          providerId: z.string(),
+          providerType: z.string(),
+        });
 
 export const addCredentialsServiceAccountFormSchema = (
   providerType: ProviderType,

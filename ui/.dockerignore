@@ -13,3 +13,5 @@ README.md
 !.next/static
 !.next/standalone
 .git
+.husky
+scripts/setup-git-hooks.js

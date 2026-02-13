@@ -1,23 +1,17 @@
 "use client";
 
-import { Button } from "@heroui/button";
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownSection,
-  DropdownTrigger,
-} from "@heroui/dropdown";
-import {
-  DeleteDocumentBulkIcon,
-  EditDocumentBulkIcon,
-} from "@heroui/shared-icons";
 import { Row } from "@tanstack/react-table";
-import clsx from "clsx";
+import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
-import { CustomAlertModal } from "@/components/ui/custom";
+import { Button } from "@/components/shadcn";
+import {
+  ActionDropdown,
+  ActionDropdownDangerZone,
+  ActionDropdownItem,
+} from "@/components/shadcn/dropdown";
+import { Modal } from "@/components/shadcn/modal";
 
 import { DeleteForm, EditForm } from "../forms";
 
@@ -25,7 +19,6 @@ interface DataTableRowActionsProps<UserProps> {
   row: Row<UserProps>;
   roles?: { id: string; name: string }[];
 }
-const iconClasses = "text-2xl text-default-500 pointer-events-none shrink-0";
 
 export function DataTableRowActions<UserProps>({
   row,
@@ -41,8 +34,8 @@ export function DataTableRowActions<UserProps>({
 
   return (
     <>
-      <CustomAlertModal
-        isOpen={isEditOpen}
+      <Modal
+        open={isEditOpen}
         onOpenChange={setIsEditOpen}
         title="Edit user details"
       >
@@ -55,62 +48,38 @@ export function DataTableRowActions<UserProps>({
           roles={roles || []}
           setIsOpen={setIsEditOpen}
         />
-      </CustomAlertModal>
-      <CustomAlertModal
-        isOpen={isDeleteOpen}
+      </Modal>
+      <Modal
+        open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Are you absolutely sure?"
         description="This action cannot be undone. This will permanently delete your user account and remove your data from the server."
       >
         <DeleteForm userId={userId} setIsOpen={setIsDeleteOpen} />
-      </CustomAlertModal>
+      </Modal>
 
       <div className="relative flex items-center justify-end gap-2">
-        <Dropdown
-          className="dark:bg-prowler-blue-800 shadow-xl"
-          placement="bottom"
-        >
-          <DropdownTrigger>
-            <Button isIconOnly radius="full" size="sm" variant="light">
-              <VerticalDotsIcon className="text-default-400" />
+        <ActionDropdown
+          trigger={
+            <Button variant="ghost" size="icon-sm" className="rounded-full">
+              <VerticalDotsIcon className="text-slate-400" />
             </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            closeOnSelect
-            aria-label="Actions"
-            color="default"
-            variant="flat"
-          >
-            <DropdownSection title="Actions">
-              <DropdownItem
-                key="edit"
-                description="Allows you to edit the user"
-                textValue="Edit User"
-                startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                onPress={() => setIsEditOpen(true)}
-              >
-                Edit User
-              </DropdownItem>
-            </DropdownSection>
-            <DropdownSection title="Danger zone">
-              <DropdownItem
-                key="delete"
-                className="text-danger"
-                color="danger"
-                description="Delete the user permanently"
-                textValue="Delete User"
-                startContent={
-                  <DeleteDocumentBulkIcon
-                    className={clsx(iconClasses, "!text-danger")}
-                  />
-                }
-                onPress={() => setIsDeleteOpen(true)}
-              >
-                Delete User
-              </DropdownItem>
-            </DropdownSection>
-          </DropdownMenu>
-        </Dropdown>
+          }
+        >
+          <ActionDropdownItem
+            icon={<Pencil />}
+            label="Edit User"
+            onSelect={() => setIsEditOpen(true)}
+          />
+          <ActionDropdownDangerZone>
+            <ActionDropdownItem
+              icon={<Trash2 />}
+              label="Delete User"
+              destructive
+              onSelect={() => setIsDeleteOpen(true)}
+            />
+          </ActionDropdownDangerZone>
+        </ActionDropdown>
       </div>
     </>
   );

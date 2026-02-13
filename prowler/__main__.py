@@ -8,6 +8,7 @@ from colorama import Fore, Style
 from colorama import init as colorama_init
 
 from prowler.config.config import (
+    EXTERNAL_TOOL_PROVIDERS,
     csv_file_suffix,
     get_available_compliance_frameworks,
     html_file_suffix,
@@ -24,6 +25,7 @@ from prowler.lib.check.check import (
     list_checks_json,
     list_fixers,
     list_services,
+    load_custom_checks_metadata,
     parse_checks_from_file,
     parse_checks_from_folder,
     print_categories,
@@ -51,17 +53,24 @@ from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected im
 )
 from prowler.lib.outputs.compliance.c5.c5_aws import AWSC5
 from prowler.lib.outputs.compliance.c5.c5_azure import AzureC5
+from prowler.lib.outputs.compliance.c5.c5_gcp import GCPC5
 from prowler.lib.outputs.compliance.ccc.ccc_aws import CCC_AWS
 from prowler.lib.outputs.compliance.ccc.ccc_azure import CCC_Azure
 from prowler.lib.outputs.compliance.ccc.ccc_gcp import CCC_GCP
+from prowler.lib.outputs.compliance.cis.cis_alibabacloud import AlibabaCloudCIS
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
-from prowler.lib.outputs.compliance.cis.cis_oci import OCICIS
+from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
+from prowler.lib.outputs.compliance.csa.csa_alibabacloud import AlibabaCloudCSA
+from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
+from prowler.lib.outputs.compliance.csa.csa_azure import AzureCSA
+from prowler.lib.outputs.compliance.csa.csa_gcp import GCPCSA
+from prowler.lib.outputs.compliance.csa.csa_oraclecloud import OracleCloudCSA
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
@@ -80,6 +89,9 @@ from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
     AzureMitreAttack,
 )
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_alibaba import (
+    ProwlerThreatScoreAlibaba,
+)
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_aws import (
     ProwlerThreatScoreAWS,
 )
@@ -88,6 +100,9 @@ from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_azur
 )
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_gcp import (
     ProwlerThreatScoreGCP,
+)
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_kubernetes import (
+    ProwlerThreatScoreKubernetes,
 )
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_m365 import (
     ProwlerThreatScoreM365,
@@ -99,20 +114,25 @@ from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.lib.outputs.outputs import extract_findings_statistics, report
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
+from prowler.providers.alibabacloud.models import AlibabaCloudOutputOptions
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.aws.models import AWSOutputOptions
 from prowler.providers.azure.models import AzureOutputOptions
+from prowler.providers.cloudflare.models import CloudflareOutputOptions
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.iac.models import IACOutputOptions
+from prowler.providers.image.exceptions.exceptions import ImageBaseException
+from prowler.providers.image.models import ImageOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 from prowler.providers.llm.models import LLMOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
+from prowler.providers.openstack.models import OpenStackOutputOptions
 from prowler.providers.oraclecloud.models import OCIOutputOptions
 
 
@@ -181,6 +201,11 @@ def prowler():
     logger.debug("Loading checks metadata from .metadata.json files")
     bulk_checks_metadata = CheckMetadata.get_bulk(provider)
 
+    # Load custom checks metadata before validation
+    if checks_folder:
+        custom_folder_metadata = load_custom_checks_metadata(checks_folder)
+        bulk_checks_metadata.update(custom_folder_metadata)
+
     if args.list_categories:
         print_categories(list_categories(bulk_checks_metadata))
         sys.exit()
@@ -189,8 +214,8 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
-    # Skip compliance frameworks for IAC and LLM providers
-    if provider != "iac" and provider != "llm":
+    # Skip compliance frameworks for external-tool providers
+    if provider not in EXTERNAL_TOOL_PROVIDERS:
         bulk_compliance_frameworks = Compliance.get_bulk(provider)
         # Complete checks metadata with the compliance framework specification
         bulk_checks_metadata = update_checks_metadata_with_compliance(
@@ -247,8 +272,8 @@ def prowler():
     if not args.only_logs:
         global_provider.print_credentials()
 
-    # Skip service and check loading for IAC and LLM providers
-    if provider != "iac" and provider != "llm":
+    # Skip service and check loading for external-tool providers
+    if provider not in EXTERNAL_TOOL_PROVIDERS:
         # Import custom checks from folder
         if checks_folder:
             custom_checks = parse_checks_from_folder(global_provider, checks_folder)
@@ -317,6 +342,10 @@ def prowler():
         output_options = GithubOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+    elif provider == "cloudflare":
+        output_options = CloudflareOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
     elif provider == "m365":
         output_options = M365OutputOptions(
             args, bulk_checks_metadata, global_provider.identity
@@ -331,10 +360,20 @@ def prowler():
         )
     elif provider == "iac":
         output_options = IACOutputOptions(args, bulk_checks_metadata)
+    elif provider == "image":
+        output_options = ImageOutputOptions(args, bulk_checks_metadata)
     elif provider == "llm":
         output_options = LLMOutputOptions(args, bulk_checks_metadata)
-    elif provider == "oci":
+    elif provider == "oraclecloud":
         output_options = OCIOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "alibabacloud":
+        output_options = AlibabaCloudOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "openstack":
+        output_options = OpenStackOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
 
@@ -346,8 +385,8 @@ def prowler():
     # Execute checks
     findings = []
 
-    if provider == "iac" or provider == "llm":
-        # For IAC and LLM providers, run the scan directly
+    if provider in EXTERNAL_TOOL_PROVIDERS:
+        # For external-tool providers, run the scan directly
         if provider == "llm":
 
             def streaming_callback(findings_batch):
@@ -357,7 +396,17 @@ def prowler():
             findings = global_provider.run_scan(streaming_callback=streaming_callback)
         else:
             # Original behavior for IAC or non-verbose LLM
-            findings = global_provider.run()
+            try:
+                findings = global_provider.run()
+            except ImageBaseException as error:
+                logger.critical(f"{error}")
+                sys.exit(1)
+            # Note: IaC doesn't support granular progress tracking since Trivy runs as a black box
+            # and returns all findings at once. Progress tracking would just be 0% → 100%.
+
+            # Filter findings by status if specified
+            if hasattr(args, "status") and args.status:
+                findings = [f for f in findings if f.status in args.status]
             # Report findings for verbose output
             report(findings, global_provider, output_options)
     elif len(checks_to_execute):
@@ -423,7 +472,7 @@ def prowler():
         else:
             # Refactor(CLI)
             logger.critical(
-                "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_NAME environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
+                "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_NAME environment variables (see more in https://docs.prowler.com/user-guide/cli/tutorials/integrations#configuration-of-the-integration-with-slack)."
             )
             sys.exit(1)
 
@@ -566,7 +615,6 @@ def prowler():
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
             elif compliance_name.startswith("ccc_"):
-
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"
@@ -592,6 +640,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(c5)
                 c5.batch_write_data_to_file()
+            elif compliance_name == "csa_ccm_4.0_aws":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                csa_ccm_4_0_aws = AWSCSA(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(csa_ccm_4_0_aws)
+                csa_ccm_4_0_aws.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -695,6 +755,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(c5_azure)
                 c5_azure.batch_write_data_to_file()
+            elif compliance_name == "csa_ccm_4.0_azure":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                csa_ccm_4_0_azure = AzureCSA(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(csa_ccm_4_0_azure)
+                csa_ccm_4_0_azure.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -786,6 +858,30 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(ccc_gcp)
                 ccc_gcp.batch_write_data_to_file()
+            elif compliance_name == "c5_gcp":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                c5_gcp = GCPC5(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(c5_gcp)
+                c5_gcp.batch_write_data_to_file()
+            elif compliance_name == "csa_ccm_4.0_gcp":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                csa_ccm_4_0_gcp = GCPCSA(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(csa_ccm_4_0_gcp)
+                csa_ccm_4_0_gcp.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -827,6 +923,19 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(iso27001)
                 iso27001.batch_write_data_to_file()
+            elif compliance_name == "prowler_threatscore_kubernetes":
+                # Generate Prowler ThreatScore Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                prowler_threatscore = ProwlerThreatScoreKubernetes(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(prowler_threatscore)
+                prowler_threatscore.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -950,7 +1059,7 @@ def prowler():
                 generated_outputs["compliance"].append(generic_compliance)
                 generic_compliance.batch_write_data_to_file()
 
-    elif provider == "oci":
+    elif provider == "oraclecloud":
         for compliance_name in input_compliance_frameworks:
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
@@ -958,13 +1067,77 @@ def prowler():
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"
                 )
-                cis = OCICIS(
+                cis = OracleCloudCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
+            elif compliance_name == "csa_ccm_4.0_oraclecloud":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                csa_ccm_4_0_oraclecloud = OracleCloudCSA(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(csa_ccm_4_0_oraclecloud)
+                csa_ccm_4_0_oraclecloud.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+
+    elif provider == "alibabacloud":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis = AlibabaCloudCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
+            elif compliance_name == "csa_ccm_4.0_alibabacloud":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                csa_ccm_4_0_alibabacloud = AlibabaCloudCSA(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(csa_ccm_4_0_alibabacloud)
+                csa_ccm_4_0_alibabacloud.batch_write_data_to_file()
+            elif compliance_name == "prowler_threatscore_alibabacloud":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                prowler_threatscore = ProwlerThreatScoreAlibaba(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(prowler_threatscore)
+                prowler_threatscore.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"

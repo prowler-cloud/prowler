@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "exchange_shared_mailbox_sign_in_disabled",
+  "CheckTitle": "Shared mailbox has sign-in blocked",
+  "CheckType": [],
+  "ServiceName": "exchange",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Shared Mailbox",
+  "ResourceGroup": "IAM",
+  "Description": "Shared mailboxes are used for collaboration and should not permit direct sign-in. This check verifies that the **AccountEnabled** property is set to `false` in Entra ID for all shared mailboxes, preventing direct authentication.",
+  "Risk": "When sign-in is enabled on shared mailboxes, users with the password can bypass delegation controls and access the mailbox directly. This undermines **accountability** since actions cannot be attributed to individual users, and it increases the attack surface for credential-based attacks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/microsoft-365/admin/email/about-shared-mailboxes",
+    "https://learn.microsoft.com/en-us/microsoft-365/admin/email/create-a-shared-mailbox#block-sign-in-for-the-shared-mailbox-account"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Get-EXOMailbox -RecipientTypeDetails SharedMailbox | ForEach-Object { Update-MgUser -UserId $_.ExternalDirectoryObjectId -AccountEnabled:$false }",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Entra admin center (https://entra.microsoft.com/)\n2. Expand Identity > Users and select All users\n3. Search for and select the shared mailbox user account\n4. In the properties pane, go to Account status\n5. Uncheck 'Account enabled' and click Save\n6. Repeat for all shared mailbox accounts",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Block sign-in for all shared mailboxes to ensure users can only access them through delegation. This enforces accountability and reduces security risks from shared credentials.",
+      "Url": "https://hub.prowler.com/check/exchange_shared_mailbox_sign_in_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

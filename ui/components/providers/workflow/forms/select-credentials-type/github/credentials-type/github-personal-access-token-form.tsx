@@ -29,11 +29,6 @@ export const GitHubPersonalAccessTokenForm = ({
         placeholder="Enter your GitHub personal access token"
         variant="bordered"
         isRequired
-        isInvalid={
-          !!control._formState.errors[
-            ProviderCredentialFields.PERSONAL_ACCESS_TOKEN
-          ]
-        }
       />
     </>
   );

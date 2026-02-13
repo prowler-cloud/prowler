@@ -1,32 +1,97 @@
-from types import MappingProxyType
+from collections.abc import Iterable, Mapping
 
 from api.models import Provider
 from prowler.config.config import get_available_compliance_frameworks
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata
 
-PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE = {}
-PROWLER_CHECKS = {}
 AVAILABLE_COMPLIANCE_FRAMEWORKS = {}
 
-# Map API provider names to Prowler directory names
-# This is needed because the OCI provider directory is 'oraclecloud' but the provider type is 'oci'
-PROVIDER_NAME_MAPPING = {
-    "oci": "oraclecloud",
-}
+
+class LazyComplianceTemplate(Mapping):
+    """Lazy-load compliance templates per provider on first access."""
+
+    def __init__(self, provider_types: Iterable[str] | None = None) -> None:
+        if provider_types is None:
+            provider_types = Provider.ProviderChoices.values
+        self._provider_types = tuple(provider_types)
+        self._provider_types_set = set(self._provider_types)
+        self._cache: dict[str, dict] = {}
+
+    def _load_provider(self, provider_type: str) -> dict:
+        if provider_type not in self._provider_types_set:
+            raise KeyError(provider_type)
+        cached = self._cache.get(provider_type)
+        if cached is not None:
+            return cached
+        _ensure_provider_loaded(provider_type)
+        return self._cache[provider_type]
+
+    def __getitem__(self, key: str) -> dict:
+        return self._load_provider(key)
+
+    def __iter__(self):
+        return iter(self._provider_types)
+
+    def __len__(self) -> int:
+        return len(self._provider_types)
+
+    def __contains__(self, key: object) -> bool:
+        return key in self._provider_types_set
+
+    def get(self, key: str, default=None):
+        if key not in self._provider_types_set:
+            return default
+        return self._load_provider(key)
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging helper
+        loaded = ", ".join(sorted(self._cache))
+        return f"{self.__class__.__name__}(loaded=[{loaded}])"
 
 
-def get_prowler_provider_name(provider_type: str) -> str:
-    """
-    Map API provider type to Prowler provider directory name.
+class LazyChecksMapping(Mapping):
+    """Lazy-load checks mapping per provider on first access."""
 
-    Args:
-        provider_type: The provider type from the API (e.g., 'oci', 'aws', 'azure')
+    def __init__(self, provider_types: Iterable[str] | None = None) -> None:
+        if provider_types is None:
+            provider_types = Provider.ProviderChoices.values
+        self._provider_types = tuple(provider_types)
+        self._provider_types_set = set(self._provider_types)
+        self._cache: dict[str, dict] = {}
 
-    Returns:
-        The provider name used in Prowler's directory structure (e.g., 'oraclecloud', 'aws', 'azure')
-    """
-    return PROVIDER_NAME_MAPPING.get(provider_type, provider_type)
+    def _load_provider(self, provider_type: str) -> dict:
+        if provider_type not in self._provider_types_set:
+            raise KeyError(provider_type)
+        cached = self._cache.get(provider_type)
+        if cached is not None:
+            return cached
+        _ensure_provider_loaded(provider_type)
+        return self._cache[provider_type]
+
+    def __getitem__(self, key: str) -> dict:
+        return self._load_provider(key)
+
+    def __iter__(self):
+        return iter(self._provider_types)
+
+    def __len__(self) -> int:
+        return len(self._provider_types)
+
+    def __contains__(self, key: object) -> bool:
+        return key in self._provider_types_set
+
+    def get(self, key: str, default=None):
+        if key not in self._provider_types_set:
+            return default
+        return self._load_provider(key)
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging helper
+        loaded = ", ".join(sorted(self._cache))
+        return f"{self.__class__.__name__}(loaded=[{loaded}])"
+
+
+PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE = LazyComplianceTemplate()
+PROWLER_CHECKS = LazyChecksMapping()
 
 
 def get_compliance_frameworks(provider_type: Provider.ProviderChoices) -> list[str]:
@@ -47,9 +112,8 @@ def get_compliance_frameworks(provider_type: Provider.ProviderChoices) -> list[s
     """
     global AVAILABLE_COMPLIANCE_FRAMEWORKS
     if provider_type not in AVAILABLE_COMPLIANCE_FRAMEWORKS:
-        prowler_provider_name = get_prowler_provider_name(provider_type)
         AVAILABLE_COMPLIANCE_FRAMEWORKS[provider_type] = (
-            get_available_compliance_frameworks(prowler_provider_name)
+            get_available_compliance_frameworks(provider_type)
         )
 
     return AVAILABLE_COMPLIANCE_FRAMEWORKS[provider_type]
@@ -69,8 +133,7 @@ def get_prowler_provider_checks(provider_type: Provider.ProviderChoices):
     Returns:
         Iterable[str]: An iterable of check IDs associated with the specified provider type.
     """
-    prowler_provider_name = get_prowler_provider_name(provider_type)
-    return CheckMetadata.get_bulk(prowler_provider_name).keys()
+    return CheckMetadata.get_bulk(provider_type).keys()
 
 
 def get_prowler_provider_compliance(provider_type: Provider.ProviderChoices) -> dict:
@@ -88,32 +151,38 @@ def get_prowler_provider_compliance(provider_type: Provider.ProviderChoices) -> 
         dict: A dictionary mapping compliance framework names to their respective
             Compliance objects for the specified provider.
     """
-    prowler_provider_name = get_prowler_provider_name(provider_type)
-    return Compliance.get_bulk(prowler_provider_name)
+    return Compliance.get_bulk(provider_type)
 
 
-def load_prowler_compliance():
-    """
-    Load and initialize the Prowler compliance data and checks for all provider types.
-
-    This function retrieves compliance data for all supported provider types,
-    generates a compliance overview template, and populates the global variables
-    `PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE` and `PROWLER_CHECKS` with read-only mappings
-    of the compliance templates and checks, respectively.
-    """
-    global PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE
-    global PROWLER_CHECKS
-
-    prowler_compliance = {
-        provider_type: get_prowler_provider_compliance(provider_type)
-        for provider_type in Provider.ProviderChoices.values
-    }
-    template = generate_compliance_overview_template(prowler_compliance)
-    PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE = MappingProxyType(template)
-    PROWLER_CHECKS = MappingProxyType(load_prowler_checks(prowler_compliance))
+def _load_provider_assets(provider_type: Provider.ProviderChoices) -> tuple[dict, dict]:
+    prowler_compliance = {provider_type: get_prowler_provider_compliance(provider_type)}
+    template = generate_compliance_overview_template(
+        prowler_compliance, provider_types=[provider_type]
+    )
+    checks = load_prowler_checks(prowler_compliance, provider_types=[provider_type])
+    return template.get(provider_type, {}), checks.get(provider_type, {})
 
 
-def load_prowler_checks(prowler_compliance):
+def _ensure_provider_loaded(provider_type: Provider.ProviderChoices) -> None:
+    if (
+        provider_type in PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE._cache
+        and provider_type in PROWLER_CHECKS._cache
+    ):
+        return
+    template_cached = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE._cache.get(provider_type)
+    checks_cached = PROWLER_CHECKS._cache.get(provider_type)
+    if template_cached is not None and checks_cached is not None:
+        return
+    template, checks = _load_provider_assets(provider_type)
+    if template_cached is None:
+        PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE._cache[provider_type] = template
+    if checks_cached is None:
+        PROWLER_CHECKS._cache[provider_type] = checks
+
+
+def load_prowler_checks(
+    prowler_compliance, provider_types: Iterable[str] | None = None
+):
     """
     Generate a mapping of checks to the compliance frameworks that include them.
 
@@ -122,21 +191,25 @@ def load_prowler_checks(prowler_compliance):
     of compliance names that include that check.
 
     Args:
-        prowler_compliance (dict): The compliance data for all provider types,
+        prowler_compliance (dict): The compliance data for provider types,
             as returned by `get_prowler_provider_compliance`.
+        provider_types (Iterable[str] | None): Optional subset of provider types to
+            process. Defaults to all providers.
 
     Returns:
         dict: A nested dictionary where the first-level keys are provider types,
             and the values are dictionaries mapping check IDs to sets of compliance names.
     """
     checks = {}
-    for provider_type in Provider.ProviderChoices.values:
+    if provider_types is None:
+        provider_types = Provider.ProviderChoices.values
+    for provider_type in provider_types:
         checks[provider_type] = {
             check_id: set() for check_id in get_prowler_provider_checks(provider_type)
         }
-        for compliance_name, compliance_data in prowler_compliance[
-            provider_type
-        ].items():
+        for compliance_name, compliance_data in prowler_compliance.get(
+            provider_type, {}
+        ).items():
             for requirement in compliance_data.Requirements:
                 for check in requirement.Checks:
                     try:
@@ -166,6 +239,7 @@ def generate_scan_compliance(
     Returns:
         None: This function modifies the compliance_overview in place.
     """
+
     for compliance_id in PROWLER_CHECKS[provider_type][check_id]:
         for requirement in compliance_overview[compliance_id]["requirements"].values():
             if check_id in requirement["checks"]:
@@ -184,7 +258,9 @@ def generate_scan_compliance(
                     ] += 1
 
 
-def generate_compliance_overview_template(prowler_compliance: dict):
+def generate_compliance_overview_template(
+    prowler_compliance: dict, provider_types: Iterable[str] | None = None
+):
     """
     Generate a compliance overview template for all provider types.
 
@@ -194,17 +270,21 @@ def generate_compliance_overview_template(prowler_compliance: dict):
     counts for requirements status.
 
     Args:
-        prowler_compliance (dict): The compliance data for all provider types,
+        prowler_compliance (dict): The compliance data for provider types,
             as returned by `get_prowler_provider_compliance`.
+        provider_types (Iterable[str] | None): Optional subset of provider types to
+            process. Defaults to all providers.
 
     Returns:
         dict: A nested dictionary representing the compliance overview template,
             structured by provider type and compliance framework.
     """
     template = {}
-    for provider_type in Provider.ProviderChoices.values:
+    if provider_types is None:
+        provider_types = Provider.ProviderChoices.values
+    for provider_type in provider_types:
         provider_compliance = template.setdefault(provider_type, {})
-        compliance_data_dict = prowler_compliance[provider_type]
+        compliance_data_dict = prowler_compliance.get(provider_type, {})
 
         for compliance_name, compliance_data in compliance_data_dict.items():
             compliance_requirements = {}

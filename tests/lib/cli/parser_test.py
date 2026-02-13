@@ -17,7 +17,7 @@ prowler_command = "prowler"
 
 # capsys
 # https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
-prowler_default_usage_error = "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,mongodbatlas,oci,dashboard,iac} ..."
+prowler_default_usage_error = "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,dashboard,iac,image} ..."
 
 
 def mock_get_available_providers():
@@ -29,9 +29,13 @@ def mock_get_available_providers():
         "m365",
         "github",
         "iac",
+        "image",
         "nhn",
         "mongodbatlas",
-        "oci",
+        "oraclecloud",
+        "alibabacloud",
+        "cloudflare",
+        "openstack",
     ]
 
 
@@ -1233,6 +1237,23 @@ class Test_Parser:
         assert (
             capsys.readouterr().err
             == f"{prowler_default_usage_error}\nprowler: error: unrecognized arguments: --subscription-ids\n"
+        )
+
+    def test_parser_non_aws_with_json_asff_output(self, capsys):
+        command = [
+            prowler_command,
+            "azure",
+            "--sp-env-auth",
+            "--output-formats",
+            "json-asff",
+        ]
+        with pytest.raises(SystemExit) as wrapped_exit:
+            _ = self.parser.parse(command)
+        assert wrapped_exit.type == SystemExit
+        assert wrapped_exit.value.code == 2
+        assert (
+            capsys.readouterr().err
+            == f"{prowler_default_usage_error}\nprowler: error: json-asff output format is only available for the aws provider, but azure was selected\n"
         )
 
     def test_parser_gcp_auth_credentials_file(self):

@@ -1,25 +1,18 @@
 "use client";
 
-import { Button } from "@heroui/button";
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownSection,
-  DropdownTrigger,
-} from "@heroui/dropdown";
-import {
-  AddNoteBulkIcon,
-  DeleteDocumentBulkIcon,
-  EditDocumentBulkIcon,
-} from "@heroui/shared-icons";
 import { Row } from "@tanstack/react-table";
-import clsx from "clsx";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
-import { CustomAlertModal } from "@/components/ui/custom";
+import { Button } from "@/components/shadcn";
+import {
+  ActionDropdown,
+  ActionDropdownDangerZone,
+  ActionDropdownItem,
+} from "@/components/shadcn/dropdown";
+import { Modal } from "@/components/shadcn/modal";
 
 import { DeleteForm, EditForm } from "../forms";
 
@@ -27,7 +20,6 @@ interface DataTableRowActionsProps<InvitationProps> {
   row: Row<InvitationProps>;
   roles?: { id: string; name: string }[];
 }
-const iconClasses = "text-2xl text-default-500 pointer-events-none shrink-0";
 
 export function DataTableRowActions<InvitationProps>({
   row,
@@ -44,8 +36,8 @@ export function DataTableRowActions<InvitationProps>({
 
   return (
     <>
-      <CustomAlertModal
-        isOpen={isEditOpen}
+      <Modal
+        open={isEditOpen}
         onOpenChange={setIsEditOpen}
         title="Edit invitation details"
       >
@@ -56,76 +48,47 @@ export function DataTableRowActions<InvitationProps>({
           roles={roles || []}
           setIsOpen={setIsEditOpen}
         />
-      </CustomAlertModal>
-      <CustomAlertModal
-        isOpen={isDeleteOpen}
+      </Modal>
+      <Modal
+        open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Are you absolutely sure?"
         description="This action cannot be undone. This will permanently revoke your invitation."
       >
         <DeleteForm invitationId={invitationId} setIsOpen={setIsDeleteOpen} />
-      </CustomAlertModal>
+      </Modal>
 
       <div className="relative flex items-center justify-end gap-2">
-        <Dropdown
-          className="dark:bg-prowler-blue-800 shadow-xl"
-          placement="bottom"
-        >
-          <DropdownTrigger>
-            <Button isIconOnly radius="full" size="sm" variant="light">
-              <VerticalDotsIcon className="text-default-400" />
+        <ActionDropdown
+          trigger={
+            <Button variant="ghost" size="icon-sm" className="rounded-full">
+              <VerticalDotsIcon className="text-slate-400" />
             </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            closeOnSelect
-            aria-label="Actions"
-            color="default"
-            variant="flat"
-          >
-            <DropdownSection title="Actions">
-              <DropdownItem
-                key="check-details"
-                description="View invitation details"
-                textValue="Check Details"
-                startContent={<AddNoteBulkIcon className={iconClasses} />}
-                onPress={() =>
-                  router.push(`/invitations/check-details?id=${invitationId}`)
-                }
-              >
-                Check Details
-              </DropdownItem>
-
-              <DropdownItem
-                key="edit"
-                description="Allows you to edit the invitation"
-                textValue="Edit Invitation"
-                startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                onPress={() => setIsEditOpen(true)}
-                isDisabled={invitationAccepted === "accepted"}
-              >
-                Edit Invitation
-              </DropdownItem>
-            </DropdownSection>
-            <DropdownSection title="Danger zone">
-              <DropdownItem
-                key="delete"
-                className="text-danger"
-                color="danger"
-                description="Delete the invitation permanently"
-                textValue="Delete Invitation"
-                startContent={
-                  <DeleteDocumentBulkIcon
-                    className={clsx(iconClasses, "!text-danger")}
-                  />
-                }
-                onPress={() => setIsDeleteOpen(true)}
-                isDisabled={invitationAccepted === "accepted"}
-              >
-                Revoke Invitation
-              </DropdownItem>
-            </DropdownSection>
-          </DropdownMenu>
-        </Dropdown>
+          }
+        >
+          <ActionDropdownItem
+            icon={<Eye />}
+            label="Check Details"
+            onSelect={() =>
+              router.push(`/invitations/check-details?id=${invitationId}`)
+            }
+          />
+          <ActionDropdownItem
+            icon={<Pencil />}
+            label="Edit Invitation"
+            onSelect={() => setIsEditOpen(true)}
+            disabled={invitationAccepted === "accepted"}
+          />
+          <ActionDropdownDangerZone>
+            <ActionDropdownItem
+              icon={<Trash2 />}
+              label="Revoke Invitation"
+              destructive
+              onSelect={() => setIsDeleteOpen(true)}
+              disabled={invitationAccepted === "accepted"}
+            />
+          </ActionDropdownDangerZone>
+        </ActionDropdown>
       </div>
     </>
   );

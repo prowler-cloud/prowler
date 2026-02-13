@@ -52,7 +52,7 @@
           {
             "group": "Prowler Lighthouse AI",
             "pages": [
-              "user-guide/tutorials/prowler-app-lighthouse"
+              "getting-started/products/prowler-lighthouse-ai"
             ]
           },
           {
@@ -99,7 +99,14 @@
               },
               "user-guide/tutorials/prowler-app-rbac",
               "user-guide/tutorials/prowler-app-api-keys",
-              "user-guide/tutorials/prowler-app-mute-findings",
+              {
+                "group": "Mutelist",
+                "expanded": true,
+                "pages": [
+                  "user-guide/tutorials/prowler-app-simple-mutelist",
+                  "user-guide/tutorials/prowler-app-mute-findings"
+                ]
+              },
               {
                 "group": "Integrations",
                 "expanded": true,
@@ -109,7 +116,14 @@
                   "user-guide/tutorials/prowler-app-jira-integration"
                 ]
               },
-              "user-guide/tutorials/prowler-app-lighthouse",
+              {
+                "group": "Lighthouse AI",
+                "pages": [
+                  "user-guide/tutorials/prowler-app-lighthouse",
+                  "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
+                ]
+              },
+              "user-guide/tutorials/prowler-cloud-public-ips",
               {
                 "group": "Tutorials",
                 "pages": [
@@ -192,10 +206,16 @@
                 ]
               },
               {
+                "group": "Alibaba Cloud",
+                "pages": [
+                  "user-guide/providers/alibabacloud/getting-started-alibabacloud",
+                  "user-guide/providers/alibabacloud/authentication"
+                ]
+              },
+              {
                 "group": "Kubernetes",
                 "pages": [
-                  "user-guide/providers/kubernetes/in-cluster",
-                  "user-guide/providers/kubernetes/outside-cluster",
+                  "user-guide/providers/kubernetes/getting-started-k8s",
                   "user-guide/providers/kubernetes/misc"
                 ]
               },
@@ -229,6 +249,19 @@
                 ]
               },
               {
+                "group": "Cloudflare",
+                "pages": [
+                  "user-guide/providers/cloudflare/getting-started-cloudflare",
+                  "user-guide/providers/cloudflare/authentication"
+                ]
+              },
+              {
+                "group": "Image",
+                "pages": [
+                  "user-guide/providers/image/getting-started-image"
+                ]
+              },
+              {
                 "group": "LLM",
                 "pages": [
                   "user-guide/providers/llm/getting-started-llm"
@@ -239,6 +272,13 @@
                 "pages": [
                   "user-guide/providers/oci/getting-started-oci",
                   "user-guide/providers/oci/authentication"
+                ]
+              },
+              {
+                "group": "OpenStack",
+                "pages": [
+                  "user-guide/providers/openstack/getting-started-openstack",
+                  "user-guide/providers/openstack/authentication"
                 ]
               }
             ]
@@ -264,7 +304,9 @@
               "developer-guide/outputs",
               "developer-guide/integrations",
               "developer-guide/security-compliance-framework",
-              "developer-guide/lighthouse"
+              "developer-guide/lighthouse-architecture",
+              "developer-guide/mcp-server",
+              "developer-guide/ai-skills"
             ]
           },
           {
@@ -273,6 +315,7 @@
               "developer-guide/aws-details",
               "developer-guide/azure-details",
               "developer-guide/gcp-details",
+              "developer-guide/alibabacloud-details",
               "developer-guide/kubernetes-details",
               "developer-guide/m365-details",
               "developer-guide/github-details",
@@ -287,7 +330,8 @@
                 "group": "Testing",
                 "pages": [
                   "developer-guide/unit-testing",
-                  "developer-guide/integration-testing"
+                  "developer-guide/integration-testing",
+                  "developer-guide/end2end-testing"
                 ]
               },
               "developer-guide/debugging",
@@ -300,14 +344,28 @@
       },
       {
         "tab": "Security",
-        "pages": [
-          "security"
+        "groups": [
+          {
+            "group": "Security & Compliance",
+            "pages": [
+              "security/index",
+              "security/software-security"
+            ]
+          },
+          {
+            "group": "Prowler Cloud",
+            "pages": [
+              "security/encryption",
+              "security/data-regions",
+              "security/networking"
+            ]
+          }
         ]
       },
       {
-        "tab": "Contact Us",
+        "tab": "Support",
         "pages": [
-          "contact"
+          "support"
         ]
       },
       {
@@ -428,6 +486,10 @@
     {
       "source": "/projects/prowler-open-source/en/latest/tutorials/:slug*",
       "destination": "/user-guide/tutorials/:slug*"
+    },
+    {
+      "source": "/contact",
+      "destination": "/support"
     }
   ]
 }
