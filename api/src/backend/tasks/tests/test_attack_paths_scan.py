@@ -244,9 +244,7 @@ class TestAttackPathsRun:
         failure_args = mock_finish.call_args[0]
         assert failure_args[0] is attack_paths_scan
         assert failure_args[1] == StateChoices.FAILED
-        assert failure_args[2] == {
-            "global_error": "Cartography failed: ingestion boom"
-        }
+        assert failure_args[2] == {"global_error": "Cartography failed: ingestion boom"}
 
     def test_run_failure_marks_scan_failed_even_when_drop_database_fails(
         self, tenants_fixture, providers_fixture, scans_fixture
@@ -330,9 +328,7 @@ class TestAttackPathsRun:
         failure_args = mock_finish.call_args[0]
         assert failure_args[0] is attack_paths_scan
         assert failure_args[1] == StateChoices.FAILED
-        assert failure_args[2] == {
-            "global_error": "Cartography failed: ingestion boom"
-        }
+        assert failure_args[2] == {"global_error": "Cartography failed: ingestion boom"}
 
     def test_run_returns_early_for_unsupported_provider(self, tenants_fixture):
         tenant = tenants_fixture[0]
