@@ -13,9 +13,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/dns/docs/dnssec-config",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudDNS/dns-sec-key-signing-algorithm-in-use.html",
     "https://docs.cloud.google.com/dns/docs/dnssec-config",
-    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_6#terraform",
     "https://cloud.google.com/dns/docs/dnssec-advanced?hl=id",
     "https://docs.cloud.google.com/dns/docs/dnssec-advanced"
   ],

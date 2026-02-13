@@ -13,8 +13,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/dns/docs/dnssec-config",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudDNS/dns-sec-zone-signing-algorithm-in-use.html",
-    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_6#terraform",
     "https://cloud-kb.sentinelone.com/dns-security-rsa-sha1-enabled",
     "https://datatracker.ietf.org/doc/html/rfc9905",
     "https://stackoverflow.com/questions/68968312/terraform-errors-deploying-google-dns-managed-zone-with-rsasha1",

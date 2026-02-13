@@ -17,9 +17,7 @@
     "https://cloud.google.com/dns",
     "https://docs.cloud.google.com/dns/docs/dnssec",
     "https://cloud.google.com/dns/docs/dnssec-config?hl=vi",
-    "https://cloud.google.com/dns/docs/registrars?hl=Es",
-    "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_5#terraform",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudDNS/enable-dns-sec.html"
+    "https://cloud.google.com/dns/docs/registrars?hl=Es"
   ],
   "Remediation": {
     "Code": {
