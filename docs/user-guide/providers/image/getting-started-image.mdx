@@ -175,15 +175,15 @@ The timeout accepts values in seconds (`s`), minutes (`m`), or hours (`h`). Defa
 
 ### Authentication for Private Registries
 
-To scan images from private registries, the Image provider supports three authentication methods. Prowler evaluates them in the following order of priority:
+To scan images from private registries, the Image provider supports three authentication methods. Prowler uses the first available method in this priority order:
 
 #### 1. Basic Authentication (Environment Variables)
 
-To authenticate with a username and password, set the `TRIVY_USERNAME` and `TRIVY_PASSWORD` environment variables. Prowler automatically runs `docker login`, pulls the image, and performs a `docker logout` after the scan completes:
+To authenticate with a username and password, set the `REGISTRY_USERNAME` and `REGISTRY_PASSWORD` environment variables. Prowler automatically runs `docker login`, pulls the image, and performs a `docker logout` after the scan completes:
 
 ```bash
-export TRIVY_USERNAME="myuser"
-export TRIVY_PASSWORD="mypassword"
+export REGISTRY_USERNAME="myuser"
+export REGISTRY_PASSWORD="mypassword"
 
 prowler image -I myregistry.io/myapp:v1.0
 ```
@@ -192,10 +192,10 @@ Both variables must be set for this method to activate. Prowler handles the full
 
 #### 2. Token-Based Authentication
 
-To authenticate using a registry token (such as a bearer or OAuth2 token), set the `TRIVY_REGISTRY_TOKEN` environment variable. Prowler passes the token directly to Trivy:
+To authenticate using a registry token (such as a bearer or OAuth2 token), set the `REGISTRY_TOKEN` environment variable. Prowler passes the token directly to Trivy:
 
 ```bash
-export TRIVY_REGISTRY_TOKEN="my-registry-token"
+export REGISTRY_TOKEN="my-registry-token"
 
 prowler image -I myregistry.io/myapp:v1.0
 ```
@@ -220,7 +220,7 @@ When basic authentication is active (method 1), Prowler automatically logs out f
 
 The Image provider categorizes common Trivy errors with actionable guidance:
 
-* **Authentication failure (401/403):** Registry credentials are missing or invalid. Verify the `TRIVY_USERNAME`/`TRIVY_PASSWORD` or `TRIVY_REGISTRY_TOKEN` environment variables, or run `docker login` for the target registry and retry the scan.
+* **Authentication failure (401/403):** Registry credentials are missing or invalid. Verify the `REGISTRY_USERNAME`/`REGISTRY_PASSWORD` or `REGISTRY_TOKEN` environment variables, or run `docker login` for the target registry and retry the scan.
 * **Image not found (404):** The specified image name, tag, or registry is incorrect. Verify the image reference exists and is accessible.
 * **Rate limited (429):** The container registry is throttling requests. Wait before retrying, or authenticate to increase rate limits.
 * **Network issue:** Trivy cannot reach the registry due to connectivity problems. Check network access, DNS resolution, and firewall rules.

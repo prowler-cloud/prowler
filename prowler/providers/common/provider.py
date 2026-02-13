@@ -285,9 +285,6 @@ class Provider(ABC):
                         timeout=arguments.timeout,
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
-                        registry_username=getattr(arguments, "registry_username", None),
-                        registry_password=getattr(arguments, "registry_password", None),
-                        registry_token=getattr(arguments, "registry_token", None),
                     )
                 elif "mongodbatlas" in provider_class_name.lower():
                     provider_class(
@@ -312,6 +309,9 @@ class Provider(ABC):
                 elif "openstack" in provider_class_name.lower():
                     provider_class(
                         clouds_yaml_file=getattr(arguments, "clouds_yaml_file", None),
+                        clouds_yaml_content=getattr(
+                            arguments, "clouds_yaml_content", None
+                        ),
                         clouds_yaml_cloud=getattr(arguments, "clouds_yaml_cloud", None),
                         auth_url=getattr(arguments, "os_auth_url", None),
                         identity_api_version=getattr(

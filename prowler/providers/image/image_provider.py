@@ -69,9 +69,9 @@ class ImageProvider(Provider):
         config_path: str | None = None,
         config_content: dict | None = None,
         fixer_config: dict | None = None,
-        registry_username: str = None,
-        registry_password: str = None,
-        registry_token: str = None,
+        registry_username: str | None = None,
+        registry_password: str | None = None,
+        registry_token: str | None = None,
     ):
         logger.info("Instantiating Image Provider...")
 
@@ -90,9 +90,9 @@ class ImageProvider(Provider):
         self._identity = "prowler"
 
         # Registry authentication (follows IaC pattern: explicit params, env vars internal)
-        self.registry_username = registry_username or os.environ.get("TRIVY_USERNAME")
-        self.registry_password = registry_password or os.environ.get("TRIVY_PASSWORD")
-        self.registry_token = registry_token or os.environ.get("TRIVY_REGISTRY_TOKEN")
+        self.registry_username = registry_username or os.environ.get("REGISTRY_USERNAME")
+        self.registry_password = registry_password or os.environ.get("REGISTRY_PASSWORD")
+        self.registry_token = registry_token or os.environ.get("REGISTRY_TOKEN")
         self._logged_in_registries: set = set()
 
         if self.registry_username and self.registry_password:
@@ -173,6 +173,8 @@ class ImageProvider(Provider):
                 file=file_path,
                 message=f"Image list file not found: {file_path}",
             )
+        except (ImageListFileReadError, ImageListFileNotFoundError):
+            raise
         except Exception as error:
             raise ImageListFileReadError(
                 file=file_path,
@@ -275,7 +277,10 @@ class ImageProvider(Provider):
         return None
 
     def _docker_login(self, registry: str | None) -> None:
-        """Run docker login --password-stdin for a registry."""
+        """Run docker login --password-stdin for a registry.
+
+        Password is passed via stdin to prevent exposure in process listings.
+        """
         registry_label = registry or "Docker Hub"
         cmd = [
             "docker",
@@ -633,7 +638,7 @@ class ImageProvider(Provider):
         """Build environment variables for Trivy, injecting registry credentials.
 
         When username+password are provided, we rely on docker login (which stores
-        credentials in Docker's credential store). Setting TRIVY_USERNAME/TRIVY_PASSWORD
+        credentials in Docker's credential store). Setting REGISTRY_USERNAME/REGISTRY_PASSWORD as Trivy env vars
         would cause Trivy to attempt its own token-exchange auth, which fails for
         Docker Hub and other registries that require docker login.
         """

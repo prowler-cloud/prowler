@@ -870,7 +870,7 @@ class CheckReportImage(Check_Report):
 
     def __init__(
         self,
-        metadata: Optional[str] = None,
+        metadata: Optional[dict] = None,
         finding: Optional[dict] = None,
         image_name: str = "",
     ) -> None:
@@ -878,7 +878,7 @@ class CheckReportImage(Check_Report):
         Initialize the Container Image Check's finding information from a Trivy vulnerability/secret dict.
 
         Args:
-            metadata (str): Check metadata.
+            metadata (Dict): Check metadata.
             finding (dict): A single vulnerability/secret result from Trivy's JSON output.
             image_name (str): The container image name being scanned.
         """
