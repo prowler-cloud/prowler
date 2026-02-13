@@ -13,7 +13,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/docs/authentication/api-keys",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudAPI/rotate-api-keys.html"
+    "https://cloud.google.com/docs/authentication/api-keys-best-practices"
   ],
   "Remediation": {
     "Code": {
