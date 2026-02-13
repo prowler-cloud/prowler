@@ -12,9 +12,8 @@
   "Risk": "Without **CMEK** on Dataproc disks, keys remain provider-controlled, limiting **rotation**, **revocation**, and **location control**. This reduces containment if disks or snapshots are exposed and may block **data sovereignty** requirements, impacting **confidentiality** and incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/ensure-gcp-dataproc-cluster-is-encrypted-with-customer-supplied-encryption-keys-cseks#terraform",
-    "https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/customer-managed-encryption",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/Dataproc/enable-encryption-with-cmks-for-dataproc-clusters.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/Dataproc/enable-encryption-with-cmks-for-dataproc-clusters.html",
+    "https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/customer-managed-encryption"
   ],
   "Remediation": {
     "Code": {
