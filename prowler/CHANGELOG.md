@@ -121,7 +121,50 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS SQS service metadata to new format [(#9429)](https://github.com/prowler-cloud/prowler/pull/9429)
 - Update AWS Shield service metadata to new format [(#9427)](https://github.com/prowler-cloud/prowler/pull/9427)
 - Update AWS Secrets Manager service metadata to new format [(#9408)](https://github.com/prowler-cloud/prowler/pull/9408)
+- Improve SageMaker service tag retrieval with parallel execution [(#9609)](https://github.com/prowler-cloud/prowler/pull/9609)
+- Update AWS Redshift service metadata to new format [(#9385)](https://github.com/prowler-cloud/prowler/pull/9385)
+- Update AWS Storage Gateway service metadata to new format [(#9433)](https://github.com/prowler-cloud/prowler/pull/9433)
+- Update AWS Well-Architected service metadata to new format [(#9482)](https://github.com/prowler-cloud/prowler/pull/9482)
+- Update AWS SSM service metadata to new format [(#9430)](https://github.com/prowler-cloud/prowler/pull/9430)
+- Update AWS Organizations service metadata to new format [(#9384)](https://github.com/prowler-cloud/prowler/pull/9384)
+- Update AWS Resource Explorer v2 service metadata to new format [(#9386)](https://github.com/prowler-cloud/prowler/pull/9386)
+- Update AWS SageMaker service metadata to new format [(#9407)](https://github.com/prowler-cloud/prowler/pull/9407)
+- Update AWS Security Hub service metadata to new format [(#9409)](https://github.com/prowler-cloud/prowler/pull/9409)
+- Update AWS SES service metadata to new format [(#9411)](https://github.com/prowler-cloud/prowler/pull/9411)
+- Update AWS SSM Incidents service metadata to new format [(#9431)](https://github.com/prowler-cloud/prowler/pull/9431)
+- Update AWS WorkSpaces service metadata to new format [(#9483)](https://github.com/prowler-cloud/prowler/pull/9483)
+- Update AWS OpenSearch service metadata to new format [(#9383)](https://github.com/prowler-cloud/prowler/pull/9383)
+- Update AWS VPC service metadata to new format [(#9479)](https://github.com/prowler-cloud/prowler/pull/9479)
+- Update AWS Transfer service metadata to new format [(#9434)](https://github.com/prowler-cloud/prowler/pull/9434)
+- Update AWS S3 service metadata to new format [(#9552)](https://github.com/prowler-cloud/prowler/pull/9552)
+- Update AWS DataSync service metadata to new format [(#8854)](https://github.com/prowler-cloud/prowler/pull/8854)
+- Update AWS RDS service metadata to new format [(#9551)](https://github.com/prowler-cloud/prowler/pull/9551)
+- Update AWS Bedrock service metadata to new format [(#8827)](https://github.com/prowler-cloud/prowler/pull/8827)
+- Update AWS IAM service metadata to new format [(#9550)](https://github.com/prowler-cloud/prowler/pull/9550)
+- Enhance `user_registration_details` perfomance and user `mfa` evaluation [(#9236)](https://github.com/prowler-cloud/prowler/pull/9236)
+- Update AWS Cognito service metadata to new format [(#8853)](https://github.com/prowler-cloud/prowler/pull/8853)
+- Update AWS EC2 service metadata to new format [(#9549)](https://github.com/prowler-cloud/prowler/pull/9549)
+- Update Azure AI Search service metadata to new format [(#9087)](https://github.com/prowler-cloud/prowler/pull/9087)
+- Update Azure AKS service metadata to new format [(#9611)](https://github.com/prowler-cloud/prowler/pull/9611)
+- Update Azure API Management service metadata to new format [(#9612)](https://github.com/prowler-cloud/prowler/pull/9612)
+- Enhance AWS IAM privilege escalation detection with patterns from pathfinding.cloud library [(#9922)](https://github.com/prowler-cloud/prowler/pull/9922)
 
+### Fixed
+
+- OCI authentication error handling and validation [(#9738)](https://github.com/prowler-cloud/prowler/pull/9738)
+- AWS EC2 SG library [(#9216)](https://github.com/prowler-cloud/prowler/pull/9216)
+
+### Security
+- `safety` to `3.7.0` and `filelock` to `3.20.3` due to [Safety vulnerability 82754 (CVE-2025-68146)](https://data.safetycli.com/v/82754/97c/) [(#9816)](https://github.com/prowler-cloud/prowler/pull/9816)
+- `pyasn1` to v0.6.2 to address [CVE-2026-23490](https://nvd.nist.gov/vuln/detail/CVE-2026-23490) [(#9817)](https://github.com/prowler-cloud/prowler/pull/9817)
+
+---
+
+## [5.16.1] (Prowler v5.16.1)
+
+### Fixed
+
+- ZeroDivision error from Prowler ThreatScore [(#9653)](https://github.com/prowler-cloud/prowler/pull/9653)
 
 ---
 
