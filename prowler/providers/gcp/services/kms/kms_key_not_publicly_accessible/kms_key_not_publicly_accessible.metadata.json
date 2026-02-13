@@ -12,8 +12,6 @@
   "Risk": "Granting **public principals** access lets anyone on the Internet or any Google account use permissions on the key.\n- **Confidentiality** loss via unauthorized `decrypt`\n- **Integrity** compromise via illicit `sign`\n- **Availability** impact from disable, rotation, or destruction",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudKMS/publicly-accessible-kms-cryptokeys.html",
-    "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/ensure-that-cloud-kms-cryptokeys-are-not-anonymously-or-publicly-accessible#terraform",
     "https://cloud.google.com/kms/docs/iam"
   ],
   "Remediation": {

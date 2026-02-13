@@ -12,8 +12,6 @@
   "Risk": "Without timely rotation, a stolen key can decrypt an expanding volume of data, eroding **confidentiality**. Prolonged key lifetimes widen windows for misuse, impact **integrity** of protected workloads, and make emergency rollover harder, risking **availability** disruptions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_4#terraform",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudKMS/rotate-kms-encryption-keys.html",
     "https://cloud.google.com/iam/docs/manage-access-service-accounts"
   ],
   "Remediation": {
