@@ -86,7 +86,11 @@ def finish_attack_paths_scan(
 ) -> None:
     with rls_transaction(attack_paths_scan.tenant_id):
         now = datetime.now(tz=timezone.utc)
-        duration = int((now - attack_paths_scan.started_at).total_seconds())
+        duration = (
+            int((now - attack_paths_scan.started_at).total_seconds())
+            if attack_paths_scan.started_at
+            else 0
+        )
 
         attack_paths_scan.state = state
         attack_paths_scan.progress = 100
@@ -144,3 +148,24 @@ def update_old_attack_paths_scan(
     with rls_transaction(old_attack_paths_scan.tenant_id):
         old_attack_paths_scan.is_graph_database_deleted = True
         old_attack_paths_scan.save(update_fields=["is_graph_database_deleted"])
+
+
+def fail_attack_paths_scan(
+    tenant_id: str,
+    scan_id: str,
+    error: str,
+) -> None:
+    """
+    Mark the `AttackPathsScan` row as `FAILED` unless it's already `COMPLETED` or `FAILED`.
+    Used as a safety net when the Celery task fails outside the job's own error handling.
+    """
+    attack_paths_scan = retrieve_attack_paths_scan(tenant_id, scan_id)
+    if attack_paths_scan and attack_paths_scan.state not in (
+        StateChoices.COMPLETED,
+        StateChoices.FAILED,
+    ):
+        finish_attack_paths_scan(
+            attack_paths_scan,
+            StateChoices.FAILED,
+            {"global_error": error},
+        )
