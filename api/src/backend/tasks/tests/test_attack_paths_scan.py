@@ -485,7 +485,7 @@ class TestAttackPathsScanRLSTaskOnFailure:
                 task_id="task-abc",
                 args=(),
                 kwargs={"tenant_id": "t-1", "scan_id": "s-1"},
-                einfo=None,
+                _einfo=None,
             )
 
         mock_fail.assert_called_once_with("t-1", "s-1", "boom")
@@ -503,7 +503,7 @@ class TestAttackPathsScanRLSTaskOnFailure:
                 task_id="task-abc",
                 args=(),
                 kwargs={},
-                einfo=None,
+                _einfo=None,
             )
 
         mock_fail.assert_not_called()
