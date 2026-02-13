@@ -92,6 +92,7 @@ class AlibabaCloudCSAModel(BaseModel):
     """
     AlibabaCloudCSAModel generates a finding's output in CSV CSA format for Alibaba Cloud.
     """
+
     Provider: str
     Description: str
     AccountId: str
