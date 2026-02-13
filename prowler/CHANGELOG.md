@@ -24,6 +24,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Parallelize Cloudflare zone API calls with threading to improve scan performance [(#9982)](https://github.com/prowler-cloud/prowler/pull/9982)
 - Update GCP API Keys service metadata to new format [(#9637)](https://github.com/prowler-cloud/prowler/pull/9637)
 - Update GCP BigQuery service metadata to new format [(#9638)](https://github.com/prowler-cloud/prowler/pull/9638)
+- Update GCP Cloud Storage service metadata to new format [(#9640)](https://github.com/prowler-cloud/prowler/pull/9640)
 
 ## [5.18.3] (Prowler UNRELEASED)
 
@@ -120,7 +121,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS SQS service metadata to new format [(#9429)](https://github.com/prowler-cloud/prowler/pull/9429)
 - Update AWS Shield service metadata to new format [(#9427)](https://github.com/prowler-cloud/prowler/pull/9427)
 - Update AWS Secrets Manager service metadata to new format [(#9408)](https://github.com/prowler-cloud/prowler/pull/9408)
-- Update GCP Cloud Storage service metadata to new format [(#9640)](https://github.com/prowler-cloud/prowler/pull/9640)
 
 
 ---

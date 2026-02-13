@@ -8,13 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "storage.googleapis.com/Bucket",
+  "ResourceGroup": "storage",
   "Description": "Cloud Storage buckets have **uniform bucket-level access (UBLA)** enabled so object permissions are controlled solely by **bucket-level IAM**, with object ACLs disabled.",
   "Risk": "Without **UBLA**, object ACLs can bypass bucket IAM, enabling unintended public reads or unauthorized writes. This threatens **confidentiality** through data exposure, undermines **integrity** via object tampering, and reduces **auditability** with fragmented, hard-to-review permissions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/enable-uniform-bucket-level-access.html",
-    "https://docs.prowler.com/checks/gcp/google-cloud-storage-gcs-policies/bc_gcp_gcs_2#terraform",
-    "https://cloud.google.com/storage/docs/using-uniform-bucket-level-access"
+    "https://docs.cloud.google.com/storage/docs/using-uniform-bucket-level-access",
+    "https://docs.cloud.google.com/storage/docs/public-access-prevention",
+    "https://docs.cloud.google.com/storage/docs/access-control/iam"
   ],
   "Remediation": {
     "Code": {

@@ -8,22 +8,19 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "storage.googleapis.com/Bucket",
+  "ResourceGroup": "storage",
   "Description": "**Cloud Storage log sink buckets** have a configured **retention period** with **Bucket Lock** applied, ensuring the retention policy cannot be shortened or removed.",
   "Risk": "Without a locked retention policy, exported logs can be deleted early or retention reduced, undermining log **integrity** and **availability**. An attacker or malicious insider could purge evidence to evade detection, hindering **forensics** and weakening **non-repudiation** across the environment.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.examtopics.com/discussions/google/view/122735-exam-professional-cloud-devops-engineer-topic-1-question-116/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/retention-policies-with-bucket-lock.html",
-    "https://cloud.google.com/storage/docs/samples/storage-lock-retention-policy?hl=pt",
-    "https://docs.prowler.com/checks/gcp/logging-policies-1/ensure-that-retention-policies-on-log-buckets-are-configured-using-bucket-lock#terraform",
-    "https://cloud.google.com/storage/docs/using-uniform-bucket-level-access",
-    "https://www.freecram.net/question/Google.Professional-Cloud-DevOps-Engineer.v2024-08-01.q71/your-company-operates-in-a-highly-regulated-domain-that-requires-you-to-store-all-organization-logs-for",
-    "https://www.skills.google/focuses/3483?locale=fr_CA&parent=catalog",
-    "https://www.youtube.com/watch?v=6nbIPPeKU_A"
+    "https://docs.cloud.google.com/storage/docs/bucket-lock",
+    "https://docs.cloud.google.com/storage/docs/using-bucket-lock",
+    "https://docs.cloud.google.com/storage/docs/samples/storage-lock-retention-policy",
+    "https://docs.cloud.google.com/logging/docs/export/configure_export_v2"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud storage buckets lock-retention-policy gs://<LOG_BUCKET_NAME>",
       "NativeIaC": "",
       "Other": "1. In Google Cloud Console, go to Storage > Buckets and open the bucket used by your Logs Router sink\n2. Click the Configuration tab\n3. Under Retention policy, click Edit, set any required retention duration, and click Save\n4. Click Lock retention policy, type LOCK to confirm, and confirm to permanently lock it",
       "Terraform": "```hcl\nresource \"google_storage_bucket\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"<LOCATION>\"\n\n  retention_policy {\n    retention_period = 86400         # Required: enable a retention policy (1 day)\n    is_locked        = true          # CRITICAL: locks the retention policy (Bucket Lock) to pass the check\n  }\n}\n```"

@@ -8,10 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "storage.googleapis.com/Bucket",
+  "ResourceGroup": "storage",
   "Description": "**Google Cloud Storage buckets** are assessed for **Soft Delete** being enabled with a non-zero retention window, meaning deleted objects are temporarily preserved and can be restored until the window expires.",
   "Risk": "**No Soft Delete** makes object deletions **immediate and irreversible**, undermining data **availability** and **integrity**. Accidental removal, compromised credentials, wiper malware, or misconfigured lifecycle rules can erase datasets with no recovery path, breaking RPO/RTO and legal retention expectations.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://docs.cloud.google.com/storage/docs/soft-delete",
+    "https://docs.cloud.google.com/storage/docs/use-soft-delete"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "gcloud storage buckets update gs://<BUCKET_NAME> --soft-delete-duration=<SECONDS>",

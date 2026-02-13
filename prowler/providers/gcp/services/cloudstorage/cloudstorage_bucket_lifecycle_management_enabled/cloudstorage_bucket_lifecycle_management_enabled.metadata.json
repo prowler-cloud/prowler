@@ -8,14 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "storage.googleapis.com/Bucket",
+  "ResourceGroup": "storage",
   "Description": "**Cloud Storage buckets** use **Object Lifecycle Management** with at least one valid rule (supported `action` and non-empty `condition`) to automatically transition storage class or delete objects.",
   "Risk": "Without lifecycle rules, data and object versions persist indefinitely, expanding the attack surface and hindering mandated erasure. Stale data amplifies exfiltration impact (**confidentiality**) and complicates **integrity** controls, while also driving avoidable cost and retention noncompliance.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://cloud.google.com/storage/docs/managing-lifecycles?hl=id",
     "https://docs.cloud.google.com/storage/docs/managing-lifecycles",
     "https://docs.cloud.google.com/storage/docs/lifecycle",
-    "https://cloud.google.com/storage/docs/samples/storage-enable-bucket-lifecycle-management?hl=fr",
     "https://docs.cloud.google.com/storage/docs/samples/storage-enable-bucket-lifecycle-management"
   ],
   "Remediation": {

@@ -8,17 +8,15 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "storage.googleapis.com/Bucket",
+  "ResourceGroup": "storage",
   "Description": "**Cloud Storage buckets** are assessed for **anonymous or public access** by detecting permissions granted to broad principals like `allUsers` or `allAuthenticatedUsers` that make bucket data reachable without authentication.",
   "Risk": "**Public buckets** undermine **confidentiality** and **integrity**. Anyone can list or download objects; if write access exists, content can be overwritten or deleted. Abuse enables hotlinking and malware hosting, impacting **availability** and driving unexpected egress costs.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://cloud.google.com/storage/docs/access-control/iam-reference",
-    "https://urlbox.com/docs/storage/configure-google-cloud-storage",
-    "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_1",
-    "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_1#terraform",
-    "https://dataintegration.info/how-to-create-and-use-a-storage-bucket",
-    "https://stackoverflow.com/questions/78496714/is-it-safe-for-a-django-backends-gcp-storage-bucket-to-be-public",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/publicly-accessible-storage-buckets.html"
+    "https://docs.cloud.google.com/storage/docs/public-access-prevention",
+    "https://docs.cloud.google.com/storage/docs/access-control/iam",
+    "https://docs.cloud.google.com/storage/docs/access-control/iam-reference",
+    "https://docs.cloud.google.com/storage/docs/using-uniform-bucket-level-access"
   ],
   "Remediation": {
     "Code": {
