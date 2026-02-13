@@ -6,7 +6,7 @@
   "ServiceName": "bigquery",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "bigquery.googleapis.com/Dataset",
   "Description": "**BigQuery datasets** use **Customer-Managed Encryption Keys** (`CMEK`) rather than Google-managed encryption. The evaluation identifies datasets configured to use a customer-managed key for data-at-rest protection.",
   "Risk": "Without **CMEK**, organizations lose **cryptographic control** of data at rest, weakening **confidentiality** and **access governance**. Lack of custom **key rotation**, **revocation** (kill switch), and location control hinders incident response and may conflict with data-sovereignty requirements.",

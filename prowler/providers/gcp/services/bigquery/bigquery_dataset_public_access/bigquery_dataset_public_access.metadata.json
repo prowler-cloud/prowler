@@ -6,7 +6,7 @@
   "ServiceName": "bigquery",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
+  "Severity": "high",
   "ResourceType": "bigquery.googleapis.com/Dataset",
   "Description": "BigQuery datasets are evaluated for exposure to **public identities**. The finding highlights datasets that grant any role to `allUsers` or `allAuthenticatedUsers`, which makes the dataset publicly accessible beyond intended principals.",
   "Risk": "Public dataset access erodes **confidentiality** by enabling unrestricted reads and metadata discovery. Attackers can query and copy data for **exfiltration** and use schema details for **lateral movement**. It can also trigger unexpected **costs** from abusive or high-volume queries.",

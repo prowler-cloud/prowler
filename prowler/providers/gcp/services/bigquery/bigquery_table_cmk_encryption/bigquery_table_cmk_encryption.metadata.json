@@ -6,7 +6,7 @@
   "ServiceName": "bigquery",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "bigquery.googleapis.com/Table",
   "Description": "**BigQuery tables** use **customer-managed encryption keys** (`CMEK`) for at-rest encryption. The evaluation identifies tables lacking a configured **Cloud KMS key**, indicating use of default Google-managed encryption instead.",
   "Risk": "Without `CMEK`, encryption keys are not under your control, reducing **key custody** and auditability. You can't enforce **region-bound keys**, custom **rotation**, or revoke access by disabling a key, weakening **confidentiality** and **compliance**. A compromised account may retain data access without an external KMS gate.",
