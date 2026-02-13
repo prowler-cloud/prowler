@@ -14,11 +14,7 @@
   "AdditionalURLs": [
     "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/ArtifactRegistry/enable-vulnerability-analysis.html",
     "https://cloud.google.com/container-registry/docs/container-analysis",
-    "https://medium.com/google-cloud/centrally-managing-artifact-registry-container-image-vulnerabilities-on-google-cloud-part-one-d86fb4791601",
-    "https://codelabs.developers.google.com/securing-container-builds",
-    "https://help.vanta.com/en/articles/11345771-connecting-gcp-container-registry-to-vanta",
     "https://docs.cloud.google.com/artifact-analysis/docs/enable-automatic-scanning",
-    "https://stackoverflow.com/questions/66171291/no-vulnerabilities-reported-on-docker-images-in-artifact-registry",
     "https://cloud.google.com/container-registry/docs/container-best-practices"
   ],
   "Remediation": {
