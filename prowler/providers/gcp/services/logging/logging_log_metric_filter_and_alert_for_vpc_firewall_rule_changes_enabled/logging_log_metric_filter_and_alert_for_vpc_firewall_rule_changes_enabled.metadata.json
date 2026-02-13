@@ -12,7 +12,6 @@
   "Risk": "Without alerts on firewall rule changes, unauthorized or accidental modifications can go unnoticed, exposing services or blocking critical traffic.\n\nConfidentiality suffers (opened ports), integrity is reduced (tampered controls), and availability can be impacted (outages), enabling lateral movement and data exfiltration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-firewall-rule-changes-monitoring.html",
     "https://cloud.google.com/monitoring/alerts"
   ],
   "Remediation": {

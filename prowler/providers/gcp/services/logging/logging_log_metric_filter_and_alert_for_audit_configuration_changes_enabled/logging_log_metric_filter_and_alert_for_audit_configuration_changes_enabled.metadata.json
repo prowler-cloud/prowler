@@ -12,7 +12,6 @@
   "Risk": "Unmonitored **Audit Config** changes can reduce or disable **Admin Activity/Data Access** logging, creating blind spots. Adversaries could suppress evidence, evade detection, and alter permissions unnoticed, degrading **confidentiality**, **integrity**, and the **availability** of forensic telemetry.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-audit-configuration-changes-monitoring.html",
     "https://cloud.google.com/monitoring/alerts"
   ],
   "Remediation": {

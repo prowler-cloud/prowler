@@ -12,8 +12,7 @@
   "Risk": "Without exporting all logs, audit evidence can expire or be altered in-project, reducing the **availability** and **integrity** of telemetry. This hinders threat detection and forensics, prevents cross-project correlation, and can let attacker actions evade scrutiny after log rotation or deletion.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://cloud.google.com/logging/docs/export",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/export-all-log-entries.html"
+    "https://cloud.google.com/logging/docs/export"
   ],
   "Remediation": {
     "Code": {

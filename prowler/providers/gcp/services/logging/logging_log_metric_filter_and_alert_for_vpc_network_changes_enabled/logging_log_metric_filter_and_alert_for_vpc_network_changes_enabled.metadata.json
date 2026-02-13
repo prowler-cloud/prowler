@@ -12,7 +12,6 @@
   "Risk": "Missing alerts on VPC changes lets **unauthorized or accidental modifications** go unnoticed, risking:\n- Data exposure via unintended peering or new networks\n- Segmentation bypass through routing/subnet edits\n- Outages from deletions or misconfigurations\n\nThis affects confidentiality, integrity, and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLogging/enable-vpc-network-changes-monitoring.html",
     "https://www.gcpweekly.com/gcp-resources/tag/cloud-monitoring/",
     "https://cloud.google.com/monitoring/alerts"
   ],
