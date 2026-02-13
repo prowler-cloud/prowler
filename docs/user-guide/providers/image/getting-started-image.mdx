@@ -10,7 +10,7 @@ Prowler's Image provider enables comprehensive container image security scanning
 
 * **Trivy integration:** Prowler leverages [Trivy](https://trivy.dev/) to scan container images for vulnerabilities, secrets, misconfigurations, and license issues.
 * **Trivy required:** Trivy must be installed and available in the system PATH before running any scan.
-* **Authentication:** No registry authentication is required for public images. For private registries, configure Docker credentials via `docker login` before scanning.
+* **Authentication:** No registry authentication is required for public images. For private registries, credentials can be provided via environment variables or manual `docker login`.
 * **Output formats:** Results are output in the same formats as other Prowler providers (CSV, JSON, HTML, etc.).
 
 ## Prowler CLI
@@ -175,23 +175,52 @@ The timeout accepts values in seconds (`s`), minutes (`m`), or hours (`h`). Defa
 
 ### Authentication for Private Registries
 
-The Image provider relies on Trivy for registry authentication. To scan images from private registries, configure Docker credentials before running the scan:
+To scan images from private registries, the Image provider supports three authentication methods. Prowler evaluates them in the following order of priority:
+
+#### 1. Basic Authentication (Environment Variables)
+
+To authenticate with a username and password, set the `TRIVY_USERNAME` and `TRIVY_PASSWORD` environment variables. Prowler automatically runs `docker login`, pulls the image, and performs a `docker logout` after the scan completes:
 
 ```bash
-# Log in to a private registry
-docker login myregistry.io
+export TRIVY_USERNAME="myuser"
+export TRIVY_PASSWORD="mypassword"
 
-# Then scan the image
 prowler image -I myregistry.io/myapp:v1.0
 ```
 
-Trivy automatically uses credentials from Docker's credential store (`~/.docker/config.json`).
+Both variables must be set for this method to activate. Prowler handles the full lifecycle — login, pull, scan, and cleanup — without any manual Docker commands.
+
+#### 2. Token-Based Authentication
+
+To authenticate using a registry token (such as a bearer or OAuth2 token), set the `TRIVY_REGISTRY_TOKEN` environment variable. Prowler passes the token directly to Trivy:
+
+```bash
+export TRIVY_REGISTRY_TOKEN="my-registry-token"
+
+prowler image -I myregistry.io/myapp:v1.0
+```
+
+This method is useful for registries that support token-based access without requiring a username and password.
+
+#### 3. Manual Docker Login (Fallback)
+
+If no environment variables are set, Prowler relies on existing credentials in Docker's credential store (`~/.docker/config.json`). To configure credentials manually before scanning:
+
+```bash
+docker login myregistry.io
+
+prowler image -I myregistry.io/myapp:v1.0
+```
+
+<Note>
+When basic authentication is active (method 1), Prowler automatically logs out from all authenticated registries after the scan completes. Manual `docker login` sessions (method 3) are not affected by this cleanup.
+</Note>
 
 ### Troubleshooting Common Scan Errors
 
 The Image provider categorizes common Trivy errors with actionable guidance:
 
-* **Authentication failure (401/403):** Registry credentials are missing or invalid. Run `docker login` for the target registry and retry the scan.
+* **Authentication failure (401/403):** Registry credentials are missing or invalid. Verify the `TRIVY_USERNAME`/`TRIVY_PASSWORD` or `TRIVY_REGISTRY_TOKEN` environment variables, or run `docker login` for the target registry and retry the scan.
 * **Image not found (404):** The specified image name, tag, or registry is incorrect. Verify the image reference exists and is accessible.
 * **Rate limited (429):** The container registry is throttling requests. Wait before retrying, or authenticate to increase rate limits.
 * **Network issue:** Trivy cannot reach the registry due to connectivity problems. Check network access, DNS resolution, and firewall rules.
