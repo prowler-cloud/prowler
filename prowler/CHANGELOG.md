@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.18.3] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- `pip install prowler` failing on systems without C compiler due to `netifaces` transitive dependency from `openstacksdk` [(#10055)](https://github.com/prowler-cloud/prowler/pull/10055)
+
+---
+
 ## [5.18.2] (Prowler v5.18.2)
 
 ### 🐞 Fixed
