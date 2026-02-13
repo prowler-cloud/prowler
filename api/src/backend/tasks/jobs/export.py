@@ -39,6 +39,7 @@ from prowler.lib.outputs.compliance.csa.csa_alibabacloud import AlibabaCloudCSA
 from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
 from prowler.lib.outputs.compliance.csa.csa_azure import AzureCSA
 from prowler.lib.outputs.compliance.csa.csa_gcp import GCPCSA
+from prowler.lib.outputs.compliance.csa.csa_oraclecloud import OracleCloudCSA
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
@@ -138,6 +139,7 @@ COMPLIANCE_CLASS_MAP = {
     ],
     "oraclecloud": [
         (lambda name: name.startswith("cis_"), OracleCloudCIS),
+        (lambda name: name.startswith("csa_"), OracleCloudCSA),
     ],
     "alibabacloud": [
         (lambda name: name.startswith("cis_"), AlibabaCloudCIS),
