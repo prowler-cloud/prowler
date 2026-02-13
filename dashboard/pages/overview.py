@@ -35,6 +35,7 @@ from dashboard.config import (
 from dashboard.lib.cards import create_provider_card
 from dashboard.lib.dropdowns import (
     create_account_dropdown,
+    create_category_dropdown,
     create_date_dropdown,
     create_provider_dropdown,
     create_region_dropdown,
@@ -258,6 +259,8 @@ else:
                 accounts.append(account + " - K8S")
             if "alibabacloud" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
                 accounts.append(account + " - ALIBABACLOUD")
+            if "oraclecloud" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                accounts.append(account + " - OCI")
 
     account_dropdown = create_account_dropdown(accounts)
 
@@ -305,6 +308,8 @@ else:
             services.append(service + " - M365")
         if "alibabacloud" in list(data[data["SERVICE_NAME"] == service]["PROVIDER"]):
             services.append(service + " - ALIBABACLOUD")
+        if "oraclecloud" in list(data[data["SERVICE_NAME"] == service]["PROVIDER"]):
+            services.append(service + " - OCI")
 
     services = ["All"] + services
     services = [
@@ -343,6 +348,18 @@ else:
     status = [x for x in status if str(x) != "nan" and x.__class__.__name__ == "str"]
 
     status_dropdown = create_status_dropdown(status)
+
+    # Create the category dropdown
+    categories = []
+    if "CATEGORIES" in data.columns:
+        for cat_list in data["CATEGORIES"].dropna().unique():
+            if cat_list and str(cat_list) != "nan":
+                for cat in str(cat_list).split(","):
+                    cat = cat.strip()
+                    if cat and cat not in categories:
+                        categories.append(cat)
+    categories = ["All"] + sorted(categories)
+    category_dropdown = create_category_dropdown(categories)
     table_div_header = []
     table_div_header.append(
         html.Div(
@@ -504,6 +521,7 @@ else:
         provider_dropdown,
         table_row_dropdown,
         status_dropdown,
+        category_dropdown,
         table_div_header,
         len(data["PROVIDER"].unique()),
     )
@@ -540,6 +558,8 @@ else:
         Output("table-rows", "options"),
         Output("status-filter", "value"),
         Output("status-filter", "options"),
+        Output("category-filter", "value"),
+        Output("category-filter", "options"),
         Output("aws_card", "n_clicks"),
         Output("azure_card", "n_clicks"),
         Output("gcp_card", "n_clicks"),
@@ -557,6 +577,7 @@ else:
     Input("provider-filter", "value"),
     Input("table-rows", "value"),
     Input("status-filter", "value"),
+    Input("category-filter", "value"),
     Input("search-input", "value"),
     Input("aws_card", "n_clicks"),
     Input("azure_card", "n_clicks"),
@@ -582,6 +603,7 @@ def filter_data(
     provider_values,
     table_row_values,
     status_values,
+    category_values,
     search_value,
     aws_clicks,
     azure_clicks,
@@ -749,6 +771,8 @@ def filter_data(
                 all_account_ids.append(account)
             if "alibabacloud" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
                 all_account_ids.append(account)
+            if "oraclecloud" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                all_account_ids.append(account)
 
     all_account_names = []
     if "ACCOUNT_NAME" in filtered_data.columns:
@@ -775,6 +799,8 @@ def filter_data(
                     data[data["ACCOUNT_UID"] == item]["PROVIDER"]
                 ):
                     cloud_accounts_options.append(item + " - ALIBABACLOUD")
+                if "oraclecloud" in list(data[data["ACCOUNT_UID"] == item]["PROVIDER"]):
+                    cloud_accounts_options.append(item + " - OCI")
             if "ACCOUNT_NAME" in filtered_data.columns:
                 if "azure" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
                     cloud_accounts_options.append(item + " - AZURE")
@@ -907,6 +933,10 @@ def filter_data(
                 filtered_data[filtered_data["SERVICE_NAME"] == item]["PROVIDER"]
             ):
                 service_filter_options.append(item + " - ALIBABACLOUD")
+            if "oraclecloud" in list(
+                filtered_data[filtered_data["SERVICE_NAME"] == item]["PROVIDER"]
+            ):
+                service_filter_options.append(item + " - OCI")
 
     # Filter Service
     if service_values == ["All"]:
@@ -964,6 +994,41 @@ def filter_data(
     filtered_data = filtered_data[filtered_data["STATUS"].isin(updated_status_values)]
 
     status_filter_options = ["All"] + list(filtered_data["STATUS"].unique())
+
+    # Filter Category
+    if "CATEGORIES" in filtered_data.columns:
+        if category_values == ["All"]:
+            updated_category_values = None
+        elif "All" in category_values and len(category_values) > 1:
+            category_values.remove("All")
+            updated_category_values = category_values
+        elif len(category_values) == 0:
+            updated_category_values = None
+            category_values = ["All"]
+        else:
+            updated_category_values = category_values
+
+        if updated_category_values:
+            filtered_data = filtered_data[
+                filtered_data["CATEGORIES"].apply(
+                    lambda x: any(
+                        cat.strip() in updated_category_values
+                        for cat in str(x).split(",")
+                        if str(x) != "nan"
+                    )
+                )
+            ]
+
+        category_filter_options = ["All"]
+        for cat_list in filtered_data["CATEGORIES"].dropna().unique():
+            if cat_list and str(cat_list) != "nan":
+                for cat in str(cat_list).split(","):
+                    cat = cat.strip()
+                    if cat and cat not in category_filter_options:
+                        category_filter_options.append(cat)
+        category_filter_options = sorted(category_filter_options)
+    else:
+        category_filter_options = ["All"]
 
     if len(filtered_data_sp) == 0:
         fig = px.pie()
@@ -1066,7 +1131,12 @@ def filter_data(
             figure=fig,
             config={"displayModeBar": False},
         )
+        pie_3 = dcc.Graph(
+            figure=fig,
+            config={"displayModeBar": False},
+        )
         table = dcc.Graph(figure=fig, config={"displayModeBar": False})
+        table_row_options = []
 
     else:
         # Status Pie Chart
@@ -1122,22 +1192,25 @@ def filter_data(
             style={"height": "300px", "overflow-y": "auto"},
         )
 
-        color_bars = [
-            color_mapping_severity[severity]
-            for severity in df1["SEVERITY"].value_counts().index
-        ]
-
-        figure_bars = go.Figure(
-            data=[
+        # Prepare bar chart data only if df1 has FAIL findings
+        if len(df1) > 0:
+            color_bars = [
+                color_mapping_severity[severity]
+                for severity in df1["SEVERITY"].value_counts().index
+            ]
+            bar_data = [
                 go.Bar(
-                    x=df1["SEVERITY"]
-                    .value_counts()
-                    .index,  # assign x as the dataframe column 'x'
+                    x=df1["SEVERITY"].value_counts().index,
                     y=df1["SEVERITY"].value_counts().values,
                     marker=dict(color=color_bars),
                     textposition="auto",
                 )
-            ],
+            ]
+        else:
+            bar_data = []
+
+        figure_bars = go.Figure(
+            data=bar_data,
             layout=go.Layout(
                 paper_bgcolor="#FFF",
                 font=dict(size=12, color="#292524"),
@@ -1507,11 +1580,15 @@ def filter_data(
             severity_values,
             severity_filter_options,
             service_values,
+            provider_values,
+            provider_filter_options,
             service_filter_options,
             table_row_values,
             table_row_options,
             status_values,
             status_filter_options,
+            category_values,
+            category_filter_options,
             aws_clicks,
             azure_clicks,
             gcp_clicks,
@@ -1549,6 +1626,8 @@ def filter_data(
             table_row_options,
             status_values,
             status_filter_options,
+            category_values,
+            category_filter_options,
             aws_clicks,
             azure_clicks,
             gcp_clicks,

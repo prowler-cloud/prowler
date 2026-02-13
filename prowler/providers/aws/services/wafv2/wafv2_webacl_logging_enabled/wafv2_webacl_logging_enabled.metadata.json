@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsWafv2WebAcl",
+  "ResourceGroup": "security",
   "Description": "**AWS WAFv2 Web ACLs** with **logging** capture details of inspected requests and rule evaluations. The assessment determines for each Web ACL whether logging is configured to record traffic analyzed by that ACL.",
   "Risk": "Without **WAF logging**, visibility into allowed/blocked requests is lost, degrading detection and response. **SQLi**, **credential stuffing**, and **bot/DDoS probes** can go unnoticed, risking data exposure (C), undetected rule misuse (I), and service instability from unseen abuse (A).",
   "RelatedUrl": "",

@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:network:vcn",
   "Severity": "high",
   "ResourceType": "OciVcn",
+  "ResourceGroup": "network",
   "Description": "Security lists should not allow unrestricted RDP access from the internet.",
   "Risk": "Not meeting this network security requirement increases risk of unauthorized access.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",

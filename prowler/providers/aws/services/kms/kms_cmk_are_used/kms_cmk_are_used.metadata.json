@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsKmsKey",
+  "ResourceGroup": "security",
   "Description": "**Customer-managed KMS keys** are assessed by key state. Keys in `Enabled` are considered in use. Keys not `Enabled` and not `PendingDeletion` are identified as unused, while those in `PendingDeletion` are recognized as scheduled for removal.",
   "Risk": "Keeping **unused CMKs** increases **attack surface** and **cost**.\n\nIf such keys are re-enabled or misconfigured, they can grant unintended decryption, impacting **confidentiality**. Deleting a key mistakenly thought unused can cause **irrecoverable data loss**, harming **availability**.",
   "RelatedUrl": "",
