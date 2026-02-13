@@ -373,6 +373,7 @@ class AttackPathsScanRLSTask(RLSTask):
         scan_id = kwargs.get("scan_id")
 
         if tenant_id and scan_id:
+            logger.error(f"Attack paths scan task {task_id} failed: {exc}")
             attack_paths_db_utils.fail_attack_paths_scan(tenant_id, scan_id, str(exc))
 
 

@@ -86,7 +86,7 @@ def finish_attack_paths_scan(
 ) -> None:
     with rls_transaction(attack_paths_scan.tenant_id):
         now = datetime.now(tz=timezone.utc)
-        duration = int((now - attack_paths_scan.started_at).total_seconds())
+        duration = int((now - attack_paths_scan.started_at).total_seconds()) if attack_paths_scan.started_at else 0
 
         attack_paths_scan.state = state
         attack_paths_scan.progress = 100
