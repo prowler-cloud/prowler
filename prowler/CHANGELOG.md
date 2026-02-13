@@ -17,13 +17,24 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - OCI regions updater script and CI workflow [(#10020)](https://github.com/prowler-cloud/prowler/pull/10020)
 - `image` provider for container image scanning with Trivy integration [(#9984)](https://github.com/prowler-cloud/prowler/pull/9984)
 - OpenStack compute 7 new checks [(#9944)](https://github.com/prowler-cloud/prowler/pull/9944)
+- CSA CCM 4.0 for the Alibaba Cloud provider [(#10061)](https://github.com/prowler-cloud/prowler/pull/10061)
 
 ### 🔄 Changed
 
 - Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
 - Parallelize Cloudflare zone API calls with threading to improve scan performance [(#9982)](https://github.com/prowler-cloud/prowler/pull/9982)
+- Update GCP API Keys service metadata to new format [(#9637)](https://github.com/prowler-cloud/prowler/pull/9637)
+- Update GCP BigQuery service metadata to new format [(#9638)](https://github.com/prowler-cloud/prowler/pull/9638)
 
-## [5.18.2] (Prowler UNRELEASED)
+## [5.18.3] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- `pip install prowler` failing on systems without C compiler due to `netifaces` transitive dependency from `openstacksdk` [(#10055)](https://github.com/prowler-cloud/prowler/pull/10055)
+
+---
+
+## [5.18.2] (Prowler v5.18.2)
 
 ### 🐞 Fixed
 
