@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsCloudFrontDistribution",
+  "ResourceGroup": "network",
   "Description": "CloudFront distributions have origins whose `OriginSslProtocols` allow **deprecated SSL/TLS versions** (`SSLv3`, `TLSv1`, `TLSv1.1`) for CloudFront-to-origin HTTPS connections.",
   "Risk": "Weak protocols between CloudFront and the origin allow downgrades and known exploits (e.g., POODLE/BEAST), enabling eavesdropping or content tampering. This compromises the **confidentiality** and **integrity** of data in transit, exposing cookies, credentials, and responses served to viewers.",
   "RelatedUrl": "",

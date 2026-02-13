@@ -1,7 +1,7 @@
 "use server";
 
+import { extract } from "@extractus/feed-extractor";
 import { unstable_cache } from "next/cache";
-import Parser from "rss-parser";
 import { z } from "zod";
 
 import type { FeedError, FeedItem, FeedSource, ParsedFeed } from "./types";
@@ -42,44 +42,24 @@ function getFeedSources(): FeedSource[] {
 async function parseSingleFeed(
   source: FeedSource,
 ): Promise<{ items: FeedItem[]; error?: FeedError }> {
-  const parser = new Parser({
-    timeout: 10000,
-    headers: {
-      "User-Agent": "Prowler-UI/1.0",
-    },
-  });
-
   try {
-    const feed = await parser.parseURL(source.url);
+    const feed = await extract(source.url);
 
-    // Map RSS items to our FeedItem type
-    const items: FeedItem[] = (feed.items || []).map((item) => {
-      // Validate and parse date with fallback to current date
-      const parsePubDate = (): string => {
-        const dateString = item.isoDate || item.pubDate;
-        if (!dateString) return new Date().toISOString();
-
-        const parsed = new Date(dateString);
-        return isNaN(parsed.getTime())
-          ? new Date().toISOString()
-          : parsed.toISOString();
-      };
-
-      return {
-        id: item.guid || item.link || `${source.id}-${item.title}`,
-        title: item.title || "Untitled",
-        description:
-          item.contentSnippet || item.content || item.description || "",
-        link: item.link || "",
-        pubDate: parsePubDate(),
-        sourceId: source.id,
-        sourceName: source.name,
-        sourceType: source.type,
-        author: item.creator || item.author,
-        categories: item.categories || [],
-        contentSnippet: item.contentSnippet || undefined,
-      };
-    });
+    const items: FeedItem[] = (feed.entries || []).map((entry) => ({
+      id: entry.id || entry.link || `${source.id}-${entry.title}`,
+      title: entry.title || "Untitled",
+      description: entry.description || "",
+      link: entry.link || "",
+      pubDate: entry.published
+        ? new Date(entry.published).toISOString()
+        : new Date().toISOString(),
+      sourceId: source.id,
+      sourceName: source.name,
+      sourceType: source.type,
+      author: undefined,
+      categories: [],
+      contentSnippet: entry.description?.slice(0, 500),
+    }));
 
     return { items };
   } catch (error) {

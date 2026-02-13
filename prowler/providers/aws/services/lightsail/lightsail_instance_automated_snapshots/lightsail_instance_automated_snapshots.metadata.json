@@ -15,6 +15,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "compute",
   "Description": "**Amazon Lightsail instances** with **automatic daily snapshots** enabled are identified. The evaluation checks if an instance is configured to take recurring snapshots at a scheduled time.",
   "Risk": "Absent automation, data lacks **point-in-time recovery**, increasing **availability** risk from accidental deletion, corruption, or ransomware. Failed updates or compromise hinder quick rollback, degrading **integrity** and extending RPO/RTO, causing prolonged outages.",
   "RelatedUrl": "",

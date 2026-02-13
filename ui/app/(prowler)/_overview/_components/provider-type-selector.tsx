@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { lazy, Suspense } from "react";
 
 import {
@@ -10,6 +10,7 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 import { type ProviderProps, ProviderType } from "@/types/providers";
 
 const AWSProviderBadge = lazy(() =>
@@ -122,8 +123,8 @@ type ProviderTypeSelectorProps = {
 export const ProviderTypeSelector = ({
   providers,
 }: ProviderTypeSelectorProps) => {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const { navigateWithParams } = useUrlFilters();
 
   const currentProviders = searchParams.get("filter[provider_type__in]") || "";
   const selectedTypes = currentProviders
@@ -131,20 +132,18 @@ export const ProviderTypeSelector = ({
     : [];
 
   const handleMultiValueChange = (values: string[]) => {
-    const params = new URLSearchParams(searchParams.toString());
+    navigateWithParams((params) => {
+      // Update provider_type__in
+      if (values.length > 0) {
+        params.set("filter[provider_type__in]", values.join(","));
+      } else {
+        params.delete("filter[provider_type__in]");
+      }
 
-    // Update provider_type__in
-    if (values.length > 0) {
-      params.set("filter[provider_type__in]", values.join(","));
-    } else {
-      params.delete("filter[provider_type__in]");
-    }
-
-    // Clear account selection when changing provider types
-    // User should manually select accounts if they want to filter by specific accounts
-    params.delete("filter[provider_id__in]");
-
-    router.push(`?${params.toString()}`, { scroll: false });
+      // Clear account selection when changing provider types
+      // User should manually select accounts if they want to filter by specific accounts
+      params.delete("filter[provider_id__in]");
+    });
   };
 
   const availableTypes = Array.from(
@@ -153,7 +152,7 @@ export const ProviderTypeSelector = ({
         // .filter((p) => p.attributes.connection?.connected)
         .map((p) => p.attributes.provider),
     ),
-  ) as ProviderType[];
+  ).filter((type): type is ProviderType => type in PROVIDER_DATA);
 
   const renderIcon = (providerType: ProviderType) => {
     const IconComponent = PROVIDER_DATA[providerType].icon;

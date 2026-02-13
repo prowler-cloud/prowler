@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsMskCluster",
+  "ResourceGroup": "messaging",
   "Description": "Amazon MSK clusters are evaluated for **unauthenticated client access**. Serverless clusters inherently require authentication; provisioned clusters are checked for configurations that allow **unrestricted connections** rather than authenticated clients.",
   "Risk": "Allowing **unauthenticated access** lets anyone connect and:\n- Read sensitive topics (confidentiality)\n- Publish or alter data (integrity)\n- Overload brokers and consumers (availability)\n\nThis enables message exfiltration, stream poisoning, and abuse of trusted data pipelines.",
   "RelatedUrl": "",

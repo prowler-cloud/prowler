@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
+  "ResourceGroup": "network",
   "Description": "**Application Load Balancers** that are **internet-facing** are evaluated for an associated **AWS Shield Advanced** protection. Scope includes ALBs of type application with external exposure.",
   "Risk": "Without enhanced DDoS protection, internet-facing ALBs are exposed to volumetric L3/L4 floods and HTTP L7 floods, compromising **availability** via outages and latency spikes. Sudden scaling can raise **costs**, while reduced visibility and response support extend disruption across dependent services.",
   "RelatedUrl": "",

@@ -1,6 +1,7 @@
 "use server";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getThreatScore = async ({
@@ -12,12 +13,7 @@ export const getThreatScore = async ({
 
   const url = new URL(`${apiBaseUrl}/overviews/threatscore`);
 
-  // Handle multiple filters
-  Object.entries(filters).forEach(([key, value]) => {
-    if (key !== "filter[search]") {
-      url.searchParams.append(key, String(value));
-    }
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const response = await fetch(url.toString(), {
