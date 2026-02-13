@@ -18,7 +18,7 @@
   "Risk": "Absent **S3 Block Public Access**, public ACLs or broad policies can grant Internet or cross-account access.\n- Data disclosure (confidentiality)\n- Object overwrite or uploads (integrity)\n- Deletion or outages from misuse (availability)",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/bucket-public-access-block.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/S3/bucket-public-access-block.html",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
   ],
   "Remediation": {

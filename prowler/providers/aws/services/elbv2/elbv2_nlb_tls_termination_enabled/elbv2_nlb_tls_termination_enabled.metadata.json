@@ -19,7 +19,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/listener-update-rules.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/network-load-balancer-listener-security.html#"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/ELBv2/network-load-balancer-listener-security.html#"
   ],
   "Remediation": {
     "Code": {

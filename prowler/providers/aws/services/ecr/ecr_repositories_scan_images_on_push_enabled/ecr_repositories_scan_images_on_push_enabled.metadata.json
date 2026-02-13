@@ -17,7 +17,7 @@
   "Risk": "Without **scan on push**, images with known CVEs can enter registries and reach runtime unnoticed, undermining **integrity** and **confidentiality** through exploitable packages. Attackers may achieve code execution and lateral movement. Delayed detection increases operational risk and extends remediation timelines.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ECR/scan-on-push.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/ECR/scan-on-push.html",
     "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-basic-enabling.html",
     "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html"
   ],

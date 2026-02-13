@@ -17,7 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/redshift-controls.html#redshift-7",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/enable-enhanced-vpc-routing.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Redshift/enable-enhanced-vpc-routing.html",
     "https://docs.aws.amazon.com/redshift/latest/mgmt/enhanced-vpc-routing.html"
   ],
   "Remediation": {

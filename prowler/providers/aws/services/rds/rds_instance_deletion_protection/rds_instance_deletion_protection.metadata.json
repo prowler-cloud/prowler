@@ -17,7 +17,7 @@
   "Risk": "Without **deletion protection**, a user or pipeline can delete a database in one action, causing immediate loss of availability and possible data loss if backups are stale or missing. This heightens exposure to insider misuse, compromised credentials, or faulty automation, increasing recovery time and cost.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/instance-deletion-protection.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/RDS/instance-deletion-protection.html",
     "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_DeleteInstance.html"
   ],
   "Remediation": {

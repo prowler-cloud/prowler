@@ -18,7 +18,7 @@
   "AdditionalURLs": [
     "https://aws.amazon.com/blogs/compute/managing-aws-lambda-runtime-upgrades/",
     "https://docs.aws.amazon.com/lambda/latest/dg/runtime-support-policy.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/supported-runtime-environment.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Lambda/supported-runtime-environment.html",
     "https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html"
   ],
   "Remediation": {

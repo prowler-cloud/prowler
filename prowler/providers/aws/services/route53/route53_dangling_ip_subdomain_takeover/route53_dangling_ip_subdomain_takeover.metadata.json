@@ -18,7 +18,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.icompaas.com/support/solutions/articles/62000233461-ensure-route53-records-contains-dangling-ips-",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Route53/dangling-dns-records.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Route53/dangling-dns-records.html",
     "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-deleting.html"
   ],
   "Remediation": {

@@ -20,7 +20,7 @@
   "Risk": "Without KMS-backed SSE, SNS stores message bodies unencrypted at rest, undermining **confidentiality**.\n\nPrivileged insiders or compromised service components could access plaintext during persistence windows, causing data exposure. You also lose KMS controls such as key policies, rotation, and detailed audit trails.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SNS/topic-encrypted-with-kms-customer-master-keys.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/SNS/topic-encrypted-with-kms-customer-master-keys.html",
     "https://docs.aws.amazon.com/sns/latest/dg/sns-server-side-encryption.html"
   ],
   "Remediation": {

@@ -18,7 +18,7 @@
   "Risk": "**Public SNS topics** allow anyone or unknown accounts to:\n- **Subscribe** and siphon messages (confidentiality)\n- **Publish** spoofed payloads that alter workflows (integrity)\n- **Flood** messages causing outages and costs (availability)\nThey also enable cross-account abuse and bypass expected trust boundaries.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SNS/topics-everyone-publish.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/SNS/topics-everyone-publish.html",
     "https://docs.aws.amazon.com/config/latest/developerguide/sns-topic-policy.html"
   ],
   "Remediation": {

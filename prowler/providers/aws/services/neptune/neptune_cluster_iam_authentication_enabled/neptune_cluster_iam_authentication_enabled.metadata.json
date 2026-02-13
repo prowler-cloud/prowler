@@ -19,7 +19,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-7",
     "https://docs.aws.amazon.com/config/latest/developerguide/neptune-cluster-iam-database-authentication.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/iam-db-authentication.html#",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Neptune/iam-db-authentication.html#",
     "https://hub.steampipe.io/plugins/turbot/terraform/queries/neptune/neptune_cluster_iam_authentication_enabled"
   ],
   "Remediation": {

@@ -19,7 +19,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_findings.html",
     "https://docs.aws.amazon.com/prescriptive-guidance/latest/vulnerability-management/assess-and-prioritize-security-findings.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/GuardDuty/findings.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/GuardDuty/findings.html"
   ],
   "Remediation": {
     "Code": {

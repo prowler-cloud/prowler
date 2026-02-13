@@ -20,7 +20,7 @@
     "https://docs.aws.amazon.com/AmazonECR/latest/userguide/lp_creation.html",
     "https://aws.plainenglish.io/automation-deletion-untagged-container-image-in-amazon-ecr-using-ecr-lifecycle-policy-995eae2f5b8d",
     "https://blog.stackademic.com/title-implementing-lifecycle-policies-in-aws-ecr-a-practical-guide-3860b612b477",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ECR/lifecycle-policy-in-use.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/ECR/lifecycle-policy-in-use.html"
   ],
   "Remediation": {
     "Code": {

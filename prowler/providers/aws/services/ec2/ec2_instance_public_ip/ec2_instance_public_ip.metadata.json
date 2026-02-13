@@ -17,7 +17,7 @@
   "Risk": "Publicly addressed instances are Internet-scannable, enabling direct probing and brute-force of exposed services and management ports. This increases risks of unauthorized access, remote code execution, and data exfiltration (**confidentiality, integrity**), and allows direct DDoS targeting, degrading **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/aws-ec2-public-ip.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/EC2/aws-ec2-public-ip.html",
     "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html"
   ],
   "Remediation": {

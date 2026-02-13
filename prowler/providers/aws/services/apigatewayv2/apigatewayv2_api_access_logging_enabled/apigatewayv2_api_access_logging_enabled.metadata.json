@@ -21,7 +21,7 @@
     "https://docs.aws.amazon.com/apigateway/latest/developerguide/security-monitoring.html",
     "https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html",
     "https://support.icompaas.com/support/solutions/articles/62000229562-ensure-api-gateway-v2-has-access-logging-enabled",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/APIGateway/api-gateway-stage-access-logging.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/APIGateway/api-gateway-stage-access-logging.html"
   ],
   "Remediation": {
     "Code": {

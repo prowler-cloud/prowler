@@ -23,7 +23,7 @@
   "Risk": "Without **encryption at rest**, database files, snapshots, and automated backups remain in plaintext. An attacker with access to copied snapshots, compromised backups, or underlying storage can read sensitive data, causing loss of **confidentiality** and enabling large-scale exfiltration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-encryption-enabled.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/RDS/rds-encryption-enabled.html",
     "https://aws.amazon.com/blogs/storage/protecting-amazon-rds-db-instances-encrypted-using-kms-aws-managed-key-with-cross-account-and-cross-region-backups/",
     "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html"
   ],

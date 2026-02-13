@@ -17,7 +17,7 @@
   "Risk": "Using a well-known admin username simplifies **credential stuffing** and **brute-force** attempts. Attackers can focus on password guessing, increasing chances of compromise. A successful login enables data theft (**confidentiality**), unauthorized changes (**integrity**), and destructive operations or outages (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-master-username.html#",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/RDS/rds-master-username.html#",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-24"
   ],
   "Remediation": {

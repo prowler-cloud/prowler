@@ -18,7 +18,7 @@
   "Risk": "Broad peering routes expand cross-VPC reachability, enabling lateral movement and unauthorized discovery, harming **confidentiality** and **integrity**. Using `0.0.0.0/0` or full-CIDR paths also increases misrouting with overlapping ranges, reducing network **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/VPC/vpc-peering-access.html#",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement-staging/knowledge-base/aws/VPC/vpc-peering-access.html#",
     "https://docs.aws.amazon.com/vpc/latest/peering/peering-configurations-partial-access.html"
   ],
   "Remediation": {

@@ -15,7 +15,7 @@
   "Risk": "Without **SNI**, distributions use dedicated IP SSL, driving higher costs and inefficient IP usage. Dedicated IPs can strain quotas and hinder scaling, reducing **availability**. Managing IP-bound certificates adds **operational risk** during rotations and expansions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-sni.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudFront/cloudfront-sni.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-8",
     "https://support.icompaas.com/support/solutions/articles/62000223557-ensure-cloudfront-sni-enabled",
     "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cnames-https-dedicated-ip-or-sni.html#cnames-https-sni"

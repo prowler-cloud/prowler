@@ -18,7 +18,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awssupport/latest/user/fault-tolerance-checks.html#amazon-ec2-auto-scaling-group-capacity-rebalance-enabled",
     "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-capacity-rebalancing.html",
-    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/enable-capacity-rebalancing.html",
+    "https://trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/EC2/enable-capacity-rebalancing.html",
     "https://docs.aws.amazon.com/autoscaling/ec2/userguide/enable-capacity-rebalancing-console-cli.html"
   ],
   "Remediation": {

@@ -17,7 +17,7 @@
   "Risk": "Absent or short-retained backups degrade **availability** and heighten **data loss** risk. Hardware failures, corruption, or accidental deletes may not be recoverable to needed points, undermining **RPO/RTO**, prolonging outages, and limiting **forensics** on cache data.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ElastiCache/enable-automatic-backups.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/ElastiCache/enable-automatic-backups.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-1"
   ],
   "Remediation": {

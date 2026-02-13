@@ -18,7 +18,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/encryption-at-rest.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/encryption-at-rest.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Elasticsearch/encryption-at-rest.html"
   ],
   "Remediation": {
     "Code": {

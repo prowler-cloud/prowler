@@ -17,7 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/field-level-encryption.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/field-level-encryption-enabled.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudFront/field-level-encryption-enabled.html"
   ],
   "Remediation": {
     "Code": {

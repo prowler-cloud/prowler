@@ -18,7 +18,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html",
     "https://repost.aws/pt/knowledge-center/lambda-dedicated-vpc",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-in-vpc.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Lambda/function-in-vpc.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/lambda-controls.html#lambda-3",
     "https://stackoverflow.com/questions/55074793/how-can-we-force-aws-lamda-to-run-securely-in-a-vpc",
     "https://www.techtarget.com/searchCloudComputing/answer/How-do-I-configure-AWS-Lambda-functions-in-a-VPC/"

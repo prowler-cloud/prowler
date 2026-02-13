@@ -17,7 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/secure-connections-supported-viewer-protocols-ciphers.html",
-    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-insecure-origin-ssl-protocols.html",
+    "https://trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudFront/cloudfront-insecure-origin-ssl-protocols.html",
     "https://support.icompaas.com/support/solutions/articles/62000223404-ensure-cloudfront-distributions-are-not-using-deprecated-ssl-protocols"
   ],
   "Remediation": {

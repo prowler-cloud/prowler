@@ -19,7 +19,7 @@
   "AdditionalURLs": [
     "https://repost.aws/questions/QUTY5hPVxgS6Caa3eZHX7-nQ/waf-on-alb-or-cloudfront",
     "https://docs.aws.amazon.com/waf/latest/developerguide/cloudfront-features.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-integrated-with-waf.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudFront/cloudfront-integrated-with-waf.html"
   ],
   "Remediation": {
     "Code": {

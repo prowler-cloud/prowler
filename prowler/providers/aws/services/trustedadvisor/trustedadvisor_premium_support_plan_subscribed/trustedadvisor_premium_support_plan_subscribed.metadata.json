@@ -15,7 +15,7 @@
   "Risk": "Without **Premium Support**, critical incidents face slower response, reducing **availability** and delaying containment of security events. Limited Trusted Advisor coverage lets **misconfigurations** persist, risking **data exposure** and **privilege misuse**. Lack of expert guidance increases change risk during production impacts.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/Support/support-plan.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement-staging/knowledge-base/aws/Support/support-plan.html",
     "https://aws.amazon.com/premiumsupport/plans/"
   ],
   "Remediation": {

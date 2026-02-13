@@ -17,7 +17,7 @@
   "Risk": "Expired or near-expiry **TLS certificates** can break handshakes, causing **service outages** and failed API calls (**availability**). Emergency fixes raise misconfiguration risk, enabling disabled verification or weak ciphers, which allows **MITM** and data exposure (**confidentiality**/**integrity**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ACM/certificate-expires-in-45-days.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/ACM/certificate-expires-in-45-days.html",
     "https://repost.aws/es/knowledge-center/acm-notification-certificate-renewal",
     "https://docs.aws.amazon.com/config/latest/developerguide/acm-certificate-expiration-check.html",
     "https://repost.aws/questions/QU3sMaeZPMRo2kLcsfJsfuVA/acm-notifications-for-expiring-certificates"

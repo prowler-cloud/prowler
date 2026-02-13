@@ -20,7 +20,7 @@
   "AdditionalURLs": [
     "https://aws.amazon.com/blogs/big-data/introducing-managed-query-results-for-amazon-athena/",
     "https://docs.aws.amazon.com/athena/latest/ug/managed-results.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Athena/encryption-enabled.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Athena/encryption-enabled.html",
     "https://docs.aws.amazon.com/athena/latest/ug/encrypting-managed-results.html",
     "https://docs.aws.amazon.com/athena/latest/ug/encrypting-query-results-stored-in-s3.html",
     "https://docs.aws.amazon.com/athena/latest/ug/workgroups-minimum-encryption.html",
