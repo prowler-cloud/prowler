@@ -173,8 +173,6 @@ class ImageProvider(Provider):
                 file=file_path,
                 message=f"Image list file not found: {file_path}",
             )
-        except (ImageListFileReadError, ImageListFileNotFoundError):
-            raise
         except Exception as error:
             raise ImageListFileReadError(
                 file=file_path,
