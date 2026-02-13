@@ -17,7 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/ec2-instance-using-iam-roles.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/EC2/ec2-instance-using-iam-roles.html"
   ],
   "Remediation": {
     "Code": {

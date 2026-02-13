@@ -18,7 +18,7 @@
   "Risk": "Unencrypted snapshots enable direct access to full database data if backups are leaked, cross-account shared, or stolen. Adversaries can harvest data offline, bypassing network controls, leading to **loss of confidentiality**. Restores from such snapshots propagate the exposure to new instances.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/snapshot-encrypted.html#",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/RDS/snapshot-encrypted.html#",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-4"
   ],
   "Remediation": {
