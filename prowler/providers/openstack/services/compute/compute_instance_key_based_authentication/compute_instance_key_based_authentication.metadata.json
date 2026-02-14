@@ -1,0 +1,38 @@
+{
+  "Provider": "openstack",
+  "CheckID": "compute_instance_key_based_authentication",
+  "CheckTitle": "Compute instances use SSH key-based authentication",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OpenStackInstance",
+  "ResourceGroup": "compute",
+  "Description": "**OpenStack compute instances** (VMs) are evaluated to verify that **SSH key-based authentication** is configured by checking for an assigned keypair. Password-based authentication is vulnerable to brute-force attacks, credential stuffing, and phishing. SSH keys provide cryptographic authentication resistant to these attacks.",
+  "Risk": "Instances without SSH key-based authentication are vulnerable to brute-force password attacks, credential stuffing, and password reuse. Attackers can test common passwords, intercept credentials, or exploit leaked passwords from other breaches. Successful SSH access enables malware injection, lateral movement, privilege escalation, and data exfiltration.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/security-guide/compute/hardening-the-virtualization-layers.html",
+    "https://docs.openstack.org/api-ref/compute/#keypairs-keypairs"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys\nsudo systemctl restart sshd\nssh -i ~/.ssh/private_key username@instance_ip",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Compute > Instances > Launch Instance**\n2. In **Key Pair** tab, select existing keypair or create new one\n3. Launch instance with keypair attached",
+      "Terraform": "```hcl\n# Terraform: ensure compute instance uses SSH key-based authentication\n\n# Create or import keypair\nresource \"openstack_compute_keypair_v2\" \"keypair\" {\n  name       = \"production-keypair\"\n  public_key = file(\"~/.ssh/id_rsa.pub\")\n}\n\nresource \"openstack_compute_instance_v2\" \"instance\" {\n  name            = \"secure-instance\"\n  image_id        = var.image_id\n  flavor_id       = var.flavor_id\n  # Critical: attach keypair for SSH key-based authentication\n  key_pair        = openstack_compute_keypair_v2.keypair.name\n  security_groups = [\"default\"]\n\n  network {\n    name = var.network_name\n  }\n\n  # Optional: use cloud-init to enforce key-only authentication\n  user_data = <<-EOF\n    #cloud-config\n    ssh_pwauth: false\n    disable_root: true\n  EOF\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Always use SSH keys instead of passwords for instance authentication. Generate keys with strong algorithms (RSA 4096-bit, Ed25519). Protect private keys with passphrases and store securely. Disable password authentication in sshd_config. Rotate keypairs periodically and revoke old keys. Use bastion hosts or VPN for SSH access instead of direct internet exposure.",
+      "Url": "https://hub.prowler.com/check/compute_instance_key_based_authentication"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check verifies keypair assignment via OpenStack metadata. It does not validate authorized_keys file contents or SSH daemon configuration inside the instance. Manual verification may be needed for instances launched without keypairs but later configured with keys."
+}

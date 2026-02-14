@@ -1,0 +1,39 @@
+{
+  "Provider": "openstack",
+  "CheckID": "compute_instance_public_ip_exposed",
+  "CheckTitle": "Compute instances are not exposed to the internet",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OpenStackInstance",
+  "ResourceGroup": "compute",
+  "Description": "**OpenStack compute instances** are evaluated to verify they are **not exposed to the internet** via public IPs (floating IPs or access IPs). Instances with public IPs are directly reachable from the internet, increasing attack surface. Best practices recommend using **bastion hosts**, **VPN gateways**, or **load balancers** instead.",
+  "Risk": "Instances with public IPs are directly reachable from the internet, enabling reconnaissance, port scanning, and vulnerability exploitation. Attackers can target instances for brute-force attacks, credential stuffing, and malware injection. Public exposure bypasses network segmentation and defense-in-depth. Compromised public instances become pivot points for lateral movement.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/neutron/latest/admin/intro-nat.html",
+    "https://docs.openstack.org/security-guide/networking/architecture.html",
+    "https://docs.openstack.org/neutron/latest/admin/intro-os-networking.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack server remove floating ip <instance_id> <floating_ip>\nssh -J bastion private-instance",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Compute > Instances**\n2. Select instance with public IP\n3. Click **Actions > Disassociate Floating IP**\n4. Confirm disassociation\n5. Access via bastion host or VPN instead",
+      "Terraform": "```hcl\n# Terraform: deploy instance without public IP (private network only)\n\nresource \"openstack_compute_instance_v2\" \"private_instance\" {\n  name            = \"private-instance\"\n  image_id        = var.image_id\n  flavor_id       = var.flavor_id\n  key_pair        = var.key_pair_name\n  security_groups = [\"internal-sg\"]\n\n  # Attach to private network ONLY (no floating IP)\n  network {\n    name = \"private-network\"\n  }\n\n  # Do NOT create floating IP association\n}\n\n# Bastion host for SSH access (only instance with public IP)\nresource \"openstack_compute_instance_v2\" \"bastion\" {\n  name            = \"bastion-host\"\n  image_id        = var.bastion_image_id\n  flavor_id       = \"small\"\n  key_pair        = var.bastion_keypair\n  security_groups = [\"bastion-sg\"]  # Restrict SSH to corporate IPs only\n\n  network {\n    name = \"dmz-network\"\n  }\n}\n\nresource \"openstack_networking_floatingip_v2\" \"bastion_fip\" {\n  pool = \"public\"\n}\n\nresource \"openstack_compute_floatingip_associate_v2\" \"bastion_fip_assoc\" {\n  floating_ip = openstack_networking_floatingip_v2.bastion_fip.address\n  instance_id = openstack_compute_instance_v2.bastion.id\n}\n\n# Security group for bastion (least privilege)\nresource \"openstack_networking_secgroup_v2\" \"bastion_sg\" {\n  name        = \"bastion-sg\"\n  description = \"Allow SSH from corporate IPs only\"\n}\n\nresource \"openstack_networking_secgroup_rule_v2\" \"bastion_ssh\" {\n  direction         = \"ingress\"\n  ethertype         = \"IPv4\"\n  protocol          = \"tcp\"\n  port_range_min    = 22\n  port_range_max    = 22\n  remote_ip_prefix  = var.corporate_cidr  # e.g., 203.0.113.0/24\n  security_group_id = openstack_networking_secgroup_v2.bastion_sg.id\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Avoid public IPs on application/database instances; use private networks only. Deploy bastion hosts or VPN gateways for operator access. Use load balancers (Octavia, HAProxy) with public IPs for web traffic instead of direct instance exposure. Apply least-privilege security groups. Enable flow logs. Use cloud NAT gateways for outbound access without inbound exposure.",
+      "Url": "https://hub.prowler.com/check/compute_instance_public_ip_exposed"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check flags instances with any public IP (floating IP, access IP v4/v6). Some workloads legitimately require public IPs (bastion hosts, NAT gateways, public-facing load balancers). Review findings in context of architecture requirements. Private RFC1918 IPs (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) are not flagged."
+}

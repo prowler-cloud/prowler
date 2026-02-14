@@ -1,0 +1,37 @@
+{
+  "Provider": "openstack",
+  "CheckID": "compute_instance_config_drive_enabled",
+  "CheckTitle": "Compute instances have config drive enabled",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "OpenStackInstance",
+  "ResourceGroup": "compute",
+  "Description": "**OpenStack compute instances** (VMs) are evaluated to verify that **config drive** is enabled. Config drive provides metadata and user data via a virtual CD-ROM device instead of the metadata service (169.254.169.254). This improves security by eliminating network-based metadata access, which can be vulnerable to SSRF attacks and metadata service exploitation.",
+  "Risk": "Instances without config drive rely on the metadata service (169.254.169.254), vulnerable to SSRF attacks that extract credentials and SSH keys. Metadata service is vulnerable to spoofing in compromised networks and can become unavailable. Config drive eliminates this attack surface by providing metadata via virtual CD-ROM, removing dependency on network-accessible metadata.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/nova/queens/user/config-drive.html",
+    "https://cloudinit.readthedocs.io/en/latest/reference/datasources/configdrive.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack server show <instance_id> -c config_drive\nopenstack server image create <instance_id> --name backup-snapshot\nopenstack server rebuild <instance_id> --image <image_id> --config-drive true",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Compute > Instances > Launch Instance**\n2. In **Configuration** or **Advanced Options** tab, enable **Config Drive**\n3. Complete instance launch\n\nNote: Config drive cannot be added to existing instances without rebuild",
+      "Terraform": "```hcl\n# Terraform: enable config drive for compute instance\nresource \"openstack_compute_instance_v2\" \"instance\" {\n  name            = \"secure-instance\"\n  image_id        = var.image_id\n  flavor_id       = var.flavor_id\n  key_pair        = var.key_pair_name\n  security_groups = [\"default\"]\n  # Enable config drive for secure metadata injection\n  config_drive    = true\n\n  network {\n    name = var.network_name\n  }\n\n  # Optional: cloud-init will automatically use config drive if available\n  user_data = <<-EOF\n    #cloud-config\n    datasource_list: [ConfigDrive, OpenStack]\n  EOF\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable config drive on all instances to eliminate metadata service attack surface. Config drive provides metadata via virtual CD-ROM instead of network-accessible service (169.254.169.254), preventing SSRF attacks. Combine with firewall rules blocking metadata service access from applications. Use config drive in air-gapped environments where metadata service is unavailable.",
+      "Url": "https://hub.prowler.com/check/compute_instance_config_drive_enabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Config drive must be enabled at instance creation time and cannot be added to existing instances without rebuild. Some OpenStack deployments may not support config drive (e.g., bare metal provisioning). Config drive is read-only from the guest OS perspective."
+}

@@ -1,4 +1,4 @@
-"""Tests for compute_instance_security_groups_attached check."""
+"""Tests for compute_instance_locked_status_enabled check."""
 
 from unittest import mock
 
@@ -10,8 +10,8 @@ from tests.providers.openstack.openstack_fixtures import (
 )
 
 
-class Test_compute_instance_security_groups_attached:
-    """Test suite for compute_instance_security_groups_attached check."""
+class Test_compute_instance_locked_status_enabled:
+    """Test suite for compute_instance_locked_status_enabled check."""
 
     def test_no_instances(self):
         """Test when no instances exist."""
@@ -24,42 +24,42 @@ class Test_compute_instance_security_groups_attached:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached.compute_client",  # noqa: E501
+                "prowler.providers.openstack.services.compute.compute_instance_locked_status_enabled.compute_instance_locked_status_enabled.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached import (  # noqa: E501
-                compute_instance_security_groups_attached,
+            from prowler.providers.openstack.services.compute.compute_instance_locked_status_enabled.compute_instance_locked_status_enabled import (
+                compute_instance_locked_status_enabled,
             )
 
-            check = compute_instance_security_groups_attached()
+            check = compute_instance_locked_status_enabled()
             result = check.execute()
 
             assert len(result) == 0
 
-    def test_instance_with_security_groups(self):
-        """Test instance with security groups attached (PASS)."""
+    def test_instance_locked_with_reason(self):
+        """Test instance with locked status enabled and reason (PASS)."""
         compute_client = mock.MagicMock()
         compute_client.instances = [
             ComputeInstance(
                 id="instance-1",
-                name="Instance One",
+                name="Locked Instance",
                 status="ACTIVE",
                 flavor_id="flavor-1",
-                security_groups=["default", "web"],
+                security_groups=["default"],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
-                is_locked=False,
-                locked_reason="",
-                key_name="",
-                user_id="",
+                is_locked=True,
+                locked_reason="Production instance - do not modify",
+                key_name="my-keypair",
+                user_id="user-123",
                 access_ipv4="",
                 access_ipv6="",
                 public_v4="",
                 public_v6="",
-                private_v4="",
+                private_v4="10.0.0.5",
                 private_v6="",
-                networks={},
+                networks={"private": ["10.0.0.5"]},
                 has_config_drive=False,
                 metadata={},
                 user_data="",
@@ -73,38 +73,96 @@ class Test_compute_instance_security_groups_attached:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached.compute_client",  # noqa: E501
+                "prowler.providers.openstack.services.compute.compute_instance_locked_status_enabled.compute_instance_locked_status_enabled.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached import (  # noqa: E501
-                compute_instance_security_groups_attached,
+            from prowler.providers.openstack.services.compute.compute_instance_locked_status_enabled.compute_instance_locked_status_enabled import (
+                compute_instance_locked_status_enabled,
             )
 
-            check = compute_instance_security_groups_attached()
+            check = compute_instance_locked_status_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Instance Instance One (instance-1) has security groups attached: default, web."
+                == "Instance Locked Instance (instance-1) has locked status enabled (reason: Production instance - do not modify)."
             )
             assert result[0].resource_id == "instance-1"
-            assert result[0].resource_name == "Instance One"
+            assert result[0].resource_name == "Locked Instance"
             assert result[0].region == OPENSTACK_REGION
             assert result[0].project_id == OPENSTACK_PROJECT_ID
 
-    def test_instance_without_security_groups(self):
-        """Test instance without security groups attached (FAIL)."""
+    def test_instance_locked_without_reason(self):
+        """Test instance with locked status enabled but no reason (PASS)."""
         compute_client = mock.MagicMock()
         compute_client.instances = [
             ComputeInstance(
                 id="instance-2",
-                name="Instance Two",
+                name="Locked No Reason",
                 status="ACTIVE",
-                flavor_id="flavor-2",
-                security_groups=[],
+                flavor_id="flavor-1",
+                security_groups=["default"],
+                region=OPENSTACK_REGION,
+                project_id=OPENSTACK_PROJECT_ID,
+                is_locked=True,
+                locked_reason="",
+                key_name="",
+                user_id="",
+                access_ipv4="",
+                access_ipv6="",
+                public_v4="",
+                public_v6="",
+                private_v4="",
+                private_v6="",
+                networks={},
+                has_config_drive=False,
+                metadata={},
+                user_data="",
+                trusted_image_certificates=[],
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.compute.compute_instance_locked_status_enabled.compute_instance_locked_status_enabled.compute_client",
+                new=compute_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.compute.compute_instance_locked_status_enabled.compute_instance_locked_status_enabled import (
+                compute_instance_locked_status_enabled,
+            )
+
+            check = compute_instance_locked_status_enabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == "Instance Locked No Reason (instance-2) has locked status enabled."
+            )
+            assert result[0].resource_id == "instance-2"
+            assert result[0].resource_name == "Locked No Reason"
+            assert result[0].region == OPENSTACK_REGION
+            assert result[0].project_id == OPENSTACK_PROJECT_ID
+
+    def test_instance_not_locked(self):
+        """Test instance without locked status (FAIL)."""
+        compute_client = mock.MagicMock()
+        compute_client.instances = [
+            ComputeInstance(
+                id="instance-3",
+                name="Unlocked Instance",
+                status="ACTIVE",
+                flavor_id="flavor-1",
+                security_groups=["default"],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
                 is_locked=False,
@@ -131,42 +189,42 @@ class Test_compute_instance_security_groups_attached:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached.compute_client",  # noqa: E501
+                "prowler.providers.openstack.services.compute.compute_instance_locked_status_enabled.compute_instance_locked_status_enabled.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached import (  # noqa: E501
-                compute_instance_security_groups_attached,
+            from prowler.providers.openstack.services.compute.compute_instance_locked_status_enabled.compute_instance_locked_status_enabled import (
+                compute_instance_locked_status_enabled,
             )
 
-            check = compute_instance_security_groups_attached()
+            check = compute_instance_locked_status_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Instance Instance Two (instance-2) does not have any security groups attached."
+                == "Instance Unlocked Instance (instance-3) does not have locked status enabled."
             )
-            assert result[0].resource_id == "instance-2"
-            assert result[0].resource_name == "Instance Two"
+            assert result[0].resource_id == "instance-3"
+            assert result[0].resource_name == "Unlocked Instance"
             assert result[0].region == OPENSTACK_REGION
             assert result[0].project_id == OPENSTACK_PROJECT_ID
 
     def test_multiple_instances_mixed(self):
-        """Test multiple instances with mixed results."""
+        """Test multiple instances with mixed locked status."""
         compute_client = mock.MagicMock()
         compute_client.instances = [
             ComputeInstance(
-                id="instance-pass",
-                name="Instance Pass",
+                id="instance-locked",
+                name="Locked",
                 status="ACTIVE",
                 flavor_id="flavor-1",
-                security_groups=["default"],
+                security_groups=[],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
-                is_locked=False,
-                locked_reason="",
+                is_locked=True,
+                locked_reason="Protected",
                 key_name="",
                 user_id="",
                 access_ipv4="",
@@ -182,10 +240,10 @@ class Test_compute_instance_security_groups_attached:
                 trusted_image_certificates=[],
             ),
             ComputeInstance(
-                id="instance-fail",
-                name="Instance Fail",
+                id="instance-unlocked",
+                name="Unlocked",
                 status="ACTIVE",
-                flavor_id="flavor-2",
+                flavor_id="flavor-1",
                 security_groups=[],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
@@ -213,75 +271,17 @@ class Test_compute_instance_security_groups_attached:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached.compute_client",  # noqa: E501
+                "prowler.providers.openstack.services.compute.compute_instance_locked_status_enabled.compute_instance_locked_status_enabled.compute_client",
                 new=compute_client,
             ),
         ):
-            from prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached import (  # noqa: E501
-                compute_instance_security_groups_attached,
+            from prowler.providers.openstack.services.compute.compute_instance_locked_status_enabled.compute_instance_locked_status_enabled import (
+                compute_instance_locked_status_enabled,
             )
 
-            check = compute_instance_security_groups_attached()
+            check = compute_instance_locked_status_enabled()
             result = check.execute()
 
             assert len(result) == 2
             assert len([r for r in result if r.status == "PASS"]) == 1
             assert len([r for r in result if r.status == "FAIL"]) == 1
-
-    def test_instance_without_name_uses_id(self):
-        """Test instance without name still reports using its ID."""
-        compute_client = mock.MagicMock()
-        compute_client.instances = [
-            ComputeInstance(
-                id="instance-3",
-                name="",
-                status="ACTIVE",
-                flavor_id="flavor-3",
-                security_groups=["default"],
-                region=OPENSTACK_REGION,
-                project_id=OPENSTACK_PROJECT_ID,
-                is_locked=False,
-                locked_reason="",
-                key_name="",
-                user_id="",
-                access_ipv4="",
-                access_ipv6="",
-                public_v4="",
-                public_v6="",
-                private_v4="",
-                private_v6="",
-                networks={},
-                has_config_drive=False,
-                metadata={},
-                user_data="",
-                trusted_image_certificates=[],
-            )
-        ]
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_openstack_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached.compute_client",  # noqa: E501
-                new=compute_client,
-            ),
-        ):
-            from prowler.providers.openstack.services.compute.compute_instance_security_groups_attached.compute_instance_security_groups_attached import (  # noqa: E501
-                compute_instance_security_groups_attached,
-            )
-
-            check = compute_instance_security_groups_attached()
-            result = check.execute()
-
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == "Instance  (instance-3) has security groups attached: default."
-            )
-            assert result[0].resource_id == "instance-3"
-            assert result[0].resource_name == ""
-            assert result[0].region == OPENSTACK_REGION
-            assert result[0].project_id == OPENSTACK_PROJECT_ID

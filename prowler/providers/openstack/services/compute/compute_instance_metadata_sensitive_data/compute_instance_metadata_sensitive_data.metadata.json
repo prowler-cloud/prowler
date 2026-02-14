@@ -1,0 +1,38 @@
+{
+  "Provider": "openstack",
+  "CheckID": "compute_instance_metadata_sensitive_data",
+  "CheckTitle": "Compute instance metadata does not contain sensitive data",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "OpenStackInstance",
+  "ResourceGroup": "compute",
+  "Description": "**OpenStack compute instance metadata** is evaluated to detect **sensitive data** such as passwords, API keys, secrets, and private keys. Instance metadata is accessible via the metadata service (169.254.169.254) to any process inside the instance. Storing secrets in metadata exposes them to SSRF attacks, compromised applications, and unauthorized access.",
+  "Risk": "Instance metadata containing sensitive data exposes credentials through the metadata service (169.254.169.254), accessible to any process inside the instance. Attackers exploiting SSRF, compromised applications, or insider threats can extract passwords, API keys, and private keys. Stolen credentials enable unauthorized modifications, privilege escalation, resource deletion, and cryptomining.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/nova/latest/user/metadata.html",
+    "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack server unset --property <sensitive_key> <instance_id>",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Compute > Instances**\n2. Select instance with sensitive metadata\n3. Remove sensitive metadata keys using CLI command\n4. Rotate exposed credentials immediately\n5. Store secrets in Barbican or external secrets manager instead",
+      "Terraform": "```hcl\n# Terraform: use Barbican for secrets instead of metadata\n\n# Store secret in Barbican\nresource \"openstack_keymanager_secret_v1\" \"db_password\" {\n  name                 = \"database-password\"\n  payload              = random_password.db_password.result\n  payload_content_type = \"text/plain\"\n  secret_type          = \"passphrase\"\n}\n\nresource \"random_password\" \"db_password\" {\n  length  = 32\n  special = true\n}\n\n# Instance WITHOUT sensitive data in metadata\nresource \"openstack_compute_instance_v2\" \"secure_instance\" {\n  name            = \"app-server\"\n  image_id        = var.image_id\n  flavor_id       = var.flavor_id\n  key_pair        = var.key_pair_name\n  security_groups = [\"app-sg\"]\n\n  # Safe metadata (non-sensitive labels only)\n  metadata = {\n    environment       = \"production\"\n    application       = \"web-app\"\n    cost_center       = \"engineering\"\n    barbican_secret_id = openstack_keymanager_secret_v1.db_password.secret_ref\n  }\n\n  network {\n    name = \"private-network\"\n  }\n\n  # Use cloud-init to retrieve secrets from Barbican\n  user_data = <<-EOF\n    #!/bin/bash\n    # Retrieve database password from Barbican\n    SECRET_REF=\"${openstack_keymanager_secret_v1.db_password.secret_ref}\"\n    DB_PASSWORD=$(openstack secret get \"$SECRET_REF\" --payload -f value)\n    \n    # Configure application with retrieved secret\n    echo \"DATABASE_URL=<scheme>://user:$DB_PASSWORD@db-host/dbname\" > /etc/app/config.env\n    chmod 600 /etc/app/config.env\n  EOF\n}\n\n# ANTI-PATTERN: DO NOT DO THIS\n# resource \"openstack_compute_instance_v2\" \"insecure_instance\" {\n#   metadata = {\n#     db_password = \"hardcoded-secret-123\"  # NEVER store secrets in metadata\n#     api_key     = \"sk-1234567890abcdef\"   # Exposed via metadata service\n#   }\n# }\n```"
+    },
+    "Recommendation": {
+      "Text": "Never store secrets in metadata; use Barbican (OpenStack Key Manager), Vault, or external secrets management instead. Retrieve secrets at runtime via APIs. Implement least privilege access to secrets with RBAC. Enable secrets audit logging. Use envelope encryption for secrets at rest. Implement automatic rotation every 90 days. Scan metadata for hardcoded secrets using tools like TruffleHog.",
+      "Url": "https://hub.prowler.com/check/compute_instance_metadata_sensitive_data"
+    }
+  },
+  "Categories": [
+    "secrets",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check uses the detect-secrets library to scan for credentials. May produce false positives on metadata keys containing secret-like keywords. Findings should be reviewed manually. The audit_config allows configuring secrets_ignore_patterns to exclude specific patterns and detect_secrets_plugins to customize detection. Metadata is world-readable within instance via 169.254.169.254."
+}
