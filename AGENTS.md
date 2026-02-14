@@ -45,7 +45,7 @@ Use these skills for detailed patterns on-demand:
 | `prowler-pr` | Pull request conventions | [SKILL.md](skills/prowler-pr/SKILL.md) |
 | `prowler-docs` | Documentation style guide | [SKILL.md](skills/prowler-docs/SKILL.md) |
 | `prowler-attack-paths-query` | Create Attack Paths openCypher queries | [SKILL.md](skills/prowler-attack-paths-query/SKILL.md) |
-| `prowler-gh-aw` | GitHub Agentic Workflows (gh-aw) | [SKILL.md](skills/prowler-gh-aw/SKILL.md) |
+| `gh-aw` | GitHub Agentic Workflows (gh-aw) | [SKILL.md](skills/gh-aw/SKILL.md) |
 | `skill-creator` | Create new AI agent skills | [SKILL.md](skills/skill-creator/SKILL.md) |
 
 ### Auto-invoke Skills
@@ -63,12 +63,12 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | App Router / Server Actions | `nextjs-15` |
 | Building AI chat features | `ai-sdk-5` |
 | Committing changes | `prowler-commit` |
-| Configuring MCP servers in agentic workflows | `prowler-gh-aw` |
+| Configuring MCP servers in agentic workflows | `gh-aw` |
 | Create PR that requires changelog entry | `prowler-changelog` |
 | Create a PR with gh pr create | `prowler-pr` |
 | Creating API endpoints | `jsonapi` |
 | Creating Attack Paths queries | `prowler-attack-paths-query` |
-| Creating GitHub Agentic Workflows | `prowler-gh-aw` |
+| Creating GitHub Agentic Workflows | `gh-aw` |
 | Creating ViewSets, serializers, or filters in api/ | `django-drf` |
 | Creating Zod schemas | `zod-4` |
 | Creating a git commit | `prowler-commit` |
@@ -78,17 +78,17 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Creating/modifying models, views, serializers | `prowler-api` |
 | Creating/updating compliance frameworks | `prowler-compliance` |
 | Debug why a GitHub Actions job is failing | `prowler-ci` |
-| Debugging gh-aw compilation errors | `prowler-gh-aw` |
+| Debugging gh-aw compilation errors | `gh-aw` |
 | Fill .github/pull_request_template.md (Context/Description/Steps to review/Checklist) | `prowler-pr` |
 | General Prowler development questions | `prowler` |
 | Implementing JSON:API endpoints | `django-drf` |
-| Importing Copilot Custom Agents into workflows | `prowler-gh-aw` |
+| Importing Copilot Custom Agents into workflows | `gh-aw` |
 | Inspect PR CI checks and gates (.github/workflows/*) | `prowler-ci` |
 | Inspect PR CI workflows (.github/workflows/*): conventional-commit, pr-check-changelog, pr-conflict-checker, labeler | `prowler-pr` |
 | Mapping checks to compliance controls | `prowler-compliance` |
 | Mocking AWS with moto in tests | `prowler-test-sdk` |
 | Modifying API responses | `jsonapi` |
-| Modifying gh-aw workflow frontmatter or safe-outputs | `prowler-gh-aw` |
+| Modifying gh-aw workflow frontmatter or safe-outputs | `gh-aw` |
 | Regenerate AGENTS.md Auto-invoke tables (sync.sh) | `skill-sync` |
 | Review PR requirements: template, title conventions, changelog gate | `prowler-pr` |
 | Review changelog format and conventions | `prowler-changelog` |
