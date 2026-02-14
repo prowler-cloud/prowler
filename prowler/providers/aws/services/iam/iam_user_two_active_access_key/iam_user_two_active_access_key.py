@@ -5,8 +5,8 @@ from prowler.providers.aws.services.iam.iam_client import iam_client
 
 class iam_user_two_active_access_key(Check):
     def execute(self) -> Check_Report_AWS:
+        findings = []
         try:
-            findings = []
             response = iam_client.credential_report
             for user in response:
                 report = Check_Report_AWS(metadata=self.metadata(), resource=user)
@@ -34,5 +34,4 @@ class iam_user_two_active_access_key(Check):
                 findings.append(report)
         except Exception as error:
             logger.error(f"{error.__class__.__name__} -- {error}")
-        finally:
-            return findings
+        return findings

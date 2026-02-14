@@ -128,8 +128,9 @@ def update_check_metadata(check_metadata, custom_metadata):
                         setattr(check_metadata, attribute, custom_metadata[attribute])
                     except ValueError:
                         pass
-    finally:
-        return check_metadata
+    except Exception:
+        pass
+    return check_metadata
 
 
 def update_check_metadata_remediation(
