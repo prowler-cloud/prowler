@@ -129,7 +129,9 @@ def update_check_metadata(check_metadata, custom_metadata):
                     except ValueError:
                         pass
     except Exception:
-        pass
+        logger.warning(
+            "Failed to update custom checks metadata, returning original metadata"
+        )
     return check_metadata
 
 
