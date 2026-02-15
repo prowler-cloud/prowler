@@ -20,5 +20,10 @@ Working workflow and agent files in this repo:
 - MCP servers: https://github.github.com/gh-aw/guides/mcps/
 - Imports: https://github.github.com/gh-aw/reference/imports/
 - Network access: https://github.github.com/gh-aw/reference/network/
+- Security architecture: https://github.github.com/gh-aw/introduction/architecture/
+- Threat detection: https://github.github.com/gh-aw/reference/threat-detection/
+- Compilation process: https://github.github.com/gh-aw/reference/compilation-process/
+- Lockdown mode: https://github.github.com/gh-aw/reference/lockdown-mode/
+- Concurrency: https://github.github.com/gh-aw/reference/concurrency/
 - Design patterns: https://github.github.com/gh-aw/patterns/
 - Copilot Custom Agents: https://github.github.com/gh-aw/reference/copilot-custom-agents/
