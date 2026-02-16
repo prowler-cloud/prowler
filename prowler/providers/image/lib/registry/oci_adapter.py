@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import re
 import time
 
@@ -28,6 +29,7 @@ class OciRegistryAdapter(RegistryAdapter):
         super().__init__(registry_url, username, password, token, verify_ssl)
         self._base_url = self._normalise_url(registry_url)
         self._bearer_token = None
+        self._basic_auth_verified = False
 
     @staticmethod
     def _normalise_url(url):
@@ -72,6 +74,8 @@ class OciRegistryAdapter(RegistryAdapter):
     def _ensure_auth(self, repository=None):
         if self._bearer_token:
             return
+        if self._basic_auth_verified:
+            return
         if self.token:
             self._bearer_token = self.token
             return
@@ -81,6 +85,22 @@ class OciRegistryAdapter(RegistryAdapter):
             return
         if resp.status_code == 401:
             www_auth = resp.headers.get("Www-Authenticate", "")
+
+            if not www_auth.lower().startswith("bearer"):
+                # Basic auth challenge (e.g., AWS ECR)
+                if self.username and self.password:
+                    self._basic_auth_verified = True
+                    return
+                raise ImageRegistryAuthError(
+                    file=__file__,
+                    message=(
+                        f"Registry {self.registry_url} requires authentication "
+                        f"but no credentials provided. "
+                        f"Set REGISTRY_USERNAME and REGISTRY_PASSWORD."
+                    ),
+                )
+
+            # Bearer token exchange (standard OCI flow)
             self._bearer_token = self._obtain_bearer_token(www_auth, repository)
             return
         if resp.status_code == 403:
@@ -118,12 +138,27 @@ class OciRegistryAdapter(RegistryAdapter):
         data = resp.json()
         return data.get("token") or data.get("access_token", "")
 
+    def _resolve_basic_credentials(self):
+        """Decode pre-encoded base64 auth tokens (e.g., from aws ecr get-authorization-token).
+
+        Returns (username, password) — decoded if the password is a base64 token
+        containing 'username:real_password', otherwise returned as-is.
+        """
+        try:
+            decoded = base64.b64decode(self.password).decode("utf-8")
+            if decoded.startswith(f"{self.username}:"):
+                return self.username, decoded[len(self.username) + 1 :]
+        except Exception:
+            pass
+        return self.username, self.password
+
     def _authed_request(self, method, url, **kwargs):
         headers = kwargs.pop("headers", {})
         if self._bearer_token:
             headers["Authorization"] = f"Bearer {self._bearer_token}"
         elif self.username and self.password:
-            kwargs.setdefault("auth", (self.username, self.password))
+            user, pwd = self._resolve_basic_credentials()
+            kwargs.setdefault("auth", (user, pwd))
         kwargs["headers"] = headers
         return self._request_with_retry(method, url, **kwargs)
 

@@ -1,3 +1,4 @@
+import base64
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -25,7 +26,9 @@ class TestOciAdapterInit:
         assert adapter._base_url == "https://myregistry.io"
 
     def test_stores_credentials(self):
-        adapter = OciRegistryAdapter("reg.io", username="u", password="p", token="t", verify_ssl=False)
+        adapter = OciRegistryAdapter(
+            "reg.io", username="u", password="p", token="t", verify_ssl=False
+        )
         assert adapter.username == "u"
         assert adapter.password == "p"
         assert adapter.token == "t"
@@ -50,7 +53,12 @@ class TestOciAdapterAuth:
 
     @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
     def test_ensure_auth_bearer_challenge(self, mock_request):
-        ping_resp = MagicMock(status_code=401, headers={"Www-Authenticate": 'Bearer realm="https://auth.example.com/token",service="registry"'})
+        ping_resp = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": 'Bearer realm="https://auth.example.com/token",service="registry"'
+            },
+        )
         token_resp = MagicMock(status_code=200)
         token_resp.json.return_value = {"token": "bearer-tok"}
         mock_request.side_effect = [ping_resp, token_resp]
@@ -66,13 +74,94 @@ class TestOciAdapterAuth:
         with pytest.raises(ImageRegistryAuthError):
             adapter._ensure_auth()
 
+    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    def test_ensure_auth_basic_challenge_with_creds(self, mock_request):
+        ping_resp = MagicMock(
+            status_code=401,
+            headers={"Www-Authenticate": 'Basic realm="https://ecr.aws"'},
+        )
+        mock_request.return_value = ping_resp
+        adapter = OciRegistryAdapter("ecr.aws", username="AWS", password="tok")
+        adapter._ensure_auth()
+        assert adapter._basic_auth_verified is True
+        assert adapter._bearer_token is None
+
+    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    def test_ensure_auth_basic_challenge_no_creds(self, mock_request):
+        ping_resp = MagicMock(
+            status_code=401,
+            headers={"Www-Authenticate": 'Basic realm="https://ecr.aws"'},
+        )
+        mock_request.return_value = ping_resp
+        adapter = OciRegistryAdapter("ecr.aws")
+        with pytest.raises(ImageRegistryAuthError):
+            adapter._ensure_auth()
+
+    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    def test_basic_auth_used_in_requests(self, mock_request):
+        ping_resp = MagicMock(
+            status_code=401,
+            headers={"Www-Authenticate": 'Basic realm="https://ecr.aws"'},
+        )
+        catalog_resp = MagicMock(status_code=200, headers={})
+        catalog_resp.json.return_value = {"repositories": ["myapp"]}
+        mock_request.side_effect = [ping_resp, catalog_resp]
+        adapter = OciRegistryAdapter("ecr.aws", username="AWS", password="tok")
+        adapter._ensure_auth()
+        adapter._authed_request("GET", "https://ecr.aws/v2/_catalog")
+        # The catalog request should use Basic auth (auth kwarg), not Bearer header
+        call_kwargs = mock_request.call_args_list[1][1]
+        assert call_kwargs.get("auth") == ("AWS", "tok")
+        assert "Authorization" not in call_kwargs.get("headers", {})
+
+    def test_resolve_basic_credentials_decodes_base64_token(self):
+        raw_password = "real-jwt-password"
+        encoded = base64.b64encode(f"AWS:{raw_password}".encode()).decode()
+        adapter = OciRegistryAdapter("ecr.aws", username="AWS", password=encoded)
+        user, pwd = adapter._resolve_basic_credentials()
+        assert user == "AWS"
+        assert pwd == raw_password
+
+    def test_resolve_basic_credentials_passthrough_raw_password(self):
+        adapter = OciRegistryAdapter("ecr.aws", username="AWS", password="plain-pass")
+        user, pwd = adapter._resolve_basic_credentials()
+        assert user == "AWS"
+        assert pwd == "plain-pass"
+
+    def test_resolve_basic_credentials_passthrough_invalid_base64(self):
+        adapter = OciRegistryAdapter(
+            "ecr.aws", username="AWS", password="not!valid~base64"
+        )
+        user, pwd = adapter._resolve_basic_credentials()
+        assert user == "AWS"
+        assert pwd == "not!valid~base64"
+
+    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    def test_basic_auth_decodes_ecr_token_in_request(self, mock_request):
+        raw_password = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0In0.abc"
+        encoded = base64.b64encode(f"AWS:{raw_password}".encode()).decode()
+        ping_resp = MagicMock(
+            status_code=401,
+            headers={"Www-Authenticate": 'Basic realm="https://ecr.aws"'},
+        )
+        catalog_resp = MagicMock(status_code=200, headers={})
+        catalog_resp.json.return_value = {"repositories": ["myapp"]}
+        mock_request.side_effect = [ping_resp, catalog_resp]
+        adapter = OciRegistryAdapter("ecr.aws", username="AWS", password=encoded)
+        adapter._ensure_auth()
+        adapter._authed_request("GET", "https://ecr.aws/v2/_catalog")
+        call_kwargs = mock_request.call_args_list[1][1]
+        assert call_kwargs.get("auth") == ("AWS", raw_password)
+
 
 class TestOciAdapterListRepositories:
     @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
     def test_list_repos_single_page(self, mock_request):
         ping_resp = MagicMock(status_code=200)
         catalog_resp = MagicMock(status_code=200, headers={})
-        catalog_resp.json.return_value = {"repositories": ["app/frontend", "app/backend"]}
+        catalog_resp.json.return_value = {
+            "repositories": ["app/frontend", "app/backend"]
+        }
         mock_request.side_effect = [ping_resp, catalog_resp]
         adapter = OciRegistryAdapter("reg.io")
         repos = adapter.list_repositories()
@@ -81,7 +170,10 @@ class TestOciAdapterListRepositories:
     @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
     def test_list_repos_paginated(self, mock_request):
         ping_resp = MagicMock(status_code=200)
-        page1_resp = MagicMock(status_code=200, headers={"Link": '<https://reg.io/v2/_catalog?n=200&last=b>; rel="next"'})
+        page1_resp = MagicMock(
+            status_code=200,
+            headers={"Link": '<https://reg.io/v2/_catalog?n=200&last=b>; rel="next"'},
+        )
         page1_resp.json.return_value = {"repositories": ["a"]}
         page2_resp = MagicMock(status_code=200, headers={})
         page2_resp.json.return_value = {"repositories": ["b"]}
@@ -158,9 +250,16 @@ class TestOciAdapterNextPageUrl:
         assert OciRegistryAdapter._next_page_url(resp) is None
 
     def test_link_header_with_next(self):
-        resp = MagicMock(headers={"Link": '<https://reg.io/v2/_catalog?n=200&last=b>; rel="next"'})
-        assert OciRegistryAdapter._next_page_url(resp) == "https://reg.io/v2/_catalog?n=200&last=b"
+        resp = MagicMock(
+            headers={"Link": '<https://reg.io/v2/_catalog?n=200&last=b>; rel="next"'}
+        )
+        assert (
+            OciRegistryAdapter._next_page_url(resp)
+            == "https://reg.io/v2/_catalog?n=200&last=b"
+        )
 
     def test_link_header_no_next(self):
-        resp = MagicMock(headers={"Link": '<https://reg.io/v2/_catalog?n=200>; rel="prev"'})
+        resp = MagicMock(
+            headers={"Link": '<https://reg.io/v2/_catalog?n=200>; rel="prev"'}
+        )
         assert OciRegistryAdapter._next_page_url(resp) is None
