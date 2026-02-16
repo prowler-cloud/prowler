@@ -42,9 +42,9 @@ def check_security_group_rule(
     if ports is not None and len(ports) > 0:
         # If rule has no port range, it allows all ports (protocol-level rule)
         if rule.port_range_min is None and rule.port_range_max is None:
-            # Only match if protocol is None (all protocols/ports)
-            if rule.protocol is not None:
-                return False
+            # No port range means all ports for the protocol (or all
+            # protocols if protocol is also None). This always matches.
+            pass
         else:
             # Check if any of the target ports fall within the rule's range
             port_matches = False

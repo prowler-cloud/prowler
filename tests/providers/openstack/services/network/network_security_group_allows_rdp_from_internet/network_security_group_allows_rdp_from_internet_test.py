@@ -315,6 +315,61 @@ class Test_network_security_group_allows_rdp_from_internet:
                 == "Security group port-range (sg-5) allows unrestricted RDP access (port 3389) from the Internet via rule rule-range (tcp/0.0.0.0/0:3000-4000)."
             )
 
+    def test_security_group_with_all_tcp_from_internet(self):
+        """Test security group allowing all TCP ports from internet (FAIL).
+
+        In OpenStack Neutron, protocol=tcp with port_range_min=None and
+        port_range_max=None means all TCP ports are allowed.
+        """
+        network_client = mock.MagicMock()
+        network_client.security_groups = [
+            SecurityGroup(
+                id="sg-all-tcp",
+                name="all-tcp-open",
+                description="All TCP ports open",
+                security_group_rules=[
+                    SecurityGroupRule(
+                        id="rule-all-tcp",
+                        security_group_id="sg-all-tcp",
+                        direction="ingress",
+                        protocol="tcp",
+                        ethertype="IPv4",
+                        port_range_min=None,
+                        port_range_max=None,
+                        remote_ip_prefix="0.0.0.0/0",
+                        remote_group_id=None,
+                    ),
+                ],
+                project_id=OPENSTACK_PROJECT_ID,
+                region=OPENSTACK_REGION,
+                is_default=False,
+                tags=[],
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet.network_client",
+                new=network_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.network.network_security_group_allows_rdp_from_internet.network_security_group_allows_rdp_from_internet import (
+                network_security_group_allows_rdp_from_internet,
+            )
+
+            check = network_security_group_allows_rdp_from_internet()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_id == "sg-all-tcp"
+            assert result[0].resource_name == "all-tcp-open"
+            assert result[0].region == OPENSTACK_REGION
+
     def test_multiple_security_groups_mixed(self):
         """Test multiple security groups with mixed results."""
         network_client = mock.MagicMock()
