@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the kubelet --streaming-connection-idle-timeout argument is not set to 0",
   "CheckType": [],
   "ServiceName": "kubelet",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesKubelet",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
   "Remediation": {
     "Code": {
-      "CLI": "--streaming-connection-idle-timeout=<non-zero value>"
+      "CLI": "--streaming-connection-idle-timeout=<non-zero value>",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-streaming-connection-idle-timeout-argument-is-not-set-to-0",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Configure a non-zero timeout for streaming connections in kubelet to enhance node security.",

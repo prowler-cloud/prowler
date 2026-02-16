@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the --profiling argument is set to false",
   "CheckType": [],
   "ServiceName": "controllermanager",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesControllerManager",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/",
   "Remediation": {
     "Code": {
-      "CLI": "--profiling=false"
+      "CLI": "--profiling=false",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-profiling-argument-is-set-to-false",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Disable profiling in the Kubernetes Controller Manager for enhanced security.",

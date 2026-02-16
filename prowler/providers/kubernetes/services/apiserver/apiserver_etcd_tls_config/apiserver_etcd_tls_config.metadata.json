@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the --etcd-certfile and --etcd-keyfile arguments are set as appropriate",
   "CheckType": [],
   "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/",
   "Remediation": {
     "Code": {
-      "CLI": "--etcd-certfile=<path/to/client-certificate-file> --etcd-keyfile=<path/to/client-key-file>"
+      "CLI": "--etcd-certfile=<path/to/client-certificate-file> --etcd-keyfile=<path/to/client-key-file>",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-etcd-certfile-and-etcd-keyfile-arguments-are-set-as-appropriate",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Enable TLS encryption for etcd client connections to secure sensitive data.",

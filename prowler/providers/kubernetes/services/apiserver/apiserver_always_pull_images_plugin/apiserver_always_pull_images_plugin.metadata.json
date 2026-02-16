@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the admission control plugin AlwaysPullImages is set",
   "CheckType": [],
   "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwayspullimages",
   "Remediation": {
     "Code": {
-      "CLI": "--enable-admission-plugins=...,AlwaysPullImages,..."
+      "CLI": "--enable-admission-plugins=...,AlwaysPullImages,...",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-alwayspullimages-is-set#kubernetes",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Configure the API server to use the AlwaysPullImages admission control plugin to ensure image security and integrity.",

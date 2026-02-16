@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the --audit-log-maxbackup argument is set to 10 or as appropriate",
   "CheckType": [],
   "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
   "Remediation": {
     "Code": {
-      "CLI": "--audit-log-maxbackup=10"
+      "CLI": "--audit-log-maxbackup=10",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-audit-log-maxbackup-argument-is-set-to-10-or-as-appropriate#kubernetes",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Configure the API server audit log backup retention to 10 or as per your organization's requirements.",

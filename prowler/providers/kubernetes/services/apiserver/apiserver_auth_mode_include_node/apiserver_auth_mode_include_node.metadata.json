@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the --authorization-mode argument includes Node",
   "CheckType": [],
   "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/node/",
   "Remediation": {
     "Code": {
-      "CLI": "--authorization-mode=Node,RBAC"
+      "CLI": "--authorization-mode=Node,RBAC",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-authorization-mode-argument-includes-node",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Configure the API server to use Node authorization mode along with other modes like RBAC to restrict kubelet access to the necessary resources.",

@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the admission control plugin SecurityContextDeny is set if PodSecurityPolicy is not used",
   "CheckType": [],
   "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
   "Remediation": {
     "Code": {
-      "CLI": "--enable-admission-plugins=...,SecurityContextDeny,..."
+      "CLI": "--enable-admission-plugins=...,SecurityContextDeny,...",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-securitycontextdeny-is-set-if-podsecuritypolicy-is-not-used",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Use SecurityContextDeny as an admission control plugin in the API server to enhance security, especially in the absence of PodSecurityPolicy.",

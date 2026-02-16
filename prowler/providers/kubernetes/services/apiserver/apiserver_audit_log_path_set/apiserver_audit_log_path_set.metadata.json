@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the --audit-log-path argument is set",
   "CheckType": [],
   "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
   "Remediation": {
     "Code": {
-      "CLI": "--audit-log-path=/var/log/apiserver/audit.log"
+      "CLI": "--audit-log-path=/var/log/apiserver/audit.log",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-audit-log-path-argument-is-set#kubernetes",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Enable audit logging in the API server by specifying a valid path for --audit-log-path to ensure comprehensive activity logging within the cluster.",

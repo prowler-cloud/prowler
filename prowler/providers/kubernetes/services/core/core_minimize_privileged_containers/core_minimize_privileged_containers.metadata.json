@@ -4,6 +4,8 @@
   "CheckTitle": "Minimize the admission of privileged containers",
   "CheckType": [],
   "ServiceName": "core",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
   "ResourceGroup": "container",
@@ -11,7 +13,12 @@
   "Risk": "Permitting privileged containers by default can lead to security vulnerabilities as these containers have elevated privileges equivalent to the host.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
   "Remediation": {
-    "Code": {},
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_2#kubernetes",
+      "Other": "",
+      "Terraform": ""
+    },
     "Recommendation": {
       "Text": "Restrict the use of privileged containers through admission control policies.",
       "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"

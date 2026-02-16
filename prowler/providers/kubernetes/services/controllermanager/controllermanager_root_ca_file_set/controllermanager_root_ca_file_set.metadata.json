@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the --root-ca-file argument is set as appropriate",
   "CheckType": [],
   "ServiceName": "controllermanager",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesControllerManager",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
   "Remediation": {
     "Code": {
-      "CLI": "--root-ca-file=/path/to/ca-file"
+      "CLI": "--root-ca-file=/path/to/ca-file",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-root-ca-file-argument-is-set-as-appropriate",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Configure the Controller Manager with a root CA file to enhance security for pods communicating with the API server.",

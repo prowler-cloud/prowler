@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the --profiling argument is set to false",
   "CheckType": [],
   "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
   "Remediation": {
     "Code": {
-      "CLI": "--profiling=false"
+      "CLI": "--profiling=false",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-profiling-argument-is-set-to-false-2",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Disable profiling in the API server unless it is necessary for troubleshooting performance bottlenecks.",

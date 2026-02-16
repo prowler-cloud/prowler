@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the --profiling argument is set to false",
   "CheckType": [],
   "ServiceName": "scheduler",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesScheduler",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://github.com/kubernetes/community/blob/master/contributors/devel/profiling.md",
   "Remediation": {
     "Code": {
-      "CLI": "--profiling=false"
+      "CLI": "--profiling=false",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-profiling-argument-is-set-to-false-2",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "To minimize exposure to performance data and potential vulnerabilities, ensure the --profiling argument in the Kubernetes Scheduler is set to false.",

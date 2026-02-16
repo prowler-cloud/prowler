@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the --authorization-mode argument includes RBAC",
   "CheckType": [],
   "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
   "Remediation": {
     "Code": {
-      "CLI": "--authorization-mode=Node,RBAC"
+      "CLI": "--authorization-mode=Node,RBAC",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-authorization-mode-argument-includes-rbac",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Ensure that the API server is configured with RBAC authorization mode for enhanced security and access control.",

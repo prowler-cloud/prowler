@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the --terminated-pod-gc-threshold argument is set as appropriate",
   "CheckType": [],
   "ServiceName": "controllermanager",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesControllerManager",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-garbage-collection",
   "Remediation": {
     "Code": {
-      "CLI": "--terminated-pod-gc-threshold=10"
+      "CLI": "--terminated-pod-gc-threshold=10",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-terminated-pod-gc-threshold-argument-is-set-as-appropriate",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Review and adjust the --terminated-pod-gc-threshold argument in the kube-controller-manager to ensure efficient garbage collection and optimal resource utilization.",

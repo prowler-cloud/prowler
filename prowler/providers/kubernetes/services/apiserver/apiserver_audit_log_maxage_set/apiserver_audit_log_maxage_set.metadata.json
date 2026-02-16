@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the --audit-log-maxage argument is set to 30 or as appropriate",
   "CheckType": [],
   "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
   "Remediation": {
     "Code": {
-      "CLI": "--audit-log-maxage=30"
+      "CLI": "--audit-log-maxage=30",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-audit-log-maxage-argument-is-set-to-30-or-as-appropriate#kubernetes",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Configure the API server audit log retention period to retain logs for at least 30 days or as per your organization's requirements.",

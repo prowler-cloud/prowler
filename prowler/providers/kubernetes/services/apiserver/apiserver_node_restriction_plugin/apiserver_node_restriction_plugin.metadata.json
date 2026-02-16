@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the admission control plugin NodeRestriction is set",
   "CheckType": [],
   "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers",
   "Remediation": {
     "Code": {
-      "CLI": "--enable-admission-plugins=...,NodeRestriction,..."
+      "CLI": "--enable-admission-plugins=...,NodeRestriction,...",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-noderestriction-is-set",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Enable the NodeRestriction admission control plugin in the API server for enhanced node and pod security.",

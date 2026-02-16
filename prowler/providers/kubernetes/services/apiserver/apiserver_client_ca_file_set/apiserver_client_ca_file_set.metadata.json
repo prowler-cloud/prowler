@@ -4,6 +4,8 @@
   "CheckTitle": "Ensure that the --client-ca-file argument is set as appropriate",
   "CheckType": [],
   "ServiceName": "apiserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
   "ResourceGroup": "container",
@@ -12,7 +14,10 @@
   "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
   "Remediation": {
     "Code": {
-      "CLI": "--client-ca-file=<path/to/client-ca-file>"
+      "CLI": "--client-ca-file=<path/to/client-ca-file>",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-client-ca-file-argument-is-set-as-appropriate-scored",
+      "Other": "",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Ensure the API server is configured with a client CA file for secure client authentication.",
