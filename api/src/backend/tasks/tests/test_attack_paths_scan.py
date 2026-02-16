@@ -28,10 +28,6 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
         side_effect=lambda fn, *a, **kw: fn(*a, **kw),
     )
-    @patch(
-        "tasks.jobs.attack_paths.scan.db_utils.get_old_attack_paths_scans",
-        return_value=[],
-    )
     @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
@@ -76,7 +72,6 @@ class TestAttackPathsRun:
         mock_starting,
         mock_update_progress,
         mock_finish,
-        mock_get_old_scans,
         mock_event_loop,
         mock_drop_db,
         tenants_fixture,

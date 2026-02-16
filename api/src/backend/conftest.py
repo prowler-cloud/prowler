@@ -1625,7 +1625,6 @@ def create_attack_paths_scan():
         scan=None,
         state=StateChoices.COMPLETED,
         progress=0,
-        graph_database="tenant-db",
         **extra_fields,
     ):
         scan_instance = scan or Scan.objects.create(
@@ -1642,7 +1641,6 @@ def create_attack_paths_scan():
             "scan": scan_instance,
             "state": state,
             "progress": progress,
-            "graph_database": graph_database,
         }
         payload.update(extra_fields)
 

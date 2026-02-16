@@ -2428,15 +2428,6 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
                 }
             )
 
-        if not attack_paths_scan.graph_database:
-            logger.error(
-                f"The Attack Paths Scan {attack_paths_scan.id} does not reference a graph database"
-            )
-            return Response(
-                {"detail": "The Attack Paths scan does not reference a graph database"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
         payload = attack_paths_views_helpers.normalize_run_payload(request.data)
         serializer = AttackPathsQueryRunRequestSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
@@ -2450,6 +2441,8 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
                 {"id": "Unknown Attack Paths query for the selected provider"}
             )
 
+        tenant_id = str(attack_paths_scan.provider.tenant_id)
+        database_name = graph_database.get_database_name(tenant_id)
         parameters = attack_paths_views_helpers.prepare_query_parameters(
             query_definition,
             serializer.validated_data.get("parameters", {}),
@@ -2457,9 +2450,9 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         )
 
         graph = attack_paths_views_helpers.execute_attack_paths_query(
-            attack_paths_scan, query_definition, parameters
+            database_name, query_definition, parameters
         )
-        graph_database.clear_cache(attack_paths_scan.graph_database)
+        graph_database.clear_cache(database_name)
 
         status_code = status.HTTP_200_OK
         if not graph.get("nodes"):
