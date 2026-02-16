@@ -117,6 +117,7 @@
         "defender_malware_policy_notifications_internal_users_malware_enabled",
         "defender_safelinks_policy_enabled",
         "defender_zap_for_teams_enabled",
+        "defenderxdr_privileged_user_exposed_credentials",
         "entra_admin_users_phishing_resistant_mfa_enabled",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_identity_protection_user_risk_enabled"
@@ -231,6 +232,7 @@
         }
       ],
       "Checks": [
+        "defenderxdr_privileged_user_exposed_credentials",
         "entra_admin_users_sign_in_frequency_enabled",
         "entra_admin_users_mfa_enabled",
         "entra_admin_users_sign_in_frequency_enabled",
@@ -602,6 +604,7 @@
         }
       ],
       "Checks": [
+        "defenderxdr_privileged_user_exposed_credentials",
         "entra_managed_device_required_for_authentication",
         "entra_users_mfa_enabled",
         "entra_managed_device_required_for_mfa_registration",
@@ -629,6 +632,7 @@
         "admincenter_users_admins_reduced_license_footprint",
         "admincenter_users_between_two_and_four_global_admins",
         "defender_antispam_outbound_policy_configured",
+        "defenderxdr_privileged_user_exposed_credentials",
         "entra_admin_consent_workflow_enabled",
         "entra_admin_portals_access_restriction",
         "entra_admin_users_cloud_only",
@@ -715,7 +719,8 @@
       "Checks": [
         "defender_malware_policy_common_attachments_filter_enabled",
         "defender_malware_policy_comprehensive_attachments_filter_applied",
-        "defender_malware_policy_notifications_internal_users_malware_enabled"
+        "defender_malware_policy_notifications_internal_users_malware_enabled",
+        "defenderxdr_privileged_user_exposed_credentials"
       ]
     },
     {
