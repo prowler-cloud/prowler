@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "defenderidentity_health_issues_no_open",
+  "CheckTitle": "Defender for Identity monitors hybrid infrastructure without unresolved health issues",
+  "CheckType": [],
+  "ServiceName": "defenderidentity",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Defender for Identity Health Issue",
+  "ResourceGroup": "security",
+  "Description": "Microsoft Defender for Identity (MDI) monitors your hybrid identity infrastructure and detects advanced threats targeting Active Directory.\n\nHealth issues indicate problems with the MDI configuration or sensors that may affect the ability to detect identity-based attacks.",
+  "Risk": "Unresolved health issues in Defender for Identity can lead to:\n- **Gaps in threat detection** - Misconfigured sensors may fail to monitor domain controllers\n- **Delayed attack identification** - Identity-based attacks like Pass-the-Hash or Golden Ticket may go undetected\n- **Compromised hybrid infrastructure** - Attackers could exploit blind spots in identity monitoring",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/defender-for-identity/health-alerts",
+    "https://learn.microsoft.com/en-us/graph/api/security-identitycontainer-list-healthissues"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Defender XDR portal at https://security.microsoft.com/\n2. Go to Settings > Identities > Health issues\n3. Review each open health issue and its recommendations\n4. Follow the specific remediation steps provided for each issue\n5. Verify the issue is resolved and status changes to closed",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Regularly monitor and resolve Defender for Identity health issues to maintain comprehensive visibility into identity-based threats across your hybrid infrastructure.",
+      "Url": "https://hub.prowler.com/check/defenderidentity_health_issues_no_open"
+    }
+  },
+  "Categories": [
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check requires SecurityIdentitiesHealth.Read.All permission. Health issues may be global (domain-related) or sensor-specific."
+}
