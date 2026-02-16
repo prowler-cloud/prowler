@@ -10,7 +10,7 @@ from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 class Test_entra_app_registration_no_unused_privileged_permissions:
     def test_no_oauth_apps(self):
-        """No OAuth apps data available (App Governance not enabled): expected PASS with informational message."""
+        """No OAuth apps data available (App Governance not enabled): expected FAIL."""
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
@@ -35,17 +35,17 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No OAuth applications found or App Governance is not enabled. Enable App Governance in Microsoft Defender for Cloud Apps to monitor OAuth app permissions."
+                == "OAuth App Governance data is unavailable. Enable App Governance in Microsoft Defender for Cloud Apps and grant ThreatHunting.Read.All to evaluate unused privileged permissions."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "OAuth Applications"
             assert result[0].resource_id == "oauthApps"
 
     def test_no_oauth_apps_none(self):
-        """OAuth apps is None (App Governance not enabled): expected PASS with informational message."""
+        """OAuth apps is None (App Governance not enabled): expected FAIL."""
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
@@ -70,10 +70,10 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No OAuth applications found or App Governance is not enabled. Enable App Governance in Microsoft Defender for Cloud Apps to monitor OAuth app permissions."
+                == "OAuth App Governance data is unavailable. Enable App Governance in Microsoft Defender for Cloud Apps and grant ThreatHunting.Read.All to evaluate unused privileged permissions."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "OAuth Applications"

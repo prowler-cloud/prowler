@@ -15,7 +15,11 @@ class entra_app_registration_no_unused_privileged_permissions(Check):
 
     - PASS: The app has no unused privileged permissions.
     - FAIL: The app has one or more unused privileged permissions that should be revoked.
+      It also fails when OAuth App Governance data is not available.
     """
+
+    _UNUSED_STATUSES = {"notinuse", "not in use"}
+    _PRIVILEGED_PLANE_LABELS = ("control plane", "management plane")
 
     def execute(self) -> list[CheckReportM365]:
         """
@@ -29,21 +33,21 @@ class entra_app_registration_no_unused_privileged_permissions(Check):
         """
         findings = []
 
-        # Check if OAuth app data is available
+        # If OAuth app data is unavailable, fail due to missing compliance visibility.
         if not entra_client.oauth_apps:
-            # If no data is available, create a single informational finding
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
                 resource_name="OAuth Applications",
                 resource_id="oauthApps",
             )
-            report.status = "PASS"
-            report.status_extended = (
-                "No OAuth applications found or App Governance is not enabled. "
-                "Enable App Governance in Microsoft Defender for Cloud Apps to "
-                "monitor OAuth app permissions."
+            report.status = "FAIL"
+            base_status = (
+                "OAuth App Governance data is unavailable. "
+                "Enable App Governance in Microsoft Defender for Cloud Apps and "
+                "grant ThreatHunting.Read.All to evaluate unused privileged permissions."
             )
+            report.status_extended = base_status
             findings.append(report)
             return findings
 
@@ -64,13 +68,12 @@ class entra_app_registration_no_unused_privileged_permissions(Check):
 
             for permission in app.permissions:
                 # Check if the permission is privileged
-                is_privileged = permission.privilege_level.lower() == "high"
+                is_privileged = self._is_privileged_permission(permission)
 
                 # Check if the permission is unused
-                is_unused = permission.usage_status.lower() in [
-                    "notinuse",
-                    "not_in_use",
-                ]
+                is_unused = (
+                    self._normalize(permission.usage_status) in self._UNUSED_STATUSES
+                )
 
                 if is_privileged and is_unused:
                     unused_privileged_permissions.append(permission.name)
@@ -95,3 +98,23 @@ class entra_app_registration_no_unused_privileged_permissions(Check):
             findings.append(report)
 
         return findings
+
+    @classmethod
+    def _is_privileged_permission(cls, permission) -> bool:
+        privilege_level = cls._normalize(permission.privilege_level)
+        permission_type = cls._normalize(permission.permission_type)
+        classification = cls._normalize(getattr(permission, "classification", ""))
+
+        if privilege_level == "high":
+            return True
+
+        return any(
+            label in permission_type or label in classification
+            for label in cls._PRIVILEGED_PLANE_LABELS
+        )
+
+    @staticmethod
+    def _normalize(value: str) -> str:
+        return (
+            value.lower().replace("_", " ").replace("-", " ").strip() if value else ""
+        )

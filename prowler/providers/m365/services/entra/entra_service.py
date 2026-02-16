@@ -540,6 +540,10 @@ OAuthAppInfo
                                             "TargetAppDisplayName", ""
                                         ),
                                         permission_type=perm.get("PermissionType", ""),
+                                        classification=perm.get(
+                                            "Classification",
+                                            perm.get("PermissionClassification", ""),
+                                        ),
                                         privilege_level=perm.get("PrivilegeLevel", ""),
                                         usage_status=perm.get("UsageStatus", ""),
                                     )
@@ -769,6 +773,7 @@ class OAuthAppPermission(BaseModel):
         target_app_id: The target application ID that provides this permission.
         target_app_name: The target application display name.
         permission_type: The type of permission (Application or Delegated).
+        classification: Optional plane classification (e.g. Control Plane, Management Plane).
         privilege_level: The privilege level (High, Medium, Low).
         usage_status: The usage status (InUse or NotInUse).
     """
@@ -777,6 +782,7 @@ class OAuthAppPermission(BaseModel):
     target_app_id: str = ""
     target_app_name: str = ""
     permission_type: str = ""
+    classification: str = ""
     privilege_level: str = ""
     usage_status: str = ""
 
