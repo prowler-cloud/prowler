@@ -3,16 +3,7 @@ name: 'Helm: Chart Checks'
 on:
   push:
     branches:
-      - 'master'
-      - 'v5.*'
-    paths:
-      - 'contrib/k8s/helm/prowler-app/**'
-  pull_request:
-    branches:
-      - 'master'
-      - 'v5.*'
-    paths:
-      - 'contrib/k8s/helm/prowler-app/**'
+      - '*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -23,7 +14,6 @@ env:
 
 jobs:
   helm-lint:
-    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
