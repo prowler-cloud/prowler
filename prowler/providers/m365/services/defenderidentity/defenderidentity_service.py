@@ -31,7 +31,7 @@ class DefenderIdentity(M365Service):
             provider: The M365Provider instance for authentication and configuration.
         """
         super().__init__(provider)
-        self.health_issues: List[HealthIssue] = []
+        self.health_issues: Optional[List[HealthIssue]] = []
 
         created_loop = False
         try:
@@ -57,17 +57,18 @@ class DefenderIdentity(M365Service):
             asyncio.set_event_loop(None)
             loop.close()
 
-    async def _get_health_issues(self) -> List["HealthIssue"]:
+    async def _get_health_issues(self) -> Optional[List["HealthIssue"]]:
         """Retrieve health issues from Microsoft Defender for Identity.
 
         This method fetches all health issues from the MDI deployment including
         both global and sensor-specific health alerts.
 
         Returns:
-            List[HealthIssue]: A list of health issues from MDI.
+            Optional[List[HealthIssue]]: A list of health issues from MDI,
+                or None if the API call failed (tenant not onboarded or missing permissions).
         """
         logger.info("M365 - Getting Defender for Identity health issues...")
-        health_issues = []
+        health_issues: Optional[List[HealthIssue]] = []
         try:
             health_issues_response = (
                 await self.client.security.identities.health_issues.get()
@@ -114,6 +115,7 @@ class DefenderIdentity(M365Service):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return None
 
         return health_issues
 

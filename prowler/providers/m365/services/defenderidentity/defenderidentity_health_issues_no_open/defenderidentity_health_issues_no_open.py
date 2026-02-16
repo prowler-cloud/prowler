@@ -34,6 +34,38 @@ class defenderidentity_health_issues_no_open(Check):
         """
         findings = []
 
+        # If health_issues is None, the API call failed (tenant not onboarded or missing permissions)
+        if defenderidentity_client.health_issues is None:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Defender for Identity",
+                resource_id="defenderIdentity",
+            )
+            report.status = "FAIL"
+            report.status_extended = (
+                "Defender for Identity data is unavailable. "
+                "Ensure the tenant is onboarded to Microsoft Defender for Identity "
+                "and the required permissions are granted."
+            )
+            findings.append(report)
+            return findings
+
+        # If health_issues is empty list, no issues exist - this is compliant
+        if not defenderidentity_client.health_issues:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Defender for Identity",
+                resource_id="defenderIdentity",
+            )
+            report.status = "PASS"
+            report.status_extended = (
+                "No health issues found in Defender for Identity."
+            )
+            findings.append(report)
+            return findings
+
         for health_issue in defenderidentity_client.health_issues:
             report = CheckReportM365(
                 metadata=self.metadata(),

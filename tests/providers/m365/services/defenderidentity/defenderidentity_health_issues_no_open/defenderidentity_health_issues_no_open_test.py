@@ -5,7 +5,7 @@ from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 class Test_defenderidentity_health_issues_no_open:
     def test_no_health_issues(self):
-        """Test when there are no health issues to evaluate."""
+        """Test when there are no health issues (empty list): expected PASS."""
         defenderidentity_client = mock.MagicMock()
         defenderidentity_client.audited_tenant = "audited_tenant"
         defenderidentity_client.audited_domain = DOMAIN
@@ -29,7 +29,50 @@ class Test_defenderidentity_health_issues_no_open:
             check = defenderidentity_health_issues_no_open()
             result = check.execute()
 
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == "No health issues found in Defender for Identity."
+            )
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Defender for Identity"
+            assert result[0].resource_id == "defenderIdentity"
+
+    def test_health_issues_none(self):
+        """Test when health_issues is None (API failed): expected FAIL."""
+        defenderidentity_client = mock.MagicMock()
+        defenderidentity_client.audited_tenant = "audited_tenant"
+        defenderidentity_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open.defenderidentity_client",
+                new=defenderidentity_client,
+            ),
+        ):
+            from prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open import (
+                defenderidentity_health_issues_no_open,
+            )
+
+            defenderidentity_client.health_issues = None
+
+            check = defenderidentity_health_issues_no_open()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "Defender for Identity data is unavailable. Ensure the tenant is onboarded to Microsoft Defender for Identity and the required permissions are granted."
+            )
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Defender for Identity"
+            assert result[0].resource_id == "defenderIdentity"
 
     def test_health_issue_resolved(self):
         """Test when a health issue has been resolved (status is not open)."""
