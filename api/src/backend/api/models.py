@@ -327,10 +327,13 @@ class Provider(RowLevelSecurityProtectedModel):
 
     @staticmethod
     def validate_gcp_uid(value):
-        if not re.match(r"^[a-z][a-z0-9-]{5,29}$", value):
+        # Standard format: 6-30 chars, starts with letter, lowercase + digits + hyphens
+        # Legacy App Engine format: domain.com:project-id
+        if not re.match(r"^([a-z][a-z0-9.-]*:)?[a-z][a-z0-9-]{5,29}$", value):
             raise ModelValidationError(
-                detail="GCP provider ID must be 6 to 30 characters, start with a letter, and contain only lowercase "
-                "letters, numbers, and hyphens.",
+                detail="GCP provider ID must be a valid project ID: 6 to 30 characters, start with a letter, "
+                "and contain only lowercase letters, numbers, and hyphens. "
+                "Legacy App Engine project IDs with a domain prefix (e.g., example.com:my-project) are also accepted.",
                 code="gcp-uid",
                 pointer="/data/attributes/uid",
             )
