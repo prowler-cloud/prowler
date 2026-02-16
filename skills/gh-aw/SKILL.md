@@ -47,6 +47,29 @@ See [references/](references/) for existing workflow and agent examples in this 
 
 ## Critical Patterns
 
+### AGENTS.md Is the Source of Truth
+
+Agent personas MUST NOT hardcode codebase layout, file paths, skill names, tech stack versions, or project conventions. All of this lives in the repo's `AGENTS.md` files and WILL go stale if duplicated.
+
+**Instead**: Instruct the agent to READ `AGENTS.md` at runtime:
+
+```markdown
+# In the agent persona:
+Read `AGENTS.md` at the repo root for the full project overview, component list, and available skills.
+```
+
+For monorepos with component-specific `AGENTS.md` files, include a routing table that tells the agent WHICH file to read based on context — but never copy the contents of those files into the agent:
+
+```markdown
+| Component | AGENTS.md | When to read |
+|-----------|-----------|-------------|
+| Backend   | `api/AGENTS.md`    | API errors, endpoint bugs |
+| Frontend  | `ui/AGENTS.md`     | UI crashes, rendering bugs |
+| Root      | `AGENTS.md`        | Cross-component, CI/CD |
+```
+
+**Why this matters**: Agent personas are deployed as workflow files. When `AGENTS.md` updates (new skills, renamed paths, version bumps), agents that READ it at runtime get the update automatically. Agents that HARDCODE it require a separate PR to stay current — and they won't.
+
 ### Two-File Architecture
 
 Workflow file = **config + context only**. Agent file = **all reasoning logic**.
