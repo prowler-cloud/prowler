@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from prowler.providers.mongodbatlas.mongodbatlas_provider import (
         MongodbatlasProvider,
     )
+    from prowler.providers.openstack.openstack_provider import OpenstackProvider
     from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 
 
@@ -78,12 +79,14 @@ def return_prowler_provider(
     AlibabacloudProvider
     | AwsProvider
     | AzureProvider
+    | CloudflareProvider
     | GcpProvider
     | GithubProvider
     | IacProvider
     | KubernetesProvider
     | M365Provider
     | MongodbatlasProvider
+    | OpenstackProvider
     | OraclecloudProvider
 ):
     """Return the Prowler provider class based on the given provider type.
@@ -92,7 +95,7 @@ def return_prowler_provider(
         provider (Provider): The provider object containing the provider type and associated secrets.
 
     Returns:
-        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | IacProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OraclecloudProvider: The corresponding provider class.
+        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | IacProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OpenstackProvider | OraclecloudProvider: The corresponding provider class.
 
     Raises:
         ValueError: If the provider type specified in `provider.provider` is not supported.
@@ -152,6 +155,10 @@ def return_prowler_provider(
             )
 
             prowler_provider = CloudflareProvider
+        case Provider.ProviderChoices.OPENSTACK.value:
+            from prowler.providers.openstack.openstack_provider import OpenstackProvider
+
+            prowler_provider = OpenstackProvider
         case _:
             raise ValueError(f"Provider type {provider.provider} not supported")
     return prowler_provider
@@ -208,6 +215,12 @@ def get_prowler_provider_kwargs(
             **prowler_provider_kwargs,
             "filter_accounts": [provider.uid],
         }
+    elif provider.provider == Provider.ProviderChoices.OPENSTACK.value:
+        # No extra kwargs needed: clouds_yaml_content and clouds_yaml_cloud from the
+        # secret are sufficient. Validating project_id (provider.uid) against the
+        # clouds.yaml is not feasible because not all auth methods include it and the
+        # Keystone API is unavailable on public clouds.
+        pass
 
     if mutelist_processor:
         mutelist_content = mutelist_processor.configuration.get("Mutelist", {})
@@ -232,6 +245,7 @@ def initialize_prowler_provider(
     | KubernetesProvider
     | M365Provider
     | MongodbatlasProvider
+    | OpenstackProvider
     | OraclecloudProvider
 ):
     """Initialize a Prowler provider instance based on the given provider type.
@@ -241,7 +255,7 @@ def initialize_prowler_provider(
         mutelist_processor (Processor): The mutelist processor object containing the mutelist configuration.
 
     Returns:
-        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | IacProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OraclecloudProvider: An instance of the corresponding provider class
+        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | IacProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OpenstackProvider | OraclecloudProvider: An instance of the corresponding provider class
             initialized with the provider's secrets.
     """
     prowler_provider = return_prowler_provider(provider)
@@ -276,6 +290,13 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         if "access_token" in prowler_provider_kwargs:
             iac_test_kwargs["access_token"] = prowler_provider_kwargs["access_token"]
         return prowler_provider.test_connection(**iac_test_kwargs)
+    elif provider.provider == Provider.ProviderChoices.OPENSTACK.value:
+        openstack_kwargs = {
+            "clouds_yaml_content": prowler_provider_kwargs["clouds_yaml_content"],
+            "clouds_yaml_cloud": prowler_provider_kwargs["clouds_yaml_cloud"],
+            "raise_on_exception": False,
+        }
+        return prowler_provider.test_connection(**openstack_kwargs)
     else:
         return prowler_provider.test_connection(
             **prowler_provider_kwargs,

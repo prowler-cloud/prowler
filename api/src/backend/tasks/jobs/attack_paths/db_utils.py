@@ -66,7 +66,6 @@ def starting_attack_paths_scan(
         attack_paths_scan.state = StateChoices.EXECUTING
         attack_paths_scan.started_at = datetime.now(tz=timezone.utc)
         attack_paths_scan.update_tag = cartography_config.update_tag
-        attack_paths_scan.graph_database = cartography_config.neo4j_database
 
         attack_paths_scan.save(
             update_fields=[
@@ -74,7 +73,6 @@ def starting_attack_paths_scan(
                 "state",
                 "started_at",
                 "update_tag",
-                "graph_database",
             ]
         )
 
@@ -86,7 +84,11 @@ def finish_attack_paths_scan(
 ) -> None:
     with rls_transaction(attack_paths_scan.tenant_id):
         now = datetime.now(tz=timezone.utc)
-        duration = int((now - attack_paths_scan.started_at).total_seconds())
+        duration = (
+            int((now - attack_paths_scan.started_at).total_seconds())
+            if attack_paths_scan.started_at
+            else 0
+        )
 
         attack_paths_scan.state = state
         attack_paths_scan.progress = 100
@@ -114,33 +116,22 @@ def update_attack_paths_scan_progress(
         attack_paths_scan.save(update_fields=["progress"])
 
 
-def get_old_attack_paths_scans(
+def fail_attack_paths_scan(
     tenant_id: str,
-    provider_id: str,
-    attack_paths_scan_id: str,
-) -> list[ProwlerAPIAttackPathsScan]:
-    """
-    An `old_attack_paths_scan` is any `completed` Attack Paths scan for the same provider,
-    with its graph database not deleted, excluding the current Attack Paths scan.
-    """
-
-    with rls_transaction(tenant_id):
-        completed_scans_qs = (
-            ProwlerAPIAttackPathsScan.objects.filter(
-                provider_id=provider_id,
-                state=StateChoices.COMPLETED,
-                is_graph_database_deleted=False,
-            )
-            .exclude(id=attack_paths_scan_id)
-            .all()
-        )
-
-        return list(completed_scans_qs)
-
-
-def update_old_attack_paths_scan(
-    old_attack_paths_scan: ProwlerAPIAttackPathsScan,
+    scan_id: str,
+    error: str,
 ) -> None:
-    with rls_transaction(old_attack_paths_scan.tenant_id):
-        old_attack_paths_scan.is_graph_database_deleted = True
-        old_attack_paths_scan.save(update_fields=["is_graph_database_deleted"])
+    """
+    Mark the `AttackPathsScan` row as `FAILED` unless it's already `COMPLETED` or `FAILED`.
+    Used as a safety net when the Celery task fails outside the job's own error handling.
+    """
+    attack_paths_scan = retrieve_attack_paths_scan(tenant_id, scan_id)
+    if attack_paths_scan and attack_paths_scan.state not in (
+        StateChoices.COMPLETED,
+        StateChoices.FAILED,
+    ):
+        finish_attack_paths_scan(
+            attack_paths_scan,
+            StateChoices.FAILED,
+            {"global_error": error},
+        )

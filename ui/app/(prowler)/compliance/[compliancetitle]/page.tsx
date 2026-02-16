@@ -151,8 +151,9 @@ export default async function ComplianceDetail({
             {/* Mobile: each card on own row | Tablet: ThreatScore full row, others share row | Desktop: all 3 in one row */}
             <div
               className={cn(
-                "grid grid-cols-1 gap-6 md:grid-cols-2",
-                isThreatScore && "xl:grid-cols-[minmax(280px,320px)_auto_1fr]",
+                "grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]",
+                isThreatScore &&
+                  "xl:grid-cols-[minmax(280px,320px)_minmax(280px,400px)_1fr]",
               )}
             >
               {isThreatScore && (
@@ -209,7 +210,7 @@ const SSRComplianceContent = async ({
   if (!scanId || type === "tasks") {
     return (
       <div className="flex flex-col gap-8">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
           <RequirementsStatusCard pass={0} fail={0} manual={0} />
           <TopFailedSectionsCard sections={[]} />
           {/* <SectionsFailureRateCard categories={[]} /> */}
@@ -244,8 +245,9 @@ const SSRComplianceContent = async ({
       {/* Mobile: each card on own row | Tablet: ThreatScore full row, others share row | Desktop: all 3 in one row */}
       <div
         className={cn(
-          "grid grid-cols-1 gap-6 md:grid-cols-2",
-          threatScoreData && "xl:grid-cols-[minmax(280px,320px)_auto_1fr]",
+          "grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]",
+          threatScoreData &&
+            "xl:grid-cols-[minmax(280px,320px)_minmax(280px,400px)_1fr]",
         )}
       >
         {threatScoreData && (

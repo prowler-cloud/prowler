@@ -13,7 +13,6 @@
   "Risk": "Multiple network interfaces on a VM instance can:\n\n- **Expand attack surface** by providing additional entry points for unauthorized access\n- **Create unintended network paths** that bypass security controls\n- **Increase management complexity** leading to potential misconfigurations",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/vms-with-multiple-enis.html",
     "https://cloud.google.com/vpc/docs/multiple-interfaces-concepts"
   ],
   "Remediation": {

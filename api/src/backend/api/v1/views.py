@@ -763,27 +763,40 @@ class TenantFinishACSView(FinishACSView):
             .tenant
         )
 
-        # Check if tenant has only one user with MANAGE_ACCOUNT role
-        users_with_manage_account = (
+        role_name = (
+            extra.get("userType", ["no_permissions"])[0].strip()
+            if extra.get("userType")
+            else "no_permissions"
+        )
+        role = (
+            Role.objects.using(MainRouter.admin_db)
+            .filter(name=role_name, tenant=tenant)
+            .first()
+        )
+
+        # Only skip mapping if it would remove the last MANAGE_ACCOUNT user
+        remaining_manage_account_users = (
             UserRoleRelationship.objects.using(MainRouter.admin_db)
             .filter(role__manage_account=True, tenant_id=tenant.id)
+            .exclude(user_id=user_id)
             .values("user")
             .distinct()
             .count()
         )
+        user_has_manage_account = (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(role__manage_account=True, tenant_id=tenant.id, user_id=user_id)
+            .exists()
+        )
+        role_manage_account = role.manage_account if role else False
+        would_remove_last_manage_account = (
+            user_has_manage_account
+            and remaining_manage_account_users == 0
+            and not role_manage_account
+        )
 
-        # Only apply role mapping from userType if tenant does NOT have exactly one user with MANAGE_ACCOUNT
-        if users_with_manage_account != 1:
-            role_name = (
-                extra.get("userType", ["no_permissions"])[0].strip()
-                if extra.get("userType")
-                else "no_permissions"
-            )
-            try:
-                role = Role.objects.using(MainRouter.admin_db).get(
-                    name=role_name, tenant=tenant
-                )
-            except Role.DoesNotExist:
+        if not would_remove_last_manage_account:
+            if role is None:
                 role = Role.objects.using(MainRouter.admin_db).create(
                     name=role_name,
                     tenant=tenant,
@@ -2415,15 +2428,6 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
                 }
             )
 
-        if not attack_paths_scan.graph_database:
-            logger.error(
-                f"The Attack Paths Scan {attack_paths_scan.id} does not reference a graph database"
-            )
-            return Response(
-                {"detail": "The Attack Paths scan does not reference a graph database"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
         payload = attack_paths_views_helpers.normalize_run_payload(request.data)
         serializer = AttackPathsQueryRunRequestSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
@@ -2437,6 +2441,9 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
                 {"id": "Unknown Attack Paths query for the selected provider"}
             )
 
+        database_name = graph_database.get_database_name(
+            attack_paths_scan.provider.tenant_id
+        )
         parameters = attack_paths_views_helpers.prepare_query_parameters(
             query_definition,
             serializer.validated_data.get("parameters", {}),
@@ -2444,9 +2451,9 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         )
 
         graph = attack_paths_views_helpers.execute_attack_paths_query(
-            attack_paths_scan, query_definition, parameters
+            database_name, query_definition, parameters
         )
-        graph_database.clear_cache(attack_paths_scan.graph_database)
+        graph_database.clear_cache(database_name)
 
         status_code = status.HTTP_200_OK
         if not graph.get("nodes"):

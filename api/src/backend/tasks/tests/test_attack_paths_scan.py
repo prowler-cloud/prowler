@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 from tasks.jobs.attack_paths import findings as findings_module
+from tasks.jobs.attack_paths import internet as internet_module
 from tasks.jobs.attack_paths.scan import run as attack_paths_run
 
 from api.models import (
@@ -27,16 +28,13 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
         side_effect=lambda fn, *a, **kw: fn(*a, **kw),
     )
-    @patch(
-        "tasks.jobs.attack_paths.scan.db_utils.get_old_attack_paths_scans",
-        return_value=[],
-    )
     @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.sync.sync_graph")
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph")
     @patch("tasks.jobs.attack_paths.scan.sync.create_sync_indexes")
+    @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.findings.analysis")
     @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
@@ -67,13 +65,13 @@ class TestAttackPathsRun:
         mock_cartography_ontology,
         mock_findings_indexes,
         mock_findings_analysis,
+        mock_internet_analysis,
         mock_sync_indexes,
         mock_drop_subgraph,
         mock_sync,
         mock_starting,
         mock_update_progress,
         mock_finish,
-        mock_get_old_scans,
         mock_event_loop,
         mock_drop_db,
         tenants_fixture,
@@ -139,6 +137,7 @@ class TestAttackPathsRun:
         # These use tmp_cartography_config (neo4j_database="db-scan-id")
         mock_cartography_analysis.assert_called_once()
         mock_cartography_ontology.assert_called_once()
+        mock_internet_analysis.assert_called_once()
         mock_findings_analysis.assert_called_once()
         mock_drop_subgraph.assert_called_once_with(
             database="tenant-db",
@@ -207,6 +206,7 @@ class TestAttackPathsRun:
             patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run"),
             patch("tasks.jobs.attack_paths.scan.cartography_analysis.run"),
             patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes"),
+            patch("tasks.jobs.attack_paths.scan.internet.analysis"),
             patch("tasks.jobs.attack_paths.scan.findings.analysis"),
             patch(
                 "tasks.jobs.attack_paths.scan.db_utils.retrieve_attack_paths_scan",
@@ -239,9 +239,91 @@ class TestAttackPathsRun:
         failure_args = mock_finish.call_args[0]
         assert failure_args[0] is attack_paths_scan
         assert failure_args[1] == StateChoices.FAILED
-        assert failure_args[2] == {
-            "global_cartography_error": "Cartography failed: ingestion boom"
-        }
+        assert failure_args[2] == {"global_error": "Cartography failed: ingestion boom"}
+
+    def test_run_failure_marks_scan_failed_even_when_drop_database_fails(
+        self, tenants_fixture, providers_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        attack_paths_scan = AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.SCHEDULED,
+        )
+
+        mock_session = MagicMock()
+        session_ctx = MagicMock()
+        session_ctx.__enter__.return_value = mock_session
+        session_ctx.__exit__.return_value = False
+        ingestion_fn = MagicMock(side_effect=RuntimeError("ingestion boom"))
+
+        with (
+            patch(
+                "tasks.jobs.attack_paths.scan.rls_transaction",
+                new=lambda *args, **kwargs: nullcontext(),
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.initialize_prowler_provider",
+                return_value=MagicMock(_enabled_regions=["us-east-1"]),
+            ),
+            patch("tasks.jobs.attack_paths.scan.graph_database.get_uri"),
+            patch(
+                "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
+                return_value="db-scan-id",
+            ),
+            patch("tasks.jobs.attack_paths.scan.graph_database.create_database"),
+            patch(
+                "tasks.jobs.attack_paths.scan.graph_database.get_session",
+                return_value=session_ctx,
+            ),
+            patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run"),
+            patch("tasks.jobs.attack_paths.scan.cartography_analysis.run"),
+            patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes"),
+            patch("tasks.jobs.attack_paths.scan.internet.analysis"),
+            patch("tasks.jobs.attack_paths.scan.findings.analysis"),
+            patch(
+                "tasks.jobs.attack_paths.scan.db_utils.retrieve_attack_paths_scan",
+                return_value=attack_paths_scan,
+            ),
+            patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan"),
+            patch(
+                "tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress"
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan"
+            ) as mock_finish,
+            patch(
+                "tasks.jobs.attack_paths.scan.graph_database.drop_database",
+                side_effect=ConnectionError("neo4j down"),
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.get_cartography_ingestion_function",
+                return_value=ingestion_fn,
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
+                side_effect=lambda fn, *a, **kw: fn(*a, **kw),
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.utils.stringify_exception",
+                return_value="Cartography failed: ingestion boom",
+            ),
+        ):
+            with pytest.raises(RuntimeError, match="ingestion boom"):
+                attack_paths_run(str(tenant.id), str(scan.id), "task-789")
+
+        failure_args = mock_finish.call_args[0]
+        assert failure_args[0] is attack_paths_scan
+        assert failure_args[1] == StateChoices.FAILED
+        assert failure_args[2] == {"global_error": "Cartography failed: ingestion boom"}
 
     def test_run_returns_early_for_unsupported_provider(self, tenants_fixture):
         tenant = tenants_fixture[0]
@@ -284,6 +366,142 @@ class TestAttackPathsRun:
         }
         mock_get_ingestion.assert_called_once_with(provider.provider)
         mock_retrieve.assert_called_once_with(str(tenant.id), str(scan.id))
+
+
+@pytest.mark.django_db
+class TestFailAttackPathsScan:
+    def test_marks_executing_scan_as_failed(
+        self, tenants_fixture, providers_fixture, scans_fixture
+    ):
+        from tasks.jobs.attack_paths.db_utils import (
+            fail_attack_paths_scan,
+        )
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        attack_paths_scan = AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.EXECUTING,
+        )
+
+        with (
+            patch(
+                "tasks.jobs.attack_paths.db_utils.retrieve_attack_paths_scan",
+                return_value=attack_paths_scan,
+            ) as mock_retrieve,
+            patch(
+                "tasks.jobs.attack_paths.db_utils.finish_attack_paths_scan"
+            ) as mock_finish,
+        ):
+            fail_attack_paths_scan(str(tenant.id), str(scan.id), "setup exploded")
+
+        mock_retrieve.assert_called_once_with(str(tenant.id), str(scan.id))
+        mock_finish.assert_called_once_with(
+            attack_paths_scan,
+            StateChoices.FAILED,
+            {"global_error": "setup exploded"},
+        )
+
+    def test_skips_already_failed_scan(
+        self, tenants_fixture, providers_fixture, scans_fixture
+    ):
+        from tasks.jobs.attack_paths.db_utils import (
+            fail_attack_paths_scan,
+        )
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        attack_paths_scan = AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.FAILED,
+        )
+
+        with (
+            patch(
+                "tasks.jobs.attack_paths.db_utils.retrieve_attack_paths_scan",
+                return_value=attack_paths_scan,
+            ),
+            patch(
+                "tasks.jobs.attack_paths.db_utils.finish_attack_paths_scan"
+            ) as mock_finish,
+        ):
+            fail_attack_paths_scan(str(tenant.id), str(scan.id), "setup exploded")
+
+        mock_finish.assert_not_called()
+
+    def test_skips_when_no_scan_found(self, tenants_fixture):
+        from tasks.jobs.attack_paths.db_utils import (
+            fail_attack_paths_scan,
+        )
+
+        tenant = tenants_fixture[0]
+
+        with (
+            patch(
+                "tasks.jobs.attack_paths.db_utils.retrieve_attack_paths_scan",
+                return_value=None,
+            ),
+            patch(
+                "tasks.jobs.attack_paths.db_utils.finish_attack_paths_scan"
+            ) as mock_finish,
+        ):
+            fail_attack_paths_scan(str(tenant.id), "nonexistent", "setup exploded")
+
+        mock_finish.assert_not_called()
+
+
+class TestAttackPathsScanRLSTaskOnFailure:
+    def test_on_failure_delegates_to_fail_attack_paths_scan(self):
+        from tasks.tasks import AttackPathsScanRLSTask
+
+        task = AttackPathsScanRLSTask()
+
+        with patch(
+            "tasks.tasks.attack_paths_db_utils.fail_attack_paths_scan"
+        ) as mock_fail:
+            task.on_failure(
+                exc=RuntimeError("boom"),
+                task_id="task-abc",
+                args=(),
+                kwargs={"tenant_id": "t-1", "scan_id": "s-1"},
+                _einfo=None,
+            )
+
+        mock_fail.assert_called_once_with("t-1", "s-1", "boom")
+
+    def test_on_failure_skips_when_missing_kwargs(self):
+        from tasks.tasks import AttackPathsScanRLSTask
+
+        task = AttackPathsScanRLSTask()
+
+        with patch(
+            "tasks.tasks.attack_paths_db_utils.fail_attack_paths_scan"
+        ) as mock_fail:
+            task.on_failure(
+                exc=RuntimeError("boom"),
+                task_id="task-abc",
+                args=(),
+                kwargs={},
+                _einfo=None,
+            )
+
+        mock_fail.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -757,3 +975,45 @@ class TestAttackPathsFindingsHelpers:
             findings_module.load_findings(mock_session, empty_gen(), provider, config)
 
         mock_session.run.assert_not_called()
+
+
+class TestInternetAnalysis:
+    def _make_provider_and_config(self):
+        provider = MagicMock()
+        provider.provider = "aws"
+        provider.uid = "123456789012"
+        config = SimpleNamespace(update_tag=1234567890)
+        return provider, config
+
+    def test_analysis_creates_node_and_relationships(self):
+        """Verify both Cypher statements are executed and relationship count returned."""
+        mock_session = MagicMock()
+        mock_result = MagicMock()
+        mock_result.single.return_value = {"relationships_merged": 3}
+        mock_session.run.side_effect = [None, mock_result]
+        provider, config = self._make_provider_and_config()
+
+        with patch(
+            "tasks.jobs.attack_paths.internet.get_root_node_label",
+            return_value="AWSAccount",
+        ):
+            result = internet_module.analysis(mock_session, provider, config)
+
+        assert mock_session.run.call_count == 2
+        assert result == 3
+
+    def test_analysis_zero_exposed_resources(self):
+        """When no resources are exposed, zero relationships are created."""
+        mock_session = MagicMock()
+        mock_result = MagicMock()
+        mock_result.single.return_value = {"relationships_merged": 0}
+        mock_session.run.side_effect = [None, mock_result]
+        provider, config = self._make_provider_and_config()
+
+        with patch(
+            "tasks.jobs.attack_paths.internet.get_root_node_label",
+            return_value="AWSAccount",
+        ):
+            result = internet_module.analysis(mock_session, provider, config)
+
+        assert result == 0

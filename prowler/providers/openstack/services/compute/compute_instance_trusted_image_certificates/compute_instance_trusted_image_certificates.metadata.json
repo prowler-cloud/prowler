@@ -1,0 +1,39 @@
+{
+  "Provider": "openstack",
+  "CheckID": "compute_instance_trusted_image_certificates",
+  "CheckTitle": "Compute instances use trusted image certificates",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OpenStackInstance",
+  "ResourceGroup": "compute",
+  "Description": "**OpenStack compute instances** (VMs) are evaluated to verify that **trusted image certificates** are configured. Trusted image certificates enable cryptographic validation of image signatures using Glance image signing (OpenStack Image Signature Verification). This ensures instances are launched from verified, untampered images signed by trusted authorities.",
+  "Risk": "Instances without trusted certificates can be launched from tampered images containing backdoors, rootkits, or malware. Attackers can inject malicious code into unsigned images, and without signature verification, Nova launches compromised images. Malicious images enable persistence, lateral movement, data exfiltration, service disruption, and cryptomining.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/glance/latest/user/signature.html",
+    "https://docs.openstack.org/nova/latest/admin/secure-boot.html",
+    "https://docs.openstack.org/api-ref/image/v2/index.html#image-signature-verification"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Enable Glance image signature verification in glance-api.conf\n2. Install Barbican for certificate storage\n3. Sign images using glance-manage or GPG tooling\n4. Upload certificates to Barbican\n5. Launch instances with trusted-image-certificate-id parameter\n\nNote: This requires administrator privileges and Glance/Nova configuration",
+      "Terraform": "```hcl\n# Terraform: launch instance with trusted image certificates\n\n# Note: Requires Glance image with signature metadata and Barbican certificate\n\nresource \"openstack_compute_instance_v2\" \"instance\" {\n  name            = \"secure-instance\"\n  image_id        = var.signed_image_id  # Must be signed image\n  flavor_id       = var.flavor_id\n  key_pair        = var.key_pair_name\n  security_groups = [\"default\"]\n\n  # Specify trusted certificate IDs for signature validation\n  # Note: This requires Nova microversion 2.63+ support\n  trusted_image_certificates = [\n    var.image_signing_cert_id,\n    var.backup_cert_id\n  ]\n\n  network {\n    name = var.network_name\n  }\n}\n\n# Ensure image has signature metadata\ndata \"openstack_images_image_v2\" \"signed_image\" {\n  name        = \"ubuntu-22.04-signed\"\n  most_recent = true\n\n  # Verify signature properties exist\n  properties = {\n    img_signature                   = \"required\"\n    img_signature_hash_method       = \"SHA-256\"\n    img_signature_key_type          = \"RSA-PSS\"\n    img_signature_certificate_uuid  = \"required\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Sign all images using GPG or X.509 certificates before uploading to Glance. Use Barbican to store signing certificates securely. Enforce trusted_image_certificates for production instances via policy. Enable signature verification in Nova (verify_glance_signatures=True). Restrict image upload permissions to authorized CI/CD pipelines. Implement certificate rotation every 12 months.",
+      "Url": "https://hub.prowler.com/check/compute_instance_trusted_image_certificates"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Trusted image certificates require OpenStack Glance image signature verification (microversion 2.63+), Barbican for certificate storage, and Nova configured to verify signatures. Many OpenStack deployments do not enable this feature by default. This check may produce false positives for clouds not using image signing."
+}
