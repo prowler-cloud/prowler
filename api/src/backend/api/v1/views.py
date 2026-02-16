@@ -2441,8 +2441,9 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
                 {"id": "Unknown Attack Paths query for the selected provider"}
             )
 
-        tenant_id = str(attack_paths_scan.provider.tenant_id)
-        database_name = graph_database.get_database_name(tenant_id)
+        database_name = graph_database.get_database_name(
+            attack_paths_scan.provider.tenant_id
+        )
         parameters = attack_paths_views_helpers.prepare_query_parameters(
             query_definition,
             serializer.validated_data.get("parameters", {}),
