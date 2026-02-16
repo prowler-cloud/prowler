@@ -3,7 +3,7 @@
 from ipaddress import IPv4Network, IPv6Network, ip_network
 from typing import List, Optional
 
-from prowler.providers.openstack.services.network.network_service import (
+from prowler.providers.openstack.services.networking.networking_service import (
     SecurityGroupRule,
 )
 

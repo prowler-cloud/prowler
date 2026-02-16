@@ -1,0 +1,36 @@
+{
+  "Provider": "openstack",
+  "CheckID": "networking_admin_state_down",
+  "CheckTitle": "Networks are administratively enabled",
+  "CheckType": [],
+  "ServiceName": "networking",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OpenStackNetwork",
+  "ResourceGroup": "network",
+  "Description": "**OpenStack networks** are evaluated to verify that **admin_state_up is True** (administratively enabled). Networks with admin_state_up=False cannot carry traffic and are typically disabled temporarily during maintenance or troubleshooting. Best practices recommend re-enabling networks promptly after maintenance to prevent service outages from forgotten disabled networks.",
+  "Risk": "Networks with admin_state_up=False cause complete connectivity loss for all attached instances, preventing access to databases, APIs, and storage. Forgotten disabled networks after maintenance result in prolonged outages that violate SLAs. Multi-tier applications (web-app-db) fail when inter-tier networks are disabled, breaking functionality even when instances are healthy.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/neutron/latest/admin/intro-os-networking.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack network set --enable <network_id>",
+      "NativeIaC": "",
+      "Other": "**Enable network via Horizon:**\n1. Navigate to **Project > Network > Networks**\n2. For each network with Admin State = DOWN\n3. Click **Edit Network**\n4. Check the **Admin State** checkbox\n5. Click **Save**",
+      "Terraform": "```hcl\nresource \"openstack_networking_network_v2\" \"network\" {\n  name           = \"app-network\"\n  admin_state_up = true  # GOOD: Administratively enabled\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable admin state on all production networks unless there is a documented maintenance window. Implement change management procedures to track network administrative state changes and ensure re-enablement after maintenance. Use monitoring alerts to detect when networks remain disabled longer than expected.",
+      "Url": "https://hub.prowler.com/check/networking_admin_state_down"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check flags networks where `admin_state_up == False`. Networks are typically disabled temporarily during maintenance or troubleshooting. If networks remain disabled after maintenance windows, they should be re-enabled. Some networks may be intentionally kept disabled as part of decommissioning procedures - verify the operational status before re-enabling."
+}

@@ -1,0 +1,37 @@
+{
+  "Provider": "openstack",
+  "CheckID": "networking_subnet_dhcp_disabled",
+  "CheckTitle": "DHCP is enabled on subnets",
+  "CheckType": [],
+  "ServiceName": "networking",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OpenStackSubnet",
+  "ResourceGroup": "network",
+  "Description": "**OpenStack subnets** are evaluated to verify that **DHCP is enabled** (enable_dhcp=True). DHCP automatically assigns IP addresses, DNS servers, and gateway information to instances at boot. Subnets with DHCP disabled require manual configuration, increasing operational complexity and IP conflict risk. Enable DHCP to simplify deployment and ensure cloud-init functionality.",
+  "Risk": "Instances fail to acquire IP addresses and cannot communicate without manual intervention, breaking automated deployment pipelines (Heat, Terraform, Ansible). Manual configuration increases deployment time, error rates, and IP conflict risk. Cloud-init depends on DHCP for metadata service discovery; without DHCP, instances cannot retrieve SSH keys or user-data, breaking bootstrapping.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/neutron/latest/admin/intro-os-networking.html",
+    "https://docs.openstack.org/neutron/2023.2/admin/config-dhcp-ha.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack subnet set --dhcp <subnet_id>",
+      "NativeIaC": "",
+      "Other": "**Enable DHCP via Horizon Dashboard:**\n1. Navigate to **Project > Network > Networks**\n2. Click on the network containing the subnet\n3. Click the **Subnets** tab\n4. For each subnet, click **Edit Subnet**\n5. In the **Subnet Details** tab:\n   - Ensure **Enable DHCP** checkbox is **checked**\n6. Click **Save**",
+      "Terraform": "```hcl\nresource \"openstack_networking_subnet_v2\" \"subnet\" {\n  name            = \"app-subnet\"\n  network_id      = openstack_networking_network_v2.network.id\n  cidr            = \"192.168.1.0/24\"\n  ip_version      = 4\n  enable_dhcp     = true  # GOOD: DHCP enabled\n  dns_nameservers = [\"8.8.8.8\", \"8.8.4.4\"]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable DHCP on all subnets unless there is a documented reason for static IP assignment. Use DHCP for automated IP management, simplified instance deployment, and proper cloud-init functionality. For environments requiring static IPs, use DHCP reservations or allowed-address-pairs instead of disabling DHCP entirely.",
+      "Url": "https://hub.prowler.com/check/networking_subnet_dhcp_disabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check flags subnets where `enable_dhcp == False`. Some environments intentionally disable DHCP for security (to prevent rogue DHCP servers) or to enforce static IP assignment. However, most cloud environments benefit from DHCP for automated instance configuration. Subnets connected to external provider networks or used for specific purposes (like load balancer VIPs) may legitimately have DHCP disabled."
+}
