@@ -15,7 +15,6 @@
   "Risk": "Outdated or single-person contacts delay **security notifications**, slow **incident response**, and complicate **account recovery**.\n\nAWS may throttle services during abuse mitigation, reducing **availability**. Missed alerts enable ongoing misuse, risking **data exfiltration** and unauthorized changes (**integrity**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/iam-policies/iam_18-maintain-contact-details#aws-console",
     "https://repost.aws/knowledge-center/update-phone-number",
     "https://support.stax.io/docs/accounts/update-aws-account-contact-details",
     "https://maartenbruntink.nl/blog/2022/09/26/aws-account-hygiene-101-mass-updating-alternate-account-contacts/",

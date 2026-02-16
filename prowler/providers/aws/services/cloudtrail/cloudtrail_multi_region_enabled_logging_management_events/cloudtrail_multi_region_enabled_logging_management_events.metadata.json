@@ -16,10 +16,7 @@
   "Description": "**CloudTrail trails** record **management events** (`read` and `write`) in every AWS region and are actively logging, using a multi-region trail or per-region coverage.",
   "Risk": "Without region-wide management event logging, changes to identities, networking, and audit settings can go untracked.\n\nAdversaries can operate in overlooked regions to create resources, modify permissions, or disable logging, undermining **integrity**, **confidentiality**, and incident response.",
   "RelatedUrl": "",
-  "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_14#terraform",
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_14"
-  ],
+  "AdditionalURLs": [],
   "Remediation": {
     "Code": {
       "CLI": "",
