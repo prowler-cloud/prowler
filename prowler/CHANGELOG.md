@@ -37,6 +37,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update GCP KMS service metadata to new format [(#9647)](https://github.com/prowler-cloud/prowler/pull/9647)
 - Update GCP Logging service metadata to new format [(#9648)](https://github.com/prowler-cloud/prowler/pull/9648)
 - Update AWS checks metadata to use Trend Micro Vision One URLs (replace deprecated CloudOne Conformity, EOL July 2026) [(#10068)](https://github.com/prowler-cloud/prowler/pull/10068)
+- Remove deprecated docs.prowler.com URLs from AWS checks metadata (canonical source is now hub.prowler.com) [(#10068)](https://github.com/prowler-cloud/prowler/pull/10068)
 
 ### 🔐 Security
 
