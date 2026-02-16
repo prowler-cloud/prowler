@@ -3984,7 +3984,7 @@ class TestAttackPathsScanViewSet:
         assert response.status_code == status.HTTP_200_OK
         mock_get_query.assert_called_once_with("aws-rds")
         mock_get_db_name.assert_called_once_with(
-            str(attack_paths_scan.provider.tenant_id)
+            attack_paths_scan.provider.tenant_id
         )
         mock_prepare.assert_called_once_with(
             query_definition,
