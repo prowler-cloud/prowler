@@ -1,9 +1,12 @@
 import asyncio
 from asyncio import gather
 from enum import Enum
-from typing import List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
+from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
+    RunHuntingQueryPostRequestBody,
+)
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -12,7 +15,33 @@ from prowler.providers.m365.m365_provider import M365Provider
 
 
 class Entra(M365Service):
+    """
+    Microsoft Entra ID service class.
+
+    This class provides methods to retrieve and manage Microsoft Entra ID
+    security policies and configurations, including authorization policies,
+    conditional access policies, admin consent policies, groups, organizations,
+    users, and OAuth application data from Defender XDR.
+
+    Attributes:
+        tenant_domain (str): The tenant domain.
+        authorization_policy (AuthorizationPolicy): The authorization policy.
+        conditional_access_policies (dict): Dictionary of conditional access policies.
+        admin_consent_policy (AdminConsentPolicy): The admin consent policy.
+        groups (list): List of groups.
+        organizations (list): List of organizations.
+        users (dict): Dictionary of users.
+        user_accounts_status (dict): Dictionary of user account statuses.
+        oauth_apps (dict): Dictionary of OAuth applications from Defender XDR.
+    """
+
     def __init__(self, provider: M365Provider):
+        """
+        Initialize the Entra service client.
+
+        Args:
+            provider: The M365Provider instance for authentication and configuration.
+        """
         super().__init__(provider)
 
         if self.powershell:
@@ -47,6 +76,7 @@ class Entra(M365Service):
                 self._get_groups(),
                 self._get_organization(),
                 self._get_users(),
+                self._get_oauth_apps(),
             )
         )
 
@@ -56,6 +86,7 @@ class Entra(M365Service):
         self.groups = attributes[3]
         self.organizations = attributes[4]
         self.users = attributes[5]
+        self.oauth_apps: Dict[str, OAuthApp] = attributes[6]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -461,6 +492,82 @@ class Entra(M365Service):
 
         return registration_details
 
+    async def _get_oauth_apps(self) -> Dict[str, "OAuthApp"]:
+        """
+        Retrieve OAuth applications from Defender XDR using Advanced Hunting.
+
+        This method queries the OAuthAppInfo table to get information about
+        OAuth applications registered in the tenant, including their permissions
+        and usage status.
+
+        Returns:
+            Dict[str, OAuthApp]: Dictionary of OAuth applications keyed by app ID.
+        """
+        logger.info("Entra - Getting OAuth apps from Defender XDR...")
+        oauth_apps = {}
+        try:
+            # Query the OAuthAppInfo table using Advanced Hunting
+            # The query gets apps with their permissions including usage status
+            query = """
+OAuthAppInfo
+| project OAuthAppId, AppName, AppStatus, PrivilegeLevel, Permissions,
+          ServicePrincipalId, IsAdminConsented, LastUsedTime, AppOrigin
+"""
+            request_body = RunHuntingQueryPostRequestBody(query=query)
+
+            result = await self.client.security.microsoft_graph_security_run_hunting_query.post(
+                request_body
+            )
+
+            if result and result.results:
+                for row in result.results:
+                    row_data = row.additional_data
+                    app_id = row_data.get("OAuthAppId", "")
+                    if not app_id:
+                        continue
+
+                    # Parse the permissions array
+                    permissions = []
+                    raw_permissions = row_data.get("Permissions", [])
+                    if raw_permissions:
+                        for perm in raw_permissions:
+                            if isinstance(perm, dict):
+                                permissions.append(
+                                    OAuthAppPermission(
+                                        name=perm.get("PermissionName", ""),
+                                        target_app_id=perm.get("TargetAppId", ""),
+                                        target_app_name=perm.get(
+                                            "TargetAppDisplayName", ""
+                                        ),
+                                        permission_type=perm.get("PermissionType", ""),
+                                        privilege_level=perm.get("PrivilegeLevel", ""),
+                                        usage_status=perm.get("UsageStatus", ""),
+                                    )
+                                )
+
+                    oauth_apps[app_id] = OAuthApp(
+                        id=app_id,
+                        name=row_data.get("AppName", ""),
+                        status=row_data.get("AppStatus", ""),
+                        privilege_level=row_data.get("PrivilegeLevel", ""),
+                        permissions=permissions,
+                        service_principal_id=row_data.get("ServicePrincipalId", ""),
+                        is_admin_consented=row_data.get("IsAdminConsented", False),
+                        last_used_time=row_data.get("LastUsedTime"),
+                        app_origin=row_data.get("AppOrigin", ""),
+                    )
+
+        except Exception as error:
+            # Log the error but don't fail - this API requires ThreatHunting.Read.All permission
+            # and App Governance to be enabled in the tenant
+            logger.warning(
+                f"Entra - Could not retrieve OAuth apps from Defender XDR. "
+                f"This requires ThreatHunting.Read.All permission and App Governance enabled. "
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return oauth_apps
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -651,3 +758,51 @@ class AuthPolicyRoles(Enum):
     USER = UUID("a0b1b346-4d3e-4e8b-98f8-753987be4970")
     GUEST_USER = UUID("10dae51f-b6af-4016-8d66-8c2a99b929b3")
     GUEST_USER_ACCESS_RESTRICTED = UUID("2af84b1e-32c8-42b7-82bc-daa82404023b")
+
+
+class OAuthAppPermission(BaseModel):
+    """
+    Model for OAuth application permission.
+
+    Attributes:
+        name: The permission name.
+        target_app_id: The target application ID that provides this permission.
+        target_app_name: The target application display name.
+        permission_type: The type of permission (Application or Delegated).
+        privilege_level: The privilege level (High, Medium, Low).
+        usage_status: The usage status (InUse or NotInUse).
+    """
+
+    name: str
+    target_app_id: str = ""
+    target_app_name: str = ""
+    permission_type: str = ""
+    privilege_level: str = ""
+    usage_status: str = ""
+
+
+class OAuthApp(BaseModel):
+    """
+    Model for OAuth application from Defender XDR.
+
+    Attributes:
+        id: The application ID.
+        name: The application display name.
+        status: The application status (Enabled, Disabled, etc.).
+        privilege_level: The overall privilege level of the app.
+        permissions: List of permissions assigned to the app.
+        service_principal_id: The service principal ID.
+        is_admin_consented: Whether the app has admin consent.
+        last_used_time: When the app was last used.
+        app_origin: Whether the app is internal or external.
+    """
+
+    id: str
+    name: str
+    status: str = ""
+    privilege_level: str = ""
+    permissions: List[OAuthAppPermission] = []
+    service_principal_id: str = ""
+    is_admin_consented: bool = False
+    last_used_time: Optional[str] = None
+    app_origin: str = ""
