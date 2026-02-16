@@ -193,30 +193,6 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
 
-        # TODO
-        # This piece of code delete old Neo4j databases for this tenant's provider
-        # When we clean all of these databases we need to:
-        #   - Delete this block
-        #   - Delete function from `db_utils` the functions get_old_attack_paths_scans` & `update_old_attack_paths_scan`
-        #   - Remove `graph_database` & `is_graph_database_deleted` from the AttackPathsScan model:
-        #     - Check indexes
-        #     - Create migration
-        #     - The use of `attack_paths_scan.graph_database` on `views` and `views_helpers`
-        #     - Tests
-        old_attack_paths_scans = db_utils.get_old_attack_paths_scans(
-            prowler_api_provider.tenant_id,
-            prowler_api_provider.id,
-            attack_paths_scan.id,
-        )
-        for old_attack_paths_scan in old_attack_paths_scans:
-            old_graph_database = old_attack_paths_scan.graph_database
-            if old_graph_database and old_graph_database != tenant_database_name:
-                logger.info(
-                    f"Dropping old Neo4j database {old_graph_database} for provider {prowler_api_provider.id}"
-                )
-                graph_database.drop_database(old_graph_database)
-            db_utils.update_old_attack_paths_scan(old_attack_paths_scan)
-
         logger.info(f"Dropping temporary Neo4j database {tmp_database_name}")
         graph_database.drop_database(tmp_database_name)
 
