@@ -36,7 +36,7 @@ class Test_entra_seamless_sso_disabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Entra organization 'Organization 1' does not have on-premises sync enabled, Seamless SSO is not applicable."
+                == "Entra organization Organization 1 does not have on-premises sync enabled, Seamless SSO is not applicable."
             )
             assert result[0].resource_id == "org1"
             assert result[0].resource_name == "Organization 1"
@@ -74,7 +74,7 @@ class Test_entra_seamless_sso_disabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Entra organization 'Organization 1' has on-premises sync enabled, Seamless SSO should be disabled to prevent lateral movement and brute force attacks."
+                == "Entra organization Organization 1 has on-premises sync enabled, Seamless SSO should be disabled to prevent lateral movement and brute force attacks."
             )
             assert result[0].resource_id == "org1"
             assert result[0].resource_name == "Organization 1"
@@ -117,7 +117,7 @@ class Test_entra_seamless_sso_disabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Entra organization 'Organization 1' has on-premises sync enabled, Seamless SSO should be disabled to prevent lateral movement and brute force attacks."
+                == "Entra organization Organization 1 has on-premises sync enabled, Seamless SSO should be disabled to prevent lateral movement and brute force attacks."
             )
             assert result[0].resource_id == "org1"
             assert result[0].resource_name == "Organization 1"
@@ -126,7 +126,7 @@ class Test_entra_seamless_sso_disabled:
             assert result[1].status == "PASS"
             assert (
                 result[1].status_extended
-                == "Entra organization 'Organization 2' does not have on-premises sync enabled, Seamless SSO is not applicable."
+                == "Entra organization Organization 2 does not have on-premises sync enabled, Seamless SSO is not applicable."
             )
             assert result[1].resource_id == "org2"
             assert result[1].resource_name == "Organization 2"

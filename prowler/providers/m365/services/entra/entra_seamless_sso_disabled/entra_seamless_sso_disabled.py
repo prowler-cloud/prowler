@@ -37,11 +37,11 @@ class entra_seamless_sso_disabled(Check):
                 resource_name=organization.name,
             )
             report.status = "PASS"
-            report.status_extended = f"Entra organization '{organization.name}' does not have on-premises sync enabled, Seamless SSO is not applicable."
+            report.status_extended = f"Entra organization {organization.name} does not have on-premises sync enabled, Seamless SSO is not applicable."
 
             if organization.on_premises_sync_enabled:
                 report.status = "FAIL"
-                report.status_extended = f"Entra organization '{organization.name}' has on-premises sync enabled, Seamless SSO should be disabled to prevent lateral movement and brute force attacks."
+                report.status_extended = f"Entra organization {organization.name} has on-premises sync enabled, Seamless SSO should be disabled to prevent lateral movement and brute force attacks."
 
             findings.append(report)
         return findings
