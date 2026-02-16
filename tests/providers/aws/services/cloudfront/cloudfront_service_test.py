@@ -171,6 +171,8 @@ def mock_make_api_call(self, operation_name, kwarg):
                 ]
             }
         }
+    if operation_name == "DescribeDeliverySources":
+        return {"deliverySources": []}
     return make_api_call(self, operation_name, kwarg)
 
 
