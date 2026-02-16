@@ -6,6 +6,40 @@ from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 class Test_defenderxdr_privileged_user_exposed_credentials:
     """Tests for the defenderxdr_privileged_user_exposed_credentials check."""
 
+    def test_exposed_credentials_none(self):
+        """Test FAIL when API call fails (None): expected FAIL."""
+        defenderxdr_client = mock.MagicMock()
+        defenderxdr_client.audited_tenant = "audited_tenant"
+        defenderxdr_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.defenderxdr.defenderxdr_privileged_user_exposed_credentials.defenderxdr_privileged_user_exposed_credentials.defenderxdr_client",
+                new=defenderxdr_client,
+            ),
+        ):
+            from prowler.providers.m365.services.defenderxdr.defenderxdr_privileged_user_exposed_credentials.defenderxdr_privileged_user_exposed_credentials import (
+                defenderxdr_privileged_user_exposed_credentials,
+            )
+
+            defenderxdr_client.exposed_credentials_privileged_users = None
+
+            check = defenderxdr_privileged_user_exposed_credentials()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "Defender XDR Exposure Management data is unavailable. Ensure Security Exposure Management is enabled and ThreatHunting.Read.All permission is granted."
+            )
+            assert result[0].resource_name == "Defender XDR Exposure Management"
+            assert result[0].resource_id == "privilegedUserExposedCredentials"
+
     def test_no_exposed_credentials(self):
         """Test PASS when no privileged users have exposed credentials."""
         defenderxdr_client = mock.MagicMock()

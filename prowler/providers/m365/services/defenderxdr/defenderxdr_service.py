@@ -7,7 +7,7 @@ through the Microsoft Graph Security API for exposure management checks.
 
 import asyncio
 import json
-from typing import Optional
+from typing import List, Optional
 
 from pydantic.v1 import BaseModel
 
@@ -42,7 +42,9 @@ class DefenderXDR(M365Service):
             provider: The M365Provider instance for authentication and configuration.
         """
         super().__init__(provider)
-        self.exposed_credentials_privileged_users = []
+        self.exposed_credentials_privileged_users: Optional[
+            List[ExposedCredentialPrivilegedUser]
+        ] = []
 
         created_loop = False
         try:
@@ -70,7 +72,7 @@ class DefenderXDR(M365Service):
             asyncio.set_event_loop(None)
             loop.close()
 
-    async def _run_advanced_hunting_query(self, query: str) -> list:
+    async def _run_advanced_hunting_query(self, query: str) -> Optional[list]:
         """
         Execute an Advanced Hunting query using Microsoft Graph Security API.
 
@@ -78,7 +80,7 @@ class DefenderXDR(M365Service):
             query: The KQL (Kusto Query Language) query to execute.
 
         Returns:
-            list: A list of results from the query.
+            Optional[list]: A list of results from the query, or None if the API call failed.
         """
         try:
             request_body = RunHuntingQueryPostRequestBody(
@@ -96,11 +98,11 @@ class DefenderXDR(M365Service):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return []
+            return None
 
     async def _get_exposed_credentials_privileged_users(
         self,
-    ) -> list["ExposedCredentialPrivilegedUser"]:
+    ) -> Optional[List["ExposedCredentialPrivilegedUser"]]:
         """
         Query for privileged users with exposed credentials on vulnerable endpoints.
 
@@ -109,11 +111,11 @@ class DefenderXDR(M365Service):
         are exposed on endpoints with high risk or exposure scores.
 
         Returns:
-            list: A list of ExposedCredentialPrivilegedUser objects containing
-                  details about exposed credentials.
+            Optional[List[ExposedCredentialPrivilegedUser]]: A list of exposed credential
+                objects, or None if the API call failed.
         """
         logger.info("M365 - Querying for exposed credentials of privileged users...")
-        exposed_users = []
+        exposed_users: List[ExposedCredentialPrivilegedUser] = []
         try:
             # KQL query to find exposed credentials for privileged users
             # This query finds edges where:
@@ -142,6 +144,10 @@ ExposureGraphEdges
     EdgeProperties
 """
             results = await self._run_advanced_hunting_query(query)
+
+            # If query failed, propagate None
+            if results is None:
+                return None
 
             for result in results:
                 if isinstance(result, dict):
@@ -172,6 +178,8 @@ ExposureGraphEdges
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return None
+
         return exposed_users
 
 

@@ -41,6 +41,23 @@ class defenderxdr_privileged_user_exposed_credentials(Check):
         findings = []
         exposed_credentials = defenderxdr_client.exposed_credentials_privileged_users
 
+        # If exposed_credentials is None, the API call failed
+        if exposed_credentials is None:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Defender XDR Exposure Management",
+                resource_id="privilegedUserExposedCredentials",
+            )
+            report.status = "FAIL"
+            report.status_extended = (
+                "Defender XDR Exposure Management data is unavailable. "
+                "Ensure Security Exposure Management is enabled and "
+                "ThreatHunting.Read.All permission is granted."
+            )
+            findings.append(report)
+            return findings
+
         if exposed_credentials:
             # Create a FAIL finding for each privileged user with exposed credentials
             for exposed_user in exposed_credentials:
