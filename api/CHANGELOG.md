@@ -20,7 +20,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support CSA CCM 4.0 for the Alibaba Cloud provider [(#10061)](https://github.com/prowler-cloud/prowler/pull/10061)
 - Attack Paths: Mark attack Paths scan as failed when Celery task fails outside job error handling [(#10065)](https://github.com/prowler-cloud/prowler/pull/10065)
 - Attack Paths: Remove legacy per-scan `graph_database` and `is_graph_database_deleted` fields from AttackPathsScan model [(#10077)](https://github.com/prowler-cloud/prowler/pull/10077)
-- Attack Paths: Add `graph_data_ready` field to decouple query availability from scan state [(#)](https://github.com/prowler-cloud/prowler/pull/)
+- Attack Paths: Add `graph_data_ready` field to decouple query availability from scan state [(#10089)](https://github.com/prowler-cloud/prowler/pull/10089)
 
 ### 🔐 Security
 
