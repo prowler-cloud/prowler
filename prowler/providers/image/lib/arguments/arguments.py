@@ -88,16 +88,85 @@ def init_parser(self):
         help="Trivy scan timeout. Default: 5m. Examples: 10m, 1h",
     )
 
+    # Registry Scan Mode
+    registry_group = image_parser.add_argument_group("Registry Scan Mode")
+    registry_group.add_argument(
+        "--registry",
+        dest="registry",
+        default=None,
+        help="Registry URL to enumerate and scan all images. Examples: myregistry.io, docker.io/myorg, 123456789.dkr.ecr.us-east-1.amazonaws.com",
+    )
+    registry_group.add_argument(
+        "--image-filter",
+        dest="image_filter",
+        default=None,
+        help="Regex to filter repository names during registry enumeration (re.search). Example: '^prod/.*'",
+    )
+    registry_group.add_argument(
+        "--tag-filter",
+        dest="tag_filter",
+        default=None,
+        help=r"Regex to filter tags during registry enumeration (re.search). Example: '^(latest|v\d+\.\d+\.\d+)$'",
+    )
+    registry_group.add_argument(
+        "--max-images",
+        dest="max_images",
+        type=int,
+        default=0,
+        help="Maximum number of images to scan from registry. 0 = unlimited. Aborts if exceeded.",
+    )
+    registry_group.add_argument(
+        "--registry-insecure",
+        dest="registry_insecure",
+        action="store_true",
+        default=False,
+        help="Skip TLS verification for registry connections (for self-signed certificates).",
+    )
+
 
 def validate_arguments(arguments):
     """Validate Image provider arguments."""
     images = getattr(arguments, "images", [])
     image_list_file = getattr(arguments, "image_list_file", None)
+    registry = getattr(arguments, "registry", None)
+    image_filter = getattr(arguments, "image_filter", None)
+    tag_filter = getattr(arguments, "tag_filter", None)
+    max_images = getattr(arguments, "max_images", 0)
+    registry_insecure = getattr(arguments, "registry_insecure", False)
 
-    if not images and not image_list_file:
+    if not images and not image_list_file and not registry:
         return (
             False,
-            "At least one image must be specified using --image (-I) or --image-list.",
+            "At least one image source must be specified using --image (-I), --image-list, or --registry.",
         )
+
+    # Registry-only flags require --registry
+    if not registry:
+        if image_filter:
+            return (False, "--image-filter requires --registry.")
+        if tag_filter:
+            return (False, "--tag-filter requires --registry.")
+        if max_images:
+            return (False, "--max-images requires --registry.")
+        if registry_insecure:
+            return (False, "--registry-insecure requires --registry.")
+
+    # Docker Hub namespace validation
+    if registry:
+        url = registry.rstrip("/")
+        for prefix in ("https://", "http://"):
+            if url.startswith(prefix):
+                url = url[len(prefix) :]
+                break
+        stripped = url
+        for prefix in ("registry-1.docker.io", "docker.io"):
+            if stripped.startswith(prefix):
+                stripped = stripped[len(prefix) :].lstrip("/")
+                if not stripped:
+                    return (
+                        False,
+                        "Docker Hub requires a namespace. Use --registry docker.io/{org_or_user}.",
+                    )
+                break
 
     return (True, "")

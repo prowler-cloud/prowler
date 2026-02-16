@@ -17,6 +17,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - OCI regions updater script and CI workflow [(#10020)](https://github.com/prowler-cloud/prowler/pull/10020)
 - `image` provider for container image scanning with Trivy integration [(#9984)](https://github.com/prowler-cloud/prowler/pull/9984)
 - Private registry authentication for the Image provider via environment variables (`REGISTRY_USERNAME`/`REGISTRY_PASSWORD`, `REGISTRY_TOKEN`) [(#9985)](https://github.com/prowler-cloud/prowler/pull/9985)
+- Registry scan mode for Image provider: enumerate and scan all images from OCI, Docker Hub, and ECR registries with `--registry`, `--image-filter`, `--tag-filter`, `--max-images`, and `--registry-insecure` flags
 - CSA CCM 4.0 for the Alibaba Cloud provider [(#10061)](https://github.com/prowler-cloud/prowler/pull/10061)
 
 ### 🔄 Changed

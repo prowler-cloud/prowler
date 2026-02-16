@@ -1,0 +1,187 @@
+"""Generic OCI Distribution Spec registry adapter."""
+
+from __future__ import annotations
+
+import re
+import time
+
+import requests
+
+from prowler.lib.logger import logger
+from prowler.providers.image.exceptions.exceptions import (
+    ImageRegistryAuthError,
+    ImageRegistryCatalogError,
+    ImageRegistryNetworkError,
+)
+from prowler.providers.image.lib.registry.base import RegistryAdapter
+
+_MAX_RETRIES = 3
+_BACKOFF_BASE = 1
+
+
+class OciRegistryAdapter(RegistryAdapter):
+    """Adapter for registries implementing OCI Distribution Spec."""
+
+    def __init__(
+        self, registry_url, username=None, password=None, token=None, verify_ssl=True
+    ):
+        super().__init__(registry_url, username, password, token, verify_ssl)
+        self._base_url = self._normalise_url(registry_url)
+        self._bearer_token = None
+
+    @staticmethod
+    def _normalise_url(url):
+        url = url.rstrip("/")
+        if not url.startswith(("http://", "https://")):
+            url = f"https://{url}"
+        return url
+
+    def list_repositories(self):
+        self._ensure_auth()
+        repositories = []
+        url = f"{self._base_url}/v2/_catalog"
+        params = {"n": 200}
+        while url:
+            resp = self._authed_request("GET", url, params=params)
+            if resp.status_code == 404:
+                raise ImageRegistryCatalogError(
+                    file=__file__,
+                    message=f"Registry at {self.registry_url} does not support catalog listing (/_catalog returned 404). Use --image or --image-list instead.",
+                )
+            self._check_response(resp, "catalog listing")
+            data = resp.json()
+            repositories.extend(data.get("repositories", []))
+            url = self._next_page_url(resp)
+            params = {}
+        return repositories
+
+    def list_tags(self, repository):
+        self._ensure_auth(repository=repository)
+        tags = []
+        url = f"{self._base_url}/v2/{repository}/tags/list"
+        params = {"n": 200}
+        while url:
+            resp = self._authed_request("GET", url, params=params)
+            self._check_response(resp, f"tag listing for {repository}")
+            data = resp.json()
+            tags.extend(data.get("tags", []) or [])
+            url = self._next_page_url(resp)
+            params = {}
+        return tags
+
+    def _ensure_auth(self, repository=None):
+        if self._bearer_token:
+            return
+        if self.token:
+            self._bearer_token = self.token
+            return
+        ping_url = f"{self._base_url}/v2/"
+        resp = self._request_with_retry("GET", ping_url)
+        if resp.status_code == 200:
+            return
+        if resp.status_code == 401:
+            www_auth = resp.headers.get("Www-Authenticate", "")
+            self._bearer_token = self._obtain_bearer_token(www_auth, repository)
+            return
+        if resp.status_code == 403:
+            raise ImageRegistryAuthError(
+                file=__file__,
+                message=f"Access denied to registry {self.registry_url} (HTTP 403). Check REGISTRY_USERNAME and REGISTRY_PASSWORD.",
+            )
+
+    def _obtain_bearer_token(self, www_authenticate, repository=None):
+        match = re.search(r'realm="([^"]+)"', www_authenticate)
+        if not match:
+            raise ImageRegistryAuthError(
+                file=__file__,
+                message=f"Cannot parse token endpoint from registry {self.registry_url}. Www-Authenticate: {www_authenticate[:200]}",
+            )
+        realm = match.group(1)
+        params = {}
+        service_match = re.search(r'service="([^"]+)"', www_authenticate)
+        if service_match:
+            params["service"] = service_match.group(1)
+        scope_match = re.search(r'scope="([^"]+)"', www_authenticate)
+        if scope_match:
+            params["scope"] = scope_match.group(1)
+        elif repository:
+            params["scope"] = f"repository:{repository}:pull"
+        auth = None
+        if self.username and self.password:
+            auth = (self.username, self.password)
+        resp = self._request_with_retry("GET", realm, params=params, auth=auth)
+        if resp.status_code != 200:
+            raise ImageRegistryAuthError(
+                file=__file__,
+                message=f"Failed to obtain bearer token from {realm} (HTTP {resp.status_code}). Check REGISTRY_USERNAME and REGISTRY_PASSWORD.",
+            )
+        data = resp.json()
+        return data.get("token") or data.get("access_token", "")
+
+    def _authed_request(self, method, url, **kwargs):
+        headers = kwargs.pop("headers", {})
+        if self._bearer_token:
+            headers["Authorization"] = f"Bearer {self._bearer_token}"
+        elif self.username and self.password:
+            kwargs.setdefault("auth", (self.username, self.password))
+        kwargs["headers"] = headers
+        return self._request_with_retry(method, url, **kwargs)
+
+    def _request_with_retry(self, method, url, **kwargs):
+        kwargs.setdefault("timeout", 30)
+        kwargs.setdefault("verify", self.verify_ssl)
+        last_exception = None
+        for attempt in range(1, _MAX_RETRIES + 1):
+            try:
+                resp = requests.request(method, url, **kwargs)
+                if resp.status_code == 429:
+                    wait = _BACKOFF_BASE * (2 ** (attempt - 1))
+                    logger.warning(
+                        f"Rate limited by registry, retrying in {wait}s (attempt {attempt}/{_MAX_RETRIES})"
+                    )
+                    time.sleep(wait)
+                    continue
+                return resp
+            except requests.exceptions.ConnectionError as exc:
+                last_exception = exc
+                if attempt < _MAX_RETRIES:
+                    wait = _BACKOFF_BASE * (2 ** (attempt - 1))
+                    logger.warning(
+                        f"Connection error to registry, retrying in {wait}s (attempt {attempt}/{_MAX_RETRIES})"
+                    )
+                    time.sleep(wait)
+                    continue
+            except requests.exceptions.Timeout as exc:
+                raise ImageRegistryNetworkError(
+                    file=__file__,
+                    message=f"Connection timed out to {self.registry_url}.",
+                    original_exception=exc,
+                )
+        raise ImageRegistryNetworkError(
+            file=__file__,
+            message=f"Failed to connect to {self.registry_url} after {_MAX_RETRIES} attempts.",
+            original_exception=last_exception,
+        )
+
+    def _check_response(self, resp, context):
+        if resp.status_code == 200:
+            return
+        if resp.status_code in (401, 403):
+            raise ImageRegistryAuthError(
+                file=__file__,
+                message=f"Authentication failed for {context} on {self.registry_url} (HTTP {resp.status_code}). Check REGISTRY_USERNAME and REGISTRY_PASSWORD.",
+            )
+        raise ImageRegistryNetworkError(
+            file=__file__,
+            message=f"Unexpected error during {context} on {self.registry_url} (HTTP {resp.status_code}): {resp.text[:200]}",
+        )
+
+    @staticmethod
+    def _next_page_url(resp):
+        link_header = resp.headers.get("Link", "")
+        if not link_header:
+            return None
+        match = re.search(r'<([^>]+)>;\s*rel="next"', link_header)
+        if match:
+            return match.group(1)
+        return None
