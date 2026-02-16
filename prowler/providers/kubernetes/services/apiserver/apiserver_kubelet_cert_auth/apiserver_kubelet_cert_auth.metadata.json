@@ -4,8 +4,6 @@
   "CheckTitle": "Ensure that the --kubelet-certificate-authority argument is set as appropriate",
   "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "",
-  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
   "ResourceGroup": "container",
@@ -14,10 +12,7 @@
   "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
   "Remediation": {
     "Code": {
-      "CLI": "--kubelet-certificate-authority=/path/to/ca-file",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-kubelet-certificate-authority-argument-is-set-as-appropriate",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "--kubelet-certificate-authority=/path/to/ca-file"
     },
     "Recommendation": {
       "Text": "Enable TLS verification between the apiserver and kubelets by specifying the certificate authority in the kube-apiserver configuration.",

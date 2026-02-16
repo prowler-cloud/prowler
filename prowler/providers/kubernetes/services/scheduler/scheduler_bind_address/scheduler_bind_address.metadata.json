@@ -4,8 +4,6 @@
   "CheckTitle": "Ensure that the --bind-address argument is set to 127.0.0.1 for the Scheduler",
   "CheckType": [],
   "ServiceName": "scheduler",
-  "SubServiceName": "",
-  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesScheduler",
   "ResourceGroup": "container",
@@ -14,10 +12,7 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/",
   "Remediation": {
     "Code": {
-      "CLI": "--bind-address=127.0.0.1",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-bind-address-argument-is-set-to-127001-1",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "--bind-address=127.0.0.1"
     },
     "Recommendation": {
       "Text": "Bind the Scheduler to the loopback address for enhanced security.",

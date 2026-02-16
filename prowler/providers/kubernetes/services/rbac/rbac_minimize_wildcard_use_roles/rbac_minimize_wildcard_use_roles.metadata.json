@@ -4,8 +4,6 @@
   "CheckTitle": "Minimize wildcard use in Roles and ClusterRoles",
   "CheckType": [],
   "ServiceName": "rbac",
-  "SubServiceName": "",
-  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Role/ClusterRole",
   "ResourceGroup": "IAM",
@@ -13,12 +11,7 @@
   "Risk": "Use of wildcards can lead to excessive rights being granted, potentially allowing users to access or modify resources beyond their scope of responsibility.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
   "Remediation": {
-    "Code": {
-      "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-minimized-wildcard-use-in-roles-and-clusterroles",
-      "Other": "",
-      "Terraform": ""
-    },
+    "Code": {},
     "Recommendation": {
       "Text": "Replace wildcards in roles and clusterroles with specific permissions.",
       "Url": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#referring-to-resources"

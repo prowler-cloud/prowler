@@ -4,8 +4,6 @@
   "CheckTitle": "Ensure that the admission control plugin EventRateLimit is set",
   "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "",
-  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
   "ResourceGroup": "container",
@@ -14,10 +12,7 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
   "Remediation": {
     "Code": {
-      "CLI": "--enable-admission-plugins=...,EventRateLimit,... --admission-control-config-file=/path/to/configuration/file",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-eventratelimit-is-set",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "--enable-admission-plugins=...,EventRateLimit,... --admission-control-config-file=/path/to/configuration/file"
     },
     "Recommendation": {
       "Text": "Configure EventRateLimit as an admission control plugin for the API server to manage the rate of incoming events effectively.",

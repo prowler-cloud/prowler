@@ -4,8 +4,6 @@
   "CheckTitle": "Ensure that the --authorization-mode argument is not set to AlwaysAllow",
   "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "",
-  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
   "ResourceGroup": "container",
@@ -14,10 +12,7 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/authorization/#using-flags-for-your-authorization-module",
   "Remediation": {
     "Code": {
-      "CLI": "--authorization-mode=RBAC",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-authorization-mode-argument-is-not-set-to-alwaysallow",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "--authorization-mode=RBAC"
     },
     "Recommendation": {
       "Text": "Ensure the API server is using a secure authorization mode, such as RBAC, and not set to AlwaysAllow.",

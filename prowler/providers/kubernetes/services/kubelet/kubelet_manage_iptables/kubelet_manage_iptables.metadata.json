@@ -4,8 +4,6 @@
   "CheckTitle": "Ensure that the kubelet --make-iptables-util-chains argument is set to true",
   "CheckType": [],
   "ServiceName": "kubelet",
-  "SubServiceName": "",
-  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesKubelet",
   "ResourceGroup": "container",
@@ -14,10 +12,7 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
   "Remediation": {
     "Code": {
-      "CLI": "--make-iptables-util-chains=true",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-make-iptables-util-chains-argument-is-set-to-true",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "--make-iptables-util-chains=true"
     },
     "Recommendation": {
       "Text": "Enable kubelet management of iptables for consistent network configuration.",

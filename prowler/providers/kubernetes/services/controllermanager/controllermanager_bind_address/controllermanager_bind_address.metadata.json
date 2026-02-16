@@ -4,8 +4,6 @@
   "CheckTitle": "Ensure that the --bind-address argument is set to 127.0.0.1",
   "CheckType": [],
   "ServiceName": "controllermanager",
-  "SubServiceName": "",
-  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesControllerManager",
   "ResourceGroup": "container",
@@ -14,10 +12,7 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/",
   "Remediation": {
     "Code": {
-      "CLI": "--bind-address=127.0.0.1",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-bind-address-argument-is-set-to-127001",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "--bind-address=127.0.0.1"
     },
     "Recommendation": {
       "Text": "Bind the Controller Manager to the loopback address for enhanced security.",

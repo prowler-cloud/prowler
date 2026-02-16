@@ -4,8 +4,6 @@
   "CheckTitle": "Ensure that the RotateKubeletServerCertificate argument is set to true",
   "CheckType": [],
   "ServiceName": "controllermanager",
-  "SubServiceName": "",
-  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesControllerManager",
   "ResourceGroup": "container",
@@ -14,10 +12,7 @@
   "RelatedUrl": "https://kubernetes.io/docs/tasks/tls/certificate-rotation/",
   "Remediation": {
     "Code": {
-      "CLI": "--feature-gates='RotateKubeletServerCertificate=true'",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-rotatekubeletservercertificate-argument-is-set-to-true-for-controller-manager#kubernetes",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "--feature-gates='RotateKubeletServerCertificate=true'"
     },
     "Recommendation": {
       "Text": "Enable kubelet server certificate rotation in the Controller Manager for automated certificate management.",

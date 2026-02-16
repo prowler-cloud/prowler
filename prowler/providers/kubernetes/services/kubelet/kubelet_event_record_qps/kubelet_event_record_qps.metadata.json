@@ -4,8 +4,6 @@
   "CheckTitle": "Ensure that the kubelet eventRecordQPS argument is set to an appropriate level",
   "CheckType": [],
   "ServiceName": "kubelet",
-  "SubServiceName": "",
-  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesKubelet",
   "ResourceGroup": "container",
@@ -14,10 +12,7 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
   "Remediation": {
     "Code": {
-      "CLI": "--event-qps=<appropriate_level>",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-event-qps-argument-is-set-to-0-or-a-level-which-ensures-appropriate-event-capture",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "--event-qps=<appropriate_level>"
     },
     "Recommendation": {
       "Text": "Configure kubelet with a balanced eventRecordQPS setting for effective event capture without causing DoS conditions.",
