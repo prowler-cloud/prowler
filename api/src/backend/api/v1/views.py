@@ -2424,7 +2424,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         if not attack_paths_scan.graph_data_ready:
             raise ValidationError(
                 {
-                    "detail": "Attack Paths data is not available for querying yet. A scan must complete at least once before queries can be run."
+                    "detail": "Attack Paths data is not available for querying — a scan must complete at least once before queries can be run"
                 }
             )
 

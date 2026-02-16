@@ -26,7 +26,7 @@ export const ScanStatusBadge = ({
   graphDataReady = false,
 }: ScanStatusBadgeProps) => {
   const graphDot = graphDataReady && status !== "completed" && (
-    <span className="bg-green-500 inline-block size-2 rounded-full" />
+    <span className="inline-block size-2 rounded-full bg-green-500" />
   );
 
   const tooltipText = graphDataReady
@@ -60,9 +60,7 @@ export const ScanStatusBadge = ({
           <Loader2
             size={14}
             className={
-              graphDataReady
-                ? "animate-spin text-green-500"
-                : "animate-spin"
+              graphDataReady ? "animate-spin text-green-500" : "animate-spin"
             }
           />
           <span>In Progress ({progress}%)</span>

@@ -168,8 +168,59 @@ class TestAttackPathsRun:
             ]
         )
 
+    @patch(
+        "tasks.jobs.attack_paths.scan.utils.stringify_exception",
+        return_value="Cartography failed: ingestion boom",
+    )
+    @patch(
+        "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
+        side_effect=lambda fn, *a, **kw: fn(*a, **kw),
+    )
+    @patch("tasks.jobs.attack_paths.scan.graph_database.drop_database")
+    @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
+    @patch("tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready")
+    @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
+    @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.internet.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
+    @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
+    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
+    @patch(
+        "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
+        return_value="db-scan-id",
+    )
+    @patch("tasks.jobs.attack_paths.scan.graph_database.get_uri")
+    @patch(
+        "tasks.jobs.attack_paths.scan.initialize_prowler_provider",
+        return_value=MagicMock(_enabled_regions=["us-east-1"]),
+    )
+    @patch(
+        "tasks.jobs.attack_paths.scan.rls_transaction",
+        new=lambda *args, **kwargs: nullcontext(),
+    )
     def test_run_failure_marks_scan_failed(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self,
+        mock_init_provider,
+        mock_get_uri,
+        mock_get_db_name,
+        mock_create_db,
+        mock_cartography_indexes,
+        mock_cartography_analysis,
+        mock_findings_indexes,
+        mock_internet_analysis,
+        mock_findings_analysis,
+        mock_starting,
+        mock_update_progress,
+        mock_set_graph_data_ready,
+        mock_finish,
+        mock_drop_db,
+        mock_event_loop,
+        mock_stringify,
+        tenants_fixture,
+        providers_fixture,
+        scans_fixture,
     ):
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
@@ -194,52 +245,16 @@ class TestAttackPathsRun:
 
         with (
             patch(
-                "tasks.jobs.attack_paths.scan.rls_transaction",
-                new=lambda *args, **kwargs: nullcontext(),
-            ),
-            patch(
-                "tasks.jobs.attack_paths.scan.initialize_prowler_provider",
-                return_value=MagicMock(_enabled_regions=["us-east-1"]),
-            ),
-            patch("tasks.jobs.attack_paths.scan.graph_database.get_uri"),
-            patch(
-                "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
-                return_value="db-scan-id",
-            ),
-            patch("tasks.jobs.attack_paths.scan.graph_database.create_database"),
-            patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_session",
                 return_value=session_ctx,
             ),
-            patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run"),
-            patch("tasks.jobs.attack_paths.scan.cartography_analysis.run"),
-            patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes"),
-            patch("tasks.jobs.attack_paths.scan.internet.analysis"),
-            patch("tasks.jobs.attack_paths.scan.findings.analysis"),
             patch(
                 "tasks.jobs.attack_paths.scan.db_utils.retrieve_attack_paths_scan",
                 return_value=attack_paths_scan,
             ),
-            patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan"),
-            patch(
-                "tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress"
-            ),
-            patch("tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready"),
-            patch(
-                "tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan"
-            ) as mock_finish,
-            patch("tasks.jobs.attack_paths.scan.graph_database.drop_database"),
             patch(
                 "tasks.jobs.attack_paths.scan.get_cartography_ingestion_function",
                 return_value=ingestion_fn,
-            ),
-            patch(
-                "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
-                side_effect=lambda fn, *a, **kw: fn(*a, **kw),
-            ),
-            patch(
-                "tasks.jobs.attack_paths.scan.utils.stringify_exception",
-                return_value="Cartography failed: ingestion boom",
             ),
         ):
             with pytest.raises(RuntimeError, match="ingestion boom"):
@@ -250,8 +265,62 @@ class TestAttackPathsRun:
         assert failure_args[1] == StateChoices.FAILED
         assert failure_args[2] == {"global_error": "Cartography failed: ingestion boom"}
 
+    @patch(
+        "tasks.jobs.attack_paths.scan.utils.stringify_exception",
+        return_value="Cartography failed: ingestion boom",
+    )
+    @patch(
+        "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
+        side_effect=lambda fn, *a, **kw: fn(*a, **kw),
+    )
+    @patch(
+        "tasks.jobs.attack_paths.scan.graph_database.drop_database",
+        side_effect=ConnectionError("neo4j down"),
+    )
+    @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
+    @patch("tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready")
+    @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
+    @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.internet.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
+    @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
+    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
+    @patch(
+        "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
+        return_value="db-scan-id",
+    )
+    @patch("tasks.jobs.attack_paths.scan.graph_database.get_uri")
+    @patch(
+        "tasks.jobs.attack_paths.scan.initialize_prowler_provider",
+        return_value=MagicMock(_enabled_regions=["us-east-1"]),
+    )
+    @patch(
+        "tasks.jobs.attack_paths.scan.rls_transaction",
+        new=lambda *args, **kwargs: nullcontext(),
+    )
     def test_run_failure_marks_scan_failed_even_when_drop_database_fails(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self,
+        mock_init_provider,
+        mock_get_uri,
+        mock_get_db_name,
+        mock_create_db,
+        mock_cartography_indexes,
+        mock_cartography_analysis,
+        mock_findings_indexes,
+        mock_internet_analysis,
+        mock_findings_analysis,
+        mock_starting,
+        mock_update_progress,
+        mock_set_graph_data_ready,
+        mock_finish,
+        mock_drop_db,
+        mock_event_loop,
+        mock_stringify,
+        tenants_fixture,
+        providers_fixture,
+        scans_fixture,
     ):
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
@@ -276,55 +345,16 @@ class TestAttackPathsRun:
 
         with (
             patch(
-                "tasks.jobs.attack_paths.scan.rls_transaction",
-                new=lambda *args, **kwargs: nullcontext(),
-            ),
-            patch(
-                "tasks.jobs.attack_paths.scan.initialize_prowler_provider",
-                return_value=MagicMock(_enabled_regions=["us-east-1"]),
-            ),
-            patch("tasks.jobs.attack_paths.scan.graph_database.get_uri"),
-            patch(
-                "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
-                return_value="db-scan-id",
-            ),
-            patch("tasks.jobs.attack_paths.scan.graph_database.create_database"),
-            patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_session",
                 return_value=session_ctx,
             ),
-            patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run"),
-            patch("tasks.jobs.attack_paths.scan.cartography_analysis.run"),
-            patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes"),
-            patch("tasks.jobs.attack_paths.scan.internet.analysis"),
-            patch("tasks.jobs.attack_paths.scan.findings.analysis"),
             patch(
                 "tasks.jobs.attack_paths.scan.db_utils.retrieve_attack_paths_scan",
                 return_value=attack_paths_scan,
             ),
-            patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan"),
-            patch(
-                "tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress"
-            ),
-            patch("tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready"),
-            patch(
-                "tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan"
-            ) as mock_finish,
-            patch(
-                "tasks.jobs.attack_paths.scan.graph_database.drop_database",
-                side_effect=ConnectionError("neo4j down"),
-            ),
             patch(
                 "tasks.jobs.attack_paths.scan.get_cartography_ingestion_function",
                 return_value=ingestion_fn,
-            ),
-            patch(
-                "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
-                side_effect=lambda fn, *a, **kw: fn(*a, **kw),
-            ),
-            patch(
-                "tasks.jobs.attack_paths.scan.utils.stringify_exception",
-                return_value="Cartography failed: ingestion boom",
             ),
         ):
             with pytest.raises(RuntimeError, match="ingestion boom"):
