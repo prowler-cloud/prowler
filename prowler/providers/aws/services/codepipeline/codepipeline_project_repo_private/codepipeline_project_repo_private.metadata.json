@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "codepipeline_project_repo_private",
-  "CheckTitle": "CodePipeline pipelines should use private repository sources with authenticated connections",
+  "CheckTitle": "CodePipeline pipeline should use private repository source with authenticated connection",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
@@ -11,7 +11,7 @@
   "Severity": "medium",
   "ResourceType": "AwsCodePipelinePipeline",
   "ResourceGroup": "devops",
-  "Description": "**CodePipeline pipelines** should configure their **source stages** to use **private repositories** with authenticated connections rather than public GitHub or GitLab repositories. This ensures deployment configurations, build artifacts, and CI/CD logic remain protected from unauthorized access.",
+  "Description": "**CodePipeline pipeline** should configure its **source stage** to use a **private repository** with authenticated connection rather than a public GitHub or GitLab repository. This ensures deployment configurations, build artifacts, and CI/CD logic remain protected from unauthorized access.",
   "Risk": "Using **public repositories** as pipeline sources exposes deployment configurations, infrastructure code, and CI/CD workflows to anyone on the internet. \n\nThis increases the risk of **supply chain attacks**, **credential exposure**, and **intellectual property theft**. Adversaries can study deployment patterns, identify security gaps, inject malicious code, or leverage exposed secrets to compromise **confidentiality**, **integrity**, and **availability** of production systems.",
   "RelatedUrl": "",
   "AdditionalURLs": [
