@@ -33,8 +33,8 @@ class entra_app_registration_no_unused_privileged_permissions(Check):
         """
         findings = []
 
-        # If OAuth app data is unavailable, fail due to missing compliance visibility.
-        if not entra_client.oauth_apps:
+        # If OAuth app data is None, the API call failed (missing permissions or App Governance not enabled)
+        if entra_client.oauth_apps is None:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
@@ -42,12 +42,26 @@ class entra_app_registration_no_unused_privileged_permissions(Check):
                 resource_id="oauthApps",
             )
             report.status = "FAIL"
-            base_status = (
+            report.status_extended = (
                 "OAuth App Governance data is unavailable. "
                 "Enable App Governance in Microsoft Defender for Cloud Apps and "
                 "grant ThreatHunting.Read.All to evaluate unused privileged permissions."
             )
-            report.status_extended = base_status
+            findings.append(report)
+            return findings
+
+        # If OAuth apps is empty dict, no apps are registered - this is compliant
+        if not entra_client.oauth_apps:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="OAuth Applications",
+                resource_id="oauthApps",
+            )
+            report.status = "PASS"
+            report.status_extended = (
+                "No OAuth applications are registered in the tenant."
+            )
             findings.append(report)
             return findings
 

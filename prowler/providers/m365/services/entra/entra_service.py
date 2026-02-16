@@ -86,7 +86,7 @@ class Entra(M365Service):
         self.groups = attributes[3]
         self.organizations = attributes[4]
         self.users = attributes[5]
-        self.oauth_apps: Dict[str, OAuthApp] = attributes[6]
+        self.oauth_apps: Optional[Dict[str, OAuthApp]] = attributes[6]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -492,7 +492,7 @@ class Entra(M365Service):
 
         return registration_details
 
-    async def _get_oauth_apps(self) -> Dict[str, "OAuthApp"]:
+    async def _get_oauth_apps(self) -> Optional[Dict[str, "OAuthApp"]]:
         """
         Retrieve OAuth applications from Defender XDR using Advanced Hunting.
 
@@ -501,10 +501,11 @@ class Entra(M365Service):
         and usage status.
 
         Returns:
-            Dict[str, OAuthApp]: Dictionary of OAuth applications keyed by app ID.
+            Optional[Dict[str, OAuthApp]]: Dictionary of OAuth applications keyed by app ID,
+                or None if the API call failed (missing permissions or App Governance not enabled).
         """
         logger.info("Entra - Getting OAuth apps from Defender XDR...")
-        oauth_apps = {}
+        oauth_apps: Optional[Dict[str, OAuthApp]] = {}
         try:
             # Query the OAuthAppInfo table using Advanced Hunting
             # The query gets apps with their permissions including usage status
@@ -562,13 +563,14 @@ OAuthAppInfo
                     )
 
         except Exception as error:
-            # Log the error but don't fail - this API requires ThreatHunting.Read.All permission
-            # and App Governance to be enabled in the tenant
+            # Log the error and return None to indicate API failure
+            # This API requires ThreatHunting.Read.All permission and App Governance to be enabled
             logger.warning(
                 f"Entra - Could not retrieve OAuth apps from Defender XDR. "
                 f"This requires ThreatHunting.Read.All permission and App Governance enabled. "
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return None
 
         return oauth_apps
 
