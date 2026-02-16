@@ -199,7 +199,8 @@
         "admincenter_users_admins_reduced_license_footprint",
         "entra_admin_portals_access_restriction",
         "entra_admin_users_phishing_resistant_mfa_enabled",
-        "entra_policy_guest_users_access_restrictions"
+        "entra_policy_guest_users_access_restrictions",
+        "entra_seamless_sso_disabled"
       ]
     },
     {
@@ -215,7 +216,8 @@
         }
       ],
       "Checks": [
-        "admincenter_settings_password_never_expire"
+        "admincenter_settings_password_never_expire",
+        "entra_seamless_sso_disabled"
       ]
     },
     {
@@ -236,6 +238,7 @@
         "entra_admin_users_sign_in_frequency_enabled",
         "entra_legacy_authentication_blocked",
         "entra_managed_device_required_for_authentication",
+        "entra_seamless_sso_disabled",
         "entra_users_mfa_enabled",
         "exchange_organization_modern_authentication_enabled",
         "exchange_transport_config_smtp_auth_disabled",
@@ -636,7 +639,8 @@
         "entra_admin_users_phishing_resistant_mfa_enabled",
         "entra_admin_users_sign_in_frequency_enabled",
         "entra_policy_ensure_default_user_cannot_create_tenants",
-        "entra_policy_guest_invite_only_for_admin_roles"
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_seamless_sso_disabled"
       ]
     },
     {
@@ -673,6 +677,7 @@
         "entra_admin_users_sign_in_frequency_enabled",
         "entra_admin_users_mfa_enabled",
         "entra_managed_device_required_for_authentication",
+        "entra_seamless_sso_disabled",
         "entra_users_mfa_enabled",
         "entra_identity_protection_sign_in_risk_enabled"
       ]
