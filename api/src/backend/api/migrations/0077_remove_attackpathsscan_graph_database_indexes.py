@@ -5,6 +5,8 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
+    atomic = False
+
     dependencies = [
         ("api", "0076_openstack_provider"),
     ]
@@ -17,13 +19,5 @@ class Migration(migrations.Migration):
         RemoveIndexConcurrently(
             model_name="attackpathsscan",
             name="aps_completed_graph_idx",
-        ),
-        migrations.RemoveField(
-            model_name="attackpathsscan",
-            name="graph_database",
-        ),
-        migrations.RemoveField(
-            model_name="attackpathsscan",
-            name="is_graph_database_deleted",
         ),
     ]
