@@ -89,6 +89,7 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
     }
     if (
       scan.attributes.state === SCAN_STATES.SCHEDULED ||
+      scan.attributes.state === SCAN_STATES.AVAILABLE ||
       scan.attributes.state === SCAN_STATES.EXECUTING
     ) {
       return "Waiting...";

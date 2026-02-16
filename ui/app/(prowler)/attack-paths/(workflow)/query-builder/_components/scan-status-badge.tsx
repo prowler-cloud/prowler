@@ -3,6 +3,11 @@
 import { Loader2 } from "lucide-react";
 
 import { Badge } from "@/components/shadcn/badge/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import type { ScanState } from "@/types/attack-paths";
 
 interface ScanStatusBadgeProps {
@@ -20,52 +25,71 @@ export const ScanStatusBadge = ({
   progress = 0,
   graphDataReady = false,
 }: ScanStatusBadgeProps) => {
-  const dataAvailableDot = graphDataReady && status !== "completed" && (
-    <span
-      className="bg-bg-pass-secondary inline-block size-2 rounded-full"
-      title="Data available"
-    />
+  const graphDot = graphDataReady && status !== "completed" && (
+    <span className="bg-green-500 inline-block size-2 rounded-full" />
   );
 
-  if (status === "scheduled") {
-    return (
-      <Badge className="bg-bg-neutral-tertiary text-text-neutral-primary gap-2">
-        {dataAvailableDot}
-        <span>Scheduled</span>
-      </Badge>
-    );
-  }
+  const tooltipText = graphDataReady
+    ? "Graph available"
+    : status === "failed" || status === "completed"
+      ? "Graph not available"
+      : "Graph not available yet";
 
-  if (status === "available") {
-    return (
-      <Badge className="bg-bg-neutral-tertiary text-text-neutral-primary gap-2">
-        {dataAvailableDot}
-        <span>Queued</span>
-      </Badge>
-    );
-  }
+  const renderBadge = () => {
+    if (status === "scheduled") {
+      return (
+        <Badge className="bg-bg-neutral-tertiary text-text-neutral-primary gap-2">
+          {graphDot}
+          <span>Scheduled</span>
+        </Badge>
+      );
+    }
 
-  if (status === "executing") {
-    return (
-      <Badge className="bg-bg-warning-secondary text-text-neutral-primary gap-2">
-        {dataAvailableDot || <Loader2 size={14} className="animate-spin" />}
-        <span>In Progress ({progress}%)</span>
-      </Badge>
-    );
-  }
+    if (status === "available") {
+      return (
+        <Badge className="bg-bg-neutral-tertiary text-text-neutral-primary gap-2">
+          {graphDot}
+          <span>Queued</span>
+        </Badge>
+      );
+    }
 
-  if (status === "completed") {
+    if (status === "executing") {
+      return (
+        <Badge className="bg-bg-warning-secondary text-text-neutral-primary gap-2">
+          <Loader2
+            size={14}
+            className={
+              graphDataReady
+                ? "animate-spin text-green-500"
+                : "animate-spin"
+            }
+          />
+          <span>In Progress ({progress}%)</span>
+        </Badge>
+      );
+    }
+
+    if (status === "completed") {
+      return (
+        <Badge className="bg-bg-pass-secondary text-text-success-primary gap-2">
+          <span>Completed</span>
+        </Badge>
+      );
+    }
+
     return (
-      <Badge className="bg-bg-pass-secondary text-text-success-primary gap-2">
-        <span>Completed</span>
+      <Badge className="bg-bg-fail-secondary text-text-error-primary gap-2">
+        {graphDot}
+        <span>Failed</span>
       </Badge>
     );
-  }
+  };
 
   return (
-    <Badge className="bg-bg-fail-secondary text-text-error-primary gap-2">
-      {dataAvailableDot}
-      <span>Failed</span>
-    </Badge>
+    <Tooltip>
+      <TooltipTrigger asChild>{renderBadge()}</TooltipTrigger>
+      <TooltipContent>{tooltipText}</TooltipContent>
+    </Tooltip>
   );
 };
