@@ -296,6 +296,7 @@ paths:
             enum:
             - state
             - progress
+            - graph_data_ready
             - provider
             - provider_alias
             - provider_type
@@ -355,7 +356,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -388,7 +389,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -571,6 +572,7 @@ paths:
             enum:
             - state
             - progress
+            - graph_data_ready
             - provider
             - provider_alias
             - provider_type
@@ -631,6 +633,7 @@ paths:
             enum:
             - state
             - progress
+            - graph_data_ready
             - provider
             - provider_alias
             - provider_type
@@ -1340,7 +1343,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -1373,7 +1376,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -1934,7 +1937,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -1967,7 +1970,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -2436,7 +2439,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -2469,7 +2472,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -2936,7 +2939,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -2969,7 +2972,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -3424,7 +3427,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -3457,7 +3460,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -5253,7 +5256,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -5286,7 +5289,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -5420,7 +5423,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -5453,7 +5456,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -5763,7 +5766,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -5796,7 +5799,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -5964,7 +5967,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -5997,7 +6000,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -6395,7 +6398,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -6428,7 +6431,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -6561,7 +6564,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -6594,7 +6597,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -6751,7 +6754,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -6784,7 +6787,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -7582,7 +7585,7 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -7615,7 +7618,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -7650,7 +7653,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -7683,7 +7686,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -8341,7 +8344,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -8374,7 +8377,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -8847,7 +8850,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -8880,7 +8883,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -9166,7 +9169,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -9199,7 +9202,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -9491,7 +9494,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -9524,7 +9527,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -10350,7 +10353,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -10383,7 +10386,7 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -12530,16 +12533,16 @@ components:
               type: string
             description:
               type: string
+            attribution:
+              allOf:
+              - $ref: '#/components/schemas/AttackPathsQueryAttribution'
+              nullable: true
             provider:
               type: string
             parameters:
               type: array
               items:
                 $ref: '#/components/schemas/AttackPathsQueryParameter'
-            attribution:
-              allOf:
-              - $ref: '#/components/schemas/AttackPathsQueryAttribution'
-              nullable: true
           required:
           - id
           - name
@@ -12737,6 +12740,8 @@ components:
               type: integer
               maximum: 2147483647
               minimum: -2147483648
+            graph_data_ready:
+              type: boolean
             provider_alias:
               type: string
               readOnly: true
@@ -17450,36 +17455,6 @@ components:
                     required:
                     - clouds_yaml_content
                     - clouds_yaml_cloud
-                  - type: object
-                    title: OpenStack Explicit Credentials
-                    properties:
-                      auth_url:
-                        type: string
-                        description: OpenStack Keystone authentication URL (e.g.,
-                          https://openstack.example.com:5000/v3).
-                      username:
-                        type: string
-                        description: OpenStack username for authentication.
-                      password:
-                        type: string
-                        description: OpenStack password for authentication.
-                      region_name:
-                        type: string
-                        description: OpenStack region name (e.g., RegionOne).
-                      identity_api_version:
-                        type: string
-                        description: Keystone API version (default: 3).
-                      user_domain_name:
-                        type: string
-                        description: User domain name (default: Default).
-                      project_domain_name:
-                        type: string
-                        description: Project domain name (default: Default).
-                    required:
-                    - auth_url
-                    - username
-                    - password
-                    - region_name
                   writeOnly: true
               required:
               - secret
@@ -18494,7 +18469,7 @@ components:
                 * `alibabacloud` - Alibaba Cloud
                 * `cloudflare` - Cloudflare
                 * `openstack` - OpenStack
-              x-spec-enum-id: 2d8d323e9cc0044b
+              x-spec-enum-id: 4b8815b179aa7216
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -18613,7 +18588,7 @@ components:
               - cloudflare
               - openstack
               type: string
-              x-spec-enum-id: 2d8d323e9cc0044b
+              x-spec-enum-id: 4b8815b179aa7216
               description: |-
                 Type of provider to create.
 
@@ -18679,7 +18654,7 @@ components:
                   - cloudflare
                   - openstack
                   type: string
-                  x-spec-enum-id: 2d8d323e9cc0044b
+                  x-spec-enum-id: 4b8815b179aa7216
                   description: |-
                     Type of provider to create.
 
@@ -19529,35 +19504,6 @@ components:
                 required:
                 - clouds_yaml_content
                 - clouds_yaml_cloud
-              - type: object
-                title: OpenStack Explicit Credentials
-                properties:
-                  auth_url:
-                    type: string
-                    description: OpenStack Keystone authentication URL (e.g., https://openstack.example.com:5000/v3).
-                  username:
-                    type: string
-                    description: OpenStack username for authentication.
-                  password:
-                    type: string
-                    description: OpenStack password for authentication.
-                  region_name:
-                    type: string
-                    description: OpenStack region name (e.g., RegionOne).
-                  identity_api_version:
-                    type: string
-                    description: Keystone API version (default: 3).
-                  user_domain_name:
-                    type: string
-                    description: User domain name (default: Default).
-                  project_domain_name:
-                    type: string
-                    description: Project domain name (default: Default).
-                required:
-                - auth_url
-                - username
-                - password
-                - region_name
               writeOnly: true
           required:
           - secret_type
@@ -19958,36 +19904,6 @@ components:
                     required:
                     - clouds_yaml_content
                     - clouds_yaml_cloud
-                  - type: object
-                    title: OpenStack Explicit Credentials
-                    properties:
-                      auth_url:
-                        type: string
-                        description: OpenStack Keystone authentication URL (e.g.,
-                          https://openstack.example.com:5000/v3).
-                      username:
-                        type: string
-                        description: OpenStack username for authentication.
-                      password:
-                        type: string
-                        description: OpenStack password for authentication.
-                      region_name:
-                        type: string
-                        description: OpenStack region name (e.g., RegionOne).
-                      identity_api_version:
-                        type: string
-                        description: Keystone API version (default: 3).
-                      user_domain_name:
-                        type: string
-                        description: User domain name (default: Default).
-                      project_domain_name:
-                        type: string
-                        description: Project domain name (default: Default).
-                    required:
-                    - auth_url
-                    - username
-                    - password
-                    - region_name
                   writeOnly: true
               required:
               - secret_type
@@ -20399,35 +20315,6 @@ components:
                 required:
                 - clouds_yaml_content
                 - clouds_yaml_cloud
-              - type: object
-                title: OpenStack Explicit Credentials
-                properties:
-                  auth_url:
-                    type: string
-                    description: OpenStack Keystone authentication URL (e.g., https://openstack.example.com:5000/v3).
-                  username:
-                    type: string
-                    description: OpenStack username for authentication.
-                  password:
-                    type: string
-                    description: OpenStack password for authentication.
-                  region_name:
-                    type: string
-                    description: OpenStack region name (e.g., RegionOne).
-                  identity_api_version:
-                    type: string
-                    description: Keystone API version (default: 3).
-                  user_domain_name:
-                    type: string
-                    description: User domain name (default: Default).
-                  project_domain_name:
-                    type: string
-                    description: Project domain name (default: Default).
-                required:
-                - auth_url
-                - username
-                - password
-                - region_name
               writeOnly: true
           required:
           - secret

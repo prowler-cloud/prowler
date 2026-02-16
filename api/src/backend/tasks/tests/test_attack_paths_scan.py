@@ -28,6 +28,7 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
         side_effect=lambda fn, *a, **kw: fn(*a, **kw),
     )
+    @patch("tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
@@ -72,6 +73,7 @@ class TestAttackPathsRun:
         mock_starting,
         mock_update_progress,
         mock_finish,
+        mock_set_graph_data_ready,
         mock_event_loop,
         mock_drop_db,
         tenants_fixture,
@@ -159,6 +161,12 @@ class TestAttackPathsRun:
         mock_finish.assert_called_once_with(
             attack_paths_scan, StateChoices.COMPLETED, ingestion_result
         )
+        mock_set_graph_data_ready.assert_has_calls(
+            [
+                call(attack_paths_scan, False),
+                call(attack_paths_scan, True),
+            ]
+        )
 
     def test_run_failure_marks_scan_failed(
         self, tenants_fixture, providers_fixture, scans_fixture
@@ -216,6 +224,7 @@ class TestAttackPathsRun:
             patch(
                 "tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress"
             ),
+            patch("tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready"),
             patch(
                 "tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan"
             ) as mock_finish,
@@ -297,6 +306,7 @@ class TestAttackPathsRun:
             patch(
                 "tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress"
             ),
+            patch("tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready"),
             patch(
                 "tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan"
             ) as mock_finish,
@@ -1017,3 +1027,217 @@ class TestInternetAnalysis:
             result = internet_module.analysis(mock_session, provider, config)
 
         assert result == 0
+
+
+@pytest.mark.django_db
+class TestAttackPathsDbUtilsGraphDataReady:
+    """Tests for db_utils functions related to graph_data_ready lifecycle."""
+
+    def test_create_attack_paths_scan_first_scan_defaults_to_false(
+        self, tenants_fixture, providers_fixture, scans_fixture
+    ):
+        from tasks.jobs.attack_paths.db_utils import create_attack_paths_scan
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        with patch(
+            "tasks.jobs.attack_paths.db_utils.rls_transaction",
+            new=lambda *args, **kwargs: nullcontext(),
+        ):
+            attack_paths_scan = create_attack_paths_scan(
+                str(tenant.id), str(scan.id), provider.id
+            )
+
+        assert attack_paths_scan is not None
+        assert attack_paths_scan.graph_data_ready is False
+
+    def test_create_attack_paths_scan_inherits_true_from_previous(
+        self, tenants_fixture, providers_fixture, scans_fixture
+    ):
+        from tasks.jobs.attack_paths.db_utils import create_attack_paths_scan
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.COMPLETED,
+            graph_data_ready=True,
+        )
+
+        new_scan = Scan.objects.create(
+            name="New Scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+            tenant_id=tenant.id,
+        )
+
+        with patch(
+            "tasks.jobs.attack_paths.db_utils.rls_transaction",
+            new=lambda *args, **kwargs: nullcontext(),
+        ):
+            attack_paths_scan = create_attack_paths_scan(
+                str(tenant.id), str(new_scan.id), provider.id
+            )
+
+        assert attack_paths_scan is not None
+        assert attack_paths_scan.graph_data_ready is True
+
+    def test_create_attack_paths_scan_inherits_false_when_no_previous_ready(
+        self, tenants_fixture, providers_fixture, scans_fixture
+    ):
+        from tasks.jobs.attack_paths.db_utils import create_attack_paths_scan
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.FAILED,
+            graph_data_ready=False,
+        )
+
+        new_scan = Scan.objects.create(
+            name="New Scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+            tenant_id=tenant.id,
+        )
+
+        with patch(
+            "tasks.jobs.attack_paths.db_utils.rls_transaction",
+            new=lambda *args, **kwargs: nullcontext(),
+        ):
+            attack_paths_scan = create_attack_paths_scan(
+                str(tenant.id), str(new_scan.id), provider.id
+            )
+
+        assert attack_paths_scan is not None
+        assert attack_paths_scan.graph_data_ready is False
+
+    def test_set_graph_data_ready_updates_field(
+        self, tenants_fixture, providers_fixture, scans_fixture
+    ):
+        from tasks.jobs.attack_paths.db_utils import set_graph_data_ready
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        attack_paths_scan = AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.EXECUTING,
+            graph_data_ready=True,
+        )
+
+        with patch(
+            "tasks.jobs.attack_paths.db_utils.rls_transaction",
+            new=lambda *args, **kwargs: nullcontext(),
+        ):
+            set_graph_data_ready(attack_paths_scan, False)
+
+        attack_paths_scan.refresh_from_db()
+        assert attack_paths_scan.graph_data_ready is False
+
+        with patch(
+            "tasks.jobs.attack_paths.db_utils.rls_transaction",
+            new=lambda *args, **kwargs: nullcontext(),
+        ):
+            set_graph_data_ready(attack_paths_scan, True)
+
+        attack_paths_scan.refresh_from_db()
+        assert attack_paths_scan.graph_data_ready is True
+
+    def test_finish_attack_paths_scan_does_not_modify_graph_data_ready(
+        self, tenants_fixture, providers_fixture, scans_fixture
+    ):
+        from tasks.jobs.attack_paths.db_utils import finish_attack_paths_scan
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        attack_paths_scan = AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.EXECUTING,
+            graph_data_ready=True,
+        )
+
+        with patch(
+            "tasks.jobs.attack_paths.db_utils.rls_transaction",
+            new=lambda *args, **kwargs: nullcontext(),
+        ):
+            finish_attack_paths_scan(attack_paths_scan, StateChoices.COMPLETED, {})
+
+        attack_paths_scan.refresh_from_db()
+        assert attack_paths_scan.state == StateChoices.COMPLETED
+        assert attack_paths_scan.graph_data_ready is True
+
+    def test_finish_attack_paths_scan_preserves_graph_data_ready_on_failure(
+        self, tenants_fixture, providers_fixture, scans_fixture
+    ):
+        from tasks.jobs.attack_paths.db_utils import finish_attack_paths_scan
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        attack_paths_scan = AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.EXECUTING,
+            graph_data_ready=True,
+        )
+
+        with patch(
+            "tasks.jobs.attack_paths.db_utils.rls_transaction",
+            new=lambda *args, **kwargs: nullcontext(),
+        ):
+            finish_attack_paths_scan(
+                attack_paths_scan,
+                StateChoices.FAILED,
+                {"global_error": "boom"},
+            )
+
+        attack_paths_scan.refresh_from_db()
+        assert attack_paths_scan.state == StateChoices.FAILED
+        assert attack_paths_scan.graph_data_ready is True

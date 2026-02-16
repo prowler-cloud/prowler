@@ -655,6 +655,7 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
 
     state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
     progress = models.IntegerField(default=0)
+    graph_data_ready = models.BooleanField(default=False)
 
     # Timing
     started_at = models.DateTimeField(null=True, blank=True)
