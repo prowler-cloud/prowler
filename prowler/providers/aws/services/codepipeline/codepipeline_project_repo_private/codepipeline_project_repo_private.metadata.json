@@ -12,6 +12,10 @@
   "Description": "Ensure that CodePipeline projects do not use public GitHub or GitLab repositories as source.",
   "Risk": "Using public Git repositories in CodePipeline projects could expose sensitive deployment configurations and increase the risk of supply chain attacks.",
   "RelatedUrl": "https://docs.aws.amazon.com/codepipeline/latest/userguide/connections-github.html",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/codepipeline/latest/userguide/action-reference-GitHub.html",
+    "https://docs.aws.amazon.com/codepipeline/latest/userguide/security-best-practices.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws codestar-connections create-connection --provider-type GitHub|GitLab --connection-name <connection-name>",
