@@ -1,0 +1,37 @@
+{
+  "Provider": "openstack",
+  "CheckID": "image_protected_status_enabled",
+  "CheckTitle": "Images have deletion protection enabled",
+  "CheckType": [],
+  "ServiceName": "image",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OpenStackImage",
+  "ResourceGroup": "storage",
+  "Description": "**OpenStack images** are evaluated to verify that the **protected flag is set to True**. Protected images cannot be deleted, preventing accidental or malicious removal of base images that dependent workloads rely on. Best practices recommend enabling deletion protection on all production images.",
+  "Risk": "Unprotected images can be accidentally or maliciously deleted, breaking all dependent instances and workloads. Image deletion is irreversible and can cause prolonged outages while replacement images are built and tested. In multi-tenant environments, unauthorized deletion of shared images can impact multiple projects.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/security-guide/image-storage/checklist.html",
+    "https://docs.openstack.org/glance/latest/admin/manage-images.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack image set --protected <image_id>",
+      "NativeIaC": "",
+      "Other": "**Enable protection via Horizon:**\n1. Navigate to **Project > Compute > Images**\n2. Select the unprotected image\n3. Click **Edit Image**\n4. Check the **Protected** checkbox\n5. Click **Update Image**",
+      "Terraform": "```hcl\nresource \"openstack_images_image_v2\" \"image\" {\n  name             = \"app-image\"\n  container_format = \"bare\"\n  disk_format      = \"qcow2\"\n  visibility       = \"private\"\n  protected        = true  # GOOD: Deletion protection enabled\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable deletion protection on all production images to prevent accidental or malicious removal. Implement image lifecycle management procedures that require explicit unprotection before decommissioning images.",
+      "Url": "https://hub.prowler.com/check/image_protected_status_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check flags images where the protected flag is False. Some images may intentionally be unprotected during testing or development. Verify that production images used by running workloads are protected."
+}

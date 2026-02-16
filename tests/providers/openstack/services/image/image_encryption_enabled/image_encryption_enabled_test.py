@@ -1,0 +1,231 @@
+"""Tests for image_encryption_enabled check."""
+
+from unittest import mock
+
+from prowler.providers.openstack.services.image.image_service import ImageResource
+from tests.providers.openstack.openstack_fixtures import (
+    OPENSTACK_PROJECT_ID,
+    OPENSTACK_REGION,
+    set_mocked_openstack_provider,
+)
+
+
+class Test_image_encryption_enabled:
+    def test_no_images(self):
+        """Test when no images exist."""
+        image_client = mock.MagicMock()
+        image_client.images = []
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled.image_client",
+                new=image_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled import (
+                image_encryption_enabled,
+            )
+
+            check = image_encryption_enabled()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    def test_image_encryption_enabled(self):
+        """Test PASS when hw_mem_encryption is True."""
+        image_client = mock.MagicMock()
+        image_client.images = [
+            ImageResource(
+                id="img-1",
+                name="encrypted-image",
+                status="active",
+                visibility="private",
+                protected=False,
+                owner=OPENSTACK_PROJECT_ID,
+                img_signature=None,
+                img_signature_hash_method=None,
+                img_signature_key_type=None,
+                img_signature_certificate_uuid=None,
+                hw_mem_encryption=True,
+                os_secure_boot=None,
+                members=[],
+                tags=[],
+                project_id=OPENSTACK_PROJECT_ID,
+                region=OPENSTACK_REGION,
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled.image_client",
+                new=image_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled import (
+                image_encryption_enabled,
+            )
+
+            check = image_encryption_enabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == "Image encrypted-image (img-1) has hardware memory encryption enabled."
+            )
+            assert result[0].resource_id == "img-1"
+            assert result[0].resource_name == "encrypted-image"
+            assert result[0].region == OPENSTACK_REGION
+
+    def test_image_encryption_not_set(self):
+        """Test FAIL when hw_mem_encryption is None."""
+        image_client = mock.MagicMock()
+        image_client.images = [
+            ImageResource(
+                id="img-2",
+                name="unencrypted-image",
+                status="active",
+                visibility="private",
+                protected=False,
+                owner=OPENSTACK_PROJECT_ID,
+                img_signature=None,
+                img_signature_hash_method=None,
+                img_signature_key_type=None,
+                img_signature_certificate_uuid=None,
+                hw_mem_encryption=None,
+                os_secure_boot=None,
+                members=[],
+                tags=[],
+                project_id=OPENSTACK_PROJECT_ID,
+                region=OPENSTACK_REGION,
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled.image_client",
+                new=image_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled import (
+                image_encryption_enabled,
+            )
+
+            check = image_encryption_enabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "Image unencrypted-image (img-2) does not have hardware memory encryption enabled."
+            )
+
+    def test_image_encryption_false(self):
+        """Test FAIL when hw_mem_encryption is False."""
+        image_client = mock.MagicMock()
+        image_client.images = [
+            ImageResource(
+                id="img-3",
+                name="no-encrypt-image",
+                status="active",
+                visibility="private",
+                protected=False,
+                owner=OPENSTACK_PROJECT_ID,
+                img_signature=None,
+                img_signature_hash_method=None,
+                img_signature_key_type=None,
+                img_signature_certificate_uuid=None,
+                hw_mem_encryption=False,
+                os_secure_boot=None,
+                members=[],
+                tags=[],
+                project_id=OPENSTACK_PROJECT_ID,
+                region=OPENSTACK_REGION,
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled.image_client",
+                new=image_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled import (
+                image_encryption_enabled,
+            )
+
+            check = image_encryption_enabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+
+    def test_multiple_images_mixed(self):
+        """Test mixed results with encrypted and unencrypted images."""
+        image_client = mock.MagicMock()
+        base = dict(
+            status="active",
+            visibility="private",
+            protected=False,
+            owner=OPENSTACK_PROJECT_ID,
+            img_signature=None,
+            img_signature_hash_method=None,
+            img_signature_key_type=None,
+            img_signature_certificate_uuid=None,
+            os_secure_boot=None,
+            members=[],
+            tags=[],
+            project_id=OPENSTACK_PROJECT_ID,
+            region=OPENSTACK_REGION,
+        )
+        image_client.images = [
+            ImageResource(
+                id="img-enc", name="encrypted", hw_mem_encryption=True, **base
+            ),
+            ImageResource(
+                id="img-noenc", name="unencrypted", hw_mem_encryption=None, **base
+            ),
+            ImageResource(
+                id="img-false", name="false-enc", hw_mem_encryption=False, **base
+            ),
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled.image_client",
+                new=image_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled import (
+                image_encryption_enabled,
+            )
+
+            check = image_encryption_enabled()
+            result = check.execute()
+
+            assert len(result) == 3
+            assert result[0].status == "PASS"
+            assert result[1].status == "FAIL"
+            assert result[2].status == "FAIL"

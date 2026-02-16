@@ -1,0 +1,38 @@
+{
+  "Provider": "openstack",
+  "CheckID": "image_secure_boot_enabled",
+  "CheckTitle": "Images have Secure Boot set to required",
+  "CheckType": [],
+  "ServiceName": "image",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OpenStackImage",
+  "ResourceGroup": "storage",
+  "Description": "**OpenStack images** are evaluated to verify that the **os_secure_boot property is set to 'required'**. Secure Boot ensures that only signed and trusted bootloaders and firmware execute during the boot process, protecting against bootkits, rootkits, and firmware-level attacks. Best practices recommend requiring Secure Boot for all production workloads.",
+  "Risk": "Images without Secure Boot allow unauthorized bootloader and firmware modifications. Attackers can install bootkits or rootkits that persist across reboots and are invisible to operating system security tools. Without Secure Boot, compromised firmware can intercept all system operations including encryption key management.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/security-guide/image-storage/checklist.html",
+    "https://docs.openstack.org/nova/latest/admin/secure-boot.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack image set --property os_secure_boot=required <image_id>",
+      "NativeIaC": "",
+      "Other": "**Enable Secure Boot:**\n1. Verify the image supports UEFI boot mode\n2. Set the Secure Boot property: `openstack image set --property os_secure_boot=required <image_id>`\n3. Ensure the image also has `hw_firmware_type=uefi` set\n4. Use a compatible flavor and verify boot succeeds",
+      "Terraform": "```hcl\nresource \"openstack_images_image_v2\" \"image\" {\n  name             = \"secure-image\"\n  container_format = \"bare\"\n  disk_format      = \"qcow2\"\n  visibility       = \"private\"\n\n  properties = {\n    os_secure_boot   = \"required\"  # GOOD: Secure Boot required\n    hw_firmware_type = \"uefi\"      # Required for Secure Boot\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set os_secure_boot to 'required' on all production images. Ensure images use UEFI firmware type (hw_firmware_type=uefi). Test Secure Boot compatibility before enabling in production. Use signed bootloaders and kernel images.",
+      "Url": "https://hub.prowler.com/check/image_secure_boot_enabled"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check requires UEFI-capable compute nodes. Only the value 'required' passes; 'optional', 'disabled', and unset values all fail. Some legacy operating systems may not support Secure Boot. The image must also have hw_firmware_type=uefi for Secure Boot to function."
+}

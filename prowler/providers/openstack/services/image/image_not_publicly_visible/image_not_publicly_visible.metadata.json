@@ -1,0 +1,37 @@
+{
+  "Provider": "openstack",
+  "CheckID": "image_not_publicly_visible",
+  "CheckTitle": "Images are not publicly visible to all tenants",
+  "CheckType": [],
+  "ServiceName": "image",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OpenStackImage",
+  "ResourceGroup": "storage",
+  "Description": "**OpenStack images** are evaluated to verify that **visibility is not set to 'public'**. Public images are accessible to all tenants in the cloud, potentially exposing operating system configurations, embedded credentials, proprietary software, and security hardening details. Best practices recommend keeping images private or shared only with specific trusted projects.",
+  "Risk": "Public images expose operating system configurations, embedded credentials, and proprietary software to all tenants. Attackers can analyze public images to discover vulnerabilities, extract secrets, or clone them for malicious purposes. Public images may also violate compliance requirements for data isolation between tenants.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/security-guide/image-storage/checklist.html",
+    "https://docs.openstack.org/glance/latest/admin/manage-images.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack image set --private <image_id>",
+      "NativeIaC": "",
+      "Other": "**Change visibility via Horizon:**\n1. Navigate to **Project > Compute > Images**\n2. Select the public image\n3. Click **Edit Image**\n4. Change Visibility to **Private**\n5. Click **Update Image**",
+      "Terraform": "```hcl\nresource \"openstack_images_image_v2\" \"image\" {\n  name             = \"app-image\"\n  container_format = \"bare\"\n  disk_format      = \"qcow2\"\n  visibility       = \"private\"  # GOOD: Not publicly visible\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set image visibility to 'private' or 'shared' with specific trusted projects. Regularly audit image visibility settings. Implement policies to prevent creation of public images in production environments.",
+      "Url": "https://hub.prowler.com/check/image_not_publicly_visible"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check flags images where visibility is set to 'public'. Images with visibility 'private', 'shared', or 'community' will pass. Community images are visible to all but require explicit opt-in and are considered acceptable in most environments."
+}
