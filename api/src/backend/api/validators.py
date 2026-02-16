@@ -1,3 +1,4 @@
+import re
 import string
 
 from django.core.exceptions import ValidationError
@@ -108,3 +109,69 @@ class NumericValidator:
         return _(
             f"Your password must contain at least {self.min_numeric} numeric character."
         )
+
+
+def _parse_cron_base(value: str, min_value: int, max_value: int) -> None:
+    if value == "*":
+        return
+
+    if "-" in value:
+        range_parts = value.split("-", 1)
+        if len(range_parts) != 2 or not range_parts[0] or not range_parts[1]:
+            raise ValidationError("Invalid cron expression.")
+        if not range_parts[0].isdigit() or not range_parts[1].isdigit():
+            raise ValidationError("Invalid cron expression.")
+
+        start = int(range_parts[0])
+        end = int(range_parts[1])
+        if start > end or start < min_value or end > max_value:
+            raise ValidationError("Invalid cron expression.")
+        return
+
+    if not value.isdigit():
+        raise ValidationError("Invalid cron expression.")
+
+    number = int(value)
+    if number < min_value or number > max_value:
+        raise ValidationError("Invalid cron expression.")
+
+
+def _validate_cron_field(value: str, min_value: int, max_value: int) -> None:
+    if not value:
+        raise ValidationError("Invalid cron expression.")
+
+    if not re.fullmatch(r"[\d*/,\-]+", value):
+        raise ValidationError("Invalid cron expression.")
+
+    items = value.split(",")
+    if any(not item for item in items):
+        raise ValidationError("Invalid cron expression.")
+
+    for item in items:
+        if "/" in item:
+            step_parts = item.split("/", 1)
+            if len(step_parts) != 2 or not step_parts[0] or not step_parts[1]:
+                raise ValidationError("Invalid cron expression.")
+
+            base, step = step_parts
+            if not step.isdigit() or int(step) <= 0:
+                raise ValidationError("Invalid cron expression.")
+
+            _parse_cron_base(base, min_value, max_value)
+            continue
+
+        _parse_cron_base(item, min_value, max_value)
+
+
+def cron_5_fields_validator(value: str) -> None:
+    if not isinstance(value, str):
+        raise ValidationError("Invalid cron expression.")
+
+    parts = value.strip().split()
+    if len(parts) != 5:
+        raise ValidationError("Cron expression must contain exactly 5 fields in UTC.")
+
+    # minute hour day-of-month month day-of-week
+    field_ranges = ((0, 59), (0, 23), (1, 31), (1, 12), (0, 7))
+    for part, (min_value, max_value) in zip(parts, field_ranges, strict=False):
+        _validate_cron_field(part, min_value, max_value)
