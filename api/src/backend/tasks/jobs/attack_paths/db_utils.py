@@ -134,6 +134,23 @@ def set_graph_data_ready(
         attack_paths_scan.save(update_fields=["graph_data_ready"])
 
 
+def set_provider_graph_data_ready(
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
+    ready: bool,
+) -> None:
+    """
+    Set `graph_data_ready` for ALL scans of the same provider.
+
+    Used before drop/sync so that older scan IDs cannot bypass the query gate while the graph is being replaced.
+    """
+    with rls_transaction(attack_paths_scan.tenant_id):
+        ProwlerAPIAttackPathsScan.objects.filter(
+            tenant_id=attack_paths_scan.tenant_id,
+            provider_id=attack_paths_scan.provider_id,
+        ).update(graph_data_ready=ready)
+        attack_paths_scan.refresh_from_db(fields=["graph_data_ready"])
+
+
 def fail_attack_paths_scan(
     tenant_id: str,
     scan_id: str,

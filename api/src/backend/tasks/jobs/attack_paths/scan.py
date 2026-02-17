@@ -169,7 +169,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             sync.create_sync_indexes(tenant_neo4j_session)
 
         logger.info(f"Deleting existing provider graph in {tenant_database_name}")
-        db_utils.set_graph_data_ready(attack_paths_scan, False)
+        db_utils.set_provider_graph_data_ready(attack_paths_scan, False)
         graph_database.drop_subgraph(
             database=tenant_database_name,
             provider_id=str(prowler_api_provider.id),
