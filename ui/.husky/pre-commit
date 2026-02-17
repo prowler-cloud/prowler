@@ -164,10 +164,11 @@ echo -e "${BLUE}🧪 Running unit tests...${NC}"
 echo ""
 
 # Get staged source files (exclude test files)
-STAGED_SOURCE_FILES=$(git diff --cached --name-only --diff-filter=ACM -- 'ui/**/*.ts' 'ui/**/*.tsx' | grep -v '\.test\.\|\.spec\.\|vitest\.config\|vitest\.setup' | sed 's|^ui/||' || true)
+# Note: we already cd'd into ui/, so pathspecs are relative (no ui/ prefix)
+STAGED_SOURCE_FILES=$(git diff --cached --name-only --diff-filter=ACM -- '*.ts' '*.tsx' | grep -v '\.test\.\|\.spec\.\|vitest\.config\|vitest\.setup' || true)
 
 # Check if critical paths changed (lib/, types/, config/)
-CRITICAL_PATHS_CHANGED=$(git diff --cached --name-only -- 'ui/lib/**' 'ui/types/**' 'ui/config/**' 'ui/middleware.ts' 'ui/vitest.config.ts' 'ui/vitest.setup.ts' || true)
+CRITICAL_PATHS_CHANGED=$(git diff --cached --name-only -- 'lib/**' 'types/**' 'config/**' 'middleware.ts' 'vitest.config.ts' 'vitest.setup.ts' || true)
 
 if [ -n "$CRITICAL_PATHS_CHANGED" ]; then
   echo -e "${YELLOW}Critical paths changed - running ALL unit tests${NC}"
@@ -186,6 +187,7 @@ elif [ -n "$STAGED_SOURCE_FILES" ]; then
   echo -e "${YELLOW}Running tests related to changed files:${NC}"
   echo "$STAGED_SOURCE_FILES" | while IFS= read -r file; do [ -n "$file" ] && echo "  - $file"; done
   echo ""
+  # shellcheck disable=SC2086 # Word splitting is intentional - vitest needs each file as separate arg
   if pnpm exec vitest related $STAGED_SOURCE_FILES --run; then
     echo ""
     echo -e "${GREEN}✅ Unit tests passed${NC}"
