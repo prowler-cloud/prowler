@@ -153,6 +153,8 @@ class OciRegistryAdapter(RegistryAdapter):
         Returns (username, password) — decoded if the password is a base64 token
         containing 'username:real_password', otherwise returned as-is.
         """
+        if not self.password:
+            return self.username, self.password
         try:
             decoded = base64.b64decode(self.password).decode("utf-8")
             if decoded.startswith(f"{self.username}:"):
@@ -162,6 +164,17 @@ class OciRegistryAdapter(RegistryAdapter):
         return self.username, self.password
 
     def _authed_request(self, method: str, url: str, **kwargs) -> requests.Response:
+        resp = self._do_authed_request(method, url, **kwargs)
+        if resp.status_code == 401 and self._bearer_token:
+            logger.debug(
+                f"Bearer token rejected (HTTP 401), re-authenticating to {self.registry_url}"
+            )
+            self._bearer_token = None
+            self._ensure_auth()
+            resp = self._do_authed_request(method, url, **kwargs)
+        return resp
+
+    def _do_authed_request(self, method: str, url: str, **kwargs) -> requests.Response:
         headers = kwargs.pop("headers", {})
         if self._bearer_token:
             headers["Authorization"] = f"Bearer {self._bearer_token}"

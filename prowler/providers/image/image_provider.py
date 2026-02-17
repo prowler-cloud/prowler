@@ -41,6 +41,7 @@ from prowler.providers.image.lib.arguments.arguments import (
     SCANNERS_CHOICES,
     SEVERITY_CHOICES,
 )
+from prowler.providers.image.lib.registry.dockerhub_adapter import DockerHubAdapter
 from prowler.providers.image.lib.registry.factory import create_registry_adapter
 
 
@@ -814,10 +815,6 @@ class ImageProvider(Provider):
             return
 
         # Determine if this is a Docker Hub adapter (for image reference format)
-        from prowler.providers.image.lib.registry.dockerhub_adapter import (
-            DockerHubAdapter,
-        )
-
         is_dockerhub = isinstance(adapter, DockerHubAdapter)
 
         discovered_images = []

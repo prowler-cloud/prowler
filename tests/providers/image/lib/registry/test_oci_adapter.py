@@ -153,6 +153,48 @@ class TestOciAdapterAuth:
         call_kwargs = mock_request.call_args_list[1][1]
         assert call_kwargs.get("auth") == ("AWS", raw_password)
 
+    def test_resolve_basic_credentials_none_password(self):
+        adapter = OciRegistryAdapter("ecr.aws", username="AWS", password=None)
+        user, pwd = adapter._resolve_basic_credentials()
+        assert user == "AWS"
+        assert pwd is None
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_authed_request_retries_on_401_with_bearer(self, mock_request):
+        adapter = OciRegistryAdapter("reg.io", username="u", password="p")
+        adapter._bearer_token = "expired-token"
+        # First request: 401 (expired token)
+        resp_401 = MagicMock(status_code=401)
+        # _ensure_auth ping: 401 with bearer challenge
+        ping_resp = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": 'Bearer realm="https://auth.reg.io/token",service="registry"'
+            },
+        )
+        # Token exchange: success
+        token_resp = MagicMock(status_code=200)
+        token_resp.json.return_value = {"token": "new-token"}
+        # Second request: 200 (new token works)
+        resp_200 = MagicMock(status_code=200)
+        mock_request.side_effect = [resp_401, ping_resp, token_resp, resp_200]
+        result = adapter._authed_request("GET", "https://reg.io/v2/myapp/tags/list")
+        assert result.status_code == 200
+        assert adapter._bearer_token == "new-token"
+        assert mock_request.call_count == 4
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_authed_request_no_retry_on_401_without_bearer(self, mock_request):
+        adapter = OciRegistryAdapter("reg.io", username="u", password="p")
+        adapter._basic_auth_verified = True
+        # No bearer token — using basic auth
+        resp_401 = MagicMock(status_code=401)
+        mock_request.return_value = resp_401
+        result = adapter._authed_request("GET", "https://reg.io/v2/_catalog")
+        assert result.status_code == 401
+        # Should only be called once (no retry for basic auth)
+        assert mock_request.call_count == 1
+
 
 class TestOciAdapterListRepositories:
     @patch("prowler.providers.image.lib.registry.base.requests.request")
