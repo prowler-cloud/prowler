@@ -1179,6 +1179,11 @@ class TestProviderViewSet:
                     "uid": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
                     "alias": "Cloudflare Account",
                 },
+                {
+                    "provider": "openstack",
+                    "uid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                    "alias": "OpenStack Project",
+                },
             ]
         ),
     )
@@ -1598,6 +1603,26 @@ class TestProviderViewSet:
                     "cloudflare-uid",
                     "uid",
                 ),
+                # OpenStack UID validation - starts with special character
+                (
+                    {
+                        "provider": "openstack",
+                        "uid": "-invalid-project",
+                        "alias": "test",
+                    },
+                    "openstack-uid",
+                    "uid",
+                ),
+                # OpenStack UID validation - too short (below min_length)
+                (
+                    {
+                        "provider": "openstack",
+                        "uid": "ab",
+                        "alias": "test",
+                    },
+                    "min_length",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -1771,21 +1796,21 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    9,
+                    10,
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 10),
+                ("inserted_at", TODAY, 11),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    10,
+                    11,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    10,
+                    11,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2390,6 +2415,15 @@ class TestProviderSecretViewSet:
                 {
                     "api_key": "fake-cloudflare-api-key-for-testing",
                     "api_email": "user@example.com",
+                },
+            ),
+            # OpenStack with clouds.yaml content
+            (
+                Provider.ProviderChoices.OPENSTACK.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "clouds_yaml_content": "clouds:\n  mycloud:\n    auth:\n      auth_url: https://openstack.example.com:5000/v3\n",
+                    "clouds_yaml_cloud": "mycloud",
                 },
             ),
         ],
@@ -3888,7 +3922,6 @@ class TestAttackPathsScanViewSet:
         attack_paths_scan = create_attack_paths_scan(
             provider,
             scan=scans_fixture[0],
-            graph_database="tenant-db",
         )
         query_definition = AttackPathsQueryDefinition(
             id="aws-rds",
@@ -3919,10 +3952,16 @@ class TestAttackPathsScanViewSet:
             ],
         }
 
+        expected_db_name = f"db-tenant-{attack_paths_scan.provider.tenant_id}"
+
         with (
             patch(
                 "api.v1.views.get_query_by_id", return_value=query_definition
             ) as mock_get_query,
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value=expected_db_name,
+            ) as mock_get_db_name,
             patch(
                 "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
                 return_value=prepared_parameters,
@@ -3944,17 +3983,18 @@ class TestAttackPathsScanViewSet:
 
         assert response.status_code == status.HTTP_200_OK
         mock_get_query.assert_called_once_with("aws-rds")
+        mock_get_db_name.assert_called_once_with(attack_paths_scan.provider.tenant_id)
         mock_prepare.assert_called_once_with(
             query_definition,
             {},
             attack_paths_scan.provider.uid,
         )
         mock_execute.assert_called_once_with(
-            attack_paths_scan,
+            expected_db_name,
             query_definition,
             prepared_parameters,
         )
-        mock_clear_cache.assert_called_once_with(attack_paths_scan.graph_database)
+        mock_clear_cache.assert_called_once_with(expected_db_name)
         result = response.json()["data"]
         attributes = result["attributes"]
         assert attributes["nodes"] == graph_payload["nodes"]
@@ -3984,31 +4024,6 @@ class TestAttackPathsScanViewSet:
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "must be completed" in response.json()["errors"][0]["detail"]
-
-    def test_run_attack_paths_query_requires_graph_database(
-        self,
-        authenticated_client,
-        providers_fixture,
-        scans_fixture,
-        create_attack_paths_scan,
-    ):
-        provider = providers_fixture[0]
-        attack_paths_scan = create_attack_paths_scan(
-            provider,
-            scan=scans_fixture[0],
-            graph_database=None,
-        )
-
-        response = authenticated_client.post(
-            reverse(
-                "attack-paths-scans-queries-run", kwargs={"pk": attack_paths_scan.id}
-            ),
-            data=self._run_payload(),
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-
-        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert "does not reference a graph database" in str(response.json())
 
     def test_run_attack_paths_query_unknown_query(
         self,
@@ -10844,25 +10859,20 @@ class TestTenantFinishACSView:
             assert "sso_saml_failed=true" in response.url
 
     def test_dispatch_skips_role_mapping_when_single_manage_account_user(
-        self, create_test_user, tenants_fixture, saml_setup, settings, monkeypatch
+        self,
+        create_test_user,
+        tenants_fixture,
+        admin_role_fixture,
+        saml_setup,
+        settings,
+        monkeypatch,
     ):
         """Test that role mapping is skipped when tenant has only one user with MANAGE_ACCOUNT role"""
         monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
         user = create_test_user
         tenant = tenants_fixture[0]
 
-        # Create a single role with manage_account=True for the user
-        admin_role = Role.objects.using(MainRouter.admin_db).create(
-            name="admin",
-            tenant=tenant,
-            manage_account=True,
-            manage_users=True,
-            manage_billing=True,
-            manage_providers=True,
-            manage_integrations=True,
-            manage_scans=True,
-            unlimited_visibility=True,
-        )
+        admin_role = admin_role_fixture
         UserRoleRelationship.objects.using(MainRouter.admin_db).create(
             user=user, role=admin_role, tenant_id=tenant.id
         )
@@ -10933,34 +10943,25 @@ class TestTenantFinishACSView:
             .exists()
         )
 
-    def test_dispatch_applies_role_mapping_when_multiple_manage_account_users(
-        self, create_test_user, tenants_fixture, saml_setup, settings, monkeypatch
+    def test_dispatch_skips_role_mapping_when_last_manage_account_user_maps_to_existing_role(
+        self,
+        create_test_user,
+        tenants_fixture,
+        admin_role_fixture,
+        roles_fixture,
+        saml_setup,
+        settings,
+        monkeypatch,
     ):
-        """Test that role mapping is applied when tenant has multiple users with MANAGE_ACCOUNT role"""
+        """Test that role mapping is skipped when it would remove the last MANAGE_ACCOUNT user"""
         monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
         user = create_test_user
         tenant = tenants_fixture[0]
 
-        # Create a second user with manage_account=True
-        second_admin = User.objects.using(MainRouter.admin_db).create(
-            email="admin2@prowler.com", name="Second Admin"
-        )
-        admin_role = Role.objects.using(MainRouter.admin_db).create(
-            name="admin",
-            tenant=tenant,
-            manage_account=True,
-            manage_users=True,
-            manage_billing=True,
-            manage_providers=True,
-            manage_integrations=True,
-            manage_scans=True,
-            unlimited_visibility=True,
-        )
+        admin_role = admin_role_fixture
+        viewer_role = roles_fixture[3]
         UserRoleRelationship.objects.using(MainRouter.admin_db).create(
             user=user, role=admin_role, tenant_id=tenant.id
-        )
-        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-            user=second_admin, role=admin_role, tenant_id=tenant.id
         )
 
         social_account = SocialAccount(
@@ -10970,7 +10971,7 @@ class TestTenantFinishACSView:
                 "firstName": ["John"],
                 "lastName": ["Doe"],
                 "organization": ["testing_company"],
-                "userType": ["viewer"],  # This SHOULD be applied
+                "userType": [viewer_role.name],
             },
         )
 
@@ -11008,10 +11009,91 @@ class TestTenantFinishACSView:
 
         assert response.status_code == 302
 
-        # Verify the viewer role was created and assigned (role mapping was applied)
-        viewer_role = Role.objects.using(MainRouter.admin_db).get(
-            name="viewer", tenant=tenant
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, role=admin_role, tenant_id=tenant.id)
+            .exists()
         )
+        assert not (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, role=viewer_role, tenant_id=tenant.id)
+            .exists()
+        )
+
+    def test_dispatch_applies_role_mapping_when_multiple_manage_account_users(
+        self,
+        create_test_user,
+        tenants_fixture,
+        admin_role_fixture,
+        roles_fixture,
+        saml_setup,
+        settings,
+        monkeypatch,
+    ):
+        """Test that role mapping is applied when tenant has multiple users with MANAGE_ACCOUNT role"""
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+        user = create_test_user
+        tenant = tenants_fixture[0]
+
+        # Create a second user with manage_account=True
+        second_admin = User.objects.using(MainRouter.admin_db).create(
+            email="admin2@prowler.com", name="Second Admin"
+        )
+        admin_role = admin_role_fixture
+        viewer_role = roles_fixture[3]
+        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+            user=user, role=admin_role, tenant_id=tenant.id
+        )
+        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+            user=second_admin, role=admin_role, tenant_id=tenant.id
+        )
+
+        social_account = SocialAccount(
+            user=user,
+            provider="saml",
+            extra_data={
+                "firstName": ["John"],
+                "lastName": ["Doe"],
+                "organization": ["testing_company"],
+                "userType": [viewer_role.name],  # This SHOULD be applied
+            },
+        )
+
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+        )
+        request.user = user
+        request.session = {}
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch(
+                "allauth.socialaccount.models.SocialApp.objects.get"
+            ) as mock_socialapp_get,
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_sa_get,
+            patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
+            patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
+            patch("api.models.User.objects.get") as mock_user_get,
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml", client_id="testtenant", name="Test App", settings={}
+            )
+            mock_sa_get.return_value = social_account
+            mock_socialapp_get.return_value = MagicMock(provider_id="saml")
+            mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
+            mock_saml_config_get.return_value = MagicMock()
+            mock_user_get.return_value = user
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug="testtenant")
+
+        assert response.status_code == 302
+
+        # Verify the viewer role was assigned (role mapping was applied)
         assert (
             UserRoleRelationship.objects.using(MainRouter.admin_db)
             .filter(user=user, role=viewer_role, tenant_id=tenant.id)
@@ -11022,6 +11104,86 @@ class TestTenantFinishACSView:
         assert not (
             UserRoleRelationship.objects.using(MainRouter.admin_db)
             .filter(user=user, role=admin_role, tenant_id=tenant.id)
+            .exists()
+        )
+
+    def test_dispatch_applies_role_mapping_for_non_admin_user_with_single_admin(
+        self,
+        create_test_user,
+        tenants_fixture,
+        admin_role_fixture,
+        roles_fixture,
+        saml_setup,
+        settings,
+        monkeypatch,
+    ):
+        """Test that role mapping is applied for a non-admin user when a single admin exists"""
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+        admin_user = create_test_user
+        tenant = tenants_fixture[0]
+        non_admin_user = User.objects.using(MainRouter.admin_db).create(
+            email="viewer@prowler.com", name="Viewer"
+        )
+
+        admin_role = admin_role_fixture
+        viewer_role = roles_fixture[3]
+        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+            user=admin_user, role=admin_role, tenant_id=tenant.id
+        )
+
+        social_account = SocialAccount(
+            user=non_admin_user,
+            provider="saml",
+            extra_data={
+                "firstName": ["Jane"],
+                "lastName": ["Doe"],
+                "organization": ["testing_company"],
+                "userType": [viewer_role.name],
+            },
+        )
+
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+        )
+        request.user = non_admin_user
+        request.session = {}
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch(
+                "allauth.socialaccount.models.SocialApp.objects.get"
+            ) as mock_socialapp_get,
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_sa_get,
+            patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
+            patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
+            patch("api.models.User.objects.get") as mock_user_get,
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml", client_id="testtenant", name="Test App", settings={}
+            )
+            mock_sa_get.return_value = social_account
+            mock_socialapp_get.return_value = MagicMock(provider_id="saml")
+            mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
+            mock_saml_config_get.return_value = MagicMock()
+            mock_user_get.return_value = non_admin_user
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug="testtenant")
+
+        assert response.status_code == 302
+
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=non_admin_user, role=viewer_role, tenant_id=tenant.id)
+            .exists()
+        )
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=admin_user, role=admin_role, tenant_id=tenant.id)
             .exists()
         )
 

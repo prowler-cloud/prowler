@@ -5,7 +5,6 @@ from typing import Any, Iterable
 from rest_framework.exceptions import APIException, ValidationError
 
 from api.attack_paths import database as graph_database, AttackPathsQueryDefinition
-from api.models import AttackPathsScan
 from config.custom_logging import BackendLogger
 from tasks.jobs.attack_paths.config import INTERNAL_LABELS
 
@@ -80,12 +79,12 @@ def prepare_query_parameters(
 
 
 def execute_attack_paths_query(
-    attack_paths_scan: AttackPathsScan,
+    database_name: str,
     definition: AttackPathsQueryDefinition,
     parameters: dict[str, Any],
 ) -> dict[str, Any]:
     try:
-        with graph_database.get_session(attack_paths_scan.graph_database) as session:
+        with graph_database.get_session(database_name) as session:
             result = session.run(definition.cypher, parameters)
             return _serialize_graph(result.graph())
 

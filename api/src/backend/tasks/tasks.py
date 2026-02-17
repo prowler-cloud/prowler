@@ -12,6 +12,7 @@ from tasks.jobs.attack_paths import (
     attack_paths_scan,
     can_provider_run_attack_paths_scan,
 )
+from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
     backfill_daily_severity_summaries,
@@ -359,8 +360,25 @@ def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
 
 
+class AttackPathsScanRLSTask(RLSTask):
+    """
+    RLS task that marks the `AttackPathsScan` DB row as `FAILED` when the Celery task fails.
+
+    Covers failures that happen outside the job's own try/except (e.g. provider lookup,
+    SDK initialization, or Neo4j configuration errors during setup).
+    """
+
+    def on_failure(self, exc, task_id, args, kwargs, _einfo):
+        tenant_id = kwargs.get("tenant_id")
+        scan_id = kwargs.get("scan_id")
+
+        if tenant_id and scan_id:
+            logger.error(f"Attack paths scan task {task_id} failed: {exc}")
+            attack_paths_db_utils.fail_attack_paths_scan(tenant_id, scan_id, str(exc))
+
+
 @shared_task(
-    base=RLSTask,
+    base=AttackPathsScanRLSTask,
     bind=True,
     name="attack-paths-scan-perform",
     queue="attack-paths-scans",
@@ -888,11 +906,11 @@ def jira_integration_task(
 @handle_provider_deletion
 def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: str):
     """
-    Optimized task to generate ThreatScore, ENS, and NIS2 reports with shared queries.
+    Optimized task to generate ThreatScore, ENS, NIS2, and CSA CCM reports with shared queries.
 
     This task is more efficient than running separate report tasks because it reuses database queries:
-    - Provider object fetched once (instead of three times)
-    - Requirement statistics aggregated once (instead of three times)
+    - Provider object fetched once (instead of multiple times)
+    - Requirement statistics aggregated once (instead of multiple times)
     - Can reduce database load by up to 50-70%
 
     Args:
@@ -910,6 +928,7 @@ def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: 
         generate_threatscore=True,
         generate_ens=True,
         generate_nis2=True,
+        generate_csa=True,
     )
 
 

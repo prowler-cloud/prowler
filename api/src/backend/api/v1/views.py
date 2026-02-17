@@ -763,27 +763,40 @@ class TenantFinishACSView(FinishACSView):
             .tenant
         )
 
-        # Check if tenant has only one user with MANAGE_ACCOUNT role
-        users_with_manage_account = (
+        role_name = (
+            extra.get("userType", ["no_permissions"])[0].strip()
+            if extra.get("userType")
+            else "no_permissions"
+        )
+        role = (
+            Role.objects.using(MainRouter.admin_db)
+            .filter(name=role_name, tenant=tenant)
+            .first()
+        )
+
+        # Only skip mapping if it would remove the last MANAGE_ACCOUNT user
+        remaining_manage_account_users = (
             UserRoleRelationship.objects.using(MainRouter.admin_db)
             .filter(role__manage_account=True, tenant_id=tenant.id)
+            .exclude(user_id=user_id)
             .values("user")
             .distinct()
             .count()
         )
+        user_has_manage_account = (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(role__manage_account=True, tenant_id=tenant.id, user_id=user_id)
+            .exists()
+        )
+        role_manage_account = role.manage_account if role else False
+        would_remove_last_manage_account = (
+            user_has_manage_account
+            and remaining_manage_account_users == 0
+            and not role_manage_account
+        )
 
-        # Only apply role mapping from userType if tenant does NOT have exactly one user with MANAGE_ACCOUNT
-        if users_with_manage_account != 1:
-            role_name = (
-                extra.get("userType", ["no_permissions"])[0].strip()
-                if extra.get("userType")
-                else "no_permissions"
-            )
-            try:
-                role = Role.objects.using(MainRouter.admin_db).get(
-                    name=role_name, tenant=tenant
-                )
-            except Role.DoesNotExist:
+        if not would_remove_last_manage_account:
+            if role is None:
                 role = Role.objects.using(MainRouter.admin_db).create(
                     name=role_name,
                     tenant=tenant,
@@ -1746,6 +1759,25 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             ),
         },
     ),
+    csa=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve CSA CCM compliance report",
+        description="Download CSA Cloud Controls Matrix (CCM) v4.0 compliance report as a PDF file.",
+        request=None,
+        responses={
+            200: OpenApiResponse(
+                description="PDF file containing the CSA CCM compliance report"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            401: OpenApiResponse(
+                description="API key missing or user not Authenticated"
+            ),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="The scan has no CSA CCM reports, or the CSA CCM report generation task has not started yet"
+            ),
+        },
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1809,6 +1841,9 @@ class ScanViewSet(BaseRLSViewSet):
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
         elif self.action == "nis2":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
+        elif self.action == "csa":
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
         return super().get_serializer_class()
@@ -2172,6 +2207,45 @@ class ScanViewSet(BaseRLSViewSet):
         content, filename = loader
         return self._serve_file(content, filename, "application/pdf")
 
+    @action(
+        detail=True,
+        methods=["get"],
+        url_name="csa",
+    )
+    def csa(self, request, pk=None):
+        scan = self.get_object()
+        running_resp = self._get_task_status(scan)
+        if running_resp:
+            return running_resp
+
+        if not scan.output_location:
+            return Response(
+                {
+                    "detail": "The scan has no reports, or the CSA CCM report generation task has not started yet."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if scan.output_location.startswith("s3://"):
+            bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+            key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
+            prefix = os.path.join(
+                os.path.dirname(key_prefix),
+                "csa",
+                "*_csa_report.pdf",
+            )
+            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+        else:
+            base = os.path.dirname(scan.output_location)
+            pattern = os.path.join(base, "csa", "*_csa_report.pdf")
+            loader = self._load_file(pattern, s3=False)
+
+        if isinstance(loader, Response):
+            return loader
+
+        content, filename = loader
+        return self._serve_file(content, filename, "application/pdf")
+
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
@@ -2415,15 +2489,6 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
                 }
             )
 
-        if not attack_paths_scan.graph_database:
-            logger.error(
-                f"The Attack Paths Scan {attack_paths_scan.id} does not reference a graph database"
-            )
-            return Response(
-                {"detail": "The Attack Paths scan does not reference a graph database"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
         payload = attack_paths_views_helpers.normalize_run_payload(request.data)
         serializer = AttackPathsQueryRunRequestSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
@@ -2437,6 +2502,9 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
                 {"id": "Unknown Attack Paths query for the selected provider"}
             )
 
+        database_name = graph_database.get_database_name(
+            attack_paths_scan.provider.tenant_id
+        )
         parameters = attack_paths_views_helpers.prepare_query_parameters(
             query_definition,
             serializer.validated_data.get("parameters", {}),
@@ -2444,9 +2512,9 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         )
 
         graph = attack_paths_views_helpers.execute_attack_paths_query(
-            attack_paths_scan, query_definition, parameters
+            database_name, query_definition, parameters
         )
-        graph_database.clear_cache(attack_paths_scan.graph_database)
+        graph_database.clear_cache(database_name)
 
         status_code = status.HTTP_200_OK
         if not graph.get("nodes"):

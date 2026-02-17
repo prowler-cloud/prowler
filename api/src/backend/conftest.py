@@ -537,6 +537,12 @@ def providers_fixture(tenants_fixture):
         alias="cloudflare_testing",
         tenant_id=tenant.id,
     )
+    provider11 = Provider.objects.create(
+        provider="openstack",
+        uid="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        alias="openstack_testing",
+        tenant_id=tenant.id,
+    )
 
     return (
         provider1,
@@ -549,6 +555,7 @@ def providers_fixture(tenants_fixture):
         provider8,
         provider9,
         provider10,
+        provider11,
     )
 
 
@@ -1618,7 +1625,6 @@ def create_attack_paths_scan():
         scan=None,
         state=StateChoices.COMPLETED,
         progress=0,
-        graph_database="tenant-db",
         **extra_fields,
     ):
         scan_instance = scan or Scan.objects.create(
@@ -1635,7 +1641,6 @@ def create_attack_paths_scan():
             "scan": scan_instance,
             "state": state,
             "progress": progress,
-            "graph_database": graph_database,
         }
         payload.update(extra_fields)
 
