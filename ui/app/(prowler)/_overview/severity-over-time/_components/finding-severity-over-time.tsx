@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { getSeverityTrendsByTimeRange } from "@/actions/overview/severity-trends";
 import { LineChart } from "@/components/graphs/line-chart";
@@ -28,6 +28,12 @@ export const FindingSeverityOverTime = ({
   const [data, setData] = useState<LineDataPoint[]>(initialData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync data when SSR re-delivers filtered results (e.g. provider/account filter change)
+  useEffect(() => {
+    setData(initialData);
+    setError(null);
+  }, [initialData]);
 
   const handlePointClick = ({
     point,
@@ -78,8 +84,16 @@ export const FindingSeverityOverTime = ({
     setError(null);
 
     try {
+      // Forward active provider/account filters from the URL
+      const filters: Record<string, string> = {};
+      const providerType = searchParams.get("filter[provider_type__in]");
+      const providerId = searchParams.get("filter[provider_id__in]");
+      if (providerType) filters["filter[provider_type__in]"] = providerType;
+      if (providerId) filters["filter[provider_id__in]"] = providerId;
+
       const result = await getSeverityTrendsByTimeRange({
         timeRange: newRange,
+        filters,
       });
 
       if (result.status === "success") {
