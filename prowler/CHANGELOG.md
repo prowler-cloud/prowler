@@ -21,6 +21,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CSA CCM 4.0 for the Alibaba Cloud provider [(#10061)](https://github.com/prowler-cloud/prowler/pull/10061)
 - ECS Exec (ECS-006) privilege escalation detection via `ecs:ExecuteCommand` + `ecs:DescribeTasks` [(#10066)](https://github.com/prowler-cloud/prowler/pull/10066)
 - OpenStack network service with 6 security checks [(#9970)](https://github.com/prowler-cloud/prowler/pull/9970)
+- OpenStack image service with 6 security checks [(#10096)](https://github.com/prowler-cloud/prowler/pull/10096)
 
 ### 🔄 Changed
 
