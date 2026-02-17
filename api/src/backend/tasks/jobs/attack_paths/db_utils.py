@@ -28,12 +28,21 @@ def create_attack_paths_scan(
         return None
 
     with rls_transaction(tenant_id):
+        # Inherit graph_data_ready from the previous scan for this provider,
+        # so queries remain available while the new scan runs.
+        previous_data_ready = ProwlerAPIAttackPathsScan.objects.filter(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            graph_data_ready=True,
+        ).exists()
+
         attack_paths_scan = ProwlerAPIAttackPathsScan.objects.create(
             tenant_id=tenant_id,
             provider_id=provider_id,
             scan_id=scan_id,
             state=StateChoices.SCHEDULED,
             started_at=datetime.now(tz=timezone.utc),
+            graph_data_ready=previous_data_ready,
         )
         attack_paths_scan.save()
 
@@ -114,6 +123,32 @@ def update_attack_paths_scan_progress(
     with rls_transaction(attack_paths_scan.tenant_id):
         attack_paths_scan.progress = progress
         attack_paths_scan.save(update_fields=["progress"])
+
+
+def set_graph_data_ready(
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
+    ready: bool,
+) -> None:
+    with rls_transaction(attack_paths_scan.tenant_id):
+        attack_paths_scan.graph_data_ready = ready
+        attack_paths_scan.save(update_fields=["graph_data_ready"])
+
+
+def set_provider_graph_data_ready(
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
+    ready: bool,
+) -> None:
+    """
+    Set `graph_data_ready` for ALL scans of the same provider.
+
+    Used before drop/sync so that older scan IDs cannot bypass the query gate while the graph is being replaced.
+    """
+    with rls_transaction(attack_paths_scan.tenant_id):
+        ProwlerAPIAttackPathsScan.objects.filter(
+            tenant_id=attack_paths_scan.tenant_id,
+            provider_id=attack_paths_scan.provider_id,
+        ).update(graph_data_ready=ready)
+        attack_paths_scan.refresh_from_db(fields=["graph_data_ready"])
 
 
 def fail_attack_paths_scan(
