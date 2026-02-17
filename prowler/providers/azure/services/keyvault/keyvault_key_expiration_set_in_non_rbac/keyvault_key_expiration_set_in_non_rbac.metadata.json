@@ -8,15 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.keyvault/vaults",
-  "Description": "Azure Key Vaults using access policies (non-RBAC) are assessed to confirm all **enabled keys** have an `expiration` (`exp`) defined. The finding highlights keys in these vaults that lack a set lifetime.",
+  "ResourceGroup": "security",
+  "Description": "**Azure Key Vaults** using access **policies (non-RBAC)** are assessed to confirm all **enabled keys** have an `expiration` (`exp`) defined. The finding highlights keys in these vaults that lack a set lifetime.",
   "Risk": "Non-expiring keys enable indefinite use, degrading **confidentiality** and **integrity**. Stale or compromised keys can decrypt data, forge signatures, and maintain persistence. Absent lifetimes weaken rotation discipline and impede timely revocation, increasing exposure to cryptographic and operational drift.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://hub.steampipe.io/plugins/turbot/azure/queries/key_vault/keyvault_with_non_rbac_key_expiration_set",
-    "https://docs.microsoft.com/en-us/azure/key-vault/key-vault-whatis",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/set-an-expiration-date-on-all-keys#terraform",
-    "https://docs.microsoft.com/en-us/rest/api/keyvault/about-keys--secrets-and-certificates#key-vault-keys",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/KeyVault/key-expiration-check.html#"
+    "https://learn.microsoft.com/en-us/azure/key-vault/general/basic-concepts",
+    "https://learn.microsoft.com/en-us/azure/key-vault/general/about-keys-secrets-certificates#key-vault-keys",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/KeyVault/key-expiration-check.html#"
   ],
   "Remediation": {
     "Code": {

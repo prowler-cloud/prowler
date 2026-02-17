@@ -14,6 +14,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsAmazonMQBroker",
+  "ResourceGroup": "messaging",
   "Description": "**Amazon MQ brokers** are evaluated for **public accessibility**, determining whether a broker exposes a public endpoint or is restricted to VPC-only connectivity via its `publicly accessible` setting.",
   "Risk": "**Publicly reachable brokers** expand exposure: internet hosts can probe protocols and consoles, attempt credential spraying, publish/consume messages, and flood connections. This threatens **confidentiality** (data leakage), **integrity** (message tampering), and **availability** (DoS/resource exhaustion).",
   "RelatedUrl": "",

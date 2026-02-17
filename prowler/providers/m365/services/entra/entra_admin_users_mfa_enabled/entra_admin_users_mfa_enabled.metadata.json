@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
   "Description": "Ensure that multifactor authentication (MFA) is enabled for all users in administrative roles to enhance security and reduce the risk of unauthorized access.",
   "Risk": "Without MFA enabled for administrative roles, attackers could compromise privileged accounts with only a single authentication factor, increasing the risk of data breaches and unauthorized access to sensitive resources.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-admin-mfa",

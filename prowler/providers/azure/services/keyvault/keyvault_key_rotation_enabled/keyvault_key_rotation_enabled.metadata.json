@@ -1,21 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "keyvault_key_rotation_enabled",
-  "CheckTitle": "Azure Key Vault key has automatic rotation enabled",
+  "CheckTitle": "Key Vault key has automatic rotation enabled",
   "CheckType": [],
   "ServiceName": "keyvault",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.keyvault/vaults",
+  "ResourceGroup": "security",
   "Description": "**Azure Key Vault** keys configured with a **rotation policy** that includes a `Rotate` lifetime action.\n\nThe evaluation looks for lifetime actions that schedule automatic key version creation; keys without this policy are not configured for auto-rotation.",
   "Risk": "Without **auto-rotation**, keys may outlive policy, increasing exposure if material is leaked and weakening **confidentiality**.\n\nExpired keys without planned rollover can break decrypt/unwrap operations, impacting **availability**. Long-lived keys hinder incident response and enable prolonged misuse of stale versions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-us/azure/storage/common/customer-managed-keys-overview#update-the-key-version",
-    "https://docs.microsoft.com/en-us/azure/key-vault/keys/how-to-configure-key-rotation",
+    "https://learn.microsoft.com/en-us/azure/storage/common/customer-managed-keys-overview#update-the-key-version",
     "https://learn.microsoft.com/en-us/azure/key-vault/keys/how-to-configure-key-rotation",
-    "https://www.jorgebernhardt.com/bicep-azure-key-vault-rotation-policy/",
     "https://www.techtarget.com/searchcloudcomputing/tutorial/How-to-perform-and-automate-key-rotation-in-Azure-Key-Vault"
   ],
   "Remediation": {

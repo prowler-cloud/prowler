@@ -1,25 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "keyvault_rbac_enabled",
-  "CheckTitle": "Azure Key Vault uses Azure RBAC for access control",
+  "CheckTitle": "Key Vault uses Azure RBAC for access control",
   "CheckType": [],
   "ServiceName": "keyvault",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.keyvault/vaults",
+  "ResourceGroup": "security",
   "Description": "**Azure Key Vault** uses the **Azure RBAC permission model** for data-plane access to keys, secrets, and certificates, rather than legacy access policies.\n\nEvaluates whether data access is managed through role assignments at the vault.",
   "Risk": "Without **Azure RBAC**, data access relies on coarse access policies. **Control-plane Contributors** can grant themselves data-plane rights, enabling secret or key exfiltration and unauthorized crypto operations.\n\nLack of JIT and least-privilege weakens **confidentiality** and **integrity** and hinders auditing.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.azure.cn/en-us/key-vault/general/rbac-guide?tabs=azure-cli",
-    "https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide",
-    "https://docs.microsoft.com/en-gb/azure/key-vault/general/rbac-migration#vault-access-policy-to-azure-rbac-migration-steps",
-    "https://www.linkedin.com/pulse/cloud-diaries-day-8-lets-explore-creating-key-vault-storing-jahnavi-6rb7c",
-    "https://github.com/MicrosoftDocs/azure-security-docs/blob/main/articles/key-vault/general/rbac-guide.md",
-    "https://docs.microsoft.com/en-gb/azure/role-based-access-control/role-assignments-portal?tabs=current",
-    "https://video2.skills-academy.com/en-us/azure/key-vault/general/rbac-guide",
-    "https://aspire.dev/da/deployment/azure/azure-security-best-practices/"
+    "https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide?tabs=azure-cli",
+    "https://learn.microsoft.com/en-gb/azure/role-based-access-control/role-assignments-portal?tabs=current"
   ],
   "Remediation": {
     "Code": {

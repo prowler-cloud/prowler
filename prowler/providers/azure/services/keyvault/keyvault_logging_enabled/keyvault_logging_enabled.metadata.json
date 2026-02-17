@@ -1,26 +1,22 @@
 {
   "Provider": "azure",
   "CheckID": "keyvault_logging_enabled",
-  "CheckTitle": "Azure Key Vault has a diagnostic setting capturing audit logs",
+  "CheckTitle": "Key Vault has a diagnostic setting capturing audit logs",
   "CheckType": [],
   "ServiceName": "keyvault",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.keyvault/vaults",
+  "ResourceGroup": "security",
   "Description": "**Azure Key Vault** diagnostic settings capture **audit logs** (`AuditEvent`) when category groups `audit` and `allLogs` are enabled and routed to a supported destination. Logged events include management and data-plane operations on vaults, keys, secrets, and certificates.",
   "Risk": "Without **Key Vault audit logging**, access and changes to keys, secrets, and certificates are untracked.\n\nAttackers can misuse keys to decrypt data, alter or delete crypto material, and evade detection-eroding **confidentiality** and **integrity** and delaying **incident response**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-us/azure/key-vault/key-vault-logging",
-    "https://github.com/uglide/azure-content/blob/master/articles/log-analytics/log-analytics-azure-key-vault.md",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/KeyVault/enable-audit-event-logging-for-azure-key-vaults.html",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/KeyVault/enable-audit-event-logging-for-azure-key-vaults.html",
-    "https://www.pulumi.com/registry/packages/azure/api-docs/monitoring/diagnosticsetting/",
-    "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-8-ensure-security-of-key-and-certificate-repository",
-    "https://learn.microsoft.com/en-us/azure/key-vault/general/howto-logging",
-    "https://medium.com/azure-terraformer/decoding-azure-monitor-mastering-log-categories-and-category-groups-with-the-azure-portals-json-7c8f462b382a",
-    "http://man.hubwiz.com/docset/Terraform.docset/Contents/Resources/Documents/docs/providers/azurerm/r/monitor_diagnostic_setting.html"
+    "https://learn.microsoft.com/en-us/azure/key-vault/general/logging?tabs=Vault",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/KeyVault/enable-audit-event-logging-for-azure-key-vaults.html",
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-8-ensure-security-of-key-and-certificate-repository",
+    "https://learn.microsoft.com/en-us/azure/key-vault/general/howto-logging?tabs=azure-cli"
   ],
   "Remediation": {
     "Code": {

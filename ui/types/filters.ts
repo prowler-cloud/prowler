@@ -35,4 +35,5 @@ export enum FilterType {
   STATUS = "status__in",
   DELTA = "delta__in",
   CATEGORY = "category__in",
+  RESOURCE_GROUPS = "resource_groups__in",
 }

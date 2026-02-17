@@ -8,19 +8,16 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.keyvault/vaults",
-  "Description": "**RBAC-enabled Azure Key Vaults** are evaluated to confirm every **enabled key** defines an **expiration** (`exp`). Any key lacking this attribute is identified.",
+  "ResourceGroup": "security",
+  "Description": "**Azure Key Vaults** with **RBAC-enabled access control** are evaluated to confirm every **enabled key** defines an **expiration** (`exp`). Any key lacking this attribute is identified.",
   "Risk": "**Keys without expiration** can remain active indefinitely.\nIf exposed, attackers can decrypt data, forge signatures (code/tokens), and maintain persistence, undermining **confidentiality** and **integrity**. Absent end-of-life also weakens rotation discipline and crypto agility.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-us/azure/key-vault/key-vault-whatis",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/set-an-expiration-date-on-all-keys#terraform",
-    "https://docs.microsoft.com/en-us/rest/api/keyvault/about-keys--secrets-and-certificates#key-vault-keys",
-    "https://emilyvanputten.com/enforce-or-audit-key-vault-requirements-of-certificates-secrets-and-keys-by-leveraging-azure-policy/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/KeyVault/key-expiration-check.html#",
-    "https://cran.r-project.org/web/packages/AzureKeyVault/AzureKeyVault.pdf",
+    "https://learn.microsoft.com/en-us/azure/key-vault/general/basic-concepts",
+    "https://learn.microsoft.com/en-us/azure/key-vault/general/about-keys-secrets-certificates#key-vault-keys",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/KeyVault/key-expiration-check.html#",
     "https://learn.microsoft.com/en-us/azure/key-vault/general/azure-policy",
-    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/recommendations-reference-keyvault",
-    "https://github.com/Azure/Enterprise-Scale/wiki/ALZ-Policies"
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/recommendations-reference-keyvault"
   ],
   "Remediation": {
     "Code": {

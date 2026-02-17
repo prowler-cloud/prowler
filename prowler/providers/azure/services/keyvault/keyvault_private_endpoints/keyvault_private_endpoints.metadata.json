@@ -1,19 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "keyvault_private_endpoints",
-  "CheckTitle": "Azure Key Vault uses private endpoints",
+  "CheckTitle": "Key Vault uses private endpoints",
   "CheckType": [],
   "ServiceName": "keyvault",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.keyvault/vaults",
+  "ResourceGroup": "security",
   "Description": "**Azure Key Vault** has **private endpoint connections** to serve secret and key operations over a private IP within your virtual network via Azure Private Link.",
   "Risk": "Without **private endpoints**, the vault relies on a public endpoint, expanding exposure to scanning and misconfigured allowlists. Egress controls are harder to enforce, enabling unauthorized secret retrieval for **data exfiltration** and potential key misuse, impacting confidentiality and integrity.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-overview",
-    "https://docs.microsoft.com/en-us/azure/storage/common/storage-private-endpoints"
+    "https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-overview",
+    "https://learn.microsoft.com/en-us/azure/storage/common/storage-private-endpoints"
   ],
   "Remediation": {
     "Code": {

@@ -1,23 +1,21 @@
 {
   "Provider": "azure",
   "CheckID": "keyvault_access_only_through_private_endpoints",
-  "CheckTitle": "Azure Key Vault using private endpoints has public network access disabled",
+  "CheckTitle": "Key Vault using private endpoints has public network access disabled",
   "CheckType": [],
   "ServiceName": "keyvault",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.keyvault/vaults",
-  "Description": "Azure Key Vaults configured with **private endpoints** have **public network access** set to `Disabled`, so connectivity occurs only over the private link.",
+  "ResourceGroup": "security",
+  "Description": "**Azure Key Vaults** configured with **private endpoints** have **public network access** set to `Disabled`, so connectivity occurs only over the private link.",
   "Risk": "Internet exposure alongside a **private endpoint** breaks isolation and expands attack surface:\n- Brute-force or token replay on the data plane\n- Abuse of misconfigured allowlists or trusted bypass\n- DDoS on the public endpoint\nThis can enable secret exfiltration or unauthorized key use, impacting **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.linkedin.com/pulse/locking-down-paas-private-link-managed-identity-firewall-g-r-badhon-jdqme",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/KeyVault/use-private-endpoints.html",
+    "https://support.icompaas.com/support/solutions/articles/62000234050-ensure-that-public-network-access-when-using-private-endpoint-is-disabled-automated-",
     "https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-overview",
-    "https://learn.microsoft.com/en-us/azure/key-vault/general/network-security",
-    "https://video2.skills-academy.com/en-us/answers/questions/1195778/disable-the-public-access-of-key-vault-using-power",
-    "https://arinco.com.au/blog/securing-your-serverless-applications-in-azure-part-4-deploy-private-endpoints-for-your-azure-resources/"
+    "https://learn.microsoft.com/en-us/azure/key-vault/general/network-security"
   ],
   "Remediation": {
     "Code": {

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsCodeBuildProject",
+  "ResourceGroup": "devops",
   "Description": "**AWS CodeBuild project visibility** is assessed to identify projects exposed to the public. Projects with `project_visibility` set to `PUBLIC_READ` (or not `PRIVATE`) allow anyone to access build results, logs, and artifacts.",
   "Risk": "Public visibility degrades CIA:\n- Logs may leak secrets, tokens, and source details\n- Artifacts are downloadable, enabling tampering and supply-chain malware\n- Adversaries gain CI/CD insights for reconnaissance and lateral movement",
   "RelatedUrl": "",

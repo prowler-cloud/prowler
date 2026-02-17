@@ -8,14 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.keyvault/vaults",
+  "ResourceGroup": "security",
   "Description": "**Azure Key Vault** recoverability requires both `enable_soft_delete` and `enable_purge_protection`. With these enabled, vault objects remain recoverable after deletion and cannot be permanently purged during the retention period.",
   "Risk": "Absent these protections, deleted vaults or objects can be permanently removed, cutting access to keys, secrets, and certificates. This can render data unreadable, break app authentication, and halt signing/verification, degrading **availability** and **integrity**. Malicious insiders can purge to block recovery.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-us/azure/key-vault/key-vault-soft-delete-cli",
-    "https://blogs.technet.microsoft.com/kv/2017/05/10/azure-key-vault-recovery-options/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/KeyVault/enable-key-vault-recoverability.html#",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-the-key-vault-is-recoverable#terraform"
+    "https://learn.microsoft.com/en-us/azure/key-vault/general/key-vault-recovery?tabs=azure-cli",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/KeyVault/enable-key-vault-recoverability.html#"
   ],
   "Remediation": {
     "Code": {

@@ -31,7 +31,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port(Check):
                     report.status_extended = f"Security group {security_group.name} ({security_group.id}) does not have any port open to the Internet."
                     for ingress_rule in security_group.ingress_rules:
                         if check_security_group(
-                            ingress_rule, "-1", ports=None, any_address=True
+                            ingress_rule, "-1", any_address=True, all_ports=True
                         ):
                             self.check_enis(
                                 report=report,

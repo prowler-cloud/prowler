@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "database",
   "Description": "**MemoryDB clusters** are evaluated for the `auto_minor_version_upgrade` setting that automatically applies new minor engine versions.",
   "Risk": "Without automatic minor upgrades, clusters may run **known-vulnerable engine versions**.\n- Exploitable CVEs enable unauthorized reads/writes (confidentiality, integrity)\n- Unpatched bugs can cause **DoS** or data loss (availability)\n- Version drift raises operational risk and slows incident response",
   "RelatedUrl": "",
