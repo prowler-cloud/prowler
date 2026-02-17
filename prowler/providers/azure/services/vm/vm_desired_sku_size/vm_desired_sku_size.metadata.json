@@ -1,23 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "vm_desired_sku_size",
-  "CheckTitle": "Virtual machine uses an organization-approved SKU size",
+  "CheckTitle": "Virtual Machine uses an organization-approved SKU size",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.compute/virtualmachines",
+  "ResourceGroup": "compute",
   "Description": "**Azure virtual machines** are compared against an organization **allowlist of VM size SKUs** defined in `desired_vm_sku_sizes`.\n\nInstances using sizes outside this list are flagged as non-standard.",
   "Risk": "Unrestricted VM sizes enable over-provisioned or exotic SKUs, leading to:\n- Sudden cost spikes and quota exhaustion (availability)\n- Use of hardware lacking required security features (confidentiality/integrity)\n- Abuse by compromised accounts for cryptomining at scale",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/resize-vm",
-    "https://petri.com/it-governance-with-azure-policy/",
-    "https://cloudjourney.medium.com/aws-organization-policy-and-azure-policy-7a27a491acbb",
-    "https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/overview",
-    "https://github.com/MicrosoftDocs/azure-docs/blob/main/includes/policy/reference/bycat/policies-compute.md",
-    "https://wedoazure.ie/2024/01/09/control-vm-skus-with-azure-policy-and-bicep/"
+    "https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/overview"
   ],
   "Remediation": {
     "Code": {

@@ -90,6 +90,7 @@ class Partition(str, Enum):
     Attributes:
         aws (str): Represents the standard AWS commercial regions.
         aws_cn (str): Represents the AWS China regions.
+        aws_eusc (str): Represents the AWS European Sovereign Cloud regions.
         aws_us_gov (str): Represents the AWS GovCloud (US) Regions.
         aws_iso (str): Represents the AWS ISO (US) Regions.
         aws_iso_b (str): Represents the AWS ISOB (US) Regions.
@@ -99,6 +100,7 @@ class Partition(str, Enum):
 
     aws = "aws"
     aws_cn = "aws-cn"
+    aws_eusc = "aws-eusc"
     aws_us_gov = "aws-us-gov"
     aws_iso = "aws-iso"
     aws_iso_b = "aws-iso-b"

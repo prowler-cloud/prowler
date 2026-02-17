@@ -1,0 +1,197 @@
+---
+title: "Getting Started with the Image Provider"
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+Prowler's Image provider enables comprehensive container image security scanning by integrating with [Trivy](https://trivy.dev/). This provider detects vulnerabilities, exposed secrets, and misconfigurations in container images, converting Trivy findings into Prowler's standard reporting format for unified security assessment.
+
+## How It Works
+
+* **Trivy integration:** Prowler leverages [Trivy](https://trivy.dev/) to scan container images for vulnerabilities, secrets, misconfigurations, and license issues.
+* **Trivy required:** Trivy must be installed and available in the system PATH before running any scan.
+* **Authentication:** No registry authentication is required for public images. For private registries, configure Docker credentials via `docker login` before scanning.
+* **Output formats:** Results are output in the same formats as other Prowler providers (CSV, JSON, HTML, etc.).
+
+## Prowler CLI
+
+<VersionBadge version="5.19.0" />
+
+<Note>
+The Image provider is currently available in Prowler CLI only.
+</Note>
+
+### Install Trivy
+
+Install Trivy using one of the following methods:
+
+<Tabs>
+  <Tab title="Homebrew">
+    ```bash
+    brew install trivy
+    ```
+  </Tab>
+  <Tab title="apt (Debian/Ubuntu)">
+    ```bash
+    sudo apt-get install trivy
+    ```
+  </Tab>
+  <Tab title="Install Script">
+    ```bash
+    curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+    ```
+  </Tab>
+</Tabs>
+
+For additional installation methods, see the [Trivy installation guide](https://trivy.dev/latest/getting-started/installation/).
+
+
+### Supported Scanners
+
+Prowler CLI supports the following scanners:
+
+* [Vulnerability](https://trivy.dev/docs/latest/guide/scanner/vulnerability/)
+* [Secret](https://trivy.dev/docs/latest/guide/scanner/secret/)
+* [Misconfiguration](https://trivy.dev/docs/latest/guide/scanner/misconfiguration/)
+* [License](https://trivy.dev/docs/latest/guide/scanner/license/)
+
+By default, only vulnerability and secret scanners run during a scan. To specify which scanners to use, refer to the [Specify Scanners](#specify-scanners) section below.
+
+### Scan Container Images
+
+Use the `image` argument to run Prowler with the Image provider. Specify the images to scan using the `-I` flag or an image list file.
+
+#### Scan a Single Image
+
+To scan a single container image:
+
+```bash
+prowler image -I alpine:3.18
+```
+
+#### Scan Multiple Images
+
+To scan multiple images, repeat the `-I` flag:
+
+```bash
+prowler image -I nginx:latest -I redis:7 -I python:3.12-slim
+```
+
+#### Scan From an Image List File
+
+For large-scale scanning, provide a file containing one image per line:
+
+```bash
+prowler image --image-list images.txt
+```
+
+The file supports comments (lines starting with `#`) and blank lines:
+
+```text
+# Production images
+nginx:1.25
+redis:7-alpine
+
+# Development images
+python:3.12-slim
+node:20-bookworm
+```
+
+<Note>
+Image list files are limited to a maximum of 10,000 lines. Individual image names exceeding 500 characters are automatically skipped with a warning.
+</Note>
+
+<Warning>
+Image names must follow the Open Container Initiative (OCI) reference format. Valid names start with an alphanumeric character and contain only letters, digits, periods, hyphens, underscores, slashes, colons, and `@` symbols. Names containing shell metacharacters (`;`, `|`, `&`, `$`, `` ` ``) are rejected to prevent command injection.
+</Warning>
+
+Valid examples:
+* **Standard tag:** `alpine:3.18`
+* **Custom registry:** `myregistry.io/myapp:v1.0`
+* **SHA digest:** `ghcr.io/org/image@sha256:abc123...`
+
+#### Specify Scanners
+
+To select which scanners Trivy runs, use the `--scanners` option. By default, Prowler enables `vuln` and `secret` scanners:
+
+```bash
+# Vulnerability scanning only
+prowler image -I alpine:3.18 --scanners vuln
+
+# All available scanners
+prowler image -I alpine:3.18 --scanners vuln secret misconfig license
+```
+
+
+#### Image Config Scanners
+
+To scan Dockerfile-level metadata for misconfigurations or embedded secrets, use the `--image-config-scanners` option:
+
+```bash
+# Scan Dockerfile for misconfigurations
+prowler image -I alpine:3.18 --image-config-scanners misconfig
+
+# Scan Dockerfile for both misconfigurations and secrets
+prowler image -I alpine:3.18 --image-config-scanners misconfig secret
+```
+
+Available image config scanners:
+
+* **misconfig**: Detects Dockerfile misconfigurations (e.g., running as root, missing health checks)
+* **secret**: Identifies secrets embedded in Dockerfile instructions
+
+<Note>
+Image config scanners are disabled by default. This option is independent from `--scanners` and specifically targets the image configuration (Dockerfile) rather than the image filesystem.
+</Note>
+
+#### Filter by Severity
+
+To filter findings by severity level, use the `--trivy-severity` option:
+
+```bash
+# Only critical and high severity findings
+prowler image -I alpine:3.18 --trivy-severity CRITICAL HIGH
+```
+
+Available severity levels: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `UNKNOWN`.
+
+#### Ignore Unfixed Vulnerabilities
+
+To exclude vulnerabilities without available fixes:
+
+```bash
+prowler image -I alpine:3.18 --ignore-unfixed
+```
+
+#### Configure Scan Timeout
+
+To adjust the scan timeout for large images or slow network conditions, use the `--timeout` option:
+
+```bash
+prowler image -I large-image:latest --timeout 10m
+```
+
+The timeout accepts values in seconds (`s`), minutes (`m`), or hours (`h`). Default: `5m`.
+
+### Authentication for Private Registries
+
+The Image provider relies on Trivy for registry authentication. To scan images from private registries, configure Docker credentials before running the scan:
+
+```bash
+# Log in to a private registry
+docker login myregistry.io
+
+# Then scan the image
+prowler image -I myregistry.io/myapp:v1.0
+```
+
+Trivy automatically uses credentials from Docker's credential store (`~/.docker/config.json`).
+
+### Troubleshooting Common Scan Errors
+
+The Image provider categorizes common Trivy errors with actionable guidance:
+
+* **Authentication failure (401/403):** Registry credentials are missing or invalid. Run `docker login` for the target registry and retry the scan.
+* **Image not found (404):** The specified image name, tag, or registry is incorrect. Verify the image reference exists and is accessible.
+* **Rate limited (429):** The container registry is throttling requests. Wait before retrying, or authenticate to increase rate limits.
+* **Network issue:** Trivy cannot reach the registry due to connectivity problems. Check network access, DNS resolution, and firewall rules.

@@ -1,0 +1,97 @@
+---
+title: 'Software Security'
+---
+
+Prowler follows a **security-by-design approach** throughout the software development lifecycle. All changes go through automated checks at every stage, from local development to production deployment.
+
+[Pre-commit](https://github.com/prowler-cloud/prowler/blob/master/.pre-commit-config.yaml) validations catch issues early, and [CI/CD pipelines](https://github.com/prowler-cloud/prowler/tree/master/.github) include multiple security gates ensuring code quality, secure configurations, and compliance with internal standards.
+
+Container registries are continuously scanned for vulnerabilities, with findings automatically reported to the security team for assessment and remediation. This process evolves alongside the stack as new languages, frameworks, and technologies are adopted, ensuring security practices remain comprehensive, proactive, and adaptable.
+
+## Static Application Security Testing (SAST)
+
+Multiple SAST tools are employed across the codebase to identify security vulnerabilities, code quality issues, and potential bugs during development.
+
+### CodeQL Analysis
+
+- **Scope:** UI (JavaScript/TypeScript), API (Python), and SDK (Python)
+- **Frequency:** On every push and pull request, plus daily scheduled scans
+- **Integration:** Results uploaded to GitHub Security tab via SARIF format
+- **Purpose:** Identifies security vulnerabilities, coding errors, and potential exploits in source code
+
+### Python Security Scanners
+
+- **Bandit:** Detects common security issues in Python code (SQL injection, hardcoded passwords, etc.)
+  - Configured to ignore test files and report only high-severity issues
+  - Runs on both SDK and API codebases
+- **Pylint:** Static code analysis with security-focused checks
+  - Integrated into pre-commit hooks and CI/CD pipelines
+
+### Code Quality & Dead Code Detection
+
+- **Vulture:** Identifies unused code that could indicate incomplete implementations or security gaps
+- **Flake8:** Style guide enforcement with security-relevant checks
+- **Shellcheck:** Security and correctness checks for shell scripts
+
+## Software Composition Analysis (SCA)
+
+Dependencies are continuously monitored for known vulnerabilities with timely updates ensured.
+
+### Dependency Vulnerability Scanning
+
+- **Safety:** Scans Python dependencies against known vulnerability databases
+  - Runs on every commit via pre-commit hooks
+  - Integrated into CI/CD for SDK and API
+  - Configured with selective ignores for tracked exceptions
+- **Trivy:** Multi-purpose scanner for containers and dependencies
+  - Scans all container images (UI, API, SDK, MCP Server)
+  - Checks for vulnerabilities in OS packages and application dependencies
+  - Reports findings to GitHub Security tab
+
+### Automated Dependency Updates
+
+- **Dependabot:** Automated pull requests for dependency updates
+  - **Python (pip):** Monthly updates for SDK
+  - **GitHub Actions:** Monthly updates for workflow dependencies
+  - **Docker:** Monthly updates for base images
+  - Temporarily paused for API and UI to maintain stability during active development
+  - **Security-first approach:** Even when paused, Dependabot automatically creates pull requests for security vulnerabilities, ensuring critical security patches are never delayed
+
+## Container Security
+
+All container images are scanned before deployment.
+
+### Trivy Vulnerability Scanning
+
+- Scans images for vulnerabilities and misconfigurations
+- Generates SARIF reports uploaded to GitHub Security tab
+- Creates PR comments with scan summaries
+- Configurable to fail builds on critical findings
+- Reports include CVE counts and remediation guidance
+
+### Hadolint
+
+- Validates Dockerfile syntax and structure
+- Ensures secure image building practices
+
+## Secrets Detection
+
+Prowler protects against accidental exposure of sensitive credentials.
+
+### TruffleHog
+
+- Scans entire codebase and Git history for secrets
+- Runs on every push and pull request
+- Pre-commit hook prevents committing secrets
+- Detects high-entropy strings, API keys, tokens, and credentials
+- Configured to report verified and unknown findings
+
+## Security Monitoring
+
+- **GitHub Security Tab:** Centralized view of all security findings from CodeQL, Trivy, and other SARIF-compatible tools
+- **Artifact Retention:** Security scan reports retained for post-deployment analysis
+- **PR Comments:** Automated security feedback on pull requests for rapid remediation
+
+## Contact
+
+For questions regarding software security, visit the [Support page](/support).

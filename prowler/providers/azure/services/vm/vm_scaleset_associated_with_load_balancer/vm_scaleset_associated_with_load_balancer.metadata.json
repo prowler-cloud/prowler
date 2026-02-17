@@ -1,25 +1,22 @@
 {
   "Provider": "azure",
   "CheckID": "vm_scaleset_associated_with_load_balancer",
-  "CheckTitle": "VM scale set is associated with a load balancer backend pool",
+  "CheckTitle": "Virtual Machine Scale Set is associated with a load balancer backend pool",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.compute/virtualmachinescalesets",
+  "ResourceGroup": "compute",
   "Description": "**Azure VM scale sets** are associated with at least one **load balancer backend pool**.\n\nThe evaluation looks for a backend pool link on each scale set's network configuration.",
   "Risk": "Without a load balancer, traffic targets instances directly, bypassing health-based distribution. This degrades **availability** (overloads, no failover) and **reliability** (dropped sessions, uneven scaling) and can amplify **DoS** impact by concentrating flows on fewer nodes, increasing outage risk.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://stackoverflow.com/questions/69030099/terraform-how-can-i-configure-the-backend-pool-vm-scale-set-in-a-second-load-ba",
-    "https://negatblog.wordpress.com/2018/06/21/scale-sets-and-load-balancers/",
     "https://learn.microsoft.com/en-us/azure/virtual-network/network-overview",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/associated-load-balancers.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/VirtualMachines/associated-load-balancers.html",
     "https://learn.microsoft.com/ms-my/azure/load-balancer/load-balancer-multiple-virtual-machine-scale-set?tabs=azureportal",
-    "https://www.thealteroffice.com/blog/effortlessly-scale-your-servers-for-multiplayer-games",
-    "https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-overview",
-    "https://turingtaco.medium.com/common-misconceptions-about-load-balanced-azure-vms-2b3833399cdc"
+    "https://learn.microsoft.com/en-us/azure/load-balancer/load-balancer-overview"
   ],
   "Remediation": {
     "Code": {

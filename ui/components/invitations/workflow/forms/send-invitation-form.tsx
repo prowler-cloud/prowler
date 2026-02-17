@@ -80,7 +80,7 @@ export const SendInvitationForm = ({
         const invitationId = data?.data?.id || "";
         router.push(`/invitations/check-details/?id=${invitationId}`);
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",

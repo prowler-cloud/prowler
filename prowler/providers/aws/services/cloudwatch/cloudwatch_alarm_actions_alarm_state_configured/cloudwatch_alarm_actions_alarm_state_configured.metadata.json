@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
   "Description": "Amazon CloudWatch metric alarms are evaluated for **actions** configured for the `ALARM` state. The finding flags alarms that have no action to execute when their monitored metric crosses its threshold.",
   "Risk": "Without an **ALARM action**, threshold breaches trigger no **notification** or **automated response**. This delays detection and containment, risking:\n- Availability: prolonged outages or missed scale-out\n- Integrity/confidentiality: unchecked anomalies enabling tampering or data loss",
   "RelatedUrl": "",

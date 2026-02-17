@@ -1,25 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "vm_linux_enforce_ssh_authentication",
-  "CheckTitle": "Linux virtual machine has password authentication disabled (SSH key authentication enforced)",
+  "CheckTitle": "Linux Virtual Machine has password authentication disabled (SSH key authentication enforced)",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.compute/virtualmachines",
+  "ResourceGroup": "compute",
   "Description": "**Azure Linux virtual machines** are assessed for SSH configuration where `disablePasswordAuthentication` is set to `true`, allowing only **public key authentication** and disallowing interactive passwords.",
   "Risk": "With **password-based SSH**, attackers can run brute-force or password-spray campaigns. A successful login grants remote shell, enabling command execution, data exfiltration, and lateral movement, degrading **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://askubuntu.com/questions/1440290/unable-to-disable-password-authentication-over-ssh",
-    "https://howto.im/q/how-to-disable-password-authentication-for-ssh-on-an-azure-linux-vm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/ssh-authentication-type.html",
-    "https://docs.microsoft.com/en-us/azure/virtual-machines/linux/create-ssh-keys-detailed",
-    "https://unix.stackexchange.com/questions/727492/passwordauthentication-no-but-i-can-still-login-by-password",
-    "https://github.com/Azure/terraform-azurerm-avm-res-compute-virtualmachine",
-    "https://azure.github.io/PSRule.Rules.Azure/en/rules/Azure.VM.PublicKey/",
-    "https://stackoverflow.com/questions/79694218/unable-to-connect-to-linux-vm-via-ssh"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/VirtualMachines/ssh-authentication-type.html",
+    "https://learn.microsoft.com/en-us/azure/virtual-machines/linux/create-ssh-keys-detailed"
   ],
   "Remediation": {
     "Code": {

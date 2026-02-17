@@ -1,26 +1,21 @@
 {
   "Provider": "azure",
   "CheckID": "vm_backup_enabled",
-  "CheckTitle": "Azure virtual machine is protected by Azure Backup",
+  "CheckTitle": "Virtual Machine is protected by Azure Backup",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.compute/virtualmachines",
+  "ResourceGroup": "compute",
   "Description": "**Azure VMs** are evaluated for protection by **Azure Backup** by confirming they exist as VM backup items in a **Recovery Services vault**.\n\nVMs absent from any vault item indicate no configured backup coverage.",
   "Risk": "Unprotected VMs jeopardize **availability** and **integrity**. Deletion, corruption, or ransomware can wipe data, and without recovery points recovery is slow or impossible, causing extended outages, missed `RPO/RTO`, and cascading impact on dependent services.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.mssqltips.com/sqlservertip/6408/restore-an-azure-sql-vm-using-recovery-services-vault/",
-    "https://supportlatam.zendesk.com/hc/en-us/articles/360039073412-Support-matrix-for-Azure-Backup",
-    "https://docs.microsoft.com/en-us/azure/backup/quick-backup-vm-portal",
-    "https://learn.microsoft.com/en-us/++azure/backup/backup-azure-arm-vms-prepare",
-    "https://www.cybrary.it/course/enable-vm-backup-using-recovery-services-vault",
+    "https://learn.microsoft.com/en-us/azure/backup/backup-azure-arm-vms-prepare",
     "https://learn.microsoft.com/en-us/azure/backup/quick-backup-vm-portal",
-    "https://goayxh.medium.com/microsoft-azure-az-104-azure-vm-backup-3621a9b4bd80?source=user_profile_page---------24-------------beb79bdb919----------------------",
-    "https://docs.microsoft.com/en-us/azure/backup/backup-overview",
-    "https://www.linkedin.com/pulse/azure-virtual-machine-vm-backup-restore-automation-kelvin-sikamoi"
+    "https://learn.microsoft.com/en-us/azure/backup/backup-overview"
   ],
   "Remediation": {
     "Code": {

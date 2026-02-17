@@ -1,19 +1,19 @@
 {
   "Provider": "azure",
   "CheckID": "vm_ensure_using_approved_images",
-  "CheckTitle": "Azure VM uses an approved custom machine image",
+  "CheckTitle": "Virtual Machine uses an approved custom machine image",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.compute/virtualmachines",
+  "ResourceGroup": "compute",
   "Description": "**Azure VMs** are evaluated for use of an **approved custom image** by inspecting the VM image reference. The expected format is a subscription-scoped ID like `/subscriptions/.../providers/Microsoft.Compute/images/<image>`, not marketplace, gallery, or community sources.",
   "Risk": "Using **unapproved images** undermines **integrity** and **confidentiality** by introducing unknown packages, misconfigurations, or malware. Attackers can implant backdoors, weaken hardening, and bypass baselines, enabling data exfiltration and lateral movement, and harming **availability** with unpatched software.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/approved-machine-image.html",
-    "https://docs.microsoft.com/en-us/azure/virtual-machines/windows/create-vm-generalized-managed",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/VirtualMachines/approved-machine-image.html",
     "https://learn.microsoft.com/en-us/azure/virtual-machines/windows/create-vm-generalized-managed"
   ],
   "Remediation": {

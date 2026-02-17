@@ -1,18 +1,19 @@
 {
   "Provider": "azure",
   "CheckID": "vm_jit_access_enabled",
-  "CheckTitle": "Virtual machine has Just-in-Time (JIT) access enabled",
+  "CheckTitle": "Virtual Machine has Just-in-Time (JIT) access enabled",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.compute/virtualmachines",
-  "Description": "Azure virtual machines are associated with a **Just-in-Time (JIT) network access policy** that opens management ports only for approved, time-bound requests from specified source IPs.",
+  "ResourceGroup": "compute",
+  "Description": "**Azure virtual machines** are associated with a **Just-in-Time (JIT) network access policy** that opens management ports only for approved, time-bound requests from specified source IPs.",
   "Risk": "Without **JIT**, management ports like `22`/`3389` may stay reachable, enabling:\n- brute-force and password-spray attempts\n- exploitation of remote access flaws or stolen keys\nThis threatens **confidentiality** (data exfiltration), **integrity** (unauthorized changes), and **availability** (service disruption).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.microsoft.com/en-us/azure/security-center/security-center-just-in-time?tabs=jit-config-asc%2Cjit-request-asc"
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/enable-just-in-time-access?tabs=jit-config-asc%2Cjit-request-asc"
   ],
   "Remediation": {
     "Code": {

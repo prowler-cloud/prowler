@@ -1,19 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "vm_scaleset_not_empty",
-  "CheckTitle": "Azure virtual machine scale set has at least one VM instance",
+  "CheckTitle": "Virtual Machine Scale Set has at least one VM instance",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.compute/virtualmachinescalesets",
-  "Description": "**Azure VM scale sets** with `0` VM instances are identified as *empty*.",
+  "ResourceGroup": "compute",
+  "Description": "**Azure VM scale sets** with `0` VM instances are identified as **empty**.",
   "Risk": "Orphaned scale sets degrade governance and can hide **stale autoscale** or permissive identities. If reactivated, they may launch VMs from **outdated images**, exposing vulnerable services and enabling lateral movement, impacting **confidentiality** and **availability**. They also create inventory sprawl and unnecessary spend.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/empty-vm-scale-sets.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/VirtualMachines/empty-vm-scale-sets.html"
   ],
   "Remediation": {
     "Code": {

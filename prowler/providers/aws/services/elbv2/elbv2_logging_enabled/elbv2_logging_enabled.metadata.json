@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
+  "ResourceGroup": "network",
   "Description": "**ELBv2 Application Load Balancers** are evaluated for **access logging** enabled to Amazon S3, capturing request details such as timestamps, client IPs, paths, and response codes.",
   "Risk": "Absent **ALB access logs** reduces **visibility** and hampers **incident detection** and **forensics**. Malicious requests, credential stuffing, or data exfiltration via the load balancer can go unnoticed, undermining **confidentiality** and **integrity**, and delaying recovery from **availability** incidents.",
   "RelatedUrl": "",

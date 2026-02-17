@@ -1,26 +1,22 @@
 {
   "Provider": "azure",
   "CheckID": "vm_ensure_using_managed_disks",
-  "CheckTitle": "Virtual machine uses managed disks for OS and data disks",
+  "CheckTitle": "Virtual Machine uses managed disks for OS and data disks",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.compute/virtualmachines",
-  "Description": "Azure virtual machines use **managed disks** for the OS disk and every data disk, rather than page blob VHDs in storage accounts.\n\nThe evaluation confirms that all attached VM disks are managed.",
+  "ResourceGroup": "compute",
+  "Description": "**Azure virtual machines** use **managed disks** for the OS disk and every data disk, rather than page blob VHDs in storage accounts.\n\nThe evaluation confirms that all attached VM disks are managed.",
   "Risk": "Using **unmanaged disks** ties VM data to storage account keys and SAS, increasing exposure of disk contents if those secrets leak (**confidentiality/integrity**). Limited platform resiliency and quotas increase **availability** risk. With Azure retiring unmanaged disks on `2026-03-31`, such VMs may be stopped and unable to start.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://stackoverflow.com/questions/73750730/moving-storage-from-azure-unmanaged-diskspace-to-managed/74175807",
-    "https://petri.com/converting-azure-vm-disks-managed-disks/",
     "https://learn.microsoft.com/en-us/azure/virtual-machines/unmanaged-disks-deprecation",
-    "https://charbelnemnom.com/how-to-convert-azure-stack-vm-from-unmanaged-disks-to-managed-disks/",
     "https://learn.microsoft.com/en-us/azure/virtual-machines/windows/convert-unmanaged-to-managed-disks",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/managed-disks-in-use.html",
-    "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-4-enable-data-at-rest-encryption-by-default",
-    "https://www.jorgebernhardt.com/convert-azure-vm-managed-disks-powershell/",
-    "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-virtual-machines-are-utilizing-managed-disks#terraform"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/VirtualMachines/managed-disks-in-use.html",
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-4-enable-data-at-rest-encryption-by-default"
   ],
   "Remediation": {
     "Code": {

@@ -1,24 +1,20 @@
 {
   "Provider": "azure",
   "CheckID": "vm_sufficient_daily_backup_retention_period",
-  "CheckTitle": "Azure virtual machine has a backup policy with a daily retention period meeting the configured minimum",
+  "CheckTitle": "Virtual Machine has a backup policy with a daily retention period meeting the configured minimum",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.compute/virtualmachines",
+  "ResourceGroup": "compute",
   "Description": "**Azure virtual machines** are evaluated for a backup policy in a Recovery Services vault with a **daily retention** period that meets the configured minimum. VMs lacking protection or using a shorter retention window are identified for review.",
   "Risk": "**Insufficient or missing VM backups** weaken **availability** and **integrity**. Short retention reduces recovery points, limiting rollback after **ransomware**, accidental deletion, or faulty changes. This increases RPO, extends RTO, and can force rebuilds, causing data loss and downtime.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://stackoverflow.com/questions/54564906/how-to-use-terraform-template-to-add-an-azure-vm-into-a-recovery-service-vault",
-    "https://medium.com/@obaff/azure-backup-automation-script-35ab582e0e28",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/sufficient-backup-retention-period.html",
-    "https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-introduction",
-    "https://github.com/hashicorp/terraform-provider-azurerm/blob/main/website/docs/r/backup_policy_vm.html.markdown",
-    "https://www.linkedin.com/learning/windows-server-hybrid-administrator-associate-az-801-cert-prep-3-implement-disaster-recovery/implement-azure-backup-policies",
-    "https://www.pulumi.com/ai/answers/eivLgQ2uCU7yVfJMBzooYZ/azure-backup-policyvm-creation-in-c"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/VirtualMachines/sufficient-backup-retention-period.html",
+    "https://learn.microsoft.com/en-us/azure/backup/backup-azure-vms-introduction"
   ],
   "Remediation": {
     "Code": {

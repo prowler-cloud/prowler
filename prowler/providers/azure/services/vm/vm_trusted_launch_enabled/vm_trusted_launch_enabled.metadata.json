@@ -1,25 +1,19 @@
 {
   "Provider": "azure",
   "CheckID": "vm_trusted_launch_enabled",
-  "CheckTitle": "Virtual machine has Trusted Launch with Secure Boot and vTPM enabled",
+  "CheckTitle": "Virtual Machine has Trusted Launch with Secure Boot and vTPM enabled",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.compute/virtualmachines",
+  "ResourceGroup": "compute",
   "Description": "**Azure VMs** are evaluated for **Trusted Launch** with both **Secure Boot** and **vTPM** enabled.\n\nIdentifies VMs not set to `TrustedLaunch` or missing `secureBootEnabled` and `vTpmEnabled` together.",
   "Risk": "Missing **Trusted Launch** weakens boot-chain integrity. Attackers can persist via bootkits/rootkits, bypass OS controls, steal secrets, and tamper with drivers. Loss of attestation reduces detection, risking **integrity**, **confidentiality**, and **availability** through stealthy, hard-to-remediate compromises.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.tbone.se/2022/07/11/create-a-secure-workstation-image-with-trusted-launch-enabled-in-azure/",
-    "https://learn.microsoft.com/en-us/azure/virtual-machines/trusted-launch-existing-vm?tabs=portal",
-    "https://learn.microsoft.com/en-us/azure/virtual-machines/trusted-launch-existing-vm?tabs=portal#enable-trusted-launch-on-existing-vm",
-    "https://www.anoopcnair.com/enable-trusted-launch-for-azure-virtual-machine/",
-    "https://learn.microsoft.com/en-us/azure/virtual-machines/trusted-launch",
-    "https://github.com/MicrosoftDocs/azure-compute-docs/blob/main/articles/virtual-machines/trusted-launch.md",
-    "https://windowsforum.com/threads/enable-trusted-launch-in-place-for-azure-vms-secure-boot-and-vtpm.379613/",
-    "https://docs.azure.cn/en-us/virtual-machines/trusted-launch"
+    "https://learn.microsoft.com/en-us/azure/virtual-machines/trusted-launch"
   ],
   "Remediation": {
     "Code": {

@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsKmsKey",
+  "ResourceGroup": "security",
   "Description": "**KMS keys** are assessed for **excessive access** in key policies or grants, including `*` principals and broadly scoped permissions to multiple identities.",
   "Risk": "Broad access to a **KMS key** enables unauthorized `kms:Decrypt` and data-key generation, breaking **confidentiality**. With admin rights, attackers can change policies or schedule deletion, undermining control **integrity** and threatening **availability** of data dependent on the key.",
   "RelatedUrl": "",
@@ -23,9 +24,9 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws kms put-key-policy --key-id <example_resource_id> --policy-name default --policy '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::<account_id>:root\"},\"Action\":\"kms:*\",\"Resource\":\"*\"}]}'",
+      "CLI": "aws kms put-key-policy --key-id <example_resource_id> --policy-name default --policy '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::<account_id>:root\"},\"Action\":\"kms:\\*\",\"Resource\":\"\\*\"}]}'",
       "NativeIaC": "```yaml\n# CloudFormation: restrict KMS key policy to account root (removes any public access)\nResources:\n  <example_resource_name>:\n    Type: AWS::KMS::Key\n    Properties:\n      KeyPolicy:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Principal:\n              AWS: arn:aws:iam::<account_id>:root  # Critical: only account root can access; prevents public \"*\" principals\n            Action: kms:*\n            Resource: '*'\n```",
-      "Other": "1. Open AWS Console > Key Management Service (KMS)\n2. Select the affected key and go to the Key policy tab\n3. Click Edit and remove any statement with Principal set to \"*\" (or AWS: \"*\")\n4. Ensure a statement exists that allows only arn:aws:iam::<account_id>:root\n5. Save changes",
+      "Other": "1. Open AWS Console > Key Management Service (KMS)\n2. Select the affected key and go to the Key policy tab\n3. Click Edit and remove any statement with Principal set to \"\\*\" (or AWS: \"\\*\")\n4. Ensure a statement exists that allows only arn:aws:iam::<account_id>:root\n5. Save changes",
       "Terraform": "```hcl\n# Restrict KMS key policy to the account root to avoid any public (\"*\") principals\ndata \"aws_caller_identity\" \"current\" {}\n\nresource \"aws_kms_key\" \"<example_resource_name>\" {\n  policy = jsonencode({\n    Version   = \"2012-10-17\"\n    Statement = [\n      {\n        Effect    = \"Allow\"\n        Principal = { AWS = \"arn:aws:iam::${data.aws_caller_identity.current.account_id}:root\" } # Critical: limit to account root to remove public access\n        Action    = \"kms:*\"\n        Resource  = \"*\"\n      }\n    ]\n  })\n}\n```"
     },
     "Recommendation": {
