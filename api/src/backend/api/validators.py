@@ -1,6 +1,7 @@
 import re
 import string
 
+from celery.schedules import crontab
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 
@@ -175,3 +176,15 @@ def cron_5_fields_validator(value: str) -> None:
     field_ranges = ((0, 59), (0, 23), (1, 31), (1, 12), (0, 6))
     for part, (min_value, max_value) in zip(parts, field_ranges, strict=False):
         _validate_cron_field(part, min_value, max_value)
+
+    # Keep model-level validation aligned with Celery crontab parsing.
+    try:
+        crontab(
+            minute=parts[0],
+            hour=parts[1],
+            day_of_month=parts[2],
+            month_of_year=parts[3],
+            day_of_week=parts[4],
+        )
+    except ValueError as exc:
+        raise ValidationError("Invalid cron expression.") from exc
