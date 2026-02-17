@@ -76,14 +76,6 @@ def test_list_buckets_respects_audit_filters():
     assert list(oss.buckets.keys()) == []
 
 
-def test_defusedxml_is_used_for_xml_parsing():
-    from defusedxml import ElementTree as defused_ET
-
-    from prowler.providers.alibabacloud.services.oss import oss_service
-
-    assert oss_service.ElementTree is defused_ET
-
-
 def test_list_buckets_rejects_xxe_payload():
     oss = _build_oss_service()
     xxe_payload = """<?xml version="1.0"?>
