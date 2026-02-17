@@ -211,6 +211,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         # Handling databases changes
         try:
             graph_database.drop_database(tmp_cartography_config.neo4j_database)
+
         except Exception:
             logger.exception(
                 f"Failed to drop temporary Neo4j database {tmp_cartography_config.neo4j_database} during cleanup"
