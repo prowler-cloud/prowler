@@ -54,6 +54,7 @@ from api.rls import (
     RowLevelSecurityProtectedModel,
     Tenant,
 )
+from api.validators import cron_5_fields_validator
 from prowler.lib.check.models import Severity
 
 fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
@@ -440,6 +441,13 @@ class Provider(RowLevelSecurityProtectedModel):
     connection_last_checked_at = models.DateTimeField(null=True, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
     scanner_args = models.JSONField(default=dict, blank=True)
+    scan_schedule = models.ForeignKey(
+        "ScanSchedule",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="providers",
+    )
 
     def clean(self):
         super().clean()
@@ -554,6 +562,41 @@ class Task(RowLevelSecurityProtectedModel):
         resource_name = "tasks"
 
 
+class ScanSchedule(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    cron_expression = models.CharField(
+        max_length=100,
+        validators=[cron_5_fields_validator],
+    )
+    enabled = models.BooleanField(default=True)
+    scheduler_task = models.ForeignKey(
+        PeriodicTask, on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "scan_schedules"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "enabled"],
+                name="scansch_tenant_enabled_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "scan-schedules"
+
+
 class Scan(RowLevelSecurityProtectedModel):
     objects = ActiveProviderManager()
     all_objects = models.Manager()
@@ -582,6 +625,14 @@ class Scan(RowLevelSecurityProtectedModel):
     next_scan_at = models.DateTimeField(null=True, blank=True)
     scheduler_task = models.ForeignKey(
         PeriodicTask, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    scan_schedule = models.ForeignKey(
+        ScanSchedule,
+        on_delete=models.SET_NULL,
+        related_name="scans",
+        related_query_name="scan",
+        null=True,
+        blank=True,
     )
     output_location = models.CharField(blank=True, null=True, max_length=4096)
     provider = models.ForeignKey(
