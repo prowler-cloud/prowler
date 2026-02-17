@@ -20,7 +20,15 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [1.18.2] (Prowler UNRELEASED)
+## [1.18.3] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Dropdown selects in the "Send to Jira" modal and other dialogs not responding to clicks [(#10097)](https://github.com/prowler-cloud/prowler/pull/10097)
+
+---
+
+## [1.18.2] (Prowler v5.18.2)
 
 ### 🐞 Fixed
 
