@@ -71,6 +71,8 @@ from .config import (
     COLOR_PROWLER_DARK_GREEN,
     COLOR_SAFE,
     COLOR_WHITE,
+    CSA_CCM_SECTION_SHORT_NAMES,
+    CSA_CCM_SECTIONS,
     DIMENSION_KEYS,
     DIMENSION_MAPPING,
     DIMENSION_NAMES,
@@ -90,6 +92,7 @@ from .config import (
 )
 
 # Framework-specific generators
+from .csa import CSAReportGenerator
 from .ens import ENSReportGenerator
 from .nis2 import NIS2ReportGenerator
 from .threatscore import ThreatScoreReportGenerator
@@ -105,6 +108,7 @@ __all__ = [
     "ThreatScoreReportGenerator",
     "ENSReportGenerator",
     "NIS2ReportGenerator",
+    "CSAReportGenerator",
     # Configuration
     "FrameworkConfig",
     "FRAMEWORK_REGISTRY",
@@ -147,6 +151,8 @@ __all__ = [
     "THREATSCORE_SECTIONS",
     "NIS2_SECTIONS",
     "NIS2_SECTION_TITLES",
+    "CSA_CCM_SECTIONS",
+    "CSA_CCM_SECTION_SHORT_NAMES",
     # Layout constants
     "COL_WIDTH_SMALL",
     "COL_WIDTH_MEDIUM",
