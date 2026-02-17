@@ -851,6 +851,7 @@ class DefenderIdentity(M365Service):
             provider: The M365Provider instance for authentication and configuration.
         """
         super().__init__(provider)
+        self.sensors: Optional[List[Sensor]] = []
         self.health_issues: Optional[List[HealthIssue]] = []
 
         created_loop = False
@@ -871,11 +872,73 @@ class DefenderIdentity(M365Service):
                 "Cannot initialize DefenderIdentity service while event loop is running"
             )
 
+        self.sensors = loop.run_until_complete(self._get_sensors())
         self.health_issues = loop.run_until_complete(self._get_health_issues())
 
         if created_loop:
             asyncio.set_event_loop(None)
             loop.close()
+
+    async def _get_sensors(self) -> Optional[List["Sensor"]]:
+        """Retrieve sensors from Microsoft Defender for Identity.
+
+        This method fetches all MDI sensors deployed in the environment,
+        including their health status and configuration.
+
+        Returns:
+            Optional[List[Sensor]]: A list of sensors from MDI,
+                or None if the API call failed (tenant not onboarded or missing permissions).
+        """
+        logger.info("DefenderIdentity - Getting sensors...")
+        sensors: Optional[List[Sensor]] = []
+        try:
+            sensors_response = await self.client.security.identities.sensors.get()
+
+            while sensors_response:
+                for sensor in getattr(sensors_response, "value", []) or []:
+                    sensors.append(
+                        Sensor(
+                            id=getattr(sensor, "id", ""),
+                            display_name=getattr(sensor, "display_name", ""),
+                            sensor_type=str(getattr(sensor, "sensor_type", ""))
+                            if getattr(sensor, "sensor_type", None)
+                            else None,
+                            deployment_status=str(
+                                getattr(sensor, "deployment_status", "")
+                            )
+                            if getattr(sensor, "deployment_status", None)
+                            else None,
+                            health_status=str(getattr(sensor, "health_status", ""))
+                            if getattr(sensor, "health_status", None)
+                            else None,
+                            open_health_issues_count=getattr(
+                                sensor, "open_health_issues_count", 0
+                            )
+                            or 0,
+                            domain_name=getattr(sensor, "domain_name", ""),
+                            version=getattr(sensor, "version", ""),
+                            created_date_time=str(
+                                getattr(sensor, "created_date_time", "")
+                            ),
+                        )
+                    )
+
+                next_link = getattr(sensors_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                sensors_response = (
+                    await self.client.security.identities.sensors.with_url(
+                        next_link
+                    ).get()
+                )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
+        return sensors
 
     async def _get_health_issues(self) -> Optional[List["HealthIssue"]]:
         """Retrieve health issues from Microsoft Defender for Identity.
@@ -938,6 +1001,32 @@ class DefenderIdentity(M365Service):
             return None
 
         return health_issues
+
+
+class Sensor(BaseModel):
+    """Model for Microsoft Defender for Identity sensor.
+
+    Attributes:
+        id: The unique identifier for the sensor.
+        display_name: The display name of the sensor.
+        sensor_type: The type of sensor (domainControllerIntegrated, domainControllerStandalone, adfsIntegrated).
+        deployment_status: The deployment status (upToDate, outdated, updating, updateFailed, notConfigured).
+        health_status: The health status of the sensor (healthy, notHealthyLow, notHealthyMedium, notHealthyHigh).
+        open_health_issues_count: Number of open health issues for this sensor.
+        domain_name: The domain name the sensor is monitoring.
+        version: The version of the sensor.
+        created_date_time: When the sensor was created.
+    """
+
+    id: str
+    display_name: str
+    sensor_type: Optional[str]
+    deployment_status: Optional[str]
+    health_status: Optional[str]
+    open_health_issues_count: int
+    domain_name: str
+    version: str
+    created_date_time: str
 
 
 class HealthIssue(BaseModel):

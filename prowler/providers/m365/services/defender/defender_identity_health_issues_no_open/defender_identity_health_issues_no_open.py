@@ -20,6 +20,7 @@ class defender_identity_health_issues_no_open(Check):
 
     - PASS: The health issue has been resolved (status is not open).
     - FAIL: The health issue is open and requires attention.
+    - FAIL: No sensors are deployed (MDI cannot protect the environment).
     """
 
     def execute(self) -> List[CheckReportM365]:
@@ -34,8 +35,8 @@ class defender_identity_health_issues_no_open(Check):
         """
         findings = []
 
-        # If health_issues is None, the API call failed (tenant not onboarded or missing permissions)
-        if defender_identity_client.health_issues is None:
+        # If sensors is None, the API call failed (tenant not onboarded or missing permissions)
+        if defender_identity_client.sensors is None:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
@@ -51,8 +52,41 @@ class defender_identity_health_issues_no_open(Check):
             findings.append(report)
             return findings
 
+        # If no sensors are deployed, MDI cannot protect the environment
+        if not defender_identity_client.sensors:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Defender for Identity",
+                resource_id="defenderIdentity",
+            )
+            report.status = "FAIL"
+            report.status_extended = (
+                "No Defender for Identity sensors are deployed. "
+                "MDI requires sensors on Domain Controllers to detect identity-based threats."
+            )
+            findings.append(report)
+            return findings
+
+        # If health_issues is None, the API call failed
+        if defender_identity_client.health_issues is None:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Defender for Identity",
+                resource_id="defenderIdentity",
+            )
+            report.status = "FAIL"
+            report.status_extended = (
+                "Unable to retrieve health issues from Defender for Identity. "
+                "Ensure the required permissions are granted."
+            )
+            findings.append(report)
+            return findings
+
         # If health_issues is empty list, no issues exist - this is compliant
         if not defender_identity_client.health_issues:
+            sensor_count = len(defender_identity_client.sensors)
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
@@ -60,7 +94,7 @@ class defender_identity_health_issues_no_open(Check):
                 resource_id="defenderIdentity",
             )
             report.status = "PASS"
-            report.status_extended = "No health issues found in Defender for Identity."
+            report.status_extended = f"No open health issues found in Defender for Identity with {sensor_count} sensor(s) deployed."
             findings.append(report)
             return findings
 

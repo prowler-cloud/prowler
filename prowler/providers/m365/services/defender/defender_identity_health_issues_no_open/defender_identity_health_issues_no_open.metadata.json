@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "Defender for Identity Health Issue",
   "ResourceGroup": "security",
-  "Description": "Microsoft Defender for Identity (MDI) monitors your hybrid identity infrastructure and detects advanced threats targeting Active Directory. Health issues indicate problems with the MDI configuration or sensors that may affect the ability to detect identity-based attacks.",
-  "Risk": "Unresolved health issues in Defender for Identity can lead to gaps in threat detection where misconfigured sensors may fail to monitor domain controllers, delayed attack identification where identity-based attacks like Pass-the-Hash or Golden Ticket may go undetected, and compromised hybrid infrastructure where attackers could exploit blind spots in identity monitoring.",
+  "Description": "Microsoft Defender for Identity (MDI) monitors your hybrid identity infrastructure and detects advanced threats targeting Active Directory. This check verifies that MDI sensors are deployed and that there are no unresolved health issues that may affect the ability to detect identity-based attacks.",
+  "Risk": "Without deployed MDI sensors or with unresolved health issues, organizations face critical gaps in threat detection. Misconfigured or missing sensors fail to monitor domain controllers, allowing identity-based attacks like Pass-the-Hash, Golden Ticket, or lateral movement to go undetected. Attackers commonly exploit these blind spots to compromise hybrid environments while evading detection.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/defender-for-identity/health-alerts",
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check requires SecurityIdentitiesHealth.Read.All permission. Health issues may be global (domain-related) or sensor-specific."
+  "Notes": "This check requires SecurityIdentitiesHealth.Read.All permission. The check first verifies that MDI sensors are deployed, then evaluates health issues which may be global (domain-related) or sensor-specific."
 }
