@@ -9,9 +9,7 @@ from abc import ABC, abstractmethod
 import requests
 
 from prowler.lib.logger import logger
-from prowler.providers.image.exceptions.exceptions import (
-    ImageRegistryNetworkError,
-)
+from prowler.providers.image.exceptions.exceptions import ImageRegistryNetworkError
 
 _MAX_RETRIES = 3
 _BACKOFF_BASE = 1
@@ -21,13 +19,27 @@ class RegistryAdapter(ABC):
     """Abstract base class for registry adapters."""
 
     def __init__(
-        self, registry_url, username=None, password=None, token=None, verify_ssl=True
-    ):
+        self,
+        registry_url: str,
+        username: str | None = None,
+        password: str | None = None,
+        token: str | None = None,
+        verify_ssl: bool = True,
+    ) -> None:
         self.registry_url = registry_url
         self.username = username
         self.password = password
         self.token = token
         self.verify_ssl = verify_ssl
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}("
+            f"registry_url={self.registry_url!r}, "
+            f"username={self.username!r}, "
+            f"password={'<redacted>' if self.password else None}, "
+            f"token={'<redacted>' if self.token else None})"
+        )
 
     @abstractmethod
     def list_repositories(self) -> list[str]:
@@ -39,15 +51,17 @@ class RegistryAdapter(ABC):
         """Enumerate all tags for a repository."""
         ...
 
-    def _request_with_retry(self, method, url, **kwargs):
+    def _request_with_retry(self, method: str, url: str, **kwargs) -> requests.Response:
         context_label = kwargs.pop("context_label", None) or self.registry_url
         kwargs.setdefault("timeout", 30)
         kwargs.setdefault("verify", self.verify_ssl)
         last_exception = None
+        last_status = None
         for attempt in range(1, _MAX_RETRIES + 1):
             try:
                 resp = requests.request(method, url, **kwargs)
                 if resp.status_code == 429:
+                    last_status = 429
                     wait = _BACKOFF_BASE * (2 ** (attempt - 1))
                     logger.warning(
                         f"Rate limited by {context_label}, retrying in {wait}s (attempt {attempt}/{_MAX_RETRIES})"
@@ -70,6 +84,11 @@ class RegistryAdapter(ABC):
                     message=f"Connection timed out to {context_label}.",
                     original_exception=exc,
                 )
+        if last_status == 429:
+            raise ImageRegistryNetworkError(
+                file=__file__,
+                message=f"Rate limited by {context_label} after {_MAX_RETRIES} attempts.",
+            )
         raise ImageRegistryNetworkError(
             file=__file__,
             message=f"Failed to connect to {context_label} after {_MAX_RETRIES} attempts.",
@@ -77,7 +96,7 @@ class RegistryAdapter(ABC):
         )
 
     @staticmethod
-    def _next_page_url(resp):
+    def _next_page_url(resp: requests.Response) -> str | None:
         link_header = resp.headers.get("Link", "")
         if not link_header:
             return None

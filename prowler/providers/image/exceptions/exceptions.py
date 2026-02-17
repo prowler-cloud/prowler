@@ -82,8 +82,8 @@ class ImageBaseException(ProwlerException):
 
     def __init__(self, code, file=None, original_exception=None, message=None):
         error_info = self.IMAGE_ERROR_CODES.get((code, self.__class__.__name__))
-        if message:
-            error_info["message"] = message
+        if error_info and message:
+            error_info = {**error_info, "message": message}
         super().__init__(
             code,
             source="Image",

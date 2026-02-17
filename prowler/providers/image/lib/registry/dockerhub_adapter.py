@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import re
 
+import requests
+
 from prowler.lib.logger import logger
 from prowler.providers.image.exceptions.exceptions import (
     ImageRegistryAuthError,
@@ -21,15 +23,24 @@ class DockerHubAdapter(RegistryAdapter):
     """Adapter for Docker Hub using the Hub REST API + OCI tag listing."""
 
     def __init__(
-        self, registry_url, username=None, password=None, token=None, verify_ssl=True
-    ):
-        super().__init__(registry_url, username, password, token, verify_ssl)
+        self,
+        registry_url: str,
+        username: str | None = None,
+        password: str | None = None,
+        token: str | None = None,
+        verify_ssl: bool = True,
+    ) -> None:
+        if not verify_ssl:
+            logger.warning(
+                "Docker Hub always uses TLS verification; --registry-insecure is ignored for Docker Hub registries."
+            )
+        super().__init__(registry_url, username, password, token, verify_ssl=True)
         self.namespace = self._extract_namespace(registry_url)
-        self._hub_jwt = None
-        self._registry_tokens = {}
+        self._hub_jwt: str | None = None
+        self._registry_tokens: dict[str, str] = {}
 
     @staticmethod
-    def _extract_namespace(registry_url):
+    def _extract_namespace(registry_url: str) -> str:
         url = registry_url.rstrip("/")
         for prefix in (
             "https://registry-1.docker.io",
@@ -49,19 +60,19 @@ class DockerHubAdapter(RegistryAdapter):
         namespace = parts[0] if parts and parts[0] else ""
         return namespace
 
-    def list_repositories(self):
+    def list_repositories(self) -> list[str]:
         if not self.namespace:
             raise ImageRegistryAuthError(
                 file=__file__,
                 message="Docker Hub requires a namespace. Use --registry docker.io/{org_or_user}.",
             )
         self._hub_login()
-        repositories = []
+        repositories: list[str] = []
         if self._hub_jwt:
             url = f"{_HUB_API}/v2/namespaces/{self.namespace}/repositories"
         else:
             url = f"{_HUB_API}/v2/repositories/{self.namespace}/"
-        params = {"page_size": 100}
+        params: dict = {"page_size": 100}
         while url:
             resp = self._hub_request("GET", url, params=params)
             self._check_hub_response(resp, "repository listing")
@@ -74,11 +85,11 @@ class DockerHubAdapter(RegistryAdapter):
             params = {}
         return repositories
 
-    def list_tags(self, repository):
+    def list_tags(self, repository: str) -> list[str]:
         token = self._get_registry_token(repository)
-        tags = []
+        tags: list[str] = []
         url = f"{_REGISTRY_HOST}/v2/{repository}/tags/list"
-        params = {"n": 100}
+        params: dict = {"n": 100}
         while url:
             resp = self._registry_request("GET", url, token, params=params)
             if resp.status_code in (401, 403):
@@ -93,11 +104,11 @@ class DockerHubAdapter(RegistryAdapter):
                 break
             data = resp.json()
             tags.extend(data.get("tags", []) or [])
-            url = self._next_page_url(resp)
+            url = self._next_tag_page_url(resp)
             params = {}
         return tags
 
-    def _hub_login(self):
+    def _hub_login(self) -> None:
         if self._hub_jwt:
             return
         if not self.username or not self.password:
@@ -115,7 +126,7 @@ class DockerHubAdapter(RegistryAdapter):
             )
         self._hub_jwt = resp.json().get("token")
 
-    def _get_registry_token(self, repository):
+    def _get_registry_token(self, repository: str) -> str:
         if repository in self._registry_tokens:
             return self._registry_tokens[repository]
         params = {
@@ -126,7 +137,11 @@ class DockerHubAdapter(RegistryAdapter):
         if self.username and self.password:
             auth = (self.username, self.password)
         resp = self._request_with_retry(
-            "GET", _AUTH_URL, params=params, auth=auth, context_label="Docker Hub",
+            "GET",
+            _AUTH_URL,
+            params=params,
+            auth=auth,
+            context_label="Docker Hub",
         )
         if resp.status_code != 200:
             raise ImageRegistryAuthError(
@@ -137,7 +152,7 @@ class DockerHubAdapter(RegistryAdapter):
         self._registry_tokens[repository] = token
         return token
 
-    def _hub_request(self, method, url, **kwargs):
+    def _hub_request(self, method: str, url: str, **kwargs) -> requests.Response:
         headers = kwargs.pop("headers", {})
         if self._hub_jwt:
             headers["Authorization"] = f"Bearer {self._hub_jwt}"
@@ -146,7 +161,9 @@ class DockerHubAdapter(RegistryAdapter):
             method, url, context_label="Docker Hub", **kwargs
         )
 
-    def _registry_request(self, method, url, token, **kwargs):
+    def _registry_request(
+        self, method: str, url: str, token: str, **kwargs
+    ) -> requests.Response:
         headers = kwargs.pop("headers", {})
         headers["Authorization"] = f"Bearer {token}"
         kwargs["headers"] = headers
@@ -154,7 +171,7 @@ class DockerHubAdapter(RegistryAdapter):
             method, url, context_label="Docker Hub", **kwargs
         )
 
-    def _check_hub_response(self, resp, context):
+    def _check_hub_response(self, resp: requests.Response, context: str) -> None:
         if resp.status_code == 200:
             return
         if resp.status_code in (401, 403):
@@ -173,7 +190,7 @@ class DockerHubAdapter(RegistryAdapter):
         )
 
     @staticmethod
-    def _next_page_url(resp):
+    def _next_tag_page_url(resp: requests.Response) -> str | None:
         link_header = resp.headers.get("Link", "")
         if not link_header:
             return None

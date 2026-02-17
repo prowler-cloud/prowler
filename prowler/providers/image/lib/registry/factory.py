@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 
+from prowler.providers.image.lib.registry.base import RegistryAdapter
 from prowler.providers.image.lib.registry.dockerhub_adapter import DockerHubAdapter
 from prowler.providers.image.lib.registry.oci_adapter import OciRegistryAdapter
 
@@ -16,8 +17,12 @@ _ECR_PATTERN = re.compile(
 
 
 def create_registry_adapter(
-    registry_url, username=None, password=None, token=None, verify_ssl=True
-):
+    registry_url: str,
+    username: str | None = None,
+    password: str | None = None,
+    token: str | None = None,
+    verify_ssl: bool = True,
+) -> RegistryAdapter:
     """Auto-detect registry type from URL and return the appropriate adapter."""
     if _DOCKER_HUB_PATTERN.search(registry_url):
         return DockerHubAdapter(
@@ -38,7 +43,7 @@ def create_registry_adapter(
     )
 
 
-def detect_registry_type(registry_url):
+def detect_registry_type(registry_url: str) -> str:
     """Return a string identifying the detected registry type."""
     if _DOCKER_HUB_PATTERN.search(registry_url):
         return "dockerhub"

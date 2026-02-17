@@ -1,7 +1,3 @@
-from unittest.mock import patch
-
-import pytest
-
 from prowler.providers.image.lib.registry.dockerhub_adapter import DockerHubAdapter
 from prowler.providers.image.lib.registry.factory import (
     create_registry_adapter,
@@ -27,10 +23,15 @@ class TestDetectRegistryType:
         assert detect_registry_type("https://docker.io/myorg") == "dockerhub"
 
     def test_ecr(self):
-        assert detect_registry_type("123456789.dkr.ecr.us-east-1.amazonaws.com") == "ecr"
+        assert (
+            detect_registry_type("123456789.dkr.ecr.us-east-1.amazonaws.com") == "ecr"
+        )
 
     def test_ecr_with_https(self):
-        assert detect_registry_type("https://123456789.dkr.ecr.us-east-1.amazonaws.com") == "ecr"
+        assert (
+            detect_registry_type("https://123456789.dkr.ecr.us-east-1.amazonaws.com")
+            == "ecr"
+        )
 
     def test_harbor(self):
         assert detect_registry_type("harbor.example.com") == "oci"
@@ -51,7 +52,11 @@ class TestCreateRegistryAdapter:
 
     def test_passes_credentials(self):
         adapter = create_registry_adapter(
-            "myregistry.io", username="user", password="pass", token="tok", verify_ssl=False
+            "myregistry.io",
+            username="user",
+            password="pass",
+            token="tok",
+            verify_ssl=False,
         )
         assert adapter.username == "user"
         assert adapter.password == "pass"

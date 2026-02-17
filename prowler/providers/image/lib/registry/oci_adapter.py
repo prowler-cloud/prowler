@@ -5,6 +5,8 @@ from __future__ import annotations
 import base64
 import re
 
+import requests
+
 from prowler.providers.image.exceptions.exceptions import (
     ImageRegistryAuthError,
     ImageRegistryCatalogError,
@@ -17,25 +19,30 @@ class OciRegistryAdapter(RegistryAdapter):
     """Adapter for registries implementing OCI Distribution Spec."""
 
     def __init__(
-        self, registry_url, username=None, password=None, token=None, verify_ssl=True
-    ):
+        self,
+        registry_url: str,
+        username: str | None = None,
+        password: str | None = None,
+        token: str | None = None,
+        verify_ssl: bool = True,
+    ) -> None:
         super().__init__(registry_url, username, password, token, verify_ssl)
         self._base_url = self._normalise_url(registry_url)
-        self._bearer_token = None
+        self._bearer_token: str | None = None
         self._basic_auth_verified = False
 
     @staticmethod
-    def _normalise_url(url):
+    def _normalise_url(url: str) -> str:
         url = url.rstrip("/")
         if not url.startswith(("http://", "https://")):
             url = f"https://{url}"
         return url
 
-    def list_repositories(self):
+    def list_repositories(self) -> list[str]:
         self._ensure_auth()
-        repositories = []
+        repositories: list[str] = []
         url = f"{self._base_url}/v2/_catalog"
-        params = {"n": 200}
+        params: dict = {"n": 200}
         while url:
             resp = self._authed_request("GET", url, params=params)
             if resp.status_code == 404:
@@ -50,11 +57,11 @@ class OciRegistryAdapter(RegistryAdapter):
             params = {}
         return repositories
 
-    def list_tags(self, repository):
+    def list_tags(self, repository: str) -> list[str]:
         self._ensure_auth(repository=repository)
-        tags = []
+        tags: list[str] = []
         url = f"{self._base_url}/v2/{repository}/tags/list"
-        params = {"n": 200}
+        params: dict = {"n": 200}
         while url:
             resp = self._authed_request("GET", url, params=params)
             self._check_response(resp, f"tag listing for {repository}")
@@ -64,7 +71,7 @@ class OciRegistryAdapter(RegistryAdapter):
             params = {}
         return tags
 
-    def _ensure_auth(self, repository=None):
+    def _ensure_auth(self, repository: str | None = None) -> None:
         if self._bearer_token:
             return
         if self._basic_auth_verified:
@@ -101,8 +108,14 @@ class OciRegistryAdapter(RegistryAdapter):
                 file=__file__,
                 message=f"Access denied to registry {self.registry_url} (HTTP 403). Check REGISTRY_USERNAME and REGISTRY_PASSWORD.",
             )
+        raise ImageRegistryNetworkError(
+            file=__file__,
+            message=f"Unexpected HTTP {resp.status_code} from registry {self.registry_url} during auth check.",
+        )
 
-    def _obtain_bearer_token(self, www_authenticate, repository=None):
+    def _obtain_bearer_token(
+        self, www_authenticate: str, repository: str | None = None
+    ) -> str:
         match = re.search(r'realm="([^"]+)"', www_authenticate)
         if not match:
             raise ImageRegistryAuthError(
@@ -110,7 +123,7 @@ class OciRegistryAdapter(RegistryAdapter):
                 message=f"Cannot parse token endpoint from registry {self.registry_url}. Www-Authenticate: {www_authenticate[:200]}",
             )
         realm = match.group(1)
-        params = {}
+        params: dict = {}
         service_match = re.search(r'service="([^"]+)"', www_authenticate)
         if service_match:
             params["service"] = service_match.group(1)
@@ -131,7 +144,7 @@ class OciRegistryAdapter(RegistryAdapter):
         data = resp.json()
         return data.get("token") or data.get("access_token", "")
 
-    def _resolve_basic_credentials(self):
+    def _resolve_basic_credentials(self) -> tuple[str | None, str | None]:
         """Decode pre-encoded base64 auth tokens (e.g., from aws ecr get-authorization-token).
 
         Returns (username, password) — decoded if the password is a base64 token
@@ -145,7 +158,7 @@ class OciRegistryAdapter(RegistryAdapter):
             pass
         return self.username, self.password
 
-    def _authed_request(self, method, url, **kwargs):
+    def _authed_request(self, method: str, url: str, **kwargs) -> requests.Response:
         headers = kwargs.pop("headers", {})
         if self._bearer_token:
             headers["Authorization"] = f"Bearer {self._bearer_token}"
@@ -155,7 +168,7 @@ class OciRegistryAdapter(RegistryAdapter):
         kwargs["headers"] = headers
         return self._request_with_retry(method, url, **kwargs)
 
-    def _check_response(self, resp, context):
+    def _check_response(self, resp: requests.Response, context: str) -> None:
         if resp.status_code == 200:
             return
         if resp.status_code in (401, 403):
