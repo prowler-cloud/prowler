@@ -101,13 +101,15 @@ class entra_app_registration_no_unused_privileged_permissions(Check):
                         f" (and {len(unused_privileged_permissions) - 5} more)"
                     )
                 report.status_extended = (
-                    f"App registration '{app.name}' has {len(unused_privileged_permissions)} "
+                    f"App registration {app.name} has {len(unused_privileged_permissions)} "
                     f"unused privileged permission(s): {permissions_list}."
                 )
             else:
                 # The app has no unused privileged permissions
                 report.status = "PASS"
-                report.status_extended = f"App registration '{app.name}' has no unused privileged permissions."
+                report.status_extended = (
+                    f"App registration {app.name} has no unused privileged permissions."
+                )
 
             findings.append(report)
 

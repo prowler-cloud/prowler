@@ -523,7 +523,9 @@ OAuthAppInfo
             if result and result.results:
                 for row in result.results:
                     row_data = row.additional_data
-                    app_id = row_data.get("OAuthAppId", "")
+                    raw_app_id = row_data.get("OAuthAppId", "")
+                    # Convert to string in case API returns non-string type
+                    app_id = str(raw_app_id) if raw_app_id else ""
                     if not app_id:
                         continue
 
@@ -535,31 +537,56 @@ OAuthAppInfo
                             if isinstance(perm, dict):
                                 permissions.append(
                                     OAuthAppPermission(
-                                        name=perm.get("PermissionName", ""),
-                                        target_app_id=perm.get("TargetAppId", ""),
-                                        target_app_name=perm.get(
-                                            "TargetAppDisplayName", ""
+                                        name=str(perm.get("PermissionName", "")),
+                                        target_app_id=str(perm.get("TargetAppId", "")),
+                                        target_app_name=str(
+                                            perm.get("TargetAppDisplayName", "")
                                         ),
-                                        permission_type=perm.get("PermissionType", ""),
-                                        classification=perm.get(
-                                            "Classification",
-                                            perm.get("PermissionClassification", ""),
+                                        permission_type=str(
+                                            perm.get("PermissionType", "")
                                         ),
-                                        privilege_level=perm.get("PrivilegeLevel", ""),
-                                        usage_status=perm.get("UsageStatus", ""),
+                                        classification=str(
+                                            perm.get(
+                                                "Classification",
+                                                perm.get(
+                                                    "PermissionClassification", ""
+                                                ),
+                                            )
+                                        ),
+                                        privilege_level=str(
+                                            perm.get("PrivilegeLevel", "")
+                                        ),
+                                        usage_status=str(perm.get("UsageStatus", "")),
                                     )
                                 )
 
+                    # Convert values to strings to handle API returning non-string types
+                    raw_service_principal_id = row_data.get("ServicePrincipalId", "")
+                    service_principal_id = (
+                        str(raw_service_principal_id)
+                        if raw_service_principal_id
+                        else ""
+                    )
+
+                    raw_last_used_time = row_data.get("LastUsedTime")
+                    last_used_time = (
+                        str(raw_last_used_time)
+                        if raw_last_used_time is not None
+                        else None
+                    )
+
                     oauth_apps[app_id] = OAuthApp(
                         id=app_id,
-                        name=row_data.get("AppName", ""),
-                        status=row_data.get("AppStatus", ""),
-                        privilege_level=row_data.get("PrivilegeLevel", ""),
+                        name=str(row_data.get("AppName", "")),
+                        status=str(row_data.get("AppStatus", "")),
+                        privilege_level=str(row_data.get("PrivilegeLevel", "")),
                         permissions=permissions,
-                        service_principal_id=row_data.get("ServicePrincipalId", ""),
-                        is_admin_consented=row_data.get("IsAdminConsented", False),
-                        last_used_time=row_data.get("LastUsedTime"),
-                        app_origin=row_data.get("AppOrigin", ""),
+                        service_principal_id=service_principal_id,
+                        is_admin_consented=bool(
+                            row_data.get("IsAdminConsented", False)
+                        ),
+                        last_used_time=last_used_time,
+                        app_origin=str(row_data.get("AppOrigin", "")),
                     )
 
         except Exception as error:

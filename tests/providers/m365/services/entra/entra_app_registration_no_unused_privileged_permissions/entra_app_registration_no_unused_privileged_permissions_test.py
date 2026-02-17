@@ -122,7 +122,7 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"App registration '{app_name}' has no unused privileged permissions."
+                == f"App registration {app_name} has no unused privileged permissions."
             )
             assert result[0].resource_name == app_name
             assert result[0].resource_id == app_id
@@ -187,7 +187,7 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"App registration '{app_name}' has no unused privileged permissions."
+                == f"App registration {app_name} has no unused privileged permissions."
             )
             assert result[0].resource_name == app_name
             assert result[0].resource_id == app_id
@@ -252,7 +252,7 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"App registration '{app_name}' has no unused privileged permissions."
+                == f"App registration {app_name} has no unused privileged permissions."
             )
             assert result[0].resource_name == app_name
             assert result[0].resource_id == app_id
@@ -309,7 +309,7 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"App registration '{app_name}' has no unused privileged permissions."
+                == f"App registration {app_name} has no unused privileged permissions."
             )
             assert result[0].resource_name == app_name
             assert result[0].resource_id == app_id
@@ -374,7 +374,7 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"App registration '{app_name}' has 1 unused privileged permission(s): Mail.ReadWrite.All."
+                == f"App registration {app_name} has 1 unused privileged permission(s): Mail.ReadWrite.All."
             )
             assert result[0].resource_name == app_name
             assert result[0].resource_id == app_id
@@ -447,7 +447,7 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"App registration '{app_name}' has 3 unused privileged permission(s): Mail.ReadWrite.All, Directory.ReadWrite.All, User.ReadWrite.All."
+                == f"App registration {app_name} has 3 unused privileged permission(s): Mail.ReadWrite.All, Directory.ReadWrite.All, User.ReadWrite.All."
             )
             assert result[0].resource_name == app_name
             assert result[0].resource_id == app_id
@@ -552,7 +552,7 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"App registration '{app_name}' has 7 unused privileged permission(s): Mail.ReadWrite.All, Directory.ReadWrite.All, User.ReadWrite.All, Group.ReadWrite.All, Sites.ReadWrite.All (and 2 more)."
+                == f"App registration {app_name} has 7 unused privileged permission(s): Mail.ReadWrite.All, Directory.ReadWrite.All, User.ReadWrite.All, Group.ReadWrite.All, Sites.ReadWrite.All (and 2 more)."
             )
             assert result[0].resource_name == app_name
             assert result[0].resource_id == app_id
@@ -609,7 +609,7 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"App registration '{app_name}' has 1 unused privileged permission(s): Mail.ReadWrite.All."
+                == f"App registration {app_name} has 1 unused privileged permission(s): Mail.ReadWrite.All."
             )
             assert result[0].resource_name == app_name
             assert result[0].resource_id == app_id
@@ -693,14 +693,14 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
             assert result_pass.status == "PASS"
             assert (
                 result_pass.status_extended
-                == f"App registration '{app_name_pass}' has no unused privileged permissions."
+                == f"App registration {app_name_pass} has no unused privileged permissions."
             )
             assert result_pass.resource_name == app_name_pass
 
             assert result_fail.status == "FAIL"
             assert (
                 result_fail.status_extended
-                == f"App registration '{app_name_fail}' has 1 unused privileged permission(s): Directory.ReadWrite.All."
+                == f"App registration {app_name_fail} has 1 unused privileged permission(s): Directory.ReadWrite.All."
             )
             assert result_fail.resource_name == app_name_fail
 
@@ -773,7 +773,7 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
             # Only the High privilege permission should be reported
             assert (
                 result[0].status_extended
-                == f"App registration '{app_name}' has 1 unused privileged permission(s): Mail.ReadWrite.All."
+                == f"App registration {app_name} has 1 unused privileged permission(s): Mail.ReadWrite.All."
             )
             assert result[0].resource_name == app_name
             assert result[0].resource_id == app_id
@@ -846,7 +846,7 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"App registration '{app_name}' has 1 unused privileged permission(s): Directory.ReadWrite.All."
+                == f"App registration {app_name} has 1 unused privileged permission(s): Directory.ReadWrite.All."
             )
             assert result[0].resource_name == app_name
             assert result[0].resource_id == app_id
