@@ -74,3 +74,34 @@ def test_list_buckets_respects_audit_filters():
         oss._list_buckets()
 
     assert list(oss.buckets.keys()) == []
+
+
+def test_defusedxml_is_used_for_xml_parsing():
+    from defusedxml import ElementTree as defused_ET
+
+    from prowler.providers.alibabacloud.services.oss import oss_service
+
+    assert oss_service.ElementTree is defused_ET
+
+
+def test_list_buckets_rejects_xxe_payload():
+    oss = _build_oss_service()
+    xxe_payload = """<?xml version="1.0"?>
+    <!DOCTYPE data [
+        <!ENTITY xxe SYSTEM "file:///etc/passwd">
+    ]>
+    <ListAllMyBucketsResult>
+      <Buckets>
+        <Bucket>
+          <Name>&xxe;</Name>
+          <CreationDate>2025-01-01T00:00:00.000Z</CreationDate>
+          <Location>oss-cn-hangzhou</Location>
+        </Bucket>
+      </Buckets>
+    </ListAllMyBucketsResult>"""
+
+    with patch("requests.get") as get_mock:
+        get_mock.return_value = MagicMock(status_code=200, text=xxe_payload)
+        oss._list_buckets()
+
+    assert oss.buckets == {}

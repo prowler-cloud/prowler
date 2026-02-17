@@ -6,9 +6,9 @@ from datetime import datetime
 from email.utils import formatdate
 from threading import Lock
 from typing import Optional
-from defusedxml import ElementTree
 
 import requests
+from defusedxml import ElementTree
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger

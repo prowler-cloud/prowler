@@ -12,6 +12,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
 
+### 🐞 Fixed
+
+- Use `defusedxml` in the Alibaba Cloud OSS service to prevent XXE vulnerabilities when parsing XML responses [(#9999)](https://github.com/prowler-cloud/prowler/pull/9999)
+
 ---
 
 ## [5.18.0] (Prowler v5.18.0)
