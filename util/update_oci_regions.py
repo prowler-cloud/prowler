@@ -50,14 +50,18 @@ def setup_oci_client():
     user_ocid = os.getenv("OCI_CLI_USER")
     fingerprint = os.getenv("OCI_CLI_FINGERPRINT")
     tenancy_ocid = os.getenv("OCI_CLI_TENANCY")
-    key_content_b64 = os.getenv("OCI_CLI_KEY_CONTENT")
+    key_content_raw = os.getenv("OCI_CLI_KEY_CONTENT")
     region = os.getenv("OCI_CLI_REGION", "us-ashburn-1")
 
-    # Decode base64 private key
-    try:
-        key_content = base64.b64decode(key_content_b64).decode("utf-8")
-    except Exception as e:
-        raise ValueError(f"Failed to decode OCI_CLI_KEY_CONTENT: {e}")
+    # Decode private key: the secret is stored base64-encoded (same format
+    # the UI/API use). If it's already raw PEM, use it directly.
+    if key_content_raw.strip().startswith("-----BEGIN"):
+        key_content = key_content_raw
+    else:
+        try:
+            key_content = base64.b64decode(key_content_raw).decode("utf-8")
+        except Exception as e:
+            raise ValueError(f"Failed to decode OCI_CLI_KEY_CONTENT: {e}")
 
     # Create OCI config dictionary
     config = {

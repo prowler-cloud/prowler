@@ -691,8 +691,6 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
     update_tag = models.BigIntegerField(
         null=True, blank=True, help_text="Cartography update tag (epoch)"
     )
-    graph_database = models.CharField(max_length=63, null=True, blank=True)
-    is_graph_database_deleted = models.BooleanField(default=False)
     ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
@@ -718,21 +716,6 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "scan_id"],
                 name="aps_scan_lookup_idx",
-            ),
-            models.Index(
-                fields=["tenant_id", "provider_id"],
-                name="aps_active_graph_idx",
-                include=["graph_database", "id"],
-                condition=Q(is_graph_database_deleted=False),
-            ),
-            models.Index(
-                fields=["tenant_id", "provider_id", "-completed_at"],
-                name="aps_completed_graph_idx",
-                include=["graph_database", "id"],
-                condition=Q(
-                    state=StateChoices.COMPLETED,
-                    is_graph_database_deleted=False,
-                ),
             ),
         ]
 
