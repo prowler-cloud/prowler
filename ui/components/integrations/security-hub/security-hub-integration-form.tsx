@@ -10,11 +10,16 @@ import { useEffect, useMemo, useState } from "react";
 import { Control, useForm } from "react-hook-form";
 
 import { createIntegration, updateIntegration } from "@/actions/integrations";
-import { EnhancedProviderSelector } from "@/components/providers/enhanced-provider-selector";
 import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-form";
+import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { Form, FormControl, FormField } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormMessage,
+} from "@/components/ui/form";
 import { FormButtons } from "@/components/ui/form/form-buttons";
 import { getAWSCredentialsTemplateLinks } from "@/lib";
 import { AWSCredentialsRole } from "@/types";
@@ -106,6 +111,26 @@ export const SecurityHubIntegrationForm = ({
   const useCustomCredentials = form.watch("use_custom_credentials");
   const providerIdValue = form.watch("provider_id");
   const hasErrors = !!form.formState.errors.provider_id || !providerIdValue;
+
+  const providerOptions = useMemo(() => {
+    return providers
+      .filter((provider) => provider.attributes.provider === "aws")
+      .map((provider) => {
+        const isDisabled = disabledProviderIds.includes(provider.id);
+        const connectionLabel = provider.attributes.connection.connected
+          ? "Connected"
+          : "Disconnected";
+
+        return {
+          value: provider.id,
+          label: provider.attributes.alias || provider.attributes.uid,
+          description: isDisabled
+            ? `${connectionLabel} (Already in use)`
+            : connectionLabel,
+          disabled: isDisabled,
+        };
+      });
+  }, [providers, disabledProviderIds]);
 
   useEffect(() => {
     if (!useCustomCredentials && isCreating) {
@@ -325,17 +350,31 @@ export const SecurityHubIntegrationForm = ({
           {!isEditingConfig && (
             <>
               <div className="flex flex-col gap-4">
-                <EnhancedProviderSelector
+                <FormField
                   control={form.control}
                   name="provider_id"
-                  providers={providers}
-                  label="AWS Provider"
-                  placeholder="Search and select an AWS provider"
-                  isInvalid={!!form.formState.errors.provider_id}
-                  selectionMode="single"
-                  providerType="aws"
-                  enableSearch={true}
-                  disabledProviderIds={disabledProviderIds}
+                  render={({ field }) => (
+                    <>
+                      <FormControl>
+                        <EnhancedMultiSelect
+                          options={providerOptions}
+                          onValueChange={(values) => {
+                            field.onChange(values.at(-1) ?? "");
+                          }}
+                          defaultValue={field.value ? [field.value] : []}
+                          placeholder="Search and select an AWS provider"
+                          searchable={true}
+                          hideSelectAll={true}
+                          maxCount={1}
+                          closeOnSelect={true}
+                          minWidth="0px"
+                          maxWidth="100%"
+                          resetOnDefaultValueChange={true}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-text-error max-w-full text-xs" />
+                    </>
+                  )}
                 />
               </div>
               <Divider />

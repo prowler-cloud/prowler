@@ -8,12 +8,17 @@ import { useState } from "react";
 import { Control, useForm } from "react-hook-form";
 
 import { createIntegration, updateIntegration } from "@/actions/integrations";
-import { EnhancedProviderSelector } from "@/components/providers/enhanced-provider-selector";
 import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-form";
+import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { Form } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormMessage,
+} from "@/components/ui/form";
 import { FormButtons } from "@/components/ui/form/form-buttons";
 import { getAWSCredentialsTemplateLinks } from "@/lib";
 import { AWSCredentialsRole } from "@/types";
@@ -272,18 +277,38 @@ export const S3IntegrationForm = ({
 
     // Show configuration step (step 0 or editing configuration)
     if (isEditingConfig || currentStep === 0) {
+      const providerOptions = providers.map((provider) => ({
+        value: provider.id,
+        label: provider.attributes.alias || provider.attributes.uid,
+        description: provider.attributes.connection.connected
+          ? "Connected"
+          : "Disconnected",
+      }));
+
       return (
         <>
           {/* Provider Selection */}
           <div className="flex flex-col gap-4">
-            <EnhancedProviderSelector
+            <FormField
               control={form.control}
               name="providers"
-              providers={providers}
-              label="Cloud Providers"
-              placeholder="Select providers to integrate with"
-              selectionMode="multiple"
-              enableSearch={true}
+              render={({ field }) => (
+                <>
+                  <FormControl>
+                    <EnhancedMultiSelect
+                      options={providerOptions}
+                      onValueChange={field.onChange}
+                      defaultValue={field.value || []}
+                      placeholder="Select providers to integrate with"
+                      searchable={true}
+                      maxCount={1}
+                      minWidth="0px"
+                      maxWidth="100%"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-text-error max-w-full text-xs" />
+                </>
+              )}
             />
           </div>
 
