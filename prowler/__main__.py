@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import tempfile
 from os import environ
 
 import requests
@@ -525,13 +526,14 @@ def prowler():
 
     if getattr(args, "export_ocsf", False):
         if not ocsf_output or not getattr(ocsf_output, "file_path", None):
-            filename = (
-                f"{output_options.output_directory}/{output_options.output_filename}"
+            tmp_ocsf = tempfile.NamedTemporaryFile(
+                suffix=json_ocsf_file_suffix, delete=False
             )
             ocsf_output = OCSF(
                 findings=finding_outputs,
-                file_path=f"{filename}{json_ocsf_file_suffix}",
+                file_path=tmp_ocsf.name,
             )
+            tmp_ocsf.close()
             ocsf_output.batch_write_data_to_file()
         print(
             f"{Style.BRIGHT}\nExporting OCSF to Prowler Cloud, please wait...{Style.RESET_ALL}"
