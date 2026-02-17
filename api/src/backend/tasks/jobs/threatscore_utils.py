@@ -114,6 +114,11 @@ def _calculate_requirements_data_from_statistics(
                 requirement_status = StatusChoices.PASS
             else:
                 requirement_status = StatusChoices.FAIL
+        elif requirement_checks:
+            # Requirement has checks but none produced findings — consistent
+            # with the dashboard's scan processing which treats this as PASS
+            # (no failed checks means the requirement is considered compliant).
+            requirement_status = StatusChoices.PASS
         else:
             requirement_status = StatusChoices.MANUAL
 

@@ -12,23 +12,13 @@ class compute_instance_security_groups_attached(Check):
 
         for instance in compute_client.instances:
             report = CheckReportOpenStack(metadata=self.metadata(), resource=instance)
-            report.resource_id = instance.id
-            report.resource_name = instance.name
-            report.region = instance.region
-
-            if instance.security_groups and len(instance.security_groups) > 0:
+            if instance.security_groups:
                 report.status = "PASS"
                 sg_names = ", ".join(instance.security_groups)
-                report.status_extended = (
-                    f"Instance {instance.name} ({instance.id}) has security groups "
-                    f"attached: {sg_names}."
-                )
+                report.status_extended = f"Instance {instance.name} ({instance.id}) has security groups attached: {sg_names}."
             else:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Instance {instance.name} ({instance.id}) does not have any "
-                    f"security groups attached."
-                )
+                report.status_extended = f"Instance {instance.name} ({instance.id}) does not have any security groups attached."
 
             findings.append(report)
 

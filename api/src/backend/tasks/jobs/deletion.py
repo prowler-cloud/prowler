@@ -13,7 +13,6 @@ from api.models import (
     ScanSummary,
     Tenant,
 )
-from tasks.jobs.attack_paths.db_utils import get_provider_graph_database_names
 
 logger = get_task_logger(__name__)
 
@@ -33,13 +32,13 @@ def delete_provider(tenant_id: str, pk: str):
     Raises:
         Provider.DoesNotExist: If no instance with the provided primary key exists.
     """
-    # Delete the Attack Paths' graph databases related to the provider
-    graph_database_names = get_provider_graph_database_names(tenant_id, pk)
+    # Delete the Attack Paths' graph data related to the provider
+    tenant_database_name = graph_database.get_database_name(tenant_id)
     try:
-        for graph_database_name in graph_database_names:
-            graph_database.drop_database(graph_database_name)
+        graph_database.drop_subgraph(tenant_database_name, str(pk))
+
     except graph_database.GraphDatabaseQueryException as gdb_error:
-        logger.error(f"Error deleting Provider databases: {gdb_error}")
+        logger.error(f"Error deleting Provider graph data: {gdb_error}")
         raise
 
     # Get all provider related data and delete them in batches
@@ -89,6 +88,13 @@ def delete_tenant(pk: str):
     for provider in Provider.objects.using(MainRouter.admin_db).filter(tenant_id=pk):
         summary = delete_provider(pk, provider.id)
         deletion_summary.update(summary)
+
+    try:
+        tenant_database_name = graph_database.get_database_name(pk)
+        graph_database.drop_database(tenant_database_name)
+    except graph_database.GraphDatabaseQueryException as gdb_error:
+        logger.error(f"Error dropping Tenant graph database: {gdb_error}")
+        raise
 
     Tenant.objects.using(MainRouter.admin_db).filter(id=pk).delete()
 

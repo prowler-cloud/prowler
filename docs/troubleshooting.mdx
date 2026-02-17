@@ -86,3 +86,122 @@ docker compose up -d
 <Note>
 We are evaluating adding these values to the default `docker-compose.yml` to avoid this issue in future releases.
 </Note>
+
+### API Container Fails to Start with JWT Key Permission Error
+
+See [GitHub Issue #8897](https://github.com/prowler-cloud/prowler/issues/8897) for more details.
+
+When deploying Prowler via Docker Compose on a fresh installation, the API container may fail to start with permission errors related to JWT RSA key file generation. This issue is commonly observed on Linux systems (Ubuntu, Debian, cloud VMs) and Windows with Docker Desktop, but not typically on macOS.
+
+**Error Message:**
+
+Checking the API container logs reveals:
+
+```bash
+PermissionError: [Errno 13] Permission denied: '/home/prowler/.config/prowler-api/jwt_private.pem'
+```
+
+Or:
+
+```bash
+Token generation failed due to invalid key configuration. Provide valid DJANGO_TOKEN_SIGNING_KEY and DJANGO_TOKEN_VERIFYING_KEY in the environment.
+```
+
+**Root Cause:**
+
+This permission mismatch occurs due to UID (User ID) mapping between the host system and Docker containers:
+
+* The API container runs as user `prowler` with UID/GID 1000
+* In environments like WSL2, the host user may have a different UID than the container user
+* Docker creates the mounted volume directory `./_data/api` on the host, often with the host user's UID or root ownership (UID 0)
+* When the application attempts to write JWT key files (`jwt_private.pem` and `jwt_public.pem`), the operation fails because the container's UID 1000 does not have write permissions to the host-owned directory
+
+**Solutions:**
+
+There are two approaches to resolve this issue:
+
+**Option 1: Fix Volume Ownership (Resolve UID Mapping)**
+
+Change the ownership of the volume directory to match the container user's UID (1000):
+
+```bash
+# The container user 'prowler' has UID 1000
+# This command changes the directory ownership to UID 1000
+sudo chown -R 1000:1000 ./_data/api
+```
+
+Then start Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+This solution directly addresses the UID mapping mismatch by ensuring the volume directory is owned by the same UID that the container process uses.
+
+**Option 2: Use Environment Variables (Skip File Storage)**
+
+Generate JWT RSA keys manually and provide them via environment variables to bypass file-based key storage entirely:
+
+```bash
+# Generate RSA keys
+openssl genrsa -out jwt_private.pem 4096
+openssl rsa -in jwt_private.pem -pubout -out jwt_public.pem
+
+# Extract key content (removes headers/footers and newlines)
+PRIVATE_KEY=$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' jwt_private.pem)
+PUBLIC_KEY=$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' jwt_public.pem)
+```
+
+Add the following to the `.env` file:
+
+```env
+DJANGO_TOKEN_SIGNING_KEY=<content of jwt_private.pem>
+DJANGO_TOKEN_VERIFYING_KEY=<content of jwt_public.pem>
+```
+
+When these environment variables are set, the API will use them directly instead of attempting to write key files to the mounted volume.
+
+<Note>
+A fix addressing this permission issue is being evaluated in [PR #9953](https://github.com/prowler-cloud/prowler/pull/9953).
+</Note>
+
+### SAML/OAuth ACS URL Incorrect When Running Behind a Proxy or Load Balancer
+
+See [GitHub Issue #9724](https://github.com/prowler-cloud/prowler/issues/9724) for more details.
+
+When running Prowler behind a reverse proxy (nginx, Traefik, etc.) or load balancer, the SAML ACS (Assertion Consumer Service) URL or OAuth callback URLs may be incorrectly generated using the internal container hostname (e.g., `http://prowler-api:8080/...`) instead of your external domain URL (e.g., `https://prowler.example.com/...`).
+
+**Root Cause:**
+
+Next.js environment variables prefixed with `NEXT_PUBLIC_` are **bundled at build time**, not runtime. The pre-built Docker images from Docker Hub (`prowlercloud/prowler-ui:stable`) are built with default internal URLs. Simply setting `NEXT_PUBLIC_API_BASE_URL` in your `.env` file or environment variables and restarting the container will **NOT** work because these values are already compiled into the JavaScript bundle.
+
+**Solution:**
+
+You must **rebuild** the UI Docker image with your external URL:
+
+```bash
+# Clone the repository (if you haven't already)
+git clone https://github.com/prowler-cloud/prowler.git
+cd prowler/ui
+
+# Build with your external URL as a build argument
+docker build \
+  --build-arg NEXT_PUBLIC_API_BASE_URL=https://prowler.example.com/api/v1 \
+  --build-arg NEXT_PUBLIC_API_DOCS_URL=https://prowler.example.com/api/v1/docs \
+  -t prowler-ui-custom:latest \
+  --target prod \
+  .
+```
+
+Then update your `docker-compose.yml` to use your custom image instead of the pre-built one:
+
+```yaml
+services:
+  ui:
+    image: prowler-ui-custom:latest  # Use your custom-built image
+    # ... rest of configuration
+```
+
+<Note>
+The `NEXT_PUBLIC_` prefix is a Next.js convention that exposes environment variables to the browser. Since the browser bundle is compiled during `docker build`, these variables must be provided as build arguments, not runtime environment variables.
+</Note>
