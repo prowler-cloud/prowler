@@ -14,6 +14,8 @@ from tests.providers.aws.utils import (
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
+ANALYZER_ARN = "arn:aws:access-analyzer:eu-west-1:111122223333:analyzer/TestAnalyzer"
+
 
 def mock_make_api_call(self, operation_name, kwarg):
     """
@@ -27,8 +29,8 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "analyzers": [
                 {
-                    "arn": "ARN",
-                    "name": "Test Analyzer",
+                    "arn": ANALYZER_ARN,
+                    "name": "TestAnalyzer",
                     "status": "ACTIVE",
                     "findings": 0,
                     "tags": {"test": "test"},
@@ -98,8 +100,9 @@ class Test_AccessAnalyzer_Service:
             set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert len(access_analyzer.analyzers) == 1
-        assert access_analyzer.analyzers[0].arn == "ARN"
-        assert access_analyzer.analyzers[0].name == "Test Analyzer"
+        assert access_analyzer.analyzers[0].arn == ANALYZER_ARN
+        assert access_analyzer.analyzers[0].name == "TestAnalyzer"
+        assert access_analyzer.analyzers[0].service == "access-analyzer"
         assert access_analyzer.analyzers[0].status == "ACTIVE"
         assert access_analyzer.analyzers[0].tags == [{"test": "test"}]
         assert access_analyzer.analyzers[0].type == "ACCOUNT"

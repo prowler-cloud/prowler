@@ -484,6 +484,7 @@ class Check_Report:
     resource: dict
     resource_details: str
     resource_tags: list
+    resource_service: str
     muted: bool
 
     def __init__(self, metadata: Dict, resource: Any) -> None:
@@ -513,6 +514,7 @@ class Check_Report:
         self.resource_details = ""
         self.resource_tags = getattr(resource, "tags", []) if resource else []
         self.muted = False
+        self.resource_service = getattr(resource, "service", None)
 
 
 @dataclass
