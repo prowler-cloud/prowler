@@ -24,13 +24,27 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Creating ViewSets, serializers, or filters in api/ | `django-drf` |
 | Creating a git commit | `prowler-commit` |
 | Creating/modifying models, views, serializers | `prowler-api` |
+| Fixing API bug | `tdd` |
+| Fixing SDK bug | `tdd` |
+| Fixing UI bug | `tdd` |
+| Fixing bug | `tdd` |
+| Implementing API endpoint | `tdd` |
 | Implementing JSON:API endpoints | `django-drf` |
+| Implementing SDK check | `tdd` |
+| Implementing UI feature | `tdd` |
+| Implementing feature | `tdd` |
 | Modifying API responses | `jsonapi` |
+| Modifying UI component | `tdd` |
+| Modifying component | `tdd` |
+| Refactoring UI code | `tdd` |
+| Refactoring code | `tdd` |
 | Review changelog format and conventions | `prowler-changelog` |
 | Reviewing JSON:API compliance | `jsonapi` |
 | Testing RLS tenant isolation | `prowler-test-api` |
 | Update CHANGELOG.md in any component | `prowler-changelog` |
 | Updating existing Attack Paths queries | `prowler-attack-paths-query` |
+| Working on UI task | `tdd` |
+| Working on task | `tdd` |
 | Writing Prowler API tests | `prowler-test-api` |
 | Writing Python tests with pytest | `pytest` |
 
