@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.18.3] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Update credentials for the Alibaba Cloud provider [(#10098)](https://github.com/prowler-cloud/prowler/pull/10098)
+
+---
+
 ## [1.18.2] (Prowler v5.18.2)
 
 ### 🐞 Fixed
