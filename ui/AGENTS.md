@@ -28,24 +28,15 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Creating Zod schemas | `zod-4` |
 | Creating a git commit | `prowler-commit` |
 | Creating/modifying Prowler UI components | `prowler-ui` |
-| Fixing API bug | `tdd` |
-| Fixing SDK bug | `tdd` |
-| Fixing UI bug | `tdd` |
 | Fixing bug | `tdd` |
-| Implementing API endpoint | `tdd` |
-| Implementing SDK check | `tdd` |
-| Implementing UI feature | `tdd` |
 | Implementing feature | `tdd` |
-| Modifying UI component | `tdd` |
 | Modifying component | `tdd` |
-| Refactoring UI code | `tdd` |
 | Refactoring code | `tdd` |
 | Review changelog format and conventions | `prowler-changelog` |
 | Testing hooks or utilities | `vitest` |
 | Update CHANGELOG.md in any component | `prowler-changelog` |
 | Using Zustand stores | `zustand-5` |
 | Working on Prowler UI structure (actions/adapters/types/hooks) | `prowler-ui` |
-| Working on UI task | `tdd` |
 | Working on task | `tdd` |
 | Working with Prowler UI test helpers/pages | `prowler-test-ui` |
 | Working with Tailwind classes | `tailwind-4` |

@@ -15,15 +15,6 @@ metadata:
     - "Refactoring code"
     - "Working on task"
     - "Modifying component"
-    - "Implementing UI feature"
-    - "Fixing UI bug"
-    - "Refactoring UI code"
-    - "Working on UI task"
-    - "Modifying UI component"
-    - "Implementing SDK check"
-    - "Implementing API endpoint"
-    - "Fixing SDK bug"
-    - "Fixing API bug"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Task
 ---
 

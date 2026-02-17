@@ -78,24 +78,16 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Creating/updating compliance frameworks | `prowler-compliance` |
 | Debug why a GitHub Actions job is failing | `prowler-ci` |
 | Fill .github/pull_request_template.md (Context/Description/Steps to review/Checklist) | `prowler-pr` |
-| Fixing API bug | `tdd` |
-| Fixing SDK bug | `tdd` |
-| Fixing UI bug | `tdd` |
 | Fixing bug | `tdd` |
 | General Prowler development questions | `prowler` |
-| Implementing API endpoint | `tdd` |
 | Implementing JSON:API endpoints | `django-drf` |
-| Implementing SDK check | `tdd` |
-| Implementing UI feature | `tdd` |
 | Implementing feature | `tdd` |
 | Inspect PR CI checks and gates (.github/workflows/*) | `prowler-ci` |
 | Inspect PR CI workflows (.github/workflows/*): conventional-commit, pr-check-changelog, pr-conflict-checker, labeler | `prowler-pr` |
 | Mapping checks to compliance controls | `prowler-compliance` |
 | Mocking AWS with moto in tests | `prowler-test-sdk` |
 | Modifying API responses | `jsonapi` |
-| Modifying UI component | `tdd` |
 | Modifying component | `tdd` |
-| Refactoring UI code | `tdd` |
 | Refactoring code | `tdd` |
 | Regenerate AGENTS.md Auto-invoke tables (sync.sh) | `skill-sync` |
 | Review PR requirements: template, title conventions, changelog gate | `prowler-pr` |
@@ -117,7 +109,6 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Using Zustand stores | `zustand-5` |
 | Working on MCP server tools | `prowler-mcp` |
 | Working on Prowler UI structure (actions/adapters/types/hooks) | `prowler-ui` |
-| Working on UI task | `tdd` |
 | Working on task | `tdd` |
 | Working with Prowler UI test helpers/pages | `prowler-test-ui` |
 | Working with Tailwind classes | `tailwind-4` |
