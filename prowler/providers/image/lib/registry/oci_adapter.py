@@ -4,20 +4,13 @@ from __future__ import annotations
 
 import base64
 import re
-import time
 
-import requests
-
-from prowler.lib.logger import logger
 from prowler.providers.image.exceptions.exceptions import (
     ImageRegistryAuthError,
     ImageRegistryCatalogError,
     ImageRegistryNetworkError,
 )
 from prowler.providers.image.lib.registry.base import RegistryAdapter
-
-_MAX_RETRIES = 3
-_BACKOFF_BASE = 1
 
 
 class OciRegistryAdapter(RegistryAdapter):
@@ -162,42 +155,6 @@ class OciRegistryAdapter(RegistryAdapter):
         kwargs["headers"] = headers
         return self._request_with_retry(method, url, **kwargs)
 
-    def _request_with_retry(self, method, url, **kwargs):
-        kwargs.setdefault("timeout", 30)
-        kwargs.setdefault("verify", self.verify_ssl)
-        last_exception = None
-        for attempt in range(1, _MAX_RETRIES + 1):
-            try:
-                resp = requests.request(method, url, **kwargs)
-                if resp.status_code == 429:
-                    wait = _BACKOFF_BASE * (2 ** (attempt - 1))
-                    logger.warning(
-                        f"Rate limited by registry, retrying in {wait}s (attempt {attempt}/{_MAX_RETRIES})"
-                    )
-                    time.sleep(wait)
-                    continue
-                return resp
-            except requests.exceptions.ConnectionError as exc:
-                last_exception = exc
-                if attempt < _MAX_RETRIES:
-                    wait = _BACKOFF_BASE * (2 ** (attempt - 1))
-                    logger.warning(
-                        f"Connection error to registry, retrying in {wait}s (attempt {attempt}/{_MAX_RETRIES})"
-                    )
-                    time.sleep(wait)
-                    continue
-            except requests.exceptions.Timeout as exc:
-                raise ImageRegistryNetworkError(
-                    file=__file__,
-                    message=f"Connection timed out to {self.registry_url}.",
-                    original_exception=exc,
-                )
-        raise ImageRegistryNetworkError(
-            file=__file__,
-            message=f"Failed to connect to {self.registry_url} after {_MAX_RETRIES} attempts.",
-            original_exception=last_exception,
-        )
-
     def _check_response(self, resp, context):
         if resp.status_code == 200:
             return
@@ -210,13 +167,3 @@ class OciRegistryAdapter(RegistryAdapter):
             file=__file__,
             message=f"Unexpected error during {context} on {self.registry_url} (HTTP {resp.status_code}): {resp.text[:200]}",
         )
-
-    @staticmethod
-    def _next_page_url(resp):
-        link_header = resp.headers.get("Link", "")
-        if not link_header:
-            return None
-        match = re.search(r'<([^>]+)>;\s*rel="next"', link_header)
-        if match:
-            return match.group(1)
-        return None

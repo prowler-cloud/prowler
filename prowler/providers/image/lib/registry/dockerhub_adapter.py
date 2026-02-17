@@ -3,19 +3,15 @@
 from __future__ import annotations
 
 import re
-import time
-
-import requests
 
 from prowler.lib.logger import logger
 from prowler.providers.image.exceptions.exceptions import (
     ImageRegistryAuthError,
+    ImageRegistryCatalogError,
     ImageRegistryNetworkError,
 )
 from prowler.providers.image.lib.registry.base import RegistryAdapter
 
-_MAX_RETRIES = 3
-_BACKOFF_BASE = 1
 _HUB_API = "https://hub.docker.com"
 _REGISTRY_HOST = "https://registry-1.docker.io"
 _AUTH_URL = "https://auth.docker.io/token"
@@ -106,11 +102,11 @@ class DockerHubAdapter(RegistryAdapter):
             return
         if not self.username or not self.password:
             return
-        resp = requests.post(
+        resp = self._request_with_retry(
+            "POST",
             f"{_HUB_API}/v2/users/login",
             json={"username": self.username, "password": self.password},
-            verify=self.verify_ssl,
-            timeout=30,
+            context_label="Docker Hub",
         )
         if resp.status_code != 200:
             raise ImageRegistryAuthError(
@@ -129,8 +125,8 @@ class DockerHubAdapter(RegistryAdapter):
         auth = None
         if self.username and self.password:
             auth = (self.username, self.password)
-        resp = requests.get(
-            _AUTH_URL, params=params, auth=auth, verify=self.verify_ssl, timeout=30
+        resp = self._request_with_retry(
+            "GET", _AUTH_URL, params=params, auth=auth, context_label="Docker Hub",
         )
         if resp.status_code != 200:
             raise ImageRegistryAuthError(
@@ -142,54 +138,20 @@ class DockerHubAdapter(RegistryAdapter):
         return token
 
     def _hub_request(self, method, url, **kwargs):
-        kwargs.setdefault("timeout", 30)
-        kwargs.setdefault("verify", self.verify_ssl)
         headers = kwargs.pop("headers", {})
         if self._hub_jwt:
             headers["Authorization"] = f"Bearer {self._hub_jwt}"
         kwargs["headers"] = headers
-        return self._request_with_retry(method, url, **kwargs)
+        return self._request_with_retry(
+            method, url, context_label="Docker Hub", **kwargs
+        )
 
     def _registry_request(self, method, url, token, **kwargs):
-        kwargs.setdefault("timeout", 30)
-        kwargs.setdefault("verify", self.verify_ssl)
         headers = kwargs.pop("headers", {})
         headers["Authorization"] = f"Bearer {token}"
         kwargs["headers"] = headers
-        return self._request_with_retry(method, url, **kwargs)
-
-    def _request_with_retry(self, method, url, **kwargs):
-        last_exception = None
-        for attempt in range(1, _MAX_RETRIES + 1):
-            try:
-                resp = requests.request(method, url, **kwargs)
-                if resp.status_code == 429:
-                    wait = _BACKOFF_BASE * (2 ** (attempt - 1))
-                    logger.warning(
-                        f"Rate limited by Docker Hub, retrying in {wait}s (attempt {attempt}/{_MAX_RETRIES})"
-                    )
-                    time.sleep(wait)
-                    continue
-                return resp
-            except requests.exceptions.ConnectionError as exc:
-                last_exception = exc
-                if attempt < _MAX_RETRIES:
-                    wait = _BACKOFF_BASE * (2 ** (attempt - 1))
-                    logger.warning(
-                        f"Connection error to Docker Hub, retrying in {wait}s (attempt {attempt}/{_MAX_RETRIES})"
-                    )
-                    time.sleep(wait)
-                    continue
-            except requests.exceptions.Timeout as exc:
-                raise ImageRegistryNetworkError(
-                    file=__file__,
-                    message="Connection timed out to Docker Hub.",
-                    original_exception=exc,
-                )
-        raise ImageRegistryNetworkError(
-            file=__file__,
-            message=f"Failed to connect to Docker Hub after {_MAX_RETRIES} attempts.",
-            original_exception=last_exception,
+        return self._request_with_retry(
+            method, url, context_label="Docker Hub", **kwargs
         )
 
     def _check_hub_response(self, resp, context):
@@ -201,7 +163,7 @@ class DockerHubAdapter(RegistryAdapter):
                 message=f"Authentication failed for {context} on Docker Hub (HTTP {resp.status_code}). Check REGISTRY_USERNAME and REGISTRY_PASSWORD environment variables.",
             )
         if resp.status_code == 404:
-            raise ImageRegistryAuthError(
+            raise ImageRegistryCatalogError(
                 file=__file__,
                 message=f"Namespace '{self.namespace}' not found on Docker Hub. Check the namespace in --registry docker.io/{{namespace}}.",
             )
