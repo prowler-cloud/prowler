@@ -38,6 +38,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update GCP IAM service metadata to new format [(#9646)](https://github.com/prowler-cloud/prowler/pull/9646)
 - Update GCP KMS service metadata to new format [(#9647)](https://github.com/prowler-cloud/prowler/pull/9647)
 - Update GCP Logging service metadata to new format [(#9648)](https://github.com/prowler-cloud/prowler/pull/9648)
+- Cloudflare provider credential validation with specific exceptions [(#9910)](https://github.com/prowler-cloud/prowler/pull/9910)
 
 ### 🔐 Security
 
