@@ -49,6 +49,21 @@ class Test_compute_instance_security_groups_attached:
                 security_groups=["default", "web"],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
+                is_locked=False,
+                locked_reason="",
+                key_name="",
+                user_id="",
+                access_ipv4="",
+                access_ipv6="",
+                public_v4="",
+                public_v6="",
+                private_v4="",
+                private_v6="",
+                networks={},
+                has_config_drive=False,
+                metadata={},
+                user_data="",
+                trusted_image_certificates=[],
             )
         ]
 
@@ -71,11 +86,14 @@ class Test_compute_instance_security_groups_attached:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == "Instance Instance One (instance-1) has security groups attached: default, web."
+            )
             assert result[0].resource_id == "instance-1"
             assert result[0].resource_name == "Instance One"
             assert result[0].region == OPENSTACK_REGION
             assert result[0].project_id == OPENSTACK_PROJECT_ID
-            assert "has security groups attached" in result[0].status_extended
 
     def test_instance_without_security_groups(self):
         """Test instance without security groups attached (FAIL)."""
@@ -89,6 +107,21 @@ class Test_compute_instance_security_groups_attached:
                 security_groups=[],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
+                is_locked=False,
+                locked_reason="",
+                key_name="",
+                user_id="",
+                access_ipv4="",
+                access_ipv6="",
+                public_v4="",
+                public_v6="",
+                private_v4="",
+                private_v6="",
+                networks={},
+                has_config_drive=False,
+                metadata={},
+                user_data="",
+                trusted_image_certificates=[],
             )
         ]
 
@@ -111,14 +144,14 @@ class Test_compute_instance_security_groups_attached:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "Instance Instance Two (instance-2) does not have any security groups attached."
+            )
             assert result[0].resource_id == "instance-2"
             assert result[0].resource_name == "Instance Two"
             assert result[0].region == OPENSTACK_REGION
             assert result[0].project_id == OPENSTACK_PROJECT_ID
-            assert (
-                "does not have any security groups attached"
-                in result[0].status_extended
-            )
 
     def test_multiple_instances_mixed(self):
         """Test multiple instances with mixed results."""
@@ -132,6 +165,21 @@ class Test_compute_instance_security_groups_attached:
                 security_groups=["default"],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
+                is_locked=False,
+                locked_reason="",
+                key_name="",
+                user_id="",
+                access_ipv4="",
+                access_ipv6="",
+                public_v4="",
+                public_v6="",
+                private_v4="",
+                private_v6="",
+                networks={},
+                has_config_drive=False,
+                metadata={},
+                user_data="",
+                trusted_image_certificates=[],
             ),
             ComputeInstance(
                 id="instance-fail",
@@ -141,6 +189,21 @@ class Test_compute_instance_security_groups_attached:
                 security_groups=[],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
+                is_locked=False,
+                locked_reason="",
+                key_name="",
+                user_id="",
+                access_ipv4="",
+                access_ipv6="",
+                public_v4="",
+                public_v6="",
+                private_v4="",
+                private_v6="",
+                networks={},
+                has_config_drive=False,
+                metadata={},
+                user_data="",
+                trusted_image_certificates=[],
             ),
         ]
 
@@ -177,6 +240,21 @@ class Test_compute_instance_security_groups_attached:
                 security_groups=["default"],
                 region=OPENSTACK_REGION,
                 project_id=OPENSTACK_PROJECT_ID,
+                is_locked=False,
+                locked_reason="",
+                key_name="",
+                user_id="",
+                access_ipv4="",
+                access_ipv6="",
+                public_v4="",
+                public_v6="",
+                private_v4="",
+                private_v6="",
+                networks={},
+                has_config_drive=False,
+                metadata={},
+                user_data="",
+                trusted_image_certificates=[],
             )
         ]
 
@@ -198,6 +276,12 @@ class Test_compute_instance_security_groups_attached:
             result = check.execute()
 
             assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == "Instance  (instance-3) has security groups attached: default."
+            )
             assert result[0].resource_id == "instance-3"
             assert result[0].resource_name == ""
-            assert "instance-3" in result[0].status_extended
+            assert result[0].region == OPENSTACK_REGION
+            assert result[0].project_id == OPENSTACK_PROJECT_ID

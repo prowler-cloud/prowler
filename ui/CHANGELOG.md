@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - OpenStack provider support in the UI [(#10046)](https://github.com/prowler-cloud/prowler/pull/10046)
+- PDF report available for the CSA CCM compliance framework [(#10088)](https://github.com/prowler-cloud/prowler/pull/10088)
 
 ### 🔄 Changed
 
