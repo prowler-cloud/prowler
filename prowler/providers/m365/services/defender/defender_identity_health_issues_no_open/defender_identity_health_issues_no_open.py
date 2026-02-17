@@ -35,8 +35,8 @@ class defender_identity_health_issues_no_open(Check):
         """
         findings = []
 
-        # If sensors is None, the API call failed (tenant not onboarded or missing permissions)
-        if defender_identity_client.sensors is None:
+        # If health_issues is None, the API call failed (tenant not onboarded or missing permissions)
+        if defender_identity_client.health_issues is None:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
@@ -52,8 +52,15 @@ class defender_identity_health_issues_no_open(Check):
             findings.append(report)
             return findings
 
-        # If no sensors are deployed, MDI cannot protect the environment
-        if not defender_identity_client.sensors:
+        # Determine sensor count (may be None if API failed, 0 if no sensors, or positive)
+        sensor_count = (
+            len(defender_identity_client.sensors)
+            if defender_identity_client.sensors is not None
+            else 0
+        )
+
+        # If health_issues is empty list and no sensors, MDI is not properly configured
+        if not defender_identity_client.health_issues and sensor_count == 0:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
@@ -68,25 +75,8 @@ class defender_identity_health_issues_no_open(Check):
             findings.append(report)
             return findings
 
-        # If health_issues is None, the API call failed
-        if defender_identity_client.health_issues is None:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource={},
-                resource_name="Defender for Identity",
-                resource_id="defenderIdentity",
-            )
-            report.status = "FAIL"
-            report.status_extended = (
-                "Unable to retrieve health issues from Defender for Identity. "
-                "Ensure the required permissions are granted."
-            )
-            findings.append(report)
-            return findings
-
-        # If health_issues is empty list, no issues exist - this is compliant
+        # If health_issues is empty list with sensors deployed - this is compliant
         if not defender_identity_client.health_issues:
-            sensor_count = len(defender_identity_client.sensors)
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},

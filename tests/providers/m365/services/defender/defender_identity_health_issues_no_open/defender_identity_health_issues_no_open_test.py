@@ -57,8 +57,8 @@ class Test_defender_identity_health_issues_no_open:
             assert result[0].resource_name == "Defender for Identity"
             assert result[0].resource_id == "defenderIdentity"
 
-    def test_sensors_none(self):
-        """Test when sensors is None (API failed): expected FAIL."""
+    def test_health_issues_none(self):
+        """Test when health_issues is None (API failed): expected FAIL."""
         defender_identity_client = mock.MagicMock()
         defender_identity_client.audited_tenant = "audited_tenant"
         defender_identity_client.audited_domain = DOMAIN
@@ -77,8 +77,8 @@ class Test_defender_identity_health_issues_no_open:
                 defender_identity_health_issues_no_open,
             )
 
-            defender_identity_client.sensors = None
-            defender_identity_client.health_issues = []
+            defender_identity_client.sensors = [get_mock_sensor()]
+            defender_identity_client.health_issues = None
 
             check = defender_identity_health_issues_no_open()
             result = check.execute()
@@ -93,8 +93,8 @@ class Test_defender_identity_health_issues_no_open:
             assert result[0].resource_name == "Defender for Identity"
             assert result[0].resource_id == "defenderIdentity"
 
-    def test_no_sensors_deployed(self):
-        """Test when no sensors are deployed (empty list): expected FAIL."""
+    def test_no_sensors_no_health_issues(self):
+        """Test when no sensors deployed and no health issues: expected FAIL (no protection)."""
         defender_identity_client = mock.MagicMock()
         defender_identity_client.audited_tenant = "audited_tenant"
         defender_identity_client.audited_domain = DOMAIN
@@ -129,8 +129,8 @@ class Test_defender_identity_health_issues_no_open:
             assert result[0].resource_name == "Defender for Identity"
             assert result[0].resource_id == "defenderIdentity"
 
-    def test_health_issues_none(self):
-        """Test when health_issues is None (API failed) but sensors exist: expected FAIL."""
+    def test_no_sensors_with_global_health_issues(self):
+        """Test when no sensors but global health issues exist: should report the issues."""
         defender_identity_client = mock.MagicMock()
         defender_identity_client.audited_tenant = "audited_tenant"
         defender_identity_client.audited_domain = DOMAIN
@@ -148,9 +148,31 @@ class Test_defender_identity_health_issues_no_open:
             from prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open import (
                 defender_identity_health_issues_no_open,
             )
+            from prowler.providers.m365.services.defender.defender_service import (
+                HealthIssue,
+            )
 
-            defender_identity_client.sensors = [get_mock_sensor()]
-            defender_identity_client.health_issues = None
+            health_issue_id = "global-issue-1"
+            health_issue_name = "Global Configuration Issue"
+
+            defender_identity_client.sensors = []  # No sensors
+            defender_identity_client.health_issues = [
+                HealthIssue(
+                    id=health_issue_id,
+                    display_name=health_issue_name,
+                    description="A global health issue",
+                    health_issue_type="global",
+                    severity="high",
+                    status="open",
+                    created_date_time="2024-01-01T00:00:00Z",
+                    last_modified_date_time="2024-01-02T00:00:00Z",
+                    domain_names=["example.com"],
+                    sensor_dns_names=[],
+                    issue_type_id="global-type-1",
+                    recommendations=["Fix the global issue"],
+                    additional_information=[],
+                )
+            ]
 
             check = defender_identity_health_issues_no_open()
             result = check.execute()
@@ -159,11 +181,10 @@ class Test_defender_identity_health_issues_no_open:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Unable to retrieve health issues from Defender for Identity. Ensure the required permissions are granted."
+                == f"Defender for Identity global health issue '{health_issue_name}' is open with high severity."
             )
-            assert result[0].resource == {}
-            assert result[0].resource_name == "Defender for Identity"
-            assert result[0].resource_id == "defenderIdentity"
+            assert result[0].resource_id == health_issue_id
+            assert result[0].resource_name == health_issue_name
 
     def test_health_issue_resolved(self):
         """Test when a health issue has been resolved (status is not open)."""
