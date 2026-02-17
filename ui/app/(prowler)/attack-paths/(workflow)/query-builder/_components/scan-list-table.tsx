@@ -42,6 +42,11 @@ interface ScanListTableProps {
 const TABLE_COLUMN_COUNT = 6;
 const DEFAULT_PAGE_SIZE = 5;
 const PAGE_SIZE_OPTIONS = [2, 5, 10, 15];
+const WAITING_STATES = [
+  SCAN_STATES.SCHEDULED,
+  SCAN_STATES.AVAILABLE,
+  SCAN_STATES.EXECUTING,
+] as const;
 
 const baseLinkClass =
   "relative block rounded border-0 bg-transparent px-3 py-1.5 text-button-primary outline-none transition-all duration-300 hover:bg-bg-neutral-tertiary hover:text-text-neutral-primary focus:shadow-none dark:hover:bg-bg-neutral-secondary dark:hover:text-text-neutral-primary";
@@ -87,11 +92,7 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
     if (scan.attributes.graph_data_ready) {
       return "Select";
     }
-    if (
-      scan.attributes.state === SCAN_STATES.SCHEDULED ||
-      scan.attributes.state === SCAN_STATES.AVAILABLE ||
-      scan.attributes.state === SCAN_STATES.EXECUTING
-    ) {
+    if (WAITING_STATES.includes(scan.attributes.state)) {
       return "Waiting...";
     }
     if (scan.attributes.state === SCAN_STATES.FAILED) {
