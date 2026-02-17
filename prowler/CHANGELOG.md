@@ -62,6 +62,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `--repository` and `--organization` flags combined interaction in GitHub provider, qualifying unqualified repository names with organization [(#10001)](https://github.com/prowler-cloud/prowler/pull/10001)
 - HPACK library logging tokens in debug mode for Azure, M365, and Cloudflare providers [(#10010)](https://github.com/prowler-cloud/prowler/pull/10010)
 
+### 🐞 Fixed
+
+- Use `defusedxml` in the Alibaba Cloud OSS service to prevent XXE vulnerabilities when parsing XML responses [(#9999)](https://github.com/prowler-cloud/prowler/pull/9999)
+
 ---
 
 ## [5.18.0] (Prowler v5.18.0)
