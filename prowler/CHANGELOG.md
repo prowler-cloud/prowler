@@ -20,6 +20,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - OpenStack compute 7 new checks [(#9944)](https://github.com/prowler-cloud/prowler/pull/9944)
 - CSA CCM 4.0 for the Alibaba Cloud provider [(#10061)](https://github.com/prowler-cloud/prowler/pull/10061)
 - ECS Exec (ECS-006) privilege escalation detection via `ecs:ExecuteCommand` + `ecs:DescribeTasks` [(#10066)](https://github.com/prowler-cloud/prowler/pull/10066)
+- `--export-ocsf` CLI flag to upload OCSF scan results to Prowler Cloud [(#10095)](https://github.com/prowler-cloud/prowler/pull/10095)
+- `scan_id` field in OCSF `unmapped` output for ingestion correlation [(#10095)](https://github.com/prowler-cloud/prowler/pull/10095)
 
 ### 🔄 Changed
 

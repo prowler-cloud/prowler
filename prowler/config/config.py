@@ -120,6 +120,11 @@ default_redteam_config_file_path = (
 encoding_format_utf_8 = "utf-8"
 available_output_formats = ["csv", "json-asff", "json-ocsf", "html"]
 
+# Prowler Cloud API settings
+cloud_api_base_url = os.getenv("PROWLER_CLOUD_API_BASE", "https://api.prowler.com")
+cloud_api_key = os.getenv("PROWLER_API_KEY", "")
+cloud_api_ingestion_path = "/api/v1/ingestions"
+
 
 def set_output_timestamp(
     new_timestamp: datetime,
