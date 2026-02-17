@@ -2,26 +2,6 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-<<<<<<< HEAD
-=======
-## [1.19.0] (Prowler UNRELEASED)
-
-### 🚀 Added
-
-- PDF report available for the CSA CCM compliance framework [(#10088)](https://github.com/prowler-cloud/prowler/pull/10088)
-
-### 🔄 Changed
-
-- Attack Paths: Query list now shows their name and short description, when one is selected it also shows a longer description and an attribution if it has it [(#9983)](https://github.com/prowler-cloud/prowler/pull/9983)
-- Updated GitHub provider form placeholder to clarify both username and organization names are valid inputs [(#9830)](https://github.com/prowler-cloud/prowler/pull/9830)
-- CSA CCM detailed view and small fix related with `Top Failed Sections` width [(#10018)](https://github.com/prowler-cloud/prowler/pull/10018)
-
-### 🔐 Security
-
-- npm dependencies updated to resolve 11 Dependabot alerts (4 HIGH, 7 MEDIUM): fast-xml-parser, @modelcontextprotocol/sdk, tar, @isaacs/brace-expansion, hono, lodash, lodash-es [(#10052)](https://github.com/prowler-cloud/prowler/pull/10052)
-
----
-
 ## [1.18.3] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
@@ -30,7 +10,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
->>>>>>> ff25d6a8c (fix(ui): changes for update credetials for AliababaCloud provider (#10098))
 ## [1.18.2] (Prowler v5.18.2)
 
 ### 🐞 Fixed
