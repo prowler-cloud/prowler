@@ -39,6 +39,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update GCP KMS service metadata to new format [(#9647)](https://github.com/prowler-cloud/prowler/pull/9647)
 - Update GCP Logging service metadata to new format [(#9648)](https://github.com/prowler-cloud/prowler/pull/9648)
 - Update Azure Key Vault service metadata to new format [(#9621)](https://github.com/prowler-cloud/prowler/pull/9621)
+- Update Azure Entra ID service metadata to new format [(#9619)](https://github.com/prowler-cloud/prowler/pull/9619)
+- Update Azure Virtual Machines service metadata to new format [(#9629)](https://github.com/prowler-cloud/prowler/pull/9629)
 - Cloudflare provider credential validation with specific exceptions [(#9910)](https://github.com/prowler-cloud/prowler/pull/9910)
 
 ### 🔐 Security
@@ -62,6 +64,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `--repository` and `--organization` flags combined interaction in GitHub provider, qualifying unqualified repository names with organization [(#10001)](https://github.com/prowler-cloud/prowler/pull/10001)
 - HPACK library logging tokens in debug mode for Azure, M365, and Cloudflare providers [(#10010)](https://github.com/prowler-cloud/prowler/pull/10010)
+
+### 🐞 Fixed
+
+- Use `defusedxml` in the Alibaba Cloud OSS service to prevent XXE vulnerabilities when parsing XML responses [(#9999)](https://github.com/prowler-cloud/prowler/pull/9999)
 
 ---
 
