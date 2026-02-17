@@ -18,7 +18,7 @@
   "Risk": "Exposed **FTP** invites Internet brute force and transmits in cleartext, enabling credential theft and packet sniffing (**confidentiality**).\n\nAttackers can upload/alter files (**integrity**) and abuse services for malware staging or DoS (**availability**). Publicly reachable hosts are rapidly probed by scanners.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-ftp-access.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/EC2/unrestricted-ftp-access.html",
     "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
   ],
   "Remediation": {

@@ -17,7 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/service-software.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/version.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Elasticsearch/version.html",
     "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-service-software.html"
   ],
   "Remediation": {

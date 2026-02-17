@@ -16,7 +16,7 @@
   "Risk": "Without centralized RDS logs, database activity lacks visibility, hindering detection and response. Credential misuse, SQL injection, data exfiltration, and privilege abuse may go unnoticed, risking **confidentiality** and **integrity**. Unseen errors and slow queries can lead to outages, impacting **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/log-exports.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/RDS/log-exports.html",
     "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/publishing_cloudwatchlogs.html",
     "https://repost.aws/knowledge-center/rds-aurora-mysql-logs-cloudwatch"
   ],

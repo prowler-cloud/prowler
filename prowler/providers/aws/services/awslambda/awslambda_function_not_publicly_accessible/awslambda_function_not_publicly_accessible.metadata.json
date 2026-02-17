@@ -19,7 +19,7 @@
     "https://docs.aws.amazon.com/config/latest/developerguide/lambda-function-public-access-prohibited.html",
     "https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/lambda-controls.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-exposed.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Lambda/function-exposed.html"
   ],
   "Remediation": {
     "Code": {

@@ -21,7 +21,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/ntn.html",
     "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ntn.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/node-to-node-encryption.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Elasticsearch/node-to-node-encryption.html"
   ],
   "Remediation": {
     "Code": {

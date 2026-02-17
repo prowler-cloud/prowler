@@ -21,7 +21,7 @@
   "Risk": "**Unremediated Inspector2 findings** mean known vulnerabilities or exposures persist on workloads.\n\nThis enables:\n- Unauthorized access and data exfiltration (C)\n- Code tampering and privilege escalation (I)\n- Service disruption via exploitation or malware (A)",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Inspector/amazon-inspector-findings.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Inspector/amazon-inspector-findings.html",
     "https://docs.aws.amazon.com/inspector/latest/user/findings-understanding.html",
     "https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html"
   ],

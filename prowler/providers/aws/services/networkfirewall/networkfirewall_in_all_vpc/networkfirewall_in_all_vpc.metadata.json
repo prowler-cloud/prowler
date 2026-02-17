@@ -17,7 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/network-firewall/latest/developerguide/vpc-config.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/NetworkFirewall/network-firewall-in-use.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/NetworkFirewall/network-firewall-in-use.html",
     "https://docs.aws.amazon.com/network-firewall/latest/developerguide/setting-up.html"
   ],
   "Remediation": {

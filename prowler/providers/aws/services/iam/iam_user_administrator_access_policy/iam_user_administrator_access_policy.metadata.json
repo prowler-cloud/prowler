@@ -17,7 +17,7 @@
   "Risk": "Assigning an IAM user full admin rights concentrates power in long-lived credentials. If compromised, attackers gain:\n- **Confidentiality**: read/export all data\n- **Integrity**: change configs, policies, code\n- **Availability**: delete resources, disrupt services\nAlso enables persistence and uncontrolled spend.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/admin-permissions.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/IAM/admin-permissions.html",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
   ],

@@ -16,7 +16,7 @@
   "Risk": "Missing alerts on **security group changes** or **failures** reduces visibility and slows response. Undetected rule changes can expose databases, while unnoticed failures prolong outages, impacting **confidentiality** and **availability** through unauthorized access or service disruption.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-db-security-groups-events.html#",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/RDS/rds-db-security-groups-events.html#",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-22"
   ],
   "Remediation": {

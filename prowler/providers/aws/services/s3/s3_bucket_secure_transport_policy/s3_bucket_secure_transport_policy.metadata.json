@@ -17,7 +17,7 @@
   "Risk": "HTTP access exposes object data and auth details to **eavesdropping** and **man-in-the-middle** attacks. Captured **pre-signed URLs** can be replayed to exfiltrate data. Traffic can be intercepted or altered, undermining **confidentiality** and **integrity** of S3 content.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/secure-transport.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/S3/secure-transport.html",
     "https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-policy-for-config-rule/"
   ],
   "Remediation": {

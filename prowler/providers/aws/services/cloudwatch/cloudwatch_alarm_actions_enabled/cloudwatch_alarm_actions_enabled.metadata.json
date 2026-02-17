@@ -17,7 +17,7 @@
   "Risk": "With alarm actions disabled, state changes neither notify nor remediate. Incidents can persist unnoticed, enabling unauthorized activity, configuration drift, or capacity exhaustion. Visibility drops, MTTR rises, and confidentiality, integrity, and availability are all at greater risk.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatch/cloudwatch-alarm-action-activated.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudWatch/cloudwatch-alarm-action-activated.html",
     "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html#alarms-and-actions",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-17"
   ],

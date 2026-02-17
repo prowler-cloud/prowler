@@ -19,7 +19,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/kinesis-controls.html#kinesis-1",
     "https://docs.aws.amazon.com/streams/latest/dev/getting-started-with-sse.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Kinesis/server-side-encryption.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Kinesis/server-side-encryption.html"
   ],
   "Remediation": {
     "Code": {

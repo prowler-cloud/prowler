@@ -18,11 +18,9 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-createdomain-configure-slow-logs.html",
     "https://support.icompaas.com/support/solutions/articles/62000129471-ensure-amazon-elasticsearch-service-es-domains-have-logging-enabled",
-    "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7",
-    "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#terraform",
     "https://bigdataboutique.com/blog/inspecting-search-slow-logs-on-elasticsearch-and-opensearch-b05d87",
     "https://repost.aws/knowledge-center/opensearch-troubleshoot-slow-logs",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/slow-logs.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Elasticsearch/slow-logs.html",
     "https://medium.com/heyjobs-tech/how-to-create-an-opensearch-cluster-using-terraform-926b4a62b489",
     "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createdomain-configure-slow-logs.html"
   ],

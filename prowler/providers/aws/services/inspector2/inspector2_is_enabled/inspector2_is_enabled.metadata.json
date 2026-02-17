@@ -19,7 +19,7 @@
   "Risk": "Absent or partial coverage leaves **unpatched vulnerabilities**, risky **code dependencies**, and **unintended network exposure** undetected.\n\nAttackers can exploit known CVEs for **remote code execution**, **lateral movement**, and **data exfiltration**, degrading **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Inspector2/enable-amazon-inspector2.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Inspector2/enable-amazon-inspector2.html",
     "https://docs.aws.amazon.com/inspector/latest/user/findings-understanding.html",
     "https://docs.aws.amazon.com/inspector/latest/user/getting_started_tutorial.html"
   ],

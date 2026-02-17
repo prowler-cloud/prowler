@@ -17,7 +17,7 @@
   "Risk": "**Two active keys per user** widen exposure and weaken credential governance.\n- Any leaked key enables unauthorized API actions, risking data exfiltration and resource changes\n- Rotation and response become error-prone, allowing attacker persistence if one key remains unnoticed",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/unnecessary-access-keys.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/IAM/unnecessary-access-keys.html",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/id-credentials-access-keys-update.html",
     "https://support.icompaas.com/support/solutions/articles/62000233813-ensure-iam-users-have-two-active-access-keys",
     "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListAccessKeys.html"

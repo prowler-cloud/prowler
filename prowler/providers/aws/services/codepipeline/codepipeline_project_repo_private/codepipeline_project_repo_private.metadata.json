@@ -1,31 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "codepipeline_project_repo_private",
-  "CheckTitle": "Ensure that CodePipeline projects do not use public GitHub or GitLab repositories as source.",
-  "CheckType": [],
+  "CheckTitle": "CodePipeline pipeline should use private repository source with authenticated connection",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
   "ServiceName": "codepipeline",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "arn:partition:codepipeline:region:account-id:pipeline-name",
   "Severity": "medium",
-  "ResourceType": "Other",
+  "ResourceType": "AwsCodePipelinePipeline",
   "ResourceGroup": "devops",
-  "Description": "Ensure that CodePipeline projects do not use public GitHub or GitLab repositories as source.",
-  "Risk": "Using public Git repositories in CodePipeline projects could expose sensitive deployment configurations and increase the risk of supply chain attacks.",
-  "RelatedUrl": "https://docs.aws.amazon.com/codepipeline/latest/userguide/connections-github.html",
+  "Description": "**CodePipeline pipeline** should configure its **source stage** to use a **private repository** with authenticated connection rather than a public GitHub or GitLab repository. This ensures deployment configurations, build artifacts, and CI/CD logic remain protected from unauthorized access.",
+  "Risk": "Using **public repositories** as pipeline sources exposes deployment configurations, infrastructure code, and CI/CD workflows to anyone on the internet. \n\nThis increases the risk of **supply chain attacks**, **credential exposure**, and **intellectual property theft**. Adversaries can study deployment patterns, identify security gaps, inject malicious code, or leverage exposed secrets to compromise **confidentiality**, **integrity**, and **availability** of production systems.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/codepipeline/latest/userguide/welcome.html",
+    "https://docs.aws.amazon.com/dtconsole/latest/userguide/connections.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws codestar-connections create-connection --provider-type GitHub|GitLab --connection-name <connection-name>",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws codestar-connections create-connection --provider-type GitHub --connection-name my-github-connection\naws codepipeline update-pipeline --pipeline file://pipeline-config.json",
+      "NativeIaC": "```yaml\n# CloudFormation: Configure pipeline with private repository via CodeStar Connection\nResources:\n  MyConnection:\n    Type: AWS::CodeStarConnections::Connection\n    Properties:\n      ConnectionName: my-github-connection\n      ProviderType: GitHub  # or GitLab\n\n  MyPipeline:\n    Type: AWS::CodePipeline::Pipeline\n    Properties:\n      Stages:\n        - Name: Source\n          Actions:\n            - Name: SourceAction\n              ActionTypeId:\n                Category: Source\n                Owner: AWS\n                Provider: CodeStarSourceConnection\n                Version: 1\n              Configuration:\n                ConnectionArn: !GetAtt MyConnection.ConnectionArn\n                FullRepositoryId: myorg/myrepo  # Private repository\n                BranchName: main\n```",
+      "Other": "1. In the AWS Console, navigate to **Developer Tools** → **Connections**\n2. Click **Create connection**\n3. Choose provider (GitHub or GitLab) and click **Connect**\n4. Authorize AWS to access your private repositories\n5. Navigate to **CodePipeline** → **Pipelines** and select your pipeline\n6. Click **Edit**\n7. In the **Source** stage, click **Edit action**\n8. Change **Action provider** to **GitHub (Version 2)** or **GitLab**\n9. Select **Connection** and choose the connection created in step 4\n10. Configure **Repository name** (private repo) and **Branch name**\n11. Click **Done** and **Save** the pipeline",
+      "Terraform": "```hcl\n# Terraform: Configure pipeline with private repository via CodeStar Connection\nresource \"aws_codestarconnections_connection\" \"github\" {\n  name          = \"my-github-connection\"\n  provider_type = \"GitHub\"  # or \"GitLab\"\n}\n\nresource \"aws_codepipeline\" \"example\" {\n  name     = \"my-pipeline\"\n  role_arn = aws_iam_role.codepipeline.arn\n\n  stage {\n    name = \"Source\"\n\n    action {\n      name             = \"Source\"\n      category         = \"Source\"\n      owner            = \"AWS\"\n      provider         = \"CodeStarSourceConnection\"\n      version          = \"1\"\n      output_artifacts = [\"source_output\"]\n\n      configuration = {\n        ConnectionArn    = aws_codestarconnections_connection.github.arn\n        FullRepositoryId = \"myorg/myrepo\"  # Private repository\n        BranchName       = \"main\"\n      }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use private Git repositories for CodePipeline sources and ensure proper authentication is configured using AWS CodeStar Connections. Consider using AWS CodeCommit or other private repository solutions for sensitive code.",
-      "Url": "https://docs.aws.amazon.com/codepipeline/latest/userguide/connections"
+      "Text": "Configure CodePipeline source stages to use **private repositories** with **AWS CodeStar Connections** for GitHub or GitLab.\n\nApply **least privilege** to connection permissions, enable **branch protection**, require **code review**, use **signed commits**, and monitor pipeline execution logs. Consider **AWS CodeCommit** for fully managed private Git hosting with native IAM integration.",
+      "Url": "https://hub.prowler.com/check/codepipeline_project_repo_private"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "supply-chain-security",
+    "secrets-management"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check supports both GitHub and GitLab repositories through CodeStar Connections"
+  "Notes": "This check evaluates CodePipeline source actions that use GitHub or GitLab providers. It detects public repositories by checking repository visibility settings via CodeStar Connections API."
 }

@@ -19,7 +19,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
     "https://asecure.cloud/a/unauthorized_api_calls/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/authorization-failures-alarm.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudWatchLogs/authorization-failures-alarm.html",
     "https://www.tenable.com/policies/[type]/AC_AWS_0559",
     "https://www.intelligentdiscovery.io/controls/cloudwatch/cloudwatch-unauthorized-api-calls",
     "https://support.icompaas.com/support/solutions/articles/62000083561-ensure-a-log-metric-filter-and-alarm-exist-for-unauthorized-api-calls"

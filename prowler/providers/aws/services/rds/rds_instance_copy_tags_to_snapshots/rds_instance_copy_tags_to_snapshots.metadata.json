@@ -17,7 +17,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/systems-manager-automation-runbooks/latest/userguide/automation-aws-enable-tags-snapshot-rds-instance.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-17",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/copy-tags-to-snapshot.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/RDS/copy-tags-to-snapshot.html"
   ],
   "Remediation": {
     "Code": {

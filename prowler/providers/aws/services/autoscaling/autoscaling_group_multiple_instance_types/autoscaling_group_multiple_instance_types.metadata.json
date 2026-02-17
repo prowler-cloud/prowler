@@ -16,7 +16,7 @@
   "Risk": "Limited to one instance type per AZ or a single AZ, scaling can stall during **capacity shortages**, hindering **failover** and degrading **availability** (timeouts, backlog growth). Costs may spike if only expensive capacity is available. Reduced diversity increases the likelihood of prolonged outages during zonal or market disruptions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/asg-multiple-instance-type-az.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/AutoScaling/asg-multiple-instance-type-az.html",
     "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-mixed-instances-groups.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-6"
   ],

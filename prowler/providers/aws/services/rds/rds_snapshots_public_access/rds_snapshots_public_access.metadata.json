@@ -18,7 +18,7 @@
   "Risk": "Public RDS snapshots expose full database copies to all AWS accounts, risking:\n- Loss of confidentiality via data exfiltration (PII, secrets)\n- Offline cracking of hashes and schema reconnaissance\n- Credential harvesting from dumps enabling lateral movement\nThis directly compromises confidentiality and fuels targeted attacks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/public-snapshots.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/RDS/public-snapshots.html",
     "https://docs.aws.amazon.com/config/latest/developerguide/rds-snapshots-public-prohibited.html",
     "https://support.icompaas.com/support/solutions/articles/62000127056-ensure-rds-snapshots-and-cluster-snapshots-are-not-public"
   ],
