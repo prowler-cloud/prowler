@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az vm update --resource-group <RESOURCE_GROUP> --name <VM_NAME> --security-type TrustedLaunch --enable-secure-boot true --enable-vtpm true",
       "NativeIaC": "```bicep\n// Enables Trusted Launch with Secure Boot and vTPM on the VM\nresource vm 'Microsoft.Compute/virtualMachines@2022-11-01' = {\n  name: '<example_resource_name>'\n  location: '<region>'\n  properties: {\n    securityProfile: {\n      securityType: 'TrustedLaunch' // Critical: sets VM security type to Trusted Launch\n      uefiSettings: {\n        secureBootEnabled: true     // Critical: enables Secure Boot\n        vTpmEnabled: true           // Critical: enables vTPM\n      }\n    }\n  }\n}\n```",
       "Other": "1. In Azure Portal, open the VM and click Stop to deallocate it\n2. Go to Settings > Configuration\n3. Under Security type, select Trusted launch\n4. Check Secure Boot and vTPM\n5. Click Save\n6. Start the VM from the Overview page",
       "Terraform": "```hcl\n# Patch the existing VM to enable Trusted Launch with Secure Boot and vTPM\nresource \"azapi_update_resource\" \"<example_resource_name>\" {\n  type        = \"Microsoft.Compute/virtualMachines@2022-11-01\"\n  resource_id = \"<example_resource_id>\"\n\n  body = jsonencode({\n    properties = {\n      securityProfile = {\n        securityType = \"TrustedLaunch\" # Critical: sets VM security type to Trusted Launch\n        uefiSettings = {\n          secureBootEnabled = true      # Critical: enables Secure Boot\n          vTpmEnabled       = true      # Critical: enables vTPM\n        }\n      }\n    }\n  })\n}\n```"
