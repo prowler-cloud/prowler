@@ -53,7 +53,7 @@ def delete_provider(tenant_id: str, pk: str):
             ("AttackPathsScans", AttackPathsScan.all_objects.filter(provider=instance)),
         ]
 
-    # Drop orphaned temporal Neo4j databases
+    # Drop orphaned temporary Neo4j databases
     for aps_id in attack_paths_scan_ids:
         tmp_db_name = graph_database.get_database_name(aps_id, temporary=True)
         try:
