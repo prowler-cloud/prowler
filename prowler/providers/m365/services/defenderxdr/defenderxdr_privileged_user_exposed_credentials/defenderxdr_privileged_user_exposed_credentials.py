@@ -20,15 +20,15 @@ class defenderxdr_privileged_user_exposed_credentials(Check):
     user cookies, sensitive tokens) are exposed on endpoints with high risk
     or exposure scores.
 
-    Prerequisites (checked in order):
+    Prerequisites:
     1. ThreatHunting.Read.All permission granted
-    2. Microsoft Defender for Endpoint enabled
-    3. Security Exposure Management enabled
+    2. Security Exposure Management enabled with data from at least one
+       Microsoft Defender service (Defender for Endpoint, Defender for Identity,
+       Defender for Cloud, Entra ID, or third-party connectors)
 
     Results:
-    - PASS: No exposed credentials found OR no MDE devices to evaluate
-    - FAIL: Exposed credentials detected OR MDE enabled but Exposure Management not enabled
-    - MANUAL: MDE not enabled in tenant (requires manual review of security requirements)
+    - PASS: No exposed credentials found for privileged users
+    - FAIL: Exposed credentials detected OR unable to query Exposure Management
     """
 
     def execute(self) -> list[CheckReportM365]:
@@ -40,124 +40,26 @@ class defenderxdr_privileged_user_exposed_credentials(Check):
         """
         findings = []
 
-        # Step 1: Check MDE devices query result
-        # If None -> API failed -> likely missing ThreatHunting.Read.All permission
-        # If mde_table_not_found -> Table doesn't exist -> MDE not enabled, needs manual review
-        # If False -> Query worked but no devices -> MDE enabled but no endpoints, PASS
-        if defenderxdr_client.has_mde_devices is None:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource={},
-                resource_name="Defender XDR",
-                resource_id="mdeDevices",
-            )
-            report.status = "FAIL"
-            report.status_extended = (
-                "Cannot query Defender for Endpoint data. "
-                "Grant ThreatHunting.Read.All permission to the application."
-            )
-            findings.append(report)
-            return findings
-
-        if defenderxdr_client.mde_table_not_found:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource={},
-                resource_name="Defender XDR",
-                resource_id="mdeDevices",
-            )
-            report.status = "MANUAL"
-            report.status_extended = (
-                "Microsoft Defender for Endpoint is not enabled in this tenant. "
-                "Verify if MDE should be deployed based on your security requirements."
-            )
-            findings.append(report)
-            return findings
-
-        if defenderxdr_client.has_mde_devices is False:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource={},
-                resource_name="Defender XDR",
-                resource_id="mdeDevices",
-            )
-            report.status = "PASS"
-            report.status_extended = (
-                "No devices found in Microsoft Defender for Endpoint. "
-                "No endpoints to evaluate for credential exposure."
-            )
-            findings.append(report)
-            return findings
-
-        # Step 2: Check Exposure Management query result
-        # If we reach here, MDE is enabled with devices
-        # If None -> API failed
-        # If exposure_table_not_found -> Table doesn't exist -> Exposure Management not enabled, FAIL
-        # If False -> Query worked but no data -> Enabled but empty
-        if defenderxdr_client.exposure_management_active is None:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource={},
-                resource_name="Defender XDR",
-                resource_id="exposureManagement",
-            )
-            report.status = "FAIL"
-            report.status_extended = (
-                "Cannot query Security Exposure Management data. "
-                "An unexpected error occurred."
-            )
-            findings.append(report)
-            return findings
-
-        if defenderxdr_client.exposure_table_not_found:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource={},
-                resource_name="Defender XDR",
-                resource_id="exposureManagement",
-            )
-            report.status = "FAIL"
-            report.status_extended = (
-                "Security Exposure Management is not enabled but MDE has devices deployed. "
-                "Enable Security Exposure Management to detect credential exposure risks."
-            )
-            findings.append(report)
-            return findings
-
-        if defenderxdr_client.exposure_management_active is False:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource={},
-                resource_name="Defender XDR",
-                resource_id="exposureManagement",
-            )
-            report.status = "FAIL"
-            report.status_extended = (
-                "Security Exposure Management is enabled but has no exposure data. "
-                "Wait for MDE to analyze device security posture and populate exposure graph."
-            )
-            findings.append(report)
-            return findings
-
-        # Step 3: Query exposed credentials
-        # If we reach here, all prerequisites are met
         exposed_credentials = defenderxdr_client.exposed_credentials_privileged_users
 
+        # None means API call failed - could be permissions or Exposure Management not enabled
         if exposed_credentials is None:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
-                resource_name="Defender XDR",
-                resource_id="privilegedUserExposedCredentials",
+                resource_name="Defender XDR Exposure Management",
+                resource_id="exposureGraphEdges",
             )
             report.status = "FAIL"
             report.status_extended = (
-                "Failed to query exposed credentials. "
-                "An unexpected error occurred while querying the ExposureGraphEdges table."
+                "Unable to query Security Exposure Management data. "
+                "Verify ThreatHunting.Read.All permission is granted and "
+                "at least one Microsoft Defender service is deployed in the tenant."
             )
             findings.append(report)
             return findings
 
+        # Found exposed credentials - report each one
         if exposed_credentials:
             for exposed_user in exposed_credentials:
                 report = CheckReportM365(
@@ -179,11 +81,12 @@ class defenderxdr_privileged_user_exposed_credentials(Check):
                 )
                 findings.append(report)
         else:
+            # Empty list - query worked but no exposed credentials found
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
                 resource_name="Defender XDR Exposure Management",
-                resource_id="privilegedUserExposedCredentials",
+                resource_id="exposureGraphEdges",
             )
             report.status = "PASS"
             report.status_extended = "No exposed credentials found for privileged users on vulnerable endpoints."
