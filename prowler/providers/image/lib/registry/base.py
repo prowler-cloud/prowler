@@ -28,17 +28,31 @@ class RegistryAdapter(ABC):
     ) -> None:
         self.registry_url = registry_url
         self.username = username
-        self.password = password
-        self.token = token
+        self._password = password
+        self._token = token
         self.verify_ssl = verify_ssl
+
+    @property
+    def password(self) -> str | None:
+        return self._password
+
+    @property
+    def token(self) -> str | None:
+        return self._token
+
+    def __getstate__(self) -> dict:
+        state = self.__dict__.copy()
+        state["_password"] = "***" if state.get("_password") else None
+        state["_token"] = "***" if state.get("_token") else None
+        return state
 
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}("
             f"registry_url={self.registry_url!r}, "
             f"username={self.username!r}, "
-            f"password={'<redacted>' if self.password else None}, "
-            f"token={'<redacted>' if self.token else None})"
+            f"password={'<redacted>' if self._password else None}, "
+            f"token={'<redacted>' if self._token else None})"
         )
 
     @abstractmethod

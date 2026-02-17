@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import base64
+import ipaddress
 import re
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
 
 from prowler.lib.logger import logger
 from prowler.providers.image.exceptions.exceptions import (
@@ -126,6 +128,7 @@ class OciRegistryAdapter(RegistryAdapter):
                 message=f"Cannot parse token endpoint from registry {self.registry_url}. Www-Authenticate: {www_authenticate[:200]}",
             )
         realm = match.group(1)
+        self._validate_realm_url(realm)
         params: dict = {}
         service_match = re.search(r'service="([^"]+)"', www_authenticate)
         if service_match:
@@ -145,7 +148,36 @@ class OciRegistryAdapter(RegistryAdapter):
                 message=f"Failed to obtain bearer token from {realm} (HTTP {resp.status_code}). Check REGISTRY_USERNAME and REGISTRY_PASSWORD.",
             )
         data = resp.json()
-        return data.get("token") or data.get("access_token", "")
+        token = data.get("token") or data.get("access_token", "")
+        if not token:
+            raise ImageRegistryAuthError(
+                file=__file__,
+                message=f"Token endpoint {realm} returned an empty token. Check REGISTRY_USERNAME and REGISTRY_PASSWORD.",
+            )
+        return token
+
+    @staticmethod
+    def _validate_realm_url(realm: str) -> None:
+        parsed = urlparse(realm)
+        if parsed.scheme not in ("http", "https"):
+            raise ImageRegistryAuthError(
+                file=__file__,
+                message=f"Bearer token realm has disallowed scheme: {parsed.scheme}. Only http/https are allowed.",
+            )
+        if parsed.scheme == "http":
+            logger.warning(
+                f"Bearer token realm uses HTTP (not HTTPS): {realm}"
+            )
+        hostname = parsed.hostname or ""
+        try:
+            addr = ipaddress.ip_address(hostname)
+            if addr.is_private or addr.is_loopback or addr.is_link_local:
+                raise ImageRegistryAuthError(
+                    file=__file__,
+                    message=f"Bearer token realm points to a private/loopback address: {hostname}. This may indicate an SSRF attempt.",
+                )
+        except ValueError:
+            pass
 
     def _resolve_basic_credentials(self) -> tuple[str | None, str | None]:
         """Decode pre-encoded base64 auth tokens (e.g., from aws ecr get-authorization-token).
@@ -159,7 +191,7 @@ class OciRegistryAdapter(RegistryAdapter):
             decoded = base64.b64decode(self.password).decode("utf-8")
             if decoded.startswith(f"{self.username}:"):
                 return self.username, decoded[len(self.username) + 1 :]
-        except Exception:
+        except (ValueError, UnicodeDecodeError):
             logger.debug("Password is not a base64-encoded auth token, using as-is")
         return self.username, self.password
 

@@ -64,7 +64,7 @@ class DockerHubAdapter(RegistryAdapter):
 
     def list_repositories(self) -> list[str]:
         if not self.namespace:
-            raise ImageRegistryAuthError(
+            raise ImageRegistryCatalogError(
                 file=__file__,
                 message="Docker Hub requires a namespace. Use --registry docker.io/{org_or_user}.",
             )
@@ -127,6 +127,11 @@ class DockerHubAdapter(RegistryAdapter):
                 message=f"Docker Hub login failed (HTTP {resp.status_code}). Check REGISTRY_USERNAME and REGISTRY_PASSWORD.",
             )
         self._hub_jwt = resp.json().get("token")
+        if not self._hub_jwt:
+            raise ImageRegistryAuthError(
+                file=__file__,
+                message="Docker Hub login returned an empty JWT token. Check REGISTRY_USERNAME and REGISTRY_PASSWORD.",
+            )
 
     def _get_registry_token(self, repository: str) -> str:
         if repository in self._registry_tokens:
@@ -151,6 +156,11 @@ class DockerHubAdapter(RegistryAdapter):
                 message=f"Failed to obtain Docker Hub registry token for {repository} (HTTP {resp.status_code}). Check REGISTRY_USERNAME and REGISTRY_PASSWORD.",
             )
         token = resp.json().get("token", "")
+        if not token:
+            raise ImageRegistryAuthError(
+                file=__file__,
+                message=f"Docker Hub registry token endpoint returned an empty token for {repository}. Check REGISTRY_USERNAME and REGISTRY_PASSWORD.",
+            )
         self._registry_tokens[repository] = token
         return token
 
