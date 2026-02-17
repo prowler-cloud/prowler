@@ -3,12 +3,12 @@ from unittest import mock
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
-class Test_defenderidentity_health_issues_no_open:
+class Test_defender_identity_health_issues_no_open:
     def test_no_health_issues(self):
         """Test when there are no health issues (empty list): expected PASS."""
-        defenderidentity_client = mock.MagicMock()
-        defenderidentity_client.audited_tenant = "audited_tenant"
-        defenderidentity_client.audited_domain = DOMAIN
+        defender_identity_client = mock.MagicMock()
+        defender_identity_client.audited_tenant = "audited_tenant"
+        defender_identity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -16,17 +16,17 @@ class Test_defenderidentity_health_issues_no_open:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open.defenderidentity_client",
-                new=defenderidentity_client,
+                "prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open.defender_identity_client",
+                new=defender_identity_client,
             ),
         ):
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open import (
-                defenderidentity_health_issues_no_open,
+            from prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open import (
+                defender_identity_health_issues_no_open,
             )
 
-            defenderidentity_client.health_issues = []
+            defender_identity_client.health_issues = []
 
-            check = defenderidentity_health_issues_no_open()
+            check = defender_identity_health_issues_no_open()
             result = check.execute()
 
             assert len(result) == 1
@@ -41,9 +41,9 @@ class Test_defenderidentity_health_issues_no_open:
 
     def test_health_issues_none(self):
         """Test when health_issues is None (API failed): expected FAIL."""
-        defenderidentity_client = mock.MagicMock()
-        defenderidentity_client.audited_tenant = "audited_tenant"
-        defenderidentity_client.audited_domain = DOMAIN
+        defender_identity_client = mock.MagicMock()
+        defender_identity_client.audited_tenant = "audited_tenant"
+        defender_identity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -51,17 +51,17 @@ class Test_defenderidentity_health_issues_no_open:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open.defenderidentity_client",
-                new=defenderidentity_client,
+                "prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open.defender_identity_client",
+                new=defender_identity_client,
             ),
         ):
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open import (
-                defenderidentity_health_issues_no_open,
+            from prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open import (
+                defender_identity_health_issues_no_open,
             )
 
-            defenderidentity_client.health_issues = None
+            defender_identity_client.health_issues = None
 
-            check = defenderidentity_health_issues_no_open()
+            check = defender_identity_health_issues_no_open()
             result = check.execute()
 
             assert len(result) == 1
@@ -76,9 +76,9 @@ class Test_defenderidentity_health_issues_no_open:
 
     def test_health_issue_resolved(self):
         """Test when a health issue has been resolved (status is not open)."""
-        defenderidentity_client = mock.MagicMock()
-        defenderidentity_client.audited_tenant = "audited_tenant"
-        defenderidentity_client.audited_domain = DOMAIN
+        defender_identity_client = mock.MagicMock()
+        defender_identity_client.audited_tenant = "audited_tenant"
+        defender_identity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -86,21 +86,21 @@ class Test_defenderidentity_health_issues_no_open:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open.defenderidentity_client",
-                new=defenderidentity_client,
+                "prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open.defender_identity_client",
+                new=defender_identity_client,
             ),
         ):
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open import (
-                defenderidentity_health_issues_no_open,
+            from prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open import (
+                defender_identity_health_issues_no_open,
             )
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_service import (
+            from prowler.providers.m365.services.defender.defender_service import (
                 HealthIssue,
             )
 
             health_issue_id = "test-health-issue-id-1"
             health_issue_name = "Test Health Issue Resolved"
 
-            defenderidentity_client.health_issues = [
+            defender_identity_client.health_issues = [
                 HealthIssue(
                     id=health_issue_id,
                     display_name=health_issue_name,
@@ -118,7 +118,7 @@ class Test_defenderidentity_health_issues_no_open:
                 )
             ]
 
-            check = defenderidentity_health_issues_no_open()
+            check = defender_identity_health_issues_no_open()
             result = check.execute()
 
             assert len(result) == 1
@@ -132,9 +132,9 @@ class Test_defenderidentity_health_issues_no_open:
 
     def test_health_issue_open_high_severity(self):
         """Test when a health issue is open with high severity."""
-        defenderidentity_client = mock.MagicMock()
-        defenderidentity_client.audited_tenant = "audited_tenant"
-        defenderidentity_client.audited_domain = DOMAIN
+        defender_identity_client = mock.MagicMock()
+        defender_identity_client.audited_tenant = "audited_tenant"
+        defender_identity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -142,21 +142,21 @@ class Test_defenderidentity_health_issues_no_open:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open.defenderidentity_client",
-                new=defenderidentity_client,
+                "prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open.defender_identity_client",
+                new=defender_identity_client,
             ),
         ):
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open import (
-                defenderidentity_health_issues_no_open,
+            from prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open import (
+                defender_identity_health_issues_no_open,
             )
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_service import (
+            from prowler.providers.m365.services.defender.defender_service import (
                 HealthIssue,
             )
 
             health_issue_id = "test-health-issue-id-2"
             health_issue_name = "Critical Sensor Health Issue"
 
-            defenderidentity_client.health_issues = [
+            defender_identity_client.health_issues = [
                 HealthIssue(
                     id=health_issue_id,
                     display_name=health_issue_name,
@@ -174,7 +174,7 @@ class Test_defenderidentity_health_issues_no_open:
                 )
             ]
 
-            check = defenderidentity_health_issues_no_open()
+            check = defender_identity_health_issues_no_open()
             result = check.execute()
 
             assert len(result) == 1
@@ -189,9 +189,9 @@ class Test_defenderidentity_health_issues_no_open:
 
     def test_health_issue_open_medium_severity(self):
         """Test when a health issue is open with medium severity."""
-        defenderidentity_client = mock.MagicMock()
-        defenderidentity_client.audited_tenant = "audited_tenant"
-        defenderidentity_client.audited_domain = DOMAIN
+        defender_identity_client = mock.MagicMock()
+        defender_identity_client.audited_tenant = "audited_tenant"
+        defender_identity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -199,21 +199,21 @@ class Test_defenderidentity_health_issues_no_open:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open.defenderidentity_client",
-                new=defenderidentity_client,
+                "prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open.defender_identity_client",
+                new=defender_identity_client,
             ),
         ):
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open import (
-                defenderidentity_health_issues_no_open,
+            from prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open import (
+                defender_identity_health_issues_no_open,
             )
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_service import (
+            from prowler.providers.m365.services.defender.defender_service import (
                 HealthIssue,
             )
 
             health_issue_id = "test-health-issue-id-3"
             health_issue_name = "Medium Severity Sensor Issue"
 
-            defenderidentity_client.health_issues = [
+            defender_identity_client.health_issues = [
                 HealthIssue(
                     id=health_issue_id,
                     display_name=health_issue_name,
@@ -231,7 +231,7 @@ class Test_defenderidentity_health_issues_no_open:
                 )
             ]
 
-            check = defenderidentity_health_issues_no_open()
+            check = defender_identity_health_issues_no_open()
             result = check.execute()
 
             assert len(result) == 1
@@ -246,9 +246,9 @@ class Test_defenderidentity_health_issues_no_open:
 
     def test_health_issue_open_low_severity(self):
         """Test when a health issue is open with low severity."""
-        defenderidentity_client = mock.MagicMock()
-        defenderidentity_client.audited_tenant = "audited_tenant"
-        defenderidentity_client.audited_domain = DOMAIN
+        defender_identity_client = mock.MagicMock()
+        defender_identity_client.audited_tenant = "audited_tenant"
+        defender_identity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -256,21 +256,21 @@ class Test_defenderidentity_health_issues_no_open:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open.defenderidentity_client",
-                new=defenderidentity_client,
+                "prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open.defender_identity_client",
+                new=defender_identity_client,
             ),
         ):
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open import (
-                defenderidentity_health_issues_no_open,
+            from prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open import (
+                defender_identity_health_issues_no_open,
             )
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_service import (
+            from prowler.providers.m365.services.defender.defender_service import (
                 HealthIssue,
             )
 
             health_issue_id = "test-health-issue-id-4"
             health_issue_name = "Low Severity Health Issue"
 
-            defenderidentity_client.health_issues = [
+            defender_identity_client.health_issues = [
                 HealthIssue(
                     id=health_issue_id,
                     display_name=health_issue_name,
@@ -288,7 +288,7 @@ class Test_defenderidentity_health_issues_no_open:
                 )
             ]
 
-            check = defenderidentity_health_issues_no_open()
+            check = defender_identity_health_issues_no_open()
             result = check.execute()
 
             assert len(result) == 1
@@ -303,9 +303,9 @@ class Test_defenderidentity_health_issues_no_open:
 
     def test_multiple_health_issues_mixed_status(self):
         """Test when there are multiple health issues with different statuses."""
-        defenderidentity_client = mock.MagicMock()
-        defenderidentity_client.audited_tenant = "audited_tenant"
-        defenderidentity_client.audited_domain = DOMAIN
+        defender_identity_client = mock.MagicMock()
+        defender_identity_client.audited_tenant = "audited_tenant"
+        defender_identity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -313,18 +313,18 @@ class Test_defenderidentity_health_issues_no_open:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open.defenderidentity_client",
-                new=defenderidentity_client,
+                "prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open.defender_identity_client",
+                new=defender_identity_client,
             ),
         ):
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open import (
-                defenderidentity_health_issues_no_open,
+            from prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open import (
+                defender_identity_health_issues_no_open,
             )
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_service import (
+            from prowler.providers.m365.services.defender.defender_service import (
                 HealthIssue,
             )
 
-            defenderidentity_client.health_issues = [
+            defender_identity_client.health_issues = [
                 HealthIssue(
                     id="issue-1",
                     display_name="Resolved Issue",
@@ -357,7 +357,7 @@ class Test_defenderidentity_health_issues_no_open:
                 ),
             ]
 
-            check = defenderidentity_health_issues_no_open()
+            check = defender_identity_health_issues_no_open()
             result = check.execute()
 
             assert len(result) == 2
@@ -383,9 +383,9 @@ class Test_defenderidentity_health_issues_no_open:
 
     def test_health_issue_with_unknown_type_and_severity(self):
         """Test when health issue has None/unknown type and severity."""
-        defenderidentity_client = mock.MagicMock()
-        defenderidentity_client.audited_tenant = "audited_tenant"
-        defenderidentity_client.audited_domain = DOMAIN
+        defender_identity_client = mock.MagicMock()
+        defender_identity_client.audited_tenant = "audited_tenant"
+        defender_identity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -393,21 +393,21 @@ class Test_defenderidentity_health_issues_no_open:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open.defenderidentity_client",
-                new=defenderidentity_client,
+                "prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open.defender_identity_client",
+                new=defender_identity_client,
             ),
         ):
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open import (
-                defenderidentity_health_issues_no_open,
+            from prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open import (
+                defender_identity_health_issues_no_open,
             )
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_service import (
+            from prowler.providers.m365.services.defender.defender_service import (
                 HealthIssue,
             )
 
             health_issue_id = "test-health-issue-id-5"
             health_issue_name = "Unknown Type Issue"
 
-            defenderidentity_client.health_issues = [
+            defender_identity_client.health_issues = [
                 HealthIssue(
                     id=health_issue_id,
                     display_name=health_issue_name,
@@ -425,7 +425,7 @@ class Test_defenderidentity_health_issues_no_open:
                 )
             ]
 
-            check = defenderidentity_health_issues_no_open()
+            check = defender_identity_health_issues_no_open()
             result = check.execute()
 
             assert len(result) == 1
@@ -439,9 +439,9 @@ class Test_defenderidentity_health_issues_no_open:
 
     def test_health_issue_status_case_insensitive(self):
         """Test that status comparison is case insensitive (OPEN vs open)."""
-        defenderidentity_client = mock.MagicMock()
-        defenderidentity_client.audited_tenant = "audited_tenant"
-        defenderidentity_client.audited_domain = DOMAIN
+        defender_identity_client = mock.MagicMock()
+        defender_identity_client.audited_tenant = "audited_tenant"
+        defender_identity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -449,21 +449,21 @@ class Test_defenderidentity_health_issues_no_open:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open.defenderidentity_client",
-                new=defenderidentity_client,
+                "prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open.defender_identity_client",
+                new=defender_identity_client,
             ),
         ):
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open import (
-                defenderidentity_health_issues_no_open,
+            from prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open import (
+                defender_identity_health_issues_no_open,
             )
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_service import (
+            from prowler.providers.m365.services.defender.defender_service import (
                 HealthIssue,
             )
 
             health_issue_id = "test-health-issue-id-6"
             health_issue_name = "Uppercase Status Issue"
 
-            defenderidentity_client.health_issues = [
+            defender_identity_client.health_issues = [
                 HealthIssue(
                     id=health_issue_id,
                     display_name=health_issue_name,
@@ -481,7 +481,7 @@ class Test_defenderidentity_health_issues_no_open:
                 )
             ]
 
-            check = defenderidentity_health_issues_no_open()
+            check = defender_identity_health_issues_no_open()
             result = check.execute()
 
             assert len(result) == 1
@@ -494,9 +494,9 @@ class Test_defenderidentity_health_issues_no_open:
 
     def test_health_issue_with_empty_status(self):
         """Test when health issue has empty/None status (treated as not open)."""
-        defenderidentity_client = mock.MagicMock()
-        defenderidentity_client.audited_tenant = "audited_tenant"
-        defenderidentity_client.audited_domain = DOMAIN
+        defender_identity_client = mock.MagicMock()
+        defender_identity_client.audited_tenant = "audited_tenant"
+        defender_identity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -504,21 +504,21 @@ class Test_defenderidentity_health_issues_no_open:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open.defenderidentity_client",
-                new=defenderidentity_client,
+                "prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open.defender_identity_client",
+                new=defender_identity_client,
             ),
         ):
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open import (
-                defenderidentity_health_issues_no_open,
+            from prowler.providers.m365.services.defender.defender_identity_health_issues_no_open.defender_identity_health_issues_no_open import (
+                defender_identity_health_issues_no_open,
             )
-            from prowler.providers.m365.services.defenderidentity.defenderidentity_service import (
+            from prowler.providers.m365.services.defender.defender_service import (
                 HealthIssue,
             )
 
             health_issue_id = "test-health-issue-id-7"
             health_issue_name = "Empty Status Issue"
 
-            defenderidentity_client.health_issues = [
+            defender_identity_client.health_issues = [
                 HealthIssue(
                     id=health_issue_id,
                     display_name=health_issue_name,
@@ -536,7 +536,7 @@ class Test_defenderidentity_health_issues_no_open:
                 )
             ]
 
-            check = defenderidentity_health_issues_no_open()
+            check = defender_identity_health_issues_no_open()
             result = check.execute()
 
             assert len(result) == 1
