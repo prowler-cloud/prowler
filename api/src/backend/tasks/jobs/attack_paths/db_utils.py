@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from django.db.models import Q
 from cartography.config import Config as CartographyConfig
 
 from api.db_utils import rls_transaction
@@ -10,7 +9,7 @@ from api.models import (
     Provider as ProwlerAPIProvider,
     StateChoices,
 )
-from tasks.jobs.attack_paths.providers import is_provider_available
+from tasks.jobs.attack_paths.config import is_provider_available
 
 
 def can_provider_run_attack_paths_scan(tenant_id: str, provider_id: int) -> bool:
@@ -67,7 +66,6 @@ def starting_attack_paths_scan(
         attack_paths_scan.state = StateChoices.EXECUTING
         attack_paths_scan.started_at = datetime.now(tz=timezone.utc)
         attack_paths_scan.update_tag = cartography_config.update_tag
-        attack_paths_scan.graph_database = cartography_config.neo4j_database
 
         attack_paths_scan.save(
             update_fields=[
@@ -75,7 +73,6 @@ def starting_attack_paths_scan(
                 "state",
                 "started_at",
                 "update_tag",
-                "graph_database",
             ]
         )
 
@@ -87,7 +84,11 @@ def finish_attack_paths_scan(
 ) -> None:
     with rls_transaction(attack_paths_scan.tenant_id):
         now = datetime.now(tz=timezone.utc)
-        duration = int((now - attack_paths_scan.started_at).total_seconds())
+        duration = (
+            int((now - attack_paths_scan.started_at).total_seconds())
+            if attack_paths_scan.started_at
+            else 0
+        )
 
         attack_paths_scan.state = state
         attack_paths_scan.progress = 100
@@ -115,54 +116,22 @@ def update_attack_paths_scan_progress(
         attack_paths_scan.save(update_fields=["progress"])
 
 
-def get_old_attack_paths_scans(
+def fail_attack_paths_scan(
     tenant_id: str,
-    provider_id: str,
-    attack_paths_scan_id: str,
-) -> list[ProwlerAPIAttackPathsScan]:
-    """
-    An `old_attack_paths_scan` is any `completed` Attack Paths scan for the same provider,
-    with its graph database not deleted, excluding the current Attack Paths scan.
-    """
-
-    with rls_transaction(tenant_id):
-        completed_scans_qs = (
-            ProwlerAPIAttackPathsScan.objects.filter(
-                provider_id=provider_id,
-                state=StateChoices.COMPLETED,
-                is_graph_database_deleted=False,
-            )
-            .exclude(id=attack_paths_scan_id)
-            .all()
-        )
-
-        return list(completed_scans_qs)
-
-
-def update_old_attack_paths_scan(
-    old_attack_paths_scan: ProwlerAPIAttackPathsScan,
+    scan_id: str,
+    error: str,
 ) -> None:
-    with rls_transaction(old_attack_paths_scan.tenant_id):
-        old_attack_paths_scan.is_graph_database_deleted = True
-        old_attack_paths_scan.save(update_fields=["is_graph_database_deleted"])
-
-
-def get_provider_graph_database_names(tenant_id: str, provider_id: str) -> list[str]:
     """
-    Return existing graph database names for a tenant/provider.
-
-    Note: For accesing the `AttackPathsScan` we need to use `all_objects` manager because the provider is soft-deleted.
+    Mark the `AttackPathsScan` row as `FAILED` unless it's already `COMPLETED` or `FAILED`.
+    Used as a safety net when the Celery task fails outside the job's own error handling.
     """
-    with rls_transaction(tenant_id):
-        graph_databases_names_qs = (
-            ProwlerAPIAttackPathsScan.all_objects.filter(
-                ~Q(graph_database=""),
-                graph_database__isnull=False,
-                provider_id=provider_id,
-                is_graph_database_deleted=False,
-            )
-            .values_list("graph_database", flat=True)
-            .distinct()
+    attack_paths_scan = retrieve_attack_paths_scan(tenant_id, scan_id)
+    if attack_paths_scan and attack_paths_scan.state not in (
+        StateChoices.COMPLETED,
+        StateChoices.FAILED,
+    ):
+        finish_attack_paths_scan(
+            attack_paths_scan,
+            StateChoices.FAILED,
+            {"global_error": error},
         )
-
-        return list(graph_databases_names_qs)

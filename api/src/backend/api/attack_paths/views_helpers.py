@@ -1,12 +1,12 @@
 import logging
 
-from typing import Any
+from typing import Any, Iterable
 
 from rest_framework.exceptions import APIException, ValidationError
 
 from api.attack_paths import database as graph_database, AttackPathsQueryDefinition
-from api.models import AttackPathsScan
 from config.custom_logging import BackendLogger
+from tasks.jobs.attack_paths.config import INTERNAL_LABELS
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -79,12 +79,12 @@ def prepare_query_parameters(
 
 
 def execute_attack_paths_query(
-    attack_paths_scan: AttackPathsScan,
+    database_name: str,
     definition: AttackPathsQueryDefinition,
     parameters: dict[str, Any],
 ) -> dict[str, Any]:
     try:
-        with graph_database.get_session(attack_paths_scan.graph_database) as session:
+        with graph_database.get_session(database_name) as session:
             result = session.run(definition.cypher, parameters)
             return _serialize_graph(result.graph())
 
@@ -101,7 +101,7 @@ def _serialize_graph(graph):
         nodes.append(
             {
                 "id": node.element_id,
-                "labels": list(node.labels),
+                "labels": _filter_labels(node.labels),
                 "properties": _serialize_properties(node._properties),
             },
         )
@@ -122,6 +122,10 @@ def _serialize_graph(graph):
         "nodes": nodes,
         "relationships": relationships,
     }
+
+
+def _filter_labels(labels: Iterable[str]) -> list[str]:
+    return [label for label in labels if label not in INTERNAL_LABELS]
 
 
 def _serialize_properties(properties: dict[str, Any]) -> dict[str, Any]:

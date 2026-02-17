@@ -10,10 +10,10 @@
   {
     "section": "dependencies",
     "name": "@aws-sdk/client-bedrock-runtime",
-    "from": "3.943.0",
-    "to": "3.948.0",
+    "from": "3.948.0",
+    "to": "3.988.0",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T08:24:46.195Z"
+    "generatedAt": "2026-02-12T11:04:39.164Z"
   },
   {
     "section": "dependencies",
@@ -67,9 +67,9 @@
     "section": "dependencies",
     "name": "@langchain/mcp-adapters",
     "from": "1.0.3",
-    "to": "1.0.3",
+    "to": "1.1.3",
     "strategy": "installed",
-    "generatedAt": "2025-12-12T10:01:54.132Z"
+    "generatedAt": "2026-02-12T11:04:39.164Z"
   },
   {
     "section": "dependencies",
@@ -283,9 +283,9 @@
     "section": "dependencies",
     "name": "@tailwindcss/postcss",
     "from": "4.1.13",
-    "to": "4.1.13",
+    "to": "4.1.18",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-02-12T11:04:39.164Z"
   },
   {
     "section": "dependencies",
@@ -995,9 +995,9 @@
     "section": "devDependencies",
     "name": "shadcn",
     "from": "3.4.1",
-    "to": "3.4.1",
+    "to": "3.8.4",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T15:52:15.849Z"
+    "generatedAt": "2026-02-12T11:04:39.164Z"
   },
   {
     "section": "devDependencies",
@@ -1011,9 +1011,9 @@
     "section": "devDependencies",
     "name": "tailwindcss",
     "from": "4.1.13",
-    "to": "4.1.13",
+    "to": "4.1.18",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-02-12T11:04:39.164Z"
   },
   {
     "section": "devDependencies",
