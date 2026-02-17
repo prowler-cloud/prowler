@@ -8,6 +8,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { addProvider } from "@/actions/providers/providers";
+import { AwsMethodSelector } from "@/components/providers/organizations/aws-method-selector";
+import { OrgWizardModal } from "@/components/providers/organizations/org-wizard-modal";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
 import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
@@ -83,6 +85,8 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
 export const ConnectAccountForm = () => {
   const { toast } = useToast();
   const [prevStep, setPrevStep] = useState(1);
+  const [awsMethod, setAwsMethod] = useState<"single" | null>(null);
+  const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
   const router = useRouter();
 
   const formSchema = addProviderFormSchema;
@@ -170,10 +174,19 @@ export const ConnectAccountForm = () => {
   };
 
   const handleBackStep = () => {
+    // If in UID form after choosing single, go back to method selector
+    if (prevStep === 2 && awsMethod === "single") {
+      setAwsMethod(null);
+      form.setValue("providerUid", "");
+      form.setValue("providerAlias", "");
+      return;
+    }
+
     setPrevStep((prev) => prev - 1);
-    //Deselect the providerType if the user is going back to the first step
+    // Deselect the providerType if the user is going back to the first step
     if (prevStep === 2) {
       form.setValue("providerType", undefined as unknown as ProviderType);
+      setAwsMethod(null);
     }
     // Reset the providerUid and providerAlias fields when going back
     form.setValue("providerUid", "");
@@ -200,35 +213,50 @@ export const ConnectAccountForm = () => {
             errorMessage={form.formState.errors.providerType?.message}
           />
         )}
-        {/* Step 2: UID, alias, and credentials (if AWS) */}
-        {prevStep === 2 && (
+        {/* Step 2: AWS method selector (only for AWS, before choosing method) */}
+        {prevStep === 2 && providerType === "aws" && awsMethod === null && (
           <>
             <ProviderTitleDocs providerType={providerType} />
-            <CustomInput
-              control={form.control}
-              name="providerUid"
-              type="text"
-              label={providerFieldDetails.label}
-              labelPlacement="inside"
-              placeholder={providerFieldDetails.placeholder}
-              variant="bordered"
-              isRequired
+            <AwsMethodSelector
+              onSelectSingle={() => setAwsMethod("single")}
+              onSelectOrganizations={() => setIsOrgModalOpen(true)}
             />
-            <CustomInput
-              control={form.control}
-              name="providerAlias"
-              type="text"
-              label="Provider alias (optional)"
-              labelPlacement="inside"
-              placeholder="Enter the provider alias"
-              variant="bordered"
-              isRequired={false}
+            <OrgWizardModal
+              open={isOrgModalOpen}
+              onOpenChange={setIsOrgModalOpen}
             />
           </>
         )}
+        {/* Step 2: UID, alias form (non-AWS or AWS single account) */}
+        {prevStep === 2 &&
+          (providerType !== "aws" || awsMethod === "single") && (
+            <>
+              <ProviderTitleDocs providerType={providerType} />
+              <CustomInput
+                control={form.control}
+                name="providerUid"
+                type="text"
+                label={providerFieldDetails.label}
+                labelPlacement="inside"
+                placeholder={providerFieldDetails.placeholder}
+                variant="bordered"
+                isRequired
+              />
+              <CustomInput
+                control={form.control}
+                name="providerAlias"
+                type="text"
+                label="Provider alias (optional)"
+                labelPlacement="inside"
+                placeholder="Enter the provider alias"
+                variant="bordered"
+                isRequired={false}
+              />
+            </>
+          )}
         {/* Navigation buttons */}
         <div className="flex w-full justify-end gap-4">
-          {/* Show "Back" button only in Step 2 */}
+          {/* Show "Back" button in Step 2 (skip when on AWS method selector) */}
           {prevStep === 2 && (
             <Button
               type="button"
@@ -241,22 +269,23 @@ export const ConnectAccountForm = () => {
               Back
             </Button>
           )}
-          {/* Show "Next" button in Step 2 */}
-          {prevStep === 2 && (
-            <Button
-              type="submit"
-              variant="default"
-              size="lg"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <ChevronRightIcon size={24} />
-              )}
-              {isLoading ? "Loading" : "Next"}
-            </Button>
-          )}
+          {/* Show "Next" button in Step 2 (only when UID form is visible) */}
+          {prevStep === 2 &&
+            (providerType !== "aws" || awsMethod === "single") && (
+              <Button
+                type="submit"
+                variant="default"
+                size="lg"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <ChevronRightIcon size={24} />
+                )}
+                {isLoading ? "Loading" : "Next"}
+              </Button>
+            )}
         </div>
       </form>
     </Form>

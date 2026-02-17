@@ -1,6 +1,5 @@
 import "@/styles/globals.css";
 
-import { Spacer } from "@heroui/spacer";
 import React from "react";
 
 import { WorkflowAddProvider } from "@/components/providers/workflow";
@@ -18,7 +17,7 @@ export default function ProviderLayout({ children }: ProviderLayoutProps) {
         icon="icon-park-outline:close-small"
         href="/providers"
       />
-      <Spacer y={8} />
+      <div className="mt-8" />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         <div className="order-1 my-auto hidden h-full lg:col-span-4 lg:col-start-2 lg:block">
           <WorkflowAddProvider />
