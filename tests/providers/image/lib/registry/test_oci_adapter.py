@@ -36,14 +36,14 @@ class TestOciAdapterInit:
 
 
 class TestOciAdapterAuth:
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_ensure_auth_with_token(self, mock_request):
         adapter = OciRegistryAdapter("reg.io", token="my-token")
         adapter._ensure_auth()
         assert adapter._bearer_token == "my-token"
         mock_request.assert_not_called()
 
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_ensure_auth_anonymous_ok(self, mock_request):
         resp = MagicMock(status_code=200)
         mock_request.return_value = resp
@@ -51,7 +51,7 @@ class TestOciAdapterAuth:
         adapter._ensure_auth()
         assert adapter._bearer_token is None
 
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_ensure_auth_bearer_challenge(self, mock_request):
         ping_resp = MagicMock(
             status_code=401,
@@ -66,7 +66,7 @@ class TestOciAdapterAuth:
         adapter._ensure_auth()
         assert adapter._bearer_token == "bearer-tok"
 
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_ensure_auth_403_raises(self, mock_request):
         resp = MagicMock(status_code=403)
         mock_request.return_value = resp
@@ -74,7 +74,7 @@ class TestOciAdapterAuth:
         with pytest.raises(ImageRegistryAuthError):
             adapter._ensure_auth()
 
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_ensure_auth_basic_challenge_with_creds(self, mock_request):
         ping_resp = MagicMock(
             status_code=401,
@@ -86,7 +86,7 @@ class TestOciAdapterAuth:
         assert adapter._basic_auth_verified is True
         assert adapter._bearer_token is None
 
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_ensure_auth_basic_challenge_no_creds(self, mock_request):
         ping_resp = MagicMock(
             status_code=401,
@@ -97,7 +97,7 @@ class TestOciAdapterAuth:
         with pytest.raises(ImageRegistryAuthError):
             adapter._ensure_auth()
 
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_basic_auth_used_in_requests(self, mock_request):
         ping_resp = MagicMock(
             status_code=401,
@@ -136,7 +136,7 @@ class TestOciAdapterAuth:
         assert user == "AWS"
         assert pwd == "not!valid~base64"
 
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_basic_auth_decodes_ecr_token_in_request(self, mock_request):
         raw_password = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0In0.abc"
         encoded = base64.b64encode(f"AWS:{raw_password}".encode()).decode()
@@ -155,7 +155,7 @@ class TestOciAdapterAuth:
 
 
 class TestOciAdapterListRepositories:
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_list_repos_single_page(self, mock_request):
         ping_resp = MagicMock(status_code=200)
         catalog_resp = MagicMock(status_code=200, headers={})
@@ -167,7 +167,7 @@ class TestOciAdapterListRepositories:
         repos = adapter.list_repositories()
         assert repos == ["app/frontend", "app/backend"]
 
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_list_repos_paginated(self, mock_request):
         ping_resp = MagicMock(status_code=200)
         page1_resp = MagicMock(
@@ -182,7 +182,7 @@ class TestOciAdapterListRepositories:
         repos = adapter.list_repositories()
         assert repos == ["a", "b"]
 
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_list_repos_404_raises(self, mock_request):
         ping_resp = MagicMock(status_code=200)
         catalog_resp = MagicMock(status_code=404)
@@ -193,7 +193,7 @@ class TestOciAdapterListRepositories:
 
 
 class TestOciAdapterListTags:
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_list_tags(self, mock_request):
         ping_resp = MagicMock(status_code=200)
         tags_resp = MagicMock(status_code=200, headers={})
@@ -203,7 +203,7 @@ class TestOciAdapterListTags:
         tags = adapter.list_tags("myapp")
         assert tags == ["latest", "v1.0"]
 
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_list_tags_null_tags(self, mock_request):
         ping_resp = MagicMock(status_code=200)
         tags_resp = MagicMock(status_code=200, headers={})
@@ -215,8 +215,8 @@ class TestOciAdapterListTags:
 
 
 class TestOciAdapterRetry:
-    @patch("prowler.providers.image.lib.registry.oci_adapter.time.sleep")
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.time.sleep")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_retry_on_429(self, mock_request, mock_sleep):
         resp_429 = MagicMock(status_code=429)
         resp_200 = MagicMock(status_code=200)
@@ -226,8 +226,8 @@ class TestOciAdapterRetry:
         assert result.status_code == 200
         mock_sleep.assert_called_once()
 
-    @patch("prowler.providers.image.lib.registry.oci_adapter.time.sleep")
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.time.sleep")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_connection_error_retries(self, mock_request, mock_sleep):
         mock_request.side_effect = requests.exceptions.ConnectionError("failed")
         adapter = OciRegistryAdapter("reg.io")
@@ -235,7 +235,7 @@ class TestOciAdapterRetry:
             adapter._request_with_retry("GET", "https://reg.io/v2/")
         assert mock_request.call_count == 3
 
-    @patch("prowler.providers.image.lib.registry.oci_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_timeout_raises_immediately(self, mock_request):
         mock_request.side_effect = requests.exceptions.Timeout("timeout")
         adapter = OciRegistryAdapter("reg.io")

@@ -200,7 +200,7 @@ class TestRegistryList:
         captured = capsys.readouterr()
         assert "v1.0" in captured.out
         assert "dev-abc" not in captured.out
-        assert "1 images" in captured.out
+        assert "1 image)" in captured.out
 
     @patch("prowler.providers.image.image_provider.create_registry_adapter")
     def test_registry_list_skips_max_images(self, mock_factory, capsys):

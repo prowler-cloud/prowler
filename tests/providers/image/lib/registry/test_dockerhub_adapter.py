@@ -30,20 +30,18 @@ class TestDockerHubAdapterInit:
 
 
 class TestDockerHubListRepositories:
-    @patch("prowler.providers.image.lib.registry.dockerhub_adapter.requests.request")
-    @patch("prowler.providers.image.lib.registry.dockerhub_adapter.requests.post")
-    def test_list_repos(self, mock_post, mock_request):
-        # Hub login
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_list_repos(self, mock_request):
+        # Hub login (now goes through requests.request via _request_with_retry)
         login_resp = MagicMock(status_code=200)
         login_resp.json.return_value = {"token": "jwt"}
-        mock_post.return_value = login_resp
         # Repo listing
         repos_resp = MagicMock(status_code=200)
         repos_resp.json.return_value = {
             "results": [{"name": "app1"}, {"name": "app2"}],
             "next": None,
         }
-        mock_request.return_value = repos_resp
+        mock_request.side_effect = [login_resp, repos_resp]
         adapter = DockerHubAdapter("docker.io/myorg", username="u", password="p")
         repos = adapter.list_repositories()
         assert repos == ["myorg/app1", "myorg/app2"]
@@ -53,7 +51,7 @@ class TestDockerHubListRepositories:
         with pytest.raises(ImageRegistryAuthError, match="namespace"):
             adapter.list_repositories()
 
-    @patch("prowler.providers.image.lib.registry.dockerhub_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_list_repos_public_no_credentials(self, mock_request):
         """When no credentials are provided, use the public /v2/repositories/{ns}/ endpoint."""
         repos_resp = MagicMock(status_code=200)
@@ -71,39 +69,37 @@ class TestDockerHubListRepositories:
 
 
 class TestDockerHubListTags:
-    @patch("prowler.providers.image.lib.registry.dockerhub_adapter.requests.request")
-    @patch("prowler.providers.image.lib.registry.dockerhub_adapter.requests.get")
-    def test_list_tags(self, mock_get, mock_request):
-        # Token exchange
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_list_tags(self, mock_request):
+        # Token exchange (now goes through requests.request via _request_with_retry)
         token_resp = MagicMock(status_code=200)
         token_resp.json.return_value = {"token": "registry-token"}
-        mock_get.return_value = token_resp
         # Tag listing
         tags_resp = MagicMock(status_code=200, headers={})
         tags_resp.json.return_value = {"tags": ["latest", "v1.0"]}
-        mock_request.return_value = tags_resp
+        mock_request.side_effect = [token_resp, tags_resp]
         adapter = DockerHubAdapter("docker.io/myorg", username="u", password="p")
         tags = adapter.list_tags("myorg/myapp")
         assert tags == ["latest", "v1.0"]
 
-    @patch("prowler.providers.image.lib.registry.dockerhub_adapter.requests.request")
-    @patch("prowler.providers.image.lib.registry.dockerhub_adapter.requests.get")
-    def test_list_tags_auth_failure(self, mock_get, mock_request):
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_list_tags_auth_failure(self, mock_request):
+        # Token exchange
         token_resp = MagicMock(status_code=200)
         token_resp.json.return_value = {"token": "tok"}
-        mock_get.return_value = token_resp
+        # Tag listing returns 401
         tags_resp = MagicMock(status_code=401)
-        mock_request.return_value = tags_resp
+        mock_request.side_effect = [token_resp, tags_resp]
         adapter = DockerHubAdapter("docker.io/myorg")
         with pytest.raises(ImageRegistryAuthError):
             adapter.list_tags("myorg/myapp")
 
 
 class TestDockerHubLogin:
-    @patch("prowler.providers.image.lib.registry.dockerhub_adapter.requests.post")
-    def test_login_failure(self, mock_post):
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_login_failure(self, mock_request):
         resp = MagicMock(status_code=401)
-        mock_post.return_value = resp
+        mock_request.return_value = resp
         adapter = DockerHubAdapter("docker.io/myorg", username="bad", password="creds")
         with pytest.raises(ImageRegistryAuthError, match="login failed"):
             adapter._hub_login()
@@ -115,8 +111,8 @@ class TestDockerHubLogin:
 
 
 class TestDockerHubRetry:
-    @patch("prowler.providers.image.lib.registry.dockerhub_adapter.time.sleep")
-    @patch("prowler.providers.image.lib.registry.dockerhub_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.time.sleep")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_retry_on_429(self, mock_request, mock_sleep):
         resp_429 = MagicMock(status_code=429)
         resp_200 = MagicMock(status_code=200)
@@ -127,8 +123,8 @@ class TestDockerHubRetry:
         )
         assert result.status_code == 200
 
-    @patch("prowler.providers.image.lib.registry.dockerhub_adapter.time.sleep")
-    @patch("prowler.providers.image.lib.registry.dockerhub_adapter.requests.request")
+    @patch("prowler.providers.image.lib.registry.base.time.sleep")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_connection_error_retries(self, mock_request, mock_sleep):
         mock_request.side_effect = requests.exceptions.ConnectionError("fail")
         adapter = DockerHubAdapter("docker.io/myorg")
