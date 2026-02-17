@@ -21,7 +21,7 @@
       "CLI": "Update-MgPolicyAuthorizationPolicy -BodyParameter @{permissionGrantPolicyIdsAssignedToDefaultUserRole=@('ManagePermissionGrantsForSelf.microsoft-user-default-low')}",
       "NativeIaC": "",
       "Other": "1. Sign in to Microsoft Entra admin center as Global Administrator or Privileged Role Administrator\n2. Go to Identity > Applications > Enterprise applications\n3. Select Consent and permissions > User consent settings\n4. Under User consent for applications, select \"Allow user consent for apps from verified publishers, for selected permissions\"\n5. Click Save",
-      "Terraform": ""
+      "Terraform": "```hcl\nresource \"azuread_authorization_policy\" \"<example_resource_name>\" {\n  # Critical: restricts user consent to verified publishers with low-impact permissions only\n  permission_grant_policy_ids_assigned_to_default_user_role = [\"ManagePermissionGrantsForSelf.microsoft-user-default-low\"]\n}\n```"
     },
     "Recommendation": {
       "Text": "Enforce **least privilege** for app consent:\n- Remove `microsoft-user-default-legacy`\n- Allow consent only for verified publishers and low-impact permissions (e.g., `microsoft-user-default-low`)\n- Require admin approval for higher-risk scopes via the admin consent workflow\n- Periodically review and revoke unused consent grants",

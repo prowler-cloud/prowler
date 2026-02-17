@@ -22,7 +22,7 @@
       "CLI": "az rest --method PATCH --url https://graph.microsoft.com/v1.0/policies/authorizationPolicy/authorizationPolicy --body '{\"defaultUserRolePermissions\":{\"allowedToCreateApps\":false}}'",
       "NativeIaC": "",
       "Other": "1. Sign in to the Microsoft Entra admin center\n2. Go to Microsoft Entra ID > Users > User settings\n3. Set \"Users can register applications\" to \"No\"\n4. Click Save",
-      "Terraform": ""
+      "Terraform": "```hcl\nresource \"azuread_authorization_policy\" \"<example_resource_name>\" {\n  default_user_role_permissions {\n    allowed_to_create_apps = false # Critical: disables application registration for non-privileged users\n  }\n}\n```"
     },
     "Recommendation": {
       "Text": "Apply **least privilege**: restrict app registration to admins or delegated roles; set `Users can register applications` to `No`. Use the **Application Developer** role for exceptions, require **admin consent** workflows, routinely review app/service principal permissions, and audit changes for **defense in depth**.",

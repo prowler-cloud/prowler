@@ -18,7 +18,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "Remove-MgDirectoryRoleMember -DirectoryRoleId (Get-MgDirectoryRole -Filter \"displayName eq 'Global Administrator'\").Id -DirectoryObjectId '<example_user_id>'",
       "NativeIaC": "",
       "Other": "1. Sign in to the Microsoft Entra admin center\n2. Go to Identity > Roles & admins > Global Administrator\n3. Select View assignments (or Assignments)\n4. Remove members until the total Global Administrator assignments are fewer than 5\n5. Save changes",
       "Terraform": "```hcl\n# Keep Global Administrator assignments below 5 by defining only required principals\ndata \"azuread_directory_role\" \"global_admin\" {\n  display_name = \"Global Administrator\"\n}\n\n# Critical: This assignment grants GA to a specific principal; keep total GA assignments < 5\nresource \"azuread_directory_role_assignment\" \"ga_primary\" {\n  role_id             = data.azuread_directory_role.global_admin.id  # Assigns the Global Administrator role\n  principal_object_id = \"<example_resource_id>\"                      # Required account (e.g., break-glass)\n}\n\n# Critical: Add only necessary GA assignments; remove extras to ensure count < 5\nresource \"azuread_directory_role_assignment\" \"ga_secondary\" {\n  role_id             = data.azuread_directory_role.global_admin.id  # Assigns the Global Administrator role\n  principal_object_id = \"<example_resource_id>\"                      # Second required account\n}\n```"

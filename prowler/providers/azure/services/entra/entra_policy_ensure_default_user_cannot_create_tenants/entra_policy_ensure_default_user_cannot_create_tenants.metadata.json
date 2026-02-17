@@ -22,7 +22,7 @@
       "CLI": "Update-MgPolicyAuthorizationPolicy -AuthorizationPolicyId authorizationPolicy -BodyParameter @{ defaultUserRolePermissions = @{ allowedToCreateTenants = $false } }",
       "NativeIaC": "",
       "Other": "1. Go to Microsoft Entra admin center (https://entra.microsoft.com)\n2. Navigate: Microsoft Entra ID > Users > User settings\n3. Set \"Restrict non-admin users from creating tenants\" to Yes\n4. Click Save",
-      "Terraform": ""
+      "Terraform": "```hcl\nresource \"azuread_authorization_policy\" \"<example_resource_name>\" {\n  default_user_role_permissions {\n    allowed_to_create_tenants = false # Critical: disables tenant creation for non-privileged users\n  }\n}\n```"
     },
     "Recommendation": {
       "Text": "Apply **least privilege**: set `allowed_to_create_tenants=false` so only vetted admins or the **Tenant Creator** role (managed with **PIM**) can create tenants. Enforce **separation of duties**, require approvals, and monitor audits. Review this setting regularly to prevent tenant sprawl and maintain **defense in depth**.",

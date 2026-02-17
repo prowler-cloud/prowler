@@ -19,7 +19,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "Update-MgDirectorySetting -DirectorySettingId (Get-MgDirectorySetting | Where-Object {$_.DisplayName -eq 'Group.Unified'}).Id -BodyParameter @{Values = @(@{Name = 'EnableGroupCreation'; Value = 'false'})}",
       "NativeIaC": "",
       "Other": "1. Sign in to the Microsoft Entra admin center\n2. Go to Groups > General\n3. Set \"Users can create Microsoft 365 groups in Azure portals, API, or PowerShell\" to \"No\"\n4. Click Save",
       "Terraform": "```hcl\ndata \"azuread_directory_setting_template\" \"unified\" {\n  display_name = \"Group.Unified\"\n}\n\nresource \"azuread_directory_setting\" \"example_resource_name\" {\n  template_id = data.azuread_directory_setting_template.unified.id\n\n  values = {\n    EnableGroupCreation = \"false\"\n    # Critical: sets EnableGroupCreation to false so users cannot create Microsoft 365 groups\n  }\n}\n```"

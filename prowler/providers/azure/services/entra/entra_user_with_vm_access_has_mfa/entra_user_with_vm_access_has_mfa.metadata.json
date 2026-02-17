@@ -19,7 +19,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "az rest --method post --uri https://graph.microsoft.com/v1.0/users/<USER_OBJECT_ID>/authentication/phoneMethods --body '{\"phoneNumber\":\"<E164_PHONE_NUMBER>\",\"phoneType\":\"mobile\"}'",
+      "CLI": "az rest --method post --url https://graph.microsoft.com/v1.0/users/<example_user_id>/authentication/phoneMethods --body '{\"phoneNumber\":\"+10000000000\",\"phoneType\":\"mobile\"}'",
       "NativeIaC": "",
       "Other": "1. Sign in to Microsoft Entra admin center (entra.microsoft.com) with an admin account\n2. Go to Identity > Users > select the user with VM access\n3. Select Authentication methods > Add authentication method > choose Phone\n4. Enter the user's E.164 phone number (e.g., +15551234567) and click Add",
       "Terraform": ""

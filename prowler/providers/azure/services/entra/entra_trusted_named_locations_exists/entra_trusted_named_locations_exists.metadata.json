@@ -18,10 +18,10 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "az rest --method post --url https://graph.microsoft.com/v1.0/identity/conditionalAccess/namedLocations --headers Content-Type=application/json --body '{\"@odata.type\":\"#microsoft.graph.ipNamedLocation\",\"displayName\":\"<example_resource_name>\",\"isTrusted\":true,\"ipRanges\":[{\"cidrAddress\":\"203.0.113.0/24\"}]}'",
+      "CLI": "az rest --method post --url https://graph.microsoft.com/v1.0/identity/conditionalAccess/namedLocations --headers Content-Type=application/json --body '{\"@odata.type\":\"#microsoft.graph.ipNamedLocation\",\"displayName\":\"<example_resource_name>\",\"isTrusted\":true,\"ipRanges\":[{\"@odata.type\":\"#microsoft.graph.iPv4CidrRange\",\"cidrAddress\":\"203.0.113.0/24\"}]}'",
       "NativeIaC": "",
       "Other": "1. Sign in to the Microsoft Entra admin center (entra.microsoft.com)\n2. Go to Microsoft Entra ID > Protection > Conditional Access > Named locations\n3. Click New location\n4. Enter Name: <example_resource_name>\n5. Choose IP ranges location and add an IP range (e.g., 203.0.113.0/24)\n6. Check Mark as trusted location\n7. Click Create",
-      "Terraform": ""
+      "Terraform": "```hcl\nresource \"azuread_named_location\" \"<example_resource_name>\" {\n  display_name = \"<example_resource_name>\"\n\n  ip {\n    ip_ranges = [\"203.0.113.0/24\"]\n    trusted   = true # Critical: marks the location as trusted for Conditional Access policies\n  }\n}\n```"
     },
     "Recommendation": {
       "Text": "Define **named locations** for your organization's egress IP ranges and mark them as `trusted`. Keep ranges accurate and narrow; review regularly. Use them in **Conditional Access** to enforce stronger controls off trusted networks. Apply **zero trust** and **least privilege**, and require MFA or device compliance when outside trusted locations.",
