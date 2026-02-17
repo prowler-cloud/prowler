@@ -285,6 +285,18 @@ class GithubProvider(Provider):
                 else:
                     app_key = format_rsa_key(github_app_key_content)
 
+            # Check for incomplete GitHub App credentials (user provided only part of them)
+            elif (github_app_key or github_app_key_content) and not github_app_id:
+                raise GithubEnvironmentVariableError(
+                    file=os.path.basename(__file__),
+                    message="GitHub App authentication requires both --github-app-id and --github-app-key-path (or --github-app-key). Missing: --github-app-id",
+                )
+            elif github_app_id and not (github_app_key or github_app_key_content):
+                raise GithubEnvironmentVariableError(
+                    file=os.path.basename(__file__),
+                    message="GitHub App authentication requires both --github-app-id and --github-app-key-path (or --github-app-key). Missing: --github-app-key-path or --github-app-key",
+                )
+
             else:
                 # PAT
                 logger.info(
