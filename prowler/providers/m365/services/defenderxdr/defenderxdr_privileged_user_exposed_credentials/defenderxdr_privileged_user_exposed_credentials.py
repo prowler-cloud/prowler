@@ -64,10 +64,10 @@ class defenderxdr_privileged_user_exposed_credentials(Check):
                 resource_name="Defender XDR",
                 resource_id="mdeDevices",
             )
-            report.status = "FAIL"
+            report.status = "PASS"
             report.status_extended = (
                 "No devices found in Microsoft Defender for Endpoint. "
-                "Deploy MDE agents on endpoints to enable credential exposure detection."
+                "No endpoints to evaluate for credential exposure."
             )
             findings.append(report)
             return findings

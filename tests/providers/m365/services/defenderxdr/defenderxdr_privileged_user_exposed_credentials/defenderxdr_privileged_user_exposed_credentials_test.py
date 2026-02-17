@@ -41,7 +41,7 @@ class Test_defenderxdr_privileged_user_exposed_credentials:
             assert result[0].resource_id == "mdeDevices"
 
     def test_no_mde_devices(self):
-        """Test FAIL when no MDE devices are deployed."""
+        """Test PASS when no MDE devices are deployed - no endpoints to evaluate."""
         defenderxdr_client = mock.MagicMock()
         defenderxdr_client.audited_tenant = "audited_tenant"
         defenderxdr_client.audited_domain = DOMAIN
@@ -67,12 +67,12 @@ class Test_defenderxdr_privileged_user_exposed_credentials:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 "No devices found in Microsoft Defender for Endpoint"
                 in result[0].status_extended
             )
-            assert "Deploy MDE agents" in result[0].status_extended
+            assert "No endpoints to evaluate" in result[0].status_extended
             assert result[0].resource_id == "mdeDevices"
 
     def test_exposure_management_check_failed(self):
