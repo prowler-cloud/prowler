@@ -175,8 +175,6 @@ The timeout accepts values in seconds (`s`), minutes (`m`), or hours (`h`). Defa
 
 ### Registry Scan Mode
 
-<VersionBadge version="5.19.0" />
-
 Registry Scan Mode enumerates and scans all images from an OCI-compatible registry, Docker Hub namespace, or Amazon ECR registry. To activate it, use the `--registry` flag with the registry URL:
 
 ```bash
@@ -184,8 +182,6 @@ prowler image --registry myregistry.io
 ```
 
 #### Discover Available Images
-
-<VersionBadge version="5.19.0" />
 
 To list all repositories and tags available in the registry without running a scan, use the `--registry-list` flag. This is useful for discovering image names and tags before building filter regexes:
 
@@ -271,8 +267,6 @@ Registry Scan Mode supports the following registry types:
 * **Amazon ECR:** Use the full ECR endpoint URL (e.g., `123456789.dkr.ecr.us-east-1.amazonaws.com`). Authentication is handled via AWS credentials.
 
 ### Authentication for Private Registries
-
-<VersionBadge version="5.19.0" />
 
 To scan images from private registries, the Image provider supports three authentication methods. Prowler uses the first available method in this priority order:
 
