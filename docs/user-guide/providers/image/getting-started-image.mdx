@@ -267,7 +267,7 @@ Skipping TLS verification disables certificate validation for registry connectio
 Registry Scan Mode supports the following registry types:
 
 * **OCI-compatible registries:** Any registry implementing the OCI Distribution Specification (e.g., Harbor, GitLab Container Registry, GitHub Container Registry).
-* **Docker Hub:** Specify a namespace with `--registry docker.io/{org_or_user}`.
+* **Docker Hub:** Specify a namespace with `--registry docker.io/{org_or_user}`. Public namespaces can be scanned without credentials; authenticated access is used automatically when `REGISTRY_USERNAME` and `REGISTRY_PASSWORD` are set.
 * **Amazon ECR:** Use the full ECR endpoint URL (e.g., `123456789.dkr.ecr.us-east-1.amazonaws.com`). Authentication is handled via AWS credentials.
 
 ### Authentication for Private Registries
