@@ -26,13 +26,18 @@ def backfill_legacy_daily_scan_schedules(apps, schema_editor):  # noqa: ARG001
     Scan = apps.get_model("api", "Scan")
     ScanSchedule = apps.get_model("api", "ScanSchedule")
 
-    for periodic_task in PeriodicTask.objects.filter(
-        task="scan-perform-scheduled", enabled=True
-    ).iterator():
+    for periodic_task in (
+        PeriodicTask.objects.filter(task="scan-perform-scheduled", enabled=True)
+        .order_by("-date_changed", "-id")
+        .iterator()
+    ):
         kwargs = periodic_task.kwargs or ""
         try:
             task_kwargs = json.loads(kwargs)
         except (TypeError, json.JSONDecodeError):
+            continue
+
+        if not isinstance(task_kwargs, dict):
             continue
 
         tenant_id_raw = task_kwargs.get("tenant_id")
@@ -40,17 +45,17 @@ def backfill_legacy_daily_scan_schedules(apps, schema_editor):  # noqa: ARG001
         if not tenant_id_raw or not provider_id_raw:
             continue
 
-        tenant_id = str(tenant_id_raw)
-        provider_id = str(provider_id_raw)
-
         try:
-            provider = Provider.objects.filter(
-                id=provider_id,
-                tenant_id=tenant_id,
-                is_deleted=False,
-            ).first()
-        except Exception:
+            tenant_id = uuid.UUID(str(tenant_id_raw))
+            provider_id = uuid.UUID(str(provider_id_raw))
+        except (TypeError, ValueError, AttributeError):
             continue
+
+        provider = Provider.objects.filter(
+            id=provider_id,
+            tenant_id=tenant_id,
+            is_deleted=False,
+        ).first()
 
         if provider is None:
             continue

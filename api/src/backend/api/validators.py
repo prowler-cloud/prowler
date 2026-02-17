@@ -171,7 +171,7 @@ def cron_5_fields_validator(value: str) -> None:
     if len(parts) != 5:
         raise ValidationError("Cron expression must contain exactly 5 fields in UTC.")
 
-    # minute hour day-of-month month day-of-week
-    field_ranges = ((0, 59), (0, 23), (1, 31), (1, 12), (0, 7))
+    # minute hour day-of-month month day-of-week (Celery: 0-6)
+    field_ranges = ((0, 59), (0, 23), (1, 31), (1, 12), (0, 6))
     for part, (min_value, max_value) in zip(parts, field_ranges, strict=False):
         _validate_cron_field(part, min_value, max_value)
