@@ -52,30 +52,7 @@ class defender_identity_health_issues_no_open(Check):
             findings.append(report)
             return findings
 
-        # Determine sensor count (may be None if API failed, 0 if no sensors, or positive)
-        sensor_count = (
-            len(defender_identity_client.sensors)
-            if defender_identity_client.sensors is not None
-            else 0
-        )
-
-        # If health_issues is empty list and no sensors, MDI is not properly configured
-        if not defender_identity_client.health_issues and sensor_count == 0:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource={},
-                resource_name="Defender for Identity",
-                resource_id="defenderIdentity",
-            )
-            report.status = "FAIL"
-            report.status_extended = (
-                "No Defender for Identity sensors are deployed. "
-                "MDI requires sensors on Domain Controllers to detect identity-based threats."
-            )
-            findings.append(report)
-            return findings
-
-        # If health_issues is empty list with sensors deployed - this is compliant
+        # If health_issues is empty list - no issues exist, this is compliant
         if not defender_identity_client.health_issues:
             report = CheckReportM365(
                 metadata=self.metadata(),
@@ -84,7 +61,9 @@ class defender_identity_health_issues_no_open(Check):
                 resource_id="defenderIdentity",
             )
             report.status = "PASS"
-            report.status_extended = f"No open health issues found in Defender for Identity with {sensor_count} sensor(s) deployed."
+            report.status_extended = (
+                "No open health issues found in Defender for Identity."
+            )
             findings.append(report)
             return findings
 
