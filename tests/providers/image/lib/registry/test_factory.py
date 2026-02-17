@@ -1,40 +1,6 @@
 from prowler.providers.image.lib.registry.dockerhub_adapter import DockerHubAdapter
-from prowler.providers.image.lib.registry.factory import (
-    create_registry_adapter,
-    detect_registry_type,
-)
+from prowler.providers.image.lib.registry.factory import create_registry_adapter
 from prowler.providers.image.lib.registry.oci_adapter import OciRegistryAdapter
-
-
-class TestDetectRegistryType:
-    def test_generic_oci(self):
-        assert detect_registry_type("myregistry.io") == "oci"
-
-    def test_generic_oci_with_https(self):
-        assert detect_registry_type("https://myregistry.io") == "oci"
-
-    def test_docker_hub(self):
-        assert detect_registry_type("docker.io/myorg") == "dockerhub"
-
-    def test_docker_hub_registry1(self):
-        assert detect_registry_type("registry-1.docker.io/myorg") == "dockerhub"
-
-    def test_docker_hub_with_https(self):
-        assert detect_registry_type("https://docker.io/myorg") == "dockerhub"
-
-    def test_ecr(self):
-        assert (
-            detect_registry_type("123456789.dkr.ecr.us-east-1.amazonaws.com") == "ecr"
-        )
-
-    def test_ecr_with_https(self):
-        assert (
-            detect_registry_type("https://123456789.dkr.ecr.us-east-1.amazonaws.com")
-            == "ecr"
-        )
-
-    def test_harbor(self):
-        assert detect_registry_type("harbor.example.com") == "oci"
 
 
 class TestCreateRegistryAdapter:

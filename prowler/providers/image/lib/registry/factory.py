@@ -11,9 +11,6 @@ from prowler.providers.image.lib.registry.oci_adapter import OciRegistryAdapter
 _DOCKER_HUB_PATTERN = re.compile(
     r"^(https?://)?(docker\.io|registry-1\.docker\.io)(/|$)", re.IGNORECASE
 )
-_ECR_PATTERN = re.compile(
-    r"^(https?://)?\d+\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com(/|$)", re.IGNORECASE
-)
 
 
 def create_registry_adapter(
@@ -41,12 +38,3 @@ def create_registry_adapter(
         token=token,
         verify_ssl=verify_ssl,
     )
-
-
-def detect_registry_type(registry_url: str) -> str:
-    """Return a string identifying the detected registry type."""
-    if _DOCKER_HUB_PATTERN.search(registry_url):
-        return "dockerhub"
-    if _ECR_PATTERN.search(registry_url):
-        return "ecr"
-    return "oci"

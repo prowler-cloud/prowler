@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import re
-
-import requests
+from typing import TYPE_CHECKING
 
 from prowler.lib.logger import logger
 from prowler.providers.image.exceptions.exceptions import (
@@ -13,6 +12,9 @@ from prowler.providers.image.exceptions.exceptions import (
     ImageRegistryNetworkError,
 )
 from prowler.providers.image.lib.registry.base import RegistryAdapter
+
+if TYPE_CHECKING:
+    import requests
 
 _HUB_API = "https://hub.docker.com"
 _REGISTRY_HOST = "https://registry-1.docker.io"

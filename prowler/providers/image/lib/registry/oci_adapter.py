@@ -4,15 +4,18 @@ from __future__ import annotations
 
 import base64
 import re
+from typing import TYPE_CHECKING
 
-import requests
-
+from prowler.lib.logger import logger
 from prowler.providers.image.exceptions.exceptions import (
     ImageRegistryAuthError,
     ImageRegistryCatalogError,
     ImageRegistryNetworkError,
 )
 from prowler.providers.image.lib.registry.base import RegistryAdapter
+
+if TYPE_CHECKING:
+    import requests
 
 
 class OciRegistryAdapter(RegistryAdapter):
@@ -155,7 +158,7 @@ class OciRegistryAdapter(RegistryAdapter):
             if decoded.startswith(f"{self.username}:"):
                 return self.username, decoded[len(self.username) + 1 :]
         except Exception:
-            pass
+            logger.debug("Password is not a base64-encoded auth token, using as-is")
         return self.username, self.password
 
     def _authed_request(self, method: str, url: str, **kwargs) -> requests.Response:
