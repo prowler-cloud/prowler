@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import type { ProviderType } from "@/types";
-import type { AttackPathScan } from "@/types/attack-paths";
+import type { AttackPathScan, ScanState } from "@/types/attack-paths";
 import { SCAN_STATES } from "@/types/attack-paths";
 
 import { ScanStatusBadge } from "./scan-status-badge";
@@ -42,11 +42,11 @@ interface ScanListTableProps {
 const TABLE_COLUMN_COUNT = 6;
 const DEFAULT_PAGE_SIZE = 5;
 const PAGE_SIZE_OPTIONS = [2, 5, 10, 15];
-const WAITING_STATES = [
+const WAITING_STATES: readonly ScanState[] = [
   SCAN_STATES.SCHEDULED,
   SCAN_STATES.AVAILABLE,
   SCAN_STATES.EXECUTING,
-] as const;
+];
 
 const baseLinkClass =
   "relative block rounded border-0 bg-transparent px-3 py-1.5 text-button-primary outline-none transition-all duration-300 hover:bg-bg-neutral-tertiary hover:text-text-neutral-primary focus:shadow-none dark:hover:bg-bg-neutral-secondary dark:hover:text-text-neutral-primary";
