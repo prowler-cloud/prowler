@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra** authorization policy for the default user role is assessed for assignment of the user-consent policy `microsoft-user-default-legacy`. Its presence means users can self-consent to app permissions; its absence indicates consent is restricted (e.g., only verified publishers or low-impact scopes).",
   "Risk": "Broad self-consent enables **OAuth consent phishing** and rogue apps to gain tokens to tenant data (**confidentiality**), request write scopes to change resources (**integrity**), and persist via refresh tokens after password changes. Mis-scoped grants can drive lateral movement and privilege escalation.",
   "RelatedUrl": "",

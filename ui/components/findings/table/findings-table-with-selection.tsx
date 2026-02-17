@@ -97,6 +97,7 @@ export function FindingsTableWithSelection({
         rowSelection={rowSelection}
         onRowSelectionChange={setRowSelection}
         getRowCanSelect={getRowCanSelect}
+        showSearch
       />
 
       {selectedFindingIds.length > 0 && (

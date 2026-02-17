@@ -8,16 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra authorization policy** governs whether default users can create new tenants. This evaluates if tenant creation is disabled for non-admin users via `allowed_to_create_tenants=false`.",
   "Risk": "Permitting default users to create tenants fuels **shadow IT** and identity sprawl. Creators become **Global Administrators** of unmanaged tenants, eroding **confidentiality** and **integrity** through unsanctioned apps and unmonitored data flows, and degrading **availability** of centralized governance.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.tenable.com/audits/items/CIS_Microsoft_365_v2.0.0_E3_Level_1.audit:2903297800f576cc637b3ab36e9e923a",
-    "https://charbelnemnom.com/restrict-non-admin-users-from-creating-tenants/",
     "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#tenant-creator",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/disable-user-tenant-creation.html",
-    "https://docs.kertos.io/en/article/verify-that-restrict-non-admin-users-from-creating-tenants-is-set-to-yes",
-    "https://www.linkedin.com/pulse/stop-tenant-sprawl-azure-ad-entra-id-dr-umesh-pandit-it37c",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/ActiveDirectory/disable-user-tenant-creation.html",
     "https://learn.microsoft.com/en-us/entra/fundamentals/users-default-permissions"
   ],
   "Remediation": {

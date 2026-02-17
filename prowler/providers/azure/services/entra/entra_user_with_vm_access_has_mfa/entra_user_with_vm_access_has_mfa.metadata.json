@@ -8,15 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.aadiam/tenants",
-  "Description": "Microsoft Entra users with Azure roles that grant VM sign-in or management access-such as `Owner`, `Contributor`, `Virtual Machine * Login`, and `Virtual Machine Contributor`-are evaluated for **multi-factor authentication** enrollment. The finding highlights accounts with VM access that lack more than one authentication factor.",
+  "ResourceGroup": "IAM",
+  "Description": "**Microsoft Entra** users with Azure roles that grant VM sign-in or management access-such as `Owner`, `Contributor`, `Virtual Machine * Login`, and `Virtual Machine Contributor`-are evaluated for **multi-factor authentication** enrollment. The finding highlights accounts with VM access that lack more than one authentication factor.",
   "Risk": "Without **MFA**, accounts with VM access are vulnerable to phishing, password spraying, and credential stuffing. Compromise can enable remote VM login, abuse of the VM's managed identity, privilege escalation, and lateral movement-impacting confidentiality, integrity, and availability of workloads.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.rebeladmin.com/step-step-guide-enable-mfa-azure-admins-preview/",
-    "https://www.rebeladmin.com/tag/entra-id/page/15/",
-    "https://www.rebeladmin.com/tag/azure-conditional-access/page/3/",
-    "https://www.rebeladmin.com/tag/azure-domain-services/page/3/",
-    "https://smbtothecloud.com/is-per-user-mfa-really-disabled-maybe-not-if-its-breaking-your-entra-joined-w365-avd-connections/"
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/howto-mfa-userdevicesettings",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/VirtualMachines/vm-access-with-mfa-enabled-identities.html"
   ],
   "Remediation": {
     "Code": {

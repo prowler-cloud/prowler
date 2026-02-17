@@ -708,3 +708,186 @@
 - Provider cleanup performed before each test to ensure clean state
 - Requires valid OCI account with API Key set up
 - API Key credential type is automatically used for OCI providers
+
+---
+
+## Test Case: `PROVIDER-E2E-013` - Update OCI Provider Credentials
+
+**Priority:** `normal`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @oci
+
+**Description/Objective:** Validates the complete flow of updating credentials for an existing OCI provider. This test verifies that the provider UID is correctly passed to the update credentials form, which is required for OCI credential validation.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, E2E_OCI_REGION
+- An OCI provider with the specified Tenancy ID must already exist (run PROVIDER-E2E-012 first)
+- This test must be run serially and never in parallel with other tests
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Verify OCI provider exists in the table
+3. Click row actions menu for the OCI provider
+4. Click "Update Credentials" option
+5. Verify update credentials page is loaded
+6. Verify OCI credentials form fields are visible (confirms providerUid is loaded)
+7. Fill OCI credentials (user ID, fingerprint, key content, region)
+8. Click Next to submit
+9. Verify successful navigation to test connection page
+
+### Expected Result:
+
+- Update credentials page loads successfully
+- OCI credentials form is displayed with all required fields
+- Provider UID is correctly passed to the form (hidden field populated)
+- Credentials can be updated and submitted
+- User is redirected to test connection page after successful update
+
+### Key verification points:
+
+- Provider page loads correctly
+- OCI provider row is visible in providers table
+- Row actions dropdown opens and displays "Update Credentials" option
+- Update credentials page URL contains correct parameters
+- OCI credentials form displays all fields (tenancy ID, user ID, fingerprint, key content, region)
+- Form submission succeeds (no silent failures due to missing provider UID)
+- Successful redirect to test connection page
+
+### Notes:
+
+- Test uses same environment variables as PROVIDER-E2E-012 (add OCI provider)
+- Requires PROVIDER-E2E-012 to be run first to create the OCI provider
+- This test validates the fix for OCI update credentials form failing silently due to missing provider UID
+- The provider UID is required for OCI credential validation (tenancy field auto-populated from UID)
+
+---
+
+## Test Case: `PROVIDER-E2E-014` - Add AlibabaCloud Provider with Static Credentials
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @alibabacloud
+
+**Description/Objective:** Validates the complete flow of adding a new Alibaba Cloud provider using static credentials (Access Key ID and Access Key Secret)
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_ALIBABACLOUD_ACCOUNT_ID, E2E_ALIBABACLOUD_ACCESS_KEY_ID, E2E_ALIBABACLOUD_ACCESS_KEY_SECRET
+- Remove any existing provider with the same Account ID before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Account ID not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select AlibabaCloud provider type
+4. Fill provider details (account ID and alias)
+5. Verify AlibabaCloud credentials page is loaded
+6. Select static credentials type
+7. Verify static credentials page is loaded
+8. Fill AlibabaCloud credentials (access key ID and access key secret)
+9. Launch initial scan
+10. Verify redirect to Scans page
+11. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result:
+
+- AlibabaCloud provider successfully added with static credentials
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays AlibabaCloud option
+- Provider details form accepts account ID and alias
+- Credentials page loads with credential type selection
+- Static credentials page loads with access key ID and access key secret fields
+- Static credentials are properly filled in the correct fields
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by account ID)
+- Scan name field contains "scheduled scan"
+
+### Notes:
+
+- Test uses environment variables for AlibabaCloud credentials
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid Alibaba Cloud account with appropriate permissions
+- Static credentials must have sufficient permissions for security scanning
+
+---
+
+## Test Case: `PROVIDER-E2E-015` - Add AlibabaCloud Provider with RAM Role Credentials
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @alibabacloud
+
+**Description/Objective:** Validates the complete flow of adding a new Alibaba Cloud provider using RAM Role credentials (Access Key ID, Access Key Secret, and Role ARN)
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_ALIBABACLOUD_ACCOUNT_ID, E2E_ALIBABACLOUD_ACCESS_KEY_ID, E2E_ALIBABACLOUD_ACCESS_KEY_SECRET, E2E_ALIBABACLOUD_ROLE_ARN
+- Remove any existing provider with the same Account ID before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Account ID not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select AlibabaCloud provider type
+4. Fill provider details (account ID and alias)
+5. Verify AlibabaCloud credentials page is loaded
+6. Select RAM Role credentials type
+7. Verify RAM Role credentials page is loaded
+8. Fill AlibabaCloud RAM Role credentials (access key ID, access key secret, and role ARN)
+9. Launch initial scan
+10. Verify redirect to Scans page
+11. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result:
+
+- AlibabaCloud provider successfully added with RAM Role credentials
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays AlibabaCloud option
+- Provider details form accepts account ID and alias
+- Credentials page loads with credential type selection
+- RAM Role credentials page loads with access key ID, access key secret, and role ARN fields
+- RAM Role credentials are properly filled in the correct fields
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by account ID)
+- Scan name field contains "scheduled scan"
+
+### Notes:
+
+- Test uses environment variables for AlibabaCloud RAM Role credentials
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid Alibaba Cloud account with RAM Role configured
+- RAM Role must have sufficient permissions for security scanning
+- Role ARN must be properly configured and assumable

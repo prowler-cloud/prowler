@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra authorization policy** controls who can send **B2B guest invitations**.\n\nSecure posture is when invitations are restricted to specific admin roles (`adminsAndGuestInviters`) or completely disabled (`none`).",
   "Risk": "**Open guest invitation** rights let members or guests add external users without oversight, expanding the attack surface.\n\nImpacts:\n- **Confidentiality**: data leakage via overshared resources\n- **Integrity**: privilege escalation through group/team access\n- **Availability**: difficult containment due to account sprawl",
   "RelatedUrl": "",

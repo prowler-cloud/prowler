@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsLambdaFunction",
+  "ResourceGroup": "serverless",
   "Description": "**Lambda functions** using **obsolete runtimes**-such as `python3.8`, `nodejs14.x`, `go1.x`, `ruby2.7`-are identified against a curated list of deprecated runtime identifiers.",
   "Risk": "Unmaintained runtimes lack security patches, exposing code and libraries to known CVEs (**confidentiality, integrity**).\n\nDeprecation can block create/update and break builds, causing failed deployments or runtime errors (**availability**). Tooling may stop supporting builds, slowing fixes and recovery.",
   "RelatedUrl": "",

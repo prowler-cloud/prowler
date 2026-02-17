@@ -8,18 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra** directory setting **Group.Unified** governs who can create **Microsoft 365 Groups**. The evaluation inspects `EnableGroupCreation` and, when present, `GroupCreationAllowedGroupId` to determine if group creation is broadly allowed or restricted to a designated group.",
   "Risk": "Unrestricted group creation drives sprawl of Teams, SharePoint sites, and mailboxes, undermining **confidentiality** via public spaces and guest invites. Compromised accounts can create groups to stage exfiltration or impersonation. It also heightens **integrity** risks from unsanctioned owners and **operational** burden for lifecycle and governance.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/users-can-create-office-365-groups.html#",
-    "https://cloudaen.com/blogs/view/ms_teams_restricting_creation",
-    "https://docs.easylife365.cloud/collab/getting-started/control-microsoft-groups-creation",
-    "https://bytesolutions.com/how-to-restrict-users-from-creating-teams-and-groups-in-microsoft-365/",
-    "https://www.sharepointdiary.com/2019/07/disable-office-365-group-creation-using-powershell.html",
-    "https://thecloudtechnologist.com/2017/01/17/how-to-restrict-office-365-groups-creation-to-it-department-only/",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/ActiveDirectory/users-can-create-office-365-groups.html#",
     "https://learn.microsoft.com/en-us/microsoft-365/community/all-about-groups#microsoft-365-groups",
-    "https://woshub.com/prevent-users-creating-new-groups-microsoft-365-teams-outlook/",
     "https://learn.microsoft.com/en-us/microsoft-365/solutions/manage-creation-of-groups?view=o365-worldwide&redirectSourcePath=%252fen-us%252farticle%252fControl-who-can-create-Office-365-Groups-4c46c8cb-17d0-44b5-9776-005fced8e618"
   ],
   "Remediation": {

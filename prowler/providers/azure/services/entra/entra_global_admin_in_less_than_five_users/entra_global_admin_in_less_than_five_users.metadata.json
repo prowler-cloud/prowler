@@ -8,12 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra Global Administrator** assignments are evaluated by counting current role members per tenant and identifying when the number of assignees is `5` or more.",
   "Risk": "Having **5+ Global Administrators** expands the privileged attack surface. Compromised credentials or tokens can enable tenant-wide changes, disable security controls, exfiltrate data, and create persistence, impacting **confidentiality**, **integrity**, and **availability** across Entra, Microsoft 365, and Azure.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://cqureacademy.com/identity-theft-protection/8-things-to-avoid-in-azure-active-directory/",
-    "https://www.hub.trimarcsecurity.com/post/common-azure-ad-microsoft-365-m365-security-misconfigurations",
     "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices#5-limit-the-number-of-global-administrators-to-less-than-5",
     "https://learn.microsoft.com/en-us/microsoft-365/admin/add-users/about-admin-roles?view=o365-worldwide#security-guidelines-for-assigning-roles"
   ],

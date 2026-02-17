@@ -8,11 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra authorization policy** controls whether default users can create application registrations via `allowed_to_create_apps`. App creation is expected to be limited to administrators or explicitly delegated roles.",
   "Risk": "Permitting default users to register apps enables **unvetted service principals**, **consent phishing**, and **over-privileged API access**, threatening data **confidentiality** and **integrity**. Adversaries can persist with app credentials, exfiltrate mail/files, and perform **lateral movement** using rogue permissions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/users-can-register-applications.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/ActiveDirectory/users-can-register-applications.html",
     "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/delegate-app-roles#restrict-who-can-create-applications",
     "https://learn.microsoft.com/en-us/entra/identity-platform/how-applications-are-added#who-has-permission-to-add-applications-to-my-azure-ad-instance"
   ],

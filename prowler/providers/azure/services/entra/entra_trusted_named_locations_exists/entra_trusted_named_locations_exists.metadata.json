@@ -8,7 +8,8 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "microsoft.aadiam/tenants",
-  "Description": "Microsoft Entra ID Conditional Access supports **trusted named locations** defined by **public IP ranges**. Presence of at least one location marked `trusted` with IP CIDR ranges available for use in policy conditions.",
+  "ResourceGroup": "network",
+  "Description": "**Microsoft Entra ID Conditional Access** supports **trusted named locations** defined by **public IP ranges**. Presence of at least one location marked `trusted` with IP CIDR ranges available for use in policy conditions.",
   "Risk": "Without trusted IP-based locations, policies can't reliably distinguish corporate networks from unknown sources. This weakens **confidentiality and integrity**, enabling risky sign-ins to avoid stricter controls and forcing coarse rules that over-prompt users or leave **account takeover** and **data exfiltration** paths open.",
   "RelatedUrl": "",
   "AdditionalURLs": [

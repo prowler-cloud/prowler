@@ -22,6 +22,9 @@ import {
   OCIProviderData,
   OCIProviderCredential,
   OCI_CREDENTIAL_OPTIONS,
+  AlibabaCloudProviderData,
+  AlibabaCloudProviderCredential,
+  ALIBABACLOUD_CREDENTIAL_OPTIONS,
 } from "./providers-page";
 import { ScansPage } from "../scans/scans-page";
 import fs from "fs";
@@ -1135,6 +1138,276 @@ test.describe("Add Provider", () => {
 
         // Verify scan status is "Scheduled scan"
         await scansPage.verifyScheduledScanStatus(tenancyId);
+      },
+    );
+  });
+
+  test.describe.serial("Add AlibabaCloud Provider", () => {
+    // Providers page object
+    let providersPage: ProvidersPage;
+    let scansPage: ScansPage;
+
+    // Test data from environment variables
+    const accountId = process.env.E2E_ALIBABACLOUD_ACCOUNT_ID;
+    const accessKeyId = process.env.E2E_ALIBABACLOUD_ACCESS_KEY_ID;
+    const accessKeySecret = process.env.E2E_ALIBABACLOUD_ACCESS_KEY_SECRET;
+    const roleArn = process.env.E2E_ALIBABACLOUD_ROLE_ARN;
+
+    // Validate required environment variable for beforeEach
+    if (!accountId) {
+      throw new Error(
+        "E2E_ALIBABACLOUD_ACCOUNT_ID environment variable is not set",
+      );
+    }
+
+    // Setup before each test
+    test.beforeEach(async ({ page }) => {
+      providersPage = new ProvidersPage(page);
+      // Clean up existing provider to ensure clean test state
+      await deleteProviderIfExists(providersPage, accountId);
+    });
+
+    // Use admin authentication for provider management
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should add a new AlibabaCloud provider with static credentials",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@alibabacloud",
+          "@serial",
+          "@PROVIDER-E2E-014",
+        ],
+      },
+      async ({ page }) => {
+        // Validate required environment variables
+        if (!accessKeyId || !accessKeySecret) {
+          throw new Error(
+            "E2E_ALIBABACLOUD_ACCESS_KEY_ID and E2E_ALIBABACLOUD_ACCESS_KEY_SECRET environment variables are not set",
+          );
+        }
+
+        // Prepare test data for AlibabaCloud provider
+        const alibabacloudProviderData: AlibabaCloudProviderData = {
+          accountId: accountId,
+          alias: "Test E2E AlibabaCloud Account - Static Credentials",
+        };
+
+        // Prepare static credentials
+        const staticCredentials: AlibabaCloudProviderCredential = {
+          type: ALIBABACLOUD_CREDENTIAL_OPTIONS.ALIBABACLOUD_CREDENTIALS,
+          accessKeyId: accessKeyId,
+          accessKeySecret: accessKeySecret,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select AlibabaCloud provider
+        await providersPage.selectAlibabaCloudProvider();
+
+        // Fill provider details
+        await providersPage.fillAlibabaCloudProviderDetails(
+          alibabacloudProviderData,
+        );
+        await providersPage.clickNext();
+
+        // Verify credentials page is loaded
+        await providersPage.verifyAlibabaCloudCredentialsPageLoaded();
+
+        // Select static credentials type
+        await providersPage.selectAlibabaCloudCredentialsType(
+          ALIBABACLOUD_CREDENTIAL_OPTIONS.ALIBABACLOUD_CREDENTIALS,
+        );
+
+        // Verify static credentials page is loaded
+        await providersPage.verifyAlibabaCloudStaticCredentialsPageLoaded();
+
+        // Fill static credentials
+        await providersPage.fillAlibabaCloudStaticCredentials(staticCredentials);
+        await providersPage.clickNext();
+
+        // Launch scan
+        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.clickNext();
+
+        // Wait for redirect to scan page
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
+
+        // Verify scan status is "Scheduled scan"
+        await scansPage.verifyScheduledScanStatus(accountId);
+      },
+    );
+
+    test(
+      "should add a new AlibabaCloud provider with RAM Role credentials",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@alibabacloud",
+          "@serial",
+          "@PROVIDER-E2E-015",
+        ],
+      },
+      async ({ page }) => {
+        // Validate required environment variables
+        if (!accessKeyId || !accessKeySecret || !roleArn) {
+          throw new Error(
+            "E2E_ALIBABACLOUD_ACCESS_KEY_ID, E2E_ALIBABACLOUD_ACCESS_KEY_SECRET, and E2E_ALIBABACLOUD_ROLE_ARN environment variables are not set",
+          );
+        }
+
+        // Prepare test data for AlibabaCloud provider
+        const alibabacloudProviderData: AlibabaCloudProviderData = {
+          accountId: accountId,
+          alias: "Test E2E AlibabaCloud Account - RAM Role Credentials",
+        };
+
+        // Prepare RAM Role credentials
+        const roleCredentials: AlibabaCloudProviderCredential = {
+          type: ALIBABACLOUD_CREDENTIAL_OPTIONS.ALIBABACLOUD_ROLE,
+          accessKeyId: accessKeyId,
+          accessKeySecret: accessKeySecret,
+          roleArn: roleArn,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select AlibabaCloud provider
+        await providersPage.selectAlibabaCloudProvider();
+
+        // Fill provider details
+        await providersPage.fillAlibabaCloudProviderDetails(
+          alibabacloudProviderData,
+        );
+        await providersPage.clickNext();
+
+        // Verify credentials page is loaded
+        await providersPage.verifyAlibabaCloudCredentialsPageLoaded();
+
+        // Select RAM Role credentials type
+        await providersPage.selectAlibabaCloudCredentialsType(
+          ALIBABACLOUD_CREDENTIAL_OPTIONS.ALIBABACLOUD_ROLE,
+        );
+
+        // Verify RAM Role credentials page is loaded
+        await providersPage.verifyAlibabaCloudRoleCredentialsPageLoaded();
+
+        // Fill RAM Role credentials
+        await providersPage.fillAlibabaCloudRoleCredentials(roleCredentials);
+        await providersPage.clickNext();
+
+        // Launch scan
+        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.clickNext();
+
+        // Wait for redirect to scan page
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
+
+        // Verify scan status is "Scheduled scan"
+        await scansPage.verifyScheduledScanStatus(accountId);
+      },
+    );
+  });
+});
+
+test.describe("Update Provider Credentials", () => {
+  test.describe.serial("Update OCI Provider Credentials", () => {
+    let providersPage: ProvidersPage;
+
+    // Test data from environment variables (same as add OCI provider test)
+    const tenancyId = process.env.E2E_OCI_TENANCY_ID;
+    const userId = process.env.E2E_OCI_USER_ID;
+    const fingerprint = process.env.E2E_OCI_FINGERPRINT;
+    const keyContent = process.env.E2E_OCI_KEY_CONTENT;
+    const region = process.env.E2E_OCI_REGION;
+
+    // Validate required environment variables
+    if (!tenancyId || !userId || !fingerprint || !keyContent || !region) {
+      throw new Error(
+        "E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, and E2E_OCI_REGION environment variables are not set",
+      );
+    }
+
+    // Setup before each test
+    test.beforeEach(async ({ page }) => {
+      providersPage = new ProvidersPage(page);
+    });
+
+    // Use admin authentication for provider management
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should update OCI provider credentials successfully",
+      {
+        tag: [
+          "@e2e",
+          "@providers",
+          "@oci",
+          "@serial",
+          "@PROVIDER-E2E-013",
+        ],
+      },
+      async () => {
+        // Prepare updated credentials
+        const ociCredentials: OCIProviderCredential = {
+          type: OCI_CREDENTIAL_OPTIONS.OCI_API_KEY,
+          tenancyId: tenancyId,
+          userId: userId,
+          fingerprint: fingerprint,
+          keyContent: keyContent,
+          region: region,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Verify OCI provider exists in the table
+        const providerExists =
+          await providersPage.verifySingleRowForProviderUID(tenancyId);
+        if (!providerExists) {
+          throw new Error(
+            `OCI provider with tenancy ID ${tenancyId} not found. Run the add OCI provider test first.`,
+          );
+        }
+
+        // Click update credentials for the OCI provider
+        await providersPage.clickUpdateCredentials(tenancyId);
+
+        // Verify update credentials page is loaded
+        await providersPage.verifyUpdateCredentialsPageLoaded();
+
+        // Verify OCI credentials form fields are visible (confirms providerUid is loaded)
+        // Note: Tenancy OCID is hidden in update flow (auto-populated from provider UID)
+        await providersPage.verifyOCIUpdateCredentialsPageLoaded();
+
+        // Fill updated credentials
+        await providersPage.fillOCICredentials(ociCredentials);
+
+        // Click Next to submit
+        await providersPage.clickNext();
+
+        // Verify successful navigation to test connection page
+        await providersPage.verifyTestConnectionPageLoaded();
       },
     );
   });

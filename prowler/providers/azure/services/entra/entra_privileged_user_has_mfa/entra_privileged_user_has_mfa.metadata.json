@@ -8,12 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra** privileged accounts are expected to use **multifactor authentication**. This evaluates users assigned to elevated directory roles and confirms they have **multiple authentication methods** registered for sign-in.",
   "Risk": "Without **MFA**, privileged accounts face **phishing**, **password spraying**, and **credential reuse** risks. Compromise can grant tenant-wide admin control to alter roles, create backdoors, exfiltrate data, and weaken defenses, impacting **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/authentication/tutorial-enable-azure-mfa",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/multi-factor-authentication-for-all-privileged-users.html#",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/ActiveDirectory/multi-factor-authentication-for-all-privileged-users.html#",
     "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mfa-howitworks"
   ],
   "Remediation": {

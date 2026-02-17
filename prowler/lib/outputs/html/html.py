@@ -1023,6 +1023,77 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_cloudflare_assessment_summary(provider: Provider) -> str:
+        """
+        get_cloudflare_assessment_summary gets the HTML assessment summary for the Cloudflare provider
+
+        Args:
+            provider (Provider): the Cloudflare provider object
+
+        Returns:
+            str: HTML assessment summary for the Cloudflare provider
+        """
+        try:
+            # Build assessment summary items (only non-None values)
+            assessment_items = ""
+            if provider.accounts:
+                accounts = ", ".join([acc.id for acc in provider.accounts])
+                assessment_items += f"""
+                            <li class="list-group-item">
+                                <b>Accounts:</b> {accounts}
+                            </li>"""
+
+            # Build credentials items (only non-None values)
+            credentials_items = ""
+
+            # Authentication method
+            if provider.session.api_token:
+                credentials_items += """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Token
+                            </li>"""
+            elif provider.session.api_key and provider.session.api_email:
+                credentials_items += """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Key + Email
+                            </li>"""
+
+            # Email (from identity or session)
+            email = getattr(provider.identity, "email", None) or getattr(
+                provider.session, "api_email", None
+            )
+            if email:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Email:</b> {email}
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Cloudflare Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Cloudflare Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_alibabacloud_assessment_summary(provider: Provider) -> str:
         """
         get_alibabacloud_assessment_summary gets the HTML assessment summary for the Alibaba Cloud provider
@@ -1080,6 +1151,78 @@ class HTML(Output):
                             <li class="list-group-item">
                                 <b>Identity ARN:</b> {identity_arn}
                             </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_openstack_assessment_summary(provider: Provider) -> str:
+        """
+        get_openstack_assessment_summary gets the HTML assessment summary for the OpenStack provider
+
+        Args:
+            provider (Provider): the OpenStack provider object
+
+        Returns:
+            str: HTML assessment summary for the OpenStack provider
+        """
+        try:
+            project_id = getattr(provider.identity, "project_id", "unknown")
+            project_name = getattr(provider.identity, "project_name", "")
+            region_name = getattr(provider.identity, "region_name", "unknown")
+            username = getattr(provider.identity, "username", "unknown")
+            user_id = getattr(provider.identity, "user_id", "")
+
+            project_name_item = (
+                f"""
+                            <li class="list-group-item">
+                                <b>Project Name:</b> {project_name}
+                            </li>"""
+                if project_name
+                else ""
+            )
+
+            user_id_item = (
+                f"""
+                            <li class="list-group-item">
+                                <b>User ID:</b> {user_id}
+                            </li>"""
+                if user_id
+                else ""
+            )
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            OpenStack Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Project ID:</b> {project_id}
+                            </li>
+                            {project_name_item}
+                            <li class="list-group-item">
+                                <b>Region:</b> {region_name}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            OpenStack Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Username:</b> {username}
+                            </li>
+                            {user_id_item}
                         </ul>
                     </div>
                 </div>"""

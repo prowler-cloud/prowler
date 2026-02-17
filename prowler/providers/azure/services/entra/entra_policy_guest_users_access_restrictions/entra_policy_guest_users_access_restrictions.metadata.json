@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra authorization policy** guest settings are assessed to determine whether guest user access is limited to the properties and memberships of their own directory objects (`Restricted access`) instead of broader visibility into users and groups",
   "Risk": "Excess guest visibility enables **directory reconnaissance**, exposing user and group details for **phishing**, **password spraying**, and targeted attacks. This weakens **confidentiality** and can facilitate **privilege escalation** and lateral movement through informed abuse of group memberships and access paths.",
   "RelatedUrl": "",

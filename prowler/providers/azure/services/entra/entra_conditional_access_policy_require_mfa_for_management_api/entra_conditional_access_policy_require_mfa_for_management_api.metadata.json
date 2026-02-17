@@ -8,17 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra Conditional Access** requires **MFA** for the **Windows Azure Service Management API** when an `enabled` policy targets `All users` and grants `Require multifactor authentication` to tokens for this management endpoint.",
   "Risk": "Without MFA on Azure management endpoints, stolen or phished passwords can enable control-plane access.\n\nAttackers can change configs, create/delete resources, extract secrets, pivot laterally, and disrupt services-compromising confidentiality, integrity, and availability, with added cost exposure.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.linkedin.com/posts/andy-ballard-cissp-273637161_azuredevops-conditionalaccess-microsoftentra-activity-7357081486467964928-zlJV",
-    "https://www.thetechtrails.com/2024/09/entra-id-conditional-access-policies-guide.html",
     "https://learn.microsoft.com/en-sg/entra/identity/conditional-access/policy-old-require-mfa-azure-mgmt",
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps",
-    "https://support.icompaas.com/support/solutions/articles/62000233942-ensure-that-multi-factor-authentication-is-required-for-windows-azure-service-management-api-manual-",
-    "https://github.com/MicrosoftDocs/entra-docs/blob/main/docs/identity/conditional-access/concept-conditional-access-cloud-apps.md",
-    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-azure-management"
+    "https://support.icompaas.com/support/solutions/articles/62000233942-ensure-that-multi-factor-authentication-is-required-for-windows-azure-service-management-api-manual-"
   ],
   "Remediation": {
     "Code": {

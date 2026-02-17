@@ -8,16 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra authorization policy** setting for default user role permissions governing creation of **security groups** by non-privileged users.\n\nThe value of `allowed_to_create_security_groups` is examined to ensure group creation is limited to administrators across portals, API, and PowerShell.",
   "Risk": "Allowing standard users to create security groups drives **entitlement sprawl** and can grant **unauthorized access** when those groups are tied to apps, sites, or roles. This weakens **least privilege**, complicates audits, and enables **lateral movement** or data exfiltration via misassigned group-based permissions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.thetechtrails.com/2024/10/top-recommended-security-settings-microsoft-entra-id-guide-m365-admins.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/users-can-create-security-groups.html",
-    "https://learn.microsoft.com/en-us/entra/identity/users/groups-self-service-management",
-    "https://blog.admindroid.com/configure-self-service-group-management-in-microsoft-entra-id/",
-    "https://cloudtips.nl/managing-entra-id-configuration-and-security-using-the-terraform-msgraph-provider-\ufe0f-f67a76360bc1",
-    "https://office365itpros.com/2024/05/09/user-role-permissions/"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/ActiveDirectory/users-can-create-security-groups.html",
+    "https://learn.microsoft.com/en-us/entra/identity/users/groups-self-service-management"
   ],
   "Remediation": {
     "Code": {

@@ -8,18 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceGroup": "security",
   "Description": "Microsoft Entra **Security defaults** provide tenant-wide baseline identity protections:\n- MFA registration and challenges\n- Legacy auth (`IMAP/POP/SMTP`) blocked\n- Extra checks for privileged access\n\nThis evaluation identifies whether that baseline is enabled at the tenant level.",
   "Risk": "Absent these defaults, users can sign in with **password-only** or via **legacy protocols** that bypass MFA, enabling **password spray**, replay, and phishing-based takeovers. Compromise risks data exposure (confidentiality), unauthorized changes (integrity), and service disruption (availability).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/security-defaults-enabled.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/security-defaults-enabled.html#",
-    "https://www.techtarget.com/searchenterprisedesktop/tip/How-to-set-up-MFA-for-an-organizations-Microsoft-365",
-    "https://learn.microsoft.com/en-us/entra/fundamentals/security-defaults",
-    "https://www.cayosoft.com/azure-security-best-practices/azure-ad-password-policy/",
-    "https://petri.com/how-to-enable-security-defaults-in-azure-active-directory/",
-    "https://azvise.com/2023/02/15/what-are-security-defaults/",
-    "https://techcommunity.microsoft.com/t5/microsoft-entra-blog/introducing-security-defaults/ba-p/1061414"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/ActiveDirectory/security-defaults-enabled.html",
+    "https://learn.microsoft.com/en-us/entra/fundamentals/security-defaults"
   ],
   "Remediation": {
     "Code": {

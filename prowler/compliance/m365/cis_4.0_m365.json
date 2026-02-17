@@ -121,7 +121,9 @@
     {
       "Id": "1.2.2",
       "Description": "Shared mailboxes are used when multiple people need access to the same mailbox, such as a company information or support email address, reception desk, or other function that might be shared by multiple people.Users with permissions to the group mailbox can send as or send on behalf of the mailbox email address if the administrator has given that user permissions to do that. This is particularly useful for help and support mailboxes because users can send emails from \"Contoso Support\" or \"Building A Reception Desk.\"Shared mailboxes are created with a corresponding user account using a system generated password that is unknown at the time of creation.The recommended state is `Sign in blocked` for `Shared mailboxes`.",
-      "Checks": [],
+      "Checks": [
+        "exchange_shared_mailbox_sign_in_disabled"
+      ],
       "Attributes": [
         {
           "Section": "1 Microsoft 365 admin center",
@@ -316,7 +318,9 @@
     {
       "Id": "2.1.1",
       "Description": "Enabling Safe Links policy for Office applications allows URL's that exist inside of Office documents and email applications opened by Office, Office Online and Office mobile to be processed against Defender for Office time-of-click verification and rewritten if required.**Note:** E5 Licensing includes a number of Built-in Protection policies. When auditing policies note which policy you are viewing, and keep in mind CIS recommendations often extend the Default or Build-in Policies provided by MS. In order to **Pass** the highest priority policy must match all settings recommended.",
-      "Checks": [],
+      "Checks": [
+        "defender_safelinks_policy_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",
@@ -383,7 +387,9 @@
     {
       "Id": "2.1.4",
       "Description": "The Safe Attachments policy helps protect users from malware in email attachments by scanning attachments for viruses, malware, and other malicious content. When an email attachment is received by a user, Safe Attachments will scan the attachment in a secure environment and provide a verdict on whether the attachment is safe or not.",
-      "Checks": [],
+      "Checks": [
+        "defender_safe_attachments_policy_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",
@@ -404,7 +410,9 @@
     {
       "Id": "2.1.5",
       "Description": "Safe Attachments for SharePoint, OneDrive, and Microsoft Teams scans these services for malicious files.",
-      "Checks": [],
+      "Checks": [
+        "defender_atp_safe_attachments_and_docs_configured"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",
@@ -691,7 +699,9 @@
     {
       "Id": "2.4.4",
       "Description": "Zero-hour auto purge (ZAP) is a protection feature that retroactively detects and neutralizes malware and high confidence phishing. When ZAP for Teams protection blocks a message, the message is blocked for everyone in the chat. The initial block happens right after delivery, but ZAP occurs up to 48 hours after delivery.",
-      "Checks": [],
+      "Checks": [
+        "defender_zap_for_teams_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",

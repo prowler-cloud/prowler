@@ -8,12 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra** non-privileged users are assessed for **multifactor authentication** by verifying they have **two or more registered authentication methods** (*MFA enrollment*).",
   "Risk": "Absent **MFA** on standard accounts enables password-only logins after phishing, reuse, or spraying, leading to **account takeover**. Attackers can access email, files, and apps, send internal phishing, and escalate, undermining **confidentiality** and **integrity**, and risking **availability** via malicious changes.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/authentication/tutorial-enable-azure-mfa",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/multi-factor-authentication-for-all-non-privileged-users.html#",
+    "https://support.icompaas.com/support/solutions/articles/62000219680-ensure-that-multi-factor-auth-status-is-enabled-for-all-non-privileged-users",
     "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mfa-howitworks"
   ],
   "Remediation": {

@@ -1,0 +1,38 @@
+{
+  "Provider": "openstack",
+  "CheckID": "compute_instance_security_groups_attached",
+  "CheckTitle": "Compute instances have security groups attached",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OpenStackInstance",
+  "ResourceGroup": "compute",
+  "Description": "**OpenStack compute instances** (VMs) are evaluated to verify that at least one **security group** is attached. Security groups act as virtual firewalls, controlling ingress and egress traffic. Instances without security groups may have **unrestricted network access**, violating defense-in-depth principles.",
+  "Risk": "Instances without security groups are exposed to unrestricted network traffic from any source. Attackers can probe open ports, exploit vulnerable services, conduct injection attacks, and tamper with data without firewall barriers. Lack of network access controls enables unauthorized access, data exfiltration, lateral movement, DDoS attacks, and resource exhaustion.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/nova/latest/user/security-groups.html",
+    "https://docs.openstack.org/security-guide/networking/architecture.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack server add security group <instance_id> <security_group_name>",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Compute > Instances**\n2. Select instance without security groups\n3. Click **Actions > Edit Security Groups**\n4. Add at least one security group\n5. Click **Save**",
+      "Terraform": "```hcl\n# Terraform: ensure compute instance has security groups attached\nresource \"openstack_compute_instance_v2\" \"instance\" {\n  name            = \"example-instance\"\n  image_id        = var.image_id\n  flavor_id       = var.flavor_id\n  key_pair        = var.key_pair_name\n  # Critical: attach at least one security group\n  security_groups = [\"default\", \"web-sg\", \"app-sg\"]\n\n  network {\n    name = var.network_name\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Attach security groups to all instances following least privilege principle: allow only required ports and sources, deny all by default. Use separate security groups per tier (web, app, database) with explicit rules. Avoid overly permissive rules like 0.0.0.0/0 ingress on sensitive ports. Implement network segmentation with isolated networks. Regularly audit and remove stale rules.",
+      "Url": "https://hub.prowler.com/check/compute_instance_security_groups_attached"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
