@@ -6,7 +6,7 @@ import { Radio, RadioGroup } from "@heroui/radio";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Control, useForm } from "react-hook-form";
 
 import { createIntegration, updateIntegration } from "@/actions/integrations";
@@ -57,7 +57,7 @@ export const SecurityHubIntegrationForm = ({
   const isEditingConfig = editMode === "configuration";
   const isEditingCredentials = editMode === "credentials";
 
-  const disabledProviderIds = useMemo(() => {
+  const disabledProviderIds = (() => {
     // When editing, no providers should be disabled since we're not changing it
     if (isEditing) {
       return [];
@@ -74,7 +74,7 @@ export const SecurityHubIntegrationForm = ({
     });
 
     return usedProviderIds;
-  }, [isEditing, existingIntegrations]);
+  })();
 
   const form = useForm({
     resolver: zodResolver(
@@ -112,25 +112,23 @@ export const SecurityHubIntegrationForm = ({
   const providerIdValue = form.watch("provider_id");
   const hasErrors = !!form.formState.errors.provider_id || !providerIdValue;
 
-  const providerOptions = useMemo(() => {
-    return providers
-      .filter((provider) => provider.attributes.provider === "aws")
-      .map((provider) => {
-        const isDisabled = disabledProviderIds.includes(provider.id);
-        const connectionLabel = provider.attributes.connection.connected
-          ? "Connected"
-          : "Disconnected";
+  const providerOptions = providers
+    .filter((provider) => provider.attributes.provider === "aws")
+    .map((provider) => {
+      const isDisabled = disabledProviderIds.includes(provider.id);
+      const connectionLabel = provider.attributes.connection.connected
+        ? "Connected"
+        : "Disconnected";
 
-        return {
-          value: provider.id,
-          label: provider.attributes.alias || provider.attributes.uid,
-          description: isDisabled
-            ? `${connectionLabel} (Already in use)`
-            : connectionLabel,
-          disabled: isDisabled,
-        };
-      });
-  }, [providers, disabledProviderIds]);
+      return {
+        value: provider.id,
+        label: provider.attributes.alias || provider.attributes.uid,
+        description: isDisabled
+          ? `${connectionLabel} (Already in use)`
+          : connectionLabel,
+        disabled: isDisabled,
+      };
+    });
 
   useEffect(() => {
     if (!useCustomCredentials && isCreating) {
@@ -367,8 +365,6 @@ export const SecurityHubIntegrationForm = ({
                           hideSelectAll={true}
                           maxCount={1}
                           closeOnSelect={true}
-                          minWidth="0px"
-                          maxWidth="100%"
                           resetOnDefaultValueChange={true}
                         />
                       </FormControl>

@@ -193,10 +193,14 @@ export const SendToJiraModal = ({
               name="integration"
               render={({ field }) => (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-text-neutral-secondary text-xs font-light tracking-tight">
+                  <label
+                    htmlFor="jira-integration-select"
+                    className="text-text-neutral-secondary text-xs font-light tracking-tight"
+                  >
                     Jira Integration
                   </label>
                   <EnhancedMultiSelect
+                    id="jira-integration-select"
                     options={integrationOptions}
                     onValueChange={(values) => {
                       const selectedValue = values.at(-1) ?? "";
@@ -213,8 +217,6 @@ export const SendToJiraModal = ({
                     hideSelectAll={true}
                     maxCount={1}
                     closeOnSelect={true}
-                    minWidth="0px"
-                    maxWidth="100%"
                     resetOnDefaultValueChange={true}
                   />
                   <FormMessage className="text-text-error text-xs" />
@@ -230,10 +232,14 @@ export const SendToJiraModal = ({
               name="project"
               render={({ field }) => (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-text-neutral-secondary text-xs font-light tracking-tight">
+                  <label
+                    htmlFor="jira-project-select"
+                    className="text-text-neutral-secondary text-xs font-light tracking-tight"
+                  >
                     Project
                   </label>
                   <EnhancedMultiSelect
+                    id="jira-project-select"
                     options={projectOptions}
                     onValueChange={(values) => {
                       const selectedValue = values.at(-1) ?? "";
@@ -248,8 +254,6 @@ export const SendToJiraModal = ({
                     hideSelectAll={true}
                     maxCount={1}
                     closeOnSelect={true}
-                    minWidth="0px"
-                    maxWidth="100%"
                     resetOnDefaultValueChange={true}
                   />
                   <FormMessage className="text-text-error text-xs" />

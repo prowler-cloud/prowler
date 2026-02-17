@@ -178,7 +178,6 @@ export const EditGroupForm = ({
 
             return (
               <div className="flex flex-col gap-2">
-                <p className="text-sm font-medium">Select Providers</p>
                 <EnhancedMultiSelect
                   options={combinedProviders.map((provider) => ({
                     label: provider.name,
@@ -197,8 +196,6 @@ export const EditGroupForm = ({
                   searchable={true}
                   hideSelectAll={true}
                   emptyIndicator="No results found"
-                  minWidth="0px"
-                  maxWidth="100%"
                   resetOnDefaultValueChange={true}
                 />
               </div>
@@ -231,7 +228,6 @@ export const EditGroupForm = ({
 
             return (
               <div className="flex flex-col gap-2">
-                <p className="text-sm font-medium">Select Roles</p>
                 <EnhancedMultiSelect
                   options={combinedRoles.map((role) => ({
                     label: role.name,
@@ -248,8 +244,6 @@ export const EditGroupForm = ({
                   searchable={true}
                   hideSelectAll={true}
                   emptyIndicator="No results found"
-                  minWidth="0px"
-                  maxWidth="100%"
                   resetOnDefaultValueChange={true}
                 />
               </div>

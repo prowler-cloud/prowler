@@ -138,7 +138,6 @@ export const AddGroupForm = ({
           control={form.control}
           render={({ field }) => (
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-medium">Select Providers</p>
               <EnhancedMultiSelect
                 options={providerOptions}
                 onValueChange={field.onChange}
@@ -147,8 +146,6 @@ export const AddGroupForm = ({
                 searchable={true}
                 hideSelectAll={true}
                 emptyIndicator="No results found"
-                minWidth="0px"
-                maxWidth="100%"
                 resetOnDefaultValueChange={true}
               />
             </div>
@@ -171,7 +168,6 @@ export const AddGroupForm = ({
           control={form.control}
           render={({ field }) => (
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-medium">Select Roles</p>
               <EnhancedMultiSelect
                 options={roleOptions}
                 onValueChange={field.onChange}
@@ -180,8 +176,6 @@ export const AddGroupForm = ({
                 searchable={true}
                 hideSelectAll={true}
                 emptyIndicator="No results found"
-                minWidth="0px"
-                maxWidth="100%"
                 resetOnDefaultValueChange={true}
               />
             </div>

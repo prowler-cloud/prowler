@@ -245,8 +245,6 @@ export const AddRoleForm = ({
                     searchable={true}
                     hideSelectAll={true}
                     emptyIndicator="No results found"
-                    minWidth="0px"
-                    maxWidth="100%"
                     resetOnDefaultValueChange={true}
                   />
                 </div>

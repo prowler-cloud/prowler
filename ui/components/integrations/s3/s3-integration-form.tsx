@@ -302,8 +302,6 @@ export const S3IntegrationForm = ({
                       placeholder="Select providers to integrate with"
                       searchable={true}
                       maxCount={1}
-                      minWidth="0px"
-                      maxWidth="100%"
                     />
                   </FormControl>
                   <FormMessage className="text-text-error max-w-full text-xs" />
