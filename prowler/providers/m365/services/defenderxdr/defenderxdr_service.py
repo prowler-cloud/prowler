@@ -30,6 +30,10 @@ class DefenderXDR(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
 
+        # MDE status: None = API error, "not_enabled" = table not found,
+        # "no_devices" = enabled but empty, "active" = has devices
+        self.mde_status: Optional[str] = None
+
         # Check data
         self.exposed_credentials_privileged_users: Optional[
             List[ExposedCredentialPrivilegedUser]
@@ -37,8 +41,13 @@ class DefenderXDR(M365Service):
 
         loop = self._get_event_loop()
         try:
-            self.exposed_credentials_privileged_users = loop.run_until_complete(
-                self._get_exposed_credentials_privileged_users()
+            self.mde_status, self.exposed_credentials_privileged_users = (
+                loop.run_until_complete(
+                    asyncio.gather(
+                        self._check_mde_status(),
+                        self._get_exposed_credentials_privileged_users(),
+                    )
+                )
             )
         finally:
             self._cleanup_event_loop(loop)
@@ -66,7 +75,7 @@ class DefenderXDR(M365Service):
         except Exception:
             pass
 
-    async def _run_hunting_query(self, query: str) -> Optional[List[Dict]]:
+    async def _run_hunting_query(self, query: str) -> tuple[Optional[List[Dict]], bool]:
         """
         Execute an Advanced Hunting query using Microsoft Graph Security API.
 
@@ -74,7 +83,9 @@ class DefenderXDR(M365Service):
             query: The KQL (Kusto Query Language) query to execute.
 
         Returns:
-            List of result dictionaries, empty list if no results, or None if API call failed.
+            Tuple of (results, table_not_found):
+            - results: List of result dictionaries, empty list if no results, None if API error.
+            - table_not_found: True if query failed because table doesn't exist.
         """
         try:
             request_body = RunHuntingQueryPostRequestBody(query=query)
@@ -83,19 +94,57 @@ class DefenderXDR(M365Service):
             )
 
             if not response or not response.results:
-                return []
+                return [], False
 
-            return [
+            results = [
                 row.additional_data
                 for row in response.results
                 if hasattr(row, "additional_data")
             ]
+            return results, False
 
         except Exception as error:
+            error_message = str(error).lower()
+
+            if (
+                "failed to resolve table" in error_message
+                or "could not find table" in error_message
+            ):
+                logger.warning(f"DefenderXDR - Table not found in query: {error}")
+                return [], True
+
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return None, False
+
+    async def _check_mde_status(self) -> Optional[str]:
+        """
+        Check Microsoft Defender for Endpoint status.
+
+        Returns:
+            - None: API call failed (permission issue)
+            - "not_enabled": DeviceInfo table doesn't exist (MDE not enabled)
+            - "no_devices": MDE enabled but no devices onboarded
+            - "active": MDE enabled with devices reporting
+        """
+        logger.info("DefenderXDR - Checking MDE status...")
+
+        query = "DeviceInfo | summarize DeviceCount = count()"
+        results, table_not_found = await self._run_hunting_query(query)
+
+        if results is None:
             return None
+
+        if table_not_found:
+            return "not_enabled"
+
+        if results and len(results) > 0:
+            device_count = results[0].get("DeviceCount", 0)
+            if device_count > 0:
+                return "active"
+
+        return "no_devices"
 
     async def _get_exposed_credentials_privileged_users(
         self,
@@ -129,7 +178,7 @@ ExposureGraphEdges
     TargetCategories = TargetNodeCategories
 """
 
-        results = await self._run_hunting_query(query)
+        results, _ = await self._run_hunting_query(query)
 
         if results is None:
             return None
