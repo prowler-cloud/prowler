@@ -882,10 +882,7 @@ class ImageProvider(Provider):
             f"{total_images} {'image' if total_images == 1 else 'images'})\n"
         )
         for repo, tags in repos_tags.items():
-            print(
-                f"  {Fore.YELLOW}{repo}{Style.RESET_ALL} "
-                f"({len(tags)} tags)"
-            )
+            print(f"  {Fore.YELLOW}{repo}{Style.RESET_ALL} " f"({len(tags)} tags)")
             print(f"    {', '.join(tags)}")
         print()
 

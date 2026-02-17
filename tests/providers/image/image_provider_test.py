@@ -445,7 +445,9 @@ class TestImageProviderRegistryAuth:
 
         assert provider.auth_method == "Docker login"
 
-    @patch.dict(os.environ, {"REGISTRY_USERNAME": "envuser", "REGISTRY_PASSWORD": "envpass"})
+    @patch.dict(
+        os.environ, {"REGISTRY_USERNAME": "envuser", "REGISTRY_PASSWORD": "envpass"}
+    )
     def test_basic_auth_from_env_vars(self):
         """Test that env vars are used as fallback for basic auth."""
         provider = _make_provider()
@@ -462,7 +464,9 @@ class TestImageProviderRegistryAuth:
         assert provider.registry_token == "env-token"
         assert provider.auth_method == "Registry token"
 
-    @patch.dict(os.environ, {"REGISTRY_USERNAME": "envuser", "REGISTRY_PASSWORD": "envpass"})
+    @patch.dict(
+        os.environ, {"REGISTRY_USERNAME": "envuser", "REGISTRY_PASSWORD": "envpass"}
+    )
     def test_explicit_params_override_env_vars(self):
         """Test that explicit params take precedence over env vars."""
         provider = _make_provider(
