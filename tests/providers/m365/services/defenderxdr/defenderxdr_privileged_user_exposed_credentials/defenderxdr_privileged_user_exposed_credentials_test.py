@@ -6,11 +6,14 @@ from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 class Test_defenderxdr_privileged_user_exposed_credentials:
     """Tests for the defenderxdr_privileged_user_exposed_credentials check."""
 
-    def test_exposed_credentials_none(self):
-        """Test FAIL when API call fails (None): expected FAIL."""
+    def test_mde_devices_check_failed(self):
+        """Test FAIL when MDE devices check fails (None): missing permission."""
         defenderxdr_client = mock.MagicMock()
         defenderxdr_client.audited_tenant = "audited_tenant"
         defenderxdr_client.audited_domain = DOMAIN
+        defenderxdr_client.has_mde_devices = None
+        defenderxdr_client.exposure_management_active = True
+        defenderxdr_client.exposed_credentials_privileged_users = []
 
         with (
             mock.patch(
@@ -25,8 +28,6 @@ class Test_defenderxdr_privileged_user_exposed_credentials:
             from prowler.providers.m365.services.defenderxdr.defenderxdr_privileged_user_exposed_credentials.defenderxdr_privileged_user_exposed_credentials import (
                 defenderxdr_privileged_user_exposed_credentials,
             )
-
-            defenderxdr_client.exposed_credentials_privileged_users = None
 
             check = defenderxdr_privileged_user_exposed_credentials()
             result = check.execute()
@@ -34,17 +35,19 @@ class Test_defenderxdr_privileged_user_exposed_credentials:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
-                result[0].status_extended
-                == "Defender XDR Exposure Management data is unavailable. Ensure Security Exposure Management is enabled and ThreatHunting.Read.All permission is granted."
+                "Cannot query Defender for Endpoint data" in result[0].status_extended
             )
-            assert result[0].resource_name == "Defender XDR Exposure Management"
-            assert result[0].resource_id == "privilegedUserExposedCredentials"
+            assert "ThreatHunting.Read.All" in result[0].status_extended
+            assert result[0].resource_id == "mdeDevices"
 
-    def test_no_exposed_credentials(self):
-        """Test PASS when no privileged users have exposed credentials."""
+    def test_no_mde_devices(self):
+        """Test FAIL when no MDE devices are deployed."""
         defenderxdr_client = mock.MagicMock()
         defenderxdr_client.audited_tenant = "audited_tenant"
         defenderxdr_client.audited_domain = DOMAIN
+        defenderxdr_client.has_mde_devices = False
+        defenderxdr_client.exposure_management_active = True
+        defenderxdr_client.exposed_credentials_privileged_users = []
 
         with (
             mock.patch(
@@ -60,7 +63,141 @@ class Test_defenderxdr_privileged_user_exposed_credentials:
                 defenderxdr_privileged_user_exposed_credentials,
             )
 
-            defenderxdr_client.exposed_credentials_privileged_users = []
+            check = defenderxdr_privileged_user_exposed_credentials()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                "No devices found in Microsoft Defender for Endpoint"
+                in result[0].status_extended
+            )
+            assert "Deploy MDE agents" in result[0].status_extended
+            assert result[0].resource_id == "mdeDevices"
+
+    def test_exposure_management_check_failed(self):
+        """Test FAIL when Exposure Management check fails (None): not enabled."""
+        defenderxdr_client = mock.MagicMock()
+        defenderxdr_client.audited_tenant = "audited_tenant"
+        defenderxdr_client.audited_domain = DOMAIN
+        defenderxdr_client.has_mde_devices = True
+        defenderxdr_client.exposure_management_active = None
+        defenderxdr_client.exposed_credentials_privileged_users = []
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.defenderxdr.defenderxdr_privileged_user_exposed_credentials.defenderxdr_privileged_user_exposed_credentials.defenderxdr_client",
+                new=defenderxdr_client,
+            ),
+        ):
+            from prowler.providers.m365.services.defenderxdr.defenderxdr_privileged_user_exposed_credentials.defenderxdr_privileged_user_exposed_credentials import (
+                defenderxdr_privileged_user_exposed_credentials,
+            )
+
+            check = defenderxdr_privileged_user_exposed_credentials()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                "Cannot query Security Exposure Management data"
+                in result[0].status_extended
+            )
+            assert "Enable Security Exposure Management" in result[0].status_extended
+            assert result[0].resource_id == "exposureManagement"
+
+    def test_exposure_management_no_data(self):
+        """Test FAIL when Exposure Management has no data."""
+        defenderxdr_client = mock.MagicMock()
+        defenderxdr_client.audited_tenant = "audited_tenant"
+        defenderxdr_client.audited_domain = DOMAIN
+        defenderxdr_client.has_mde_devices = True
+        defenderxdr_client.exposure_management_active = False
+        defenderxdr_client.exposed_credentials_privileged_users = []
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.defenderxdr.defenderxdr_privileged_user_exposed_credentials.defenderxdr_privileged_user_exposed_credentials.defenderxdr_client",
+                new=defenderxdr_client,
+            ),
+        ):
+            from prowler.providers.m365.services.defenderxdr.defenderxdr_privileged_user_exposed_credentials.defenderxdr_privileged_user_exposed_credentials import (
+                defenderxdr_privileged_user_exposed_credentials,
+            )
+
+            check = defenderxdr_privileged_user_exposed_credentials()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                "Security Exposure Management is enabled but has no exposure data"
+                in result[0].status_extended
+            )
+            assert result[0].resource_id == "exposureManagement"
+
+    def test_exposed_credentials_query_failed(self):
+        """Test FAIL when exposed credentials query fails (None): unexpected error."""
+        defenderxdr_client = mock.MagicMock()
+        defenderxdr_client.audited_tenant = "audited_tenant"
+        defenderxdr_client.audited_domain = DOMAIN
+        defenderxdr_client.has_mde_devices = True
+        defenderxdr_client.exposure_management_active = True
+        defenderxdr_client.exposed_credentials_privileged_users = None
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.defenderxdr.defenderxdr_privileged_user_exposed_credentials.defenderxdr_privileged_user_exposed_credentials.defenderxdr_client",
+                new=defenderxdr_client,
+            ),
+        ):
+            from prowler.providers.m365.services.defenderxdr.defenderxdr_privileged_user_exposed_credentials.defenderxdr_privileged_user_exposed_credentials import (
+                defenderxdr_privileged_user_exposed_credentials,
+            )
+
+            check = defenderxdr_privileged_user_exposed_credentials()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "Failed to query exposed credentials" in result[0].status_extended
+            assert "unexpected error" in result[0].status_extended
+            assert result[0].resource_id == "privilegedUserExposedCredentials"
+
+    def test_no_exposed_credentials(self):
+        """Test PASS when no privileged users have exposed credentials."""
+        defenderxdr_client = mock.MagicMock()
+        defenderxdr_client.audited_tenant = "audited_tenant"
+        defenderxdr_client.audited_domain = DOMAIN
+        defenderxdr_client.has_mde_devices = True
+        defenderxdr_client.exposure_management_active = True
+        defenderxdr_client.exposed_credentials_privileged_users = []
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.defenderxdr.defenderxdr_privileged_user_exposed_credentials.defenderxdr_privileged_user_exposed_credentials.defenderxdr_client",
+                new=defenderxdr_client,
+            ),
+        ):
+            from prowler.providers.m365.services.defenderxdr.defenderxdr_privileged_user_exposed_credentials.defenderxdr_privileged_user_exposed_credentials import (
+                defenderxdr_privileged_user_exposed_credentials,
+            )
 
             check = defenderxdr_privileged_user_exposed_credentials()
             result = check.execute()
@@ -79,6 +216,8 @@ class Test_defenderxdr_privileged_user_exposed_credentials:
         defenderxdr_client = mock.MagicMock()
         defenderxdr_client.audited_tenant = "audited_tenant"
         defenderxdr_client.audited_domain = DOMAIN
+        defenderxdr_client.has_mde_devices = True
+        defenderxdr_client.exposure_management_active = True
 
         with (
             mock.patch(
@@ -128,6 +267,8 @@ class Test_defenderxdr_privileged_user_exposed_credentials:
         defenderxdr_client = mock.MagicMock()
         defenderxdr_client.audited_tenant = "audited_tenant"
         defenderxdr_client.audited_domain = DOMAIN
+        defenderxdr_client.has_mde_devices = True
+        defenderxdr_client.exposure_management_active = True
 
         with (
             mock.patch(
@@ -177,6 +318,8 @@ class Test_defenderxdr_privileged_user_exposed_credentials:
         defenderxdr_client = mock.MagicMock()
         defenderxdr_client.audited_tenant = "audited_tenant"
         defenderxdr_client.audited_domain = DOMAIN
+        defenderxdr_client.has_mde_devices = True
+        defenderxdr_client.exposure_management_active = True
 
         with (
             mock.patch(
@@ -252,6 +395,8 @@ class Test_defenderxdr_privileged_user_exposed_credentials:
         defenderxdr_client = mock.MagicMock()
         defenderxdr_client.audited_tenant = "audited_tenant"
         defenderxdr_client.audited_domain = DOMAIN
+        defenderxdr_client.has_mde_devices = True
+        defenderxdr_client.exposure_management_active = True
 
         with (
             mock.patch(

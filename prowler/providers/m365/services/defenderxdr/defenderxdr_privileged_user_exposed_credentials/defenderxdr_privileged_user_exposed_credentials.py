@@ -20,46 +20,112 @@ class defenderxdr_privileged_user_exposed_credentials(Check):
     user cookies, sensitive tokens) are exposed on endpoints with high risk
     or exposure scores.
 
-    - PASS: No exposed credentials found for privileged users on vulnerable endpoints.
-    - FAIL: Exposed credentials detected for privileged user on vulnerable endpoint.
+    Prerequisites (checked in order):
+    1. ThreatHunting.Read.All permission granted
+    2. Microsoft Defender for Endpoint deployed on devices
+    3. Security Exposure Management enabled
 
-    Attributes:
-        metadata: Metadata associated with the check (inherited from Check).
+    Results:
+    - PASS: No exposed credentials found (with full visibility)
+    - FAIL: Exposed credentials detected OR prerequisites not met
     """
 
     def execute(self) -> list[CheckReportM365]:
         """
         Execute the check for exposed credentials of privileged users.
 
-        This method evaluates whether any privileged users have authentication
-        credentials exposed on vulnerable endpoints. It creates a finding for
-        each exposed user or a single PASS finding if no exposures are detected.
-
         Returns:
             List[CheckReportM365]: A list of reports containing the result of the check.
         """
         findings = []
+
+        # Step 1: Check MDE devices query result
+        # If None -> API failed -> likely missing ThreatHunting.Read.All permission
+        # If False -> Query worked but no devices -> MDE not deployed
+        if defenderxdr_client.has_mde_devices is None:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Defender XDR",
+                resource_id="mdeDevices",
+            )
+            report.status = "FAIL"
+            report.status_extended = (
+                "Cannot query Defender for Endpoint data. "
+                "Grant ThreatHunting.Read.All permission to the application."
+            )
+            findings.append(report)
+            return findings
+
+        if defenderxdr_client.has_mde_devices is False:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Defender XDR",
+                resource_id="mdeDevices",
+            )
+            report.status = "FAIL"
+            report.status_extended = (
+                "No devices found in Microsoft Defender for Endpoint. "
+                "Deploy MDE agents on endpoints to enable credential exposure detection."
+            )
+            findings.append(report)
+            return findings
+
+        # Step 2: Check Exposure Management query result
+        # If we reach here, ThreatHunting.Read.All permission is working (step 1 passed)
+        # If None -> API failed -> Exposure Management not enabled in tenant
+        # If False -> Query worked but no data -> Exposure Management enabled but empty
+        if defenderxdr_client.exposure_management_active is None:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Defender XDR",
+                resource_id="exposureManagement",
+            )
+            report.status = "FAIL"
+            report.status_extended = (
+                "Cannot query Security Exposure Management data. "
+                "Enable Security Exposure Management in Microsoft Defender XDR portal."
+            )
+            findings.append(report)
+            return findings
+
+        if defenderxdr_client.exposure_management_active is False:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Defender XDR",
+                resource_id="exposureManagement",
+            )
+            report.status = "FAIL"
+            report.status_extended = (
+                "Security Exposure Management is enabled but has no exposure data. "
+                "Wait for MDE to analyze device security posture and populate exposure graph."
+            )
+            findings.append(report)
+            return findings
+
+        # Step 3: Query exposed credentials
+        # If we reach here, all prerequisites are met
         exposed_credentials = defenderxdr_client.exposed_credentials_privileged_users
 
-        # If exposed_credentials is None, the API call failed
         if exposed_credentials is None:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
-                resource_name="Defender XDR Exposure Management",
+                resource_name="Defender XDR",
                 resource_id="privilegedUserExposedCredentials",
             )
             report.status = "FAIL"
             report.status_extended = (
-                "Defender XDR Exposure Management data is unavailable. "
-                "Ensure Security Exposure Management is enabled and "
-                "ThreatHunting.Read.All permission is granted."
+                "Failed to query exposed credentials. "
+                "An unexpected error occurred while querying the ExposureGraphEdges table."
             )
             findings.append(report)
             return findings
 
         if exposed_credentials:
-            # Create a FAIL finding for each privileged user with exposed credentials
             for exposed_user in exposed_credentials:
                 report = CheckReportM365(
                     metadata=self.metadata(),
@@ -78,10 +144,8 @@ class defenderxdr_privileged_user_exposed_credentials(Check):
                     f"Privileged user {exposed_user.target_node_name} has exposed "
                     f"credentials{credential_info} on device {exposed_user.source_node_name}."
                 )
-
                 findings.append(report)
         else:
-            # Create a single PASS finding when no exposed credentials are found
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},

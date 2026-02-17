@@ -30,14 +30,28 @@ class DefenderXDR(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
 
+        # Prerequisites status
+        self.has_mde_devices: Optional[bool] = None
+        self.exposure_management_active: Optional[bool] = None
+
+        # Check data
         self.exposed_credentials_privileged_users: Optional[
             List[ExposedCredentialPrivilegedUser]
         ] = []
 
         loop = self._get_event_loop()
         try:
-            self.exposed_credentials_privileged_users = loop.run_until_complete(
-                self._get_exposed_credentials_privileged_users()
+            # First verify prerequisites, then fetch check data
+            (
+                self.has_mde_devices,
+                self.exposure_management_active,
+                self.exposed_credentials_privileged_users,
+            ) = loop.run_until_complete(
+                asyncio.gather(
+                    self._check_mde_devices(),
+                    self._check_exposure_management(),
+                    self._get_exposed_credentials_privileged_users(),
+                )
             )
         finally:
             self._cleanup_event_loop(loop)
@@ -65,12 +79,16 @@ class DefenderXDR(M365Service):
         except Exception:
             pass
 
-    async def _run_hunting_query(self, query: str) -> Optional[List[Dict]]:
+    async def _run_hunting_query(
+        self, query: str, return_empty_on_table_not_found: bool = False
+    ) -> Optional[List[Dict]]:
         """
         Execute an Advanced Hunting query using Microsoft Graph Security API.
 
         Args:
             query: The KQL (Kusto Query Language) query to execute.
+            return_empty_on_table_not_found: If True, return empty list when table doesn't exist
+                instead of None. Useful for checking if a feature is enabled.
 
         Returns:
             List of result dictionaries, empty list if no results, or None if API call failed.
@@ -91,10 +109,64 @@ class DefenderXDR(M365Service):
             ]
 
         except Exception as error:
+            error_message = str(error).lower()
+
+            # Check if error is "table not found" - this means the feature is not enabled
+            if return_empty_on_table_not_found and (
+                "failed to resolve table" in error_message
+                or "could not find table" in error_message
+            ):
+                logger.warning(
+                    f"DefenderXDR - Table not found in query, feature may not be enabled: {error}"
+                )
+                return []
+
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return None
+
+    async def _check_mde_devices(self) -> Optional[bool]:
+        """
+        Check if Microsoft Defender for Endpoint has devices reporting.
+
+        Returns:
+            True if devices exist, False if no devices or MDE not enabled, None if API call failed.
+        """
+        logger.info("DefenderXDR - Checking for MDE devices...")
+
+        query = "DeviceInfo | summarize DeviceCount = count()"
+        results = await self._run_hunting_query(
+            query, return_empty_on_table_not_found=True
+        )
+
+        if results is None:
+            return None
+
+        if results and len(results) > 0:
+            device_count = results[0].get("DeviceCount", 0)
+            return device_count > 0
+
+        return False
+
+    async def _check_exposure_management(self) -> Optional[bool]:
+        """
+        Check if Security Exposure Management is active and has data.
+
+        Returns:
+            True if active with data, False if no data or not enabled, None if API call failed.
+        """
+        logger.info("DefenderXDR - Checking Exposure Management status...")
+
+        query = "ExposureGraphEdges | take 1"
+        results = await self._run_hunting_query(
+            query, return_empty_on_table_not_found=True
+        )
+
+        if results is None:
+            return None
+
+        return len(results) > 0
 
     async def _get_exposed_credentials_privileged_users(
         self,
