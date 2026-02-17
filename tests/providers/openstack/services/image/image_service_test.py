@@ -51,6 +51,7 @@ class TestImageService:
         mock_img.img_signature_key_type = None
         mock_img.img_signature_certificate_uuid = None
         mock_img.hw_mem_encryption = None
+        mock_img.needs_secure_boot = None
         mock_img.os_secure_boot = None
         mock_img.tags = ["production"]
         mock_img.project_id = OPENSTACK_PROJECT_ID
@@ -87,6 +88,7 @@ class TestImageService:
         mock_img.img_signature_key_type = "RSA-PSS"
         mock_img.img_signature_certificate_uuid = "cert-uuid-123"
         mock_img.hw_mem_encryption = True
+        mock_img.needs_secure_boot = "required"
         mock_img.os_secure_boot = "required"
         mock_img.tags = []
         mock_img.project_id = OPENSTACK_PROJECT_ID
@@ -122,6 +124,7 @@ class TestImageService:
         mock_img.img_signature_key_type = None
         mock_img.img_signature_certificate_uuid = None
         mock_img.hw_mem_encryption = None
+        mock_img.needs_secure_boot = None
         mock_img.os_secure_boot = None
         mock_img.tags = []
         mock_img.project_id = OPENSTACK_PROJECT_ID
@@ -161,6 +164,7 @@ class TestImageService:
         mock_img.img_signature_key_type = None
         mock_img.img_signature_certificate_uuid = None
         mock_img.hw_mem_encryption = None
+        mock_img.needs_secure_boot = None
         mock_img.os_secure_boot = None
         mock_img.tags = []
         mock_img.project_id = OPENSTACK_PROJECT_ID
@@ -220,6 +224,7 @@ class TestImageService:
         mock_img.img_signature_key_type = None
         mock_img.img_signature_certificate_uuid = None
         mock_img.hw_mem_encryption = None
+        mock_img.needs_secure_boot = None
         mock_img.os_secure_boot = None
         mock_img.tags = []
         mock_img.project_id = OPENSTACK_PROJECT_ID

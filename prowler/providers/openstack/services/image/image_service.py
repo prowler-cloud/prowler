@@ -23,6 +23,11 @@ class Image(OpenStackService):
         logger.info("Image - Listing images...")
         try:
             for img in self.client.images():
+                # Skip images not owned by the current project (e.g. provider public images)
+                owner = getattr(img, "owner_id", getattr(img, "owner", ""))
+                if owner != self.project_id:
+                    continue
+
                 # Signature properties may be direct attributes or inside a properties dict
                 properties = getattr(img, "properties", {}) or {}
 
@@ -54,9 +59,12 @@ class Image(OpenStackService):
                             img, "img_signature_certificate_uuid", None
                         )
                         or properties.get("img_signature_certificate_uuid"),
-                        hw_mem_encryption=getattr(img, "hw_mem_encryption", None)
-                        or properties.get("hw_mem_encryption"),
-                        os_secure_boot=getattr(img, "os_secure_boot", None)
+                        hw_mem_encryption=self._parse_bool(
+                            getattr(img, "hw_mem_encryption", None)
+                            or properties.get("hw_mem_encryption")
+                        ),
+                        os_secure_boot=getattr(img, "needs_secure_boot", None)
+                        or getattr(img, "os_secure_boot", None)
                         or properties.get("os_secure_boot"),
                         members=members,
                         tags=getattr(img, "tags", []),
@@ -76,6 +84,24 @@ class Image(OpenStackService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
                 f"Unexpected error listing images: {error}"
             )
+
+    @staticmethod
+    def _parse_bool(value) -> Optional[bool]:
+        """Parse a boolean value that may be a string from the Glance API.
+
+        Args:
+            value: A bool, string ("True"/"False"), or None.
+
+        Returns:
+            True, False, or None.
+        """
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.lower() == "true"
+        return None
 
     def _list_image_members(self, image_id: str) -> List[ImageMember]:
         """List members (shared projects) for a specific image.
