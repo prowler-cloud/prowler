@@ -9,7 +9,7 @@ import {
 import { getThreatScore } from "@/actions/overview";
 import {
   ClientAccordionWrapper,
-  ComplianceDownloadButton,
+  ComplianceDownloadButtons,
   ComplianceHeader,
   RequirementsStatusCard,
   RequirementsStatusCardSkeleton,
@@ -128,20 +128,17 @@ export default async function ComplianceDetail({
             selectedScan={selectedScan}
           />
         </div>
-        {(() => {
-          const framework = attributesData?.data?.[0]?.attributes?.framework;
-          const reportType = getReportTypeForFramework(framework);
-
-          return selectedScanId && reportType ? (
-            <div className="mb-4 flex-shrink-0 self-end sm:mb-0 sm:self-start sm:pt-1">
-              <ComplianceDownloadButton
-                scanId={selectedScanId}
-                reportType={reportType}
-                label="Download report"
-              />
-            </div>
-          ) : null;
-        })()}
+        {selectedScanId && (
+          <div className="mb-4 flex-shrink-0 self-end sm:mb-0 sm:self-start sm:pt-1">
+            <ComplianceDownloadButtons
+              scanId={selectedScanId}
+              complianceId={complianceId}
+              reportType={getReportTypeForFramework(
+                attributesData?.data?.[0]?.attributes?.framework,
+              )}
+            />
+          </div>
+        )}
       </div>
 
       <Suspense
