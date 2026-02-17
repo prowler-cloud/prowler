@@ -878,7 +878,8 @@ class ImageProvider(Provider):
         print(
             f"\n{Style.BRIGHT}Registry:{Style.RESET_ALL} "
             f"{Fore.CYAN}{self.registry}{Style.RESET_ALL} "
-            f"({num_repos} repositories, {total_images} images)\n"
+            f"({num_repos} {'repository' if num_repos == 1 else 'repositories'}, "
+            f"{total_images} {'image' if total_images == 1 else 'images'})\n"
         )
         for repo, tags in repos_tags.items():
             print(

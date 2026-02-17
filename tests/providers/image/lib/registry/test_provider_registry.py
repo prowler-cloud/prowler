@@ -184,7 +184,7 @@ class TestRegistryList:
         captured = capsys.readouterr()
         assert "prod/app" in captured.out
         assert "dev/app" not in captured.out
-        assert "1 repositories" in captured.out
+        assert "1 repository" in captured.out
 
     @patch("prowler.providers.image.image_provider.create_registry_adapter")
     def test_registry_list_respects_tag_filter(self, mock_factory, capsys):
