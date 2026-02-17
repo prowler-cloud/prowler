@@ -305,3 +305,110 @@ class TestOciAdapterNextPageUrl:
             headers={"Link": '<https://reg.io/v2/_catalog?n=200>; rel="prev"'}
         )
         assert OciRegistryAdapter._next_page_url(resp) is None
+
+
+class TestOciAdapterSSRF:
+    def test_reject_file_scheme(self):
+        adapter = OciRegistryAdapter("reg.io")
+        with pytest.raises(ImageRegistryAuthError, match="disallowed scheme"):
+            adapter._validate_realm_url("file:///etc/passwd")
+
+    def test_reject_ftp_scheme(self):
+        adapter = OciRegistryAdapter("reg.io")
+        with pytest.raises(ImageRegistryAuthError, match="disallowed scheme"):
+            adapter._validate_realm_url("ftp://evil.com/token")
+
+    def test_reject_private_ip(self):
+        adapter = OciRegistryAdapter("reg.io")
+        with pytest.raises(ImageRegistryAuthError, match="private/loopback"):
+            adapter._validate_realm_url("https://10.0.0.1/token")
+
+    def test_reject_loopback(self):
+        adapter = OciRegistryAdapter("reg.io")
+        with pytest.raises(ImageRegistryAuthError, match="private/loopback"):
+            adapter._validate_realm_url("https://127.0.0.1/token")
+
+    def test_reject_link_local(self):
+        adapter = OciRegistryAdapter("reg.io")
+        with pytest.raises(ImageRegistryAuthError, match="private/loopback"):
+            adapter._validate_realm_url("https://169.254.169.254/latest/meta-data")
+
+    def test_accept_public_https(self):
+        adapter = OciRegistryAdapter("reg.io")
+        # Should not raise
+        adapter._validate_realm_url("https://auth.example.com/token")
+
+    def test_accept_hostname_not_ip(self):
+        adapter = OciRegistryAdapter("reg.io")
+        # Hostnames (not IPs) should pass even if they resolve to private IPs
+        adapter._validate_realm_url("https://internal.corp.com/token")
+
+
+class TestOciAdapterEmptyToken:
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_empty_bearer_token_raises(self, mock_request):
+        ping_resp = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": 'Bearer realm="https://auth.example.com/token",service="registry"'
+            },
+        )
+        token_resp = MagicMock(status_code=200)
+        token_resp.json.return_value = {"token": "", "access_token": ""}
+        mock_request.side_effect = [ping_resp, token_resp]
+        adapter = OciRegistryAdapter("reg.io", username="u", password="p")
+        with pytest.raises(ImageRegistryAuthError, match="empty token"):
+            adapter._ensure_auth()
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_none_bearer_token_raises(self, mock_request):
+        ping_resp = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": 'Bearer realm="https://auth.example.com/token",service="registry"'
+            },
+        )
+        token_resp = MagicMock(status_code=200)
+        token_resp.json.return_value = {}
+        mock_request.side_effect = [ping_resp, token_resp]
+        adapter = OciRegistryAdapter("reg.io", username="u", password="p")
+        with pytest.raises(ImageRegistryAuthError, match="empty token"):
+            adapter._ensure_auth()
+
+
+class TestOciAdapterNarrowExcept:
+    def test_invalid_utf8_base64_falls_through(self):
+        # Create a base64 string that decodes to invalid UTF-8
+        invalid_bytes = base64.b64encode(b"\xff\xfe").decode()
+        adapter = OciRegistryAdapter("ecr.aws", username="AWS", password=invalid_bytes)
+        user, pwd = adapter._resolve_basic_credentials()
+        assert user == "AWS"
+        assert pwd == invalid_bytes
+
+
+class TestCredentialRedaction:
+    def test_getstate_redacts_credentials(self):
+        adapter = OciRegistryAdapter("reg.io", username="u", password="secret", token="tok")
+        state = adapter.__getstate__()
+        assert state["_password"] == "***"
+        assert state["_token"] == "***"
+        assert state["username"] == "u"
+        assert state["registry_url"] == "reg.io"
+
+    def test_getstate_none_credentials(self):
+        adapter = OciRegistryAdapter("reg.io")
+        state = adapter.__getstate__()
+        assert state["_password"] is None
+        assert state["_token"] is None
+
+    def test_repr_redacts_credentials(self):
+        adapter = OciRegistryAdapter("reg.io", username="u", password="s3cret_pw", token="s3cret_tk")
+        r = repr(adapter)
+        assert "s3cret_pw" not in r
+        assert "s3cret_tk" not in r
+        assert "<redacted>" in r
+
+    def test_properties_still_work(self):
+        adapter = OciRegistryAdapter("reg.io", password="secret", token="tok")
+        assert adapter.password == "secret"
+        assert adapter.token == "tok"

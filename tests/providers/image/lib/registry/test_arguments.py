@@ -13,6 +13,7 @@ class TestValidateArguments:
             tag_filter=None,
             max_images=0,
             registry_insecure=False,
+            registry_list_images=False,
         )
         ok, msg = validate_arguments(args)
         assert not ok
@@ -27,6 +28,7 @@ class TestValidateArguments:
             tag_filter=None,
             max_images=0,
             registry_insecure=False,
+            registry_list_images=False,
         )
         ok, _ = validate_arguments(args)
         assert ok
@@ -40,6 +42,7 @@ class TestValidateArguments:
             tag_filter=None,
             max_images=0,
             registry_insecure=False,
+            registry_list_images=False,
         )
         ok, _ = validate_arguments(args)
         assert ok
@@ -53,6 +56,7 @@ class TestValidateArguments:
             tag_filter=None,
             max_images=0,
             registry_insecure=False,
+            registry_list_images=False,
         )
         ok, _ = validate_arguments(args)
         assert ok
@@ -66,6 +70,7 @@ class TestValidateArguments:
             tag_filter=None,
             max_images=0,
             registry_insecure=False,
+            registry_list_images=False,
         )
         ok, msg = validate_arguments(args)
         assert not ok
@@ -80,6 +85,7 @@ class TestValidateArguments:
             tag_filter="^v",
             max_images=0,
             registry_insecure=False,
+            registry_list_images=False,
         )
         ok, msg = validate_arguments(args)
         assert not ok
@@ -94,6 +100,7 @@ class TestValidateArguments:
             tag_filter=None,
             max_images=50,
             registry_insecure=False,
+            registry_list_images=False,
         )
         ok, msg = validate_arguments(args)
         assert not ok
@@ -108,6 +115,7 @@ class TestValidateArguments:
             tag_filter=None,
             max_images=0,
             registry_insecure=True,
+            registry_list_images=False,
         )
         ok, msg = validate_arguments(args)
         assert not ok
@@ -122,6 +130,7 @@ class TestValidateArguments:
             tag_filter=None,
             max_images=0,
             registry_insecure=False,
+            registry_list_images=False,
         )
         ok, msg = validate_arguments(args)
         assert not ok
@@ -136,6 +145,7 @@ class TestValidateArguments:
             tag_filter=None,
             max_images=0,
             registry_insecure=False,
+            registry_list_images=False,
         )
         ok, _ = validate_arguments(args)
         assert ok
@@ -149,6 +159,7 @@ class TestValidateArguments:
             tag_filter=None,
             max_images=0,
             registry_insecure=False,
+            registry_list_images=False,
         )
         ok, msg = validate_arguments(args)
         assert not ok
@@ -163,6 +174,7 @@ class TestValidateArguments:
             tag_filter="^v",
             max_images=100,
             registry_insecure=True,
+            registry_list_images=False,
         )
         ok, _ = validate_arguments(args)
         assert ok
@@ -205,6 +217,7 @@ class TestValidateArguments:
             tag_filter=None,
             max_images=0,
             registry_insecure=False,
+            registry_list_images=False,
         )
         ok, _ = validate_arguments(args)
         assert ok

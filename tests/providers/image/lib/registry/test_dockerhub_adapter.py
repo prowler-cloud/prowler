@@ -5,6 +5,7 @@ import requests
 
 from prowler.providers.image.exceptions.exceptions import (
     ImageRegistryAuthError,
+    ImageRegistryCatalogError,
     ImageRegistryNetworkError,
 )
 from prowler.providers.image.lib.registry.dockerhub_adapter import DockerHubAdapter
@@ -48,7 +49,7 @@ class TestDockerHubListRepositories:
 
     def test_list_repos_no_namespace_raises(self):
         adapter = DockerHubAdapter("docker.io")
-        with pytest.raises(ImageRegistryAuthError, match="namespace"):
+        with pytest.raises(ImageRegistryCatalogError, match="namespace"):
             adapter.list_repositories()
 
     @patch("prowler.providers.image.lib.registry.base.requests.request")
@@ -131,3 +132,32 @@ class TestDockerHubRetry:
         with pytest.raises(ImageRegistryNetworkError):
             adapter._request_with_retry("GET", "https://hub.docker.com")
         assert mock_request.call_count == 3
+
+
+class TestDockerHubEmptyTokens:
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_empty_hub_jwt_raises(self, mock_request):
+        resp = MagicMock(status_code=200)
+        resp.json.return_value = {"token": ""}
+        mock_request.return_value = resp
+        adapter = DockerHubAdapter("docker.io/myorg", username="u", password="p")
+        with pytest.raises(ImageRegistryAuthError, match="empty JWT"):
+            adapter._hub_login()
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_none_hub_jwt_raises(self, mock_request):
+        resp = MagicMock(status_code=200)
+        resp.json.return_value = {}
+        mock_request.return_value = resp
+        adapter = DockerHubAdapter("docker.io/myorg", username="u", password="p")
+        with pytest.raises(ImageRegistryAuthError, match="empty JWT"):
+            adapter._hub_login()
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_empty_registry_token_raises(self, mock_request):
+        resp = MagicMock(status_code=200)
+        resp.json.return_value = {"token": ""}
+        mock_request.return_value = resp
+        adapter = DockerHubAdapter("docker.io/myorg", username="u", password="p")
+        with pytest.raises(ImageRegistryAuthError, match="empty token"):
+            adapter._get_registry_token("myorg/myapp")

@@ -8,6 +8,7 @@ from prowler.providers.image.exceptions.exceptions import (
     ImageMaxImagesExceededError,
 )
 from prowler.providers.image.image_provider import ImageProvider
+from prowler.providers.image.lib.registry.dockerhub_adapter import DockerHubAdapter
 
 _CLEAN_ENV = {
     "PATH": os.environ.get("PATH", ""),
@@ -215,3 +216,23 @@ class TestRegistryList:
         assert exc_info.value.code == 0
         captured = capsys.readouterr()
         assert "6 images" in captured.out
+
+
+class TestDockerHubEnumeration:
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_dockerhub_images_use_repo_tag_format(self, mock_factory):
+        """Docker Hub images should use repo:tag format without host prefix."""
+        adapter = MagicMock(spec=DockerHubAdapter)
+        adapter.list_repositories.return_value = ["myorg/app1", "myorg/app2"]
+        adapter.list_tags.side_effect = [["latest", "v1.0"], ["latest"]]
+        mock_factory.return_value = adapter
+
+        provider = _build_provider(registry="docker.io/myorg")
+        # Docker Hub images should NOT have host prefix
+        assert "myorg/app1:latest" in provider.images
+        assert "myorg/app1:v1.0" in provider.images
+        assert "myorg/app2:latest" in provider.images
+        # Ensure no host prefix was added
+        for img in provider.images:
+            assert not img.startswith("docker.io/"), f"Unexpected host prefix in {img}"
+        assert len(provider.images) == 3
