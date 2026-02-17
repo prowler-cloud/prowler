@@ -31,6 +31,7 @@ export const ComplianceDownloadButtons = ({
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   const handleDownloadCsv = async () => {
+    if (isDownloadingCsv) return;
     setIsDownloadingCsv(true);
     try {
       await downloadComplianceCsv(scanId, complianceId, toast);
@@ -40,7 +41,7 @@ export const ComplianceDownloadButtons = ({
   };
 
   const handleDownloadPdf = async () => {
-    if (!reportType) return;
+    if (!reportType || isDownloadingPdf) return;
     setIsDownloadingPdf(true);
     try {
       await downloadComplianceReportPdf(scanId, reportType, toast);
@@ -48,8 +49,6 @@ export const ComplianceDownloadButtons = ({
       setIsDownloadingPdf(false);
     }
   };
-
-  const isBusy = isDownloadingCsv || isDownloadingPdf;
 
   const buttonClassName = cn(
     "border-button-primary text-button-primary hover:bg-button-primary/10",
@@ -63,7 +62,7 @@ export const ComplianceDownloadButtons = ({
         variant="outline"
         className={buttonClassName}
         onClick={handleDownloadCsv}
-        disabled={disabled || isBusy}
+        disabled={disabled || isDownloadingCsv}
         aria-label="Download compliance CSV report"
       >
         <FileTextIcon
@@ -78,7 +77,7 @@ export const ComplianceDownloadButtons = ({
           variant="outline"
           className={buttonClassName}
           onClick={handleDownloadPdf}
-          disabled={disabled || isBusy}
+          disabled={disabled || isDownloadingPdf}
           aria-label="Download compliance PDF report"
         >
           <DownloadIcon
