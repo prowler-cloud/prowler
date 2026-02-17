@@ -22,12 +22,13 @@ class defenderxdr_privileged_user_exposed_credentials(Check):
 
     Prerequisites (checked in order):
     1. ThreatHunting.Read.All permission granted
-    2. Microsoft Defender for Endpoint deployed on devices
+    2. Microsoft Defender for Endpoint enabled
     3. Security Exposure Management enabled
 
     Results:
-    - PASS: No exposed credentials found (with full visibility)
-    - FAIL: Exposed credentials detected OR prerequisites not met
+    - PASS: No exposed credentials found OR no MDE devices to evaluate
+    - FAIL: Exposed credentials detected OR MDE enabled but Exposure Management not enabled
+    - MANUAL: MDE not enabled in tenant (requires manual review of security requirements)
     """
 
     def execute(self) -> list[CheckReportM365]:
@@ -41,7 +42,8 @@ class defenderxdr_privileged_user_exposed_credentials(Check):
 
         # Step 1: Check MDE devices query result
         # If None -> API failed -> likely missing ThreatHunting.Read.All permission
-        # If False -> Query worked but no devices -> MDE not deployed
+        # If mde_table_not_found -> Table doesn't exist -> MDE not enabled, needs manual review
+        # If False -> Query worked but no devices -> MDE enabled but no endpoints, PASS
         if defenderxdr_client.has_mde_devices is None:
             report = CheckReportM365(
                 metadata=self.metadata(),
@@ -53,6 +55,21 @@ class defenderxdr_privileged_user_exposed_credentials(Check):
             report.status_extended = (
                 "Cannot query Defender for Endpoint data. "
                 "Grant ThreatHunting.Read.All permission to the application."
+            )
+            findings.append(report)
+            return findings
+
+        if defenderxdr_client.mde_table_not_found:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Defender XDR",
+                resource_id="mdeDevices",
+            )
+            report.status = "MANUAL"
+            report.status_extended = (
+                "Microsoft Defender for Endpoint is not enabled in this tenant. "
+                "Verify if MDE should be deployed based on your security requirements."
             )
             findings.append(report)
             return findings
@@ -73,9 +90,10 @@ class defenderxdr_privileged_user_exposed_credentials(Check):
             return findings
 
         # Step 2: Check Exposure Management query result
-        # If we reach here, ThreatHunting.Read.All permission is working (step 1 passed)
-        # If None -> API failed -> Exposure Management not enabled in tenant
-        # If False -> Query worked but no data -> Exposure Management enabled but empty
+        # If we reach here, MDE is enabled with devices
+        # If None -> API failed
+        # If exposure_table_not_found -> Table doesn't exist -> Exposure Management not enabled, FAIL
+        # If False -> Query worked but no data -> Enabled but empty
         if defenderxdr_client.exposure_management_active is None:
             report = CheckReportM365(
                 metadata=self.metadata(),
@@ -86,7 +104,22 @@ class defenderxdr_privileged_user_exposed_credentials(Check):
             report.status = "FAIL"
             report.status_extended = (
                 "Cannot query Security Exposure Management data. "
-                "Enable Security Exposure Management in Microsoft Defender XDR portal."
+                "An unexpected error occurred."
+            )
+            findings.append(report)
+            return findings
+
+        if defenderxdr_client.exposure_table_not_found:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Defender XDR",
+                resource_id="exposureManagement",
+            )
+            report.status = "FAIL"
+            report.status_extended = (
+                "Security Exposure Management is not enabled but MDE has devices deployed. "
+                "Enable Security Exposure Management to detect credential exposure risks."
             )
             findings.append(report)
             return findings
