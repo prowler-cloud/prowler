@@ -31,7 +31,7 @@ def delete_provider(tenant_id: str, pk: str):
               was already deleted.
     """
 
-    # Get all provider related data for delete them in batches
+    # Get all provider related data to delete them in batches
     with rls_transaction(tenant_id):
         try:
             instance = Provider.all_objects.get(pk=pk)
