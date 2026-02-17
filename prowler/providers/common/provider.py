@@ -295,6 +295,9 @@ class Provider(ABC):
                         registry_insecure=getattr(
                             arguments, "registry_insecure", False
                         ),
+                        registry_list_images=getattr(
+                            arguments, "registry_list_images", False
+                        ),
                     )
                 elif "mongodbatlas" in provider_class_name.lower():
                     provider_class(

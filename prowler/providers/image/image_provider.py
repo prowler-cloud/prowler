@@ -80,6 +80,7 @@ class ImageProvider(Provider):
         tag_filter: str | None = None,
         max_images: int = 0,
         registry_insecure: bool = False,
+        registry_list_images: bool = False,
     ):
         logger.info("Instantiating Image Provider...")
 
@@ -122,6 +123,7 @@ class ImageProvider(Provider):
         self.tag_filter = tag_filter
         self.max_images = max_images
         self.registry_insecure = registry_insecure
+        self.registry_list_images = registry_list_images
 
         # Compile regex filters
         self._image_filter_re = None
@@ -819,12 +821,16 @@ class ImageProvider(Provider):
         is_dockerhub = isinstance(adapter, DockerHubAdapter)
 
         discovered_images = []
+        repos_tags: dict[str, list[str]] = {}
         for repo in repositories:
             tags = adapter.list_tags(repo)
 
             # Apply tag filter
             if self._tag_filter_re:
                 tags = [t for t in tags if self._tag_filter_re.search(t)]
+
+            if tags:
+                repos_tags[repo] = tags
 
             for tag in tags:
                 if is_dockerhub:
@@ -839,6 +845,11 @@ class ImageProvider(Provider):
                             break
                     image_ref = f"{registry_host}/{repo}:{tag}"
                 discovered_images.append(image_ref)
+
+        # Registry list mode: print listing and exit
+        if self.registry_list_images:
+            self._print_registry_listing(repos_tags, len(discovered_images))
+            raise SystemExit(0)
 
         # Check max-images limit
         if self.max_images and len(discovered_images) > self.max_images:
@@ -858,6 +869,24 @@ class ImageProvider(Provider):
             f"Discovered {len(discovered_images)} images from registry {self.registry} "
             f"({len(repositories)} repositories). Total images to scan: {len(self.images)}"
         )
+
+    def _print_registry_listing(
+        self, repos_tags: dict[str, list[str]], total_images: int
+    ) -> None:
+        """Print a structured listing of registry repositories and tags."""
+        num_repos = len(repos_tags)
+        print(
+            f"\n{Style.BRIGHT}Registry:{Style.RESET_ALL} "
+            f"{Fore.CYAN}{self.registry}{Style.RESET_ALL} "
+            f"({num_repos} repositories, {total_images} images)\n"
+        )
+        for repo, tags in repos_tags.items():
+            print(
+                f"  {Fore.YELLOW}{repo}{Style.RESET_ALL} "
+                f"({len(tags)} tags)"
+            )
+            print(f"    {', '.join(tags)}")
+        print()
 
     def print_credentials(self) -> None:
         """Print scan configuration."""

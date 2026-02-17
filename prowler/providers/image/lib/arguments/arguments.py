@@ -122,6 +122,13 @@ def init_parser(self):
         default=False,
         help="Skip TLS verification for registry connections (for self-signed certificates).",
     )
+    registry_group.add_argument(
+        "--registry-list",
+        dest="registry_list_images",
+        action="store_true",
+        default=False,
+        help="List all repositories and tags from the registry, then exit without scanning. Useful for discovering available images before building --image-filter or --tag-filter.",
+    )
 
 
 def validate_arguments(arguments):
@@ -133,6 +140,10 @@ def validate_arguments(arguments):
     tag_filter = getattr(arguments, "tag_filter", None)
     max_images = getattr(arguments, "max_images", 0)
     registry_insecure = getattr(arguments, "registry_insecure", False)
+    registry_list_images = getattr(arguments, "registry_list_images", False)
+
+    if registry_list_images and not registry:
+        return (False, "--registry-list requires --registry.")
 
     if not images and not image_list_file and not registry:
         return (

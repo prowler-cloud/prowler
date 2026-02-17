@@ -24,6 +24,7 @@ def _build_provider(**overrides):
         tag_filter=None,
         max_images=0,
         registry_insecure=False,
+        registry_list_images=False,
         config_content={"image": {}},
     )
     defaults.update(overrides)
@@ -147,3 +148,71 @@ class TestEmptyRegistry:
 
         provider = _build_provider(images=["nginx:latest"])
         assert provider.images == ["nginx:latest"]
+
+
+class TestRegistryList:
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_registry_list_prints_and_exits(self, mock_factory, capsys):
+        adapter = MagicMock()
+        adapter.list_repositories.return_value = ["app/frontend", "app/backend"]
+        adapter.list_tags.side_effect = [["latest", "v1.0"], ["latest"]]
+        mock_factory.return_value = adapter
+
+        with pytest.raises(SystemExit) as exc_info:
+            _build_provider(registry_list_images=True)
+
+        assert exc_info.value.code == 0
+        captured = capsys.readouterr()
+        assert "app/frontend" in captured.out
+        assert "app/backend" in captured.out
+        assert "latest" in captured.out
+        assert "v1.0" in captured.out
+        assert "2 repositories" in captured.out
+        assert "3 images" in captured.out
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_registry_list_respects_image_filter(self, mock_factory, capsys):
+        adapter = MagicMock()
+        adapter.list_repositories.return_value = ["prod/app", "dev/app"]
+        adapter.list_tags.return_value = ["latest"]
+        mock_factory.return_value = adapter
+
+        with pytest.raises(SystemExit) as exc_info:
+            _build_provider(registry_list_images=True, image_filter="^prod/")
+
+        assert exc_info.value.code == 0
+        captured = capsys.readouterr()
+        assert "prod/app" in captured.out
+        assert "dev/app" not in captured.out
+        assert "1 repositories" in captured.out
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_registry_list_respects_tag_filter(self, mock_factory, capsys):
+        adapter = MagicMock()
+        adapter.list_repositories.return_value = ["myapp"]
+        adapter.list_tags.return_value = ["latest", "v1.0", "dev-abc"]
+        mock_factory.return_value = adapter
+
+        with pytest.raises(SystemExit) as exc_info:
+            _build_provider(registry_list_images=True, tag_filter=r"^v\d+\.\d+$")
+
+        assert exc_info.value.code == 0
+        captured = capsys.readouterr()
+        assert "v1.0" in captured.out
+        assert "dev-abc" not in captured.out
+        assert "1 images" in captured.out
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_registry_list_skips_max_images(self, mock_factory, capsys):
+        adapter = MagicMock()
+        adapter.list_repositories.return_value = ["app1", "app2", "app3"]
+        adapter.list_tags.return_value = ["latest", "v1.0"]
+        mock_factory.return_value = adapter
+
+        # max_images=1 would normally raise, but --registry-list skips it
+        with pytest.raises(SystemExit) as exc_info:
+            _build_provider(registry_list_images=True, max_images=1)
+
+        assert exc_info.value.code == 0
+        captured = capsys.readouterr()
+        assert "6 images" in captured.out
