@@ -73,6 +73,17 @@ class TestValidateArguments:
         ok, _ = validate_arguments(args)
         assert ok
 
+    def test_registry_list_without_registry_fails(self):
+        args = Namespace(images=["nginx:latest"], image_list_file=None, registry=None, image_filter=None, tag_filter=None, max_images=0, registry_insecure=False, registry_list_images=True)
+        ok, msg = validate_arguments(args)
+        assert not ok
+        assert "--registry-list requires --registry" in msg
+
+    def test_registry_list_with_registry_passes(self):
+        args = Namespace(images=[], image_list_file=None, registry="myregistry.io", image_filter=None, tag_filter=None, max_images=0, registry_insecure=False, registry_list_images=True)
+        ok, _ = validate_arguments(args)
+        assert ok
+
     def test_combined_registry_and_image_passes(self):
         args = Namespace(images=["nginx:latest"], image_list_file=None, registry="myregistry.io", image_filter=None, tag_filter=None, max_images=0, registry_insecure=False)
         ok, _ = validate_arguments(args)

@@ -27,6 +27,8 @@ def create_registry_adapter(
             token=token,
             verify_ssl=verify_ssl,
         )
+    # ECR and other non-Docker-Hub registries implement the OCI Distribution Spec,
+    # so they are handled by the generic OCI adapter.
     return OciRegistryAdapter(
         registry_url=registry_url,
         username=username,
