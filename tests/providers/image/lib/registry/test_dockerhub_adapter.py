@@ -18,7 +18,9 @@ class TestDockerHubAdapterInit:
         assert DockerHubAdapter._extract_namespace("https://docker.io/myorg") == "myorg"
 
     def test_extract_namespace_registry1(self):
-        assert DockerHubAdapter._extract_namespace("registry-1.docker.io/myorg") == "myorg"
+        assert (
+            DockerHubAdapter._extract_namespace("registry-1.docker.io/myorg") == "myorg"
+        )
 
     def test_extract_namespace_empty(self):
         assert DockerHubAdapter._extract_namespace("docker.io") == ""
@@ -50,6 +52,22 @@ class TestDockerHubListRepositories:
         adapter = DockerHubAdapter("docker.io")
         with pytest.raises(ImageRegistryAuthError, match="namespace"):
             adapter.list_repositories()
+
+    @patch("prowler.providers.image.lib.registry.dockerhub_adapter.requests.request")
+    def test_list_repos_public_no_credentials(self, mock_request):
+        """When no credentials are provided, use the public /v2/repositories/{ns}/ endpoint."""
+        repos_resp = MagicMock(status_code=200)
+        repos_resp.json.return_value = {
+            "results": [{"name": "repo1"}, {"name": "repo2"}],
+            "next": None,
+        }
+        mock_request.return_value = repos_resp
+        adapter = DockerHubAdapter("docker.io/publicns")
+        repos = adapter.list_repositories()
+        assert repos == ["publicns/repo1", "publicns/repo2"]
+        called_url = mock_request.call_args[0][1]
+        assert "/v2/repositories/publicns/" in called_url
+        assert "/v2/namespaces/" not in called_url
 
 
 class TestDockerHubListTags:
@@ -104,7 +122,9 @@ class TestDockerHubRetry:
         resp_200 = MagicMock(status_code=200)
         mock_request.side_effect = [resp_429, resp_200]
         adapter = DockerHubAdapter("docker.io/myorg")
-        result = adapter._request_with_retry("GET", "https://hub.docker.com/v2/namespaces/myorg/repositories")
+        result = adapter._request_with_retry(
+            "GET", "https://hub.docker.com/v2/namespaces/myorg/repositories"
+        )
         assert result.status_code == 200
 
     @patch("prowler.providers.image.lib.registry.dockerhub_adapter.time.sleep")

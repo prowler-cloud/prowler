@@ -61,7 +61,10 @@ class DockerHubAdapter(RegistryAdapter):
             )
         self._hub_login()
         repositories = []
-        url = f"{_HUB_API}/v2/namespaces/{self.namespace}/repositories"
+        if self._hub_jwt:
+            url = f"{_HUB_API}/v2/namespaces/{self.namespace}/repositories"
+        else:
+            url = f"{_HUB_API}/v2/repositories/{self.namespace}/"
         params = {"page_size": 100}
         while url:
             resp = self._hub_request("GET", url, params=params)
