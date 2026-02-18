@@ -326,15 +326,20 @@ class ImageProvider(Provider):
         """Clean up any resources after scanning."""
 
     def _process_finding(
-        self, finding: dict, image_name: str, finding_type: str
+        self,
+        finding: dict,
+        image: str,
+        trivy_target: str,
+        image_sha: str = "",
     ) -> CheckReportImage:
         """
         Process a single finding and create a CheckReportImage object.
 
         Args:
             finding: The finding object from Trivy output
-            image_name: The container image name being scanned
-            finding_type: The type of finding (Vulnerability, Secret, etc.)
+            image: The clean container image name (e.g., "alpine:3.18")
+            trivy_target: The Trivy target string (e.g., "alpine:3.18 (alpine 3.18.0)")
+            image_sha: Short SHA from Trivy Metadata.ImageID for resource uniqueness
 
         Returns:
             CheckReportImage: The processed check report
@@ -377,7 +382,7 @@ class ImageProvider(Provider):
                 "CheckID": finding_id,
                 "CheckTitle": finding.get("Title", finding_id),
                 "CheckType": ["Container Image Security"],
-                "ServiceName": finding_type,
+                "ServiceName": "container-image",
                 "SubServiceName": "",
                 "ResourceIdTemplate": "",
                 "Severity": trivy_severity,
@@ -410,11 +415,13 @@ class ImageProvider(Provider):
             metadata = json.dumps(metadata_dict)
 
             report = CheckReportImage(
-                metadata=metadata, finding=finding, image_name=image_name
+                metadata=metadata, finding=finding, image_name=image
             )
             report.status = finding_status
             report.status_extended = self._build_status_extended(finding)
             report.region = self.region
+            report.image_sha = image_sha
+            report.resource_details = trivy_target
             return report
 
         except Exception as error:
@@ -563,6 +570,19 @@ class ImageProvider(Provider):
                     logger.info(f"No findings for image: {image}")
                     return
 
+                # Extract image digest for resource uniqueness
+                trivy_metadata = output.get("Metadata", {})
+                image_id = trivy_metadata.get("ImageID", "")
+                if not image_id:
+                    repo_digests = trivy_metadata.get("RepoDigests", [])
+                    if repo_digests:
+                        image_id = (
+                            repo_digests[0].split("@")[-1]
+                            if "@" in repo_digests[0]
+                            else ""
+                        )
+                short_sha = image_id.replace("sha256:", "")[:12] if image_id else ""
+
             except json.JSONDecodeError as error:
                 logger.error(f"Failed to parse Trivy output for {image}: {error}")
                 logger.debug(f"Trivy stdout: {process.stdout[:500]}")
@@ -573,11 +593,12 @@ class ImageProvider(Provider):
 
             for result in results:
                 target = result.get("Target", image)
-                result_type = result.get("Type", "unknown")
 
                 # Process Vulnerabilities
                 for vuln in result.get("Vulnerabilities", []):
-                    report = self._process_finding(vuln, target, result_type)
+                    report = self._process_finding(
+                        vuln, image, target, image_sha=short_sha
+                    )
                     batch.append(report)
                     if len(batch) >= self.FINDING_BATCH_SIZE:
                         yield batch
@@ -585,7 +606,9 @@ class ImageProvider(Provider):
 
                 # Process Secrets
                 for secret in result.get("Secrets", []):
-                    report = self._process_finding(secret, target, "secret")
+                    report = self._process_finding(
+                        secret, image, target, image_sha=short_sha
+                    )
                     batch.append(report)
                     if len(batch) >= self.FINDING_BATCH_SIZE:
                         yield batch
@@ -594,7 +617,7 @@ class ImageProvider(Provider):
                 # Process Misconfigurations (from Dockerfile)
                 for misconfig in result.get("Misconfigurations", []):
                     report = self._process_finding(
-                        misconfig, target, "misconfiguration"
+                        misconfig, image, target, image_sha=short_sha
                     )
                     batch.append(report)
                     if len(batch) >= self.FINDING_BATCH_SIZE:

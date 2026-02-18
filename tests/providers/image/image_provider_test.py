@@ -20,6 +20,7 @@ from prowler.providers.image.exceptions.exceptions import (
 )
 from prowler.providers.image.image_provider import ImageProvider
 from tests.providers.image.image_fixtures import (
+    SAMPLE_IMAGE_SHA,
     SAMPLE_MISCONFIGURATION_FINDING,
     SAMPLE_SECRET_FINDING,
     SAMPLE_UNKNOWN_SEVERITY_FINDING,
@@ -27,6 +28,8 @@ from tests.providers.image.image_fixtures import (
     get_empty_trivy_output,
     get_invalid_trivy_output,
     get_multi_type_trivy_output,
+    get_no_metadata_trivy_output,
+    get_repo_digest_only_trivy_output,
     get_sample_trivy_json_output,
 )
 
@@ -120,21 +123,24 @@ class TestImageProvider:
         provider = _make_provider()
         report = provider._process_finding(
             SAMPLE_VULNERABILITY_FINDING,
+            "alpine:3.18",
             "alpine:3.18 (alpine 3.18.0)",
-            "alpine",
+            image_sha="c1aabb73d233",
         )
 
         assert isinstance(report, CheckReportImage)
         assert report.status == "FAIL"
         assert report.check_metadata.CheckID == "CVE-2024-1234"
         assert report.check_metadata.Severity == "high"
-        assert report.check_metadata.ServiceName == "alpine"
+        assert report.check_metadata.ServiceName == "container-image"
         assert report.check_metadata.ResourceType == "container-image"
         assert report.check_metadata.ResourceGroup == "container"
         assert report.package_name == "openssl"
         assert report.installed_version == "1.1.1k-r0"
         assert report.fixed_version == "1.1.1l-r0"
-        assert report.resource_name == "alpine:3.18 (alpine 3.18.0)"
+        assert report.resource_name == "alpine:3.18"
+        assert report.image_sha == "c1aabb73d233"
+        assert report.resource_details == "alpine:3.18 (alpine 3.18.0)"
         assert report.region == "container"
         assert report.check_metadata.Categories == ["vulnerability"]
         assert report.check_metadata.RelatedUrl == ""
@@ -145,14 +151,14 @@ class TestImageProvider:
         report = provider._process_finding(
             SAMPLE_SECRET_FINDING,
             "myimage:latest",
-            "secret",
+            "myimage:latest (debian 12)",
         )
 
         assert isinstance(report, CheckReportImage)
         assert report.status == "FAIL"
         assert report.check_metadata.CheckID == "aws-access-key-id"
         assert report.check_metadata.Severity == "critical"
-        assert report.check_metadata.ServiceName == "secret"
+        assert report.check_metadata.ServiceName == "container-image"
         assert report.check_metadata.Categories == ["secrets"]
 
     def test_process_finding_misconfiguration(self):
@@ -161,13 +167,13 @@ class TestImageProvider:
         report = provider._process_finding(
             SAMPLE_MISCONFIGURATION_FINDING,
             "myimage:latest",
-            "misconfiguration",
+            "myimage:latest (debian 12)",
         )
 
         assert isinstance(report, CheckReportImage)
         assert report.check_metadata.CheckID == "DS001"
         assert report.check_metadata.Severity == "medium"
-        assert report.check_metadata.ServiceName == "misconfiguration"
+        assert report.check_metadata.ServiceName == "container-image"
         assert report.check_metadata.Categories == []
 
     def test_process_finding_unknown_severity(self):
@@ -176,7 +182,7 @@ class TestImageProvider:
         report = provider._process_finding(
             SAMPLE_UNKNOWN_SEVERITY_FINDING,
             "myimage:latest",
-            "alpine",
+            "myimage:latest (alpine 3.18.0)",
         )
 
         assert report.check_metadata.Severity == "informational"
@@ -195,6 +201,9 @@ class TestImageProvider:
 
         assert len(reports) == 1
         assert reports[0].check_metadata.CheckID == "CVE-2024-1234"
+        assert reports[0].image_sha == SAMPLE_IMAGE_SHA
+        assert reports[0].resource_name == "alpine:3.18"
+        assert reports[0].check_metadata.ServiceName == "container-image"
 
     @patch("subprocess.run")
     def test_run_scan_empty_output(self, mock_subprocess):
@@ -393,6 +402,51 @@ class TestImageProvider:
         with pytest.raises(ImageScanError, match="401 unauthorized"):
             for _ in provider._scan_single_image("private/image:latest"):
                 pass
+
+    @patch("subprocess.run")
+    def test_sha_extraction_from_image_id(self, mock_subprocess):
+        """Test that image_sha is extracted from Trivy Metadata.ImageID."""
+        provider = _make_provider()
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
+        )
+
+        reports = []
+        for batch in provider._scan_single_image("alpine:3.18"):
+            reports.extend(batch)
+
+        assert len(reports) == 1
+        assert reports[0].image_sha == SAMPLE_IMAGE_SHA
+
+    @patch("subprocess.run")
+    def test_sha_extraction_fallback_to_repo_digests(self, mock_subprocess):
+        """Test that image_sha falls back to RepoDigests when ImageID is absent."""
+        provider = _make_provider()
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_repo_digest_only_trivy_output(), stderr=""
+        )
+
+        reports = []
+        for batch in provider._scan_single_image("alpine:3.18"):
+            reports.extend(batch)
+
+        assert len(reports) == 1
+        assert reports[0].image_sha == "e5f6g7h8i9j0"
+
+    @patch("subprocess.run")
+    def test_sha_extraction_no_metadata(self, mock_subprocess):
+        """Test that image_sha is empty when no Metadata is present."""
+        provider = _make_provider()
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_no_metadata_trivy_output(), stderr=""
+        )
+
+        reports = []
+        for batch in provider._scan_single_image("alpine:3.18"):
+            reports.extend(batch)
+
+        assert len(reports) == 1
+        assert reports[0].image_sha == ""
 
     @patch("subprocess.run")
     def test_run_scan_propagates_scan_error(self, mock_subprocess):

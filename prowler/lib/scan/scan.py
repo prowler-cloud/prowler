@@ -358,11 +358,17 @@ class Scan:
                     for i, (image_name, image_reports) in enumerate(
                         self._provider.scan_per_image()
                     ):
+                        # Build resource UID from image name + SHA (all reports share the same SHA)
+                        image_sha = image_reports[0].image_sha if image_reports else ""
+                        resource_uid = (
+                            f"{image_name}:{image_sha}" if image_sha else image_name
+                        )
+
                         findings = []
                         for report in image_reports:
                             finding_uid = (
                                 f"{report.check_metadata.CheckID}"
-                                f"-{report.resource_name}"
+                                f"-{image_name}"
                                 f"-{report.resource_id}"
                             )
                             status_enum = (
@@ -382,9 +388,9 @@ class Scan:
                                 status=status_enum,
                                 status_extended=report.status_extended,
                                 muted=report.muted,
-                                resource_uid=report.resource_id,
+                                resource_uid=resource_uid,
                                 resource_metadata=report.resource,
-                                resource_name=report.resource_name,
+                                resource_name=image_name,
                                 resource_details=report.resource_details,
                                 resource_tags={},
                                 region=report.region,

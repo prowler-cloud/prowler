@@ -450,7 +450,7 @@ class TestImageScanPath:
         )
 
     @staticmethod
-    def _make_report(check_id, image_name, status="FAIL"):
+    def _make_report(check_id, image_name, status="FAIL", image_sha="abc123def456"):
         report = MagicMock()
         report.check_metadata = TestImageScanPath._make_check_metadata(check_id)
         report.resource_name = image_name
@@ -461,6 +461,7 @@ class TestImageScanPath:
         report.resource = {}
         report.resource_details = ""
         report.region = "container"
+        report.image_sha = image_sha
         return report
 
     @pytest.fixture
@@ -492,6 +493,10 @@ class TestImageScanPath:
             assert f.status.name in ("PASS", "FAIL")
             assert f.auth_method == "Registry"
             assert f.account_name == "Container Registry"
+            # resource_uid should be image_name:sha
+            assert ":abc123def456" in f.resource_uid
+            # resource_name should be clean image name
+            assert f.resource_name in ("img1:latest", "img2:latest")
 
     def test_image_scan_progress_tracking(self, mock_image_provider):
         """Verify progress increments per image."""
