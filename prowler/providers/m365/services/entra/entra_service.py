@@ -1,4 +1,5 @@
 import asyncio
+import json
 from asyncio import gather
 from enum import Enum
 from typing import Dict, List, Optional
@@ -530,14 +531,21 @@ OAuthAppInfo
                         continue
 
                     # Parse the permissions array
+                    # Permissions can be a list of JSON strings or a list of dicts
                     permissions = []
                     raw_permissions = row_data.get("Permissions", [])
                     if raw_permissions:
                         for perm in raw_permissions:
+                            # Parse JSON string if needed
+                            if isinstance(perm, str):
+                                try:
+                                    perm = json.loads(perm)
+                                except json.JSONDecodeError:
+                                    continue
                             if isinstance(perm, dict):
                                 permissions.append(
                                     OAuthAppPermission(
-                                        name=str(perm.get("PermissionName", "")),
+                                        name=str(perm.get("PermissionValue", "")),
                                         target_app_id=str(perm.get("TargetAppId", "")),
                                         target_app_name=str(
                                             perm.get("TargetAppDisplayName", "")
@@ -556,7 +564,7 @@ OAuthAppInfo
                                         privilege_level=str(
                                             perm.get("PrivilegeLevel", "")
                                         ),
-                                        usage_status=str(perm.get("UsageStatus", "")),
+                                        usage_status=str(perm.get("InUse", "")),
                                     )
                                 )
 
