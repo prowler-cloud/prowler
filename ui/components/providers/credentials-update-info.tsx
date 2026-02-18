@@ -1,5 +1,6 @@
 "use client";
 
+import { SelectViaAlibabaCloud } from "@/components/providers/workflow/forms/select-credentials-type/alibabacloud";
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
 import { SelectViaGCP } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
 import { SelectViaGitHub } from "@/components/providers/workflow/forms/select-credentials-type/github";
@@ -27,6 +28,9 @@ export const CredentialsUpdateInfo = ({
     }
     if (providerType === "m365") {
       return <SelectViaM365 initialVia={initialVia} />;
+    }
+    if (providerType === "alibabacloud") {
+      return <SelectViaAlibabaCloud initialVia={initialVia} />;
     }
     return null;
   };

@@ -64,7 +64,12 @@ class Provider(str, Enum):
     ORACLECLOUD = "oraclecloud"
     ALIBABACLOUD = "alibabacloud"
     OPENSTACK = "openstack"
+    IMAGE = "image"
 
+
+# Providers that delegate scanning to an external tool (e.g. Trivy, promptfoo)
+# and bypass standard check/service loading.
+EXTERNAL_TOOL_PROVIDERS = frozenset({"iac", "llm", "image"})
 
 # Compliance
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))

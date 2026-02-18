@@ -6,6 +6,7 @@ from config.django.base import DJANGO_TMP_OUTPUT_DIRECTORY
 from tasks.jobs.export import _generate_compliance_output_directory, _upload_to_s3
 from tasks.jobs.reports import (
     FRAMEWORK_REGISTRY,
+    CSAReportGenerator,
     ENSReportGenerator,
     NIS2ReportGenerator,
     ThreatScoreReportGenerator,
@@ -147,6 +148,49 @@ def generate_nis2_report(
     )
 
 
+def generate_csa_report(
+    tenant_id: str,
+    scan_id: str,
+    compliance_id: str,
+    output_path: str,
+    provider_id: str,
+    only_failed: bool = True,
+    include_manual: bool = False,
+    provider_obj: Provider | None = None,
+    requirement_statistics: dict[str, dict[str, int]] | None = None,
+    findings_cache: dict[str, list[FindingOutput]] | None = None,
+) -> None:
+    """
+    Generate a PDF compliance report for CSA Cloud Controls Matrix (CCM) v4.0.
+
+    Args:
+        tenant_id: The tenant ID for Row-Level Security context.
+        scan_id: ID of the scan executed by Prowler.
+        compliance_id: ID of the compliance framework (e.g., "csa_ccm_4.0_aws").
+        output_path: Output PDF file path.
+        provider_id: Provider ID for the scan.
+        only_failed: If True, only include failed requirements in detailed section.
+        include_manual: If True, include manual requirements in detailed section.
+        provider_obj: Pre-fetched Provider object to avoid duplicate queries.
+        requirement_statistics: Pre-aggregated requirement statistics.
+        findings_cache: Cache of already loaded findings to avoid duplicate queries.
+    """
+    generator = CSAReportGenerator(FRAMEWORK_REGISTRY["csa_ccm"])
+
+    generator.generate(
+        tenant_id=tenant_id,
+        scan_id=scan_id,
+        compliance_id=compliance_id,
+        output_path=output_path,
+        provider_id=provider_id,
+        provider_obj=provider_obj,
+        requirement_statistics=requirement_statistics,
+        findings_cache=findings_cache,
+        only_failed=only_failed,
+        include_manual=include_manual,
+    )
+
+
 def generate_compliance_reports(
     tenant_id: str,
     scan_id: str,
@@ -154,11 +198,14 @@ def generate_compliance_reports(
     generate_threatscore: bool = True,
     generate_ens: bool = True,
     generate_nis2: bool = True,
+    generate_csa: bool = True,
     only_failed_threatscore: bool = True,
     min_risk_level_threatscore: int = 4,
     include_manual_ens: bool = True,
     include_manual_nis2: bool = False,
     only_failed_nis2: bool = True,
+    only_failed_csa: bool = True,
+    include_manual_csa: bool = False,
 ) -> dict[str, dict[str, bool | str]]:
     """
     Generate multiple compliance reports with shared database queries.
@@ -175,23 +222,27 @@ def generate_compliance_reports(
         generate_threatscore: Whether to generate ThreatScore report.
         generate_ens: Whether to generate ENS report.
         generate_nis2: Whether to generate NIS2 report.
+        generate_csa: Whether to generate CSA CCM report.
         only_failed_threatscore: For ThreatScore, only include failed requirements.
         min_risk_level_threatscore: Minimum risk level for ThreatScore critical requirements.
         include_manual_ens: For ENS, include manual requirements.
         include_manual_nis2: For NIS2, include manual requirements.
         only_failed_nis2: For NIS2, only include failed requirements.
+        only_failed_csa: For CSA CCM, only include failed requirements.
+        include_manual_csa: For CSA CCM, include manual requirements.
 
     Returns:
         Dictionary with results for each report type.
     """
     logger.info(
         "Generating compliance reports for scan %s with provider %s"
-        " (ThreatScore: %s, ENS: %s, NIS2: %s)",
+        " (ThreatScore: %s, ENS: %s, NIS2: %s, CSA: %s)",
         scan_id,
         provider_id,
         generate_threatscore,
         generate_ens,
         generate_nis2,
+        generate_csa,
     )
 
     results = {}
@@ -206,6 +257,8 @@ def generate_compliance_reports(
                 results["ens"] = {"upload": False, "path": ""}
             if generate_nis2:
                 results["nis2"] = {"upload": False, "path": ""}
+            if generate_csa:
+                results["csa"] = {"upload": False, "path": ""}
             return results
 
         provider_obj = Provider.objects.get(id=provider_id)
@@ -235,7 +288,23 @@ def generate_compliance_reports(
         results["nis2"] = {"upload": False, "path": ""}
         generate_nis2 = False
 
-    if not generate_threatscore and not generate_ens and not generate_nis2:
+    if generate_csa and provider_type not in [
+        "aws",
+        "azure",
+        "gcp",
+        "oraclecloud",
+        "alibabacloud",
+    ]:
+        logger.info("Provider %s not supported for CSA CCM report", provider_type)
+        results["csa"] = {"upload": False, "path": ""}
+        generate_csa = False
+
+    if (
+        not generate_threatscore
+        and not generate_ens
+        and not generate_nis2
+        and not generate_csa
+    ):
         return results
 
     # Aggregate requirement statistics once
@@ -274,6 +343,13 @@ def generate_compliance_reports(
             scan_id,
             compliance_framework="nis2",
         )
+        csa_path = _generate_compliance_output_directory(
+            DJANGO_TMP_OUTPUT_DIRECTORY,
+            provider_uid,
+            tenant_id,
+            scan_id,
+            compliance_framework="csa",
+        )
         out_dir = str(Path(threatscore_path).parent.parent)
     except Exception as e:
         logger.error("Error generating output directory: %s", e)
@@ -284,6 +360,8 @@ def generate_compliance_reports(
             results["ens"] = error_dict.copy()
         if generate_nis2:
             results["nis2"] = error_dict.copy()
+        if generate_csa:
+            results["csa"] = error_dict.copy()
         return results
 
     # Generate ThreatScore report
@@ -456,6 +534,41 @@ def generate_compliance_reports(
             logger.error("Error generating NIS2 report: %s", e)
             results["nis2"] = {"upload": False, "path": "", "error": str(e)}
 
+    # Generate CSA CCM report
+    if generate_csa:
+        compliance_id_csa = f"csa_ccm_4.0_{provider_type}"
+        pdf_path_csa = f"{csa_path}_csa_report.pdf"
+        logger.info("Generating CSA CCM report with compliance %s", compliance_id_csa)
+
+        try:
+            generate_csa_report(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                compliance_id=compliance_id_csa,
+                output_path=pdf_path_csa,
+                provider_id=provider_id,
+                only_failed=only_failed_csa,
+                include_manual=include_manual_csa,
+                provider_obj=provider_obj,
+                requirement_statistics=requirement_statistics,
+                findings_cache=findings_cache,
+            )
+
+            upload_uri_csa = _upload_to_s3(
+                tenant_id, scan_id, pdf_path_csa, f"csa/{Path(pdf_path_csa).name}"
+            )
+
+            if upload_uri_csa:
+                results["csa"] = {"upload": True, "path": upload_uri_csa}
+                logger.info("CSA CCM report uploaded to %s", upload_uri_csa)
+            else:
+                results["csa"] = {"upload": False, "path": out_dir}
+                logger.warning("CSA CCM report saved locally at %s", out_dir)
+
+        except Exception as e:
+            logger.error("Error generating CSA CCM report: %s", e)
+            results["csa"] = {"upload": False, "path": "", "error": str(e)}
+
     # Clean up temporary files if all reports were uploaded successfully
     all_uploaded = all(
         result.get("upload", False)
@@ -481,6 +594,7 @@ def generate_compliance_reports_job(
     generate_threatscore: bool = True,
     generate_ens: bool = True,
     generate_nis2: bool = True,
+    generate_csa: bool = True,
 ) -> dict[str, dict[str, bool | str]]:
     """
     Celery task wrapper for generate_compliance_reports.
@@ -492,6 +606,7 @@ def generate_compliance_reports_job(
         generate_threatscore: Whether to generate ThreatScore report.
         generate_ens: Whether to generate ENS report.
         generate_nis2: Whether to generate NIS2 report.
+        generate_csa: Whether to generate CSA CCM report.
 
     Returns:
         Dictionary with results for each report type.
@@ -503,4 +618,5 @@ def generate_compliance_reports_job(
         generate_threatscore=generate_threatscore,
         generate_ens=generate_ens,
         generate_nis2=generate_nis2,
+        generate_csa=generate_csa,
     )

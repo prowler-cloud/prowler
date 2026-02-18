@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional, Set
 from pydantic.v1 import BaseModel, Field, ValidationError, validator
 from pydantic.v1.error_wrappers import ErrorWrapper
 
-from prowler.config.config import Provider
+from prowler.config.config import EXTERNAL_TOOL_PROVIDERS, Provider
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
@@ -159,11 +159,7 @@ class CheckMetadata(BaseModel):
             raise ValueError("ServiceName must be a non-empty string")
 
         check_id = values.get("CheckID")
-        if (
-            check_id
-            and values.get("Provider") != "iac"
-            and values.get("Provider") != "llm"
-        ):
+        if check_id and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
             service_from_check_id = check_id.split("_")[0]
             if service_name != service_from_check_id:
                 raise ValueError(
@@ -179,11 +175,7 @@ class CheckMetadata(BaseModel):
         if not check_id:
             raise ValueError("CheckID must be a non-empty string")
 
-        if (
-            check_id
-            and values.get("Provider") != "iac"
-            and values.get("Provider") != "llm"
-        ):
+        if check_id and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
             if "-" in check_id:
                 raise ValueError(
                     f"CheckID {check_id} contains a hyphen, which is not allowed"
@@ -902,6 +894,49 @@ class CheckReportIAC(Check_Report):
             if finding.get("CauseMetadata", {}).get("StartLine", "")
             else ""
         )
+
+
+@dataclass
+class CheckReportImage(Check_Report):
+    """Contains the Container Image Check's finding information using Trivy."""
+
+    resource_name: str
+    resource_id: str
+    image_digest: str
+    package_name: str
+    installed_version: str
+    fixed_version: str
+
+    def __init__(
+        self,
+        metadata: Optional[dict] = None,
+        finding: Optional[dict] = None,
+        image_name: str = "",
+    ) -> None:
+        """
+        Initialize the Container Image Check's finding information from a Trivy vulnerability/secret dict.
+
+        Args:
+            metadata (Dict): Check metadata.
+            finding (dict): A single vulnerability/secret result from Trivy's JSON output.
+            image_name (str): The container image name being scanned.
+        """
+        if metadata is None:
+            metadata = {}
+        if finding is None:
+            finding = {}
+        super().__init__(metadata, finding)
+
+        self.resource_name = image_name
+        self.resource_id = (
+            finding.get("VulnerabilityID", "")
+            or finding.get("RuleID", "")
+            or finding.get("ID", "")
+        )
+        self.image_digest = finding.get("PkgID", "")
+        self.package_name = finding.get("PkgName", "")
+        self.installed_version = finding.get("InstalledVersion", "")
+        self.fixed_version = finding.get("FixedVersion", "")
 
 
 @dataclass

@@ -281,6 +281,18 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
                     )
+                elif "image" in provider_class_name.lower():
+                    provider_class(
+                        images=arguments.images,
+                        image_list_file=arguments.image_list_file,
+                        scanners=arguments.scanners,
+                        image_config_scanners=arguments.image_config_scanners,
+                        trivy_severity=arguments.trivy_severity,
+                        ignore_unfixed=arguments.ignore_unfixed,
+                        timeout=arguments.timeout,
+                        config_path=arguments.config_file,
+                        fixer_config=fixer_config,
+                    )
                 elif "mongodbatlas" in provider_class_name.lower():
                     provider_class(
                         atlas_public_key=arguments.atlas_public_key,
@@ -304,6 +316,9 @@ class Provider(ABC):
                 elif "openstack" in provider_class_name.lower():
                     provider_class(
                         clouds_yaml_file=getattr(arguments, "clouds_yaml_file", None),
+                        clouds_yaml_content=getattr(
+                            arguments, "clouds_yaml_content", None
+                        ),
                         clouds_yaml_cloud=getattr(arguments, "clouds_yaml_cloud", None),
                         auth_url=getattr(arguments, "os_auth_url", None),
                         identity_api_version=getattr(

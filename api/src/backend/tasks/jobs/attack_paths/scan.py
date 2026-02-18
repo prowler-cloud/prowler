@@ -169,6 +169,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             sync.create_sync_indexes(tenant_neo4j_session)
 
         logger.info(f"Deleting existing provider graph in {tenant_database_name}")
+        db_utils.set_provider_graph_data_ready(attack_paths_scan, False)
         graph_database.drop_subgraph(
             database=tenant_database_name,
             provider_id=str(prowler_api_provider.id),
@@ -183,6 +184,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             target_database=tenant_database_name,
             provider_id=str(prowler_api_provider.id),
         )
+        db_utils.set_graph_data_ready(attack_paths_scan, True)
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 99)
 
         logger.info(f"Clearing Neo4j cache for database {tenant_database_name}")
@@ -192,30 +194,6 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             f"Completed Cartography ({attack_paths_scan.id}) for "
             f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
-
-        # TODO
-        # This piece of code delete old Neo4j databases for this tenant's provider
-        # When we clean all of these databases we need to:
-        #   - Delete this block
-        #   - Delete function from `db_utils` the functions get_old_attack_paths_scans` & `update_old_attack_paths_scan`
-        #   - Remove `graph_database` & `is_graph_database_deleted` from the AttackPathsScan model:
-        #     - Check indexes
-        #     - Create migration
-        #     - The use of `attack_paths_scan.graph_database` on `views` and `views_helpers`
-        #     - Tests
-        old_attack_paths_scans = db_utils.get_old_attack_paths_scans(
-            prowler_api_provider.tenant_id,
-            prowler_api_provider.id,
-            attack_paths_scan.id,
-        )
-        for old_attack_paths_scan in old_attack_paths_scans:
-            old_graph_database = old_attack_paths_scan.graph_database
-            if old_graph_database and old_graph_database != tenant_database_name:
-                logger.info(
-                    f"Dropping old Neo4j database {old_graph_database} for provider {prowler_api_provider.id}"
-                )
-                graph_database.drop_database(old_graph_database)
-            db_utils.update_old_attack_paths_scan(old_attack_paths_scan)
 
         logger.info(f"Dropping temporary Neo4j database {tmp_database_name}")
         graph_database.drop_database(tmp_database_name)
@@ -228,10 +206,17 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     except Exception as e:
         exception_message = utils.stringify_exception(e, "Cartography failed")
         logger.error(exception_message)
-        ingestion_exceptions["global_cartography_error"] = exception_message
+        ingestion_exceptions["global_error"] = exception_message
 
         # Handling databases changes
-        graph_database.drop_database(tmp_cartography_config.neo4j_database)
+        try:
+            graph_database.drop_database(tmp_cartography_config.neo4j_database)
+
+        except Exception:
+            logger.exception(
+                f"Failed to drop temporary Neo4j database {tmp_cartography_config.neo4j_database} during cleanup"
+            )
+
         db_utils.finish_attack_paths_scan(
             attack_paths_scan, StateChoices.FAILED, ingestion_exceptions
         )
