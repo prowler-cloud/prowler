@@ -61,8 +61,9 @@ jobs:
 
       - name: Safety
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run safety check --ignore 79023,79027
+        run: poetry run safety check --ignore 79023,79027,84420
         # TODO: 79023 & 79027 knack ReDoS until `azure-cli-core` (via `cartography`) allows `knack` >=0.13.0
+        # TODO: 84420 from `azure-core`, that we need fix alltogether with `azure-cli-core` and `knack`
 
       - name: Vulture
         if: steps.check-changes.outputs.any_changed == 'true'

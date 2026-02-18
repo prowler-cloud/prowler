@@ -1080,6 +1080,11 @@ class TestProviderViewSet:
                 {"provider": "aws", "uid": "111111111111", "alias": "test"},
                 {"provider": "gcp", "uid": "a12322-test54321", "alias": "test"},
                 {
+                    "provider": "gcp",
+                    "uid": "example.com:my-project-123456",
+                    "alias": "legacy-gcp",
+                },
+                {
                     "provider": "kubernetes",
                     "uid": "kubernetes-test-123456789",
                     "alias": "test",
@@ -1198,6 +1203,11 @@ class TestProviderViewSet:
             [
                 {"provider": "aws", "uid": "111111111111", "alias": "test"},
                 {"provider": "gcp", "uid": "a12322-test54321", "alias": "test"},
+                {
+                    "provider": "gcp",
+                    "uid": "example.com:my-project-123456",
+                    "alias": "legacy-gcp",
+                },
                 {
                     "provider": "kubernetes",
                     "uid": "kubernetes-test-123456789",
