@@ -77,6 +77,7 @@ export function EnhancedMultiSelect({
 
   const buttonRef = useRef<HTMLButtonElement>(null);
   const prevDefaultValueRef = useRef<string[]>(defaultValue);
+  const selectedAtOpenRef = useRef<string[]>(selectedValues);
   const multiSelectId = useId();
   const listboxId = `${multiSelectId}-listbox`;
 
@@ -105,10 +106,14 @@ export function EnhancedMultiSelect({
     }
   }, [defaultValue, selectedValues, resetOnDefaultValueChange]);
 
-  // Clear search when popover closes
-  useEffect(() => {
-    if (!open) setSearch("");
-  }, [open]);
+  function handleOpenChange(nextOpen: boolean) {
+    if (nextOpen) {
+      selectedAtOpenRef.current = [...selectedValues];
+    } else {
+      setSearch("");
+    }
+    setOpen(nextOpen);
+  }
 
   const enabledOptions = options.filter((o) => !o.disabled);
 
@@ -121,8 +126,9 @@ export function EnhancedMultiSelect({
         )
       : options
   ).toSorted((a, b) => {
-    const aSelected = selectedValues.includes(a.value) ? 0 : 1;
-    const bSelected = selectedValues.includes(b.value) ? 0 : 1;
+    const snapshot = selectedAtOpenRef.current;
+    const aSelected = snapshot.includes(a.value) ? 0 : 1;
+    const bSelected = snapshot.includes(b.value) ? 0 : 1;
     return aSelected - bSelected;
   });
 
@@ -161,7 +167,7 @@ export function EnhancedMultiSelect({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           id={id}
