@@ -697,6 +697,30 @@
   },
   {
     "section": "devDependencies",
+    "name": "@testing-library/jest-dom",
+    "from": "6.9.1",
+    "to": "6.9.1",
+    "strategy": "installed",
+    "generatedAt": "2026-01-29T16:42:27.795Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@testing-library/react",
+    "from": "16.3.2",
+    "to": "16.3.2",
+    "strategy": "installed",
+    "generatedAt": "2026-01-29T16:42:27.795Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@testing-library/user-event",
+    "from": "14.6.1",
+    "to": "14.6.1",
+    "strategy": "installed",
+    "generatedAt": "2026-01-29T16:42:27.795Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "@types/d3",
     "from": "7.4.3",
     "to": "7.4.3",
@@ -774,6 +798,22 @@
     "to": "8.53.0",
     "strategy": "installed",
     "generatedAt": "2026-01-19T13:54:24.770Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@vitejs/plugin-react",
+    "from": "5.1.2",
+    "to": "5.1.2",
+    "strategy": "installed",
+    "generatedAt": "2026-01-29T16:42:27.795Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@vitest/coverage-v8",
+    "from": "4.0.18",
+    "to": "4.0.18",
+    "strategy": "installed",
+    "generatedAt": "2026-01-29T16:42:27.795Z"
   },
   {
     "section": "devDependencies",
@@ -913,6 +953,14 @@
   },
   {
     "section": "devDependencies",
+    "name": "jsdom",
+    "from": "27.4.0",
+    "to": "27.4.0",
+    "strategy": "installed",
+    "generatedAt": "2026-01-29T16:42:27.795Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "lint-staged",
     "from": "15.5.2",
     "to": "15.5.2",
@@ -974,5 +1022,13 @@
     "to": "5.5.4",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "vitest",
+    "from": "4.0.18",
+    "to": "4.0.18",
+    "strategy": "installed",
+    "generatedAt": "2026-01-29T16:42:27.795Z"
   }
 ]
