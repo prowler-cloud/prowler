@@ -18,7 +18,13 @@ class entra_app_registration_no_unused_privileged_permissions(Check):
       It also fails when OAuth App Governance data is not available.
     """
 
-    _UNUSED_STATUSES = {"notinuse", "not in use"}
+    # InUse field values from OAuthAppInfo:
+    # - "true" / "1" / "True" = permission is actively used
+    # - "false" / "0" / "False" = permission is NOT used (this triggers FAIL)
+    # - "Not supported" = Microsoft cannot determine usage
+    # - "" (empty) = No tracking data available
+    # Note: Microsoft is changing from numeric (1/0) to textual (True/False) on Feb 25, 2026
+    _UNUSED_STATUSES = {"false", "0", "notinuse", "not in use"}
     _PRIVILEGED_PLANE_LABELS = ("control plane", "management plane")
 
     def execute(self) -> list[CheckReportM365]:
@@ -85,9 +91,8 @@ class entra_app_registration_no_unused_privileged_permissions(Check):
                 is_privileged = self._is_privileged_permission(permission)
 
                 # Check if the permission is unused
-                is_unused = (
-                    self._normalize(permission.usage_status) in self._UNUSED_STATUSES
-                )
+                normalized_usage = self._normalize(permission.usage_status)
+                is_unused = normalized_usage in self._UNUSED_STATUSES
 
                 if is_privileged and is_unused:
                     unused_privileged_permissions.append(permission.name)
@@ -95,11 +100,7 @@ class entra_app_registration_no_unused_privileged_permissions(Check):
             if unused_privileged_permissions:
                 # The app has unused privileged permissions
                 report.status = "FAIL"
-                permissions_list = ", ".join(unused_privileged_permissions[:5])
-                if len(unused_privileged_permissions) > 5:
-                    permissions_list += (
-                        f" (and {len(unused_privileged_permissions) - 5} more)"
-                    )
+                permissions_list = ", ".join(unused_privileged_permissions)
                 report.status_extended = (
                     f"App registration {app.name} has {len(unused_privileged_permissions)} "
                     f"unused privileged permission(s): {permissions_list}."
