@@ -2,7 +2,7 @@ import uuid
 from functools import wraps
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import IntegrityError, connection, transaction
+from django.db import DatabaseError, connection, transaction
 from rest_framework_json_api.serializers import ValidationError
 
 from api.db_router import READ_REPLICA_ALIAS
@@ -74,12 +74,13 @@ def set_tenant(func=None, *, keep_tenant=False):
 
 def handle_provider_deletion(func):
     """
-    Decorator that raises ProviderDeletedException if provider was deleted during execution.
+    Decorator that raises `ProviderDeletedException` if provider was deleted during execution.
 
-    Catches ObjectDoesNotExist and IntegrityError, checks if provider still exists,
-    and raises ProviderDeletedException if not. Otherwise, re-raises original exception.
+    Catches `ObjectDoesNotExist` and `DatabaseError` (including `IntegrityError`), checks if
+    provider still exists, and raises `ProviderDeletedException` if not. Otherwise,
+    re-raises original exception.
 
-    Requires tenant_id and provider_id in kwargs.
+    Requires `tenant_id` and `provider_id` in kwargs.
 
     Example:
         @shared_task
@@ -92,7 +93,7 @@ def handle_provider_deletion(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except (ObjectDoesNotExist, IntegrityError):
+        except (ObjectDoesNotExist, DatabaseError):
             tenant_id = kwargs.get("tenant_id")
             provider_id = kwargs.get("provider_id")
 

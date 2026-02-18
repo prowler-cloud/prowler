@@ -383,6 +383,7 @@ class AttackPathsScanRLSTask(RLSTask):
     name="attack-paths-scan-perform",
     queue="attack-paths-scans",
 )
+@handle_provider_deletion
 def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
     """
     Execute an Attack Paths scan for the given provider within the current tenant RLS context.
