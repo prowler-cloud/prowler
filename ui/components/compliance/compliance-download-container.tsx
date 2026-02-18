@@ -12,7 +12,7 @@ import {
 } from "@/lib/helper";
 import { cn } from "@/lib/utils";
 
-interface ComplianceDownloadButtonsProps {
+interface ComplianceDownloadContainerProps {
   scanId: string;
   complianceId: string;
   reportType?: ComplianceReportType;
@@ -20,13 +20,13 @@ interface ComplianceDownloadButtonsProps {
   disabled?: boolean;
 }
 
-export const ComplianceDownloadButtons = ({
+export const ComplianceDownloadContainer = ({
   scanId,
   complianceId,
   reportType,
   compact = false,
   disabled = false,
-}: ComplianceDownloadButtonsProps) => {
+}: ComplianceDownloadContainerProps) => {
   const [isDownloadingCsv, setIsDownloadingCsv] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 

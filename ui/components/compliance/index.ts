@@ -12,7 +12,7 @@ export * from "./compliance-charts/top-failed-sections-card";
 export * from "./compliance-custom-details/cis-details";
 export * from "./compliance-custom-details/ens-details";
 export * from "./compliance-custom-details/iso-details";
-export * from "./compliance-download-buttons";
+export * from "./compliance-download-container";
 export * from "./compliance-header/compliance-header";
 export * from "./compliance-header/compliance-scan-info";
 export * from "./compliance-header/data-compliance";

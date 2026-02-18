@@ -9,7 +9,7 @@ import {
 import { getThreatScore } from "@/actions/overview";
 import {
   ClientAccordionWrapper,
-  ComplianceDownloadButtons,
+  ComplianceDownloadContainer,
   ComplianceHeader,
   RequirementsStatusCard,
   RequirementsStatusCardSkeleton,
@@ -130,7 +130,7 @@ export default async function ComplianceDetail({
         </div>
         {selectedScanId && (
           <div className="mb-4 flex-shrink-0 self-end sm:mb-0 sm:self-start sm:pt-1">
-            <ComplianceDownloadButtons
+            <ComplianceDownloadContainer
               scanId={selectedScanId}
               complianceId={complianceId}
               reportType={getReportTypeForFramework(

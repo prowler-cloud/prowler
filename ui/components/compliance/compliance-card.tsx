@@ -9,7 +9,7 @@ import { getReportTypeForFramework } from "@/lib/compliance/compliance-report-ty
 import { ScanEntity } from "@/types/scans";
 
 import { getComplianceIcon } from "../icons";
-import { ComplianceDownloadButtons } from "./compliance-download-buttons";
+import { ComplianceDownloadContainer } from "./compliance-download-container";
 
 interface ComplianceCardProps {
   title: string;
@@ -136,7 +136,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
                 role="group"
                 tabIndex={0}
               >
-                <ComplianceDownloadButtons
+                <ComplianceDownloadContainer
                   compact
                   scanId={scanId}
                   complianceId={complianceId}
