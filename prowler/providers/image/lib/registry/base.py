@@ -82,6 +82,15 @@ class RegistryAdapter(ABC):
                     )
                     time.sleep(wait)
                     continue
+                if resp.status_code >= 500:
+                    last_status = resp.status_code
+                    wait = _BACKOFF_BASE * (2 ** (attempt - 1))
+                    logger.warning(
+                        f"Server error from {context_label} (HTTP {resp.status_code}), "
+                        f"retrying in {wait}s (attempt {attempt}/{_MAX_RETRIES})"
+                    )
+                    time.sleep(wait)
+                    continue
                 return resp
             except requests.exceptions.ConnectionError as exc:
                 last_exception = exc
@@ -102,6 +111,11 @@ class RegistryAdapter(ABC):
             raise ImageRegistryNetworkError(
                 file=__file__,
                 message=f"Rate limited by {context_label} after {_MAX_RETRIES} attempts.",
+            )
+        if last_status is not None and last_status >= 500:
+            raise ImageRegistryNetworkError(
+                file=__file__,
+                message=f"Server error from {context_label} (HTTP {last_status}) after {_MAX_RETRIES} attempts.",
             )
         raise ImageRegistryNetworkError(
             file=__file__,
