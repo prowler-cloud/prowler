@@ -990,19 +990,16 @@ export class ProvidersPage extends BasePage {
   }
 
   async selectAuthenticationMethod(method: AWSCredentialType): Promise<void> {
-    // Select the authentication method
+    // Select the authentication method (shadcn Select renders as combobox + listbox)
 
-    const button = this.page.locator("button").filter({
+    const trigger = this.page.locator('[role="combobox"]').filter({
       hasText: /AWS SDK Default|Prowler Cloud will assume|Access & Secret Key/i,
     });
 
-    await button.click();
+    await trigger.click();
 
-    const modal = this.page
-      .locator('[role="dialog"], .modal, [data-testid*="modal"]')
-      .first();
-
-    await expect(modal).toBeVisible({ timeout: 10000 });
+    const listbox = this.page.getByRole("listbox");
+    await expect(listbox).toBeVisible({ timeout: 10000 });
 
     if (method === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {
       await this.page
