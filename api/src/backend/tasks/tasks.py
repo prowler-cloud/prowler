@@ -134,13 +134,41 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         scan_id (str): The ID of the scan that was performed.
         provider_id (str): The primary key of the Provider instance that was scanned.
     """
-    chain(
-        create_compliance_requirements_task.si(tenant_id=tenant_id, scan_id=scan_id),
-        update_provider_compliance_scores_task.si(tenant_id=tenant_id, scan_id=scan_id),
-    ).apply_async()
-    aggregate_attack_surface_task.apply_async(
-        kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
+    with rls_transaction(tenant_id):
+        provider_type = Provider.objects.get(id=provider_id).provider
+
+    has_compliance = provider_type not in (
+        Provider.ProviderChoices.IAC.value,
+        Provider.ProviderChoices.IMAGE.value,
     )
+
+    if has_compliance:
+        chain(
+            create_compliance_requirements_task.si(
+                tenant_id=tenant_id, scan_id=scan_id
+            ),
+            update_provider_compliance_scores_task.si(
+                tenant_id=tenant_id, scan_id=scan_id
+            ),
+        ).apply_async()
+        aggregate_attack_surface_task.apply_async(
+            kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
+        )
+
+    final_group_tasks = [
+        check_integrations_task.si(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            scan_id=scan_id,
+        ),
+    ]
+    if has_compliance:
+        final_group_tasks.append(
+            generate_compliance_reports_task.si(
+                tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
+            ),
+        )
+
     chain(
         perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
         group(
@@ -149,17 +177,7 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
                 scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
             ),
         ),
-        group(
-            # Use optimized task that generates both reports with shared queries
-            generate_compliance_reports_task.si(
-                tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
-            ),
-            check_integrations_task.si(
-                tenant_id=tenant_id,
-                provider_id=provider_id,
-                scan_id=scan_id,
-            ),
-        ),
+        group(*final_group_tasks),
     ).apply_async()
 
     if can_provider_run_attack_paths_scan(tenant_id, provider_id):

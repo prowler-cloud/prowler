@@ -543,6 +543,12 @@ def providers_fixture(tenants_fixture):
         alias="openstack_testing",
         tenant_id=tenant.id,
     )
+    provider12 = Provider.objects.create(
+        provider="image",
+        uid="ghcr.io",
+        alias="image_testing",
+        tenant_id=tenant.id,
+    )
 
     return (
         provider1,
@@ -556,6 +562,7 @@ def providers_fixture(tenants_fixture):
         provider9,
         provider10,
         provider11,
+        provider12,
     )
 
 

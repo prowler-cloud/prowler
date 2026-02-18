@@ -58,12 +58,32 @@ class ImageBaseException(ProwlerException):
             "message": "Docker binary not found.",
             "remediation": "Install Docker to enable private registry authentication via docker login.",
         },
+        (11013, "ImageRegistryAuthError"): {
+            "message": "Registry authentication failed.",
+            "remediation": "Check REGISTRY_USERNAME/REGISTRY_PASSWORD or REGISTRY_TOKEN environment variables.",
+        },
+        (11014, "ImageRegistryCatalogError"): {
+            "message": "Registry does not support catalog listing.",
+            "remediation": "Use --image or --image-list instead of --registry.",
+        },
+        (11015, "ImageRegistryNetworkError"): {
+            "message": "Network error communicating with registry.",
+            "remediation": "Check registry URL and network connectivity.",
+        },
+        (11016, "ImageMaxImagesExceededError"): {
+            "message": "Discovered images exceed --max-images limit.",
+            "remediation": "Use --image-filter or --tag-filter to narrow results, or increase --max-images.",
+        },
+        (11017, "ImageInvalidFilterError"): {
+            "message": "Invalid regex filter pattern.",
+            "remediation": "Check the regex syntax for --image-filter or --tag-filter.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
         error_info = self.IMAGE_ERROR_CODES.get((code, self.__class__.__name__))
-        if message:
-            error_info["message"] = message
+        if error_info and message:
+            error_info = {**error_info, "message": message}
         super().__init__(
             code,
             source="Image",
@@ -173,7 +193,7 @@ class ImageInvalidConfigScannerError(ImageBaseException):
 
 
 class ImageDockerLoginError(ImageBaseException):
-    """Exception raised when docker login fails."""
+    """Exception raised when Docker login fails."""
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
@@ -182,9 +202,54 @@ class ImageDockerLoginError(ImageBaseException):
 
 
 class ImageDockerNotFoundError(ImageBaseException):
-    """Exception raised when the docker binary is not found."""
+    """Exception raised when Docker binary is not found."""
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             11012, file=file, original_exception=original_exception, message=message
+        )
+
+
+class ImageRegistryAuthError(ImageBaseException):
+    """Exception raised when registry authentication fails."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            11013, file=file, original_exception=original_exception, message=message
+        )
+
+
+class ImageRegistryCatalogError(ImageBaseException):
+    """Exception raised when registry does not support catalog listing."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            11014, file=file, original_exception=original_exception, message=message
+        )
+
+
+class ImageRegistryNetworkError(ImageBaseException):
+    """Exception raised when a network error occurs communicating with a registry."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            11015, file=file, original_exception=original_exception, message=message
+        )
+
+
+class ImageMaxImagesExceededError(ImageBaseException):
+    """Exception raised when discovered images exceed --max-images limit."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            11016, file=file, original_exception=original_exception, message=message
+        )
+
+
+class ImageInvalidFilterError(ImageBaseException):
+    """Exception raised when an invalid regex filter pattern is provided."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            11017, file=file, original_exception=original_exception, message=message
         )

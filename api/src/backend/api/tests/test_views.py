@@ -1189,6 +1189,26 @@ class TestProviderViewSet:
                     "uid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                     "alias": "OpenStack Project",
                 },
+                {
+                    "provider": "image",
+                    "uid": "ghcr.io",
+                    "alias": "GitHub Registry",
+                },
+                {
+                    "provider": "image",
+                    "uid": "docker.io",
+                    "alias": "Docker Hub",
+                },
+                {
+                    "provider": "image",
+                    "uid": "123456789012.dkr.ecr.us-east-1.amazonaws.com",
+                    "alias": "ECR",
+                },
+                {
+                    "provider": "image",
+                    "uid": "https://registry.example.com:5000",
+                    "alias": "Private",
+                },
             ]
         ),
     )
@@ -1633,6 +1653,26 @@ class TestProviderViewSet:
                     "min_length",
                     "uid",
                 ),
+                # Image UID validation - too short (below min_length)
+                (
+                    {
+                        "provider": "image",
+                        "uid": "ab",
+                        "alias": "test",
+                    },
+                    "min_length",
+                    "uid",
+                ),
+                # Image UID validation - invalid characters (space)
+                (
+                    {
+                        "provider": "image",
+                        "uid": "not valid!",
+                        "alias": "test",
+                    },
+                    "image-uid",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -1784,6 +1824,38 @@ class TestProviderViewSet:
         assert response.status_code == status.HTTP_202_ACCEPTED
         mock_provider_connection.assert_called_once_with(
             provider_id=str(provider1.id), tenant_id=ANY
+        )
+        assert "Content-Location" in response.headers
+        assert response.headers["Content-Location"] == f"/api/v1/tasks/{task_mock.id}"
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.check_provider_connection_task.delay")
+    def test_providers_connection_image(
+        self,
+        mock_provider_connection,
+        mock_task_get,
+        authenticated_client,
+        providers_fixture,
+        tasks_fixture,
+    ):
+        prowler_task = tasks_fixture[0]
+        task_mock = Mock()
+        task_mock.id = prowler_task.id
+        task_mock.status = "PENDING"
+        mock_provider_connection.return_value = task_mock
+        mock_task_get.return_value = prowler_task
+
+        image_provider = providers_fixture[10]
+        assert image_provider.provider == "image"
+        assert image_provider.connected is None
+        assert image_provider.connection_last_checked_at is None
+
+        response = authenticated_client.post(
+            reverse("provider-connection", kwargs={"pk": image_provider.id})
+        )
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_provider_connection.assert_called_once_with(
+            provider_id=str(image_provider.id), tenant_id=ANY
         )
         assert "Content-Location" in response.headers
         assert response.headers["Content-Location"] == f"/api/v1/tasks/{task_mock.id}"
@@ -2435,6 +2507,39 @@ class TestProviderSecretViewSet:
                     "clouds_yaml_content": "clouds:\n  mycloud:\n    auth:\n      auth_url: https://openstack.example.com:5000/v3\n",
                     "clouds_yaml_cloud": "mycloud",
                 },
+            ),
+            # Image with Docker login
+            (
+                Provider.ProviderChoices.IMAGE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "registry_username": "user",
+                    "registry_password": "pass",
+                },
+            ),
+            # Image with token
+            (
+                Provider.ProviderChoices.IMAGE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "registry_token": "ghp_abc123",
+                },
+            ),
+            # Image with no auth + filters
+            (
+                Provider.ProviderChoices.IMAGE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "image_filter": "my-app.*",
+                    "tag_filter": "v[0-9]+",
+                    "max_images": 50,
+                },
+            ),
+            # Image with empty secret (public registry)
+            (
+                Provider.ProviderChoices.IMAGE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {},
             ),
         ],
     )

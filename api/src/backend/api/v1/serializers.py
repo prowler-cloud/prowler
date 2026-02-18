@@ -1528,6 +1528,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                     )
             elif provider_type == Provider.ProviderChoices.OPENSTACK.value:
                 serializer = OpenStackCloudsYamlProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.IMAGE.value:
+                serializer = ImageProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1661,6 +1663,37 @@ class GithubProviderSecret(serializers.Serializer):
 class IacProviderSecret(serializers.Serializer):
     repository_url = serializers.CharField()
     access_token = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class ImageProviderSecret(serializers.Serializer):
+    registry_username = serializers.CharField(required=False)
+    registry_password = serializers.CharField(required=False)
+    registry_token = serializers.CharField(required=False)
+    image_filter = serializers.CharField(required=False)
+    tag_filter = serializers.CharField(required=False)
+    max_images = serializers.IntegerField(required=False, min_value=0)
+
+    def validate(self, attrs):
+        has_username = attrs.get("registry_username")
+        has_password = attrs.get("registry_password")
+        has_token = attrs.get("registry_token")
+
+        if (has_username or has_password) and has_token:
+            raise serializers.ValidationError(
+                "You cannot provide both registry_username/registry_password and registry_token."
+            )
+        if has_username and not has_password:
+            raise serializers.ValidationError(
+                "registry_password is required when registry_username is provided."
+            )
+        if has_password and not has_username:
+            raise serializers.ValidationError(
+                "registry_username is required when registry_password is provided."
+            )
+        return super().validate(attrs)
 
     class Meta:
         resource_name = "provider-secrets"
