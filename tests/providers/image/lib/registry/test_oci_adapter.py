@@ -388,7 +388,9 @@ class TestOciAdapterNarrowExcept:
 
 class TestCredentialRedaction:
     def test_getstate_redacts_credentials(self):
-        adapter = OciRegistryAdapter("reg.io", username="u", password="secret", token="tok")
+        adapter = OciRegistryAdapter(
+            "reg.io", username="u", password="secret", token="tok"
+        )
         state = adapter.__getstate__()
         assert state["_password"] == "***"
         assert state["_token"] == "***"
@@ -402,7 +404,9 @@ class TestCredentialRedaction:
         assert state["_token"] is None
 
     def test_repr_redacts_credentials(self):
-        adapter = OciRegistryAdapter("reg.io", username="u", password="s3cret_pw", token="s3cret_tk")
+        adapter = OciRegistryAdapter(
+            "reg.io", username="u", password="s3cret_pw", token="s3cret_tk"
+        )
         r = repr(adapter)
         assert "s3cret_pw" not in r
         assert "s3cret_tk" not in r

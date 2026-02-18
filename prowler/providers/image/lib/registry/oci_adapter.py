@@ -165,9 +165,7 @@ class OciRegistryAdapter(RegistryAdapter):
                 message=f"Bearer token realm has disallowed scheme: {parsed.scheme}. Only http/https are allowed.",
             )
         if parsed.scheme == "http":
-            logger.warning(
-                f"Bearer token realm uses HTTP (not HTTPS): {realm}"
-            )
+            logger.warning(f"Bearer token realm uses HTTP (not HTTPS): {realm}")
         hostname = parsed.hostname or ""
         try:
             addr = ipaddress.ip_address(hostname)
