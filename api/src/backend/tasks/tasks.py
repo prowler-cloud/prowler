@@ -11,8 +11,8 @@ from django_celery_beat.models import PeriodicTask
 from tasks.jobs.attack_paths import (
     attack_paths_scan,
     can_provider_run_attack_paths_scan,
+    db_utils as attack_paths_db_utils,
 )
-from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
     backfill_daily_severity_summaries,
