@@ -180,7 +180,7 @@ export function EnhancedMultiSelect({
           aria-haspopup="listbox"
           aria-controls={open ? listboxId : undefined}
           className={cn(
-            "border-border-input-primary bg-bg-input-primary text-bg-button-secondary data-[placeholder]:text-bg-button-secondary [&_svg:not([class*='text-'])]:text-bg-button-secondary aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-bg-input-primary active:bg-bg-input-primary dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex h-auto min-h-12 w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-1 focus-visible:ring-offset-1 dark:focus-visible:ring-slate-400 [&_svg]:pointer-events-auto",
+            "border-border-input-primary bg-bg-input-primary text-text-neutral-primary data-[placeholder]:text-text-neutral-tertiary [&_svg:not([class*='text-'])]:text-text-neutral-tertiary aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-bg-input-primary active:bg-bg-input-primary focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex h-auto min-h-12 w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-1 focus-visible:ring-offset-1 [&_svg]:pointer-events-auto",
             disabled && "cursor-not-allowed opacity-50",
             className,
           )}
@@ -196,8 +196,8 @@ export function EnhancedMultiSelect({
                     return (
                       <Badge
                         key={value}
-                        variant="outline"
-                        className="text-bg-button-secondary m-1 cursor-default border-slate-300 bg-slate-100 dark:border-slate-600 dark:bg-slate-800 [&>svg]:pointer-events-auto"
+                        variant="tag"
+                        className="m-1 cursor-default [&>svg]:pointer-events-auto"
                       >
                         <span className="cursor-default">{option.label}</span>
                         <span
@@ -220,8 +220,8 @@ export function EnhancedMultiSelect({
                   .filter(Boolean)}
                 {selectedValues.length > maxCount && (
                   <Badge
-                    variant="outline"
-                    className="text-bg-button-secondary m-1 cursor-default border-slate-300 bg-slate-100 dark:border-slate-600 dark:bg-slate-800 [&>svg]:pointer-events-auto"
+                    variant="tag"
+                    className="m-1 cursor-default [&>svg]:pointer-events-auto"
                   >
                     {`+ ${selectedValues.length - maxCount} more`}
                     <span
@@ -259,7 +259,7 @@ export function EnhancedMultiSelect({
                     }
                   }}
                   aria-label={`Clear all ${selectedValues.length} selected options`}
-                  className="text-bg-button-secondary/70 hover:text-bg-button-secondary focus:ring-border-input-primary-press mx-2 flex h-4 w-4 cursor-pointer items-center justify-center rounded-sm focus:ring-2 focus:ring-offset-1 focus:outline-none"
+                  className="text-text-neutral-tertiary hover:text-text-neutral-primary focus:ring-border-input-primary-press mx-2 flex h-4 w-4 cursor-pointer items-center justify-center rounded-sm focus:ring-2 focus:ring-offset-1 focus:outline-none"
                 >
                   <XIcon className="h-4 w-4" />
                 </div>
@@ -268,17 +268,17 @@ export function EnhancedMultiSelect({
                   className="flex h-full min-h-6"
                 />
                 <ChevronDown
-                  className="text-bg-button-secondary/70 mx-2 h-4 cursor-pointer"
+                  className="text-text-neutral-tertiary mx-2 h-4 cursor-pointer"
                   aria-hidden="true"
                 />
               </div>
             </div>
           ) : (
             <div className="mx-auto flex w-full items-center justify-between">
-              <span className="text-bg-button-secondary/70 mx-3 text-sm">
+              <span className="text-text-neutral-tertiary mx-3 text-sm">
                 {placeholder}
               </span>
-              <ChevronDown className="text-bg-button-secondary/70 mx-2 h-4 cursor-pointer" />
+              <ChevronDown className="text-text-neutral-tertiary mx-2 h-4 cursor-pointer" />
             </div>
           )}
         </Button>
@@ -289,7 +289,7 @@ export function EnhancedMultiSelect({
         role="listbox"
         aria-multiselectable="true"
         aria-label="Available options"
-        className="border-border-input-primary bg-bg-input-primary text-bg-button-secondary pointer-events-auto z-50 w-[var(--radix-popover-trigger-width)] max-w-[var(--radix-popover-trigger-width)] touch-manipulation rounded-lg p-0"
+        className="border-border-input-primary bg-bg-input-primary text-text-neutral-primary pointer-events-auto z-50 w-[var(--radix-popover-trigger-width)] max-w-[var(--radix-popover-trigger-width)] touch-manipulation rounded-lg p-0"
         align="start"
         onEscapeKeyDown={() => setOpen(false)}
       >
@@ -354,7 +354,7 @@ export function EnhancedMultiSelect({
                     <div className="flex min-w-0 flex-col">
                       <span className="truncate">{option.label}</span>
                       {option.description && (
-                        <span className="text-muted-foreground text-xs">
+                        <span className="text-text-neutral-tertiary text-xs">
                           {option.description}
                         </span>
                       )}
