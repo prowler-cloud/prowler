@@ -8,6 +8,7 @@ import { AzureProviderBadge } from "./azure-provider-badge";
 import { GCPProviderBadge } from "./gcp-provider-badge";
 import { GitHubProviderBadge } from "./github-provider-badge";
 import { IacProviderBadge } from "./iac-provider-badge";
+import { ImageProviderBadge } from "./image-provider-badge";
 import { KS8ProviderBadge } from "./ks8-provider-badge";
 import { M365ProviderBadge } from "./m365-provider-badge";
 import { MongoDBAtlasProviderBadge } from "./mongodbatlas-provider-badge";
@@ -21,6 +22,7 @@ export {
   GCPProviderBadge,
   GitHubProviderBadge,
   IacProviderBadge,
+  ImageProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
@@ -37,6 +39,7 @@ export const PROVIDER_ICONS: Record<string, FC<IconSvgProps>> = {
   "Microsoft 365": M365ProviderBadge,
   GitHub: GitHubProviderBadge,
   "Infrastructure as Code": IacProviderBadge,
+  "Container Registry": ImageProviderBadge,
   "Oracle Cloud Infrastructure": OracleCloudProviderBadge,
   "MongoDB Atlas": MongoDBAtlasProviderBadge,
   "Alibaba Cloud": AlibabaCloudProviderBadge,

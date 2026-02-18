@@ -57,6 +57,11 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
         label: "Repository URL",
         placeholder: "e.g. https://github.com/user/repo",
       };
+    case "image":
+      return {
+        label: "Registry URL",
+        placeholder: "e.g. https://registry.example.com",
+      };
     case "oraclecloud":
       return {
         label: "Tenancy OCID",
