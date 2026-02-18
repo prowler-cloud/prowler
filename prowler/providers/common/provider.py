@@ -250,8 +250,6 @@ class Provider(ABC):
                     )
                 elif "googleworkspace" in provider_class_name.lower():
                     provider_class(
-                        credentials_file=arguments.credentials_file,
-                        credentials_content=arguments.credentials_content,
                         delegated_user=arguments.delegated_user,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,

@@ -1,40 +1,40 @@
 from prowler.exceptions.exceptions import ProwlerException
 
 
-# Exceptions codes from 6000 to 6999 are reserved for Google Workspace exceptions
+# Exceptions codes from 12000 to 12999 are reserved for Google Workspace exceptions
 class GoogleWorkspaceBaseException(ProwlerException):
     """Base class for Google Workspace Errors."""
 
     GOOGLEWORKSPACE_ERROR_CODES = {
-        (6000, "GoogleWorkspaceEnvironmentVariableError"): {
+        (12000, "GoogleWorkspaceEnvironmentVariableError"): {
             "message": "Google Workspace environment variable error",
             "remediation": "Check the Google Workspace environment variables and ensure they are properly set.",
         },
-        (6001, "GoogleWorkspaceNoCredentialsError"): {
+        (12001, "GoogleWorkspaceNoCredentialsError"): {
             "message": "Google Workspace credentials are required to authenticate",
-            "remediation": "Provide either --credentials-file or --credentials-content with a valid Service Account JSON.",
+            "remediation": "Set the GOOGLEWORKSPACE_CREDENTIALS_FILE or GOOGLEWORKSPACE_CREDENTIALS_CONTENT environment variable with a valid Service Account JSON.",
         },
-        (6002, "GoogleWorkspaceInvalidCredentialsError"): {
+        (12002, "GoogleWorkspaceInvalidCredentialsError"): {
             "message": "Google Workspace credentials provided are not valid",
             "remediation": "Check the Service Account credentials and ensure they are valid.",
         },
-        (6003, "GoogleWorkspaceSetUpSessionError"): {
+        (12003, "GoogleWorkspaceSetUpSessionError"): {
             "message": "Error setting up Google Workspace session",
             "remediation": "Check the session setup and ensure credentials are properly configured.",
         },
-        (6004, "GoogleWorkspaceSetUpIdentityError"): {
+        (12004, "GoogleWorkspaceSetUpIdentityError"): {
             "message": "Google Workspace identity setup error due to bad credentials or API access",
             "remediation": "Check credentials and ensure the Service Account has proper API access and Domain-Wide Delegation configured.",
         },
-        (6005, "GoogleWorkspaceImpersonationError"): {
+        (12005, "GoogleWorkspaceImpersonationError"): {
             "message": "Error impersonating user with Domain-Wide Delegation",
             "remediation": "Ensure the Service Account has Domain-Wide Delegation enabled and the delegated user email is correct.",
         },
-        (6006, "GoogleWorkspaceMissingDelegatedUserError"): {
+        (12006, "GoogleWorkspaceMissingDelegatedUserError"): {
             "message": "Delegated user email is required for Domain-Wide Delegation",
             "remediation": "Provide --delegated-user with a valid user email from your domain.",
         },
-        (6007, "GoogleWorkspaceInsufficientScopesError"): {
+        (12007, "GoogleWorkspaceInsufficientScopesError"): {
             "message": "Service Account does not have required OAuth scopes",
             "remediation": "Ensure the Service Account has the required scopes configured in Domain-Wide Delegation settings.",
         },
@@ -66,54 +66,54 @@ class GoogleWorkspaceCredentialsError(GoogleWorkspaceBaseException):
 class GoogleWorkspaceEnvironmentVariableError(GoogleWorkspaceCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6000, file=file, original_exception=original_exception, message=message
+            12000, file=file, original_exception=original_exception, message=message
         )
 
 
 class GoogleWorkspaceNoCredentialsError(GoogleWorkspaceCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6001, file=file, original_exception=original_exception, message=message
+            12001, file=file, original_exception=original_exception, message=message
         )
 
 
 class GoogleWorkspaceInvalidCredentialsError(GoogleWorkspaceCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6002, file=file, original_exception=original_exception, message=message
+            12002, file=file, original_exception=original_exception, message=message
         )
 
 
 class GoogleWorkspaceSetUpSessionError(GoogleWorkspaceCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6003, file=file, original_exception=original_exception, message=message
+            12003, file=file, original_exception=original_exception, message=message
         )
 
 
 class GoogleWorkspaceSetUpIdentityError(GoogleWorkspaceCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6004, file=file, original_exception=original_exception, message=message
+            12004, file=file, original_exception=original_exception, message=message
         )
 
 
 class GoogleWorkspaceImpersonationError(GoogleWorkspaceCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6005, file=file, original_exception=original_exception, message=message
+            12005, file=file, original_exception=original_exception, message=message
         )
 
 
 class GoogleWorkspaceMissingDelegatedUserError(GoogleWorkspaceCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6006, file=file, original_exception=original_exception, message=message
+            12006, file=file, original_exception=original_exception, message=message
         )
 
 
 class GoogleWorkspaceInsufficientScopesError(GoogleWorkspaceCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6007, file=file, original_exception=original_exception, message=message
+            12007, file=file, original_exception=original_exception, message=message
         )

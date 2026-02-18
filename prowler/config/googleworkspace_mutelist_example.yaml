@@ -1,0 +1,32 @@
+### Account, Check and/or Region can be * to apply for all the cases.
+### Account == Google Workspace Customer ID and Region == * (Google Workspace is a global service)
+### Resources and tags are lists that can have either Regex or Keywords.
+### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
+### Use an alternation Regex to match one of multiple tags with "ORed" logic.
+### For each check you can except Accounts, Regions, Resources and/or Tags.
+###########################  MUTELIST EXAMPLE  ###########################
+Mutelist:
+  Accounts:
+    "C1234567":
+      Checks:
+        "directory_super_admin_count":
+          Regions:
+            - "*"
+          Resources:
+            - "example.com"           # Will ignore example.com domain in check directory_super_admin_count
+          Description: "Super admin count check muted for example.com during planned admin account restructuring"
+        "directory_*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"                 # Will ignore every Directory check for Customer ID C1234567
+
+    "*":
+      Checks:
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "test"
+          Tags:
+            - "test=test"         # Will ignore every resource containing the string "test" and the tag 'test=test' in every account

@@ -256,7 +256,7 @@ class GoogleworkspaceProvider(Provider):
                 else:
                     raise GoogleWorkspaceNoCredentialsError(
                         file=os.path.basename(__file__),
-                        message="No credentials provided. Use --credentials-file, --credentials-content, or environment variables.",
+                        message="No credentials provided. Set the GOOGLEWORKSPACE_CREDENTIALS_FILE or GOOGLEWORKSPACE_CREDENTIALS_CONTENT environment variable.",
                     )
 
             # Perform Domain-Wide Delegation impersonation

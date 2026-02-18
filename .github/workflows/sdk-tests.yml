@@ -438,6 +438,30 @@ jobs:
           flags: prowler-py${{ matrix.python-version }}-openstack
           files: ./openstack_coverage.xml
 
+      # Google Workspace Provider
+      - name: Check if Google Workspace files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-googleworkspace
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        with:
+          files: |
+            ./prowler/**/googleworkspace/**
+            ./tests/**/googleworkspace/**
+            ./poetry.lock
+
+      - name: Run Google Workspace tests
+        if: steps.changed-googleworkspace.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/googleworkspace --cov-report=xml:googleworkspace_coverage.xml tests/providers/googleworkspace
+
+      - name: Upload Google Workspace coverage to Codecov
+        if: steps.changed-googleworkspace.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-googleworkspace
+          files: ./googleworkspace_coverage.xml
+
       # Lib
       - name: Check if Lib files changed
         if: steps.check-changes.outputs.any_changed == 'true'

@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from google.oauth2.service_account import Credentials
 
 from prowler.providers.googleworkspace.exceptions.exceptions import (
     GoogleWorkspaceMissingDelegatedUserError,
@@ -22,14 +23,14 @@ from tests.providers.googleworkspace.googleworkspace_fixtures import (
 )
 
 
-class TestGoogleworkspaceProvider:
+class TestGoogleWorkspaceProvider:
     def test_googleworkspace_provider_with_credentials_file(self):
         """Test provider initialization with credentials file"""
         credentials_file = "/path/to/credentials.json"
         delegated_user = DELEGATED_USER
 
         # Mock credentials object
-        mock_credentials = MagicMock()
+        mock_credentials = MagicMock(spec=Credentials)
 
         with (
             patch(
@@ -69,7 +70,7 @@ class TestGoogleworkspaceProvider:
         delegated_user = DELEGATED_USER
 
         # Mock credentials object
-        mock_credentials = MagicMock()
+        mock_credentials = MagicMock(spec=Credentials)
 
         with (
             patch(
@@ -122,7 +123,7 @@ class TestGoogleworkspaceProvider:
         credentials_file = "/path/to/credentials.json"
         delegated_user = DELEGATED_USER
 
-        mock_credentials = MagicMock()
+        mock_credentials = MagicMock(spec=Credentials)
 
         with (
             patch(
@@ -167,7 +168,7 @@ class TestGoogleworkspaceProvider:
 
     def test_googleworkspace_provider_print_credentials(self):
         """Test print_credentials method"""
-        mock_credentials = MagicMock()
+        mock_credentials = MagicMock(spec=Credentials)
 
         with (
             patch(
