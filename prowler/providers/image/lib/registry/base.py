@@ -13,6 +13,7 @@ from prowler.providers.image.exceptions.exceptions import ImageRegistryNetworkEr
 
 _MAX_RETRIES = 3
 _BACKOFF_BASE = 1
+_USER_AGENT = "Prowler/1.0 (registry-adapter)"
 
 
 class RegistryAdapter(ABC):
@@ -69,8 +70,12 @@ class RegistryAdapter(ABC):
         context_label = kwargs.pop("context_label", None) or self.registry_url
         kwargs.setdefault("timeout", 30)
         kwargs.setdefault("verify", self.verify_ssl)
+        headers = kwargs.get("headers", {})
+        headers.setdefault("User-Agent", _USER_AGENT)
+        kwargs["headers"] = headers
         last_exception = None
         last_status = None
+        last_body = None
         for attempt in range(1, _MAX_RETRIES + 1):
             try:
                 resp = requests.request(method, url, **kwargs)
@@ -84,10 +89,11 @@ class RegistryAdapter(ABC):
                     continue
                 if resp.status_code >= 500:
                     last_status = resp.status_code
+                    last_body = (resp.text or "")[:500]
                     wait = _BACKOFF_BASE * (2 ** (attempt - 1))
                     logger.warning(
                         f"Server error from {context_label} (HTTP {resp.status_code}), "
-                        f"retrying in {wait}s (attempt {attempt}/{_MAX_RETRIES})"
+                        f"retrying in {wait}s (attempt {attempt}/{_MAX_RETRIES}): {last_body}"
                     )
                     time.sleep(wait)
                     continue
@@ -115,7 +121,7 @@ class RegistryAdapter(ABC):
         if last_status is not None and last_status >= 500:
             raise ImageRegistryNetworkError(
                 file=__file__,
-                message=f"Server error from {context_label} (HTTP {last_status}) after {_MAX_RETRIES} attempts.",
+                message=f"Server error from {context_label} (HTTP {last_status}) after {_MAX_RETRIES} attempts: {last_body}",
             )
         raise ImageRegistryNetworkError(
             file=__file__,

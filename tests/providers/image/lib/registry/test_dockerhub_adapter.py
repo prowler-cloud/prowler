@@ -191,6 +191,23 @@ class TestDockerHubRetry:
         assert mock_request.call_count == 1
         mock_sleep.assert_not_called()
 
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_request_sends_user_agent(self, mock_request):
+        mock_request.return_value = MagicMock(status_code=200)
+        adapter = DockerHubAdapter("docker.io/myorg")
+        adapter._request_with_retry("GET", "https://hub.docker.com")
+        _, kwargs = mock_request.call_args
+        assert kwargs["headers"]["User-Agent"] == "Prowler/1.0 (registry-adapter)"
+
+    @patch("prowler.providers.image.lib.registry.base.time.sleep")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_retry_500_includes_response_body(self, mock_request, mock_sleep):
+        resp_500 = MagicMock(status_code=500, text="<html>Cloudflare error</html>")
+        mock_request.return_value = resp_500
+        adapter = DockerHubAdapter("docker.io/myorg")
+        with pytest.raises(ImageRegistryNetworkError, match="Cloudflare error"):
+            adapter._request_with_retry("GET", "https://hub.docker.com")
+
 
 class TestDockerHubEmptyTokens:
     @patch("prowler.providers.image.lib.registry.base.requests.request")
