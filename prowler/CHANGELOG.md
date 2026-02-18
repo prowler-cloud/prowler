@@ -40,6 +40,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update GCP KMS service metadata to new format [(#9647)](https://github.com/prowler-cloud/prowler/pull/9647)
 - Update GCP Logging service metadata to new format [(#9648)](https://github.com/prowler-cloud/prowler/pull/9648)
 
+### 🐞 Fixed
+
+- `image` provider: dynamic User-Agent version, correct finding Categories and RelatedUrl metadata, remove dead docker login/pull code, replace SystemExit in registry listing
+
 ### 🔐 Security
 
 - Bumped `py-ocsf-models` to 0.8.1 and `cryptography` to 44.0.3 [(#10059)](https://github.com/prowler-cloud/prowler/pull/10059)

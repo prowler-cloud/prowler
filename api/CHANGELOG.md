@@ -22,6 +22,11 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack Paths: Mark attack Paths scan as failed when Celery task fails outside job error handling [(#10065)](https://github.com/prowler-cloud/prowler/pull/10065)
 - Attack Paths: Remove legacy per-scan `graph_database` and `is_graph_database_deleted` fields from AttackPathsScan model [(#10077)](https://github.com/prowler-cloud/prowler/pull/10077)
 
+### 🐞 Fixed
+
+- Skip compliance and attack surface tasks for Image and IaC providers
+- Normalize Image provider UID by stripping protocol prefix on save
+
 ### 🔐 Security
 
 - Bump `Pillow` to 12.1.1 (CVE-2021-25289) [(#10027)](https://github.com/prowler-cloud/prowler/pull/10027)

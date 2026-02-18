@@ -96,6 +96,7 @@ class ImageProvider(Provider):
         self.audited_account = "image-scan"
         self._session = None
         self._identity = "prowler"
+        self._listing_only = False
 
         # Registry authentication (follows IaC pattern: explicit params, env vars internal)
         self.registry_username = registry_username or os.environ.get(
@@ -152,6 +153,8 @@ class ImageProvider(Provider):
         # Registry scan mode: enumerate images from registry
         if self.registry:
             self._enumerate_registry()
+            if self._listing_only:
+                return
 
         for image in self.images:
             self._validate_image_name(image)
@@ -337,22 +340,25 @@ class ImageProvider(Provider):
             CheckReportImage: The processed check report
         """
         try:
-            # Determine finding ID based on type
+            # Determine finding ID and category based on type
             if "VulnerabilityID" in finding:
                 finding_id = finding["VulnerabilityID"]
                 finding_description = finding.get(
                     "Description", finding.get("Title", "")
                 )
                 finding_status = "FAIL"
+                finding_categories = ["vulnerability"]
             elif "RuleID" in finding:
                 # Secret finding
                 finding_id = finding["RuleID"]
                 finding_description = finding.get("Title", "Secret detected")
                 finding_status = "FAIL"
+                finding_categories = ["secrets"]
             else:
                 finding_id = finding.get("ID", "UNKNOWN")
                 finding_description = finding.get("Description", "")
                 finding_status = finding.get("Status", "FAIL")
+                finding_categories = []
 
             # Build remediation text for vulnerabilities
             remediation_text = ""
@@ -381,7 +387,7 @@ class ImageProvider(Provider):
                 "Risk": finding.get(
                     "Description", "Vulnerability detected in container image"
                 ),
-                "RelatedUrl": finding.get("PrimaryURL", ""),
+                "RelatedUrl": "",
                 "Remediation": {
                     "Code": {
                         "NativeIaC": "",
@@ -394,7 +400,7 @@ class ImageProvider(Provider):
                         "Url": finding.get("PrimaryURL", ""),
                     },
                 },
-                "Categories": [],
+                "Categories": finding_categories,
                 "DependsOn": [],
                 "RelatedTo": [],
                 "Notes": "",
@@ -770,10 +776,11 @@ class ImageProvider(Provider):
                     image_ref = f"{registry_host}/{repo}:{tag}"
                 discovered_images.append(image_ref)
 
-        # Registry list mode: print listing and exit
+        # Registry list mode: print listing and return early
         if self.registry_list_images:
             self._print_registry_listing(repos_tags, len(discovered_images))
-            raise SystemExit(0)
+            self._listing_only = True
+            return
 
         # Check max-images limit
         if self.max_images and len(discovered_images) > self.max_images:

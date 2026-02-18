@@ -197,7 +197,12 @@ class TestDockerHubRetry:
         adapter = DockerHubAdapter("docker.io/myorg")
         adapter._request_with_retry("GET", "https://hub.docker.com")
         _, kwargs = mock_request.call_args
-        assert kwargs["headers"]["User-Agent"] == "Prowler/1.0 (registry-adapter)"
+        from prowler.config.config import prowler_version
+
+        assert (
+            kwargs["headers"]["User-Agent"]
+            == f"Prowler/{prowler_version} (registry-adapter)"
+        )
 
     @patch("prowler.providers.image.lib.registry.base.time.sleep")
     @patch("prowler.providers.image.lib.registry.base.requests.request")

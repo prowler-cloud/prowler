@@ -8,12 +8,13 @@ from abc import ABC, abstractmethod
 
 import requests
 
+from prowler.config.config import prowler_version
 from prowler.lib.logger import logger
 from prowler.providers.image.exceptions.exceptions import ImageRegistryNetworkError
 
 _MAX_RETRIES = 3
 _BACKOFF_BASE = 1
-_USER_AGENT = "Prowler/1.0 (registry-adapter)"
+_USER_AGENT = f"Prowler/{prowler_version} (registry-adapter)"
 
 
 class RegistryAdapter(ABC):

@@ -423,7 +423,7 @@ class Provider(RowLevelSecurityProtectedModel):
 
     @staticmethod
     def validate_image_uid(value):
-        pattern = r"^(https?://)?[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?(:\d{1,5})?(/[a-zA-Z0-9._-]+)*/?$"
+        pattern = r"^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?(:\d{1,5})?(/[a-zA-Z0-9._-]+)*/?$"
         if not re.match(pattern, value):
             raise ModelValidationError(
                 detail="Image provider ID must be a valid registry URL "
@@ -464,6 +464,8 @@ class Provider(RowLevelSecurityProtectedModel):
 
     def clean(self):
         super().clean()
+        if self.provider == self.ProviderChoices.IMAGE.value and self.uid:
+            self.uid = re.sub(r"^https?://", "", self.uid)
         getattr(self, f"validate_{self.provider}_uid")(self.uid)
 
     def save(self, *args, **kwargs):
