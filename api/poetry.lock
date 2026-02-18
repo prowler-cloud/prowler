@@ -985,20 +985,20 @@ files = [
 
 [[package]]
 name = "azure-cli-core"
-version = "2.82.0"
+version = "2.83.0"
 description = "Microsoft Azure Command-Line Tools Core Module"
 optional = false
 python-versions = ">=3.10.0"
 groups = ["main"]
 files = [
-    {file = "azure_cli_core-2.82.0-py3-none-any.whl", hash = "sha256:998792de4e4d44f7f048ef46c5a07c8b30cff291e9b141682fd8a2c01421c826"},
-    {file = "azure_cli_core-2.82.0.tar.gz", hash = "sha256:d2de9423d19373665a4cdaae8db3139bcdcbb6cf10bfd417ef4610cb7733f1cd"},
+    {file = "azure_cli_core-2.83.0-py3-none-any.whl", hash = "sha256:3136f1434cb6fbd2f5b1d7f82b15cff3d4ba4a638808a86584376a829fd26b8a"},
+    {file = "azure_cli_core-2.83.0.tar.gz", hash = "sha256:ac59ae4307a961891587d746984a3349b7afe9759ed8267e1cdd614aeeeabbf9"},
 ]
 
 [package.dependencies]
 argcomplete = ">=3.5.2,<3.6.0"
 azure-cli-telemetry = "==1.1.0.*"
-azure-core = ">=1.37.0,<1.38.0"
+azure-core = ">=1.38.0,<1.39.0"
 azure-mgmt-core = ">=1.2.0,<2"
 cryptography = "*"
 distro = {version = "*", markers = "sys_platform == \"linux\""}
@@ -1007,8 +1007,8 @@ jmespath = "*"
 knack = ">=0.11.0,<0.12.0"
 microsoft-security-utilities-secret-masker = ">=1.0.0b4,<1.1.0"
 msal = [
-    {version = "1.34.0b1", extras = ["broker"], markers = "sys_platform == \"win32\""},
-    {version = "1.34.0b1", markers = "sys_platform != \"win32\""},
+    {version = "1.35.0b1", extras = ["broker"], markers = "sys_platform == \"win32\""},
+    {version = "1.35.0b1", markers = "sys_platform != \"win32\""},
 ]
 msal-extensions = "1.2.0"
 packaging = ">=20.9"
@@ -1049,14 +1049,14 @@ files = [
 
 [[package]]
 name = "azure-core"
-version = "1.37.0"
+version = "1.38.1"
 description = "Microsoft Azure Core Library for Python"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "azure_core-1.37.0-py3-none-any.whl", hash = "sha256:b3abe2c59e7d6bb18b38c275a5029ff80f98990e7c90a5e646249a56630fcc19"},
-    {file = "azure_core-1.37.0.tar.gz", hash = "sha256:7064f2c11e4b97f340e8e8c6d923b822978be3016e46b7bc4aa4b337cfb48aee"},
+    {file = "azure_core-1.38.1-py3-none-any.whl", hash = "sha256:69f08ee3d55136071b7100de5b198994fc1c5f89d2b91f2f43156d20fcf200a4"},
+    {file = "azure_core-1.38.1.tar.gz", hash = "sha256:9317db1d838e39877eb94a2240ce92fa607db68adf821817b723f0d679facbf6"},
 ]
 
 [package.dependencies]
@@ -1822,13 +1822,15 @@ crt = ["awscrt (==0.27.6)"]
 
 [[package]]
 name = "cartography"
-version = "0.126.1"
+version = "0.129.0"
 description = "Explore assets and their relationships across your technical infrastructure."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
-files = []
-develop = false
+files = [
+    {file = "cartography-0.129.0-py3-none-any.whl", hash = "sha256:d42c840369be9e4d0ac4d024074e3732416e40bab3d9a3023b6a247918daed4c"},
+    {file = "cartography-0.129.0.tar.gz", hash = "sha256:cb47d603e652554a4cbcc1a868c96014eb02b3d5cc1affea0428b2ed7fa61699"},
+]
 
 [package.dependencies]
 adal = ">=1.2.4"
@@ -1850,7 +1852,7 @@ azure-mgmt-keyvault = ">=10.0.0"
 azure-mgmt-logic = ">=10.0.0"
 azure-mgmt-monitor = ">=3.0.0"
 azure-mgmt-network = ">=25.0.0"
-azure-mgmt-resource = ">=10.2.0"
+azure-mgmt-resource = ">=10.2.0,<25.0.0"
 azure-mgmt-security = ">=5.0.0"
 azure-mgmt-sql = ">=3.0.1,<4"
 azure-mgmt-storage = ">=16.0.0"
@@ -1863,6 +1865,7 @@ botocore = ">=1.18.1"
 cloudflare = ">=4.1.0,<5.0.0"
 crowdstrike-falconpy = ">=0.5.1"
 dnspython = ">=1.15.0"
+dockerfile = ">=3.0.0"
 duo-client = "*"
 google-api-python-client = ">=1.7.8"
 google-auth = ">=2.37.0"
@@ -1873,12 +1876,14 @@ kubernetes = ">=22.6.0"
 marshmallow = ">=3.0.0rc7"
 msgraph-sdk = "*"
 msrestazure = ">=0.6.4"
-neo4j = ">=5.28.2,<6.0.0"
+neo4j = ">=6.0.0"
 oci = ">=2.71.0"
 okta = "<1.0.0"
+packageurl-python = "*"
 packaging = "*"
-pdpyras = ">=4.3.0"
+pagerduty = ">=4.0.1"
 policyuniverse = ">=1.1.0.0"
+PyJWT = {version = ">=2.0.0", extras = ["crypto"]}
 python-dateutil = "*"
 python-digitalocean = ">=1.16.0"
 pyyaml = ">=5.3.1"
@@ -1889,12 +1894,6 @@ statsd = "*"
 typer = ">=0.9.0"
 types-aiobotocore-ecr = "*"
 xmltodict = "*"
-
-[package.source]
-type = "git"
-url = "https://github.com/prowler-cloud/cartography"
-reference = "0.126.1"
-resolved_reference = "9e3dd6459bec027461e1fe998c034a0f3fb83e3d"
 
 [[package]]
 name = "celery"
@@ -3095,6 +3094,21 @@ dev = ["coverage (==7.2.7)", "pytest (==7.4.2)", "pytest-cov (==4.1.0)", "pytest
 docs = ["myst-parser (==0.18.0)", "sphinx (==5.1.1)"]
 ssh = ["paramiko (>=2.4.3)"]
 websockets = ["websocket-client (>=1.3.0)"]
+
+[[package]]
+name = "dockerfile"
+version = "3.4.0"
+description = "Parse a dockerfile into a high-level representation using the official go parser."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "dockerfile-3.4.0-cp39-abi3-macosx_13_0_x86_64.whl", hash = "sha256:ed33446a76007cbb3f28c247f189cc06db34667d4f59a398a5c44912d7c13f36"},
+    {file = "dockerfile-3.4.0-cp39-abi3-macosx_14_0_arm64.whl", hash = "sha256:a4549d4f038483c25906d4fec56bb6ffe82ae26e0f80a15f2c0fedbb50712053"},
+    {file = "dockerfile-3.4.0-cp39-abi3-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:b95102bd82e6f67c836186b51c13114aa586a20e8cb6441bde24d4070542009d"},
+    {file = "dockerfile-3.4.0-cp39-abi3-win_amd64.whl", hash = "sha256:30202187f1885f99ac839fd41ca8150b2fd0a66fac12db0166361d0c4622e71a"},
+    {file = "dockerfile-3.4.0.tar.gz", hash = "sha256:238bb950985c55a525daef8bbfe994a0230aa0978c419f4caa4d9ce0a37343f1"},
+]
 
 [[package]]
 name = "dogpile-cache"
@@ -5441,28 +5455,28 @@ files = [
 
 [[package]]
 name = "msal"
-version = "1.34.0b1"
+version = "1.35.0b1"
 description = "The Microsoft Authentication Library (MSAL) for Python library enables your app to access the Microsoft Cloud by supporting authentication of users with Microsoft Azure Active Directory accounts (AAD) and Microsoft Accounts (MSA) using industry standard OAuth2 and OpenID Connect."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "msal-1.34.0b1-py3-none-any.whl", hash = "sha256:3b6373325e3509d97873e36965a75e9cc9393f1b579d12cc03c0ca0ef6d37eb4"},
-    {file = "msal-1.34.0b1.tar.gz", hash = "sha256:86cdbfec14955e803379499d017056c6df4ed40f717fd6addde94bdeb4babd78"},
+    {file = "msal-1.35.0b1-py3-none-any.whl", hash = "sha256:bf656775c64bbc2103d8255980f5c3c966c7432106795e1fe70ca338a7e43150"},
+    {file = "msal-1.35.0b1.tar.gz", hash = "sha256:fe8143079183a5c952cd9f3ba66a148fe7bae9fb9952bd0e834272bfbeb34508"},
 ]
 
 [package.dependencies]
-cryptography = ">=2.5,<48"
+cryptography = ">=2.5,<49"
 PyJWT = {version = ">=1.0.0,<3", extras = ["crypto"]}
 pymsalruntime = [
-    {version = ">=0.14,<0.19", optional = true, markers = "python_version >= \"3.6\" and platform_system == \"Windows\" and extra == \"broker\""},
-    {version = ">=0.17,<0.19", optional = true, markers = "python_version >= \"3.8\" and platform_system == \"Darwin\" and extra == \"broker\""},
-    {version = ">=0.18,<0.19", optional = true, markers = "python_version >= \"3.8\" and platform_system == \"Linux\" and extra == \"broker\""},
+    {version = ">=0.14,<0.21", optional = true, markers = "python_version >= \"3.8\" and platform_system == \"Windows\" and extra == \"broker\""},
+    {version = ">=0.17,<0.21", optional = true, markers = "python_version >= \"3.8\" and platform_system == \"Darwin\" and extra == \"broker\""},
+    {version = ">=0.18,<0.21", optional = true, markers = "python_version >= \"3.8\" and platform_system == \"Linux\" and extra == \"broker\""},
 ]
 requests = ">=2.0.0,<3"
 
 [package.extras]
-broker = ["pymsalruntime (>=0.14,<0.19) ; python_version >= \"3.6\" and platform_system == \"Windows\"", "pymsalruntime (>=0.17,<0.19) ; python_version >= \"3.8\" and platform_system == \"Darwin\"", "pymsalruntime (>=0.18,<0.19) ; python_version >= \"3.8\" and platform_system == \"Linux\""]
+broker = ["pymsalruntime (>=0.14,<0.21) ; python_version >= \"3.8\" and platform_system == \"Windows\"", "pymsalruntime (>=0.17,<0.21) ; python_version >= \"3.8\" and platform_system == \"Darwin\"", "pymsalruntime (>=0.18,<0.21) ; python_version >= \"3.8\" and platform_system == \"Linux\""]
 
 [[package]]
 name = "msal-extensions"
@@ -5806,23 +5820,23 @@ sqlframe = ["sqlframe (>=3.22.0,!=3.39.3)"]
 
 [[package]]
 name = "neo4j"
-version = "5.28.3"
+version = "6.1.0"
 description = "Neo4j Bolt driver for Python"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "neo4j-5.28.3-py3-none-any.whl", hash = "sha256:dbf6d9211b861bc3dd62dccbf8a74d1e33e0c602084dd123b753edf46e1fdfad"},
-    {file = "neo4j-5.28.3.tar.gz", hash = "sha256:0625aaaf0963bc99a7231e946952f579792c3be22687192b20e0b74aa1233a2b"},
+    {file = "neo4j-6.1.0-py3-none-any.whl", hash = "sha256:3bd93941f3a3559af197031157220af9fd71f4f93a311db687bd69ffa417b67d"},
+    {file = "neo4j-6.1.0.tar.gz", hash = "sha256:b5dde8c0d8481e7b6ae3733569d990dd3e5befdc5d452f531ad1884ed3500b84"},
 ]
 
 [package.dependencies]
 pytz = "*"
 
 [package.extras]
-numpy = ["numpy (>=1.7.0,<3.0.0)"]
-pandas = ["numpy (>=1.7.0,<3.0.0)", "pandas (>=1.1.0,<3.0.0)"]
-pyarrow = ["pyarrow (>=1.0.0)"]
+numpy = ["numpy (>=1.21.2,<3.0.0)"]
+pandas = ["numpy (>=1.21.2,<3.0.0)", "pandas (>=1.1.0,<3.0.0)"]
+pyarrow = ["pyarrow (>=6.0.0,<23.0.0)"]
 
 [[package]]
 name = "nest-asyncio"
@@ -6094,6 +6108,24 @@ pbr = ">=2.0.0,<2.1.0 || >2.1.0"
 typing-extensions = ">=4.1.0"
 
 [[package]]
+name = "packageurl-python"
+version = "0.17.6"
+description = "A purl aka. Package URL parser and builder"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "packageurl_python-0.17.6-py3-none-any.whl", hash = "sha256:31a85c2717bc41dd818f3c62908685ff9eebcb68588213745b14a6ee9e7df7c9"},
+    {file = "packageurl_python-0.17.6.tar.gz", hash = "sha256:1252ce3a102372ca6f86eb968e16f9014c4ba511c5c37d95a7f023e2ca6e5c25"},
+]
+
+[package.extras]
+build = ["setuptools", "wheel"]
+lint = ["black", "isort", "mypy"]
+sqlalchemy = ["sqlalchemy (>=2.0.0)"]
+test = ["pytest"]
+
+[[package]]
 name = "packaging"
 version = "26.0"
 description = "Core utilities for Python packages"
@@ -6104,6 +6136,21 @@ files = [
     {file = "packaging-26.0-py3-none-any.whl", hash = "sha256:b36f1fef9334a5588b4166f8bcd26a14e521f2b55e6b9de3aaa80d3ff7a37529"},
     {file = "packaging-26.0.tar.gz", hash = "sha256:00243ae351a257117b6a241061796684b084ed1c516a08c48a3f7e147a9d80b4"},
 ]
+
+[[package]]
+name = "pagerduty"
+version = "6.1.0"
+description = "Clients for PagerDuty's Public APIs"
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+files = [
+    {file = "pagerduty-6.1.0-py3-none-any.whl", hash = "sha256:ca4954b917cb8e92f83e6b4e18d0f81fdaa73768edb7ad6e859edcc8f950f4eb"},
+    {file = "pagerduty-6.1.0.tar.gz", hash = "sha256:84dfba74f68142c4a71c88af4858f1eb8671e7bc564bc133ac41c59daa7b54f8"},
+]
+
+[package.dependencies]
+httpx = "*"
 
 [[package]]
 name = "pandas"
@@ -6205,22 +6252,6 @@ files = [
 
 [package.dependencies]
 setuptools = "*"
-
-[[package]]
-name = "pdpyras"
-version = "5.4.1"
-description = "PagerDuty Python REST API Sessions."
-optional = false
-python-versions = ">=3.6"
-groups = ["main"]
-files = [
-    {file = "pdpyras-5.4.1-py2.py3-none-any.whl", hash = "sha256:e16020cf57e4c916ab3dace7c7dffe21a2e7059ab7411ce3ddf1e620c54e9c89"},
-    {file = "pdpyras-5.4.1.tar.gz", hash = "sha256:36021aff5979a79f1d87edc95e0c46e98ce8549292bc0cab3d9f33501795703b"},
-]
-
-[package.dependencies]
-requests = "*"
-urllib3 = "*"
 
 [[package]]
 name = "pillow"
@@ -9366,4 +9397,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "c575bc849038db5b5d0882bec441529bf474a42b28c96718372ad4ceb388432c"
+content-hash = "42759b370c9e38da727e73f9d8ec0fa61bc6137eab18f11ccd7deff79a0dee69"
