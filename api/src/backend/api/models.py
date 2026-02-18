@@ -288,6 +288,7 @@ class Provider(RowLevelSecurityProtectedModel):
         ORACLECLOUD = "oraclecloud", _("Oracle Cloud Infrastructure")
         ALIBABACLOUD = "alibabacloud", _("Alibaba Cloud")
         CLOUDFLARE = "cloudflare", _("Cloudflare")
+        IMAGE = "image", _("Image")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -410,6 +411,26 @@ class Provider(RowLevelSecurityProtectedModel):
                 pointer="/data/attributes/uid",
             )
 
+    @staticmethod
+    def validate_image_uid(value):
+        pattern = r"^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?(:\d{1,5})?(/[a-zA-Z0-9._-]+)*/?$"
+        if not re.match(pattern, value):
+            raise ModelValidationError(
+                detail="Image provider ID must be a valid registry URL "
+                "(e.g., docker.io, ghcr.io, registry.example.com:5000).",
+                code="image-uid",
+                pointer="/data/attributes/uid",
+            )
+        port_match = re.search(r":(\d{1,5})(?=/|$)", value)
+        if port_match:
+            port = int(port_match.group(1))
+            if not 1 <= port <= 65535:
+                raise ModelValidationError(
+                    detail="Port number must be between 1 and 65535.",
+                    code="image-uid",
+                    pointer="/data/attributes/uid",
+                )
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -433,6 +454,8 @@ class Provider(RowLevelSecurityProtectedModel):
 
     def clean(self):
         super().clean()
+        if self.provider == self.ProviderChoices.IMAGE.value and self.uid:
+            self.uid = re.sub(r"^https?://", "", self.uid)
         getattr(self, f"validate_{self.provider}_uid")(self.uid)
 
     def save(self, *args, **kwargs):
@@ -681,8 +704,6 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
     update_tag = models.BigIntegerField(
         null=True, blank=True, help_text="Cartography update tag (epoch)"
     )
-    graph_database = models.CharField(max_length=63, null=True, blank=True)
-    is_graph_database_deleted = models.BooleanField(default=False)
     ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
@@ -708,21 +729,6 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "scan_id"],
                 name="aps_scan_lookup_idx",
-            ),
-            models.Index(
-                fields=["tenant_id", "provider_id"],
-                name="aps_active_graph_idx",
-                include=["graph_database", "id"],
-                condition=Q(is_graph_database_deleted=False),
-            ),
-            models.Index(
-                fields=["tenant_id", "provider_id", "-completed_at"],
-                name="aps_completed_graph_idx",
-                include=["graph_database", "id"],
-                condition=Q(
-                    state=StateChoices.COMPLETED,
-                    is_graph_database_deleted=False,
-                ),
             ),
         ]
 

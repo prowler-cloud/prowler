@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [Unreleased]
+
+### 🚀 Added
+
+- Image provider support with registry credential handling, UID validation, and connection testing
+
+---
+
 ## [1.19.0] (Prowler v5.18.0)
 
 ### 🚀 Added

@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from prowler.providers.gcp.gcp_provider import GcpProvider
     from prowler.providers.github.github_provider import GithubProvider
     from prowler.providers.iac.iac_provider import IacProvider
+    from prowler.providers.image.image_provider import ImageProvider
     from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
     from prowler.providers.m365.m365_provider import M365Provider
     from prowler.providers.mongodbatlas.mongodbatlas_provider import (
@@ -78,9 +79,11 @@ def return_prowler_provider(
     AlibabacloudProvider
     | AwsProvider
     | AzureProvider
+    | CloudflareProvider
     | GcpProvider
     | GithubProvider
     | IacProvider
+    | ImageProvider
     | KubernetesProvider
     | M365Provider
     | MongodbatlasProvider
@@ -92,7 +95,7 @@ def return_prowler_provider(
         provider (Provider): The provider object containing the provider type and associated secrets.
 
     Returns:
-        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | IacProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OraclecloudProvider: The corresponding provider class.
+        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | IacProvider | ImageProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OraclecloudProvider: The corresponding provider class.
 
     Raises:
         ValueError: If the provider type specified in `provider.provider` is not supported.
@@ -152,6 +155,10 @@ def return_prowler_provider(
             )
 
             prowler_provider = CloudflareProvider
+        case Provider.ProviderChoices.IMAGE.value:
+            from prowler.providers.image.image_provider import ImageProvider
+
+            prowler_provider = ImageProvider
         case _:
             raise ValueError(f"Provider type {provider.provider} not supported")
     return prowler_provider
@@ -208,11 +215,30 @@ def get_prowler_provider_kwargs(
             **prowler_provider_kwargs,
             "filter_accounts": [provider.uid],
         }
+    elif provider.provider == Provider.ProviderChoices.IMAGE.value:
+        prowler_provider_kwargs = {
+            "registry": provider.uid,
+        }
+        secret = provider.secret.secret
+        for key in (
+            "registry_username",
+            "registry_password",
+            "registry_token",
+            "image_filter",
+            "tag_filter",
+        ):
+            if key in secret:
+                prowler_provider_kwargs[key] = secret[key]
+        if "max_images" in secret:
+            prowler_provider_kwargs["max_images"] = int(secret["max_images"])
 
     if mutelist_processor:
         mutelist_content = mutelist_processor.configuration.get("Mutelist", {})
-        # IaC provider doesn't support mutelist (uses Trivy's built-in logic)
-        if mutelist_content and provider.provider != Provider.ProviderChoices.IAC.value:
+        # IaC and Image providers don't support mutelist (Trivy handles its own logic)
+        if mutelist_content and provider.provider not in (
+            Provider.ProviderChoices.IAC.value,
+            Provider.ProviderChoices.IMAGE.value,
+        ):
             prowler_provider_kwargs["mutelist_content"] = mutelist_content
 
     return prowler_provider_kwargs
@@ -229,6 +255,7 @@ def initialize_prowler_provider(
     | GcpProvider
     | GithubProvider
     | IacProvider
+    | ImageProvider
     | KubernetesProvider
     | M365Provider
     | MongodbatlasProvider
@@ -241,7 +268,7 @@ def initialize_prowler_provider(
         mutelist_processor (Processor): The mutelist processor object containing the mutelist configuration.
 
     Returns:
-        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | IacProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OraclecloudProvider: An instance of the corresponding provider class
+        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | IacProvider | ImageProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OraclecloudProvider: An instance of the corresponding provider class
             initialized with the provider's secrets.
     """
     prowler_provider = return_prowler_provider(provider)
@@ -276,6 +303,20 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         if "access_token" in prowler_provider_kwargs:
             iac_test_kwargs["access_token"] = prowler_provider_kwargs["access_token"]
         return prowler_provider.test_connection(**iac_test_kwargs)
+    elif provider.provider == Provider.ProviderChoices.IMAGE.value:
+        from prowler.providers.image.lib.registry.factory import create_registry_adapter
+
+        try:
+            adapter = create_registry_adapter(
+                registry_url=provider.uid,
+                username=prowler_provider_kwargs.get("registry_username"),
+                password=prowler_provider_kwargs.get("registry_password"),
+                token=prowler_provider_kwargs.get("registry_token"),
+            )
+            adapter.list_repositories()
+            return Connection(is_connected=True, error=None)
+        except Exception as e:
+            return Connection(is_connected=False, error=str(e))
     else:
         return prowler_provider.test_connection(
             **prowler_provider_kwargs,

@@ -24,6 +24,7 @@ from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.github.github_provider import GithubProvider
 from prowler.providers.iac.iac_provider import IacProvider
+from prowler.providers.image.image_provider import ImageProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.m365.m365_provider import M365Provider
 from prowler.providers.mongodbatlas.mongodbatlas_provider import MongodbatlasProvider
@@ -120,6 +121,7 @@ class TestReturnProwlerProvider:
             (Provider.ProviderChoices.IAC.value, IacProvider),
             (Provider.ProviderChoices.ALIBABACLOUD.value, AlibabacloudProvider),
             (Provider.ProviderChoices.CLOUDFLARE.value, CloudflareProvider),
+            (Provider.ProviderChoices.IMAGE.value, ImageProvider),
         ],
     )
     def test_return_prowler_provider(self, provider_type, expected_provider):
@@ -185,6 +187,54 @@ class TestProwlerProviderConnectionTest:
         assert connection.is_connected is False
         assert isinstance(connection.error, Provider.secret.RelatedObjectDoesNotExist)
         assert str(connection.error) == "Provider has no secret."
+
+    @patch(
+        "prowler.providers.image.lib.registry.factory.create_registry_adapter",
+    )
+    @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_image_success(
+        self, mock_return_prowler_provider, mock_create_adapter
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.uid = "ghcr.io"
+        provider.secret.secret = {"registry_token": "tok"}
+
+        mock_adapter = MagicMock()
+        mock_create_adapter.return_value = mock_adapter
+
+        connection = prowler_provider_connection_test(provider)
+
+        assert connection.is_connected is True
+        assert connection.error is None
+        mock_create_adapter.assert_called_once_with(
+            registry_url="ghcr.io",
+            username=None,
+            password=None,
+            token="tok",
+        )
+        mock_adapter.list_repositories.assert_called_once()
+
+    @patch(
+        "prowler.providers.image.lib.registry.factory.create_registry_adapter",
+    )
+    @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_image_failure(
+        self, mock_return_prowler_provider, mock_create_adapter
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.uid = "ghcr.io"
+        provider.secret.secret = {"registry_token": "bad-token"}
+
+        mock_adapter = MagicMock()
+        mock_adapter.list_repositories.side_effect = Exception("401 Unauthorized")
+        mock_create_adapter.return_value = mock_adapter
+
+        connection = prowler_provider_connection_test(provider)
+
+        assert connection.is_connected is False
+        assert connection.error == "401 Unauthorized"
 
 
 class TestGetProwlerProviderKwargs:
@@ -327,6 +377,103 @@ class TestGetProwlerProviderKwargs:
         expected_result = {
             "scan_repository_url": provider_uid,
             "oauth_app_token": "test_token",
+        }
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_image_provider(self):
+        """Test that Image provider gets correct kwargs with registry URL and auth."""
+        provider_uid = "ghcr.io"
+        secret_dict = {
+            "registry_username": "user",
+            "registry_password": "pass",
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {
+            "registry": provider_uid,
+            "registry_username": "user",
+            "registry_password": "pass",
+        }
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_image_provider_with_filters(self):
+        """Test that Image provider includes scan filters."""
+        provider_uid = "docker.io"
+        secret_dict = {
+            "registry_token": "ghp_abc123",
+            "image_filter": "my-app.*",
+            "tag_filter": "v[0-9]+",
+            "max_images": 50,
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {
+            "registry": provider_uid,
+            "registry_token": "ghp_abc123",
+            "image_filter": "my-app.*",
+            "tag_filter": "v[0-9]+",
+            "max_images": 50,
+        }
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_image_provider_no_auth(self):
+        """Test that Image provider works with empty secret for public registries."""
+        provider_uid = "docker.io"
+        secret_dict = {}
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {"registry": provider_uid}
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_image_provider_ignores_mutelist(self):
+        """Test that Image provider does NOT receive mutelist_content.
+
+        Image provider uses Trivy's built-in logic, so it should not
+        receive mutelist_content even when a mutelist processor is configured.
+        """
+        provider_uid = "ghcr.io"
+        secret_dict = {"registry_token": "test_token"}
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        mutelist_processor = MagicMock()
+        mutelist_processor.configuration = {"Mutelist": {"key": "value"}}
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider, mutelist_processor)
+
+        assert "mutelist_content" not in result
+        expected_result = {
+            "registry": provider_uid,
+            "registry_token": "test_token",
         }
         assert result == expected_result
 
