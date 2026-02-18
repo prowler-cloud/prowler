@@ -13,7 +13,6 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "@/components/shadcn/command";
 import {
   Popover,
@@ -26,6 +25,7 @@ import { cn } from "@/lib/utils";
 interface MultiSelectOption {
   label: string;
   value: string;
+  icon?: ReactNode;
   description?: string;
   disabled?: boolean;
 }
@@ -112,14 +112,19 @@ export function EnhancedMultiSelect({
 
   const enabledOptions = options.filter((o) => !o.disabled);
 
-  const filteredOptions =
+  const filteredOptions = (
     searchable && search
       ? options.filter(
           (o) =>
             o.label.toLowerCase().includes(search.toLowerCase()) ||
             o.value.toLowerCase().includes(search.toLowerCase()),
         )
-      : options;
+      : options
+  ).toSorted((a, b) => {
+    const aSelected = selectedValues.includes(a.value) ? 0 : 1;
+    const bSelected = selectedValues.includes(b.value) ? 0 : 1;
+    return aSelected - bSelected;
+  });
 
   function getOptionByValue(value: string) {
     return options.find((o) => o.value === value);
@@ -337,6 +342,9 @@ export function EnhancedMultiSelect({
                       aria-hidden="true"
                       className="pointer-events-none mr-2 size-4"
                     />
+                    {option.icon && (
+                      <span className="shrink-0">{option.icon}</span>
+                    )}
                     <div className="flex min-w-0 flex-col">
                       <span className="truncate">{option.label}</span>
                       {option.description && (
@@ -349,32 +357,34 @@ export function EnhancedMultiSelect({
                 );
               })}
             </CommandGroup>
-            <CommandSeparator />
-            <CommandGroup>
-              <div className="flex items-center justify-between">
-                {selectedValues.length > 0 && (
-                  <>
-                    <CommandItem
-                      onSelect={handleClear}
-                      className="flex-1 cursor-pointer justify-center"
-                    >
-                      Clear
-                    </CommandItem>
-                    <Separator
-                      orientation="vertical"
-                      className="flex h-full min-h-6"
-                    />
-                  </>
-                )}
-                <CommandItem
-                  onSelect={() => setOpen(false)}
-                  className="max-w-full flex-1 cursor-pointer justify-center"
-                >
-                  Close
-                </CommandItem>
-              </div>
-            </CommandGroup>
           </CommandList>
+          <Separator />
+          <div className="flex items-center justify-between p-1">
+            {selectedValues.length > 0 && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClear}
+                  className="flex-1"
+                >
+                  Clear
+                </Button>
+                <Separator
+                  orientation="vertical"
+                  className="flex h-full min-h-6"
+                />
+              </>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setOpen(false)}
+              className="flex-1"
+            >
+              Close
+            </Button>
+          </div>
         </Command>
       </PopoverContent>
     </Popover>
