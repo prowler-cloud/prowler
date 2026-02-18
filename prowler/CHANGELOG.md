@@ -54,6 +54,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `pip install prowler` failing on systems without C compiler due to `netifaces` transitive dependency from `openstacksdk` [(#10055)](https://github.com/prowler-cloud/prowler/pull/10055)
 - `kms_key_not_publicly_accessible` false negative for specific KMS actions (e.g., `kms:DescribeKey`, `kms:Decrypt`) with unrestricted principals [(#10071)](https://github.com/prowler-cloud/prowler/pull/10071)
+- Remove account_id and location for manual requirements in M365CIS [(#10105)](https://github.com/prowler-cloud/prowler/pull/10105)
 
 ---
 
