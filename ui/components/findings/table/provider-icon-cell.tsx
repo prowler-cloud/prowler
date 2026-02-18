@@ -13,7 +13,7 @@ import {
 } from "@/components/icons/providers-badge";
 import { ProviderType } from "@/types";
 
-const PROVIDER_ICONS = {
+export const PROVIDER_ICONS = {
   aws: AWSProviderBadge,
   azure: AzureProviderBadge,
   gcp: GCPProviderBadge,
