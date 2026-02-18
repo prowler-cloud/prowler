@@ -33,6 +33,14 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🐞 Fixed
 
+- Remove account_id and location for manual requirements in M365CIS [(#10105)](https://github.com/prowler-cloud/prowler/pull/10105)
+
+---
+
+## [1.19.2] (Prowler v5.18.2)
+
+### 🐞 Fixed
+
 - SAML role mapping now prevents removing the last MANAGE_ACCOUNT user [(#10007)](https://github.com/prowler-cloud/prowler/pull/10007)
 
 ---
