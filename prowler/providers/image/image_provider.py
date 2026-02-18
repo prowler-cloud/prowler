@@ -107,8 +107,8 @@ class ImageProvider(Provider):
         self.registry_token = registry_token or os.environ.get("REGISTRY_TOKEN")
 
         if self.registry_username and self.registry_password:
-            self._auth_method = "Docker login"
-            logger.info("Using docker login for registry authentication")
+            self._auth_method = "Basic auth"
+            logger.info("Using basic auth for registry authentication")
         elif self.registry_token:
             self._auth_method = "Registry token"
             logger.info("Using registry token for authentication")
@@ -321,7 +321,6 @@ class ImageProvider(Provider):
 
     def cleanup(self) -> None:
         """Clean up any resources after scanning."""
-        pass
 
     def _process_finding(
         self, finding: dict, image_name: str, finding_type: str
@@ -680,7 +679,7 @@ class ImageProvider(Provider):
         lower = error_msg.lower()
 
         if any(kw in lower for kw in ("401", "403", "unauthorized", "denied")):
-            return f"Auth failure — check `docker login`: {error_msg}"
+            return f"Auth failure — check registry credentials: {error_msg}"
         if any(kw in lower for kw in ("404", "manifest unknown", "not found")):
             return f"Image not found — check name/tag/registry: {error_msg}"
         if any(kw in lower for kw in ("429", "rate limit", "too many requests")):

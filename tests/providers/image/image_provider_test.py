@@ -7,8 +7,6 @@ import pytest
 
 from prowler.lib.check.models import CheckReportImage
 from prowler.providers.image.exceptions.exceptions import (
-    ImageDockerLoginError,
-    ImageDockerNotFoundError,
     ImageInvalidConfigScannerError,
     ImageInvalidNameError,
     ImageInvalidScannerError,
@@ -44,6 +42,10 @@ def _make_provider(**kwargs):
 
 
 class TestImageProvider:
+    @patch.dict(
+        os.environ,
+        {"REGISTRY_USERNAME": "", "REGISTRY_PASSWORD": "", "REGISTRY_TOKEN": ""},
+    )
     def test_image_provider(self):
         """Test default initialization."""
         provider = _make_provider()
@@ -407,14 +409,17 @@ class TestImageProvider:
                 pass
 
 
+@patch.dict(
+    os.environ, {"REGISTRY_USERNAME": "", "REGISTRY_PASSWORD": "", "REGISTRY_TOKEN": ""}
+)
 class TestImageProviderRegistryAuth:
     def test_no_auth_by_default(self):
         """Test that no auth is set when no credentials are provided."""
         provider = _make_provider()
 
-        assert provider.registry_username is None
-        assert provider.registry_password is None
-        assert provider.registry_token is None
+        assert not provider.registry_username
+        assert not provider.registry_password
+        assert not provider.registry_token
         assert provider.auth_method == "No auth"
 
     def test_basic_auth_with_explicit_params(self):
@@ -426,7 +431,7 @@ class TestImageProviderRegistryAuth:
 
         assert provider.registry_username == "myuser"
         assert provider.registry_password == "mypass"
-        assert provider.auth_method == "Docker login"
+        assert provider.auth_method == "Basic auth"
 
     def test_token_auth_with_explicit_param(self):
         """Test token auth via explicit constructor param."""
@@ -443,7 +448,7 @@ class TestImageProviderRegistryAuth:
             registry_token="my-token",
         )
 
-        assert provider.auth_method == "Docker login"
+        assert provider.auth_method == "Basic auth"
 
     @patch.dict(
         os.environ, {"REGISTRY_USERNAME": "envuser", "REGISTRY_PASSWORD": "envpass"}
@@ -454,7 +459,7 @@ class TestImageProviderRegistryAuth:
 
         assert provider.registry_username == "envuser"
         assert provider.registry_password == "envpass"
-        assert provider.auth_method == "Docker login"
+        assert provider.auth_method == "Basic auth"
 
     @patch.dict(os.environ, {"REGISTRY_TOKEN": "env-token"})
     def test_token_auth_from_env_var(self):
@@ -486,16 +491,16 @@ class TestImageProviderRegistryAuth:
         assert "TRIVY_PASSWORD" not in env
         assert "TRIVY_REGISTRY_TOKEN" not in env
 
-    def test_build_trivy_env_basic_auth_no_env_vars(self):
-        """Test that _build_trivy_env does NOT inject TRIVY_USERNAME/PASSWORD (docker login handles it)."""
+    def test_build_trivy_env_basic_auth_injects_trivy_vars(self):
+        """Test that _build_trivy_env injects TRIVY_USERNAME/PASSWORD for Trivy native auth."""
         provider = _make_provider(
             registry_username="myuser",
             registry_password="mypass",
         )
         env = provider._build_trivy_env()
 
-        assert "TRIVY_USERNAME" not in env
-        assert "TRIVY_PASSWORD" not in env
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
 
     def test_build_trivy_env_token_auth(self):
         """Test that _build_trivy_env injects registry token."""
@@ -505,8 +510,8 @@ class TestImageProviderRegistryAuth:
         assert env["TRIVY_REGISTRY_TOKEN"] == "my-token"
 
     @patch("subprocess.run")
-    def test_execute_trivy_no_trivy_env_with_basic_auth(self, mock_subprocess):
-        """Test that _execute_trivy does NOT set TRIVY_USERNAME/PASSWORD (docker login handles auth)."""
+    def test_execute_trivy_injects_trivy_env_with_basic_auth(self, mock_subprocess):
+        """Test that _execute_trivy sets TRIVY_USERNAME/PASSWORD for Trivy native auth."""
         provider = _make_provider(
             registry_username="myuser",
             registry_password="mypass",
@@ -519,12 +524,12 @@ class TestImageProviderRegistryAuth:
 
         call_kwargs = mock_subprocess.call_args
         env = call_kwargs.kwargs.get("env") or call_kwargs[1].get("env")
-        assert "TRIVY_USERNAME" not in env
-        assert "TRIVY_PASSWORD" not in env
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
 
     @patch("subprocess.run")
     def test_test_connection_with_basic_auth(self, mock_subprocess):
-        """Test test_connection does docker login, pull, trivy, logout and does NOT set TRIVY_* env vars."""
+        """Test test_connection passes TRIVY_USERNAME/PASSWORD via env for Trivy native auth."""
         mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
 
         result = ImageProvider.test_connection(
@@ -534,29 +539,13 @@ class TestImageProviderRegistryAuth:
         )
 
         assert result.is_connected is True
-        # Should have 4 subprocess calls: docker login, docker pull, trivy, docker logout
-        assert mock_subprocess.call_count == 4
-        login_call = mock_subprocess.call_args_list[0]
-        assert login_call.args[0] == [
-            "docker",
-            "login",
-            "--username",
-            "myuser",
-            "--password-stdin",
-            "private.registry.io",
-        ]
-        assert login_call.kwargs["input"] == "mypass"
-
-        pull_call = mock_subprocess.call_args_list[1]
-        assert pull_call.args[0] == ["docker", "pull", "private.registry.io/myapp:v1"]
-
-        trivy_call = mock_subprocess.call_args_list[2]
+        # Should have 1 subprocess call: trivy only (no docker login/pull/logout)
+        assert mock_subprocess.call_count == 1
+        trivy_call = mock_subprocess.call_args
+        assert trivy_call.args[0][0] == "trivy"
         env = trivy_call.kwargs.get("env") or trivy_call[1].get("env")
-        assert "TRIVY_USERNAME" not in env
-        assert "TRIVY_PASSWORD" not in env
-
-        logout_call = mock_subprocess.call_args_list[3]
-        assert logout_call.args[0] == ["docker", "logout", "private.registry.io"]
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
 
     @patch("subprocess.run")
     def test_test_connection_with_token(self, mock_subprocess):
@@ -584,7 +573,7 @@ class TestImageProviderRegistryAuth:
             output = " ".join(
                 str(call.args[0]) for call in mock_print.call_args_list if call.args
             )
-            assert "Docker login" in output
+            assert "Basic auth" in output
 
 
 class TestExtractRegistry:
@@ -627,232 +616,10 @@ class TestExtractRegistry:
         assert ImageProvider._extract_registry("nginx") is None
 
 
-class TestDockerLogin:
+class TestTrivyAuthIntegration:
     @patch("subprocess.run")
-    def test_login_success(self, mock_subprocess):
-        """Test successful docker login."""
-        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
-        provider = _make_provider(
-            registry_username="myuser",
-            registry_password="mypass",
-        )
-
-        provider._docker_login("ghcr.io")
-
-        mock_subprocess.assert_called_once()
-        call_args = mock_subprocess.call_args
-        assert call_args.args[0] == [
-            "docker",
-            "login",
-            "--username",
-            "myuser",
-            "--password-stdin",
-            "ghcr.io",
-        ]
-        assert call_args.kwargs["input"] == "mypass"
-        assert "ghcr.io" in provider._logged_in_registries
-
-    @patch("subprocess.run")
-    def test_login_docker_hub(self, mock_subprocess):
-        """Test docker login for Docker Hub (registry=None)."""
-        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
-        provider = _make_provider(
-            registry_username="myuser",
-            registry_password="mypass",
-        )
-
-        provider._docker_login(None)
-
-        call_args = mock_subprocess.call_args
-        assert call_args.args[0] == [
-            "docker",
-            "login",
-            "--username",
-            "myuser",
-            "--password-stdin",
-        ]
-        assert None in provider._logged_in_registries
-
-    @patch("subprocess.run")
-    def test_login_failure_raises(self, mock_subprocess):
-        """Test docker login failure raises ImageDockerLoginError."""
-        mock_subprocess.return_value = MagicMock(
-            returncode=1, stderr="unauthorized: incorrect username or password"
-        )
-        provider = _make_provider(
-            registry_username="myuser",
-            registry_password="badpass",
-        )
-
-        with pytest.raises(ImageDockerLoginError):
-            provider._docker_login("ghcr.io")
-
-        assert "ghcr.io" not in provider._logged_in_registries
-
-    @patch("subprocess.run")
-    def test_login_docker_not_found(self, mock_subprocess):
-        """Test docker binary not found raises ImageDockerNotFoundError."""
-        mock_subprocess.side_effect = FileNotFoundError("docker not found")
-        provider = _make_provider(
-            registry_username="myuser",
-            registry_password="mypass",
-        )
-
-        with pytest.raises(ImageDockerNotFoundError):
-            provider._docker_login("ghcr.io")
-
-    @patch("subprocess.run")
-    def test_login_password_via_stdin_not_args(self, mock_subprocess):
-        """Test that password is passed via stdin, never in command args."""
-        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
-        provider = _make_provider(
-            registry_username="myuser",
-            registry_password="s3cret!",
-        )
-
-        provider._docker_login("ghcr.io")
-
-        call_args = mock_subprocess.call_args
-        cmd = call_args.args[0]
-        assert "s3cret!" not in cmd
-        assert call_args.kwargs["input"] == "s3cret!"
-
-
-class TestDockerLogout:
-    @patch("subprocess.run")
-    def test_logout_success(self, mock_subprocess):
-        """Test successful docker logout."""
-        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
-        provider = _make_provider()
-
-        provider._docker_logout("ghcr.io")
-
-        mock_subprocess.assert_called_once_with(
-            ["docker", "logout", "ghcr.io"],
-            capture_output=True,
-            text=True,
-        )
-
-    @patch("subprocess.run")
-    def test_logout_docker_hub(self, mock_subprocess):
-        """Test docker logout for Docker Hub (registry=None)."""
-        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
-        provider = _make_provider()
-
-        provider._docker_logout(None)
-
-        mock_subprocess.assert_called_once_with(
-            ["docker", "logout"],
-            capture_output=True,
-            text=True,
-        )
-
-    @patch("subprocess.run")
-    def test_logout_failure_warns(self, mock_subprocess):
-        """Test docker logout failure only warns, never raises."""
-        mock_subprocess.return_value = MagicMock(returncode=1, stderr="some error")
-        provider = _make_provider()
-
-        provider._docker_logout("ghcr.io")
-
-    @patch("subprocess.run")
-    def test_logout_exception_warns(self, mock_subprocess):
-        """Test docker logout handles exceptions gracefully."""
-        mock_subprocess.side_effect = OSError("docker crashed")
-        provider = _make_provider()
-
-        provider._docker_logout("ghcr.io")
-
-
-class TestCleanup:
-    @patch("subprocess.run")
-    def test_cleanup_calls_logout_for_each_registry(self, mock_subprocess):
-        """Test cleanup calls docker logout for each logged-in registry."""
-        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
-        provider = _make_provider(
-            registry_username="myuser",
-            registry_password="mypass",
-        )
-        provider._logged_in_registries = {"ghcr.io", None}
-
-        provider.cleanup()
-
-        assert mock_subprocess.call_count == 2
-        assert len(provider._logged_in_registries) == 0
-
-    def test_cleanup_idempotent(self):
-        """Test cleanup is safe to call multiple times."""
-        provider = _make_provider()
-
-        provider.cleanup()
-        provider.cleanup()
-
-        assert len(provider._logged_in_registries) == 0
-
-    @patch("subprocess.run")
-    def test_cleanup_clears_set(self, mock_subprocess):
-        """Test cleanup clears the _logged_in_registries set."""
-        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
-        provider = _make_provider(
-            registry_username="myuser",
-            registry_password="mypass",
-        )
-        provider._logged_in_registries = {"ghcr.io"}
-
-        provider.cleanup()
-
-        assert provider._logged_in_registries == set()
-
-
-class TestDockerPull:
-    @patch("subprocess.run")
-    def test_pull_success(self, mock_subprocess):
-        """Test successful docker pull."""
-        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
-        provider = _make_provider(
-            registry_username="myuser",
-            registry_password="mypass",
-        )
-
-        provider._docker_pull("ghcr.io/user/image:tag")
-
-        mock_subprocess.assert_called_once_with(
-            ["docker", "pull", "ghcr.io/user/image:tag"],
-            capture_output=True,
-            text=True,
-        )
-
-    @patch("subprocess.run")
-    def test_pull_failure_raises_scan_error(self, mock_subprocess):
-        """Test docker pull failure raises ImageScanError."""
-        mock_subprocess.return_value = MagicMock(
-            returncode=1, stderr="Error: pull access denied"
-        )
-        provider = _make_provider(
-            registry_username="myuser",
-            registry_password="mypass",
-        )
-
-        with pytest.raises(ImageScanError):
-            provider._docker_pull("private/image:tag")
-
-    @patch("subprocess.run")
-    def test_pull_docker_not_found(self, mock_subprocess):
-        """Test docker binary not found raises ImageDockerNotFoundError."""
-        mock_subprocess.side_effect = FileNotFoundError("docker not found")
-        provider = _make_provider(
-            registry_username="myuser",
-            registry_password="mypass",
-        )
-
-        with pytest.raises(ImageDockerNotFoundError):
-            provider._docker_pull("alpine:3.18")
-
-
-class TestDockerLoginIntegration:
-    @patch("subprocess.run")
-    def test_run_scan_calls_docker_login_with_credentials(self, mock_subprocess):
-        """Test that run_scan() calls docker login, docker pull, then trivy when credentials are set."""
+    def test_run_scan_passes_trivy_env_with_credentials(self, mock_subprocess):
+        """Test that run_scan() passes TRIVY_USERNAME/PASSWORD via env when credentials are set."""
         mock_subprocess.return_value = MagicMock(
             returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
         )
@@ -867,13 +634,16 @@ class TestDockerLoginIntegration:
             reports.extend(batch)
 
         calls = mock_subprocess.call_args_list
-        assert calls[0].args[0][:2] == ["docker", "login"]
-        assert calls[1].args[0][:2] == ["docker", "pull"]
-        assert calls[2].args[0][:2] == ["trivy", "image"]
+        # Only trivy calls, no docker login/pull
+        assert all(call.args[0][0] == "trivy" for call in calls)
+        env = calls[0].kwargs.get("env") or calls[0][1].get("env")
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
 
+    @patch.dict(os.environ, {"REGISTRY_USERNAME": "", "REGISTRY_PASSWORD": ""})
     @patch("subprocess.run")
-    def test_run_scan_no_docker_login_without_credentials(self, mock_subprocess):
-        """Test that run_scan() does NOT call docker login when no credentials."""
+    def test_run_scan_no_trivy_auth_without_credentials(self, mock_subprocess):
+        """Test that run_scan() does NOT set TRIVY_USERNAME/PASSWORD when no credentials."""
         mock_subprocess.return_value = MagicMock(
             returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
         )
@@ -885,9 +655,10 @@ class TestDockerLoginIntegration:
         calls = mock_subprocess.call_args_list
         assert all(call.args[0][0] == "trivy" for call in calls)
 
+    @patch.dict(os.environ, {"REGISTRY_USERNAME": "", "REGISTRY_PASSWORD": ""})
     @patch("subprocess.run")
-    def test_run_scan_no_docker_login_with_token_only(self, mock_subprocess):
-        """Test that run_scan() does NOT call docker login when only token is provided."""
+    def test_run_scan_token_auth_via_env(self, mock_subprocess):
+        """Test that run_scan() passes TRIVY_REGISTRY_TOKEN when only token is provided."""
         mock_subprocess.return_value = MagicMock(
             returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
         )
@@ -898,10 +669,12 @@ class TestDockerLoginIntegration:
 
         calls = mock_subprocess.call_args_list
         assert all(call.args[0][0] == "trivy" for call in calls)
+        env = calls[0].kwargs.get("env") or calls[0][1].get("env")
+        assert env["TRIVY_REGISTRY_TOKEN"] == "my-token"
 
     @patch("subprocess.run")
-    def test_run_calls_cleanup_on_success(self, mock_subprocess):
-        """Test that run() calls cleanup after successful scan."""
+    def test_run_with_credentials_only_calls_trivy(self, mock_subprocess):
+        """Test that run() only calls trivy (no docker login/pull/logout)."""
         mock_subprocess.return_value = MagicMock(
             returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
         )
@@ -914,42 +687,11 @@ class TestDockerLoginIntegration:
         provider.run()
 
         calls = mock_subprocess.call_args_list
-        # login, pull, trivy, logout
-        assert calls[0].args[0][:2] == ["docker", "login"]
-        assert calls[1].args[0][:2] == ["docker", "pull"]
-        assert calls[2].args[0][:2] == ["trivy", "image"]
-        assert calls[-1].args[0][:2] == ["docker", "logout"]
+        assert all(call.args[0][0] == "trivy" for call in calls)
 
     @patch("subprocess.run")
-    def test_run_calls_cleanup_on_error(self, mock_subprocess):
-        """Test that run() calls cleanup even when scan errors."""
-
-        def side_effect(*args, **kwargs):
-            cmd = args[0]
-            if cmd[0] == "docker" and cmd[1] == "login":
-                return MagicMock(returncode=0, stderr="")
-            if cmd[0] == "docker" and cmd[1] == "pull":
-                return MagicMock(returncode=0, stderr="")
-            if cmd[0] == "trivy":
-                return MagicMock(returncode=1, stdout="", stderr="scan failed")
-            return MagicMock(returncode=0, stderr="")
-
-        mock_subprocess.side_effect = side_effect
-        provider = _make_provider(
-            images=["ghcr.io/user/image:tag"],
-            registry_username="myuser",
-            registry_password="mypass",
-        )
-
-        with pytest.raises(ImageScanError):
-            provider.run()
-
-        last_call = mock_subprocess.call_args_list[-1]
-        assert last_call.args[0][:2] == ["docker", "logout"]
-
-    @patch("subprocess.run")
-    def test_run_scan_deduplicates_registries(self, mock_subprocess):
-        """Test that run_scan() deduplicates registries for docker login but pulls each image."""
+    def test_run_scan_multiple_images_all_get_trivy_env(self, mock_subprocess):
+        """Test that all trivy calls get TRIVY_USERNAME/PASSWORD when scanning multiple images."""
         mock_subprocess.return_value = MagicMock(
             returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
         )
@@ -963,16 +705,16 @@ class TestDockerLoginIntegration:
             pass
 
         calls = mock_subprocess.call_args_list
-        docker_login_calls = [c for c in calls if c.args[0][:2] == ["docker", "login"]]
-        docker_pull_calls = [c for c in calls if c.args[0][:2] == ["docker", "pull"]]
-        trivy_calls = [c for c in calls if c.args[0][:2] == ["trivy", "image"]]
-        assert len(docker_login_calls) == 1
-        assert len(docker_pull_calls) == 2
+        trivy_calls = [c for c in calls if c.args[0][0] == "trivy"]
         assert len(trivy_calls) == 2
+        for call in trivy_calls:
+            env = call.kwargs.get("env") or call[1].get("env")
+            assert env["TRIVY_USERNAME"] == "myuser"
+            assert env["TRIVY_PASSWORD"] == "mypass"
 
     @patch("subprocess.run")
-    def test_test_connection_docker_login_docker_hub(self, mock_subprocess):
-        """Test test_connection does docker login and pull for Docker Hub images."""
+    def test_test_connection_docker_hub_uses_trivy_auth(self, mock_subprocess):
+        """Test test_connection passes TRIVY creds for Docker Hub images."""
         mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
 
         result = ImageProvider.test_connection(
@@ -982,21 +724,12 @@ class TestDockerLoginIntegration:
         )
 
         assert result.is_connected is True
-        assert mock_subprocess.call_count == 4
-        login_call = mock_subprocess.call_args_list[0]
-        assert login_call.args[0] == [
-            "docker",
-            "login",
-            "--username",
-            "myuser",
-            "--password-stdin",
-        ]
-        pull_call = mock_subprocess.call_args_list[1]
-        assert pull_call.args[0] == [
-            "docker",
-            "pull",
-            "andoniaf/test-private:tag",
-        ]
+        assert mock_subprocess.call_count == 1
+        trivy_call = mock_subprocess.call_args
+        assert trivy_call.args[0][0] == "trivy"
+        env = trivy_call.kwargs.get("env") or trivy_call[1].get("env")
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
 
 
 class TestImageProviderInputValidation:
