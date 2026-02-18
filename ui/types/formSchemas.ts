@@ -116,6 +116,11 @@ export const addProviderFormSchema = z
         providerUid: z.string(),
       }),
       z.object({
+        providerType: z.literal("image"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
+      z.object({
         providerType: z.literal("oraclecloud"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
@@ -220,46 +225,66 @@ export const addCredentialsFormSchema = (
                           .string()
                           .optional(),
                       }
-                    : providerType === "oraclecloud"
+                    : providerType === "image"
                       ? {
-                          [ProviderCredentialFields.OCI_USER]: z
+                          [ProviderCredentialFields.REGISTRY_USERNAME]: z
                             .string()
-                            .min(1, "User OCID is required"),
-                          [ProviderCredentialFields.OCI_FINGERPRINT]: z
+                            .optional(),
+                          [ProviderCredentialFields.REGISTRY_PASSWORD]: z
                             .string()
-                            .min(1, "Fingerprint is required"),
-                          [ProviderCredentialFields.OCI_KEY_CONTENT]: z
+                            .optional(),
+                          [ProviderCredentialFields.REGISTRY_TOKEN]: z
                             .string()
-                            .min(1, "Private Key Content is required"),
-                          [ProviderCredentialFields.OCI_TENANCY]: z
+                            .optional(),
+                          [ProviderCredentialFields.IMAGE_FILTER]: z
                             .string()
-                            .min(1, "Tenancy OCID is required"),
-                          [ProviderCredentialFields.OCI_REGION]: z
+                            .optional(),
+                          [ProviderCredentialFields.TAG_FILTER]: z
                             .string()
-                            .min(1, "Region is required"),
-                          [ProviderCredentialFields.OCI_PASS_PHRASE]: z
-                            .union([z.string(), z.literal("")])
                             .optional(),
                         }
-                      : providerType === "mongodbatlas"
+                      : providerType === "oraclecloud"
                         ? {
-                            [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: z
+                            [ProviderCredentialFields.OCI_USER]: z
                               .string()
-                              .min(1, "Atlas Public Key is required"),
-                            [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: z
+                              .min(1, "User OCID is required"),
+                            [ProviderCredentialFields.OCI_FINGERPRINT]: z
                               .string()
-                              .min(1, "Atlas Private Key is required"),
+                              .min(1, "Fingerprint is required"),
+                            [ProviderCredentialFields.OCI_KEY_CONTENT]: z
+                              .string()
+                              .min(1, "Private Key Content is required"),
+                            [ProviderCredentialFields.OCI_TENANCY]: z
+                              .string()
+                              .min(1, "Tenancy OCID is required"),
+                            [ProviderCredentialFields.OCI_REGION]: z
+                              .string()
+                              .min(1, "Region is required"),
+                            [ProviderCredentialFields.OCI_PASS_PHRASE]: z
+                              .union([z.string(), z.literal("")])
+                              .optional(),
                           }
-                        : providerType === "alibabacloud"
+                        : providerType === "mongodbatlas"
                           ? {
-                              [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]:
-                                z.string().min(1, "Access Key ID is required"),
-                              [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]:
-                                z
-                                  .string()
-                                  .min(1, "Access Key Secret is required"),
+                              [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: z
+                                .string()
+                                .min(1, "Atlas Public Key is required"),
+                              [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: z
+                                .string()
+                                .min(1, "Atlas Private Key is required"),
                             }
-                          : {}),
+                          : providerType === "alibabacloud"
+                            ? {
+                                [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]:
+                                  z
+                                    .string()
+                                    .min(1, "Access Key ID is required"),
+                                [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]:
+                                  z
+                                    .string()
+                                    .min(1, "Access Key Secret is required"),
+                              }
+                            : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {

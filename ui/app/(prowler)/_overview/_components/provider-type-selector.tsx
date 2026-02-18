@@ -48,6 +48,11 @@ const IacProviderBadge = lazy(() =>
     default: m.IacProviderBadge,
   })),
 );
+const ImageProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.ImageProviderBadge,
+  })),
+);
 const OracleCloudProviderBadge = lazy(() =>
   import("@/components/icons/providers-badge").then((m) => ({
     default: m.OracleCloudProviderBadge,
@@ -101,6 +106,10 @@ const PROVIDER_DATA: Record<
   iac: {
     label: "Infrastructure as Code",
     icon: IacProviderBadge,
+  },
+  image: {
+    label: "Container Registry",
+    icon: ImageProviderBadge,
   },
   oraclecloud: {
     label: "Oracle Cloud Infrastructure",

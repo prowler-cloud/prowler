@@ -264,6 +264,32 @@ export const buildIacSecret = (formData: FormData) => {
   return filterEmptyValues(secret);
 };
 
+export const buildImageSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.REGISTRY_USERNAME]: getFormValue(
+      formData,
+      ProviderCredentialFields.REGISTRY_USERNAME,
+    ),
+    [ProviderCredentialFields.REGISTRY_PASSWORD]: getFormValue(
+      formData,
+      ProviderCredentialFields.REGISTRY_PASSWORD,
+    ),
+    [ProviderCredentialFields.REGISTRY_TOKEN]: getFormValue(
+      formData,
+      ProviderCredentialFields.REGISTRY_TOKEN,
+    ),
+    [ProviderCredentialFields.IMAGE_FILTER]: getFormValue(
+      formData,
+      ProviderCredentialFields.IMAGE_FILTER,
+    ),
+    [ProviderCredentialFields.TAG_FILTER]: getFormValue(
+      formData,
+      ProviderCredentialFields.TAG_FILTER,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 /**
  * Utility function to safely encode a string to base64
  * Handles UTF-8 characters properly without using deprecated APIs
@@ -356,6 +382,10 @@ export const buildSecretConfig = (
     iac: () => ({
       secretType: "static",
       secret: buildIacSecret(formData),
+    }),
+    image: () => ({
+      secretType: "static",
+      secret: buildImageSecret(formData),
     }),
     oraclecloud: () => ({
       secretType: "static",

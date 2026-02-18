@@ -19,6 +19,7 @@ const providerTypeLabels: Record<ProviderType, string> = {
   kubernetes: "Kubernetes",
   github: "GitHub",
   iac: "Infrastructure as Code",
+  image: "Container Registry",
   oraclecloud: "Oracle Cloud Infrastructure",
   mongodbatlas: "MongoDB Atlas",
   alibabacloud: "Alibaba Cloud",

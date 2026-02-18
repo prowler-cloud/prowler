@@ -43,6 +43,11 @@ export const getProviderHelpText = (provider: string) => {
         text: "Need help scanning your Infrastructure as Code repository?",
         link: "https://goto.prowler.com/provider-iac",
       };
+    case "image":
+      return {
+        text: "Need help scanning your container registry?",
+        link: "https://goto.prowler.com/provider-image",
+      };
     case "oraclecloud":
       return {
         text: "Need help connecting your Oracle Cloud account?",

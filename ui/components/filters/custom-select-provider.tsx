@@ -43,6 +43,10 @@ const providerDisplayData: Record<
     label: "Infrastructure as Code",
     component: <CustomProviderInputIac />,
   },
+  image: {
+    label: "Container Registry",
+    component: <CustomProviderInputIac />,
+  },
   kubernetes: {
     label: "Kubernetes",
     component: <CustomProviderInputKubernetes />,
