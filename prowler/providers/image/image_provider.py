@@ -321,7 +321,6 @@ class ImageProvider(Provider):
 
     def cleanup(self) -> None:
         """Clean up any resources after scanning."""
-        pass
 
     def _process_finding(
         self, finding: dict, image_name: str, finding_type: str
@@ -451,6 +450,29 @@ class ImageProvider(Provider):
             for batch in self.run_scan():
                 reports.extend(batch)
             return reports
+        finally:
+            self.cleanup()
+
+    def scan_per_image(
+        self,
+    ) -> Generator[tuple[str, list[CheckReportImage]], None, None]:
+        """Scan images one by one, yielding (image_name, findings) per image.
+
+        Unlike run() which returns all findings at once, this method yields
+        after each image completes, enabling progress tracking.
+        """
+        try:
+            for image in self.images:
+                try:
+                    image_findings = []
+                    for batch in self._scan_single_image(image):
+                        image_findings.extend(batch)
+                    yield (image, image_findings)
+                except (ImageScanError, ImageTrivyBinaryNotFoundError):
+                    raise
+                except Exception as error:
+                    logger.error(f"Error scanning image {image}: {error}")
+                    continue
         finally:
             self.cleanup()
 

@@ -348,49 +348,56 @@ class Scan:
                     return
 
             # Special handling for Image provider
-            if self._provider.type == "image":
+            elif self._provider.type == "image":
                 if isinstance(self._provider, ImageProvider):
                     logger.info("Running Image scan with Trivy...")
-                    image_reports = self._provider.run()
 
-                    findings = []
-                    for report in image_reports:
-                        finding_uid = f"{report.check_metadata.CheckID}-{report.resource_name}-{report.resource_id}"
+                    total_images = len(self._provider.images)
+                    self._number_of_checks_to_execute = max(total_images, 1)
 
-                        status_enum = (
-                            Status.FAIL if report.status == "FAIL" else Status.PASS
-                        )
-                        if report.muted:
-                            status_enum = Status.MUTED
+                    for i, (image_name, image_reports) in enumerate(
+                        self._provider.scan_per_image()
+                    ):
+                        findings = []
+                        for report in image_reports:
+                            finding_uid = (
+                                f"{report.check_metadata.CheckID}"
+                                f"-{report.resource_name}"
+                                f"-{report.resource_id}"
+                            )
+                            status_enum = (
+                                Status.FAIL if report.status == "FAIL" else Status.PASS
+                            )
+                            if report.muted:
+                                status_enum = Status.MUTED
 
-                        finding = Finding(
-                            auth_method=self._provider.auth_method,
-                            timestamp=datetime.datetime.now(timezone.utc),
-                            account_uid=self._provider.audited_account,
-                            account_name="Image Scan",
-                            metadata=report.check_metadata,
-                            uid=finding_uid,
-                            status=status_enum,
-                            status_extended=report.status_extended,
-                            muted=report.muted,
-                            resource_uid=report.resource_name,
-                            resource_metadata=report.resource,
-                            resource_name=report.resource_name,
-                            resource_details=report.resource_details,
-                            resource_tags={},
-                            region=self._provider.region,
-                            compliance={},
-                            raw=report.resource,
-                        )
-                        findings.append(finding)
+                            finding = Finding(
+                                auth_method="Registry",
+                                timestamp=datetime.datetime.now(timezone.utc),
+                                account_uid=getattr(self._provider, "registry", None)
+                                or "image",
+                                account_name="Container Registry",
+                                metadata=report.check_metadata,
+                                uid=finding_uid,
+                                status=status_enum,
+                                status_extended=report.status_extended,
+                                muted=report.muted,
+                                resource_uid=report.resource_id,
+                                resource_metadata=report.resource,
+                                resource_name=report.resource_name,
+                                resource_details=report.resource_details,
+                                resource_tags={},
+                                region=report.region,
+                                compliance={},
+                                raw=report.resource,
+                            )
+                            findings.append(finding)
 
-                    if self._status:
-                        findings = [f for f in findings if f.status in self._status]
+                        if self._status:
+                            findings = [f for f in findings if f.status in self._status]
 
-                    self._number_of_checks_completed = 1
-                    self._number_of_checks_to_execute = 1
-
-                    yield (100.0, findings)
+                        self._number_of_checks_completed = i + 1
+                        yield (self.progress, findings)
 
                     end_time = datetime.datetime.now()
                     self._duration = int((end_time - start_time).total_seconds())
