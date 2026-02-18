@@ -23,6 +23,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack Paths: Remove legacy per-scan `graph_database` and `is_graph_database_deleted` fields from AttackPathsScan model [(#10077)](https://github.com/prowler-cloud/prowler/pull/10077)
 - Attack Paths: Add `graph_data_ready` field to decouple query availability from scan state [(#10089)](https://github.com/prowler-cloud/prowler/pull/10089)
 - AI agent guidelines with TDD and testing skills references [(#9925)](https://github.com/prowler-cloud/prowler/pull/9925)
+- Attack Paths: Upgrade Cartography from fork 0.126.1 to upstream 0.129.0 and Neo4j driver from 5.x to 6.x [(#10110)](https://github.com/prowler-cloud/prowler/pull/10110)
 
 ### 🐞 Fixed
 
@@ -31,6 +32,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🔐 Security
 
 - Bump `Pillow` to 12.1.1 (CVE-2021-25289) [(#10027)](https://github.com/prowler-cloud/prowler/pull/10027)
+- Remove safety ignore for CVE-2026-21226 (84420), fixed via `azure-core` 1.38.x [(#10110)](https://github.com/prowler-cloud/prowler/pull/10110)
 
 ---
 
