@@ -289,6 +289,7 @@ class Provider(RowLevelSecurityProtectedModel):
         ALIBABACLOUD = "alibabacloud", _("Alibaba Cloud")
         CLOUDFLARE = "cloudflare", _("Cloudflare")
         OPENSTACK = "openstack", _("OpenStack")
+        IMAGE = "image", _("Image")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -419,6 +420,26 @@ class Provider(RowLevelSecurityProtectedModel):
                 code="openstack-uid",
                 pointer="/data/attributes/uid",
             )
+
+    @staticmethod
+    def validate_image_uid(value):
+        pattern = r"^(https?://)?[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?(:\d{1,5})?(/[a-zA-Z0-9._-]+)*/?$"
+        if not re.match(pattern, value):
+            raise ModelValidationError(
+                detail="Image provider ID must be a valid registry URL "
+                "(e.g., docker.io, ghcr.io, registry.example.com:5000).",
+                code="image-uid",
+                pointer="/data/attributes/uid",
+            )
+        port_match = re.search(r":(\d{1,5})(?=/|$)", value)
+        if port_match:
+            port = int(port_match.group(1))
+            if not 1 <= port <= 65535:
+                raise ModelValidationError(
+                    detail="Port number must be between 1 and 65535.",
+                    code="image-uid",
+                    pointer="/data/attributes/uid",
+                )
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)

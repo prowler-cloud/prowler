@@ -7,6 +7,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🚀 Added
 
 - OpenStack provider support [(#10003)](https://github.com/prowler-cloud/prowler/pull/10003)
+- Image provider support with registry credential handling, UID validation, and connection testing
 
 ### 🔄 Changed
 
