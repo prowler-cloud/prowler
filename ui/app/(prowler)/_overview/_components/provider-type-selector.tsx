@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { lazy, Suspense } from "react";
+import { type ComponentType, lazy, Suspense } from "react";
 
 import {
   MultiSelect,
@@ -77,7 +77,7 @@ const IconPlaceholder = ({ width, height }: IconProps) => (
 
 const PROVIDER_DATA: Record<
   ProviderType,
-  { label: string; icon: React.ComponentType<IconProps> }
+  { label: string; icon: ComponentType<IconProps> }
 > = {
   aws: {
     label: "Amazon Web Services",

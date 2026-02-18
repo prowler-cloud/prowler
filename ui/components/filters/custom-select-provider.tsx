@@ -13,6 +13,7 @@ import {
   CustomProviderInputGCP,
   CustomProviderInputGitHub,
   CustomProviderInputIac,
+  CustomProviderInputImage,
   CustomProviderInputKubernetes,
   CustomProviderInputM365,
   CustomProviderInputMongoDBAtlas,
@@ -45,7 +46,7 @@ const providerDisplayData: Record<
   },
   image: {
     label: "Container Registry",
-    component: <CustomProviderInputIac />,
+    component: <CustomProviderInputImage />,
   },
   kubernetes: {
     label: "Kubernetes",
