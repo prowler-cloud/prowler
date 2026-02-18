@@ -442,12 +442,60 @@ class TestFailAttackPathsScan:
                 return_value=attack_paths_scan,
             ) as mock_retrieve,
             patch(
+                "tasks.jobs.attack_paths.db_utils.graph_database.drop_database"
+            ) as mock_drop_db,
+            patch(
                 "tasks.jobs.attack_paths.db_utils.finish_attack_paths_scan"
             ) as mock_finish,
         ):
             fail_attack_paths_scan(str(tenant.id), str(scan.id), "setup exploded")
 
         mock_retrieve.assert_called_once_with(str(tenant.id), str(scan.id))
+        expected_tmp_db = f"db-tmp-scan-{str(attack_paths_scan.id).lower()}"
+        mock_drop_db.assert_called_once_with(expected_tmp_db)
+        mock_finish.assert_called_once_with(
+            attack_paths_scan,
+            StateChoices.FAILED,
+            {"global_error": "setup exploded"},
+        )
+
+    def test_drops_temp_database_even_when_drop_fails(
+        self, tenants_fixture, providers_fixture, scans_fixture
+    ):
+        from tasks.jobs.attack_paths.db_utils import (
+            fail_attack_paths_scan,
+        )
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        attack_paths_scan = AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.EXECUTING,
+        )
+
+        with (
+            patch(
+                "tasks.jobs.attack_paths.db_utils.retrieve_attack_paths_scan",
+                return_value=attack_paths_scan,
+            ),
+            patch(
+                "tasks.jobs.attack_paths.db_utils.graph_database.drop_database",
+                side_effect=Exception("Neo4j unreachable"),
+            ),
+            patch(
+                "tasks.jobs.attack_paths.db_utils.finish_attack_paths_scan"
+            ) as mock_finish,
+        ):
+            fail_attack_paths_scan(str(tenant.id), str(scan.id), "setup exploded")
+
         mock_finish.assert_called_once_with(
             attack_paths_scan,
             StateChoices.FAILED,
@@ -482,11 +530,15 @@ class TestFailAttackPathsScan:
                 return_value=attack_paths_scan,
             ),
             patch(
+                "tasks.jobs.attack_paths.db_utils.graph_database.drop_database"
+            ) as mock_drop_db,
+            patch(
                 "tasks.jobs.attack_paths.db_utils.finish_attack_paths_scan"
             ) as mock_finish,
         ):
             fail_attack_paths_scan(str(tenant.id), str(scan.id), "setup exploded")
 
+        mock_drop_db.assert_not_called()
         mock_finish.assert_not_called()
 
     def test_skips_when_no_scan_found(self, tenants_fixture):

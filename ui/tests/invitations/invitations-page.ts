@@ -34,7 +34,7 @@ export class InvitationsPage extends BasePage {
     this.emailInput = page.getByRole("textbox", { name: "Email" });
 
     // Form select
-    this.roleSelect = page.getByRole("button", { name: /Role|Select a role/i });
+    this.roleSelect = page.getByRole("combobox", { name: /Role|Select a role/i });
 
     // Form details
     this.reviewInvitationDetailsButton = page.getByRole('button', { name: /Review Invitation Details/i });

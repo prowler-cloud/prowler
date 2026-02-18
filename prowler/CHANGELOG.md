@@ -20,6 +20,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - OpenStack compute 7 new checks [(#9944)](https://github.com/prowler-cloud/prowler/pull/9944)
 - CSA CCM 4.0 for the Alibaba Cloud provider [(#10061)](https://github.com/prowler-cloud/prowler/pull/10061)
 - ECS Exec (ECS-006) privilege escalation detection via `ecs:ExecuteCommand` + `ecs:DescribeTasks` [(#10066)](https://github.com/prowler-cloud/prowler/pull/10066)
+- Add file descriptor limits (`ulimits`) to Docker Compose worker services to prevent `Too many open files` errors [(#10107)](https://github.com/prowler-cloud/prowler/pull/10107)
 
 ### 🔄 Changed
 
@@ -54,6 +55,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `pip install prowler` failing on systems without C compiler due to `netifaces` transitive dependency from `openstacksdk` [(#10055)](https://github.com/prowler-cloud/prowler/pull/10055)
 - `kms_key_not_publicly_accessible` false negative for specific KMS actions (e.g., `kms:DescribeKey`, `kms:Decrypt`) with unrestricted principals [(#10071)](https://github.com/prowler-cloud/prowler/pull/10071)
+- Remove account_id and location for manual requirements in M365CIS [(#10105)](https://github.com/prowler-cloud/prowler/pull/10105)
 
 ---
 

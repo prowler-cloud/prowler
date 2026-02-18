@@ -27,23 +27,24 @@ def delete_provider(tenant_id: str, pk: str):
 
     Returns:
         dict: A dictionary with the count of deleted objects per model,
-              including related models.
-
-    Raises:
-        Provider.DoesNotExist: If no instance with the provided primary key exists.
+              including related models. Returns an empty dict if the provider
+              was already deleted.
     """
-    # Delete the Attack Paths' graph data related to the provider
-    tenant_database_name = graph_database.get_database_name(tenant_id)
-    try:
-        graph_database.drop_subgraph(tenant_database_name, str(pk))
 
-    except graph_database.GraphDatabaseQueryException as gdb_error:
-        logger.error(f"Error deleting Provider graph data: {gdb_error}")
-        raise
-
-    # Get all provider related data and delete them in batches
+    # Get all provider related data to delete them in batches
     with rls_transaction(tenant_id):
-        instance = Provider.all_objects.get(pk=pk)
+        try:
+            instance = Provider.all_objects.get(pk=pk)
+        except Provider.DoesNotExist:
+            logger.info(f"Provider `{pk}` already deleted, skipping")
+            return {}
+
+        attack_paths_scan_ids = list(
+            AttackPathsScan.all_objects.filter(provider=instance).values_list(
+                "id", flat=True
+            )
+        )
+
         deletion_steps = [
             ("Scan Summaries", ScanSummary.all_objects.filter(scan__provider=instance)),
             ("Findings", Finding.all_objects.filter(scan__provider=instance)),
@@ -52,6 +53,25 @@ def delete_provider(tenant_id: str, pk: str):
             ("AttackPathsScans", AttackPathsScan.all_objects.filter(provider=instance)),
         ]
 
+    # Drop orphaned temporary Neo4j databases
+    for aps_id in attack_paths_scan_ids:
+        tmp_db_name = graph_database.get_database_name(aps_id, temporary=True)
+        try:
+            graph_database.drop_database(tmp_db_name)
+
+        except graph_database.GraphDatabaseQueryException:
+            logger.warning(f"Failed to drop temp database {tmp_db_name}, continuing")
+
+    # Delete the Attack Paths' graph data related to the provider from the tenant database
+    tenant_database_name = graph_database.get_database_name(tenant_id)
+    try:
+        graph_database.drop_subgraph(tenant_database_name, str(pk))
+
+    except graph_database.GraphDatabaseQueryException as gdb_error:
+        logger.error(f"Error deleting Provider graph data: {gdb_error}")
+        raise
+
+    # Delete related data in batches
     deletion_summary = {}
     for step_name, queryset in deletion_steps:
         try:
@@ -61,6 +81,7 @@ def delete_provider(tenant_id: str, pk: str):
             logger.error(f"Error deleting {step_name}: {db_error}")
             raise
 
+    # Delete the provider instance itself
     try:
         with rls_transaction(tenant_id):
             _, provider_summary = instance.delete()
@@ -85,7 +106,9 @@ def delete_tenant(pk: str):
     """
     deletion_summary = {}
 
-    for provider in Provider.objects.using(MainRouter.admin_db).filter(tenant_id=pk):
+    for provider in Provider.all_objects.using(MainRouter.admin_db).filter(
+        tenant_id=pk
+    ):
         summary = delete_provider(pk, provider.id)
         deletion_summary.update(summary)
 

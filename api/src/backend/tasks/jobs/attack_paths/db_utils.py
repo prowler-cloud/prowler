@@ -2,7 +2,9 @@ from datetime import datetime, timezone
 from typing import Any
 
 from cartography.config import Config as CartographyConfig
+from celery.utils.log import get_task_logger
 
+from api.attack_paths import database as graph_database
 from api.db_utils import rls_transaction
 from api.models import (
     AttackPathsScan as ProwlerAPIAttackPathsScan,
@@ -10,6 +12,8 @@ from api.models import (
     StateChoices,
 )
 from tasks.jobs.attack_paths.config import is_provider_available
+
+logger = get_task_logger(__name__)
 
 
 def can_provider_run_attack_paths_scan(tenant_id: str, provider_id: int) -> bool:
@@ -165,6 +169,17 @@ def fail_attack_paths_scan(
         StateChoices.COMPLETED,
         StateChoices.FAILED,
     ):
+        tmp_db_name = graph_database.get_database_name(
+            attack_paths_scan.id, temporary=True
+        )
+        try:
+            graph_database.drop_database(tmp_db_name)
+
+        except Exception:
+            logger.exception(
+                f"Failed to drop temp database {tmp_db_name} during failure handling"
+            )
+
         finish_attack_paths_scan(
             attack_paths_scan,
             StateChoices.FAILED,
