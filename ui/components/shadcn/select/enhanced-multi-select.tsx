@@ -44,6 +44,7 @@ interface EnhancedMultiSelectProps {
   disabled?: boolean;
   className?: string;
   id?: string;
+  "aria-label"?: string;
 }
 
 function arraysEqual(a: string[], b: string[]): boolean {
@@ -67,6 +68,7 @@ export function EnhancedMultiSelect({
   disabled = false,
   className,
   id,
+  "aria-label": ariaLabel,
 }: EnhancedMultiSelectProps) {
   const [selectedValues, setSelectedValues] = useState<string[]>(defaultValue);
   const [open, setOpen] = useState(false);
@@ -179,6 +181,7 @@ export function EnhancedMultiSelect({
           aria-expanded={open}
           aria-haspopup="listbox"
           aria-controls={open ? listboxId : undefined}
+          aria-label={ariaLabel}
           className={cn(
             "border-border-input-primary bg-bg-input-primary text-text-neutral-primary data-[placeholder]:text-text-neutral-tertiary [&_svg:not([class*='text-'])]:text-text-neutral-tertiary aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-bg-input-primary active:bg-bg-input-primary focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex h-auto min-h-12 w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-1 focus-visible:ring-offset-1 [&_svg]:pointer-events-auto",
             disabled && "cursor-not-allowed opacity-50",

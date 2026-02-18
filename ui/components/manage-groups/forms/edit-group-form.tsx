@@ -193,6 +193,7 @@ export const EditGroupForm = ({
                     field.value?.map((provider) => provider.id) || []
                   }
                   placeholder="Select providers"
+                  aria-label="Select providers"
                   searchable={true}
                   hideSelectAll={true}
                   emptyIndicator="No results found"
@@ -241,6 +242,7 @@ export const EditGroupForm = ({
                   }}
                   defaultValue={field.value?.map((role) => role.id) || []}
                   placeholder="Select roles"
+                  aria-label="Select roles"
                   searchable={true}
                   hideSelectAll={true}
                   emptyIndicator="No results found"
