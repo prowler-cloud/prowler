@@ -9,7 +9,6 @@ import { z } from "zod";
 
 import { addProvider } from "@/actions/providers/providers";
 import { AwsMethodSelector } from "@/components/providers/organizations/aws-method-selector";
-import { OrgWizardModal } from "@/components/providers/organizations/org-wizard-modal";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
 import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
@@ -20,6 +19,29 @@ import { addProviderFormSchema, ApiError, ProviderType } from "@/types";
 import { RadioGroupProvider } from "../../radio-group-provider";
 
 export type FormValues = z.infer<typeof addProviderFormSchema>;
+
+export interface ConnectAccountSuccessData {
+  id: string;
+  providerType: ProviderType;
+  uid: string;
+  alias: string | null;
+}
+
+interface ConnectAccountFormProps {
+  onSuccess?: (data: ConnectAccountSuccessData) => void;
+  onSelectOrganizations?: () => void;
+  onProviderTypeChange?: (providerType: ProviderType | null) => void;
+  formId?: string;
+  hideNavigation?: boolean;
+  onUiStateChange?: (state: {
+    showBack: boolean;
+    showAction: boolean;
+    actionLabel: string;
+    actionDisabled: boolean;
+    isLoading: boolean;
+  }) => void;
+  onBackHandlerChange?: (handler: () => void) => void;
+}
 
 // Helper function for labels and placeholders
 const getProviderFieldDetails = (providerType?: ProviderType) => {
@@ -82,11 +104,18 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
   }
 };
 
-export const ConnectAccountForm = () => {
+export const ConnectAccountForm = ({
+  onSuccess,
+  onSelectOrganizations,
+  onProviderTypeChange,
+  formId,
+  hideNavigation = false,
+  onUiStateChange,
+  onBackHandlerChange,
+}: ConnectAccountFormProps) => {
   const { toast } = useToast();
   const [prevStep, setPrevStep] = useState(1);
   const [awsMethod, setAwsMethod] = useState<"single" | null>(null);
-  const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
   const router = useRouter();
 
   const formSchema = addProviderFormSchema;
@@ -98,9 +127,12 @@ export const ConnectAccountForm = () => {
       providerUid: "",
       providerAlias: "",
     },
+    mode: "onChange",
+    reValidateMode: "onChange",
   });
 
   const providerType = form.watch("providerType");
+  const providerUid = form.watch("providerUid");
   const providerFieldDetails = getProviderFieldDetails(providerType);
 
   const isLoading = form.formState.isSubmitting;
@@ -155,10 +187,20 @@ export const ConnectAccountForm = () => {
         // Go to the next step after successful submission
         const {
           id,
-          attributes: { provider: providerType },
+          attributes: { provider: createdProviderType, uid, alias },
         } = data.data;
 
-        router.push(`/providers/add-credentials?type=${providerType}&id=${id}`);
+        if (onSuccess) {
+          onSuccess({
+            id,
+            providerType: createdProviderType,
+            uid: uid || values.providerUid,
+            alias: alias ?? values.providerAlias ?? null,
+          });
+          return;
+        }
+
+        router.push("/providers");
       }
     } catch (error: unknown) {
       console.error("Error during submission:", error);
@@ -199,9 +241,61 @@ export const ConnectAccountForm = () => {
     }
   }, [providerType]);
 
+  useEffect(() => {
+    onProviderTypeChange?.(providerType ?? null);
+  }, [onProviderTypeChange, providerType]);
+
+  useEffect(() => {
+    onBackHandlerChange?.(() => {
+      // If in UID form after choosing single, go back to method selector
+      if (prevStep === 2 && awsMethod === "single") {
+        setAwsMethod(null);
+        form.setValue("providerUid", "");
+        form.setValue("providerAlias", "");
+        return;
+      }
+
+      setPrevStep((prev) => prev - 1);
+      // Deselect the providerType if the user is going back to the first step
+      if (prevStep === 2) {
+        form.setValue("providerType", undefined as unknown as ProviderType);
+        setAwsMethod(null);
+      }
+      // Reset the providerUid and providerAlias fields when going back
+      form.setValue("providerUid", "");
+      form.setValue("providerAlias", "");
+    });
+  }, [onBackHandlerChange, prevStep, awsMethod, providerType, isLoading, form]);
+
+  useEffect(() => {
+    const canSubmit =
+      prevStep === 2 &&
+      (providerType !== "aws" || awsMethod === "single") &&
+      providerUid.trim().length > 0 &&
+      form.formState.isValid;
+
+    onUiStateChange?.({
+      showBack: prevStep === 2,
+      showAction:
+        prevStep === 2 && (providerType !== "aws" || awsMethod === "single"),
+      actionLabel: "Next",
+      actionDisabled: !canSubmit || isLoading,
+      isLoading,
+    });
+  }, [
+    awsMethod,
+    form.formState.isValid,
+    isLoading,
+    onUiStateChange,
+    prevStep,
+    providerType,
+    providerUid,
+  ]);
+
   return (
     <Form {...form}>
       <form
+        id={formId}
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col gap-4"
       >
@@ -219,11 +313,9 @@ export const ConnectAccountForm = () => {
             <ProviderTitleDocs providerType={providerType} />
             <AwsMethodSelector
               onSelectSingle={() => setAwsMethod("single")}
-              onSelectOrganizations={() => setIsOrgModalOpen(true)}
-            />
-            <OrgWizardModal
-              open={isOrgModalOpen}
-              onOpenChange={setIsOrgModalOpen}
+              onSelectOrganizations={() => {
+                onSelectOrganizations?.();
+              }}
             />
           </>
         )}
@@ -254,39 +346,38 @@ export const ConnectAccountForm = () => {
               />
             </>
           )}
-        {/* Navigation buttons */}
-        <div className="flex w-full justify-end gap-4">
-          {/* Show "Back" button in Step 2 (skip when on AWS method selector) */}
-          {prevStep === 2 && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="lg"
-              onClick={handleBackStep}
-              disabled={isLoading}
-            >
-              {!isLoading && <ChevronLeftIcon size={24} />}
-              Back
-            </Button>
-          )}
-          {/* Show "Next" button in Step 2 (only when UID form is visible) */}
-          {prevStep === 2 &&
-            (providerType !== "aws" || awsMethod === "single") && (
+        {!hideNavigation && (
+          <div className="flex w-full justify-end gap-4">
+            {prevStep === 2 && (
               <Button
-                type="submit"
-                variant="default"
+                type="button"
+                variant="ghost"
                 size="lg"
+                onClick={handleBackStep}
                 disabled={isLoading}
               >
-                {isLoading ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <ChevronRightIcon size={24} />
-                )}
-                {isLoading ? "Loading" : "Next"}
+                {!isLoading && <ChevronLeftIcon size={24} />}
+                Back
               </Button>
             )}
-        </div>
+            {prevStep === 2 &&
+              (providerType !== "aws" || awsMethod === "single") && (
+                <Button
+                  type="submit"
+                  variant="default"
+                  size="lg"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <ChevronRightIcon size={24} />
+                  )}
+                  {isLoading ? "Loading" : "Next"}
+                </Button>
+              )}
+          </div>
+        )}
       </form>
     </Form>
   );
