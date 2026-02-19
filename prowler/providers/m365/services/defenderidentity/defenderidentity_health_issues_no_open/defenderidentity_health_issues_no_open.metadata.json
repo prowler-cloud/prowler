@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Regularly monitor and resolve Defender for Identity health issues to maintain comprehensive visibility into identity-based threats across your hybrid infrastructure.",
-      "Url": "https://learn.microsoft.com/en-us/defender-for-identity/health-alerts"
+      "Url": "https://hub.prowler.com/checks/m365/defenderidentity_health_issues_no_open"
     }
   },
   "Categories": [
