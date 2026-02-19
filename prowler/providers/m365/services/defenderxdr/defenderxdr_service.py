@@ -93,8 +93,9 @@ class DefenderXDR(M365Service):
             if loop and not loop.is_running():
                 asyncio.set_event_loop(None)
                 loop.close()
-        except Exception:
-            pass
+        except Exception as error:
+            # Best-effort cleanup: swallow errors but log them for diagnostics
+            logger.debug(f"DefenderXDR - Failed to clean up event loop: {error}")
 
     async def _run_hunting_query(self, query: str) -> tuple[Optional[List[Dict]], bool]:
         """Execute an Advanced Hunting query using Microsoft Graph Security API.

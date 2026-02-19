@@ -1,0 +1,38 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_seamless_sso_disabled",
+  "CheckTitle": "Entra hybrid deployment does not have Seamless SSO enabled",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Directory Sync Settings",
+  "ResourceGroup": "IAM",
+  "Description": "**Seamless Single Sign-On (SSO)** in hybrid Microsoft Entra deployments allows automatic authentication for domain-joined devices on the corporate network.\n\nThis check verifies the actual Seamless SSO configuration in directory synchronization settings. Modern devices with **Primary Refresh Token** (PRT) support no longer require Seamless SSO.",
+  "Risk": "Seamless SSO can be exploited for **lateral movement** between on-premises domains and Entra ID when an Entra Connect server is compromised. It can also be used to perform **brute force attacks** against Entra ID, as authentication through the AZUREADSSOACC account bypasses standard protections.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/how-to-connect-sso"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open Microsoft Entra Connect configuration tool on the on-premises server.\n2. Navigate to **Change User Sign In**.\n3. Uncheck **Enable single sign-on**.\n4. Complete the configuration wizard.\n5. In Active Directory, run `Get-AzureADSSOStatus` to verify Seamless SSO shows `\"enable\":false`.\n6. Run `Disable-AzureADSSOForest` with domain admin credentials to remove the AZUREADSSOACC account.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable **Seamless SSO** in hybrid environments where modern devices support *Primary Refresh Token (PRT)*. Regularly audit Entra Connect settings and verify that the AZUREADSSOACC computer account is removed from Active Directory.",
+      "Url": "https://hub.prowler.com/check/entra_seamless_sso_disabled"
+    }
+  },
+  "Categories": [
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_password_hash_sync_enabled"
+  ],
+  "Notes": "Applies only to hybrid Microsoft Entra deployments using Entra Connect sync. The check reads the seamless_sso_enabled flag from the directory on-premises synchronization settings via Microsoft Graph API."
+}
