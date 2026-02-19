@@ -2,7 +2,7 @@ import json
 import os
 import subprocess
 import sys
-from typing import List
+from typing import List, Optional
 
 import yaml
 from alive_progress import alive_bar
@@ -30,7 +30,7 @@ class LlmProvider(Provider):
         max_concurrency: int = 10,
         config_path: str = None,
         config_content: dict = None,
-        fixer_config: dict = {},
+        fixer_config: Optional[dict] = None,
     ):
         logger.info("Instantiating LLM Provider...")
         logger.info(f"Received config_path: {config_path}")
@@ -69,6 +69,8 @@ class LlmProvider(Provider):
             self._audit_config = {}
 
         # Fixer Config
+        if fixer_config is None:
+            fixer_config = {}
         self._fixer_config = fixer_config
 
         # Mutelist (not needed for LLM since promptfoo has its own logic)

@@ -46,6 +46,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - LLM provider scan callback handling to avoid runtime errors when invoking `run()`
+- LLM provider `fixer_config` default isolation to prevent state leakage between instances
 
 ### 🔐 Security
 

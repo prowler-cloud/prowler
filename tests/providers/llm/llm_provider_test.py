@@ -41,3 +41,13 @@ class TestLlmProvider:
             "/tmp/prowler_promptfoo_results.jsonl",
             None,
         )
+
+    def test_default_fixer_config_is_not_shared_between_instances(self, tmp_path):
+        config_path = self._create_minimal_config(tmp_path)
+        first_provider = LlmProvider(config_path=config_path)
+        second_provider = LlmProvider(config_path=config_path)
+
+        first_provider.fixer_config["shared_state"] = True
+
+        assert first_provider.fixer_config is not second_provider.fixer_config
+        assert "shared_state" not in second_provider.fixer_config
