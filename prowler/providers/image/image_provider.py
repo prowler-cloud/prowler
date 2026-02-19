@@ -929,18 +929,21 @@ class ImageProvider(Provider):
             elif registry_token:
                 env["TRIVY_REGISTRY_TOKEN"] = registry_token
 
-            # Test by pulling image metadata without scanning (no DB required)
+            # Test by scanning the image with a short timeout; Trivy will
+            # download the vulnerability DB on the first run if needed.
             process = subprocess.run(
                 [
                     "trivy",
                     "image",
-                    "--scanners",
-                    "none",
+                    "--format",
+                    "json",
+                    "--timeout",
+                    "5m",
                     image,
                 ],
                 capture_output=True,
                 text=True,
-                timeout=60,
+                timeout=360,
                 env=env,
             )
 
