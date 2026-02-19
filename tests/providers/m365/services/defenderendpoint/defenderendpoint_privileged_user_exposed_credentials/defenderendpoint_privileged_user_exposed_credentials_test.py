@@ -3,16 +3,16 @@ from unittest import mock
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
-class Test_defender_endpoint_privileged_user_exposed_credentials:
-    """Tests for the defender_endpoint_privileged_user_exposed_credentials check."""
+class Test_defenderendpoint_privileged_user_exposed_credentials:
+    """Tests for the defenderendpoint_privileged_user_exposed_credentials check."""
 
     def test_mde_status_api_failed(self):
         """Test FAIL when MDE status API call fails (None): missing permission."""
-        defender_endpoint_client = mock.MagicMock()
-        defender_endpoint_client.audited_tenant = "audited_tenant"
-        defender_endpoint_client.audited_domain = DOMAIN
-        defender_endpoint_client.mde_status = None
-        defender_endpoint_client.exposed_credentials_privileged_users = []
+        defenderendpoint_client = mock.MagicMock()
+        defenderendpoint_client.audited_tenant = "audited_tenant"
+        defenderendpoint_client.audited_domain = DOMAIN
+        defenderendpoint_client.mde_status = None
+        defenderendpoint_client.exposed_credentials_privileged_users = []
 
         with (
             mock.patch(
@@ -20,15 +20,15 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_client",
-                new=defender_endpoint_client,
+                "prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_client",
+                new=defenderendpoint_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials import (
-                defender_endpoint_privileged_user_exposed_credentials,
+            from prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials import (
+                defenderendpoint_privileged_user_exposed_credentials,
             )
 
-            check = defender_endpoint_privileged_user_exposed_credentials()
+            check = defenderendpoint_privileged_user_exposed_credentials()
             result = check.execute()
 
             assert len(result) == 1
@@ -42,11 +42,11 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
 
     def test_mde_not_enabled(self):
         """Test FAIL when MDE is not enabled - security blind spot."""
-        defender_endpoint_client = mock.MagicMock()
-        defender_endpoint_client.audited_tenant = "audited_tenant"
-        defender_endpoint_client.audited_domain = DOMAIN
-        defender_endpoint_client.mde_status = "not_enabled"
-        defender_endpoint_client.exposed_credentials_privileged_users = []
+        defenderendpoint_client = mock.MagicMock()
+        defenderendpoint_client.audited_tenant = "audited_tenant"
+        defenderendpoint_client.audited_domain = DOMAIN
+        defenderendpoint_client.mde_status = "not_enabled"
+        defenderendpoint_client.exposed_credentials_privileged_users = []
 
         with (
             mock.patch(
@@ -54,15 +54,15 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_client",
-                new=defender_endpoint_client,
+                "prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_client",
+                new=defenderendpoint_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials import (
-                defender_endpoint_privileged_user_exposed_credentials,
+            from prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials import (
+                defenderendpoint_privileged_user_exposed_credentials,
             )
 
-            check = defender_endpoint_privileged_user_exposed_credentials()
+            check = defenderendpoint_privileged_user_exposed_credentials()
             result = check.execute()
 
             assert len(result) == 1
@@ -76,11 +76,11 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
 
     def test_mde_no_devices(self):
         """Test PASS when MDE is enabled but no devices are onboarded."""
-        defender_endpoint_client = mock.MagicMock()
-        defender_endpoint_client.audited_tenant = "audited_tenant"
-        defender_endpoint_client.audited_domain = DOMAIN
-        defender_endpoint_client.mde_status = "no_devices"
-        defender_endpoint_client.exposed_credentials_privileged_users = []
+        defenderendpoint_client = mock.MagicMock()
+        defenderendpoint_client.audited_tenant = "audited_tenant"
+        defenderendpoint_client.audited_domain = DOMAIN
+        defenderendpoint_client.mde_status = "no_devices"
+        defenderendpoint_client.exposed_credentials_privileged_users = []
 
         with (
             mock.patch(
@@ -88,15 +88,15 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_client",
-                new=defender_endpoint_client,
+                "prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_client",
+                new=defenderendpoint_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials import (
-                defender_endpoint_privileged_user_exposed_credentials,
+            from prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials import (
+                defenderendpoint_privileged_user_exposed_credentials,
             )
 
-            check = defender_endpoint_privileged_user_exposed_credentials()
+            check = defenderendpoint_privileged_user_exposed_credentials()
             result = check.execute()
 
             assert len(result) == 1
@@ -107,11 +107,11 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
 
     def test_exposed_credentials_query_failed(self):
         """Test FAIL when exposed credentials query fails (None)."""
-        defender_endpoint_client = mock.MagicMock()
-        defender_endpoint_client.audited_tenant = "audited_tenant"
-        defender_endpoint_client.audited_domain = DOMAIN
-        defender_endpoint_client.mde_status = "active"
-        defender_endpoint_client.exposed_credentials_privileged_users = None
+        defenderendpoint_client = mock.MagicMock()
+        defenderendpoint_client.audited_tenant = "audited_tenant"
+        defenderendpoint_client.audited_domain = DOMAIN
+        defenderendpoint_client.mde_status = "active"
+        defenderendpoint_client.exposed_credentials_privileged_users = None
 
         with (
             mock.patch(
@@ -119,15 +119,15 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_client",
-                new=defender_endpoint_client,
+                "prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_client",
+                new=defenderendpoint_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials import (
-                defender_endpoint_privileged_user_exposed_credentials,
+            from prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials import (
+                defenderendpoint_privileged_user_exposed_credentials,
             )
 
-            check = defender_endpoint_privileged_user_exposed_credentials()
+            check = defenderendpoint_privileged_user_exposed_credentials()
             result = check.execute()
 
             assert len(result) == 1
@@ -140,11 +140,11 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
 
     def test_no_exposed_credentials(self):
         """Test PASS when no privileged users have exposed credentials."""
-        defender_endpoint_client = mock.MagicMock()
-        defender_endpoint_client.audited_tenant = "audited_tenant"
-        defender_endpoint_client.audited_domain = DOMAIN
-        defender_endpoint_client.mde_status = "active"
-        defender_endpoint_client.exposed_credentials_privileged_users = []
+        defenderendpoint_client = mock.MagicMock()
+        defenderendpoint_client.audited_tenant = "audited_tenant"
+        defenderendpoint_client.audited_domain = DOMAIN
+        defenderendpoint_client.mde_status = "active"
+        defenderendpoint_client.exposed_credentials_privileged_users = []
 
         with (
             mock.patch(
@@ -152,15 +152,15 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_client",
-                new=defender_endpoint_client,
+                "prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_client",
+                new=defenderendpoint_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials import (
-                defender_endpoint_privileged_user_exposed_credentials,
+            from prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials import (
+                defenderendpoint_privileged_user_exposed_credentials,
             )
 
-            check = defender_endpoint_privileged_user_exposed_credentials()
+            check = defenderendpoint_privileged_user_exposed_credentials()
             result = check.execute()
 
             assert len(result) == 1
@@ -176,10 +176,10 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
 
     def test_single_exposed_credential_with_credential_type(self):
         """Test FAIL when a privileged user has exposed credentials with credential type."""
-        defender_endpoint_client = mock.MagicMock()
-        defender_endpoint_client.audited_tenant = "audited_tenant"
-        defender_endpoint_client.audited_domain = DOMAIN
-        defender_endpoint_client.mde_status = "active"
+        defenderendpoint_client = mock.MagicMock()
+        defenderendpoint_client.audited_tenant = "audited_tenant"
+        defenderendpoint_client.audited_domain = DOMAIN
+        defenderendpoint_client.mde_status = "active"
 
         with (
             mock.patch(
@@ -187,14 +187,14 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_client",
-                new=defender_endpoint_client,
+                "prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_client",
+                new=defenderendpoint_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials import (
-                defender_endpoint_privileged_user_exposed_credentials,
+            from prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials import (
+                defenderendpoint_privileged_user_exposed_credentials,
             )
-            from prowler.providers.m365.services.defender.defender_service import (
+            from prowler.providers.m365.services.defenderendpoint.defenderendpoint_service import (
                 ExposedCredentialPrivilegedUser,
             )
 
@@ -210,11 +210,11 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
                 target_categories=["PrivilegedEntraIdRole"],
             )
 
-            defender_endpoint_client.exposed_credentials_privileged_users = [
+            defenderendpoint_client.exposed_credentials_privileged_users = [
                 exposed_user
             ]
 
-            check = defender_endpoint_privileged_user_exposed_credentials()
+            check = defenderendpoint_privileged_user_exposed_credentials()
             result = check.execute()
 
             assert len(result) == 1
@@ -228,10 +228,10 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
 
     def test_single_exposed_credential_without_credential_type(self):
         """Test FAIL when a privileged user has exposed credentials without credential type."""
-        defender_endpoint_client = mock.MagicMock()
-        defender_endpoint_client.audited_tenant = "audited_tenant"
-        defender_endpoint_client.audited_domain = DOMAIN
-        defender_endpoint_client.mde_status = "active"
+        defenderendpoint_client = mock.MagicMock()
+        defenderendpoint_client.audited_tenant = "audited_tenant"
+        defenderendpoint_client.audited_domain = DOMAIN
+        defenderendpoint_client.mde_status = "active"
 
         with (
             mock.patch(
@@ -239,14 +239,14 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_client",
-                new=defender_endpoint_client,
+                "prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_client",
+                new=defenderendpoint_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials import (
-                defender_endpoint_privileged_user_exposed_credentials,
+            from prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials import (
+                defenderendpoint_privileged_user_exposed_credentials,
             )
-            from prowler.providers.m365.services.defender.defender_service import (
+            from prowler.providers.m365.services.defenderendpoint.defenderendpoint_service import (
                 ExposedCredentialPrivilegedUser,
             )
 
@@ -262,11 +262,11 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
                 target_categories=["PrivilegedEntraIdRole"],
             )
 
-            defender_endpoint_client.exposed_credentials_privileged_users = [
+            defenderendpoint_client.exposed_credentials_privileged_users = [
                 exposed_user
             ]
 
-            check = defender_endpoint_privileged_user_exposed_credentials()
+            check = defenderendpoint_privileged_user_exposed_credentials()
             result = check.execute()
 
             assert len(result) == 1
@@ -280,10 +280,10 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
 
     def test_multiple_exposed_credentials(self):
         """Test FAIL for multiple privileged users with exposed credentials."""
-        defender_endpoint_client = mock.MagicMock()
-        defender_endpoint_client.audited_tenant = "audited_tenant"
-        defender_endpoint_client.audited_domain = DOMAIN
-        defender_endpoint_client.mde_status = "active"
+        defenderendpoint_client = mock.MagicMock()
+        defenderendpoint_client.audited_tenant = "audited_tenant"
+        defenderendpoint_client.audited_domain = DOMAIN
+        defenderendpoint_client.mde_status = "active"
 
         with (
             mock.patch(
@@ -291,14 +291,14 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_client",
-                new=defender_endpoint_client,
+                "prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_client",
+                new=defenderendpoint_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials import (
-                defender_endpoint_privileged_user_exposed_credentials,
+            from prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials import (
+                defenderendpoint_privileged_user_exposed_credentials,
             )
-            from prowler.providers.m365.services.defender.defender_service import (
+            from prowler.providers.m365.services.defenderendpoint.defenderendpoint_service import (
                 ExposedCredentialPrivilegedUser,
             )
 
@@ -326,12 +326,12 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
                 target_categories=["PrivilegedEntraIdRole", "privileged"],
             )
 
-            defender_endpoint_client.exposed_credentials_privileged_users = [
+            defenderendpoint_client.exposed_credentials_privileged_users = [
                 exposed_user_1,
                 exposed_user_2,
             ]
 
-            check = defender_endpoint_privileged_user_exposed_credentials()
+            check = defenderendpoint_privileged_user_exposed_credentials()
             result = check.execute()
 
             assert len(result) == 2
@@ -356,10 +356,10 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
 
     def test_exposed_credential_uses_edge_id_when_target_node_id_missing(self):
         """Test that edge_id is used as resource_id when target_node_id is empty."""
-        defender_endpoint_client = mock.MagicMock()
-        defender_endpoint_client.audited_tenant = "audited_tenant"
-        defender_endpoint_client.audited_domain = DOMAIN
-        defender_endpoint_client.mde_status = "active"
+        defenderendpoint_client = mock.MagicMock()
+        defenderendpoint_client.audited_tenant = "audited_tenant"
+        defenderendpoint_client.audited_domain = DOMAIN
+        defenderendpoint_client.mde_status = "active"
 
         with (
             mock.patch(
@@ -367,14 +367,14 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_client",
-                new=defender_endpoint_client,
+                "prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_client",
+                new=defenderendpoint_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_endpoint_privileged_user_exposed_credentials.defender_endpoint_privileged_user_exposed_credentials import (
-                defender_endpoint_privileged_user_exposed_credentials,
+            from prowler.providers.m365.services.defenderendpoint.defenderendpoint_privileged_user_exposed_credentials.defenderendpoint_privileged_user_exposed_credentials import (
+                defenderendpoint_privileged_user_exposed_credentials,
             )
-            from prowler.providers.m365.services.defender.defender_service import (
+            from prowler.providers.m365.services.defenderendpoint.defenderendpoint_service import (
                 ExposedCredentialPrivilegedUser,
             )
 
@@ -390,11 +390,11 @@ class Test_defender_endpoint_privileged_user_exposed_credentials:
                 target_categories=["PrivilegedEntraIdRole"],
             )
 
-            defender_endpoint_client.exposed_credentials_privileged_users = [
+            defenderendpoint_client.exposed_credentials_privileged_users = [
                 exposed_user
             ]
 
-            check = defender_endpoint_privileged_user_exposed_credentials()
+            check = defenderendpoint_privileged_user_exposed_credentials()
             result = check.execute()
 
             assert len(result) == 1

@@ -6,12 +6,12 @@ This check identifies privileged users whose authentication credentials
 """
 
 from prowler.lib.check.models import Check, CheckReportM365
-from prowler.providers.m365.services.defender.defender_endpoint_client import (
-    defender_endpoint_client,
+from prowler.providers.m365.services.defenderendpoint.defenderendpoint_client import (
+    defenderendpoint_client,
 )
 
 
-class defender_endpoint_privileged_user_exposed_credentials(Check):
+class defenderendpoint_privileged_user_exposed_credentials(Check):
     """
     Check if privileged users have exposed credentials on vulnerable endpoints.
 
@@ -39,7 +39,7 @@ class defender_endpoint_privileged_user_exposed_credentials(Check):
         findings = []
 
         # Step 1: Check MDE status
-        mde_status = defender_endpoint_client.mde_status
+        mde_status = defenderendpoint_client.mde_status
 
         # API call failed - likely missing ThreatHunting.Read.All permission
         if mde_status is None:
@@ -91,7 +91,7 @@ class defender_endpoint_privileged_user_exposed_credentials(Check):
 
         # Step 2: MDE is active with devices - check for exposed credentials
         exposed_credentials = (
-            defender_endpoint_client.exposed_credentials_privileged_users
+            defenderendpoint_client.exposed_credentials_privileged_users
         )
 
         # API call failed for exposed credentials query
