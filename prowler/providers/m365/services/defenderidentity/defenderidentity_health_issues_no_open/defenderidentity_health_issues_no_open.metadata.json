@@ -1,10 +1,10 @@
 {
   "Provider": "m365",
-  "CheckID": "defender_identity_health_issues_no_open",
+  "CheckID": "defenderidentity_health_issues_no_open",
   "CheckTitle": "Ensure Defender for Identity monitors hybrid infrastructure without unresolved health issues",
   "CheckType": [],
-  "ServiceName": "defender",
-  "SubServiceName": "identity",
+  "ServiceName": "defenderidentity",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Defender for Identity Health Issue",
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check requires SecurityIdentitiesHealth.Read.All permission. The check first verifies that MDI sensors are deployed, then evaluates health issues which may be global (domain-related) or sensor-specific."
+  "Notes": "This check requires SecurityIdentitiesHealth.Read.All permission and a hybrid identity environment with Active Directory on-premises connected to Microsoft Defender for Identity. Health issues can be global (domain-related, such as Directory Services account issues or auditing misconfigurations) or sensor-specific. If no hybrid AD environment is configured, this check will pass with no health issues detected, as MDI only monitors on-premises Active Directory infrastructure."
 }

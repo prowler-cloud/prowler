@@ -7,12 +7,12 @@ to monitor Domain Controllers and detect identity-based threats.
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportM365
-from prowler.providers.m365.services.defender.defender_identity_client import (
-    defender_identity_client,
+from prowler.providers.m365.services.defenderidentity.defenderidentity_client import (
+    defenderidentity_client,
 )
 
 
-class defender_identity_sensors_deployed(Check):
+class defenderidentity_sensors_deployed(Check):
     """Ensure Microsoft Defender for Identity has sensors deployed.
 
     This check evaluates whether MDI sensors are deployed to monitor
@@ -34,7 +34,7 @@ class defender_identity_sensors_deployed(Check):
         findings = []
 
         # If sensors is None, the API call failed (tenant not onboarded or missing permissions)
-        if defender_identity_client.sensors is None:
+        if defenderidentity_client.sensors is None:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
@@ -51,7 +51,7 @@ class defender_identity_sensors_deployed(Check):
             return findings
 
         # If no sensors are deployed
-        if not defender_identity_client.sensors:
+        if not defenderidentity_client.sensors:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
@@ -67,7 +67,7 @@ class defender_identity_sensors_deployed(Check):
             return findings
 
         # Report on each sensor
-        for sensor in defender_identity_client.sensors:
+        for sensor in defenderidentity_client.sensors:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource=sensor,

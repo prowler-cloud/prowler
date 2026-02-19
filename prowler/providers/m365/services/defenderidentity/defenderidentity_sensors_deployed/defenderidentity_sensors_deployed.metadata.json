@@ -1,10 +1,10 @@
 {
   "Provider": "m365",
-  "CheckID": "defender_identity_sensors_deployed",
+  "CheckID": "defenderidentity_sensors_deployed",
   "CheckTitle": "Ensure Defender for Identity sensors are deployed on Domain Controllers",
   "CheckType": [],
-  "ServiceName": "defender",
-  "SubServiceName": "identity",
+  "ServiceName": "defenderidentity",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Defender for Identity Sensor",
@@ -33,7 +33,7 @@
   ],
   "DependsOn": [],
   "RelatedTo": [
-    "defender_identity_health_issues_no_open"
+    "defenderidentity_health_issues_no_open"
   ],
-  "Notes": "This check requires SecurityIdentitiesHealth.Read.All permission. Sensors can be standalone or integrated with Domain Controllers."
+  "Notes": "This check requires SecurityIdentitiesHealth.Read.All permission and a hybrid identity environment with Active Directory on-premises. MDI sensors must be installed on Domain Controllers to monitor identity-based threats. If no hybrid AD environment is configured, this check will fail indicating no sensors are deployed. Sensors can be standalone or integrated with Domain Controllers."
 }

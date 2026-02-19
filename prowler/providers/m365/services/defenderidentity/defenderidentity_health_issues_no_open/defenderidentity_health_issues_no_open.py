@@ -7,12 +7,12 @@ health issues in the Microsoft Defender for Identity deployment.
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportM365
-from prowler.providers.m365.services.defender.defender_identity_client import (
-    defender_identity_client,
+from prowler.providers.m365.services.defenderidentity.defenderidentity_client import (
+    defenderidentity_client,
 )
 
 
-class defender_identity_health_issues_no_open(Check):
+class defenderidentity_health_issues_no_open(Check):
     """Ensure Microsoft Defender for Identity has no unresolved health issues.
 
     This check evaluates whether there are open health issues in the MDI deployment
@@ -36,7 +36,7 @@ class defender_identity_health_issues_no_open(Check):
         findings = []
 
         # If health_issues is None, the API call failed (tenant not onboarded or missing permissions)
-        if defender_identity_client.health_issues is None:
+        if defenderidentity_client.health_issues is None:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
@@ -53,7 +53,7 @@ class defender_identity_health_issues_no_open(Check):
             return findings
 
         # If health_issues is empty list - no issues exist, this is compliant
-        if not defender_identity_client.health_issues:
+        if not defenderidentity_client.health_issues:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
@@ -67,7 +67,7 @@ class defender_identity_health_issues_no_open(Check):
             findings.append(report)
             return findings
 
-        for health_issue in defender_identity_client.health_issues:
+        for health_issue in defenderidentity_client.health_issues:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource=health_issue,

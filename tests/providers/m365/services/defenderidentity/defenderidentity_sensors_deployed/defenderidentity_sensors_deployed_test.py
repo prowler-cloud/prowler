@@ -3,12 +3,12 @@ from unittest import mock
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
-class Test_defender_identity_sensors_deployed:
+class Test_defenderidentity_sensors_deployed:
     def test_sensors_none(self):
         """Test when sensors is None (API failed): expected FAIL."""
-        defender_identity_client = mock.MagicMock()
-        defender_identity_client.audited_tenant = "audited_tenant"
-        defender_identity_client.audited_domain = DOMAIN
+        defenderidentity_client = mock.MagicMock()
+        defenderidentity_client.audited_tenant = "audited_tenant"
+        defenderidentity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -16,17 +16,17 @@ class Test_defender_identity_sensors_deployed:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_identity_sensors_deployed.defender_identity_sensors_deployed.defender_identity_client",
-                new=defender_identity_client,
+                "prowler.providers.m365.services.defenderidentity.defenderidentity_sensors_deployed.defenderidentity_sensors_deployed.defenderidentity_client",
+                new=defenderidentity_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_identity_sensors_deployed.defender_identity_sensors_deployed import (
-                defender_identity_sensors_deployed,
+            from prowler.providers.m365.services.defenderidentity.defenderidentity_sensors_deployed.defenderidentity_sensors_deployed import (
+                defenderidentity_sensors_deployed,
             )
 
-            defender_identity_client.sensors = None
+            defenderidentity_client.sensors = None
 
-            check = defender_identity_sensors_deployed()
+            check = defenderidentity_sensors_deployed()
             result = check.execute()
 
             assert len(result) == 1
@@ -41,9 +41,9 @@ class Test_defender_identity_sensors_deployed:
 
     def test_no_sensors_deployed(self):
         """Test when no sensors are deployed (empty list): expected FAIL."""
-        defender_identity_client = mock.MagicMock()
-        defender_identity_client.audited_tenant = "audited_tenant"
-        defender_identity_client.audited_domain = DOMAIN
+        defenderidentity_client = mock.MagicMock()
+        defenderidentity_client.audited_tenant = "audited_tenant"
+        defenderidentity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -51,17 +51,17 @@ class Test_defender_identity_sensors_deployed:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_identity_sensors_deployed.defender_identity_sensors_deployed.defender_identity_client",
-                new=defender_identity_client,
+                "prowler.providers.m365.services.defenderidentity.defenderidentity_sensors_deployed.defenderidentity_sensors_deployed.defenderidentity_client",
+                new=defenderidentity_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_identity_sensors_deployed.defender_identity_sensors_deployed import (
-                defender_identity_sensors_deployed,
+            from prowler.providers.m365.services.defenderidentity.defenderidentity_sensors_deployed.defenderidentity_sensors_deployed import (
+                defenderidentity_sensors_deployed,
             )
 
-            defender_identity_client.sensors = []
+            defenderidentity_client.sensors = []
 
-            check = defender_identity_sensors_deployed()
+            check = defenderidentity_sensors_deployed()
             result = check.execute()
 
             assert len(result) == 1
@@ -76,9 +76,9 @@ class Test_defender_identity_sensors_deployed:
 
     def test_sensor_healthy(self):
         """Test when sensor is deployed and healthy: expected PASS."""
-        defender_identity_client = mock.MagicMock()
-        defender_identity_client.audited_tenant = "audited_tenant"
-        defender_identity_client.audited_domain = DOMAIN
+        defenderidentity_client = mock.MagicMock()
+        defenderidentity_client.audited_tenant = "audited_tenant"
+        defenderidentity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -86,21 +86,21 @@ class Test_defender_identity_sensors_deployed:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_identity_sensors_deployed.defender_identity_sensors_deployed.defender_identity_client",
-                new=defender_identity_client,
+                "prowler.providers.m365.services.defenderidentity.defenderidentity_sensors_deployed.defenderidentity_sensors_deployed.defenderidentity_client",
+                new=defenderidentity_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_identity_sensors_deployed.defender_identity_sensors_deployed import (
-                defender_identity_sensors_deployed,
+            from prowler.providers.m365.services.defenderidentity.defenderidentity_sensors_deployed.defenderidentity_sensors_deployed import (
+                defenderidentity_sensors_deployed,
             )
-            from prowler.providers.m365.services.defender.defender_service import (
+            from prowler.providers.m365.services.defenderidentity.defenderidentity_service import (
                 Sensor,
             )
 
             sensor_id = "sensor-1"
             sensor_name = "DC01.example.com"
 
-            defender_identity_client.sensors = [
+            defenderidentity_client.sensors = [
                 Sensor(
                     id=sensor_id,
                     display_name=sensor_name,
@@ -114,7 +114,7 @@ class Test_defender_identity_sensors_deployed:
                 )
             ]
 
-            check = defender_identity_sensors_deployed()
+            check = defenderidentity_sensors_deployed()
             result = check.execute()
 
             assert len(result) == 1
@@ -128,9 +128,9 @@ class Test_defender_identity_sensors_deployed:
 
     def test_sensor_unhealthy(self):
         """Test when sensor is deployed but unhealthy: expected FAIL."""
-        defender_identity_client = mock.MagicMock()
-        defender_identity_client.audited_tenant = "audited_tenant"
-        defender_identity_client.audited_domain = DOMAIN
+        defenderidentity_client = mock.MagicMock()
+        defenderidentity_client.audited_tenant = "audited_tenant"
+        defenderidentity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -138,21 +138,21 @@ class Test_defender_identity_sensors_deployed:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_identity_sensors_deployed.defender_identity_sensors_deployed.defender_identity_client",
-                new=defender_identity_client,
+                "prowler.providers.m365.services.defenderidentity.defenderidentity_sensors_deployed.defenderidentity_sensors_deployed.defenderidentity_client",
+                new=defenderidentity_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_identity_sensors_deployed.defender_identity_sensors_deployed import (
-                defender_identity_sensors_deployed,
+            from prowler.providers.m365.services.defenderidentity.defenderidentity_sensors_deployed.defenderidentity_sensors_deployed import (
+                defenderidentity_sensors_deployed,
             )
-            from prowler.providers.m365.services.defender.defender_service import (
+            from prowler.providers.m365.services.defenderidentity.defenderidentity_service import (
                 Sensor,
             )
 
             sensor_id = "sensor-2"
             sensor_name = "DC02.example.com"
 
-            defender_identity_client.sensors = [
+            defenderidentity_client.sensors = [
                 Sensor(
                     id=sensor_id,
                     display_name=sensor_name,
@@ -166,7 +166,7 @@ class Test_defender_identity_sensors_deployed:
                 )
             ]
 
-            check = defender_identity_sensors_deployed()
+            check = defenderidentity_sensors_deployed()
             result = check.execute()
 
             assert len(result) == 1
@@ -180,9 +180,9 @@ class Test_defender_identity_sensors_deployed:
 
     def test_multiple_sensors_mixed_health(self):
         """Test when multiple sensors with different health statuses."""
-        defender_identity_client = mock.MagicMock()
-        defender_identity_client.audited_tenant = "audited_tenant"
-        defender_identity_client.audited_domain = DOMAIN
+        defenderidentity_client = mock.MagicMock()
+        defenderidentity_client.audited_tenant = "audited_tenant"
+        defenderidentity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -190,18 +190,18 @@ class Test_defender_identity_sensors_deployed:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_identity_sensors_deployed.defender_identity_sensors_deployed.defender_identity_client",
-                new=defender_identity_client,
+                "prowler.providers.m365.services.defenderidentity.defenderidentity_sensors_deployed.defenderidentity_sensors_deployed.defenderidentity_client",
+                new=defenderidentity_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_identity_sensors_deployed.defender_identity_sensors_deployed import (
-                defender_identity_sensors_deployed,
+            from prowler.providers.m365.services.defenderidentity.defenderidentity_sensors_deployed.defenderidentity_sensors_deployed import (
+                defenderidentity_sensors_deployed,
             )
-            from prowler.providers.m365.services.defender.defender_service import (
+            from prowler.providers.m365.services.defenderidentity.defenderidentity_service import (
                 Sensor,
             )
 
-            defender_identity_client.sensors = [
+            defenderidentity_client.sensors = [
                 Sensor(
                     id="sensor-1",
                     display_name="DC01.example.com",
@@ -226,7 +226,7 @@ class Test_defender_identity_sensors_deployed:
                 ),
             ]
 
-            check = defender_identity_sensors_deployed()
+            check = defenderidentity_sensors_deployed()
             result = check.execute()
 
             assert len(result) == 2
@@ -249,9 +249,9 @@ class Test_defender_identity_sensors_deployed:
 
     def test_sensor_unknown_health_status(self):
         """Test when sensor has unknown/None health status: expected FAIL."""
-        defender_identity_client = mock.MagicMock()
-        defender_identity_client.audited_tenant = "audited_tenant"
-        defender_identity_client.audited_domain = DOMAIN
+        defenderidentity_client = mock.MagicMock()
+        defenderidentity_client.audited_tenant = "audited_tenant"
+        defenderidentity_client.audited_domain = DOMAIN
 
         with (
             mock.patch(
@@ -259,21 +259,21 @@ class Test_defender_identity_sensors_deployed:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.defender.defender_identity_sensors_deployed.defender_identity_sensors_deployed.defender_identity_client",
-                new=defender_identity_client,
+                "prowler.providers.m365.services.defenderidentity.defenderidentity_sensors_deployed.defenderidentity_sensors_deployed.defenderidentity_client",
+                new=defenderidentity_client,
             ),
         ):
-            from prowler.providers.m365.services.defender.defender_identity_sensors_deployed.defender_identity_sensors_deployed import (
-                defender_identity_sensors_deployed,
+            from prowler.providers.m365.services.defenderidentity.defenderidentity_sensors_deployed.defenderidentity_sensors_deployed import (
+                defenderidentity_sensors_deployed,
             )
-            from prowler.providers.m365.services.defender.defender_service import (
+            from prowler.providers.m365.services.defenderidentity.defenderidentity_service import (
                 Sensor,
             )
 
             sensor_id = "sensor-3"
             sensor_name = "DC03.example.com"
 
-            defender_identity_client.sensors = [
+            defenderidentity_client.sensors = [
                 Sensor(
                     id=sensor_id,
                     display_name=sensor_name,
@@ -287,7 +287,7 @@ class Test_defender_identity_sensors_deployed:
                 )
             ]
 
-            check = defender_identity_sensors_deployed()
+            check = defenderidentity_sensors_deployed()
             result = check.execute()
 
             assert len(result) == 1
