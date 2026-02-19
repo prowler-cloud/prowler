@@ -428,6 +428,40 @@ class TestFinding:
         assert finding_output.metadata.Notes == "mock_notes"
         assert finding_output.metadata.Compliance == []
 
+    def test_generate_output_googleworkspace(self):
+        provider = MagicMock()
+        provider.type = "googleworkspace"
+        provider.identity.delegated_user = "admin@test-company.com"
+        provider.identity.customer_id = "C1234567"
+        provider.identity.domain = "test-company.com"
+
+        check_output = MagicMock()
+        check_output.resource_id = "test_resource_id"
+        check_output.resource_name = "test_resource_name"
+        check_output.resource_details = ""
+        check_output.location = "global"
+        check_output.status = Status.PASS
+        check_output.status_extended = "mock_status_extended"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="googleworkspace")
+        check_output.resource = {}
+        check_output.compliance = {}
+
+        output_options = MagicMock()
+        output_options.unix_timestamp = True
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert isinstance(finding_output, Finding)
+        assert finding_output.auth_method == "service_account: admin@test-company.com"
+        assert finding_output.account_uid == "C1234567"
+        assert finding_output.account_name == "test-company.com"
+        assert finding_output.resource_name == "test_resource_name"
+        assert finding_output.resource_uid == "test_resource_id"
+        assert finding_output.region == "global"
+        assert finding_output.status == Status.PASS
+        assert finding_output.muted is False
+
     def test_generate_output_kubernetes(self):
         # Mock provider
         provider = MagicMock()
