@@ -6,7 +6,7 @@ import { Icon } from "@iconify/react";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -28,40 +28,53 @@ import { ProviderInfo } from "../..";
 
 type FormValues = z.input<typeof testConnectionFormSchema>;
 
-export const TestConnectionForm = ({
-  searchParams,
-  providerData,
-}: {
-  searchParams: { type: string; id: string; updated: string };
-  providerData: {
-    data: {
-      id: string;
-      type: string;
-      attributes: {
-        uid: string;
-        connection: {
-          connected: boolean | null;
-          last_checked_at: string | null;
-        };
-        provider: ProviderType;
-        alias: string;
-        scanner_args: Record<string, unknown>;
+export interface TestConnectionProviderData {
+  data: {
+    id: string;
+    type: string;
+    attributes: {
+      uid: string;
+      connection: {
+        connected: boolean | null;
+        last_checked_at: string | null;
       };
-      relationships: {
-        secret: {
-          data: {
-            type: string;
-            id: string;
-          } | null;
-        };
+      provider: ProviderType;
+      alias: string;
+      scanner_args: Record<string, unknown>;
+    };
+    relationships: {
+      secret: {
+        data: {
+          type: string;
+          id: string;
+        } | null;
       };
     };
   };
-}) => {
+}
+
+interface TestConnectionFormProps {
+  searchParams: { type: string; id: string; updated: string };
+  providerData: TestConnectionProviderData;
+  onSuccess?: () => void;
+  onResetCredentials?: () => void;
+  formId?: string;
+  hideActions?: boolean;
+  onLoadingChange?: (isLoading: boolean) => void;
+}
+
+export const TestConnectionForm = ({
+  searchParams,
+  providerData,
+  onSuccess,
+  onResetCredentials: onResetCredentialsCallback,
+  formId,
+  hideActions = false,
+  onLoadingChange,
+}: TestConnectionFormProps) => {
   const { toast } = useToast();
   const router = useRouter();
 
-  const providerType = searchParams.type;
   const providerId = searchParams.id;
 
   const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
@@ -84,6 +97,10 @@ export const TestConnectionForm = ({
 
   const isLoading = form.formState.isSubmitting;
   const isUpdated = searchParams?.updated === "true";
+
+  useEffect(() => {
+    onLoadingChange?.(isLoading || isResettingCredentials);
+  }, [isLoading, isResettingCredentials, onLoadingChange]);
 
   const onSubmitClient = async (values: FormValues) => {
     const formData = new FormData();
@@ -123,7 +140,13 @@ export const TestConnectionForm = ({
           error: connected ? null : error || "Unknown error",
         });
 
-        if (connected && isUpdated) return router.push("/providers");
+        if (connected && isUpdated) {
+          if (onSuccess) {
+            onSuccess();
+            return;
+          }
+          return router.push("/providers");
+        }
 
         if (connected && !isUpdated) {
           try {
@@ -150,6 +173,11 @@ export const TestConnectionForm = ({
                 description: data.error,
               });
             } else {
+              if (onSuccess) {
+                onSuccess();
+                return;
+              }
+
               setIsRedirecting(true);
               router.push("/scans");
             }
@@ -174,7 +202,7 @@ export const TestConnectionForm = ({
     }
   };
 
-  const onResetCredentials = async () => {
+  const handleResetCredentials = async () => {
     setIsResettingCredentials(true);
 
     // Check if provider the provider has no credentials
@@ -183,20 +211,23 @@ export const TestConnectionForm = ({
     const hasNoCredentials = !providerSecretId;
 
     if (hasNoCredentials) {
-      // If no credentials, redirect to add credentials page
-      router.push(
-        `/providers/add-credentials?type=${providerType}&id=${providerId}`,
-      );
+      if (onResetCredentialsCallback) {
+        onResetCredentialsCallback();
+      } else {
+        router.push("/providers");
+      }
+      setIsResettingCredentials(false);
       return;
     }
 
     // If provider has credentials, delete them first
     try {
       await deleteCredentials(providerSecretId);
-      // After successful deletion, redirect to add credentials page
-      router.push(
-        `/providers/add-credentials?type=${providerType}&id=${providerId}`,
-      );
+      if (onResetCredentialsCallback) {
+        onResetCredentialsCallback();
+      } else {
+        router.push("/providers");
+      }
     } catch (error) {
       console.error("Failed to delete credentials:", error);
     } finally {
@@ -226,6 +257,7 @@ export const TestConnectionForm = ({
   return (
     <Form {...form}>
       <form
+        id={formId}
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col gap-4"
       >
@@ -299,52 +331,58 @@ export const TestConnectionForm = ({
 
         <input type="hidden" name="providerId" value={providerId} />
 
-        <div className="flex w-full justify-end sm:gap-6">
-          {apiErrorMessage ? (
-            <Button variant="outline" size="lg" asChild>
-              <Link href="/providers">Back to providers</Link>
-            </Button>
-          ) : connectionStatus?.error ? (
-            <Button
-              onClick={isUpdated ? () => router.back() : onResetCredentials}
-              type="button"
-              variant="secondary"
-              size="lg"
-              disabled={isResettingCredentials}
-            >
-              {isResettingCredentials ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <CheckIcon size={24} />
-              )}
-              {isResettingCredentials
-                ? "Loading"
-                : isUpdated
-                  ? "Update credentials"
-                  : "Reset credentials"}
-            </Button>
-          ) : (
-            <Button
-              type={
-                isUpdated && connectionStatus?.connected ? "button" : "submit"
-              }
-              variant="default"
-              size="lg"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                !isUpdated && <RocketIcon size={24} />
-              )}
-              {isLoading
-                ? "Loading"
-                : isUpdated
-                  ? "Check connection"
-                  : "Launch scan"}
-            </Button>
-          )}
-        </div>
+        {!hideActions && (
+          <div className="flex w-full justify-end sm:gap-6">
+            {apiErrorMessage ? (
+              <Button variant="outline" size="lg" asChild>
+                <Link href="/providers">Back to providers</Link>
+              </Button>
+            ) : connectionStatus?.error ? (
+              <Button
+                onClick={
+                  isUpdated
+                    ? onResetCredentialsCallback || (() => router.back())
+                    : handleResetCredentials
+                }
+                type="button"
+                variant="secondary"
+                size="lg"
+                disabled={isResettingCredentials}
+              >
+                {isResettingCredentials ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <CheckIcon size={24} />
+                )}
+                {isResettingCredentials
+                  ? "Loading"
+                  : isUpdated
+                    ? "Update credentials"
+                    : "Reset credentials"}
+              </Button>
+            ) : (
+              <Button
+                type={
+                  isUpdated && connectionStatus?.connected ? "button" : "submit"
+                }
+                variant="default"
+                size="lg"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  !isUpdated && <RocketIcon size={24} />
+                )}
+                {isLoading
+                  ? "Loading"
+                  : isUpdated
+                    ? "Check connection"
+                    : "Launch scan"}
+              </Button>
+            )}
+          </div>
+        )}
       </form>
     </Form>
   );
