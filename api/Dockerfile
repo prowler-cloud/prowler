@@ -24,6 +24,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Cartography depends on `dockerfile` which has no pre-built arm64 wheel and requires Go to compile
+# hadolint ignore=DL3008
+RUN if [ "$(uname -m)" = "aarch64" ]; then \
+        apt-get update && apt-get install -y --no-install-recommends golang-go \
+        && rm -rf /var/lib/apt/lists/* ; \
+    fi
+
 # Install PowerShell
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \

@@ -39,12 +39,6 @@ class RetryableSession:
     def run(self, *args: Any, **kwargs: Any) -> Any:
         return self._call_with_retry("run", *args, **kwargs)
 
-    def write_transaction(self, *args: Any, **kwargs: Any) -> Any:
-        return self._call_with_retry("write_transaction", *args, **kwargs)
-
-    def read_transaction(self, *args: Any, **kwargs: Any) -> Any:
-        return self._call_with_retry("read_transaction", *args, **kwargs)
-
     def execute_write(self, *args: Any, **kwargs: Any) -> Any:
         return self._call_with_retry("execute_write", *args, **kwargs)
 
