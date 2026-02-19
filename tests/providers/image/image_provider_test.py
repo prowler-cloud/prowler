@@ -7,8 +7,6 @@ import pytest
 
 from prowler.lib.check.models import CheckReportImage
 from prowler.providers.image.exceptions.exceptions import (
-    ImageDockerLoginError,
-    ImageDockerNotFoundError,
     ImageInvalidConfigScannerError,
     ImageInvalidNameError,
     ImageInvalidScannerError,
@@ -804,6 +802,78 @@ class TestImageProviderRegistryAuth:
         call_kwargs = mock_subprocess.call_args
         env = call_kwargs.kwargs.get("env") or call_kwargs[1].get("env")
         assert env["TRIVY_REGISTRY_TOKEN"] == "my-token"
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_registry_success(self, mock_factory):
+        """Test registry-level connection test via list_repositories."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_repositories.return_value = ["repo1", "repo2"]
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(
+            registry="https://myregistry.io",
+            registry_username="user",
+            registry_password="pass",
+        )
+
+        assert result.is_connected is True
+        mock_factory.assert_called_once_with(
+            registry_url="https://myregistry.io",
+            username="user",
+            password="pass",
+            token=None,
+        )
+        mock_adapter.list_repositories.assert_called_once()
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_registry_failure(self, mock_factory):
+        """Test registry-level connection test failure."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_repositories.side_effect = Exception("401 Unauthorized")
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(
+            registry="https://myregistry.io",
+            raise_on_exception=False,
+        )
+
+        assert result.is_connected is False
+        assert "401 Unauthorized" in result.error
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_registry_with_token(self, mock_factory):
+        """Test registry-level connection test with token auth."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_repositories.return_value = ["repo1"]
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(
+            registry="https://ghcr.io",
+            registry_token="my-token",
+        )
+
+        assert result.is_connected is True
+        mock_factory.assert_called_once_with(
+            registry_url="https://ghcr.io",
+            username=None,
+            password=None,
+            token="my-token",
+        )
+
+    @patch("subprocess.run")
+    def test_test_connection_image_takes_precedence_over_registry(
+        self, mock_subprocess
+    ):
+        """When both image and registry are provided, image-level Trivy test is used."""
+        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
+
+        result = ImageProvider.test_connection(
+            image="alpine:3.18",
+            registry="https://myregistry.io",
+        )
+
+        assert result.is_connected is True
+        mock_subprocess.assert_called_once()
 
     def test_print_credentials_shows_auth_method(self):
         """Test that print_credentials outputs the auth method."""

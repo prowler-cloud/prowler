@@ -899,9 +899,14 @@ class ImageProvider(Provider):
         registry_username: str | None = None,
         registry_password: str | None = None,
         registry_token: str | None = None,
+        registry: str | None = None,
     ) -> "Connection":
         """
-        Test connection to container registry by attempting to inspect an image.
+        Test connection to a container registry or image.
+
+        When ``registry`` is provided (and no ``image``), tests registry-level
+        reachability via the OCI catalog endpoint (list repositories).
+        Otherwise falls back to the Trivy-based single-image test.
 
         Args:
             image: Container image to test
@@ -910,11 +915,24 @@ class ImageProvider(Provider):
             registry_username: Registry username for basic auth
             registry_password: Registry password for basic auth
             registry_token: Registry token for token-based auth
+            registry: Registry URL for registry-level connectivity test
 
         Returns:
             Connection: Connection object with success status
         """
         try:
+            # Registry-level test: list repositories to verify reachability
+            if registry and not image:
+                adapter = create_registry_adapter(
+                    registry_url=registry,
+                    username=registry_username,
+                    password=registry_password,
+                    token=registry_token,
+                )
+                adapter.list_repositories()
+                return Connection(is_connected=True)
+
+            # Image-level test via Trivy
             if provider_id and not image:
                 image = provider_id
 

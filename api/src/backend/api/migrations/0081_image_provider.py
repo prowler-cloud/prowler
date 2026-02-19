@@ -7,7 +7,7 @@ import api.db_utils
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0075_cloudflare_provider"),
+        ("api", "0080_backfill_attack_paths_graph_data_ready"),
     ]
 
     operations = [
@@ -27,6 +27,7 @@ class Migration(migrations.Migration):
                     ("oraclecloud", "Oracle Cloud Infrastructure"),
                     ("alibabacloud", "Alibaba Cloud"),
                     ("cloudflare", "Cloudflare"),
+                    ("openstack", "OpenStack"),
                     ("image", "Image"),
                 ],
                 default="aws",
