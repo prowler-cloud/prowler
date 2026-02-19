@@ -388,6 +388,37 @@ from rest_framework_json_api import serializers
                 },
                 "required": ["clouds_yaml_content", "clouds_yaml_cloud"],
             },
+            {
+                "type": "object",
+                "title": "Image Registry Credentials",
+                "properties": {
+                    "registry_username": {
+                        "type": "string",
+                        "description": "Username for Docker login authentication.",
+                    },
+                    "registry_password": {
+                        "type": "string",
+                        "description": "Password for Docker login authentication.",
+                    },
+                    "registry_token": {
+                        "type": "string",
+                        "description": "Bearer token for registry authentication.",
+                    },
+                    "image_filter": {
+                        "type": "string",
+                        "description": "Regex pattern to filter repository names during registry enumeration.",
+                    },
+                    "tag_filter": {
+                        "type": "string",
+                        "description": "Regex pattern to filter image tags during registry enumeration.",
+                    },
+                    "max_images": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "Maximum number of images to scan (0 = unlimited).",
+                    },
+                },
+            },
         ]
     }
 )

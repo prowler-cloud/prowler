@@ -864,6 +864,7 @@ class CheckReportImage(Check_Report):
     resource_name: str
     resource_id: str
     image_digest: str
+    image_sha: str
     package_name: str
     installed_version: str
     fixed_version: str
@@ -895,6 +896,7 @@ class CheckReportImage(Check_Report):
             or finding.get("ID", "")
         )
         self.image_digest = finding.get("PkgID", "")
+        self.image_sha = ""
         self.package_name = finding.get("PkgName", "")
         self.installed_version = finding.get("InstalledVersion", "")
         self.fixed_version = finding.get("FixedVersion", "")

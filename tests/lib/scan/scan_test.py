@@ -416,3 +416,102 @@ class TestScan:
         results = list(scan.scan(custom_checks_metadata))
 
         assert results[0] == (100.0, [])
+
+
+class TestImageScanPath:
+    """Tests for the IMAGE provider scan path in Scan.scan()."""
+
+    @staticmethod
+    def _make_check_metadata(check_id):
+        from prowler.lib.check.models import CheckMetadata
+
+        return CheckMetadata(
+            Provider="image",
+            CheckID=check_id,
+            CheckTitle=f"Test {check_id}",
+            CheckType=["Container Image Security"],
+            ServiceName="vuln",
+            SubServiceName="",
+            ResourceIdTemplate="",
+            Severity="high",
+            ResourceType="container-image",
+            ResourceGroup="container",
+            Description="Test finding",
+            Risk="Test risk",
+            RelatedUrl="",
+            Remediation={
+                "Code": {"NativeIaC": "", "Terraform": "", "CLI": "", "Other": ""},
+                "Recommendation": {"Text": "", "Url": ""},
+            },
+            Categories=["vulnerability"],
+            DependsOn=[],
+            RelatedTo=[],
+            Notes="",
+        )
+
+    @staticmethod
+    def _make_report(check_id, image_name, status="FAIL", image_sha="abc123def456"):
+        report = MagicMock()
+        report.check_metadata = TestImageScanPath._make_check_metadata(check_id)
+        report.resource_name = image_name
+        report.resource_id = f"{image_name}-resource"
+        report.status = status
+        report.status_extended = f"{check_id} found"
+        report.muted = False
+        report.resource = {}
+        report.resource_details = ""
+        report.region = "container"
+        report.image_sha = image_sha
+        return report
+
+    @pytest.fixture
+    def mock_image_provider(self):
+        """Create a mock ImageProvider that passes isinstance checks."""
+        from prowler.providers.image.image_provider import ImageProvider
+
+        provider = MagicMock(spec=ImageProvider)
+        provider.type = "image"
+        provider.images = ["img1:latest", "img2:latest"]
+        provider.registry = None
+
+        r1 = self._make_report("CVE-2024-0001", "img1:latest")
+        r2 = self._make_report("CVE-2024-0002", "img2:latest")
+        provider.scan_per_image.return_value = iter(
+            [("img1:latest", [r1]), ("img2:latest", [r2])]
+        )
+        return provider
+
+    def test_image_scan_yields_findings(self, mock_image_provider):
+        """Verify Finding objects are created with correct fields for each image."""
+        scan = Scan(mock_image_provider)
+        results = list(scan.scan({}))
+
+        assert len(results) == 2
+        for _, findings in results:
+            assert len(findings) == 1
+            f = findings[0]
+            assert f.status.name in ("PASS", "FAIL")
+            assert f.auth_method == "Registry"
+            assert f.account_name == "Container Registry"
+            # resource_uid should be image_name:sha
+            assert ":abc123def456" in f.resource_uid
+            # resource_name should be clean image name
+            assert f.resource_name in ("img1:latest", "img2:latest")
+
+    def test_image_scan_progress_tracking(self, mock_image_provider):
+        """Verify progress increments per image."""
+        scan = Scan(mock_image_provider)
+        results = list(scan.scan({}))
+
+        progresses = [p for p, _ in results]
+        assert len(progresses) == 2
+        assert progresses[0] < progresses[1]
+
+    def test_image_scan_status_filtering(self, mock_image_provider):
+        """Verify status filter excludes non-matching findings."""
+        scan = Scan(mock_image_provider, status=["PASS"])
+        results = list(scan.scan({}))
+
+        # All reports have status="FAIL", so filtering for PASS should yield empty findings
+        for _, findings in results:
+            assert len(findings) == 0

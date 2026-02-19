@@ -289,6 +289,7 @@ class Provider(RowLevelSecurityProtectedModel):
         ALIBABACLOUD = "alibabacloud", _("Alibaba Cloud")
         CLOUDFLARE = "cloudflare", _("Cloudflare")
         OPENSTACK = "openstack", _("OpenStack")
+        IMAGE = "image", _("Image")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -423,6 +424,27 @@ class Provider(RowLevelSecurityProtectedModel):
                 pointer="/data/attributes/uid",
             )
 
+    @staticmethod
+    def validate_image_uid(value):
+        pattern = r"^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?(:\d{1,5})?(/[a-zA-Z0-9._-]+)*/?$"
+        if not re.match(pattern, value):
+            raise ModelValidationError(
+                detail="Image provider ID must be a valid registry URL (e.g., ghcr.io, docker.io, "
+                "123456789012.dkr.ecr.us-east-1.amazonaws.com).",
+                code="image-uid",
+                pointer="/data/attributes/uid",
+            )
+        # Validate port range if present
+        port_match = re.search(r":(\d{1,5})(?=/|$)", value)
+        if port_match:
+            port = int(port_match.group(1))
+            if port < 1 or port > 65535:
+                raise ModelValidationError(
+                    detail="Image provider registry port must be between 1 and 65535.",
+                    code="image-uid",
+                    pointer="/data/attributes/uid",
+                )
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -446,6 +468,8 @@ class Provider(RowLevelSecurityProtectedModel):
 
     def clean(self):
         super().clean()
+        if self.provider == self.ProviderChoices.IMAGE.value and self.uid:
+            self.uid = re.sub(r"^https?://", "", self.uid)
         getattr(self, f"validate_{self.provider}_uid")(self.uid)
 
     def save(self, *args, **kwargs):

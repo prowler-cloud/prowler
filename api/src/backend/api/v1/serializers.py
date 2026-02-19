@@ -1528,6 +1528,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                     )
             elif provider_type == Provider.ProviderChoices.OPENSTACK.value:
                 serializer = OpenStackCloudsYamlProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.IMAGE.value:
+                serializer = ImageProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1661,6 +1663,41 @@ class GithubProviderSecret(serializers.Serializer):
 class IacProviderSecret(serializers.Serializer):
     repository_url = serializers.CharField()
     access_token = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class ImageProviderSecret(serializers.Serializer):
+    registry_username = serializers.CharField(required=False)
+    registry_password = serializers.CharField(required=False)
+    registry_token = serializers.CharField(required=False)
+    image_filter = serializers.CharField(required=False)
+    tag_filter = serializers.CharField(required=False)
+    max_images = serializers.IntegerField(required=False, min_value=0)
+
+    def validate(self, attrs):
+        username = attrs.get("registry_username")
+        password = attrs.get("registry_password")
+        token = attrs.get("registry_token")
+
+        if token and (username or password):
+            raise serializers.ValidationError(
+                {"secret": "Provide either username/password or token, not both."}
+            )
+        if username and not password:
+            raise serializers.ValidationError(
+                {
+                    "secret/registry_password": "Password is required when username is provided."
+                }
+            )
+        if password and not username:
+            raise serializers.ValidationError(
+                {
+                    "secret/registry_username": "Username is required when password is provided."
+                }
+            )
+        return attrs
 
     class Meta:
         resource_name = "provider-secrets"
