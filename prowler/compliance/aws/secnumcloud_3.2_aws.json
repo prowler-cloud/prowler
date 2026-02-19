@@ -1,0 +1,1578 @@
+{
+  "Framework": "SecNumCloud",
+  "Name": "SecNumCloud Referentiel d'Exigences v3.2",
+  "Version": "3.2",
+  "Provider": "AWS",
+  "Description": "The SecNumCloud framework is published by ANSSI (Agence Nationale de la Securite des Systemes d'Information) to qualify cloud service providers operating in France. Version 3.2, dated March 8, 2022, covers IaaS, CaaS, PaaS, and SaaS services with requirements spanning information security policies, access control, cryptography, physical security, operational security, communications security, and data sovereignty protections against extra-European law.",
+  "Requirements": [
+    {
+      "Id": "5.1",
+      "Description": "Le prestataire doit definir et appliquer des principes de securite de l'information adaptes a ses activites de fourniture de services cloud.",
+      "Name": "Principes",
+      "Attributes": [
+        {
+          "Section": "5. Politiques de securite de l'information et gestion du risque",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit operer la prestation a l'etat de l'art pour le type d'activite retenu : utiliser des logiciels stables beneficiant d'un suivi des correctifs de securite et parametres de facon a obtenir un niveau de securite optimal. b) Le prestataire doit appliquer le guide d'hygiene informatique de l'ANSSI [HYGIENE], niveau renforce, au systeme d'information du service."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "5.2",
+      "Description": "Le prestataire doit definir, faire approuver par la direction, publier et communiquer aux salaries et aux tiers concernes un ensemble de politiques de securite de l'information.",
+      "Name": "Politique de securite de l'information",
+      "Attributes": [
+        {
+          "Section": "5. Politiques de securite de l'information et gestion du risque",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une politique de securite de l'information relative au service. b) La politique de securite de l'information doit identifier les engagements du prestataire quant au respect de la legislation et reglementation nationale en vigueur selon la nature des informations qui pourraient etre confiees par le commanditaire au prestataire ; il revient en revanche in fine au commanditaire de s'assurer du respect des contraintes legales et reglementaires applicables aux donnees qu'il confie effectivement au prestataire. c) La politique de securite de l'information doit notamment couvrir les themes abordes aux chapitres 6 a 19 du present referentiel. d) La direction du prestataire doit approuver formellement la politique de securite de l'information. e) Le prestataire doit reviser annuellement la politique de securite de l'information et a chaque changement majeur pouvant avoir un impact sur le service."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "5.3",
+      "Description": "Le prestataire doit definir et appliquer un processus d'appreciation des risques de securite de l'information.",
+      "Name": "Appreciation des risques",
+      "Attributes": [
+        {
+          "Section": "5. Politiques de securite de l'information et gestion du risque",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter une appreciation des risques couvrant l'ensemble du perimetre du service. b) Le prestataire doit realiser son appreciation de risques en utilisant une methode documentee garantissant la reproductibilite et comparabilite de la demarche. c) Le prestataire doit prendre en compte dans l'appreciation des risques : la gestion d'informations du commanditaire ayant des besoins de securite differents ; les risques ayant des impacts sur les droits et libertes des personnes concernees en cas d'acces non autorise, de modification non desiree et de disparition de donnees a caractere personnel ; les risques de defaillance des mecanismes de cloisonnement des ressources de l'infrastructure technique (memoire, calcul, stockage, reseau) partagees entre les commanditaires ; les risques lies a l'effacement incomplet ou non securise des donnees stockees sur les espaces de memoire ou de stockage partages entre commanditaires, en particulier lors des reallocations des espaces de memoire et de stockage ; les risques lies a l'exposition des interfaces d'administration sur un reseau public ; les risques d'atteinte a la confidentialite des donnees des commanditaires par des tiers impliques dans la fourniture du service (fournisseurs, sous-traitants, etc.) ; les risques lies aux evenements naturels et sinistres physiques ; les risques lies a la separation des taches (voir 6.2.a) ; les risques lies aux environnements de developpement (voir 14.4.b). d) Le prestataire doit lister, dans un document specifique, les risques residuels lies a l'existence de lois extra-europeennes ayant pour objectif la collecte de donnees ou metadonnees des commanditaires sans leur consentement prealable. e) Le prestataire doit mettre a la disposition du commanditaire, sur demande de celui-ci, les elements d'appreciation des risques lies a la soumission des donnees du commanditaire au droit d'un etat non-membre de l'Union Europeenne. f) Lorsqu'il existe des exigences legales, reglementaires ou sectorielles specifiques liees aux types d'informations confiees par le commanditaire au prestataire, ce dernier doit les prendre en compte dans son appreciation des risques en s'assurant de respecter l'ensemble des exigences du present referentiel d'une part et de ne pas abaisser le niveau de securite etabli par le respect des exigences du present referentiel d'autre part. g) La direction du prestataire doit accepter formellement les risques residuels identifies dans l'appreciation des risques. h) Le prestataire doit reviser annuellement l'appreciation des risques et a chaque changement majeur pouvant avoir un impact sur le service."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "6.1",
+      "Description": "Le prestataire doit definir et attribuer toutes les responsabilites en matiere de securite de l'information.",
+      "Name": "Fonctions et responsabilites liees a la securite de l'information",
+      "Attributes": [
+        {
+          "Section": "6. Organisation de la securite de l'information",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une organisation interne de la securite pour assurer la definition, la mise en place et le suivi du fonctionnement operationnel de la securite de l'information au sein de son organisation. b) Le prestataire doit designer un responsable de la securite des systemes d'information et un responsable de la securite physique. c) Le prestataire doit definir et attribuer les responsabilites en matiere de securite de l'information pour le personnel implique dans la fourniture du service. d) Le prestataire doit s'assurer apres tout changement majeur pouvant avoir un impact sur le service que l'attribution des responsabilites en matiere de securite de l'information est toujours pertinente. e) Le prestataire doit definir et attribuer les responsabilites en matiere de protection de donnees a caractere personnel, en coherence avec son role dans les traitements de donnees a caractere personnel (responsable de traitement, sous-traitant ou co-responsable). f) Le prestataire doit, lorsqu'il traite un grand nombre de donnees parmi lesquelles figurent des categories particulieres de donnees a caractere personnel telles que definies dans [RGPD], designer un delegue a la protection des donnees. g) Il est recommande que le prestataire, quel que soit le volume de donnees a caractere personnel qu'il traite, designe un delegue a la protection des donnees. h) Le prestataire doit realiser ou contribuer a la realisation d'une analyse d'impact relative a la protection des donnees a caractere personnel lorsque le traitement est susceptible d'engendrer un risque eleve pour les droits et libertes des personnes concernees (traitement de categories particulieres de donnees a caractere personnel telles que definies dans [RGPD], traitement de donnees a grande echelle, etc.). Cette analyse doit comporter une evaluation juridique du respect des principes et droits fondamentaux, ainsi qu'une etude plus technique des mesures techniques mises en oeuvre pour proteger les personnes des risques pour leur vie privee."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "6.2",
+      "Description": "Le prestataire doit separer les taches et les domaines de responsabilite incompatibles afin de reduire les possibilites de modification non autorisee ou de mauvais usage des actifs.",
+      "Name": "Separation des taches",
+      "Attributes": [
+        {
+          "Section": "6. Organisation de la securite de l'information",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit identifier les risques associes a des cumuls de responsabilites ou de taches, les prendre en compte dans l'appreciation des risques et mettre en oeuvre des mesures de reduction de ces risques."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "6.3",
+      "Description": "Le prestataire doit etablir et maintenir des relations appropriees avec les autorites competentes.",
+      "Name": "Relations avec les autorites",
+      "Attributes": [
+        {
+          "Section": "6. Organisation de la securite de l'information",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Il est recommande que le prestataire mette en place des relations appropriees avec les autorites competentes en matiere de securite de l'information et de donnees a caractere personnel et, le cas echeant, avec les autorites sectorielles selon la nature des informations confiees par le commanditaire au prestataire."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "6.4",
+      "Description": "Le prestataire doit etablir et maintenir des relations appropriees avec des groupes de travail specialises, des associations professionnelles ou des forums traitant de la securite.",
+      "Name": "Relations avec les groupes de travail specialises",
+      "Attributes": [
+        {
+          "Section": "6. Organisation de la securite de l'information",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Il est recommande que le prestataire entretienne des contacts appropries avec des groupes de specialistes ou des sources reconnues, notamment pour prendre en compte de nouvelles menaces et les mesures de securite appropriees pour les contrer."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "6.5",
+      "Description": "Le prestataire doit integrer la securite de l'information dans la gestion de projet, quel que soit le type de projet.",
+      "Name": "La securite de l'information dans la gestion de projet",
+      "Attributes": [
+        {
+          "Section": "6. Organisation de la securite de l'information",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter une estimation des risques prealablement a tout projet pouvant avoir un impact sur le service, et ce quelle que soit la nature du projet. b) Dans la mesure ou un projet affecte ou est susceptible d'affecter le niveau de securite du service, le prestataire doit avertir le commanditaire et l'informer par ecrit des impacts potentiels, des mesures mises en place pour reduire ces impacts ainsi que des risques residuels le concernant."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "7.1",
+      "Description": "Le prestataire doit s'assurer que les candidats a l'embauche font l'objet de verifications proportionnees aux exigences metier, a la classification des informations accessibles et aux risques identifies.",
+      "Name": "Selection des candidats",
+      "Attributes": [
+        {
+          "Section": "7. Securite des ressources humaines",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure de verification des informations concernant son personnel conforme aux lois et reglements en vigueur. Ces verifications s'appliquent a toute personne impliquee dans la fourniture du service et doivent etre proportionnelles a la sensibilite ou a la specificite des informations du commanditaire confiees au prestataire ainsi qu'aux risques identifies. b) Pour les personnels disposant de privileges d'administration eleves sur les composants logiciels et materiels de l'infrastructure, le prestataire doit renforcer les verifications destinees a verifier que les antecedents de ceux-ci ne sont pas incompatibles avec l'exercice de leurs fonctions. Il est entendu par des privileges d'administration eleves, des actions permettant l'elevation de privileges ou la possibilite de realiser des actions sans traces techniques ou de desactiver, alterer les traces techniques."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "7.2",
+      "Description": "Les accords contractuels avec les salaries et les sous-traitants doivent preciser leurs responsabilites et celles du prestataire en matiere de securite de l'information.",
+      "Name": "Conditions d'embauche",
+      "Attributes": [
+        {
+          "Section": "7. Securite des ressources humaines",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit disposer d'une charte d'ethique integree au reglement interieur, prevoyant notamment que : les prestations sont realisees avec loyaute, discretion et impartialite et dans des conditions de confidentialite des informations traitees ; les personnels ne recourent qu'aux methodes, outils et techniques valides par le prestataire ; les personnels s'engagent a ne pas divulguer d'informations a un tiers, meme anonymisees et decontextualisees, obtenues ou generees dans le cadre de la prestation sauf autorisation formelle et ecrite du commanditaire ; les personnels s'engagent a signaler au prestataire tout contenu manifestement illicite decouvert pendant la prestation ; les personnels s'engagent a respecter la legislation et la reglementation nationale en vigueur et les bonnes pratiques liees a leurs activites. b) Le prestataire doit faire signer la charte d'ethique a l'ensemble des personnes impliquees dans la fourniture du service. c) Le prestataire doit introduire, dans le contrat de travail des personnels disposant de privileges d'administration eleves sur les composants et materiels de l'infrastructure du service, un engagement de responsabilite avec un renvoi aux clauses du code du travail sur la protection du secret des affaires et de la propriete intellectuelle. Il est entendu par des privileges d'administration eleves, des actions permettant l'elevation de privileges ou la possibilite de realiser des actions sans traces techniques ou de desactiver, alterer les traces techniques. d) Le prestataire doit, sur demande d'un commanditaire, lui rendre accessible le reglement interieur et la charte d'ethique."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "7.3",
+      "Description": "Les salaries du prestataire et, le cas echeant, les sous-traitants doivent suivre un programme de sensibilisation et de formation adapte et regulier concernant la securite de l'information.",
+      "Name": "Sensibilisation, apprentissage et formations a la securite de l'information",
+      "Attributes": [
+        {
+          "Section": "7. Securite des ressources humaines",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit sensibiliser a la securite de l'information et aux risques lies a la protection des donnees l'ensemble des personnes impliquees dans la fourniture du service. Il doit leur communiquer les mises a jour des politiques et procedures pertinentes dans le cadre de leurs missions. b) Le prestataire doit documenter et mettre en oeuvre un plan de formation concernant la securite de l'information adapte au service et aux missions des personnels. c) Le responsable de la securite des systemes d'information du prestataire doit valider formellement le plan de formation concernant la securite de l'information."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "7.4",
+      "Description": "Le prestataire doit mettre en place un processus disciplinaire formel et communique pour prendre des mesures a l'encontre des salaries ayant enfreint les regles de securite de l'information.",
+      "Name": "Processus disciplinaire",
+      "Attributes": [
+        {
+          "Section": "7. Securite des ressources humaines",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre un processus disciplinaire applicable a l'ensemble des personnes impliquees dans la fourniture du service ayant enfreint la politique de securite. b) Le prestataire doit, sur demande d'un commanditaire, lui rendre accessible les sanctions encourues en cas d'infraction a la politique de securite."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "7.5",
+      "Description": "Les responsabilites et les obligations en matiere de securite de l'information qui restent valables apres un changement ou une rupture du contrat de travail doivent etre definies, communiquees au salarie ou au sous-traitant et appliquees.",
+      "Name": "Rupture, terme ou modification du contrat de travail",
+      "Attributes": [
+        {
+          "Section": "7. Securite des ressources humaines",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit definir et attribuer les roles et les responsabilites relatives a la rupture, au terme ou a la modification de tout contrat avec une personne impliquee dans la fourniture du service."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "8.1",
+      "Description": "Le prestataire doit identifier les actifs associes a l'information et aux moyens de traitement de l'information et doit etablir et tenir a jour un inventaire de ces actifs.",
+      "Name": "Inventaire et propriete des actifs",
+      "Attributes": [
+        {
+          "Section": "8. Gestion des actifs",
+          "Service": "config",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire doit tenir a jour l'inventaire de l'ensemble des equipements mettant en oeuvre le service. Cet inventaire doit preciser pour chaque equipement : les informations d'identification de l'equipement (noms, adresses IP, adresses MAC, etc.) ; la fonction de l'equipement ; le modele de l'equipement ; la localisation de l'equipement ; le proprietaire de l'equipement ; le besoin de securite des informations (au sens du chapitre 8.3). b) Le prestataire doit tenir a jour l'inventaire de l'ensemble des logiciels mettant en oeuvre le service. Cet inventaire doit identifier pour chaque logiciel, sa version et les equipements sur lesquels le logiciel est installe. c) Le prestataire doit s'assurer de la validite des licences des logiciels tout au long de la prestation."
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "ec2_instance_managed_by_ssm"
+      ]
+    },
+    {
+      "Id": "8.2",
+      "Description": "Les salaries et les utilisateurs de tiers doivent restituer tous les actifs du prestataire en leur possession au terme de la periode d'emploi, du contrat ou de l'accord.",
+      "Name": "Restitution des actifs",
+      "Attributes": [
+        {
+          "Section": "8. Gestion des actifs",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure de restitution des actifs permettant de s'assurer que chaque personne impliquee dans la fourniture du service restitue l'ensemble des actifs en sa possession a la fin de sa periode d'emploi ou de son contrat."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "8.3",
+      "Description": "Les besoins de protection de la confidentialite, de l'integrite et de la disponibilite de l'information doivent etre identifies.",
+      "Name": "Identification des besoins de securite de l'information",
+      "Attributes": [
+        {
+          "Section": "8. Gestion des actifs",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit identifier les differents besoins de securite des informations relatives au service. b) Lorsque le commanditaire confie au prestataire des donnees soumises a des contraintes legales, reglementaires ou sectorielles specifiques, le prestataire doit identifier les besoins de securite specifiques associes a ces contraintes."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "8.4",
+      "Description": "Un ensemble de procedures appropriees pour le marquage et la manipulation de l'information doit etre elabore et mis en oeuvre conformement au plan de classification adopte par le prestataire.",
+      "Name": "Marquage et manipulation de l'information",
+      "Attributes": [
+        {
+          "Section": "8. Gestion des actifs",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Il est recommande que le prestataire documente et mette en oeuvre une procedure pour le marquage et la manipulation de toutes les informations participant a la delivrance du service, conformement a son besoin de securite defini au chapitre 8.3."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "8.5",
+      "Description": "Des procedures de gestion des supports amovibles doivent etre mises en oeuvre conformement au plan de classification adopte par le prestataire.",
+      "Name": "Gestion des supports amovibles",
+      "Attributes": [
+        {
+          "Section": "8. Gestion des actifs",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure pour la gestion des supports amovibles, conformement au besoin de securite defini au chapitre 8.3. Lorsque des supports amovibles sont utilises sur l'infrastructure technique ou pour des taches d'administration, ces supports doivent etre dedies a un usage."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "9.1",
+      "Description": "Une politique de controle d'acces doit etre etablie, documentee et revue en se basant sur les exigences metier et les exigences de securite de l'information. Les regles de controle d'acces et les droits pour chaque utilisateur ou groupe d'utilisateurs doivent etre clairement definis.",
+      "Name": "Politiques et controle d'acces",
+      "Attributes": [
+        {
+          "Section": "9. Controle d'acces et gestion des identites",
+          "Service": "iam",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une politique de controle d'acces sur la base du resultat de son appreciation des risques et du partage des responsabilites. b) Le prestataire doit reviser annuellement la politique de controle d'acces et a chaque changement majeur pouvant avoir un impact sur le service."
+        }
+      ],
+      "Checks": [
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_policy_attached_only_to_group_or_roles",
+        "organizations_scp_check_deny_regions"
+      ]
+    },
+    {
+      "Id": "9.2",
+      "Description": "Un processus formel d'enregistrement et de desinscription des utilisateurs doit etre mis en oeuvre pour permettre l'attribution des droits d'acces.",
+      "Name": "Enregistrement et desinscription des utilisateurs",
+      "Attributes": [
+        {
+          "Section": "9. Controle d'acces et gestion des identites",
+          "Service": "iam",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure d'enregistrement et de desinscription des utilisateurs s'appuyant sur une interface de gestion des comptes et des droits d'acces. Cette procedure doit indiquer quelles donnees doivent etre supprimees au depart d'un utilisateur. b) Le prestataire doit attribuer des comptes nominatifs lors de l'enregistrement des utilisateurs places sous sa responsabilite. c) Le prestataire doit mettre en oeuvre des moyens permettant de s'assurer que la desinscription d'un utilisateur entraine la suppression de tous ses acces aux ressources du systeme d'information du service, ainsi que la suppression de ses donnees conformement a la procedure d'enregistrement et de desinscription (voir exigence 9.2 a))."
+        }
+      ],
+      "Checks": [
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
+        "iam_no_expired_server_certificates_stored"
+      ]
+    },
+    {
+      "Id": "9.3",
+      "Description": "Un processus formel de gestion des droits d'acces doit etre mis en oeuvre pour controler l'attribution des droits d'acces a tous les types d'utilisateurs et a tous les systemes et services.",
+      "Name": "Gestion des droits d'acces",
+      "Attributes": [
+        {
+          "Section": "9. Controle d'acces et gestion des identites",
+          "Service": "iam",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure permettant d'assurer l'attribution, la modification et le retrait de droits d'acces aux ressources du systeme d'information du service. b) Le prestataire doit mettre a la disposition de ses commanditaires les outils et les moyens qui permettent une differenciation des roles des utilisateurs du service, par exemple suivant leur role fonctionnel. c) Le prestataire doit tenir a jour l'inventaire des utilisateurs sous sa responsabilite disposant de droits d'administration sur les ressources du systeme d'information du service. d) Le prestataire doit etre en mesure de fournir, pour une ressource donnee mettant en oeuvre le service, la liste de tous les utilisateurs y ayant acces, qu'ils soient sous la responsabilite du prestataire ou du commanditaire ainsi que les droits d'acces qui leurs ont ete attribues. e) Le prestataire doit etre en mesure de fournir, pour un utilisateur donne, qu'ils soient sous la responsabilite du prestataire ou du commanditaire, la liste de tous ses droits d'acces sur les differents elements du systeme d'information du service. f) Le prestataire doit definir une liste de droits d'acces incompatibles entre eux. Il doit s'assurer, lors de l'attribution de droits d'acces a un utilisateur qu'il ne possede pas de droits d'acces incompatibles entre eux au titre de la liste precedemment etablie. g) Le prestataire doit inclure dans la procedure de gestion des droits d'acces les actions de revocation ou de suspension des droits de tout utilisateur."
+        }
+      ],
+      "Checks": [
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_no_custom_policy_permissive_role_assumption",
+        "iam_user_two_active_access_key",
+        "accessanalyzer_enabled",
+        "iam_role_administratoraccess_policy",
+        "iam_user_administrator_access_policy",
+        "iam_group_administrator_access_policy"
+      ]
+    },
+    {
+      "Id": "9.4",
+      "Description": "Les proprietaires d'actifs doivent verifier les droits d'acces des utilisateurs a intervalles reguliers.",
+      "Name": "Revue des droits d'acces utilisateurs",
+      "Attributes": [
+        {
+          "Section": "9. Controle d'acces et gestion des identites",
+          "Service": "iam",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit reviser annuellement les droits d'acces des utilisateurs sur son perimetre de responsabilite. b) Le prestataire doit mettre a disposition du commanditaire un outil facilitant la revue des droits d'acces des utilisateurs places sous la responsabilite de ce dernier. c) Le prestataire doit reviser trimestriellement la liste des utilisateurs sur son perimetre de responsabilite pouvant utiliser les comptes techniques mentionnes dans l'exigence 9.2 b)."
+        }
+      ],
+      "Checks": [
+        "iam_rotate_access_key_90_days",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
+        "accessanalyzer_enabled_without_findings"
+      ]
+    },
+    {
+      "Id": "9.5",
+      "Description": "L'attribution et l'utilisation des informations secretes d'authentification doivent etre gerees dans le cadre d'un processus de gestion formel incluant une politique de mot de passe robuste et l'utilisation de l'authentification multi-facteur.",
+      "Name": "Gestion des authentifications des utilisateurs",
+      "Attributes": [
+        {
+          "Section": "9. Controle d'acces et gestion des identites",
+          "Service": "iam",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit formaliser et mettre en oeuvre des procedures de gestion de l'authentification des utilisateurs. En accord avec les exigences du chapitre 10, celles-ci doivent notamment porter sur : la gestion des moyens d'authentification (emission et reinitialisation de mot de passe, mise a jour des CRL et import des certificats racines en cas d'utilisation de certificats, etc.) ; la mise en place des moyens permettant une authentification a multiples facteurs afin de repondre aux differents cas d'usage du referentiel ; les systemes qui generent des mots de passe ou verifient leur robustesse, lorsqu'une authentification par mot de passe est utilisee. Ils doivent suivre les recommandations de [G_AUTH]. b) Tout mecanisme d'authentification doit prevoir le blocage d'un compte apres un nombre limite de tentatives infructueuses. c) Dans le cadre d'un service SaaS, le prestataire doit proposer a ses commanditaires des moyens d'authentification a multiples facteurs pour l'acces des utilisateurs finaux. d) Lorsque des comptes techniques, non nominatifs, sont necessaires, le prestataire doit mettre en place des mesures obligeant les utilisateurs a s'authentifier avec leur compte nominatif avant de pouvoir acceder a ces comptes techniques."
+        }
+      ],
+      "Checks": [
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_uppercase",
+        "iam_password_policy_number",
+        "iam_password_policy_symbol",
+        "iam_password_policy_reuse_24",
+        "iam_password_policy_expires_passwords_within_90_days_or_less",
+        "iam_user_mfa_enabled_console_access",
+        "iam_root_mfa_enabled"
+      ]
+    },
+    {
+      "Id": "9.6",
+      "Description": "L'acces aux interfaces d'administration du service cloud doit etre restreint et protege par des mecanismes d'authentification forte, incluant l'utilisation de dispositifs MFA materiels pour les comptes a privileges.",
+      "Name": "Acces aux interfaces d'administration",
+      "Attributes": [
+        {
+          "Section": "9. Controle d'acces et gestion des identites",
+          "Service": "iam",
+          "Type": "Automated",
+          "Comment": "a) Les comptes d'administration sous la responsabilite du prestataire doivent etre geres a l'aide d'outils et d'annuaires distincts de ceux utilises pour la gestion des comptes utilisateurs places sous la responsabilite du commanditaire. b) Les interfaces d'administration mises a disposition des commanditaires doivent etre distinctes des interfaces d'administration utilisees par le prestataire. c) Les interfaces d'administration mises a disposition des commanditaires ne doivent permettre aucune connexion avec des comptes d'administrateurs sous la responsabilite du prestataire. d) Les interfaces d'administration utilisees par le prestataire ne doivent pas etre accessibles a partir d'un reseau public et ainsi ne doivent permettre aucune connexion des utilisateurs sous la responsabilite du commanditaire. e) Si des interfaces d'administration sont mises a disposition des commanditaires avec un acces via un reseau public, les flux d'administration doivent etre authentifies et chiffres avec des moyens en accord avec les exigences du chapitre 10.2. f) Le prestataire doit mettre en place un systeme d'authentification multifacteur fort pour l'acces : aux interfaces d'administration utilisees par le prestataire ; aux interfaces d'administration dediees aux commanditaires. g) Dans le cadre d'un service SaaS, les interfaces d'administration mises a disposition des commanditaires doivent etre differenciees des interfaces permettant l'acces des utilisateurs finaux. h) Des lors qu'une interface d'administration est accessible depuis un reseau public, le processus d'authentification doit avoir lieu avant toute interaction entre l'utilisateur et l'interface en question. i) Lorsque le prestataire utilise un service de type IaaS comme socle d'un autre type de service (CaaS, PaaS ou SaaS), les ressources affectees a l'usage du prestataire ne doivent en aucun cas etre accessibles via l'interface publique mise a disposition des autres commanditaires du service IaaS. j) Lorsque le prestataire utilise un service de type CaaS comme socle d'un autre type de service (PaaS ou SaaS), les ressources affectees a l'usage du prestataire ne doivent en aucun cas etre accessibles via l'interface publique mise a disposition des autres commanditaires du service CaaS. k) Lorsque le prestataire utilise un service de type PaaS comme socle d'un autre type de service (typiquement SaaS), les ressources affectees a l'usage du prestataire ne doivent en aucun cas etre accessibles via l'interface publique mise a disposition des autres commanditaires du service PaaS."
+        }
+      ],
+      "Checks": [
+        "iam_root_hardware_mfa_enabled",
+        "iam_user_hardware_mfa_enabled",
+        "iam_administrator_access_with_mfa",
+        "iam_avoid_root_usage",
+        "iam_no_root_access_key",
+        "organizations_account_part_of_organizations",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+      ]
+    },
+    {
+      "Id": "9.7",
+      "Description": "L'acces a l'information et aux fonctions d'application des systemes doit etre restreint conformement a la politique de controle d'acces. Les ressources doivent etre protegees contre tout acces public non autorise.",
+      "Name": "Restriction des acces a l'information",
+      "Attributes": [
+        {
+          "Section": "9. Controle d'acces et gestion des identites",
+          "Service": "ec2",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit mettre en oeuvre des mesures de cloisonnement appropriees entre ses commanditaires. b) Le prestataire doit mettre en oeuvre des mesures de cloisonnement appropriees entre le systeme d'information du service et ses autres systemes d'information (bureautique, informatique de gestion, gestion technique du batiment, controle d'acces physique, etc.). c) Le prestataire doit concevoir, developper, configurer et deployer le systeme d'information du service en assurant au moins un cloisonnement entre d'une part l'infrastructure technique et d'autre part les equipements necessaires a l'administration des services et des ressources qu'elle heberge. d) Dans le cadre du support technique, si les actions necessaires au diagnostic et a la resolution d'un probleme rencontre par un commanditaire necessitent un acces aux donnees du commanditaire, alors le prestataire doit : n'autoriser l'acces aux donnees du commanditaire qu'apres consentement explicite du commanditaire ; verifier que la personne a qui l'acces doit etre autorise a satisfait aux verifications de l'exigence 7.1.b ; dans le cas d'une intervention realisee a distance par une personne localisee hors de l'Union Europeenne, mettre en oeuvre une passerelle securisee (poste de rebond) par laquelle la personne devra se connecter et permettant une supervision (autorisation ou interdiction des actions, demandes d'explications, etc.) en temps reel, par une personne ayant elle-meme satisfait aux verifications de l'exigence 7.1.b ; considerer les actions menees, une fois l'acces autorise, comme des actions d'administration et les journaliser comme telles ; supprimer l'autorisation d'acces aux donnees du commanditaire au terme de ces actions."
+        }
+      ],
+      "Checks": [
+        "ec2_securitygroup_default_restrict_traffic",
+        "vpc_subnet_no_public_ip_by_default",
+        "s3_bucket_public_access",
+        "s3_account_level_public_access_blocks",
+        "s3_bucket_level_public_access_block",
+        "rds_instance_no_public_access",
+        "ec2_instance_public_ip"
+      ]
+    },
+    {
+      "Id": "10.1",
+      "Description": "Les donnees stockees dans le cadre du service cloud doivent etre chiffrees au repos en utilisant des algorithmes et des longueurs de cle conformes a l'etat de l'art.",
+      "Name": "Chiffrement des donnees stockees",
+      "Attributes": [
+        {
+          "Section": "10. Cryptologie",
+          "Service": "ec2",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit definir et mettre en oeuvre un mecanisme de chiffrement empechant la recuperation des donnees des commanditaires en cas de reallocation d'une ressource ou de recuperation du support physique. Dans le cas d'un service IaaS ou CaaS, cet objectif pourra par exemple etre atteint par un chiffrement du disque ou du systeme de fichier, lorsque le protocole d'acces en mode fichiers garantit que seuls des blocs vides peuvent etre alloues, ou par un chiffrement par volume dans le cas d'un acces en mode bloc, avec au moins une cle par commanditaire. Dans le cas d'un service PaaS ou SaaS, cet objectif pourra etre atteint en utilisant un chiffrement applicatif dans le perimetre du prestataire, avec au moins une cle par commanditaire. b) Le prestataire doit utiliser une methode de chiffrement des donnees respectant les regles de [CRYPTO_B1]. c) Il est recommande d'utiliser une methode de chiffrement des donnees respectant les recommandations de [CRYPTO_B1]. d) Le prestataire doit mettre en place un chiffrement des donnees sur les supports amovibles et les supports de sauvegarde amenes a quitter le perimetre de securite physique du systeme d'information du service (au sens du chapitre 10), en fonction du besoin de securite des donnees (voir chapitre 8.3)."
+        }
+      ],
+      "Checks": [
+        "ec2_ebs_volume_encryption",
+        "ec2_ebs_default_encryption",
+        "s3_bucket_default_encryption",
+        "s3_bucket_kms_encryption",
+        "rds_instance_storage_encrypted",
+        "rds_cluster_storage_encrypted",
+        "rds_snapshots_encrypted",
+        "ec2_ebs_snapshots_encrypted",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "efs_encryption_at_rest_enabled",
+        "opensearch_service_domains_encryption_at_rest_enabled",
+        "redshift_cluster_encrypted_at_rest",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "sqs_queues_server_side_encryption_enabled",
+        "backup_recovery_point_encrypted",
+        "backup_vaults_encrypted",
+        "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+        "elasticache_redis_cluster_rest_encryption_enabled",
+        "neptune_cluster_storage_encrypted",
+        "documentdb_cluster_storage_encrypted",
+        "sagemaker_notebook_instance_encryption_enabled",
+        "glue_data_catalogs_metadata_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "10.2",
+      "Description": "Les flux de donnees entre les composants du service cloud et entre le service et les commanditaires doivent etre chiffres en transit en utilisant des protocoles et des algorithmes conformes a l'etat de l'art.",
+      "Name": "Chiffrement des flux",
+      "Attributes": [
+        {
+          "Section": "10. Cryptologie",
+          "Service": "elb",
+          "Type": "Automated",
+          "Comment": "a) Lorsque le prestataire met en oeuvre un mecanisme de chiffrement des flux reseau, celui-ci doit respecter les regles de [CRYPTO_B1]. b) Lorsque le prestataire met en oeuvre un mecanisme de chiffrement des flux reseau, il est recommande que celui-ci respecte les recommandations de [CRYPTO_B1]. c) Si le protocole TLS est mis en oeuvre, le prestataire doit appliquer les recommandations de [NT_TLS]. d) Si le protocole IPsec est mis en oeuvre, le prestataire doit appliquer les recommandations de [NT_IPSEC]. e) Si le protocole SSH est mis en oeuvre, le prestataire doit appliquer les recommandations de [NT_SSH]."
+        }
+      ],
+      "Checks": [
+        "s3_bucket_secure_transport_policy",
+        "rds_instance_transport_encrypted",
+        "opensearch_service_domains_https_communications_enforced",
+        "opensearch_service_domains_node_to_node_encryption_enabled",
+        "elb_ssl_listeners",
+        "elbv2_ssl_listeners",
+        "elb_insecure_ssl_ciphers",
+        "elbv2_insecure_ssl_ciphers",
+        "redshift_cluster_in_transit_encryption_enabled",
+        "elasticache_redis_cluster_in_transit_encryption_enabled",
+        "dynamodb_accelerator_cluster_in_transit_encryption_enabled",
+        "glue_database_connections_ssl_enabled"
+      ]
+    },
+    {
+      "Id": "10.3",
+      "Description": "Les mots de passe doivent etre stockes sous forme hachee en utilisant des algorithmes robustes conformes a l'etat de l'art et les politiques de mot de passe doivent imposer des exigences de complexite adequates.",
+      "Name": "Hachage des mots de passe",
+      "Attributes": [
+        {
+          "Section": "10. Cryptologie",
+          "Service": "iam",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire ne doit stocker que l'empreinte des mots de passe des utilisateurs et des comptes techniques. b) Le prestataire doit mettre en oeuvre une fonction de hachage respectant les regles de [CRYPTO_B1]. c) Il est recommande que le prestataire mette en oeuvre une fonction de hachage respectant les recommandations de [CRYPTO_B1]. d) Le prestataire doit generer les empreintes des mots de passe avec une fonction de hachage associee a l'utilisation d'un sel cryptographique respectant les regles de [CRYPTO_B1]."
+        }
+      ],
+      "Checks": [
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_symbol",
+        "iam_password_policy_number"
+      ]
+    },
+    {
+      "Id": "10.4",
+      "Description": "Des mecanismes de non-repudiation doivent etre mis en oeuvre pour assurer la tracabilite des actions effectuees sur le service cloud, incluant la validation de l'integrite des journaux.",
+      "Name": "Non repudiation",
+      "Attributes": [
+        {
+          "Section": "10. Cryptologie",
+          "Service": "cloudtrail",
+          "Type": "Partially Automated",
+          "Comment": "a) Lorsque le prestataire met en oeuvre un mecanisme de signature electronique, celui-ci doit respecter les regles de [CRYPTO_B1]. b) Lorsque le prestataire met en oeuvre un mecanisme de signature electronique, il est recommande que celui-ci respecte les recommandations de [CRYPTO_B1]."
+        }
+      ],
+      "Checks": [
+        "cloudtrail_log_file_validation_enabled"
+      ]
+    },
+    {
+      "Id": "10.5",
+      "Description": "Les secrets cryptographiques (cles, certificats, mots de passe) doivent etre geres de maniere securisee tout au long de leur cycle de vie, incluant la generation, le stockage, la distribution, la rotation et la destruction.",
+      "Name": "Gestion des secrets",
+      "Attributes": [
+        {
+          "Section": "10. Cryptologie",
+          "Service": "kms",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit mettre en oeuvre des cles cryptographiques respectant les regles de [CRYPTO_B2]. b) Il est recommande que le prestataire mette en oeuvre des cles cryptographiques respectant les recommandations de [CRYPTO_B2]. c) Le prestataire doit proteger l'acces aux cles cryptographiques et autres secrets utilises pour le chiffrement des donnees par un moyen adapte : conteneur de securite (logiciel ou materiel) ou support disjoint. d) Le prestataire doit proteger l'acces aux cles cryptographiques et autres secrets utilises pour les taches d'administration par un conteneur de securite adapte, logiciel ou materiel."
+        }
+      ],
+      "Checks": [
+        "kms_cmk_rotation_enabled",
+        "kms_cmk_are_used",
+        "kms_key_not_publicly_accessible",
+        "kms_cmk_not_deleted_unintentionally",
+        "secretsmanager_automatic_rotation_enabled",
+        "secretsmanager_secret_rotated_periodically",
+        "secretsmanager_not_publicly_accessible",
+        "secretsmanager_secret_unused",
+        "ec2_instance_secrets_user_data",
+        "ec2_launch_template_no_secrets",
+        "awslambda_function_no_secrets_in_code",
+        "awslambda_function_no_secrets_in_variables",
+        "ecs_task_definitions_no_environment_secrets",
+        "codebuild_project_no_secrets_in_variables",
+        "ssm_document_secrets",
+        "cloudwatch_log_group_no_secrets_in_logs"
+      ]
+    },
+    {
+      "Id": "10.6",
+      "Description": "Les racines de confiance (certificats racine, autorites de certification) utilisees dans le cadre du service cloud doivent etre gerees de maniere securisee. Les certificats doivent etre valides et utiliser des algorithmes de cle robustes.",
+      "Name": "Racines de confiance",
+      "Attributes": [
+        {
+          "Section": "10. Cryptologie",
+          "Service": "acm",
+          "Type": "Partially Automated",
+          "Comment": "a) Sur l'infrastructure technique, le prestataire doit utiliser exclusivement des certificats de cle publique issus d'une autorite de certification d'un Etat membre de l'Union Europeenne (les ceremonies de generation des cles maitresses doivent avoir lieu dans un pays membre de l'Union Europeenne et en presence du prestataire)."
+        }
+      ],
+      "Checks": [
+        "acm_certificates_expiration_check",
+        "acm_certificates_with_secure_key_algorithms"
+      ]
+    },
+    {
+      "Id": "11.1",
+      "Description": "Des perimetres de securite doivent etre definis et utilises pour proteger les zones contenant des informations sensibles ou critiques et les moyens de traitement de l'information.",
+      "Name": "Perimetres de securite physique",
+      "Attributes": [
+        {
+          "Section": "11. Securite physique et environnementale",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre des perimetres de securite, incluant le marquage des zones et les differents moyens de limitation et de controle des acces. b) Le prestataire doit distinguer des zones publiques, des zones privees et des zones sensibles. 11.1.1. Zones publiques : a) Les zones publiques sont accessibles a tous dans les limites de la propriete du prestataire. Le prestataire ne doit heberger aucune ressource devolue au service ou permettant d'acceder a des composantes de celui-ci dans les zones publiques. 11.1.2. Zones privees : a) Les zones privees peuvent heberger : les plateformes et moyens de developpement du service ; les postes d'administration, d'exploitation et de supervision ; les locaux a partir desquels le prestataire opere. 11.1.3. Zones sensibles : a) Les zones sensibles sont reservees a l'hebergement du systeme d'information de production du service hors postes d'administration, d'exploitation et de supervision."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "11.2",
+      "Description": "Les zones securisees doivent etre protegees par des controles d'acces physiques adequats pour s'assurer que seul le personnel autorise est admis.",
+      "Name": "Controle d'acces physique",
+      "Attributes": [
+        {
+          "Section": "11. Securite physique et environnementale",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "11.2.1. Zones privees : a) Le prestataire doit proteger les zones privees contre les acces non autorises. Pour ce faire, il doit mettre en oeuvre un controle d'acces physique reposant au moins sur un facteur personnel : la connaissance d'un secret, la detention d'un objet ou la biometrie. b) Il est recommande que le prestataire respecte les recommandations de [G_CVAP] pour mettre en oeuvre du controle d'acces physique. c) Le prestataire doit definir et documenter des mesures d'acces physique derogatoires en cas d'urgence. d) Le prestataire doit afficher a l'entree des zones privees un avertissement relatif aux limites et conditions d'acces a ces zones. e) Le prestataire doit definir et documenter les plages horaires et conditions d'acces aux zones privees en fonction des profils des intervenants. f) Le prestataire doit documenter et mettre en oeuvre les moyens permettant de s'assurer que les visiteurs sont systematiquement accompagnes par le prestataire lors de leurs acces et sejours en zone privee. Le prestataire doit conserver une trace de l'identite des visiteurs conformement a la legislation et reglementation en vigueur. g) En cas d'intervention (actions de diagnostic, de maintenance, ou d'administration) en zone privee par un tiers visiteur, le prestataire doit faire superviser (suivre, autoriser, interdire, questionner) les actions par un personnel ayant satisfait aux verifications de l'exigence 7.1.b. h) Le prestataire doit documenter et mettre en oeuvre des mecanismes de surveillance et de detection des acces non autorises aux zones privees. 11.2.2. Zones sensibles : a) Le prestataire doit proteger les zones sensibles contre les acces non autorises. Pour ce faire, il doit mettre en oeuvre un controle d'acces physique reposant au moins sur deux facteurs personnels : la connaissance d'un secret, la detention d'un objet ou la biometrie. b) Il est recommande que le prestataire respecte les recommandations de [G_CVAP] pour la mise en oeuvre du controle d'acces physique. c) Le prestataire doit definir et documenter des mesures d'acces physique derogatoires en cas d'urgence. d) Le prestataire doit afficher a l'entree des zones sensibles un avertissement relatif aux limites et conditions d'acces a ces zones. e) Le prestataire doit definir et documenter les plages horaires et conditions d'acces aux zones sensibles en fonction des profils des intervenants. f) Le prestataire doit documenter et mettre en oeuvre les moyens permettant de s'assurer que les visiteurs sont systematiquement accompagnes par le prestataire lors de leurs acces et sejours en zone sensible. Le prestataire doit conserver une trace de l'identite des visiteurs conformement a la legislation et reglementation en vigueur. g) En cas d'intervention (actions de diagnostic, de maintenance, ou d'administration) en zone sensible par un tiers visiteur, le prestataire doit faire superviser (suivre, autoriser, interdire, questionner) les actions par un personnel ayant satisfait aux verifications de l'exigence 7.1.b. h) Le prestataire doit documenter et mettre en oeuvre des mecanismes de surveillance et de detection des acces non autorises aux zones sensibles. i) Le prestataire doit mettre en place une journalisation des acces physiques aux zones sensibles. Il doit effectuer une revue de ces journaux au moins mensuellement. j) Le prestataire doit mettre en oeuvre les moyens garantissant qu'aucun acces direct n'existe entre une zone publique et une zone sensible."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "11.3",
+      "Description": "Des mesures de protection contre les menaces exterieures et environnementales, telles que les catastrophes naturelles, les attaques malveillantes ou les accidents, doivent etre concues et appliquees.",
+      "Name": "Protection contre les menaces exterieures et environnementales",
+      "Attributes": [
+        {
+          "Section": "11. Securite physique et environnementale",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre les moyens permettant de minimiser les risques inherents aux sinistres physiques (incendie, degat des eaux, etc.) et naturels (risques climatiques, inondations, seismes, etc.). b) Le prestataire doit documenter et mettre en oeuvre les mesures permettant de limiter les risques de depart et de propagation de feu ainsi que les risques de degat des eaux. c) Le prestataire doit documenter et mettre en oeuvre les mesures permettant de prevenir et limiter les consequences d'une coupure d'alimentation electrique et permettre une reprise du service conformement aux exigences de disponibilite du service definies dans la convention de service. d) Le prestataire doit documenter et mettre en oeuvre les moyens permettant de maintenir des conditions de temperature et d'humidite adaptees aux equipements. De plus, il doit mettre en oeuvre des mesures permettant de prevenir les pannes de climatisation et d'en limiter les consequences. e) Le prestataire doit documenter et mettre en oeuvre des controles et tests reguliers des equipements de detection et de protection physique."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "11.4",
+      "Description": "Des mesures de securite physique pour le travail dans les zones privees et sensibles doivent etre concues et appliquees.",
+      "Name": "Travail dans les zones privees et sensibles",
+      "Attributes": [
+        {
+          "Section": "11. Securite physique et environnementale",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit integrer les elements de securite physique dans la politique de securite et l'appreciation des risques conformement au niveau de securite requis par la categorie de la zone. b) Le prestataire doit documenter et mettre en oeuvre des procedures relatives au travail en zones privees et sensibles. Il doit communiquer ces procedures aux intervenants concernes."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "11.5",
+      "Description": "Les points d'acces tels que les zones de livraison et de chargement et les autres points par lesquels des personnes non autorisees peuvent penetrer dans les locaux doivent etre controles.",
+      "Name": "Zones de livraison et de chargement",
+      "Attributes": [
+        {
+          "Section": "11. Securite physique et environnementale",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Les zones de livraison et de chargement et les autres points par lesquels des personnes non autorisees peuvent penetrer dans les locaux sans etre accompagnees sont considerees comme des zones publiques. b) Le prestataire doit isoler les points d'acces de ces zones vers les zones privees et sensibles, de facon a eviter les acces non autorises, ou a defaut, implementer des mesures compensatoires permettant d'assurer le meme niveau de securite."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "11.6",
+      "Description": "Le cablage electrique et de telecommunications transportant des donnees ou supportant des services d'information doit etre protege contre les interceptions, les interferences ou les dommages.",
+      "Name": "Securite du cablage",
+      "Attributes": [
+        {
+          "Section": "11. Securite physique et environnementale",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre des mesures permettant de proteger le cablage electrique et de telecommunication des dommages physiques et des possibilites d'interception. b) Le prestataire doit etablir et tenir a jour un plan de cablage. c) Il est recommande que le prestataire mette en oeuvre des mesures permettant d'identifier les cables (par exemple code couleur, etiquette, etc.) afin d'en faciliter l'exploitation et limiter les erreurs de manipulation."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "11.7",
+      "Description": "Les materiels doivent etre entretenus correctement pour garantir leur disponibilite permanente et leur integrite.",
+      "Name": "Maintenance des materiels",
+      "Attributes": [
+        {
+          "Section": "11. Securite physique et environnementale",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre des mesures permettant de s'assurer que les conditions d'installation, de maintenance et d'entretien des equipements du systeme d'information du service heberges en zones privees et sensibles sont compatibles avec les exigences de confidentialite et de disponibilite du service definies dans la convention de service. b) Le prestataire doit souscrire des contrats de maintenance permettant de disposer des mises a jour de securite des logiciels installes sur les equipements du systeme d'information du service. c) Le prestataire doit s'assurer que les supports ne peuvent etre retournes a un tiers que si les donnees du commanditaire y sont stockees chiffrees conformement au chapitre 10.1 ou ont prealablement ete detruites a l'aide d'un mecanisme d'effacement securise par reecriture de motifs aleatoires. d) Le prestataire doit documenter et mettre en oeuvre des mesures permettant de s'assurer que les conditions d'installation, de maintenance et d'entretien des equipements techniques annexes (alimentation electrique, climatisation, incendie, etc.) sont compatibles avec les exigences de disponibilite du service definies dans la convention de service."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "11.8",
+      "Description": "Les materiels, les informations ou les logiciels ne doivent pas etre sortis des locaux du prestataire sans autorisation prealable.",
+      "Name": "Sortie des actifs",
+      "Attributes": [
+        {
+          "Section": "11. Securite physique et environnementale",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure de transfert hors site de donnees du commanditaire, equipements et logiciels. Cette procedure doit necessiter que la direction du prestataire donne son autorisation ecrite. Dans tous les cas, le prestataire doit mettre en oeuvre les moyens permettant de garantir que le niveau de protection en confidentialite et en integrite des actifs durant leur transport est equivalent a celui sur site."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "11.9",
+      "Description": "Tous les composants des equipements contenant des supports de stockage doivent etre verifies pour s'assurer que toute donnee sensible et tout logiciel sous licence ont ete supprimes ou ecrases de facon securisee avant leur mise au rebut ou leur reutilisation.",
+      "Name": "Recyclage securise du materiel",
+      "Attributes": [
+        {
+          "Section": "11. Securite physique et environnementale",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre des moyens permettant d'effacer de maniere securisee par reecriture de motifs aleatoires tout support de donnees mis a disposition d'un commanditaire. Si l'espace de stockage est chiffre dans le cadre de l'exigence 10.1.a), l'effacement peut etre realise par un effacement securise de la cle de chiffrement."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "11.10",
+      "Description": "Le materiel en attente d'utilisation doit etre protege de maniere adequate.",
+      "Name": "Materiel en attente d'utilisation",
+      "Attributes": [
+        {
+          "Section": "11. Securite physique et environnementale",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure de protection du materiel en attente d'utilisation."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "12.1",
+      "Description": "Les procedures d'exploitation doivent etre documentees et mises a disposition de tous les utilisateurs concernes.",
+      "Name": "Procedures d'exploitation documentees",
+      "Attributes": [
+        {
+          "Section": "12. Securite liee a l'exploitation",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter les procedures d'exploitation, les tenir a jour et les rendre accessibles au personnel concerne."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "12.2",
+      "Description": "Les changements apportes au systeme d'information du prestataire, aux processus metier, aux moyens de traitement de l'information et aux systemes qui ont une incidence sur la securite de l'information doivent etre geres.",
+      "Name": "Gestion des changements",
+      "Attributes": [
+        {
+          "Section": "12. Securite liee a l'exploitation",
+          "Service": "config",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure de gestion des changements apportes aux systemes et moyens de traitement de l'information. b) Le prestataire doit documenter et mettre en oeuvre une procedure permettant, en cas d'operations realisees par le prestataire et pouvant avoir un impact sur la securite ou la disponibilite du service, de communiquer au plus tot a l'ensemble de ses commanditaires les informations suivantes : la date et l'heure programmees du debut et de la fin des operations ; la nature des operations ; les impacts sur la securite ou la disponibilite du service ; le contact au sein du prestataire. c) Dans le cadre d'un service PaaS, le prestataire doit informer au plus tot le commanditaire de toute modification a venir sur des elements logiciels sous sa responsabilite des lors que la compatibilite complete ne peut etre assuree. d) Le prestataire doit informer au plus tot le commanditaire de toute modification a venir sur les elements du service des lors qu'elle est susceptible d'occasionner une perte de fonctionnalite pour le commanditaire."
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_multi_region_enabled_logging_management_events"
+      ]
+    },
+    {
+      "Id": "12.3",
+      "Description": "Les environnements de developpement, de test et d'exploitation doivent etre separes pour reduire les risques d'acces non autorise ou de changements non souhaites dans l'environnement d'exploitation.",
+      "Name": "Separation des environnements de developpement, de test et d'exploitation",
+      "Attributes": [
+        {
+          "Section": "12. Securite liee a l'exploitation",
+          "Service": "organizations",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre les mesures permettant de separer physiquement les environnements lies a la production du service des autres environnements, dont les environnements de developpement."
+        }
+      ],
+      "Checks": [
+        "organizations_account_part_of_organizations"
+      ]
+    },
+    {
+      "Id": "12.4",
+      "Description": "Des mesures de detection, de prevention et de recuperation conjuguees a une sensibilisation des utilisateurs doivent etre mises en oeuvre pour proteger le systeme d'information contre les codes malveillants.",
+      "Name": "Mesures contre les codes malveillants",
+      "Attributes": [
+        {
+          "Section": "12. Securite liee a l'exploitation",
+          "Service": "guardduty",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre les mesures de detection, de prevention et de restauration pour se proteger des codes malveillants. Le perimetre d'application de cette exigence sur le systeme d'information du service doit necessairement contenir les postes utilisateurs sous la responsabilite du prestataire et les flux entrants sur ce meme systeme d'information. b) Le prestataire doit documenter et mettre en oeuvre une sensibilisation de ses employes aux risques lies aux codes malveillants et aux bonnes pratiques pour reduire l'impact d'une infection."
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "guardduty_no_high_severity_findings",
+        "guardduty_ec2_malware_protection_enabled",
+        "guardduty_s3_protection_enabled",
+        "guardduty_rds_protection_enabled",
+        "guardduty_lambda_protection_enabled",
+        "guardduty_eks_audit_log_enabled",
+        "guardduty_eks_runtime_monitoring_enabled"
+      ]
+    },
+    {
+      "Id": "12.5",
+      "Description": "Des copies de sauvegarde des informations, des logiciels et des images systeme doivent etre effectuees et testees regulierement conformement a une politique de sauvegarde convenue.",
+      "Name": "Sauvegarde des informations",
+      "Attributes": [
+        {
+          "Section": "12. Securite liee a l'exploitation",
+          "Service": "backup",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une politique de sauvegarde et de restauration des donnees sous sa responsabilite dans le cadre du service. Cette politique doit prevoir une sauvegarde quotidienne de l'ensemble des donnees (informations, logiciels, configurations, etc.) sous la responsabilite du prestataire dans le cadre du service. b) Le prestataire doit documenter et mettre en oeuvre des mesures de protection des sauvegardes conformement a la politique de controle d'acces (voir chapitre 9). Cette politique doit prevoir une revue mensuelle des traces d'acces aux sauvegardes. c) Le prestataire doit documenter et mettre en oeuvre une procedure permettant de tester regulierement la restauration des sauvegardes. d) Le prestataire doit localiser les sauvegardes a une distance suffisante des equipements principaux en coherence avec les resultats de l'appreciation de risques et permettant de faire face a des sinistres majeurs. Les sauvegardes sont assujetties aux memes exigences de localisation que les donnees operationnelles. Le ou les sites de sauvegarde sont assujettis aux memes exigences de securite que le site principal, en particulier celles listees aux chapitres 8 et 11. Les communications entre site principal et site de sauvegarde doivent etre protegees par chiffrement, conformement aux exigences du chapitre 10."
+        }
+      ],
+      "Checks": [
+        "backup_plans_exist",
+        "backup_vaults_exist",
+        "backup_recovery_point_encrypted",
+        "rds_instance_backup_enabled",
+        "rds_cluster_protected_by_backup_plan",
+        "rds_instance_protected_by_backup_plan",
+        "ec2_ebs_volume_protected_by_backup_plan",
+        "ec2_ebs_volume_snapshots_exists",
+        "dynamodb_tables_pitr_enabled",
+        "dynamodb_table_protected_by_backup_plan",
+        "efs_have_backup_enabled",
+        "s3_bucket_object_versioning",
+        "s3_bucket_cross_region_replication",
+        "neptune_cluster_backup_enabled",
+        "documentdb_cluster_backup_enabled",
+        "elasticache_redis_cluster_backup_enabled",
+        "redshift_cluster_automated_snapshot"
+      ]
+    },
+    {
+      "Id": "12.6",
+      "Description": "Des journaux d'evenements enregistrant les activites des utilisateurs, les exceptions, les defaillances et les evenements de securite de l'information doivent etre crees, tenus a jour et regulierement revus.",
+      "Name": "Journalisation des evenements",
+      "Attributes": [
+        {
+          "Section": "12. Securite liee a l'exploitation",
+          "Service": "cloudtrail",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une politique de journalisation incluant au minimum les elements suivants : la liste des sources de collecte ; la liste des evenements a journaliser par source ; l'objet de la journalisation par evenement ; la frequence de la collecte et base de temps utilisee ; la duree de retention locale et centralisee ; les mesures de protection des journaux (dont chiffrement et duplication) ; la localisation des journaux. b) Le prestataire doit generer et collecter les evenements suivants : les activites des utilisateurs liees a la securite de l'information ; la modification des droits d'acces dans le perimetre de sa responsabilite ; les evenements issus des mecanismes de lutte contre les codes malveillants (voir chapitre 12.4) ; les exceptions ; les defaillances ; tout autre evenement lie a la securite de l'information. c) Le prestataire doit conserver les evenements issus de la journalisation pendant une duree minimale de six mois sous reserve du respect des exigences legales et reglementaires. d) Le prestataire doit fournir, sur demande d'un commanditaire, l'ensemble des evenements le concernant. e) Il est recommande que le systeme de journalisation mis en place par le prestataire respecte les recommandations de [NT_JOURNAL]."
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudwatch_log_group_retention_policy_specific_days_enabled",
+        "vpc_flow_logs_enabled",
+        "s3_bucket_server_access_logging_enabled",
+        "elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "wafv2_webacl_logging_enabled",
+        "eks_control_plane_logging_all_types_enabled",
+        "rds_cluster_integration_cloudwatch_logs",
+        "rds_instance_integration_cloudwatch_logs",
+        "opensearch_service_domains_audit_logging_enabled",
+        "opensearch_service_domains_cloudwatch_logging_enabled",
+        "redshift_cluster_audit_logging",
+        "codebuild_project_logging_enabled",
+        "ecs_task_definitions_logging_enabled",
+        "glue_etl_jobs_logging_enabled"
+      ]
+    },
+    {
+      "Id": "12.7",
+      "Description": "Les moyens de journalisation et les informations journalisees doivent etre proteges contre les risques de falsification et les acces non autorises.",
+      "Name": "Protection de l'information journalisee",
+      "Attributes": [
+        {
+          "Section": "12. Securite liee a l'exploitation",
+          "Service": "cloudtrail",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit proteger les equipements de journalisation et les evenements journalises contre les atteintes a leur disponibilite, integrite ou confidentialite, conformement au chapitre 3.2 de [NT_JOURNAL]. b) Le prestataire doit gerer le dimensionnement de l'espace de stockage de l'ensemble des equipements hebergeant une ou plusieurs sources de collecte afin de permettre la conservation locale des evenements journalises prevue par la politique de journalisation des evenements. Cette gestion du dimensionnement doit prendre en compte les evolutions du systeme d'information. c) Le prestataire doit transferer les evenements journalises en assurant leur protection en confidentialite et en integrite, sur un ou plusieurs serveurs centraux dedies et doit les stocker sur une machine physique distincte de celle qui les a generes. d) Le prestataire doit mettre en place une sauvegarde des evenements collectes suivant une politique adaptee. e) Le prestataire doit executer les processus de journalisation et de collecte des evenements avec des comptes disposant de privileges necessaires et suffisants et doit limiter l'acces aux evenements journalises conformement a la politique de controle d'acces (voir chapitre 9.1)."
+        }
+      ],
+      "Checks": [
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+        "cloudtrail_logs_s3_bucket_access_logging_enabled",
+        "cloudtrail_bucket_requires_mfa_delete",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "cloudwatch_log_group_not_publicly_accessible"
+      ]
+    },
+    {
+      "Id": "12.8",
+      "Description": "Les horloges de tous les systemes de traitement de l'information pertinents d'un organisme ou d'un domaine de securite doivent etre synchronisees sur une source de reference temporelle unique.",
+      "Name": "Synchronisation des horloges",
+      "Attributes": [
+        {
+          "Section": "12. Securite liee a l'exploitation",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une synchronisation des horloges de l'ensemble des equipements sur une ou plusieurs sources de temps internes coherentes entre elles. Ces sources pourront elles-memes etre synchronisees sur plusieurs sources fiables externes, sauf pour les reseaux isoles. b) Le prestataire doit mettre en place l'horodatage de chaque evenement journalise."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "12.9",
+      "Description": "Les evenements de securite doivent etre analyses et correles afin de detecter les incidents de securite. Des systemes de detection et de correlation doivent etre mis en oeuvre.",
+      "Name": "Analyse et correlation des evenements",
+      "Attributes": [
+        {
+          "Section": "12. Securite liee a l'exploitation",
+          "Service": "securityhub",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une infrastructure permettant l'analyse et la correlation des evenements enregistres par le systeme de journalisation afin de detecter les evenements susceptibles d'affecter la securite du systeme d'information du service, en temps reel ou a posteriori pour des evenements remontant jusqu'a six mois. b) Il est recommande de s'appuyer sur le referentiel d'exigences des prestataires de detection d'incidents de securite [PDIS] pour la mise en place et l'exploitation de l'infrastructure d'analyse et de correlation des evenements. c) Le prestataire doit acquitter les alarmes remontees par l'infrastructure d'analyse et de correlation des evenements au moins quotidiennement."
+        }
+      ],
+      "Checks": [
+        "securityhub_enabled",
+        "guardduty_is_enabled",
+        "cloudtrail_insights_exist",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_sign_in_without_mfa",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured"
+      ]
+    },
+    {
+      "Id": "12.10",
+      "Description": "Des regles regissant l'installation de logiciels par les utilisateurs doivent etre etablies et mises en oeuvre. Les systemes doivent etre geres de maniere centralisee et les correctifs appliques regulierement.",
+      "Name": "Installation de logiciels sur des systemes en exploitation",
+      "Attributes": [
+        {
+          "Section": "12. Securite liee a l'exploitation",
+          "Service": "ssm",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure permettant de controler l'installation de logiciels sur les equipements du systeme d'information du service. b) Le prestataire doit documenter et mettre en oeuvre une procedure de gestion de la configuration des environnements logiciels mis a la disposition du commanditaire, notamment pour leur maintien en condition de securite. c) Le prestataire doit fournir une capacite d'inspection et de suppression, si necessaire, des entrants (controle de l'authenticite et de l'innocuite des mises a jour, controle de l'innocuite des outils fournis, etc.) relatifs au perimetre de l'infrastructure technique : cette capacite d'inspection et de suppression doit generer des journaux d'activite et doit pouvoir faire l'objet d'un audit de code ; les entrants doivent etre traites sur des dispositifs specifiques operes et maintenus par le prestataire et heberges dans une zone cloisonnee du reste de l'infrastructure (du type zone demilitarisee telle que definie dans [G_INT])."
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm",
+        "ssm_managed_compliant_patching",
+        "ssm_documents_set_as_public"
+      ]
+    },
+    {
+      "Id": "12.11",
+      "Description": "Les informations sur les vulnerabilites techniques des systemes d'information utilises doivent etre obtenues en temps voulu, l'exposition du prestataire a ces vulnerabilites doit etre evaluee et les mesures appropriees doivent etre prises pour traiter le risque associe.",
+      "Name": "Gestion des vulnerabilites techniques",
+      "Attributes": [
+        {
+          "Section": "12. Securite liee a l'exploitation",
+          "Service": "inspector",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre un processus de veille permettant de gerer les vulnerabilites techniques des logiciels et des systemes utilises dans le systeme d'information du service. b) Le prestataire doit evaluer son exposition a ces vulnerabilites en les incluant dans l'appreciation des risques et appliquer les mesures de traitement du risque adaptees."
+        }
+      ],
+      "Checks": [
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist",
+        "ecr_repositories_scan_vulnerabilities_in_latest_image",
+        "ecr_repositories_scan_images_on_push_enabled"
+      ]
+    },
+    {
+      "Id": "12.12",
+      "Description": "L'administration des systemes d'information du service cloud doit etre effectuee de maniere securisee via des canaux dedies et des protocoles securises.",
+      "Name": "Administration",
+      "Attributes": [
+        {
+          "Section": "12. Securite liee a l'exploitation",
+          "Service": "ec2",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure obligeant les administrateurs sous sa responsabilite a utiliser des terminaux dedies pour la realisation exclusive des taches d'administration, en accord avec le chapitre 4.1 intitule 'poste et reseau d'administration' de [NT_ADMIN]. Il doit les maitriser et les maintenir a jour. b) Le prestataire doit mettre en place des mesures de durcissement de la configuration des terminaux utilises pour les taches d'administration, notamment celles du chapitre 4.2 intitule 'securisation du socle' de [NT_ADMIN]. c) Lorsque le prestataire autorise une situation de mobilite pour les administrateurs sous sa responsabilite, il doit l'encadrer par une politique documentee. La solution mise en oeuvre doit assurer que le niveau de securite de cette situation de mobilite est au moins equivalent au niveau de securite hors situation de mobilite (voir chapitres 9.6 et 9.7). Cette solution doit notamment inclure : l'utilisation d'un tunnel chiffre, non debrayable et non contournable, pour l'ensemble des flux (voir chapitre 10.2) ; le chiffrement integral du disque (voir chapitre 10.1)."
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm",
+        "ec2_client_vpn_endpoint_connection_logging_enabled"
+      ]
+    },
+    {
+      "Id": "12.13",
+      "Description": "Le telediagnostic et la telemaintenance des composants de l'infrastructure doivent etre encadres par des procedures de securite specifiques.",
+      "Name": "Telediagnostic et telemaintenance des composants de l'infrastructure",
+      "Attributes": [
+        {
+          "Section": "12. Securite liee a l'exploitation",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Dans le cadre du telediagnostic ou de la telemaintenance de composants de l'infrastructure, considerant les risques d'atteinte a la confidentialite des donnees des commanditaires, le prestataire doit : verifier que la personne a qui l'acces doit etre autorise a satisfait aux verifications de l'exigence 7.1.b ; dans le cas d'une intervention realisee par une personne n'ayant pas satisfait aux verifications de l'exigence 7.1.b, mettre en oeuvre une passerelle securisee (poste de rebond) par laquelle la personne devra se connecter et permettant une supervision des actions (autorisation ou interdiction des actions, demande d'explications, etc.) en temps reel, par une personne ayant elle-meme satisfait aux verifications de l'exigence 7.1.b. La passerelle securisee devra repondre aux objectifs de securite specifies dans [G_EXT] ; considerer les actions menees, une fois l'acces autorise, comme des actions d'administration et les journaliser comme telles ; supprimer l'autorisation d'acces a l'issue de l'intervention."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "12.14",
+      "Description": "Les flux sortants de l'infrastructure du service cloud doivent etre surveilles afin de detecter et de prevenir les exfiltrations de donnees et les communications non autorisees.",
+      "Name": "Surveillance des flux sortants de l'infrastructure",
+      "Attributes": [
+        {
+          "Section": "12. Securite liee a l'exploitation",
+          "Service": "vpc",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit fournir une capacite d'inspection et de suppression des sortants de l'infrastructure technique relatifs au perimetre du service (informations de facturation, les eventuels journaux necessaires au traitement d'incidents, etc.) : les sortants doivent pouvoir etre expurges des donnees pouvant porter atteinte a la confidentialite des donnees des commanditaires ; cette capacite d'inspection et de suppression doit generer des journaux d'activite et doit pouvoir faire l'objet d'un audit de code ; les sortants sont traites sur des dispositifs specifiques operes et maintenus par le prestataire, et heberges dans une zone cloisonnee du reste de l'infrastructure (du type zone demilitarisee telle que definie dans [G_INT])."
+        }
+      ],
+      "Checks": [
+        "vpc_flow_logs_enabled",
+        "ec2_securitygroup_allow_wide_open_public_ipv4"
+      ]
+    },
+    {
+      "Id": "13.1",
+      "Description": "Le prestataire doit etablir et maintenir une cartographie complete et a jour de son systeme d'information, incluant les reseaux, les flux et les composants.",
+      "Name": "Cartographie du systeme d'information",
+      "Attributes": [
+        {
+          "Section": "13. Securite des communications",
+          "Service": "config",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit etablir et tenir a jour une cartographie du systeme d'information du service, en lien avec l'inventaire des actifs (voir chapitre 8.1), comprenant au minimum les elements suivants : la liste des ressources materielles ou virtualisees ; les noms et fonctions des applications, supportant le service ; le schema d'architecture reseau au niveau 3 du modele OSI sur lequel les points nevralgiques sont identifies : les points d'interconnexions, notamment avec les reseaux tiers et publics ; les reseaux, sous-reseaux, notamment les reseaux d'administration ; les equipements assurant des fonctions de securite (filtrage, authentification, chiffrement, etc.) ; les serveurs hebergeant des donnees ou assurant des fonctions sensibles ; la matrice des flux reseau autorises en precisant : leur description technique (services, protocoles et ports) ; la justification metier ou d'infrastructure technique ; le cas echeant, lorsque des services, protocoles ou ports reputes non surs sont utilises, les mesures compensatoires mises en place, dans la logique de defense en profondeur. b) Le prestataire doit reviser au moins annuellement la cartographie."
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "config_recorder_using_aws_service_role",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "13.2",
+      "Description": "Les reseaux doivent etre cloisonnes et les flux entre les segments doivent etre filtres selon le principe du moindre privilege. Les groupes de securite et les listes de controle d'acces reseau doivent etre configures de maniere restrictive.",
+      "Name": "Cloisonnement des reseaux",
+      "Attributes": [
+        {
+          "Section": "13. Securite des communications",
+          "Service": "ec2",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre, pour le systeme d'information du service, les mesures de cloisonnement (logique, physique ou par chiffrement) pour separer les flux reseau selon : la sensibilite des informations transmises ; la nature des flux (production, administration, supervision, etc.) ; le domaine d'appartenance des flux (des commanditaires - avec distinction par commanditaire ou ensemble de commanditaires, du prestataire, des tiers, etc.) ; le domaine technique (traitement, stockage, etc.). b) Le prestataire doit cloisonner, physiquement ou par chiffrement, tous les flux de donnees internes au systeme d'information du service vis-a-vis de tout autre systeme d'information. Lorsque ce cloisonnement est realise par chiffrement, il est realise en accord avec les exigences du chapitre 10.2. c) Dans le cas ou le reseau d'administration de l'infrastructure technique ne fait pas l'objet d'un cloisonnement physique, les flux d'administration doivent transiter dans un tunnel chiffre, en accord avec les exigences du chapitre 10.2. d) Le prestataire doit mettre en place et configurer un pare-feu applicatif pour proteger les interfaces d'administration destinees a ses commanditaires et exposees sur un reseau public. e) Le prestataire doit mettre en oeuvre sur l'ensemble des interfaces d'administration et de supervision de l'infrastructure technique du service un mecanisme de filtrage n'autorisant que les connexions legitimes identifiees dans la matrice des flux autorises."
+        }
+      ],
+      "Checks": [
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_networkacl_allow_ingress_any_port",
+        "vpc_subnet_separate_private_public",
+        "vpc_peering_routing_tables_with_least_privilege",
+        "vpc_endpoint_connections_trust_boundaries",
+        "vpc_endpoint_services_allowed_principals_trust_boundaries",
+        "elbv2_waf_acl_attached",
+        "wafv2_webacl_with_rules"
+      ]
+    },
+    {
+      "Id": "13.3",
+      "Description": "Les reseaux doivent etre surveilles de maniere continue afin de detecter les activites anormales ou malveillantes.",
+      "Name": "Surveillance des reseaux",
+      "Attributes": [
+        {
+          "Section": "13. Securite des communications",
+          "Service": "guardduty",
+          "Type": "Automated",
+          "Comment": "a) Le prestataire doit disposer une ou plusieurs sondes de detection d'incidents de securite sur le systeme d'information du service. Ces sondes doivent notamment permettre la supervision de chacune des interconnexions du systeme d'information du service avec des systemes d'information tiers et des reseaux publics. Ces sondes doivent etre des sources de collecte pour l'infrastructure d'analyse et de correlation des evenements (voir chapitre 12.9)."
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "14.1",
+      "Description": "Des regles de developpement securise des logiciels et des systemes doivent etre etablies et appliquees au sein du prestataire.",
+      "Name": "Politique de developpement securise",
+      "Attributes": [
+        {
+          "Section": "14. Acquisition, developpement et maintenance des systemes d'information",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre des regles de developpement securise des logiciels et des systemes, et les appliquer aux developpements internes. b) Le prestataire doit documenter et mettre en oeuvre une formation adaptee en developpement securise aux employes concernes."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "14.2",
+      "Description": "Les changements apportes aux systemes dans le cycle de developpement doivent etre geres a l'aide de procedures formelles de controle des changements.",
+      "Name": "Procedures de controle des changements de systeme",
+      "Attributes": [
+        {
+          "Section": "14. Acquisition, developpement et maintenance des systemes d'information",
+          "Service": "config",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure de controle des changements apportes au systeme d'information du service. b) Le prestataire doit documenter et mettre en oeuvre une procedure de validation des changements apportes au systeme d'information du service sur un environnement de pre-production avant leur mise en production. c) Le prestataire doit conserver un historique des versions des logiciels et des systemes (developpements internes ou externes, produits commerciaux) mis en oeuvre pour permettre de reconstituer, le cas echeant dans un environnement de test, un environnement complet tel qu'il etait mis en oeuvre a une date donnee. La duree de conservation de cet historique doit etre en accord avec celle des sauvegardes (voir chapitre 12.5)."
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "cloudtrail_multi_region_enabled"
+      ]
+    },
+    {
+      "Id": "14.3",
+      "Description": "Lorsque les plateformes d'exploitation sont modifiees, les applications critiques metier doivent etre revues et testees afin de verifier qu'il n'y a pas d'effet indesirable sur l'activite ou la securite du prestataire.",
+      "Name": "Revue technique des applications apres changement apporte a la plateforme d'exploitation",
+      "Attributes": [
+        {
+          "Section": "14. Acquisition, developpement et maintenance des systemes d'information",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure permettant de tester, prealablement a leur mise en production, l'ensemble des applications afin de verifier l'absence de tout effet indesirable sur l'activite ou sur la securite du service."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "14.4",
+      "Description": "Les environnements de developpement doivent etre securises et isoles des environnements de production.",
+      "Name": "Environnement de developpement securise",
+      "Attributes": [
+        {
+          "Section": "14. Acquisition, developpement et maintenance des systemes d'information",
+          "Service": "organizations",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire doit mettre en oeuvre un environnement securise de developpement permettant de gerer l'integralite du cycle de developpement du systeme d'information du service. b) Le prestataire doit prendre en compte les environnements de developpement dans l'appreciation des risques et en assurer la protection conformement au present referentiel."
+        }
+      ],
+      "Checks": [
+        "organizations_account_part_of_organizations"
+      ]
+    },
+    {
+      "Id": "14.5",
+      "Description": "Le prestataire doit superviser et surveiller l'activite de developpement externalise du systeme.",
+      "Name": "Developpement externalise",
+      "Attributes": [
+        {
+          "Section": "14. Acquisition, developpement et maintenance des systemes d'information",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure permettant de superviser et de controler l'activite de developpement externalise des logiciels et des systemes. Cette procedure doit s'assurer que l'activite de developpement externalise soit conforme a la politique de developpement securise du prestataire et permette d'atteindre un niveau de securite du developpement externe equivalent a celui d'un developpement interne (voir exigence 14.1 a))."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "14.6",
+      "Description": "Des tests de securite et de conformite doivent etre effectues tout au long du cycle de developpement et apres chaque changement significatif.",
+      "Name": "Test de la securite et conformite du systeme",
+      "Attributes": [
+        {
+          "Section": "14. Acquisition, developpement et maintenance des systemes d'information",
+          "Service": "inspector",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire doit soumettre les systemes d'information, nouveaux ou mis a jour, a des tests de conformite et de fonctionnalite de securite pendant le developpement. Il doit documenter et mettre en oeuvre une procedure de test qui identifie : les taches a realiser ; les donnees d'entree ; les resultats attendus en sortie."
+        }
+      ],
+      "Checks": [
+        "inspector2_is_enabled",
+        "ecr_repositories_scan_images_on_push_enabled"
+      ]
+    },
+    {
+      "Id": "14.7",
+      "Description": "Les donnees de test doivent etre soigneusement selectionnees, protegees et controlees.",
+      "Name": "Protection des donnees de test",
+      "Attributes": [
+        {
+          "Section": "14. Acquisition, developpement et maintenance des systemes d'information",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure permettant d'assurer l'integrite des donnees de tests utilises en pre-production. b) Si le prestataire souhaite utiliser des donnees du commanditaire issues de la production pour realiser des tests, le prestataire doit prealablement obtenir l'accord du commanditaire et les anonymiser. Le prestataire doit assurer la confidentialite des donnees lors de leur anonymisation."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "15.1",
+      "Description": "Le prestataire doit identifier les tiers ayant acces a l'information ou aux moyens de traitement de l'information et evaluer les risques associes.",
+      "Name": "Identification des tiers",
+      "Attributes": [
+        {
+          "Section": "15. Relations avec les tiers",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit tenir a jour une liste exhaustive des tiers participant a la mise en oeuvre du service (hebergeur, developpeur, integrateur, archiveur, sous-traitant operant sur site ou a distance, fournisseurs de climatisation, etc.). Cette liste doit preciser la contribution du tiers au service et au traitement des donnees a caractere personnel. Elle doit tenir compte des cas de sous-traitance a plusieurs niveaux. b) Le prestataire doit tenir a disposition du commanditaire la liste de l'ensemble des tiers qui peuvent acceder aux donnees et l'informer de tout changement de sous-traitants au sens de l'article 28 du [RGPD] afin que le commanditaire puisse emettre des objections a cet egard."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "15.2",
+      "Description": "Tous les aspects pertinents de la securite de l'information doivent etre traites dans les accords conclus avec les tiers.",
+      "Name": "La securite dans les accords conclus avec les tiers",
+      "Attributes": [
+        {
+          "Section": "15. Relations avec les tiers",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit exiger des tiers participant a la mise en oeuvre du service, dans leur contribution au service, un niveau de securite au moins equivalent a celui qu'il s'engage a maintenir dans sa propre politique de securite. Il doit le faire au travers d'exigences, adaptees a chaque tiers et a sa contribution au service, dans les cahiers des charges ou dans les clauses de securite des accords de partenariat. Le prestataire doit inclure ces exigences dans les contrats conclus avec les tiers. b) Le prestataire doit contractualiser, avec chacun des tiers participant a la mise en oeuvre du service, des clauses d'audit permettant a un organisme de qualification de verifier que ces tiers respectent les exigences du present referentiel. c) Le prestataire doit definir et attribuer les roles et les responsabilites relatives a la modification ou a la fin du contrat le liant a un tiers participant a la mise en oeuvre du service."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "15.3",
+      "Description": "Le prestataire doit surveiller, revoir et auditer a intervalles reguliers la prestation des services des tiers.",
+      "Name": "Surveillance et revue des services des tiers",
+      "Attributes": [
+        {
+          "Section": "15. Relations avec les tiers",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure permettant de controler regulierement les mesures mises en place par les tiers participant a la mise en oeuvre du service pour respecter les exigences du present referentiel, conformement au chapitre 18.3."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "15.4",
+      "Description": "Les changements dans les services des tiers, incluant le maintien et l'amelioration des politiques, procedures et mesures existantes de securite de l'information, doivent etre geres.",
+      "Name": "Gestion des changements apportes dans les services des tiers",
+      "Attributes": [
+        {
+          "Section": "15. Relations avec les tiers",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure de suivi des changements apportes par les tiers participant a la mise en oeuvre du service susceptibles d'affecter le niveau de securite du systeme d'information du service. b) Dans la mesure ou un changement de tiers participant a la mise en oeuvre du service affecte le niveau de securite du service, le prestataire doit en informer l'ensemble des commanditaires sans delais conformement au chapitre 12.2 et mettre en oeuvre les mesures permettant de retablir le niveau de securite precedent."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "15.5",
+      "Description": "Les personnes intervenant dans le cadre du service cloud doivent etre soumises a des engagements de confidentialite.",
+      "Name": "Engagements de confidentialite",
+      "Attributes": [
+        {
+          "Section": "15. Relations avec les tiers",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure permettant de reviser au moins annuellement les exigences en matiere d'engagements de confidentialite ou de non-divulgation vis-a-vis des tiers participant a la mise en oeuvre du service."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "16.1",
+      "Description": "Des responsabilites et des procedures de gestion doivent etre etablies pour garantir une reponse rapide, efficace et ordonnee aux incidents lies a la securite de l'information.",
+      "Name": "Responsabilites et procedures",
+      "Attributes": [
+        {
+          "Section": "16. Gestion des incidents lies a la securite de l'information",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure permettant d'apporter des reponses rapides et efficaces aux incidents de securite. Ces procedures doivent definir les moyens et delais de communication des incidents de securite a l'ensemble des commanditaires concernes ainsi que le niveau de confidentialite exige pour cette communication. b) Le prestataire doit informer ses employes et l'ensemble des tiers participant a la mise en oeuvre du service de cette procedure. c) Le prestataire doit documenter toute violation de donnees a caractere personnel et en informer son commanditaire. La violation doit etre notifiee a la CNIL si elle presente un risque pour les droits et libertes des personnes concernees. Elle doit faire l'objet d'une information aupres des personnes concernees lorsque le risque pour leur vie privee est eleve."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "16.2",
+      "Description": "Les evenements lies a la securite de l'information doivent etre signales dans les meilleurs delais par les voies hierarchiques appropriees. Des mecanismes de detection et de notification automatises doivent etre mis en oeuvre.",
+      "Name": "Signalements lies a la securite de l'information",
+      "Attributes": [
+        {
+          "Section": "16. Gestion des incidents lies a la securite de l'information",
+          "Service": "guardduty",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure exigeant de ses employes et des tiers participant a la mise en oeuvre du service qu'ils lui rendent compte de tout incident de securite, avere ou suspecte ainsi que de toute faille de securite. b) Le prestataire doit documenter et mettre en oeuvre une procedure permettant a l'ensemble des commanditaires de signaler tout incident de securite, avere ou suspecte et toute faille de securite. c) Le prestataire doit communiquer sans delai aux commanditaires les incidents de securite et les preconisations associees pour en limiter les impacts. Il doit permettre au commanditaire de choisir les niveaux de gravite des incidents pour lesquels il souhaite etre informe. d) Le prestataire doit communiquer les incidents de securite aux autorites competentes conformement aux exigences legales et reglementaires en vigueur."
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled",
+        "cloudwatch_alarm_actions_enabled"
+      ]
+    },
+    {
+      "Id": "16.3",
+      "Description": "Les evenements lies a la securite de l'information doivent etre apprecies et il doit etre decide s'il est necessaire de les classer comme incidents lies a la securite de l'information.",
+      "Name": "Appreciation des evenements et prise de decision",
+      "Attributes": [
+        {
+          "Section": "16. Gestion des incidents lies a la securite de l'information",
+          "Service": "guardduty",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire doit apprecier les evenements lies a la securite de l'information et decider s'il faut les qualifier en incidents de securite. Pour l'appreciation, il doit s'appuyer sur une ou plusieurs echelles (estimation, evaluation, etc.) partagees avec le commanditaire. Note : Les incidents de securite incluent les violations de donnees a caractere personnel. b) Le prestataire doit utiliser une classification permettant d'identifier clairement les incidents de securite touchant des donnees relatives aux commanditaires, conformement aux resultats de l'appreciation des risques. Cette classification doit inclure les violations de donnees a caractere personnel."
+        }
+      ],
+      "Checks": [
+        "guardduty_no_high_severity_findings"
+      ]
+    },
+    {
+      "Id": "16.4",
+      "Description": "Les incidents lies a la securite de l'information doivent etre traites conformement aux procedures documentees.",
+      "Name": "Reponse aux incidents lies a la securite de l'information",
+      "Attributes": [
+        {
+          "Section": "16. Gestion des incidents lies a la securite de l'information",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit traiter les incidents de securite jusqu'a leur resolution et doit informer les commanditaires conformement aux procedures."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "16.5",
+      "Description": "Les connaissances acquises lors de l'analyse et du traitement des incidents lies a la securite de l'information doivent etre exploitees pour reduire la probabilite ou l'impact d'incidents futurs.",
+      "Name": "Tirer des enseignements des incidents lies a la securite de l'information",
+      "Attributes": [
+        {
+          "Section": "16. Gestion des incidents lies a la securite de l'information",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre un processus d'amelioration continue afin de diminuer l'occurrence et l'impact de types d'incidents de securite deja traites."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "16.6",
+      "Description": "Le prestataire doit definir et appliquer des procedures pour l'identification, le recueil, l'acquisition et la preservation de preuves. Les journaux d'audit doivent etre proteges et valides.",
+      "Name": "Recueil de preuves",
+      "Attributes": [
+        {
+          "Section": "16. Gestion des incidents lies a la securite de l'information",
+          "Service": "cloudtrail",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure permettant d'enregistrer les informations relatives aux incidents de securite et pouvant servir d'elements de preuve."
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_log_file_validation_enabled"
+      ]
+    },
+    {
+      "Id": "17.1",
+      "Description": "Le prestataire doit determiner ses exigences en matiere de securite de l'information et de continuite du management de la securite de l'information dans des situations defavorables, par exemple lors d'une crise ou d'un sinistre.",
+      "Name": "Organisation de la continuite d'activite",
+      "Attributes": [
+        {
+          "Section": "17. Continuite d'activite",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre oeuvre un plan de continuite d'activite prenant en compte la securite de l'information. b) Le prestataire doit reviser annuellement le plan de continuite d'activite du service et a chaque changement majeur pouvant avoir un impact sur le service."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "17.2",
+      "Description": "Le prestataire doit etablir, documenter, mettre en oeuvre et maintenir des processus, des procedures et des mesures de controle pour assurer le niveau requis de continuite de la securite de l'information au cours d'une situation defavorable. Les services doivent etre deployes en multi-AZ.",
+      "Name": "Mise en oeuvre de la continuite d'activite",
+      "Attributes": [
+        {
+          "Section": "17. Continuite d'activite",
+          "Service": "rds",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre des procedures permettant de maintenir ou de restaurer l'exploitation du service et d'assurer la disponibilite des informations au niveau et dans les delais pour lesquels le prestataire s'est engage vis-a-vis du commanditaire dans la convention de service."
+        }
+      ],
+      "Checks": [
+        "rds_instance_multi_az",
+        "rds_cluster_multi_az",
+        "elbv2_is_in_multiple_az",
+        "vpc_subnet_different_az",
+        "dynamodb_accelerator_cluster_multi_az",
+        "efs_multi_az_enabled",
+        "elasticache_redis_cluster_multi_az_enabled",
+        "neptune_cluster_multi_az",
+        "documentdb_cluster_multi_az_enabled"
+      ]
+    },
+    {
+      "Id": "17.3",
+      "Description": "Le prestataire doit verifier a intervalles reguliers les mesures de continuite de la securite de l'information mises en oeuvre afin de s'assurer qu'elles sont valables et efficaces dans des situations defavorables.",
+      "Name": "Verifier, revoir et evaluer la continuite d'activite",
+      "Attributes": [
+        {
+          "Section": "17. Continuite d'activite",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure permettant de tester le plan de continuite d'activites afin de s'assurer qu'il est pertinent et efficace en situation de crise."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "17.4",
+      "Description": "Les moyens de traitement de l'information doivent etre mis en oeuvre avec suffisamment de redondance pour repondre aux exigences de disponibilite. Les mecanismes de protection contre la suppression accidentelle doivent etre actives.",
+      "Name": "Disponibilite des moyens de traitement de l'information",
+      "Attributes": [
+        {
+          "Section": "17. Continuite d'activite",
+          "Service": "rds",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre les mesures qui lui permettent de repondre au besoin de disponibilite du service defini dans la convention de service (voir chapitre 19.1)."
+        }
+      ],
+      "Checks": [
+        "rds_instance_multi_az",
+        "elbv2_is_in_multiple_az",
+        "rds_instance_deletion_protection",
+        "rds_cluster_deletion_protection",
+        "dynamodb_table_deletion_protection_enabled"
+      ]
+    },
+    {
+      "Id": "17.5",
+      "Description": "La configuration de l'infrastructure technique du service cloud doit etre sauvegardee regulierement afin de permettre sa restauration en cas de sinistre.",
+      "Name": "Sauvegarde de la configuration de l'infrastructure technique",
+      "Attributes": [
+        {
+          "Section": "17. Continuite d'activite",
+          "Service": "backup",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une procedure de sauvegarde hors-ligne de la configuration de l'infrastructure technique."
+        }
+      ],
+      "Checks": [
+        "backup_plans_exist",
+        "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
+      "Id": "17.6",
+      "Description": "Le prestataire doit mettre a disposition du commanditaire un dispositif de sauvegarde de ses donnees, permettant la restauration en cas de sinistre.",
+      "Name": "Mise a disposition d'un dispositif de sauvegarde des donnees du commanditaire",
+      "Attributes": [
+        {
+          "Section": "17. Continuite d'activite",
+          "Service": "backup",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre a disposition du commanditaire un service de sauvegarde de ses donnees."
+        }
+      ],
+      "Checks": [
+        "backup_plans_exist",
+        "backup_vaults_exist",
+        "s3_bucket_object_versioning"
+      ]
+    },
+    {
+      "Id": "18.1",
+      "Description": "Toutes les exigences legales, reglementaires et contractuelles en vigueur, ainsi que l'approche du prestataire pour satisfaire ces exigences, doivent etre explicitement definies, documentees et tenues a jour pour chaque systeme d'information et pour le prestataire.",
+      "Name": "Identification de la legislation et des exigences contractuelles applicables",
+      "Attributes": [
+        {
+          "Section": "18. Conformite",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit identifier les exigences legales, reglementaires et contractuelles en vigueur applicables au service. En France, le prestataire doit considerer au minimum les textes suivants : les donnees a caractere personnel [LOI_IL], [RGPD] ; le secret professionnel [CP_ART_226_13], le cas echeant sans prejudice de l'application de l'article 40 alinea 2 du Code de procedure penale relatif au signalement a une autorite judiciaire ; l'abus de confiance [CP_ART_314-1] ; le secret des correspondances privees [CP_ART_226-15] ; l'atteinte a la vie privee [CP_ART_226-1] ; l'acces ou le maintien frauduleux a un systeme d'information [CP_ART_323-1]. b) Le prestataire doit, selon son role dans les traitements de donnees a caractere personnel (responsable de traitement, sous-traitant ou co-responsable) justifier et documenter les choix de mesures techniques et organisationnelles realises en vue de repondre aux exigences de protection des donnees a caractere personnel du present referentiel (voir partie 19.5). c) Le prestataire doit documenter et mettre en oeuvre les procedures permettant de respecter les exigences legales, reglementaires et contractuelles en vigueur applicables au service, ainsi que les besoins de securite specifiques (voir exigence 8.3b)). d) Le prestataire doit, sur demande d'un commanditaire, lui rendre accessible l'ensemble de ces procedures. e) Le prestataire doit documenter et mettre en oeuvre un processus de veille actif des exigences legales, reglementaires et contractuelles en vigueur applicables au service."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "18.2",
+      "Description": "L'approche du prestataire vis-a-vis de la gestion de la securite de l'information et sa mise en oeuvre (c'est-a-dire les objectifs de controle, les mesures, les politiques, les procedures et les processus relatifs a la securite de l'information) doivent etre revues de maniere independante a intervalles definis ou en cas de changement significatif.",
+      "Name": "Revue independante de la securite de l'information",
+      "Attributes": [
+        {
+          "Section": "18. Conformite",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre un programme d'audit sur trois ans definissant le perimetre et la frequence des audits en accord avec la gestion du changement, les politiques, et les resultats de l'appreciation des risques. Le prestataire doit inclure dans le programme d'audit un audit qualifie par an realise par un prestataire d'audit de la securite des systemes d'information [PASSI] qualifie. L'ensemble du programme d'audit doit notamment couvrir : l'audit de la configuration de l'infrastructure technique du service (par echantillonnage et doit inclure tous types d'equipements et de serveurs presents dans le systeme d'information du service) ; le test d'intrusion des interfaces d'administration exposees sur un reseau public ; le test d'intrusion de l'interface utilisateur pour les services SaaS ; si le service beneficie de developpements internes, l'audit de code source portant sur les fonctionnalites de securite implementees (l'approche en continue doit etre privilegiee). b) Il est recommande que le prestataire mette en oeuvre des mecanismes automatises d'audit de la configuration adaptes a l'infrastructure technique du service."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "18.3",
+      "Description": "Les responsables doivent regulierement s'assurer de la conformite du traitement de l'information et des procedures au sein de leur domaine de responsabilite, au regard des politiques et des normes de securite.",
+      "Name": "Conformite avec les politiques et les normes de securite",
+      "Attributes": [
+        {
+          "Section": "18. Conformite",
+          "Service": "securityhub",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire via le responsable de la securite de l'information doit s'assurer regulierement de l'execution correcte de l'ensemble des procedures de securite placees sous sa responsabilite en vue de garantir leur conformite avec les politiques et normes de securite."
+        }
+      ],
+      "Checks": [
+        "securityhub_enabled",
+        "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
+      "Id": "18.4",
+      "Description": "Les systemes d'information doivent etre examines regulierement quant a leur conformite avec les politiques et les normes de securite de l'information du prestataire.",
+      "Name": "Examen de la conformite technique",
+      "Attributes": [
+        {
+          "Section": "18. Conformite",
+          "Service": "securityhub",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire doit documenter et mettre en oeuvre une politique permettant de verifier la conformite technique du service aux exigences du present referentiel. Cette politique doit definir les objectifs, methodes, frequences, resultats attendus et mesures correctrices."
+        }
+      ],
+      "Checks": [
+        "inspector2_is_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "19.1",
+      "Description": "Le prestataire doit etablir une convention de service avec le commanditaire definissant les engagements de niveau de service, les responsabilites et les conditions d'utilisation du service cloud.",
+      "Name": "Convention de service",
+      "Attributes": [
+        {
+          "Section": "19. Exigences supplementaires",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit etablir une convention de service avec chacun des commanditaires du service. Toute modification de la convention de service doit etre soumise a acceptation du commanditaire. b) Le prestataire doit identifier dans la convention de service : les obligations, droits et responsabilites de chacune des parties : prestataire et tiers impliques dans la fourniture du service, commanditaires, etc. ; les elements explicitement exclus des responsabilites du prestataire dans la limite de ce que prevoient les exigences legales et reglementaires en vigueur, notamment l'article 28 du [RGPD] ; la localisation du service. La localisation du support doit etre precisee lorsqu'il est realise depuis un Etat hors l'Union Europeenne, comme le permet l'exigence 19.2.e. c) Le prestataire doit proposer une convention de service appliquant le droit d'un Etat membre de l'Union Europeenne. Le droit applicable doit etre identifie dans la convention de service. d) La convention de service doit indiquer que la collecte, la manipulation, le stockage, et plus generalement le traitement des donnees faits dans le cadre de l'avant-vente, de la mise en oeuvre, de la maintenance et l'arret du service sont realises conformement aux exigences edictees par la legislation en vigueur. e) La convention de service doit indiquer que le prestataire doit mettre a la disposition du commanditaire, sur demande de celui-ci, les elements d'appreciation des risques lies a la soumission des donnees du commanditaire au droit d'un etat non-membre de l'Union Europeenne (voir 5.3.e). f) Le prestataire doit decrire dans la convention de service les moyens techniques et organisationnels qu'il met en oeuvre pour assurer le respect du droit applicable. g) Le prestataire doit inclure dans la convention de service une clause de revision de la convention prevoyant notamment une resiliation sans penalite pour le commanditaire en cas de perte de la qualification octroyee au service. h) Le prestataire doit inclure dans la convention de service une clause de reversibilite permettant au commanditaire de recuperer l'ensemble de ses donnees (fournies directement par le commanditaire ou produites dans le cadre du service a partir des donnees ou des actions du commanditaire). i) Le prestataire doit assurer cette reversibilite via l'une des modalites techniques suivantes : la mise a disposition de fichiers suivant un ou plusieurs formats documentes et exploitables en dehors du service fourni par le prestataire ; la mise en place d'interfaces techniques permettant l'acces aux donnees suivant un schema documente et exploitable (API, format pivot, etc.). Les modalites techniques de la reversibilite figurent dans la convention de service. j) Le prestataire doit indiquer dans la convention de service le niveau de disponibilite du service. k) Le prestataire doit indiquer dans la convention de service qu'il ne peut disposer des donnees transmises et generees par le commanditaire, leur disposition etant reservee au commanditaire. l) Le prestataire doit indiquer dans la convention de service qu'il ne divulgue aucune information relative a la prestation a des tiers, sauf autorisation formelle et ecrite du commanditaire. m) Le prestataire doit indiquer dans la convention de service si les donnees du commanditaire sont automatiquement sauvegardees ou non. Dans la negative, le prestataire doit sensibiliser le commanditaire aux risques encourus et clairement indiquer les operations a mener par le commanditaire pour que ses donnees soient sauvegardees. n) Le prestataire doit indiquer dans la convention de service s'il autorise l'acces distant pour des actions d'administration ou de support au systeme d'information du service. o) Le prestataire doit preciser dans la convention de service que : le service est qualifie et inclure l'attestation de qualification ; le commanditaire peut deposer une reclamation relative au service qualifie aupres de l'ANSSI ; le commanditaire autorise l'ANSSI et l'organisme de qualification a auditer le service et son systeme d'information du service afin de verifier qu'ils respectent les exigences du present referentiel. p) Le prestataire doit preciser dans la convention de service que le commanditaire autorise, conformement au present referentiel (voir chapitre 18.2, un prestataire d'audit de la securite des systemes d'information [PASSI] qualifie mandate par le prestataire a auditer le service et son systeme d'information dans le cadre du plan de controle. q) Le prestataire doit preciser dans la convention de service qu'il s'engage a mettre a disposition toutes les informations necessaires a la realisation d'audits de conformite aux dispositions de l'article 28 du [RGPD], menes par le commanditaire ou un tiers mandate. r) Il est recommande que le tiers mandate pour les audits soit un prestataire d'audit de la securite des systemes d'information [PASSI] qualifie."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "19.2",
+      "Description": "Les donnees du commanditaire doivent etre stockees et traitees dans des centres de donnees situes sur le territoire de l'Union europeenne. Les politiques de restriction de region doivent etre appliquees.",
+      "Name": "Localisation des donnees",
+      "Attributes": [
+        {
+          "Section": "19. Exigences supplementaires",
+          "Service": "organizations",
+          "Type": "Partially Automated",
+          "Comment": "a) Le prestataire doit documenter et communiquer au commanditaire la localisation du stockage et du traitement des donnees de ce dernier. b) Le prestataire doit stocker et traiter les donnees du commanditaire au sein de l'Union Europeenne. c) Les operations d'administration et de supervision du service doivent etre realisees depuis le territoire de l'Union Europeenne. d) Le prestataire doit stocker et traiter les donnees techniques (identites des beneficiaires et des administrateurs de l'infrastructure technique, donnees manipulees par le Software Defined Network, journaux de l'infrastructure technique, annuaire, certificats, configuration des acces, etc.) au sein de l'Union Europeenne. e) Le prestataire peut realiser des operations de support aux commanditaires depuis un Etat hors de l'Union Europeenne. Il doit documenter la liste des operations qui peuvent etre effectuees par le support au commanditaire depuis un Etat hors de l'Union Europeenne, et les mecanismes permettant d'en assurer le controle d'acces et la supervision depuis l'Union Europeenne."
+        }
+      ],
+      "Checks": [
+        "organizations_scp_check_deny_regions"
+      ]
+    },
+    {
+      "Id": "19.3",
+      "Description": "Les services cloud qualifies SecNumCloud doivent etre operes depuis le territoire de l'Union europeenne.",
+      "Name": "Regionalisation",
+      "Attributes": [
+        {
+          "Section": "19. Exigences supplementaires",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit s'assurer que les interfaces du service accessibles au commanditaire soient au moins disponibles en langue francaise. b) Le prestataire doit fournir un support de premier niveau en langue francaise."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "19.4",
+      "Description": "Le prestataire doit definir les conditions de fin de contrat, incluant les modalites de restitution et de suppression des donnees du commanditaire.",
+      "Name": "Fin de contrat",
+      "Attributes": [
+        {
+          "Section": "19. Exigences supplementaires",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) A la fin du contrat liant le prestataire et le commanditaire, que le contrat soit arrive a son terme ou pour toute autre cause, le prestataire doit assurer un effacement securise de l'integralite des donnees du commanditaire. Cet effacement doit faire l'objet d'un preavis formel au commanditaire de la part du prestataire respectant un delai de vingt et un jours calendaires. L'effacement peut etre realise suivant l'une des methodes suivantes, et ce dans un delai precise dans la convention de service : effacement par reecriture complete de tout support ayant heberge ces donnees ; effacement des cles utilisees pour le chiffrement des espaces de stockage du commanditaire decrit au chapitre 10.1 ; recyclage securise, dans les conditions enoncees au chapitre 11.9. b) A la fin du contrat, le prestataire doit supprimer les donnees techniques relatives au commanditaire (annuaire, certificats, configuration des acces, etc.)."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "19.5",
+      "Description": "Le prestataire doit mettre en oeuvre des mesures techniques et organisationnelles appropriees pour garantir la protection des donnees a caractere personnel conformement a la reglementation en vigueur.",
+      "Name": "Protection des donnees a caractere personnel",
+      "Attributes": [
+        {
+          "Section": "19. Exigences supplementaires",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le prestataire doit justifier du respect des principes de protection des donnees pour les traitements de donnees a caractere personnel mis en oeuvre pour son propre compte. Il doit justifier au minimum les points suivants : les finalites des traitements determinees, explicites et legitimes ; la tracabilite des activites de traitement pour son compte et celui de son commanditaire ; le fondement licite des traitements ; l'interdiction du detournement de finalite des traitements ; les donnees utilisees respectent le principe du minimum necessaire et suffisant pour les traitements ; ainsi sont adequates, pertinentes et limitees ; la qualite des donnees utilisees pour les traitements maintenue : donnees exactes et tenues a jour ; les durees de conservation definies et limitees. b) Le prestataire doit justifier, pour les traitements de donnees a caractere personnel mis en oeuvre pour son propre compte, du respect des droits des personnes concernees. Il doit justifier au minimum les points suivants : l'information des usagers via un traitement loyal et transparent ; le recueil du consentement des usagers : expres, demontrable et retirable ; la possibilite pour les usagers d'exercer les droits d'acces, de rectification et d'effacement ; la possibilite pour les usagers d'exercer les droits de limitation du traitement, de portabilite et d'opposition. c) Lorsqu'il agit en qualite de sous-traitant au sens de l'article 28 de [RGPD], le prestataire doit apporter assistance et conseil au commanditaire en l'informant si une instruction de ce dernier constitue une violation des regles de protection des donnees."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "19.6",
+      "Description": "Le prestataire doit mettre en oeuvre des mesures de protection vis-a-vis du droit extra-europeen, afin de garantir que les donnees du commanditaire ne puissent etre soumises a des legislations extra-europeennes.",
+      "Name": "Protection vis-a-vis du droit extra-europeen",
+      "Attributes": [
+        {
+          "Section": "19. Exigences supplementaires",
+          "Service": "general",
+          "Type": "Manual",
+          "Comment": "a) Le siege statutaire, administration centrale et principal etablissement du prestataire doivent etre etablis au sein d'un Etat membre de l'Union Europeenne. b) Le capital social et les droits de vote dans la societe du prestataire ne doivent pas etre, directement ou indirectement : individuellement detenus a plus de 24% ; et collectivement detenus a plus de 39% ; par des entites tierces possedant leur siege statutaire, administration centrale ou principal etablissement au sein d'un Etat non membre de l'Union europeenne. Ces entites tierces susmentionnees ne peuvent pas individuellement ou collectivement : en vertu d'un contrat ou de clauses statutaires, disposer d'un droit de veto ; en vertu d'un contrat ou de clauses statutaires, designer la majorite des membres des organes d'administration, de direction ou de surveillance du prestataire. c) En cas de recours par le prestataire, dans le cadre des services fournis au commanditaire, aux services d'une societe tierce - y compris un sous-traitant - possedant son siege statutaire, administration centrale ou principal etablissement au sein d'un Etat non membre de l'Union Europeenne ou appartenant ou etant controlee par une societe tierce domiciliee en dehors l'Union Europeenne, cette susdite societe tierce ne doit pas avoir la possibilite technique d'obtenir les donnees operees au travers du service. d) Dans le cadre de l'exigence 19.6.c, toute societe tierce a laquelle le prestataire recourt pour fournir tout ou partie du service rendu au commanditaire, doit garantir au prestataire une autonomie d'exploitation continue dans la fourniture des services d'informatique en nuage qu'il opere ou doit etre qualifie SecNumCloud. e) Le service fourni par le prestataire doit respecter la legislation en vigueur en matiere de droits fondamentaux et les valeurs de l'Union relatives au respect de la dignite humaine, a la liberte, a l'egalite, a la democratie et a l'Etat de droit. f) Le prestataire doit informer formellement le commanditaire, et dans un delai d'un mois, de tout changement juridique, organisationnel ou technique pouvant avoir un impact sur la conformite de la prestation aux exigences du chapitre 19.6."
+        }
+      ],
+      "Checks": []
+    }
+  ]
+}
