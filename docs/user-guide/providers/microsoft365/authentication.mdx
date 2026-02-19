@@ -43,7 +43,10 @@ When using service principal authentication, add these **Application Permissions
 - `Directory.Read.All`: Required for all services.
 - `OnPremDirectorySynchronization.Read.All`: Required for `entra_seamless_sso_disabled` check (hybrid deployments).
 - `Policy.Read.All`: Required for all services.
+- `SecurityIdentitiesHealth.Read.All`: Required for `defenderidentity_health_issues_no_open` check.
+- `SecurityIdentitiesSensors.Read.All`: Required for `defenderidentity_health_issues_no_open` check.
 - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
+- `ThreatHunting.Read.All`: Required for Entra checks that use Defender XDR Advanced Hunting (e.g., unused privileged permissions detection). Also requires App Governance to be enabled in Microsoft Defender for Cloud Apps.
 
 **External API Permissions:**
 
@@ -108,6 +111,8 @@ Browser and Azure CLI authentication methods limit scanning capabilities to chec
    - `Directory.Read.All`: Required for all services
    - `OnPremDirectorySynchronization.Read.All`: Required for `entra_seamless_sso_disabled` check (hybrid deployments)
    - `Policy.Read.All`: Required for all services
+   - `SecurityIdentitiesHealth.Read.All`: Required for `defenderidentity_health_issues_no_open` check
+   - `SecurityIdentitiesSensors.Read.All`: Required for `defenderidentity_health_issues_no_open` check
    - `SharePointTenantSettings.Read.All`: Required for SharePoint service
 
    ![Permission Screenshots](/images/providers/directory-permission.png)

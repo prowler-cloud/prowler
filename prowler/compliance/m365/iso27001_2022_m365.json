@@ -117,6 +117,8 @@
         "defender_malware_policy_notifications_internal_users_malware_enabled",
         "defender_safelinks_policy_enabled",
         "defender_zap_for_teams_enabled",
+        "defenderxdr_endpoint_privileged_user_exposed_credentials",
+        "defender_identity_health_issues_no_open",
         "entra_admin_users_phishing_resistant_mfa_enabled",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_identity_protection_user_risk_enabled"
@@ -233,6 +235,7 @@
         }
       ],
       "Checks": [
+        "defenderxdr_endpoint_privileged_user_exposed_credentials",
         "entra_admin_users_sign_in_frequency_enabled",
         "entra_admin_users_mfa_enabled",
         "entra_admin_users_sign_in_frequency_enabled",
@@ -258,11 +261,12 @@
         }
       ],
       "Checks": [
-        "sharepoint_external_sharing_restricted",
-        "sharepoint_external_sharing_managed",
-        "sharepoint_guest_sharing_restricted",
+        "entra_admin_portals_access_restriction",
+        "entra_app_registration_no_unused_privileged_permissions",
         "entra_policy_guest_users_access_restrictions",
-        "entra_admin_portals_access_restriction"
+        "sharepoint_external_sharing_managed",
+        "sharepoint_external_sharing_restricted",
+        "sharepoint_guest_sharing_restricted"
       ]
     },
     {
@@ -605,6 +609,7 @@
         }
       ],
       "Checks": [
+        "defenderxdr_endpoint_privileged_user_exposed_credentials",
         "entra_managed_device_required_for_authentication",
         "entra_users_mfa_enabled",
         "entra_managed_device_required_for_mfa_registration",
@@ -632,12 +637,14 @@
         "admincenter_users_admins_reduced_license_footprint",
         "admincenter_users_between_two_and_four_global_admins",
         "defender_antispam_outbound_policy_configured",
+        "defenderxdr_endpoint_privileged_user_exposed_credentials",
         "entra_admin_consent_workflow_enabled",
         "entra_admin_portals_access_restriction",
         "entra_admin_users_cloud_only",
         "entra_admin_users_mfa_enabled",
         "entra_admin_users_phishing_resistant_mfa_enabled",
         "entra_admin_users_sign_in_frequency_enabled",
+        "entra_app_registration_no_unused_privileged_permissions",
         "entra_policy_ensure_default_user_cannot_create_tenants",
         "entra_policy_guest_invite_only_for_admin_roles",
         "entra_seamless_sso_disabled"
@@ -720,7 +727,9 @@
       "Checks": [
         "defender_malware_policy_common_attachments_filter_enabled",
         "defender_malware_policy_comprehensive_attachments_filter_applied",
-        "defender_malware_policy_notifications_internal_users_malware_enabled"
+        "defender_malware_policy_notifications_internal_users_malware_enabled",
+        "defenderxdr_endpoint_privileged_user_exposed_credentials",
+        "defender_identity_health_issues_no_open"
       ]
     },
     {
@@ -770,8 +779,9 @@
         }
       ],
       "Checks": [
-        "entra_thirdparty_integrated_apps_not_allowed",
+        "entra_app_registration_no_unused_privileged_permissions",
         "entra_policy_restricts_user_consent_for_apps",
+        "entra_thirdparty_integrated_apps_not_allowed",
         "teams_external_domains_restricted",
         "teams_external_users_cannot_start_conversations"
       ]
@@ -862,9 +872,10 @@
         }
       ],
       "Checks": [
-        "entra_policy_restricts_user_consent_for_apps",
         "admincenter_users_admins_reduced_license_footprint",
         "defender_malware_policy_comprehensive_attachments_filter_applied",
+        "entra_app_registration_no_unused_privileged_permissions",
+        "entra_policy_restricts_user_consent_for_apps",
         "entra_thirdparty_integrated_apps_not_allowed",
         "sharepoint_modern_authentication_required"
       ]
