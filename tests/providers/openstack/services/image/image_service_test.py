@@ -239,3 +239,175 @@ class TestImageService:
 
         assert len(image_service.images) == 1
         assert image_service.images[0].members == []
+
+    def test_image_hw_mem_encryption_false_not_overridden_by_properties(self):
+        """Test that hw_mem_encryption=False is preserved, not overridden by properties dict."""
+        provider = set_mocked_openstack_provider()
+
+        mock_img = MagicMock()
+        mock_img.id = "img-enc-false"
+        mock_img.name = "encryption-false-image"
+        mock_img.status = "active"
+        mock_img.visibility = "private"
+        mock_img.is_protected = False
+        mock_img.owner_id = OPENSTACK_PROJECT_ID
+        mock_img.owner = OPENSTACK_PROJECT_ID
+        mock_img.img_signature = None
+        mock_img.img_signature_hash_method = None
+        mock_img.img_signature_key_type = None
+        mock_img.img_signature_certificate_uuid = None
+        mock_img.hw_mem_encryption = False
+        mock_img.needs_secure_boot = None
+        mock_img.os_secure_boot = None
+        mock_img.tags = []
+        mock_img.project_id = OPENSTACK_PROJECT_ID
+        mock_img.properties = {"hw_mem_encryption": "true"}
+
+        provider.connection.image.images.return_value = [mock_img]
+
+        image_service = Image(provider)
+
+        assert len(image_service.images) == 1
+        assert image_service.images[0].hw_mem_encryption is False
+
+    def test_image_os_secure_boot_disabled_not_overridden_by_properties(self):
+        """Test that os_secure_boot='disabled' is preserved, not overridden by properties dict."""
+        provider = set_mocked_openstack_provider()
+
+        mock_img = MagicMock()
+        mock_img.id = "img-boot-disabled"
+        mock_img.name = "boot-disabled-image"
+        mock_img.status = "active"
+        mock_img.visibility = "private"
+        mock_img.is_protected = False
+        mock_img.owner_id = OPENSTACK_PROJECT_ID
+        mock_img.owner = OPENSTACK_PROJECT_ID
+        mock_img.img_signature = None
+        mock_img.img_signature_hash_method = None
+        mock_img.img_signature_key_type = None
+        mock_img.img_signature_certificate_uuid = None
+        mock_img.hw_mem_encryption = None
+        mock_img.needs_secure_boot = "disabled"
+        mock_img.os_secure_boot = "disabled"
+        mock_img.tags = []
+        mock_img.project_id = OPENSTACK_PROJECT_ID
+        mock_img.properties = {"os_secure_boot": "required"}
+
+        provider.connection.image.images.return_value = [mock_img]
+
+        image_service = Image(provider)
+
+        assert len(image_service.images) == 1
+        assert image_service.images[0].os_secure_boot == "disabled"
+
+    def test_image_signature_empty_string_not_overridden_by_properties(self):
+        """Test that empty string signature attrs are preserved, not overridden by properties."""
+        provider = set_mocked_openstack_provider()
+
+        mock_img = MagicMock()
+        mock_img.id = "img-sig-empty"
+        mock_img.name = "sig-empty-image"
+        mock_img.status = "active"
+        mock_img.visibility = "private"
+        mock_img.is_protected = False
+        mock_img.owner_id = OPENSTACK_PROJECT_ID
+        mock_img.owner = OPENSTACK_PROJECT_ID
+        mock_img.img_signature = ""
+        mock_img.img_signature_hash_method = ""
+        mock_img.img_signature_key_type = ""
+        mock_img.img_signature_certificate_uuid = ""
+        mock_img.hw_mem_encryption = None
+        mock_img.needs_secure_boot = None
+        mock_img.os_secure_boot = None
+        mock_img.tags = []
+        mock_img.project_id = OPENSTACK_PROJECT_ID
+        mock_img.properties = {
+            "img_signature": "should-not-override",
+            "img_signature_hash_method": "should-not-override",
+            "img_signature_key_type": "should-not-override",
+            "img_signature_certificate_uuid": "should-not-override",
+        }
+
+        provider.connection.image.images.return_value = [mock_img]
+
+        image_service = Image(provider)
+
+        assert len(image_service.images) == 1
+        img = image_service.images[0]
+        assert img.img_signature == ""
+        assert img.img_signature_hash_method == ""
+        assert img.img_signature_key_type == ""
+        assert img.img_signature_certificate_uuid == ""
+
+    def test_image_properties_fallback_when_attrs_are_none(self):
+        """Test that properties dict is used as fallback when image attrs are None."""
+        provider = set_mocked_openstack_provider()
+
+        mock_img = MagicMock()
+        mock_img.id = "img-fallback"
+        mock_img.name = "fallback-image"
+        mock_img.status = "active"
+        mock_img.visibility = "private"
+        mock_img.is_protected = False
+        mock_img.owner_id = OPENSTACK_PROJECT_ID
+        mock_img.owner = OPENSTACK_PROJECT_ID
+        mock_img.img_signature = None
+        mock_img.img_signature_hash_method = None
+        mock_img.img_signature_key_type = None
+        mock_img.img_signature_certificate_uuid = None
+        mock_img.hw_mem_encryption = None
+        mock_img.needs_secure_boot = None
+        mock_img.os_secure_boot = None
+        mock_img.tags = []
+        mock_img.project_id = OPENSTACK_PROJECT_ID
+        mock_img.properties = {
+            "img_signature": "prop-sig",
+            "img_signature_hash_method": "SHA-256",
+            "img_signature_key_type": "RSA-PSS",
+            "img_signature_certificate_uuid": "cert-from-props",
+            "hw_mem_encryption": "true",
+            "os_secure_boot": "required",
+        }
+
+        provider.connection.image.images.return_value = [mock_img]
+
+        image_service = Image(provider)
+
+        assert len(image_service.images) == 1
+        img = image_service.images[0]
+        assert img.img_signature == "prop-sig"
+        assert img.img_signature_hash_method == "SHA-256"
+        assert img.img_signature_key_type == "RSA-PSS"
+        assert img.img_signature_certificate_uuid == "cert-from-props"
+        assert img.hw_mem_encryption is True
+        assert img.os_secure_boot == "required"
+
+    def test_image_needs_secure_boot_sdk_attr_resolved(self):
+        """Test that needs_secure_boot (SDK attr) is used when os_secure_boot is absent."""
+        provider = set_mocked_openstack_provider()
+
+        mock_img = MagicMock()
+        mock_img.id = "img-sdk-boot"
+        mock_img.name = "sdk-boot-image"
+        mock_img.status = "active"
+        mock_img.visibility = "private"
+        mock_img.is_protected = False
+        mock_img.owner_id = OPENSTACK_PROJECT_ID
+        mock_img.owner = OPENSTACK_PROJECT_ID
+        mock_img.img_signature = None
+        mock_img.img_signature_hash_method = None
+        mock_img.img_signature_key_type = None
+        mock_img.img_signature_certificate_uuid = None
+        mock_img.hw_mem_encryption = None
+        mock_img.needs_secure_boot = "required"
+        mock_img.os_secure_boot = None
+        mock_img.tags = []
+        mock_img.project_id = OPENSTACK_PROJECT_ID
+        mock_img.properties = {}
+
+        provider.connection.image.images.return_value = [mock_img]
+
+        image_service = Image(provider)
+
+        assert len(image_service.images) == 1
+        assert image_service.images[0].os_secure_boot == "required"

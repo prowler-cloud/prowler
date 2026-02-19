@@ -45,27 +45,27 @@ class Image(OpenStackService):
                         visibility=visibility,
                         protected=getattr(img, "is_protected", False),
                         owner=getattr(img, "owner_id", getattr(img, "owner", "")),
-                        img_signature=getattr(img, "img_signature", None)
-                        or properties.get("img_signature"),
-                        img_signature_hash_method=getattr(
-                            img, "img_signature_hash_method", None
-                        )
-                        or properties.get("img_signature_hash_method"),
-                        img_signature_key_type=getattr(
-                            img, "img_signature_key_type", None
-                        )
-                        or properties.get("img_signature_key_type"),
-                        img_signature_certificate_uuid=getattr(
-                            img, "img_signature_certificate_uuid", None
-                        )
-                        or properties.get("img_signature_certificate_uuid"),
-                        hw_mem_encryption=self._parse_bool(
-                            getattr(img, "hw_mem_encryption", None)
-                            or properties.get("hw_mem_encryption")
+                        img_signature=self._resolve_property(
+                            img, "img_signature", properties
                         ),
-                        os_secure_boot=getattr(img, "needs_secure_boot", None)
-                        or getattr(img, "os_secure_boot", None)
-                        or properties.get("os_secure_boot"),
+                        img_signature_hash_method=self._resolve_property(
+                            img, "img_signature_hash_method", properties
+                        ),
+                        img_signature_key_type=self._resolve_property(
+                            img, "img_signature_key_type", properties
+                        ),
+                        img_signature_certificate_uuid=self._resolve_property(
+                            img, "img_signature_certificate_uuid", properties
+                        ),
+                        hw_mem_encryption=self._parse_bool(
+                            self._resolve_property(img, "hw_mem_encryption", properties)
+                        ),
+                        os_secure_boot=self._resolve_property(
+                            img,
+                            "needs_secure_boot",
+                            properties,
+                            fallback_attr="os_secure_boot",
+                        ),
                         members=members,
                         tags=getattr(img, "tags", []),
                         project_id=getattr(
@@ -84,6 +84,36 @@ class Image(OpenStackService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
                 f"Unexpected error listing images: {error}"
             )
+
+    @staticmethod
+    def _resolve_property(
+        img,
+        attr_name: str,
+        properties: dict,
+        fallback_attr: str = None,
+    ):
+        """Get an image attribute, falling back to properties dict only when None.
+
+        Uses ``is not None`` instead of ``or`` so that falsy values like
+        ``False`` or ``""`` on the image object are preserved.
+
+        Args:
+            img: The SDK image object.
+            attr_name: Primary SDK attribute name to check.
+            properties: The image properties dict for final fallback.
+            fallback_attr: Optional secondary attribute name to try before
+                falling back to properties (e.g. when the SDK exposes a
+                property under a different name like ``needs_secure_boot``
+                vs ``os_secure_boot``).
+        """
+        value = getattr(img, attr_name, None)
+        if value is not None:
+            return value
+        if fallback_attr is not None:
+            value = getattr(img, fallback_attr, None)
+            if value is not None:
+                return value
+        return properties.get(fallback_attr or attr_name)
 
     @staticmethod
     def _parse_bool(value) -> Optional[bool]:
