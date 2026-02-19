@@ -8,6 +8,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - PDF report available for the CSA CCM compliance framework [(#10088)](https://github.com/prowler-cloud/prowler/pull/10088)
 - CSV and PDF download buttons in compliance views [(#10093)](https://github.com/prowler-cloud/prowler/pull/10093)
+- Add SecNumCloud compliance framework [(#10117)](https://github.com/prowler-cloud/prowler/pull/10117)
 
 ### 🔄 Changed
 
