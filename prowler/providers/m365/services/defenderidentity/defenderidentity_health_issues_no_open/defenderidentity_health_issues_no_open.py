@@ -6,7 +6,7 @@ health issues in the Microsoft Defender for Identity deployment.
 
 from typing import List
 
-from prowler.lib.check.models import Check, CheckReportM365
+from prowler.lib.check.models import Check, CheckReportM365, Severity
 from prowler.providers.m365.services.defenderidentity.defenderidentity_client import (
     defenderidentity_client,
 )
@@ -35,8 +35,15 @@ class defenderidentity_health_issues_no_open(Check):
         """
         findings = []
 
-        # If health_issues is None, the API call failed (tenant not onboarded or missing permissions)
-        if defenderidentity_client.health_issues is None:
+        # Check sensors first - None means API error, empty list means no sensors
+        sensors_api_failed = defenderidentity_client.sensors is None
+        health_issues_api_failed = defenderidentity_client.health_issues is None
+        has_sensors = (
+            defenderidentity_client.sensors and len(defenderidentity_client.sensors) > 0
+        )
+
+        # If both APIs failed, it's likely a permission issue
+        if sensors_api_failed and health_issues_api_failed:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
@@ -45,9 +52,43 @@ class defenderidentity_health_issues_no_open(Check):
             )
             report.status = "FAIL"
             report.status_extended = (
-                "Defender for Identity data is unavailable. "
-                "Ensure the tenant is onboarded to Microsoft Defender for Identity "
-                "and the required permissions are granted."
+                "Defender for Identity APIs are not accessible. "
+                "Ensure the Service Principal has SecurityIdentitiesSensors.Read.All and "
+                "SecurityIdentitiesHealth.Read.All permissions granted."
+            )
+            findings.append(report)
+            return findings
+
+        # If only health issues API failed but we have sensors
+        if health_issues_api_failed and has_sensors:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Defender for Identity",
+                resource_id="defenderIdentity",
+            )
+            report.status = "FAIL"
+            report.status_extended = (
+                f"Cannot read health issues from Defender for Identity "
+                f"(found {len(defenderidentity_client.sensors)} sensor(s) deployed). "
+                "Ensure the Service Principal has SecurityIdentitiesHealth.Read.All permission."
+            )
+            findings.append(report)
+            return findings
+
+        # If no sensors are deployed (empty list, not None), MDI cannot monitor
+        if not has_sensors and not sensors_api_failed:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Defender for Identity",
+                resource_id="defenderIdentity",
+            )
+            report.status = "FAIL"
+            report.status_extended = (
+                "No sensors deployed in Defender for Identity. "
+                "Without sensors, MDI cannot monitor health issues in the environment. "
+                "Deploy sensors on domain controllers to enable protection."
             )
             findings.append(report)
             return findings
@@ -81,18 +122,18 @@ class defenderidentity_health_issues_no_open(Check):
 
             if status != "open":
                 report.status = "PASS"
-                report.status_extended = f"Defender for Identity {issue_type} health issue '{health_issue.display_name}' is resolved."
+                report.status_extended = f"Defender for Identity {issue_type} health issue {health_issue.display_name} is resolved."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Defender for Identity {issue_type} health issue '{health_issue.display_name}' is open with {severity} severity."
+                report.status_extended = f"Defender for Identity {issue_type} health issue {health_issue.display_name} is open with {severity} severity."
 
                 # Adjust severity based on issue severity
                 if severity == "high":
-                    report.check_metadata.Severity = "high"
+                    report.check_metadata.Severity = Severity.high
                 elif severity == "medium":
-                    report.check_metadata.Severity = "medium"
+                    report.check_metadata.Severity = Severity.medium
                 elif severity == "low":
-                    report.check_metadata.Severity = "low"
+                    report.check_metadata.Severity = Severity.low
 
             findings.append(report)
 

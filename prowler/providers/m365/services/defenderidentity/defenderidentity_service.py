@@ -72,9 +72,31 @@ class DefenderIdentity(M365Service):
         """
         logger.info("DefenderIdentity - Getting sensors...")
         sensors: Optional[List[Sensor]] = []
+
+        # Step 1: Call the API
         try:
             sensors_response = await self.client.security.identities.sensors.get()
+        except Exception as error:
+            error_msg = str(error)
+            if "403" in error_msg or "Forbidden" in error_msg:
+                logger.error(
+                    "DefenderIdentity - Permission denied accessing sensors API. "
+                    "Ensure the Service Principal has SecurityIdentitiesSensors.Read.All permission."
+                )
+            elif "401" in error_msg or "Unauthorized" in error_msg:
+                logger.error(
+                    "DefenderIdentity - Authentication failed accessing sensors API. "
+                    "Verify the Service Principal credentials are valid."
+                )
+            else:
+                logger.error(
+                    f"DefenderIdentity - API error getting sensors: "
+                    f"{error.__class__.__name__}: {error}"
+                )
+            return None
 
+        # Step 2: Parse the response
+        try:
             while sensors_response:
                 for sensor in getattr(sensors_response, "value", []) or []:
                     sensors.append(
@@ -116,10 +138,10 @@ class DefenderIdentity(M365Service):
                         next_link
                     ).get()
                 )
-
         except Exception as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"DefenderIdentity - Error parsing sensors response: "
+                f"{error.__class__.__name__}: {error}"
             )
             return None
 
@@ -137,11 +159,33 @@ class DefenderIdentity(M365Service):
         """
         logger.info("DefenderIdentity - Getting health issues...")
         health_issues: Optional[List[HealthIssue]] = []
+
+        # Step 1: Call the API
         try:
             health_issues_response = (
                 await self.client.security.identities.health_issues.get()
             )
+        except Exception as error:
+            error_msg = str(error)
+            if "403" in error_msg or "Forbidden" in error_msg:
+                logger.error(
+                    "DefenderIdentity - Permission denied accessing health issues API. "
+                    "Ensure the Service Principal has SecurityIdentitiesHealth.Read.All permission."
+                )
+            elif "401" in error_msg or "Unauthorized" in error_msg:
+                logger.error(
+                    "DefenderIdentity - Authentication failed accessing health issues API. "
+                    "Verify the Service Principal credentials are valid."
+                )
+            else:
+                logger.error(
+                    f"DefenderIdentity - API error getting health issues: "
+                    f"{error.__class__.__name__}: {error}"
+                )
+            return None
 
+        # Step 2: Parse the response
+        try:
             while health_issues_response:
                 for issue in getattr(health_issues_response, "value", []) or []:
                     health_issues.append(
@@ -161,7 +205,7 @@ class DefenderIdentity(M365Service):
                             domain_names=getattr(issue, "domain_names", []) or [],
                             sensor_dns_names=getattr(issue, "sensor_d_n_s_names", [])
                             or [],
-                            issue_type_id=getattr(issue, "issue_type_id", ""),
+                            issue_type_id=getattr(issue, "issue_type_id", None),
                             recommendations=getattr(issue, "recommendations", []) or [],
                             additional_information=getattr(
                                 issue, "additional_information", []
@@ -178,10 +222,10 @@ class DefenderIdentity(M365Service):
                         next_link
                     ).get()
                 )
-
         except Exception as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"DefenderIdentity - Error parsing health issues response: "
+                f"{error.__class__.__name__}: {error}"
             )
             return None
 
@@ -243,6 +287,6 @@ class HealthIssue(BaseModel):
     last_modified_date_time: str
     domain_names: List[str]
     sensor_dns_names: List[str]
-    issue_type_id: str
+    issue_type_id: Optional[str]
     recommendations: List[str]
     additional_information: List[str]
