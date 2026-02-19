@@ -4006,7 +4006,7 @@ class TestAttackPathsScanViewSet:
             expected_db_name,
             query_definition,
             prepared_parameters,
-            provider_id=provider_id,
+            provider_id,
         )
         mock_clear_cache.assert_called_once_with(expected_db_name)
         result = response.json()["data"]
