@@ -11,7 +11,7 @@ const inputVariants = cva(
     variants: {
       variant: {
         default:
-          "border-border-input-primary bg-bg-input-primary dark:bg-input/30 hover:bg-bg-neutral-secondary dark:hover:bg-input/50 focus:border-border-input-primary-press focus:ring-1 focus:ring-border-input-primary-press focus:ring-offset-1 placeholder:text-text-neutral-tertiary",
+          "border-border-input-primary bg-bg-input-primary dark:bg-input/30 hover:bg-bg-neutral-secondary dark:hover:bg-input/50 focus:border-border-input-primary-press focus:ring-1 focus:ring-inset focus:ring-border-input-primary-press placeholder:text-text-neutral-tertiary",
         ghost:
           "border-transparent bg-transparent hover:bg-bg-neutral-tertiary focus:bg-bg-neutral-tertiary placeholder:text-text-neutral-tertiary",
       },
