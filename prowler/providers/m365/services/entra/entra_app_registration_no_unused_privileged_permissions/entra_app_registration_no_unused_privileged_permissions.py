@@ -100,9 +100,17 @@ class entra_app_registration_no_unused_privileged_permissions(Check):
             if unused_privileged_permissions:
                 # The app has unused privileged permissions
                 report.status = "FAIL"
-                permissions_list = ", ".join(unused_privileged_permissions)
+                # Truncate list to first 5 permissions for readability
+                total_count = len(unused_privileged_permissions)
+                if total_count > 5:
+                    displayed = unused_privileged_permissions[:5]
+                    permissions_list = ", ".join(displayed)
+                    remaining = total_count - 5
+                    permissions_list += f" (and {remaining} more)"
+                else:
+                    permissions_list = ", ".join(unused_privileged_permissions)
                 report.status_extended = (
-                    f"App registration {app.name} has {len(unused_privileged_permissions)} "
+                    f"App registration {app.name} has {total_count} "
                     f"unused privileged permission(s): {permissions_list}."
                 )
             else:
