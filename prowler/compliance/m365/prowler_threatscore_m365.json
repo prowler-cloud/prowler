@@ -1148,7 +1148,8 @@
       "Id": "4.1.2",
       "Description": "Ensure that password hash sync is enabled for hybrid deployments",
       "Checks": [
-        "entra_password_hash_sync_enabled"
+        "entra_password_hash_sync_enabled",
+        "entra_seamless_sso_disabled"
       ],
       "Attributes": [
         {

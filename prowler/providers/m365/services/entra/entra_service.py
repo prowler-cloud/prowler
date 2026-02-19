@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Dict, List, Optional
 from uuid import UUID
 
+from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
     RunHuntingQueryPostRequestBody,
 )
@@ -78,6 +79,7 @@ class Entra(M365Service):
                 self._get_organization(),
                 self._get_users(),
                 self._get_oauth_apps(),
+                self._get_directory_sync_settings(),
             )
         )
 
@@ -88,6 +90,7 @@ class Entra(M365Service):
         self.organizations = attributes[4]
         self.users = attributes[5]
         self.oauth_apps: Optional[Dict[str, OAuthApp]] = attributes[6]
+        self.directory_sync_settings, self.directory_sync_error = attributes[7]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -410,6 +413,57 @@ class Entra(M365Service):
             )
 
         return organizations
+
+    async def _get_directory_sync_settings(self):
+        """Retrieve on-premises directory synchronization settings.
+
+        Fetches the directory synchronization configuration from Microsoft Graph API
+        to determine the state of synchronization features such as password sync,
+        device writeback, and other hybrid identity settings.
+
+        Returns:
+            A tuple containing:
+            - A list of DirectorySyncSettings objects, or an empty list if retrieval fails.
+            - An error message string if there was an access error, None otherwise.
+        """
+        logger.info("Entra - Getting directory sync settings...")
+        directory_sync_settings = []
+        error_message = None
+        try:
+            sync_data = await self.client.directory.on_premises_synchronization.get()
+            for sync in getattr(sync_data, "value", []) or []:
+                features = getattr(sync, "features", None)
+                directory_sync_settings.append(
+                    DirectorySyncSettings(
+                        id=sync.id,
+                        password_sync_enabled=getattr(
+                            features, "password_sync_enabled", False
+                        )
+                        or False,
+                        seamless_sso_enabled=getattr(
+                            features, "seamless_sso_enabled", False
+                        )
+                        or False,
+                    )
+                )
+        except ODataError as error:
+            error_code = getattr(error.error, "code", None) if error.error else None
+            if error_code == "Authorization_RequestDenied":
+                error_message = "Insufficient privileges to read directory sync settings. Required permission: OnPremDirectorySynchronization.Read.All or OnPremDirectorySynchronization.ReadWrite.All"
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error_message}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                error_message = str(error)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            error_message = str(error)
+        return directory_sync_settings, error_message
 
     async def _get_users(self):
         logger.info("Entra - Getting users...")
@@ -745,6 +799,19 @@ class Organization(BaseModel):
     id: str
     name: str
     on_premises_sync_enabled: bool
+
+
+class DirectorySyncSettings(BaseModel):
+    """On-premises directory synchronization settings.
+
+    Represents the synchronization configuration for a tenant, including feature
+    flags that control hybrid identity behaviors such as password synchronization
+    and Seamless SSO.
+    """
+
+    id: str
+    password_sync_enabled: bool = False
+    seamless_sso_enabled: bool = False
 
 
 class Group(BaseModel):

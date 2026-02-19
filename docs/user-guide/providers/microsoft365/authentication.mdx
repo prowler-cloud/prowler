@@ -41,6 +41,7 @@ When using service principal authentication, add these **Application Permissions
 
 - `AuditLog.Read.All`: Required for Entra service.
 - `Directory.Read.All`: Required for all services.
+- `OnPremDirectorySynchronization.Read.All`: Required for `entra_seamless_sso_disabled` check (hybrid deployments).
 - `Policy.Read.All`: Required for all services.
 - `SecurityIdentitiesHealth.Read.All`: Required for `defenderidentity_health_issues_no_open` check.
 - `SecurityIdentitiesSensors.Read.All`: Required for `defenderidentity_health_issues_no_open` check.
@@ -108,6 +109,7 @@ Browser and Azure CLI authentication methods limit scanning capabilities to chec
 
    - `AuditLog.Read.All`: Required for Entra service
    - `Directory.Read.All`: Required for all services
+   - `OnPremDirectorySynchronization.Read.All`: Required for `entra_seamless_sso_disabled` check (hybrid deployments)
    - `Policy.Read.All`: Required for all services
    - `SecurityIdentitiesHealth.Read.All`: Required for `defenderidentity_health_issues_no_open` check
    - `SecurityIdentitiesSensors.Read.All`: Required for `defenderidentity_health_issues_no_open` check
