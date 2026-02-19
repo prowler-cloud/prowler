@@ -13,35 +13,70 @@ class entra_seamless_sso_disabled(Check):
     and Entra ID, and it can also be exploited for brute force attacks. Modern devices with
     Primary Refresh Token (PRT) support make this feature unnecessary for most organizations.
 
-    - PASS: On-premises synchronization is not enabled, so Seamless SSO is not applicable.
-    - FAIL: On-premises synchronization is enabled, indicating a hybrid deployment where
-      Seamless SSO should be verified and disabled.
+    - PASS: Seamless SSO is disabled or on-premises sync is not enabled (cloud-only).
+    - FAIL: Seamless SSO is enabled in a hybrid deployment, or cannot verify due to insufficient permissions.
     """
 
     def execute(self) -> List[CheckReportM365]:
         """Execute the Seamless SSO disabled check.
 
-        Iterates over organizations to determine whether on-premises synchronization
-        is enabled. Hybrid environments with on-premises sync enabled are flagged as
-        requiring Seamless SSO to be disabled.
+        Checks the directory sync settings to determine if Seamless SSO is enabled.
+        For hybrid environments, this check verifies the actual Seamless SSO configuration
+        rather than inferring from on-premises sync status.
 
         Returns:
             A list of CheckReportM365 objects with the result of the check.
         """
         findings = []
-        for organization in entra_client.organizations:
+
+        # Check if there was an error retrieving directory sync settings
+        if entra_client.directory_sync_error:
+            for organization in entra_client.organizations:
+                report = CheckReportM365(
+                    self.metadata(),
+                    resource=organization,
+                    resource_id=organization.id,
+                    resource_name=organization.name,
+                )
+                # Only FAIL for hybrid orgs; cloud-only orgs don't need this permission
+                if organization.on_premises_sync_enabled:
+                    report.status = "FAIL"
+                    report.status_extended = f"Cannot verify Seamless SSO status for {organization.name}: {entra_client.directory_sync_error}"
+                else:
+                    report.status = "PASS"
+                    report.status_extended = f"Entra organization {organization.name} is cloud-only (no on-premises sync), Seamless SSO is not applicable."
+                findings.append(report)
+            return findings
+
+        # Process directory sync settings if available
+        for sync_settings in entra_client.directory_sync_settings:
             report = CheckReportM365(
                 self.metadata(),
-                resource=organization,
-                resource_id=organization.id,
-                resource_name=organization.name,
+                resource=sync_settings,
+                resource_id=sync_settings.id,
+                resource_name=f"Directory Sync {sync_settings.id}",
             )
-            report.status = "PASS"
-            report.status_extended = f"Entra organization {organization.name} does not have on-premises sync enabled, Seamless SSO is not applicable."
 
-            if organization.on_premises_sync_enabled:
+            if sync_settings.seamless_sso_enabled:
                 report.status = "FAIL"
-                report.status_extended = f"Entra organization {organization.name} has on-premises sync enabled, Seamless SSO should be disabled to prevent lateral movement and brute force attacks."
+                report.status_extended = f"Entra directory sync {sync_settings.id} has Seamless SSO enabled, which can be exploited for lateral movement and brute force attacks."
+            else:
+                report.status = "PASS"
+                report.status_extended = f"Entra directory sync {sync_settings.id} has Seamless SSO disabled."
 
             findings.append(report)
+
+        # If no directory sync settings and no error, it's a cloud-only tenant
+        if not entra_client.directory_sync_settings:
+            for organization in entra_client.organizations:
+                report = CheckReportM365(
+                    self.metadata(),
+                    resource=organization,
+                    resource_id=organization.id,
+                    resource_name=organization.name,
+                )
+                report.status = "PASS"
+                report.status_extended = f"Entra organization {organization.name} is cloud-only (no on-premises sync), Seamless SSO is not applicable."
+                findings.append(report)
+
         return findings

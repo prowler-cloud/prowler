@@ -4,6 +4,7 @@ from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
+from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -57,7 +58,7 @@ class Entra(M365Service):
         self.groups = attributes[3]
         self.organizations = attributes[4]
         self.users = attributes[5]
-        self.directory_sync_settings = attributes[6]
+        self.directory_sync_settings, self.directory_sync_error = attributes[6]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -389,14 +390,15 @@ class Entra(M365Service):
         device writeback, and other hybrid identity settings.
 
         Returns:
-            A list of DirectorySyncSettings objects, or an empty list if retrieval fails.
+            A tuple containing:
+            - A list of DirectorySyncSettings objects, or an empty list if retrieval fails.
+            - An error message string if there was an access error, None otherwise.
         """
         logger.info("Entra - Getting directory sync settings...")
         directory_sync_settings = []
+        error_message = None
         try:
-            sync_data = (
-                await self.client.directory.on_premises_synchronization.get()
-            )
+            sync_data = await self.client.directory.on_premises_synchronization.get()
             for sync in getattr(sync_data, "value", []) or []:
                 features = getattr(sync, "features", None)
                 directory_sync_settings.append(
@@ -412,11 +414,24 @@ class Entra(M365Service):
                         or False,
                     )
                 )
+        except ODataError as error:
+            error_code = getattr(error.error, "code", None) if error.error else None
+            if error_code == "Authorization_RequestDenied":
+                error_message = "Insufficient privileges to read directory sync settings. Required permission: OnPremDirectorySynchronization.Read.All or OnPremDirectorySynchronization.ReadWrite.All"
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error_message}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                error_message = str(error)
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        return directory_sync_settings
+            error_message = str(error)
+        return directory_sync_settings, error_message
 
     async def _get_users(self):
         logger.info("Entra - Getting users...")

@@ -41,6 +41,7 @@ When using service principal authentication, add these **Application Permissions
 
 - `AuditLog.Read.All`: Required for Entra service.
 - `Directory.Read.All`: Required for all services.
+- `OnPremDirectorySynchronization.Read.All`: Required for `entra_seamless_sso_disabled` check (hybrid deployments).
 - `Policy.Read.All`: Required for all services.
 - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
 
@@ -105,6 +106,7 @@ Browser and Azure CLI authentication methods limit scanning capabilities to chec
 
    - `AuditLog.Read.All`: Required for Entra service
    - `Directory.Read.All`: Required for all services
+   - `OnPremDirectorySynchronization.Read.All`: Required for `entra_seamless_sso_disabled` check (hybrid deployments)
    - `Policy.Read.All`: Required for all services
    - `SharePointTenantSettings.Read.All`: Required for SharePoint service
 

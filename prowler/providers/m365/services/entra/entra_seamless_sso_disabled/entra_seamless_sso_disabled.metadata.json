@@ -7,14 +7,13 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Organization Settings",
+  "ResourceType": "Directory Sync Settings",
   "ResourceGroup": "IAM",
-  "Description": "Seamless Single Sign-On (SSO) in hybrid Microsoft Entra deployments allows automatic authentication for domain-joined devices on the corporate network.\n\nWhen on-premises synchronization is enabled, Seamless SSO may be active, which modern devices with **Primary Refresh Token** (PRT) support no longer require.",
+  "Description": "Seamless Single Sign-On (SSO) in hybrid Microsoft Entra deployments allows automatic authentication for domain-joined devices on the corporate network.\n\nThis check verifies the actual Seamless SSO configuration in directory synchronization settings. Modern devices with **Primary Refresh Token** (PRT) support no longer require Seamless SSO.",
   "Risk": "Seamless SSO can be exploited for **lateral movement** between on-premises domains and Entra ID when an Entra Connect server is compromised. It can also be used to perform **brute force attacks** against Entra ID, as authentication through the AZUREADSSOACC account bypasses standard protections.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/how-to-connect-sso",
-    "https://maester.dev/docs/tests/MT.1084"
+    "https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/how-to-connect-sso"
   ],
   "Remediation": {
     "Code": {
@@ -35,5 +34,5 @@
   "RelatedTo": [
     "entra_password_hash_sync_enabled"
   ],
-  "Notes": "Applies only to hybrid Microsoft Entra deployments using Entra Connect sync. Seamless SSO status is inferred from on-premises synchronization being enabled, as the Microsoft Graph API does not expose a direct Seamless SSO configuration flag."
+  "Notes": "Applies only to hybrid Microsoft Entra deployments using Entra Connect sync. The check reads the seamless_sso_enabled flag from the directory on-premises synchronization settings via Microsoft Graph API."
 }
