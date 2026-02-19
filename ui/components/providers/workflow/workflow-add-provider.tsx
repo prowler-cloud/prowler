@@ -1,6 +1,11 @@
 "use client";
 
-import { FolderGit2, KeyRound, Shield } from "lucide-react";
+import {
+  CircleCheckBig,
+  FolderGit2,
+  KeyRound,
+  Rocket,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { ProwlerShort } from "@/components/icons/prowler/ProwlerIcons";
@@ -30,7 +35,7 @@ const STEPS: StepConfig[] = [
     label: "Validate Connection",
     description:
       "Review provider resources and test the connection to Prowler.",
-    icon: Shield,
+    icon: Rocket,
   },
   {
     label: "Launch Scan",
@@ -66,14 +71,8 @@ export const WorkflowAddProvider = () => {
                 isActive={isActive}
                 icon={step.icon}
               />
-              {/* Connector line */}
               {index < STEPS.length - 1 && (
-                <div
-                  className={cn(
-                    "h-14 w-0 border-l border-dashed",
-                    isComplete ? "border-primary/40" : "border-[#202020]",
-                  )}
-                />
+                <StepConnector isComplete={isComplete} />
               )}
             </div>
 
@@ -107,19 +106,45 @@ interface StepCircleProps {
 }
 
 function StepCircle({ isComplete, isActive, icon: Icon }: StepCircleProps) {
-  const borderColor =
-    isComplete || isActive ? "border-primary" : "border-[#202020]";
-  const iconColor = isComplete || isActive ? "text-primary" : "text-[#525252]";
+  if (isComplete) {
+    return (
+      <div className="bg-button-primary-press flex size-[44px] shrink-0 items-center justify-center rounded-full">
+        <CircleCheckBig className="text-bg-neutral-primary size-6" />
+      </div>
+    );
+  }
+
+  if (isActive) {
+    return (
+      <div className="border-border-input-primary-pressed flex size-[44px] shrink-0 items-center justify-center rounded-full border bg-[#121110]">
+        <StepIcon
+          icon={Icon}
+          className="text-border-input-primary-pressed"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex size-[44px] shrink-0 items-center justify-center rounded-full border border-[#202020] bg-[#121110]">
+      <StepIcon icon={Icon} className="text-[#525252]" />
+    </div>
+  );
+}
+
+function StepConnector({ isComplete }: { isComplete: boolean }) {
+  if (isComplete) {
+    return <div className="bg-border-input-primary-pressed h-14 w-px" />;
+  }
 
   return (
     <div
-      className={cn(
-        "flex size-[44px] shrink-0 items-center justify-center rounded-full border bg-[#121110]",
-        borderColor,
-      )}
-    >
-      <StepIcon icon={Icon} className={iconColor} />
-    </div>
+      className="h-14 w-px"
+      style={{
+        backgroundImage:
+          "repeating-linear-gradient(to bottom, var(--color-bg-data-muted) 0px, var(--color-bg-data-muted) 4px, transparent 4px, transparent 8px)",
+      }}
+    />
   );
 }
 
