@@ -42,6 +42,8 @@ When using service principal authentication, add these **Application Permissions
 - `AuditLog.Read.All`: Required for Entra service.
 - `Directory.Read.All`: Required for all services.
 - `Policy.Read.All`: Required for all services.
+- `SecurityIdentitiesHealth.Read.All`: Required for `defenderidentity_health_issues_no_open` check.
+- `SecurityIdentitiesSensors.Read.All`: Required for `defenderidentity_health_issues_no_open` check.
 - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
 
 **External API Permissions:**
@@ -106,6 +108,8 @@ Browser and Azure CLI authentication methods limit scanning capabilities to chec
    - `AuditLog.Read.All`: Required for Entra service
    - `Directory.Read.All`: Required for all services
    - `Policy.Read.All`: Required for all services
+   - `SecurityIdentitiesHealth.Read.All`: Required for `defenderidentity_health_issues_no_open` check
+   - `SecurityIdentitiesSensors.Read.All`: Required for `defenderidentity_health_issues_no_open` check
    - `SharePointTenantSettings.Read.All`: Required for SharePoint service
 
    ![Permission Screenshots](/images/providers/directory-permission.png)
