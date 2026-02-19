@@ -2,7 +2,9 @@ from datetime import datetime, timezone
 from typing import Any
 
 from cartography.config import Config as CartographyConfig
+from celery.utils.log import get_task_logger
 
+from api.attack_paths import database as graph_database
 from api.db_utils import rls_transaction
 from api.models import (
     AttackPathsScan as ProwlerAPIAttackPathsScan,
@@ -10,6 +12,8 @@ from api.models import (
     StateChoices,
 )
 from tasks.jobs.attack_paths.config import is_provider_available
+
+logger = get_task_logger(__name__)
 
 
 def can_provider_run_attack_paths_scan(tenant_id: str, provider_id: int) -> bool:
@@ -28,12 +32,21 @@ def create_attack_paths_scan(
         return None
 
     with rls_transaction(tenant_id):
+        # Inherit graph_data_ready from the previous scan for this provider,
+        # so queries remain available while the new scan runs.
+        previous_data_ready = ProwlerAPIAttackPathsScan.objects.filter(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            graph_data_ready=True,
+        ).exists()
+
         attack_paths_scan = ProwlerAPIAttackPathsScan.objects.create(
             tenant_id=tenant_id,
             provider_id=provider_id,
             scan_id=scan_id,
             state=StateChoices.SCHEDULED,
             started_at=datetime.now(tz=timezone.utc),
+            graph_data_ready=previous_data_ready,
         )
         attack_paths_scan.save()
 
@@ -116,6 +129,32 @@ def update_attack_paths_scan_progress(
         attack_paths_scan.save(update_fields=["progress"])
 
 
+def set_graph_data_ready(
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
+    ready: bool,
+) -> None:
+    with rls_transaction(attack_paths_scan.tenant_id):
+        attack_paths_scan.graph_data_ready = ready
+        attack_paths_scan.save(update_fields=["graph_data_ready"])
+
+
+def set_provider_graph_data_ready(
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
+    ready: bool,
+) -> None:
+    """
+    Set `graph_data_ready` for ALL scans of the same provider.
+
+    Used before drop/sync so that older scan IDs cannot bypass the query gate while the graph is being replaced.
+    """
+    with rls_transaction(attack_paths_scan.tenant_id):
+        ProwlerAPIAttackPathsScan.objects.filter(
+            tenant_id=attack_paths_scan.tenant_id,
+            provider_id=attack_paths_scan.provider_id,
+        ).update(graph_data_ready=ready)
+        attack_paths_scan.refresh_from_db(fields=["graph_data_ready"])
+
+
 def fail_attack_paths_scan(
     tenant_id: str,
     scan_id: str,
@@ -130,6 +169,17 @@ def fail_attack_paths_scan(
         StateChoices.COMPLETED,
         StateChoices.FAILED,
     ):
+        tmp_db_name = graph_database.get_database_name(
+            attack_paths_scan.id, temporary=True
+        )
+        try:
+            graph_database.drop_database(tmp_db_name)
+
+        except Exception:
+            logger.exception(
+                f"Failed to drop temp database {tmp_db_name} during failure handling"
+            )
+
         finish_attack_paths_scan(
             attack_paths_scan,
             StateChoices.FAILED,

@@ -1,0 +1,43 @@
+{
+  "Provider": "openstack",
+  "CheckID": "networking_security_group_allows_all_ingress_from_internet",
+  "CheckTitle": "Security groups do not allow all ingress traffic from the Internet",
+  "CheckType": [],
+  "ServiceName": "networking",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "OpenStackSecurityGroup",
+  "ResourceGroup": "network",
+  "Description": "**OpenStack security groups** are evaluated to verify that no rule allows **all ingress traffic** (any protocol, any port) from the Internet (0.0.0.0/0 or ::/0). A rule with no protocol and no port restriction is effectively a \"permit any\" firewall rule, completely bypassing network-level access controls. This is the most permissive possible configuration and should never be used in production.",
+  "Risk": "Allowing all inbound traffic from the Internet exposes every service running on the instance to unauthorized access. Attackers can discover and exploit any listening service including databases, management interfaces, internal APIs, and debugging tools. This bypasses defense-in-depth and is equivalent to having no firewall. Combined with misconfigurations or unpatched services, it enables initial access, lateral movement, data exfiltration, and full infrastructure compromise.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/neutron/latest/admin/intro-os-networking.html",
+    "https://docs.openstack.org/security-guide/networking/architecture.html",
+    "https://docs.openstack.org/api-ref/network/v2/",
+    "https://docs.openstack.org/neutron/latest/admin/config-rbac.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Network > Security Groups\n2. Locate the security group with unrestricted ingress\n3. Click Manage Rules\n4. Delete rules allowing all traffic from 0.0.0.0/0 or ::/0 with no protocol/port restriction\n5. Create specific rules for only the protocols and ports required (e.g., TCP 443 for HTTPS)\n6. Restrict source CIDRs to known IP ranges where possible\n7. Save changes and verify connectivity",
+      "Terraform": "```hcl\n# Terraform: create specific ingress rules instead of allowing all traffic\n\nresource \"openstack_networking_secgroup_v2\" \"web_servers\" {\n  name        = \"web-servers-sg\"\n  description = \"Security group for web servers\"\n}\n\n# GOOD: Allow only HTTPS from the Internet\nresource \"openstack_networking_secgroup_rule_v2\" \"https_ingress\" {\n  direction         = \"ingress\"\n  ethertype         = \"IPv4\"\n  protocol          = \"tcp\"\n  port_range_min    = 443\n  port_range_max    = 443\n  remote_ip_prefix  = \"0.0.0.0/0\"\n  security_group_id = openstack_networking_secgroup_v2.web_servers.id\n}\n\n# GOOD: Allow SSH only from bastion security group\nresource \"openstack_networking_secgroup_rule_v2\" \"ssh_from_bastion\" {\n  direction         = \"ingress\"\n  ethertype         = \"IPv4\"\n  protocol          = \"tcp\"\n  port_range_min    = 22\n  port_range_max    = 22\n  remote_group_id   = openstack_networking_secgroup_v2.bastion.id\n  security_group_id = openstack_networking_secgroup_v2.web_servers.id\n}\n\n# BAD: Never allow all traffic from the Internet\n# resource \"openstack_networking_secgroup_rule_v2\" \"allow_all\" {\n#   direction         = \"ingress\"\n#   ethertype         = \"IPv4\"\n#   remote_ip_prefix  = \"0.0.0.0/0\"  # DANGEROUS - no protocol/port restriction\n#   security_group_id = openstack_networking_secgroup_v2.web_servers.id\n# }\n```"
+    },
+    "Recommendation": {
+      "Text": "Remove rules that allow all ingress traffic from the Internet. Follow the principle of least privilege by creating specific rules for only the required protocols and ports. Use security group references (remote_group_id) instead of CIDRs where possible to restrict access to known infrastructure components.",
+      "Url": "https://hub.prowler.com/check/networking_security_group_allows_all_ingress_from_internet"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "networking_security_group_allows_ssh_from_internet",
+    "networking_security_group_allows_rdp_from_internet"
+  ],
+  "Notes": "This check specifically flags rules where protocol is unset (all protocols) AND port range is unset (all ports) AND the source is 0.0.0.0/0 or ::/0. Rules allowing all TCP or all UDP from the Internet are not flagged by this check but may be flagged by port-specific checks (SSH, RDP). In OpenStack, a rule with no remote_ip_prefix and no remote_group_id implies access from any source."
+}
