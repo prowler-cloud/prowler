@@ -15,6 +15,7 @@ from prowler.providers.image.exceptions.exceptions import (
     ImageListFileNotFoundError,
     ImageListFileReadError,
     ImageNoImagesProvidedError,
+    ImageRegistryAuthError,
     ImageScanError,
     ImageTrivyBinaryNotFoundError,
 )
@@ -288,20 +289,23 @@ class TestImageProvider:
             )
             assert "alpine:3.18" in output
 
-    @patch("subprocess.run")
-    def test_test_connection_success(self, mock_subprocess):
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_success(self, mock_factory):
         """Test successful connection returns is_connected=True."""
-        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
+        mock_adapter = MagicMock()
+        mock_adapter.list_tags.return_value = ["3.18", "latest"]
+        mock_factory.return_value = mock_adapter
 
         result = ImageProvider.test_connection(image="alpine:3.18")
 
         assert result.is_connected is True
+        mock_adapter.list_tags.assert_called_once_with("library/alpine")
 
-    @patch("subprocess.run")
-    def test_test_connection_auth_failure(self, mock_subprocess):
-        """Test 401 error returns auth failure."""
-        mock_subprocess.return_value = MagicMock(
-            returncode=1, stderr="401 unauthorized"
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_auth_failure(self, mock_factory):
+        """Test registry auth error returns auth failure."""
+        mock_factory.return_value = MagicMock(
+            list_tags=MagicMock(side_effect=ImageRegistryAuthError(file=__file__))
         )
 
         result = ImageProvider.test_connection(image="private/image:latest")
@@ -309,10 +313,12 @@ class TestImageProvider:
         assert result.is_connected is False
         assert "Authentication failed" in result.error
 
-    @patch("subprocess.run")
-    def test_test_connection_not_found(self, mock_subprocess):
-        """Test 404 error returns not found."""
-        mock_subprocess.return_value = MagicMock(returncode=1, stderr="404 not found")
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_not_found(self, mock_factory):
+        """Test tag not found returns not found error."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_tags.return_value = ["v1", "v2"]
+        mock_factory.return_value = mock_adapter
 
         result = ImageProvider.test_connection(image="nonexistent/image:latest")
 
@@ -578,10 +584,12 @@ class TestImageProviderRegistryAuth:
         assert env["TRIVY_USERNAME"] == "myuser"
         assert env["TRIVY_PASSWORD"] == "mypass"
 
-    @patch("subprocess.run")
-    def test_test_connection_with_basic_auth(self, mock_subprocess):
-        """Test test_connection uses Trivy native auth with TRIVY_USERNAME/PASSWORD env vars."""
-        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_with_basic_auth(self, mock_factory):
+        """Test test_connection passes credentials to the registry adapter."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_tags.return_value = ["v1"]
+        mock_factory.return_value = mock_adapter
 
         result = ImageProvider.test_connection(
             image="private.registry.io/myapp:v1",
@@ -590,17 +598,19 @@ class TestImageProviderRegistryAuth:
         )
 
         assert result.is_connected is True
-        assert mock_subprocess.call_count == 1
-        trivy_call = mock_subprocess.call_args
-        assert trivy_call.args[0][0] == "trivy"
-        env = trivy_call.kwargs.get("env") or trivy_call[1].get("env")
-        assert env["TRIVY_USERNAME"] == "myuser"
-        assert env["TRIVY_PASSWORD"] == "mypass"
+        mock_factory.assert_called_once_with(
+            registry_url="private.registry.io",
+            username="myuser",
+            password="mypass",
+            token=None,
+        )
 
-    @patch("subprocess.run")
-    def test_test_connection_with_token(self, mock_subprocess):
-        """Test test_connection passes token via env."""
-        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_with_token(self, mock_factory):
+        """Test test_connection passes token to the registry adapter."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_tags.return_value = ["v1"]
+        mock_factory.return_value = mock_adapter
 
         result = ImageProvider.test_connection(
             image="private.registry.io/myapp:v1",
@@ -608,9 +618,12 @@ class TestImageProviderRegistryAuth:
         )
 
         assert result.is_connected is True
-        call_kwargs = mock_subprocess.call_args
-        env = call_kwargs.kwargs.get("env") or call_kwargs[1].get("env")
-        assert env["TRIVY_REGISTRY_TOKEN"] == "my-token"
+        mock_factory.assert_called_once_with(
+            registry_url="private.registry.io",
+            username=None,
+            password=None,
+            token="my-token",
+        )
 
     def test_print_credentials_shows_auth_method(self):
         """Test that print_credentials outputs the auth method."""

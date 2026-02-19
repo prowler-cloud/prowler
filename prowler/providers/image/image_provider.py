@@ -31,6 +31,9 @@ from prowler.providers.image.exceptions.exceptions import (
     ImageListFileReadError,
     ImageMaxImagesExceededError,
     ImageNoImagesProvidedError,
+    ImageRegistryAuthError,
+    ImageRegistryCatalogError,
+    ImageRegistryNetworkError,
     ImageScanError,
     ImageTrivyBinaryNotFoundError,
 )
@@ -901,7 +904,10 @@ class ImageProvider(Provider):
         registry_token: str | None = None,
     ) -> "Connection":
         """
-        Test connection to container registry by attempting to inspect an image.
+        Test connection to container registry by verifying image accessibility.
+
+        Uses registry HTTP APIs directly instead of Trivy to avoid false
+        failures caused by Trivy DB download issues.
 
         Args:
             image: Container image to test
@@ -921,61 +927,59 @@ class ImageProvider(Provider):
             if not image:
                 return Connection(is_connected=False, error="Image name is required")
 
-            # Build env with registry credentials
-            env = dict(os.environ)
-            if registry_username and registry_password:
-                env["TRIVY_USERNAME"] = registry_username
-                env["TRIVY_PASSWORD"] = registry_password
-            elif registry_token:
-                env["TRIVY_REGISTRY_TOKEN"] = registry_token
+            # Parse registry, repository, and tag from image reference
+            registry_host = ImageProvider._extract_registry(image)
 
-            # Test by scanning the image with a short timeout; Trivy will
-            # download the vulnerability DB on the first run if needed.
-            process = subprocess.run(
-                [
-                    "trivy",
-                    "image",
-                    "--format",
-                    "json",
-                    "--timeout",
-                    "5m",
-                    image,
-                ],
-                capture_output=True,
-                text=True,
-                timeout=360,
-                env=env,
-            )
-
-            if process.returncode == 0:
-                return Connection(is_connected=True)
+            if registry_host:
+                repo_and_tag = image[len(registry_host) + 1 :]
             else:
-                error_msg = process.stderr or "Unknown error"
-                if "401" in error_msg or "unauthorized" in error_msg.lower():
-                    return Connection(
-                        is_connected=False,
-                        error="Authentication failed. Check registry credentials.",
-                    )
-                elif "not found" in error_msg.lower() or "404" in error_msg:
-                    return Connection(
-                        is_connected=False,
-                        error="Image not found in registry.",
-                    )
-                else:
-                    return Connection(
-                        is_connected=False,
-                        error=f"Failed to access image: {error_msg[:200]}",
-                    )
+                repo_and_tag = image
 
-        except subprocess.TimeoutExpired:
-            return Connection(
-                is_connected=False,
-                error="Connection timed out",
+            if ":" in repo_and_tag:
+                repository, tag = repo_and_tag.rsplit(":", 1)
+            else:
+                repository = repo_and_tag
+                tag = "latest"
+
+            is_dockerhub = not registry_host or registry_host in (
+                "docker.io",
+                "registry-1.docker.io",
             )
-        except FileNotFoundError:
+
+            # Docker Hub official images use "library/" prefix
+            if is_dockerhub and "/" not in repository:
+                repository = f"library/{repository}"
+
+            if is_dockerhub:
+                registry_url = f"docker.io/{repository.split('/')[0]}"
+            else:
+                registry_url = registry_host
+
+            adapter = create_registry_adapter(
+                registry_url=registry_url,
+                username=registry_username,
+                password=registry_password,
+                token=registry_token,
+            )
+
+            tags = adapter.list_tags(repository)
+            if tag not in tags:
+                return Connection(
+                    is_connected=False,
+                    error=f"Tag '{tag}' not found for image '{image}'.",
+                )
+
+            return Connection(is_connected=True)
+
+        except ImageRegistryAuthError:
             return Connection(
                 is_connected=False,
-                error="Trivy binary not found. Please install Trivy.",
+                error="Authentication failed. Check registry credentials.",
+            )
+        except (ImageRegistryNetworkError, ImageRegistryCatalogError) as exc:
+            return Connection(
+                is_connected=False,
+                error=f"Failed to access image: {str(exc)[:200]}",
             )
         except Exception as error:
             if raise_on_exception:
