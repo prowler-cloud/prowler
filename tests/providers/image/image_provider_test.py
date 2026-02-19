@@ -1,3 +1,4 @@
+import os
 import tempfile
 from unittest import mock
 from unittest.mock import MagicMock, patch
@@ -41,6 +42,10 @@ def _make_provider(**kwargs):
 
 
 class TestImageProvider:
+    @patch.dict(
+        os.environ,
+        {"REGISTRY_USERNAME": "", "REGISTRY_PASSWORD": "", "REGISTRY_TOKEN": ""},
+    )
     def test_image_provider(self):
         """Test default initialization."""
         provider = _make_provider()
@@ -402,6 +407,329 @@ class TestImageProvider:
         with pytest.raises(ImageScanError):
             for _ in provider.run_scan():
                 pass
+
+
+@patch.dict(
+    os.environ, {"REGISTRY_USERNAME": "", "REGISTRY_PASSWORD": "", "REGISTRY_TOKEN": ""}
+)
+class TestImageProviderRegistryAuth:
+    def test_no_auth_by_default(self):
+        """Test that no auth is set when no credentials are provided."""
+        provider = _make_provider()
+
+        assert not provider.registry_username
+        assert not provider.registry_password
+        assert not provider.registry_token
+        assert provider.auth_method == "No auth"
+
+    def test_basic_auth_with_explicit_params(self):
+        """Test basic auth via explicit constructor params."""
+        provider = _make_provider(
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+
+        assert provider.registry_username == "myuser"
+        assert provider.registry_password == "mypass"
+        assert provider.auth_method == "Basic auth"
+
+    def test_token_auth_with_explicit_param(self):
+        """Test token auth via explicit constructor param."""
+        provider = _make_provider(registry_token="my-token-123")
+
+        assert provider.registry_token == "my-token-123"
+        assert provider.auth_method == "Registry token"
+
+    def test_basic_auth_takes_precedence_over_token(self):
+        """Test that username/password takes precedence over token."""
+        provider = _make_provider(
+            registry_username="myuser",
+            registry_password="mypass",
+            registry_token="my-token",
+        )
+
+        assert provider.auth_method == "Basic auth"
+
+    @patch.dict(
+        os.environ, {"REGISTRY_USERNAME": "envuser", "REGISTRY_PASSWORD": "envpass"}
+    )
+    def test_basic_auth_from_env_vars(self):
+        """Test that env vars are used as fallback for basic auth."""
+        provider = _make_provider()
+
+        assert provider.registry_username == "envuser"
+        assert provider.registry_password == "envpass"
+        assert provider.auth_method == "Basic auth"
+
+    @patch.dict(os.environ, {"REGISTRY_TOKEN": "env-token"})
+    def test_token_auth_from_env_var(self):
+        """Test that env var is used as fallback for token auth."""
+        provider = _make_provider()
+
+        assert provider.registry_token == "env-token"
+        assert provider.auth_method == "Registry token"
+
+    @patch.dict(
+        os.environ, {"REGISTRY_USERNAME": "envuser", "REGISTRY_PASSWORD": "envpass"}
+    )
+    def test_explicit_params_override_env_vars(self):
+        """Test that explicit params take precedence over env vars."""
+        provider = _make_provider(
+            registry_username="explicit",
+            registry_password="explicit-pass",
+        )
+
+        assert provider.registry_username == "explicit"
+        assert provider.registry_password == "explicit-pass"
+
+    def test_build_trivy_env_no_auth(self):
+        """Test that _build_trivy_env returns base env when no auth."""
+        provider = _make_provider()
+        env = provider._build_trivy_env()
+
+        assert "TRIVY_USERNAME" not in env
+        assert "TRIVY_PASSWORD" not in env
+        assert "TRIVY_REGISTRY_TOKEN" not in env
+
+    def test_build_trivy_env_basic_auth_injects_trivy_vars(self):
+        """Test that _build_trivy_env injects TRIVY_USERNAME/PASSWORD for Trivy native auth."""
+        provider = _make_provider(
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+        env = provider._build_trivy_env()
+
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
+
+    def test_build_trivy_env_token_auth(self):
+        """Test that _build_trivy_env injects registry token."""
+        provider = _make_provider(registry_token="my-token")
+        env = provider._build_trivy_env()
+
+        assert env["TRIVY_REGISTRY_TOKEN"] == "my-token"
+
+    @patch("subprocess.run")
+    def test_execute_trivy_injects_trivy_env_with_basic_auth(self, mock_subprocess):
+        """Test that _execute_trivy sets TRIVY_USERNAME/PASSWORD for Trivy native auth."""
+        provider = _make_provider(
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
+        )
+
+        provider._execute_trivy(["trivy", "image", "alpine:3.18"], "alpine:3.18")
+
+        call_kwargs = mock_subprocess.call_args
+        env = call_kwargs.kwargs.get("env") or call_kwargs[1].get("env")
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
+
+    @patch("subprocess.run")
+    def test_test_connection_with_basic_auth(self, mock_subprocess):
+        """Test test_connection passes TRIVY_USERNAME/PASSWORD via env for Trivy native auth."""
+        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
+
+        result = ImageProvider.test_connection(
+            image="private.registry.io/myapp:v1",
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+
+        assert result.is_connected is True
+        # Should have 1 subprocess call: trivy only (no docker login/pull/logout)
+        assert mock_subprocess.call_count == 1
+        trivy_call = mock_subprocess.call_args
+        assert trivy_call.args[0][0] == "trivy"
+        env = trivy_call.kwargs.get("env") or trivy_call[1].get("env")
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
+
+    @patch("subprocess.run")
+    def test_test_connection_with_token(self, mock_subprocess):
+        """Test test_connection passes token via env."""
+        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
+
+        result = ImageProvider.test_connection(
+            image="private.registry.io/myapp:v1",
+            registry_token="my-token",
+        )
+
+        assert result.is_connected is True
+        call_kwargs = mock_subprocess.call_args
+        env = call_kwargs.kwargs.get("env") or call_kwargs[1].get("env")
+        assert env["TRIVY_REGISTRY_TOKEN"] == "my-token"
+
+    def test_print_credentials_shows_auth_method(self):
+        """Test that print_credentials outputs the auth method."""
+        provider = _make_provider(
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+        with mock.patch("builtins.print") as mock_print:
+            provider.print_credentials()
+            output = " ".join(
+                str(call.args[0]) for call in mock_print.call_args_list if call.args
+            )
+            assert "Basic auth" in output
+
+
+class TestExtractRegistry:
+    def test_docker_hub_simple(self):
+        assert ImageProvider._extract_registry("alpine:3.18") is None
+
+    def test_docker_hub_with_namespace(self):
+        assert ImageProvider._extract_registry("andoniaf/test-private:tag") is None
+
+    def test_ghcr(self):
+        assert ImageProvider._extract_registry("ghcr.io/user/image:tag") == "ghcr.io"
+
+    def test_ecr(self):
+        assert (
+            ImageProvider._extract_registry(
+                "123456789012.dkr.ecr.us-east-1.amazonaws.com/repo:tag"
+            )
+            == "123456789012.dkr.ecr.us-east-1.amazonaws.com"
+        )
+
+    def test_localhost_with_port(self):
+        assert (
+            ImageProvider._extract_registry("localhost:5000/myimage:latest")
+            == "localhost:5000"
+        )
+
+    def test_custom_registry_with_port(self):
+        assert (
+            ImageProvider._extract_registry("myregistry.io:5000/image:tag")
+            == "myregistry.io:5000"
+        )
+
+    def test_digest_reference(self):
+        assert (
+            ImageProvider._extract_registry("ghcr.io/user/image@sha256:abc123")
+            == "ghcr.io"
+        )
+
+    def test_bare_image_name(self):
+        assert ImageProvider._extract_registry("nginx") is None
+
+
+class TestTrivyAuthIntegration:
+    @patch("subprocess.run")
+    def test_run_scan_passes_trivy_env_with_credentials(self, mock_subprocess):
+        """Test that run_scan() passes TRIVY_USERNAME/PASSWORD via env when credentials are set."""
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
+        )
+        provider = _make_provider(
+            images=["ghcr.io/user/image:tag"],
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+
+        reports = []
+        for batch in provider.run_scan():
+            reports.extend(batch)
+
+        calls = mock_subprocess.call_args_list
+        # Only trivy calls, no docker login/pull
+        assert all(call.args[0][0] == "trivy" for call in calls)
+        env = calls[0].kwargs.get("env") or calls[0][1].get("env")
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
+
+    @patch.dict(os.environ, {"REGISTRY_USERNAME": "", "REGISTRY_PASSWORD": ""})
+    @patch("subprocess.run")
+    def test_run_scan_no_trivy_auth_without_credentials(self, mock_subprocess):
+        """Test that run_scan() does NOT set TRIVY_USERNAME/PASSWORD when no credentials."""
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
+        )
+        provider = _make_provider()
+
+        for batch in provider.run_scan():
+            pass
+
+        calls = mock_subprocess.call_args_list
+        assert all(call.args[0][0] == "trivy" for call in calls)
+
+    @patch.dict(os.environ, {"REGISTRY_USERNAME": "", "REGISTRY_PASSWORD": ""})
+    @patch("subprocess.run")
+    def test_run_scan_token_auth_via_env(self, mock_subprocess):
+        """Test that run_scan() passes TRIVY_REGISTRY_TOKEN when only token is provided."""
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
+        )
+        provider = _make_provider(registry_token="my-token")
+
+        for batch in provider.run_scan():
+            pass
+
+        calls = mock_subprocess.call_args_list
+        assert all(call.args[0][0] == "trivy" for call in calls)
+        env = calls[0].kwargs.get("env") or calls[0][1].get("env")
+        assert env["TRIVY_REGISTRY_TOKEN"] == "my-token"
+
+    @patch("subprocess.run")
+    def test_run_with_credentials_only_calls_trivy(self, mock_subprocess):
+        """Test that run() only calls trivy (no docker login/pull/logout)."""
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
+        )
+        provider = _make_provider(
+            images=["ghcr.io/user/image:tag"],
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+
+        provider.run()
+
+        calls = mock_subprocess.call_args_list
+        assert all(call.args[0][0] == "trivy" for call in calls)
+
+    @patch("subprocess.run")
+    def test_run_scan_multiple_images_all_get_trivy_env(self, mock_subprocess):
+        """Test that all trivy calls get TRIVY_USERNAME/PASSWORD when scanning multiple images."""
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
+        )
+        provider = _make_provider(
+            images=["ghcr.io/user/image1:tag", "ghcr.io/user/image2:tag"],
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+
+        for batch in provider.run_scan():
+            pass
+
+        calls = mock_subprocess.call_args_list
+        trivy_calls = [c for c in calls if c.args[0][0] == "trivy"]
+        assert len(trivy_calls) == 2
+        for call in trivy_calls:
+            env = call.kwargs.get("env") or call[1].get("env")
+            assert env["TRIVY_USERNAME"] == "myuser"
+            assert env["TRIVY_PASSWORD"] == "mypass"
+
+    @patch("subprocess.run")
+    def test_test_connection_docker_hub_uses_trivy_auth(self, mock_subprocess):
+        """Test test_connection passes TRIVY creds for Docker Hub images."""
+        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
+
+        result = ImageProvider.test_connection(
+            image="andoniaf/test-private:tag",
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+
+        assert result.is_connected is True
+        assert mock_subprocess.call_count == 1
+        trivy_call = mock_subprocess.call_args
+        assert trivy_call.args[0][0] == "trivy"
+        env = trivy_call.kwargs.get("env") or trivy_call[1].get("env")
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
 
 
 class TestImageProviderInputValidation:

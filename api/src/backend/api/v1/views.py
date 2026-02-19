@@ -2482,10 +2482,10 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     def run_attack_paths_query(self, request, pk=None):
         attack_paths_scan = self.get_object()
 
-        if attack_paths_scan.state != StateChoices.COMPLETED:
+        if not attack_paths_scan.graph_data_ready:
             raise ValidationError(
                 {
-                    "detail": "The Attack Paths scan must be completed before running Attack Paths queries"
+                    "detail": "Attack Paths data is not available for querying - a scan must complete at least once before queries can be run"
                 }
             )
 

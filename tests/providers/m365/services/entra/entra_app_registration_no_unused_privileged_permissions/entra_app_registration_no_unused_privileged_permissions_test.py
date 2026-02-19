@@ -891,6 +891,5 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            # When app name is empty, the check uses the app_id as the resource_name
-            assert result[0].resource_name == app_id
+            assert result[0].resource_name == ""
             assert result[0].resource_id == app_id

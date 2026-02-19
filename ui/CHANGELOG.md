@@ -7,12 +7,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - PDF report available for the CSA CCM compliance framework [(#10088)](https://github.com/prowler-cloud/prowler/pull/10088)
+- CSV and PDF download buttons in compliance views [(#10093)](https://github.com/prowler-cloud/prowler/pull/10093)
 
 ### 🔄 Changed
 
 - Attack Paths: Query list now shows their name and short description, when one is selected it also shows a longer description and an attribution if it has it [(#9983)](https://github.com/prowler-cloud/prowler/pull/9983)
 - Updated GitHub provider form placeholder to clarify both username and organization names are valid inputs [(#9830)](https://github.com/prowler-cloud/prowler/pull/9830)
 - CSA CCM detailed view and small fix related with `Top Failed Sections` width [(#10018)](https://github.com/prowler-cloud/prowler/pull/10018)
+- Attack Paths: Show scan data availability status with badges and tooltips, allow selecting scans for querying while a new scan is in progress [(#10089)](https://github.com/prowler-cloud/prowler/pull/10089)
 
 ### 🔐 Security
 
@@ -24,6 +26,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
+- Dropdown selects in the "Send to Jira" modal and other dialogs not responding to clicks [(#10097)](https://github.com/prowler-cloud/prowler/pull/10097)
 - Update credentials for the Alibaba Cloud provider [(#10098)](https://github.com/prowler-cloud/prowler/pull/10098)
 
 ---
@@ -50,6 +53,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 ---
 
 ## [1.18.0] (Prowler v5.18.0)
+
+### 🚀 Added
+
+- Setup Vitest with React Testing Library for unit testing with targeted test execution [(#9925)](https://github.com/prowler-cloud/prowler/pull/9925)
 
 ### 🔄 Changed
 
