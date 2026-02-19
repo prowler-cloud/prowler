@@ -4,6 +4,7 @@ export * from "./filters";
 export * from "./formSchemas";
 export * from "./organizations";
 export * from "./processors";
+export * from "./provider-wizard";
 export * from "./providers";
 export * from "./resources";
 export * from "./scans";
