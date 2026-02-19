@@ -156,7 +156,7 @@ NODE_SYNC_TEMPLATE = """
     SET n._provider_id = $provider_id
     SET n.provider_element_id = row.provider_element_id
     SET n.provider_id = $provider_id
-"""  # Two last lines are deprecated properties
+"""  # The last two lines are deprecated properties
 
 RELATIONSHIP_SYNC_TEMPLATE = f"""
     UNWIND $rows AS row
@@ -167,4 +167,4 @@ RELATIONSHIP_SYNC_TEMPLATE = f"""
     SET r._provider_id = $provider_id
     SET r.provider_element_id = row.provider_element_id
     SET r.provider_id = $provider_id
-"""  # Two last lines are deprecated properties
+"""  # The last two lines are deprecated properties

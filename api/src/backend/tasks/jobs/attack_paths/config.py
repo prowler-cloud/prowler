@@ -54,7 +54,7 @@ PROVIDER_CONFIGS: dict[str, ProviderConfig] = {
 # Labels added by Prowler that should be filtered from API responses
 # Derived from provider configs + common internal labels
 INTERNAL_LABELS: list[str] = [
-    "Tenant",  # From Cartography, but it looks like is ours
+    "Tenant",  # From Cartography, but it looks like it's ours
     PROVIDER_RESOURCE_LABEL,
     DEPRECATED_PROVIDER_RESOURCE_LABEL,
     # Add all provider-specific resource labels
