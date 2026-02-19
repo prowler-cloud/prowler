@@ -1,7 +1,7 @@
 {
   "Provider": "m365",
   "CheckID": "defenderidentity_health_issues_no_open",
-  "CheckTitle": "Ensure Defender for Identity monitors hybrid infrastructure without unresolved health issues",
+  "CheckTitle": "Defender for Identity has no unresolved health issues affecting hybrid infrastructure monitoring",
   "CheckType": [],
   "ServiceName": "defenderidentity",
   "SubServiceName": "",
