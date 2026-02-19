@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import time
 from abc import ABC, abstractmethod
+from urllib.parse import urlparse
 
 import requests
 
@@ -109,12 +110,15 @@ class RegistryAdapter(ABC):
             original_exception=last_exception,
         )
 
-    @staticmethod
-    def _next_page_url(resp: requests.Response) -> str | None:
+    def _next_page_url(self, resp: requests.Response) -> str | None:
         link_header = resp.headers.get("Link", "")
         if not link_header:
             return None
         match = re.search(r'<([^>]+)>;\s*rel="next"', link_header)
-        if match:
-            return match.group(1)
-        return None
+        if not match:
+            return None
+        url = match.group(1)
+        if url.startswith("/"):
+            parsed = urlparse(resp.url)
+            return f"{parsed.scheme}://{parsed.netloc}{url}"
+        return url
