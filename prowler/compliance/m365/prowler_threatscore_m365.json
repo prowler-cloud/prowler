@@ -387,7 +387,7 @@
       "Id": "1.2.4",
       "Description": "Enable Identity Protection user risk policies",
       "Checks": [
-        "defenderendpoint_privileged_user_exposed_credentials",
+        "defenderxdr_endpoint_privileged_user_exposed_credentials",
         "entra_identity_protection_user_risk_enabled"
       ],
       "Attributes": [

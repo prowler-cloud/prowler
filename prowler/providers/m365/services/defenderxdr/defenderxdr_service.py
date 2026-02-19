@@ -1,6 +1,6 @@
-"""Microsoft Defender for Endpoint service module.
+"""Microsoft Defender XDR service module.
 
-This module provides access to Microsoft Defender for Endpoint (MDE) data
+This module provides access to Microsoft Defender XDR data
 through the Microsoft Graph Security Advanced Hunting API.
 """
 
@@ -18,10 +18,10 @@ from prowler.providers.m365.lib.service.service import M365Service
 from prowler.providers.m365.m365_provider import M365Provider
 
 
-class DefenderEndpoint(M365Service):
-    """Microsoft Defender for Endpoint service class.
+class DefenderXDR(M365Service):
+    """Microsoft Defender XDR service class.
 
-    Provides access to Microsoft Defender for Endpoint (MDE) data through
+    Provides access to Microsoft Defender XDR data through
     the Microsoft Graph Security Advanced Hunting API.
 
     This class handles endpoint security checks including:
@@ -37,7 +37,7 @@ class DefenderEndpoint(M365Service):
     """
 
     def __init__(self, provider: M365Provider):
-        """Initialize the DefenderEndpoint service client.
+        """Initialize the DefenderXDR service client.
 
         Args:
             provider: The M365Provider instance for authentication.
@@ -72,8 +72,7 @@ class DefenderEndpoint(M365Service):
             loop = asyncio.get_running_loop()
             if loop.is_running():
                 raise RuntimeError(
-                    "Cannot initialize DefenderEndpoint service "
-                    "while event loop is running"
+                    "Cannot initialize DefenderXDR service while event loop is running"
                 )
             return loop
         except RuntimeError:
@@ -126,7 +125,7 @@ class DefenderEndpoint(M365Service):
                 "failed to resolve table" in error_message
                 or "could not find table" in error_message
             ):
-                logger.warning(f"DefenderEndpoint - Table not found in query: {error}")
+                logger.warning(f"DefenderXDR - Table not found in query: {error}")
                 return [], True
 
             logger.error(
@@ -143,7 +142,7 @@ class DefenderEndpoint(M365Service):
             - "no_devices": MDE enabled but no devices onboarded
             - "active": MDE enabled with devices reporting
         """
-        logger.info("DefenderEndpoint - Checking MDE status...")
+        logger.info("DefenderXDR - Checking MDE status...")
 
         query = "DeviceInfo | summarize DeviceCount = count()"
         results, table_not_found = await self._run_hunting_query(query)
@@ -171,7 +170,7 @@ class DefenderEndpoint(M365Service):
             or None if API call failed.
         """
         logger.info(
-            "DefenderEndpoint - Querying for exposed credentials of privileged users..."
+            "DefenderXDR - Querying for exposed credentials of privileged users..."
         )
 
         query = """
