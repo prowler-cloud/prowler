@@ -1,8 +1,7 @@
-"""
-Microsoft Defender for Endpoint service module.
+"""Microsoft Defender for Endpoint service module.
 
-This module provides access to Microsoft Defender for Endpoint (MDE) data through
-the Microsoft Graph Security Advanced Hunting API.
+This module provides access to Microsoft Defender for Endpoint (MDE) data
+through the Microsoft Graph Security Advanced Hunting API.
 """
 
 import asyncio
@@ -20,8 +19,7 @@ from prowler.providers.m365.m365_provider import M365Provider
 
 
 class DefenderEndpoint(M365Service):
-    """
-    Microsoft Defender for Endpoint service class.
+    """Microsoft Defender for Endpoint service class.
 
     Provides access to Microsoft Defender for Endpoint (MDE) data through
     the Microsoft Graph Security Advanced Hunting API.
@@ -32,16 +30,17 @@ class DefenderEndpoint(M365Service):
     - Vulnerability assessments
 
     Attributes:
-        mde_status: Status of MDE deployment (None, "not_enabled", "no_devices", "active")
-        exposed_credentials_privileged_users: List of privileged users with exposed credentials
+        mde_status: Status of MDE deployment
+            (None, "not_enabled", "no_devices", "active")
+        exposed_credentials_privileged_users: List of privileged users
+            with exposed credentials
     """
 
     def __init__(self, provider: M365Provider):
-        """
-        Initialize the DefenderEndpoint service client.
+        """Initialize the DefenderEndpoint service client.
 
         Args:
-            provider: The M365Provider instance for authentication and configuration.
+            provider: The M365Provider instance for authentication.
         """
         super().__init__(provider)
 
@@ -73,7 +72,8 @@ class DefenderEndpoint(M365Service):
             loop = asyncio.get_running_loop()
             if loop.is_running():
                 raise RuntimeError(
-                    "Cannot initialize DefenderEndpoint service while event loop is running"
+                    "Cannot initialize DefenderEndpoint service "
+                    "while event loop is running"
                 )
             return loop
         except RuntimeError:
@@ -91,16 +91,17 @@ class DefenderEndpoint(M365Service):
             pass
 
     async def _run_hunting_query(self, query: str) -> tuple[Optional[List[Dict]], bool]:
-        """
-        Execute an Advanced Hunting query using Microsoft Graph Security API.
+        """Execute an Advanced Hunting query using Microsoft Graph Security API.
 
         Args:
             query: The KQL (Kusto Query Language) query to execute.
 
         Returns:
             Tuple of (results, table_not_found):
-            - results: List of result dictionaries, empty list if no results, None if API error.
-            - table_not_found: True if query failed because table doesn't exist.
+            - results: List of result dicts, empty list if no results,
+              None if API error.
+            - table_not_found: True if query failed because table
+              doesn't exist.
         """
         try:
             request_body = RunHuntingQueryPostRequestBody(query=query)
@@ -134,8 +135,7 @@ class DefenderEndpoint(M365Service):
             return None, False
 
     async def _check_mde_status(self) -> Optional[str]:
-        """
-        Check Microsoft Defender for Endpoint status.
+        """Check Microsoft Defender for Endpoint status.
 
         Returns:
             - None: API call failed (permission issue)
@@ -164,11 +164,11 @@ class DefenderEndpoint(M365Service):
     async def _get_exposed_credentials_privileged_users(
         self,
     ) -> Optional[List["ExposedCredentialPrivilegedUser"]]:
-        """
-        Query for privileged users with exposed credentials on vulnerable endpoints.
+        """Query for privileged users with exposed credentials.
 
         Returns:
-            List of ExposedCredentialPrivilegedUser objects, or None if API call failed.
+            List of ExposedCredentialPrivilegedUser objects,
+            or None if API call failed.
         """
         logger.info(
             "DefenderEndpoint - Querying for exposed credentials of privileged users..."
@@ -201,7 +201,7 @@ ExposureGraphEdges
         return [self._parse_exposed_credential(row) for row in results if row]
 
     def _parse_exposed_credential(self, row: Dict) -> "ExposedCredentialPrivilegedUser":
-        """Parse a single row from the hunting query into an ExposedCredentialPrivilegedUser."""
+        """Parse a single row into an ExposedCredentialPrivilegedUser."""
         target_categories = row.get("TargetCategories", [])
 
         if isinstance(target_categories, str):
@@ -224,8 +224,7 @@ ExposureGraphEdges
 
 
 class ExposedCredentialPrivilegedUser(BaseModel):
-    """
-    Model for exposed credential data of a privileged user.
+    """Model for exposed credential data of a privileged user.
 
     Represents authentication credentials (CLI secrets, user cookies, tokens)
     of privileged users that are exposed on vulnerable endpoints.

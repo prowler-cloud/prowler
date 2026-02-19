@@ -1,5 +1,4 @@
-"""
-Check for exposed credentials of privileged users in Microsoft Defender for Endpoint.
+"""Check for exposed credentials of privileged users in Defender for Endpoint.
 
 This check identifies privileged users whose authentication credentials
 (CLI secrets, cookies, tokens) are exposed on vulnerable endpoints.
@@ -12,29 +11,27 @@ from prowler.providers.m365.services.defenderendpoint.defenderendpoint_client im
 
 
 class defenderendpoint_privileged_user_exposed_credentials(Check):
-    """
-    Check if privileged users have exposed credentials on vulnerable endpoints.
+    """Check if privileged users have exposed credentials on endpoints.
 
-    This check queries Microsoft Defender for Endpoint's ExposureGraphEdges table
-    via the Advanced Hunting API to identify privileged users whose authentication
-    artifacts (CLI secrets, user cookies, sensitive tokens) are exposed on endpoints
-    with high risk or exposure scores.
+    This check queries Microsoft Defender for Endpoint's ExposureGraphEdges
+    table via the Advanced Hunting API to identify privileged users whose
+    authentication artifacts (CLI secrets, user cookies, sensitive tokens)
+    are exposed on endpoints with high risk or exposure scores.
 
     Prerequisites:
     1. ThreatHunting.Read.All permission granted
     2. Microsoft Defender for Endpoint (MDE) enabled and deployed on devices
 
     Results:
-    - PASS: No exposed credentials found OR MDE enabled but no devices to evaluate
-    - FAIL: Exposed credentials detected OR MDE not enabled (security blind spot)
+    - PASS: No exposed credentials found OR MDE enabled but no devices
+    - FAIL: Exposed credentials detected OR MDE not enabled (blind spot)
     """
 
     def execute(self) -> list[CheckReportM365]:
-        """
-        Execute the check for exposed credentials of privileged users.
+        """Execute the check for exposed credentials of privileged users.
 
         Returns:
-            List[CheckReportM365]: A list of reports containing the result of the check.
+            List[CheckReportM365]: A list of reports with check results.
         """
         findings = []
 
@@ -68,12 +65,13 @@ class defenderendpoint_privileged_user_exposed_credentials(Check):
             report.status = "FAIL"
             report.status_extended = (
                 "Microsoft Defender for Endpoint is not enabled. "
-                "Without MDE there is no visibility into credential exposure on endpoints."
+                "Without MDE there is no visibility into credential "
+                "exposure on endpoints."
             )
             findings.append(report)
             return findings
 
-        # MDE enabled but no devices - PASS because there are no endpoints to evaluate
+        # MDE enabled but no devices - PASS (no endpoints to evaluate)
         if mde_status == "no_devices":
             report = CheckReportM365(
                 metadata=self.metadata(),
@@ -83,8 +81,9 @@ class defenderendpoint_privileged_user_exposed_credentials(Check):
             )
             report.status = "PASS"
             report.status_extended = (
-                "Microsoft Defender for Endpoint is enabled but no devices are onboarded. "
-                "No endpoints to evaluate for credential exposure."
+                "Microsoft Defender for Endpoint is enabled but no devices "
+                "are onboarded. No endpoints to evaluate for credential "
+                "exposure."
             )
             findings.append(report)
             return findings
@@ -104,8 +103,9 @@ class defenderendpoint_privileged_user_exposed_credentials(Check):
             )
             report.status = "FAIL"
             report.status_extended = (
-                "Unable to query Security Exposure Management for exposed credentials. "
-                "Verify that Security Exposure Management is enabled."
+                "Unable to query Security Exposure Management for exposed "
+                "credentials. Verify that Security Exposure Management "
+                "is enabled."
             )
             findings.append(report)
             return findings
@@ -117,7 +117,7 @@ class defenderendpoint_privileged_user_exposed_credentials(Check):
                     metadata=self.metadata(),
                     resource=exposed_user,
                     resource_name=exposed_user.target_node_name,
-                    resource_id=exposed_user.target_node_id or exposed_user.edge_id,
+                    resource_id=(exposed_user.target_node_id or exposed_user.edge_id),
                 )
                 report.status = "FAIL"
 
@@ -127,8 +127,9 @@ class defenderendpoint_privileged_user_exposed_credentials(Check):
                     else ""
                 )
                 report.status_extended = (
-                    f"Privileged user {exposed_user.target_node_name} has exposed "
-                    f"credentials{credential_info} on device {exposed_user.source_node_name}."
+                    f"Privileged user {exposed_user.target_node_name} has "
+                    f"exposed credentials{credential_info} on device "
+                    f"{exposed_user.source_node_name}."
                 )
                 findings.append(report)
         else:
@@ -140,7 +141,10 @@ class defenderendpoint_privileged_user_exposed_credentials(Check):
                 resource_id="exposedCredentials",
             )
             report.status = "PASS"
-            report.status_extended = "No exposed credentials found for privileged users on vulnerable endpoints."
+            report.status_extended = (
+                "No exposed credentials found for privileged users on "
+                "vulnerable endpoints."
+            )
             findings.append(report)
 
         return findings
