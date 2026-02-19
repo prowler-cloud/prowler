@@ -1,0 +1,36 @@
+{
+  "Provider": "openstack",
+  "CheckID": "blockstorage_volume_multiattach_disabled",
+  "CheckTitle": "Block storage volumes do not have multi-attach enabled",
+  "CheckType": [],
+  "ServiceName": "blockstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OpenStackVolume",
+  "ResourceGroup": "blockstorage",
+  "Description": "**OpenStack block storage volumes** are evaluated to verify that **multi-attach** is not enabled. Multi-attach allows a volume to be simultaneously attached to multiple compute instances. While useful for clustered applications, it increases the attack surface by allowing multiple instances to read and write to the same storage, potentially leading to data corruption or unauthorized access from compromised instances.",
+  "Risk": "Multi-attach volumes can be accessed by multiple instances simultaneously, increasing the blast radius if any attached instance is compromised. Data corruption may occur if applications do not implement proper cluster-aware file systems. Unauthorized modifications from one instance can affect all other attached instances.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/cinder/latest/admin/volume-multiattach.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack volume create --size 10 --type <non_multiattach_type> <volume_name>",
+      "NativeIaC": "",
+      "Other": "1. Identify volumes with multi-attach enabled\n2. Evaluate if multi-attach is truly required for the workload\n3. For volumes that do not require multi-attach, migrate data to a new volume without multi-attach\n4. Ensure multi-attach volumes use cluster-aware file systems (e.g., GFS2, OCFS2)",
+      "Terraform": "```hcl\nresource \"openstack_blockstorage_volume_v3\" \"single_attach\" {\n  name        = \"single-attach-volume\"\n  size        = 10\n  multiattach = false\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Disable multi-attach on volumes unless specifically required for clustered applications. When multi-attach is necessary, ensure cluster-aware file systems are used and implement strict access controls. Review multi-attach volumes regularly to verify continued business justification.",
+      "Url": "https://hub.prowler.com/check/blockstorage_volume_multiattach_disabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Multi-attach is a legitimate feature for clustered applications using cluster-aware file systems. This check flags volumes with multi-attach enabled for review. Organizations should evaluate whether multi-attach is necessary on a per-volume basis."
+}

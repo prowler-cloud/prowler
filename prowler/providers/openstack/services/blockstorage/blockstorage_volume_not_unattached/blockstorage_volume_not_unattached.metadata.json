@@ -1,0 +1,36 @@
+{
+  "Provider": "openstack",
+  "CheckID": "blockstorage_volume_not_unattached",
+  "CheckTitle": "Block storage volumes are attached to instances",
+  "CheckType": [],
+  "ServiceName": "blockstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "OpenStackVolume",
+  "ResourceGroup": "blockstorage",
+  "Description": "**OpenStack block storage volumes** are evaluated to verify they are **attached to at least one instance**. Unattached volumes may indicate orphaned resources that are no longer in use but continue to incur storage costs and may contain sensitive data without active monitoring or access controls.",
+  "Risk": "Unattached volumes may contain sensitive data that is no longer actively managed or monitored. Orphaned volumes increase storage costs and can be overlooked during security audits. If unattached volumes contain credentials or sensitive data, they may be accessed by unauthorized users who gain project access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/cinder/latest/cli/cli-manage-volumes.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack volume list --status available\nopenstack volume delete <volume_id>",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Block Storage > Volumes**\n2. Filter by status 'available' (unattached)\n3. Review each unattached volume for necessity\n4. Back up data if needed, then delete orphaned volumes\n5. Implement volume lifecycle policies to prevent accumulation",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review unattached volumes regularly and delete those no longer needed. Back up important data before deletion. Implement volume lifecycle policies and automated cleanup for orphaned resources. Tag volumes with ownership and purpose metadata for easier management.",
+      "Url": "https://hub.prowler.com/check/blockstorage_volume_not_unattached"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Some volumes may be intentionally unattached (e.g., data volumes awaiting attachment, backup volumes). This check identifies unattached volumes for review, not automatic remediation. Organizations should evaluate each unattached volume on a case-by-case basis."
+}
