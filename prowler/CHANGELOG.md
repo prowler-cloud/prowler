@@ -43,6 +43,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure Entra ID service metadata to new format [(#9619)](https://github.com/prowler-cloud/prowler/pull/9619)
 - Update Azure Virtual Machines service metadata to new format [(#9629)](https://github.com/prowler-cloud/prowler/pull/9629)
 
+### 🐞 Fixed
+
+- LLM provider scan callback handling to avoid runtime errors when invoking `run()`
+
 ### 🔐 Security
 
 - Bumped `py-ocsf-models` to 0.8.1 and `cryptography` to 44.0.3 [(#10059)](https://github.com/prowler-cloud/prowler/pull/10059)
