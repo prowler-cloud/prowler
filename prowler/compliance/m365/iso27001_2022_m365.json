@@ -155,7 +155,7 @@
         }
       ],
       "Checks": [
-        "defender_cam_pending_approvals",
+        "defenderxdr_critical_asset_management_pending_approvals",
         "sharepoint_external_sharing_managed",
         "exchange_external_email_tagging_enabled"
       ]
@@ -451,7 +451,7 @@
         "defender_antispam_outbound_policy_configured",
         "defender_antispam_outbound_policy_forwarding_disabled",
         "defender_antispam_policy_inbound_no_allowed_domains",
-        "defender_cam_pending_approvals",
+        "defenderxdr_critical_asset_management_pending_approvals",
         "defender_chat_report_policy_configured",
         "defender_malware_policy_common_attachments_filter_enabled",
         "defender_malware_policy_comprehensive_attachments_filter_applied",

@@ -1,4 +1,3 @@
-import asyncio
 from typing import List, Optional
 
 from pydantic.v1 import BaseModel
@@ -34,7 +33,6 @@ class Defender(M365Service):
         safe_links_policies (dict): Dictionary of Safe Links policies.
         safe_links_rules (dict): Dictionary of Safe Links rules.
         teams_protection_policy: Teams protection policy configuration.
-        pending_cam_approvals (list): List of pending Critical Asset Management approvals.
     """
 
     def __init__(self, provider: M365Provider):
@@ -61,7 +59,6 @@ class Defender(M365Service):
         self.safe_links_policies = {}
         self.safe_links_rules = {}
         self.teams_protection_policy = None
-        self.pending_cam_approvals = []
         if self.powershell:
             if self.powershell.connect_exchange_online():
                 self.malware_policies = self._get_malware_filter_policy()
@@ -84,28 +81,6 @@ class Defender(M365Service):
                 self.safe_links_rules = self._get_safe_links_rule()
                 self.teams_protection_policy = self._get_teams_protection_policy()
             self.powershell.close()
-
-        created_loop = False
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            created_loop = True
-
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            created_loop = True
-
-        if not loop.is_running():
-            self.pending_cam_approvals = loop.run_until_complete(
-                self._get_pending_cam_approvals()
-            )
-
-        if created_loop:
-            asyncio.set_event_loop(None)
-            loop.close()
 
     def _get_malware_filter_policy(self):
         logger.info("M365 - Getting Defender malware filter policy...")
@@ -660,66 +635,6 @@ class Defender(M365Service):
             )
         return teams_protection_policy
 
-    async def _get_pending_cam_approvals(self):
-        """Retrieve pending Critical Asset Management approvals via Advanced Hunting.
-
-        Queries the ExposureGraphNodes table to find assets with low criticality
-        confidence scores that require administrator approval.
-
-        Returns:
-            list[PendingCAMApproval]: A list of pending CAM approval classifications.
-        """
-        logger.info(
-            "Microsoft365 - Getting pending Critical Asset Management approvals..."
-        )
-        pending_approvals = []
-        try:
-            from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
-                RunHuntingQueryPostRequestBody,
-            )
-
-            request_body = RunHuntingQueryPostRequestBody()
-            request_body.query = (
-                "ExposureGraphNodes"
-                " | where isnotempty(parse_json(NodeProperties)['rawData']['criticalityConfidenceLow'])"
-                " | mv-expand parse_json(NodeProperties)['rawData']['criticalityConfidenceLow']"
-                " | extend Classification = tostring(NodeProperties_rawData_criticalityConfidenceLow)"
-                " | summarize PendingApproval = count(), Assets = array_sort_asc(make_set(NodeName)) by Classification"
-                " | sort by Classification asc"
-            )
-            request_body.timespan = "P1D"
-
-            result = await self.client.security.microsoft_graph_security_run_hunting_query.post(
-                request_body
-            )
-
-            if result and getattr(result, "results", None):
-                for row in result.results:
-                    row_data = getattr(row, "additional_data", {})
-                    classification = row_data.get("Classification", "")
-                    pending_count = int(row_data.get("PendingApproval", 0))
-                    assets_raw = row_data.get("Assets", "[]")
-                    if isinstance(assets_raw, str):
-                        import json
-
-                        assets = json.loads(assets_raw)
-                    elif isinstance(assets_raw, list):
-                        assets = assets_raw
-                    else:
-                        assets = []
-                    pending_approvals.append(
-                        PendingCAMApproval(
-                            classification=classification,
-                            pending_count=pending_count,
-                            assets=assets,
-                        )
-                    )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        return pending_approvals
-
 
 class MalwarePolicy(BaseModel):
     enable_file_filter: bool
@@ -911,17 +826,3 @@ class TeamsProtectionPolicy(BaseModel):
 
     identity: str
     zap_enabled: bool
-
-
-class PendingCAMApproval(BaseModel):
-    """Model for a pending Critical Asset Management approval classification.
-
-    Attributes:
-        classification: The asset classification name pending approval.
-        pending_count: The number of assets pending approval for this classification.
-        assets: List of asset names pending approval.
-    """
-
-    classification: str
-    pending_count: int
-    assets: List[str]
