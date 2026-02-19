@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "Directory Sync Settings",
   "ResourceGroup": "IAM",
-  "Description": "Seamless Single Sign-On (SSO) in hybrid Microsoft Entra deployments allows automatic authentication for domain-joined devices on the corporate network.\n\nThis check verifies the actual Seamless SSO configuration in directory synchronization settings. Modern devices with **Primary Refresh Token** (PRT) support no longer require Seamless SSO.",
+  "Description": "**Seamless Single Sign-On (SSO)** in hybrid Microsoft Entra deployments allows automatic authentication for domain-joined devices on the corporate network.\n\nThis check verifies the actual Seamless SSO configuration in directory synchronization settings. Modern devices with **Primary Refresh Token** (PRT) support no longer require Seamless SSO.",
   "Risk": "Seamless SSO can be exploited for **lateral movement** between on-premises domains and Entra ID when an Entra Connect server is compromised. It can also be used to perform **brute force attacks** against Entra ID, as authentication through the AZUREADSSOACC account bypasses standard protections.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable Seamless SSO in hybrid environments where modern devices support Primary Refresh Token (PRT). Regularly audit Entra Connect settings and verify that the AZUREADSSOACC computer account is removed from Active Directory.",
+      "Text": "Disable **Seamless SSO** in hybrid environments where modern devices support *Primary Refresh Token (PRT)*. Regularly audit Entra Connect settings and verify that the AZUREADSSOACC computer account is removed from Active Directory.",
       "Url": "https://hub.prowler.com/check/entra_seamless_sso_disabled"
     }
   },
