@@ -76,7 +76,7 @@ class entra_app_registration_no_unused_privileged_permissions(Check):
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource=app,
-                resource_name=app.name if app.name else app_id,
+                resource_name=app.name,
                 resource_id=app_id,
             )
 
