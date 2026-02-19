@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_app_registration_no_unused_privileged_permissions",
+  "CheckTitle": "App registration has no unused privileged API permissions",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "App Registration",
+  "ResourceGroup": "IAM",
+  "Description": "OAuth app registrations with privileged API permissions (High privilege level) that are not being actively used. Usage status is determined by Microsoft Defender for Cloud Apps App Governance.",
+  "Risk": "Unused privileged permissions expand the attack surface. If a compromised app has dormant privileged permissions, attackers can exploit them for **privilege escalation**, **unauthorized access** to sensitive data, or **lateral movement** within the environment.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/defender-cloud-apps/app-governance-visibility-insights-overview",
+    "https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-oauthappinfo-table"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Defender XDR portal (https://security.microsoft.com)\n2. Go to Cloud apps > App governance > Overview\n3. Review the Applications inventory for apps with unused permissions\n4. For each flagged app, view details and navigate to the Permissions tab\n5. Remove unnecessary permissions via Microsoft Entra admin center",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Apply the **principle of least privilege** by regularly reviewing and revoking unused privileged permissions from app registrations. Use Microsoft Defender for Cloud Apps App Governance to monitor permission usage.",
+      "Url": "https://hub.prowler.com/check/entra_app_registration_no_unused_privileged_permissions"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check requires Microsoft Defender for Cloud Apps with App Governance enabled and ThreatHunting.Read.All permission. If App Governance data is unavailable, the check fails due to missing visibility."
+}

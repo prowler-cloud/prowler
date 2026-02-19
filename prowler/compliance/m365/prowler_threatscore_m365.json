@@ -713,6 +713,7 @@
       "Id": "1.3.3",
       "Description": "Ensure third party integrated applications are not allowed",
       "Checks": [
+        "entra_app_registration_no_unused_privileged_permissions",
         "entra_thirdparty_integrated_apps_not_allowed"
       ],
       "Attributes": [
@@ -749,6 +750,7 @@
       "Id": "1.3.5",
       "Description": "Ensure user consent to apps accessing company data on their behalf is not allowed",
       "Checks": [
+        "entra_app_registration_no_unused_privileged_permissions",
         "entra_policy_restricts_user_consent_for_apps"
       ],
       "Attributes": [
