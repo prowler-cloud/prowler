@@ -14,8 +14,8 @@ def recover_checks_from_provider(
     Returns a list of tuples with the following format (check_name, check_path)
     """
     try:
-        # Bypass check loading for IAC provider since it uses Trivy directly
-        if provider == "iac" or provider == "llm":
+        # Bypass check loading for IAC, LLM, and Image providers since they use external tools directly
+        if provider in ("iac", "llm", "image"):
             return []
 
         checks = []

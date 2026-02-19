@@ -296,6 +296,7 @@ paths:
             enum:
             - state
             - progress
+            - graph_data_ready
             - provider
             - provider_alias
             - provider_type
@@ -355,7 +356,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -367,6 +368,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -380,13 +382,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -398,6 +401,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -413,6 +417,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -567,6 +572,7 @@ paths:
             enum:
             - state
             - progress
+            - graph_data_ready
             - provider
             - provider_alias
             - provider_type
@@ -616,7 +622,7 @@ paths:
       operationId: attack_paths_scans_queries_retrieve
       description: Retrieve the catalog of Attack Paths queries available for this
         Attack Paths scan.
-      summary: List attack paths queries
+      summary: List Attack Paths queries
       parameters:
       - in: query
         name: fields[attack-paths-scans]
@@ -627,6 +633,7 @@ paths:
             enum:
             - state
             - progress
+            - graph_data_ready
             - provider
             - provider_alias
             - provider_type
@@ -714,7 +721,7 @@ paths:
           description: Bad request (e.g., Unknown Attack Paths query for the selected
             provider)
         '404':
-          description: No attack paths found for the given query and parameters
+          description: No Attack Paths found for the given query and parameters
         '500':
           description: Attack Paths query execution failed due to a database error
   /api/v1/compliance-overviews:
@@ -1336,7 +1343,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -1348,6 +1355,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -1361,13 +1369,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -1379,6 +1388,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -1394,6 +1404,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -1926,7 +1937,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -1938,6 +1949,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -1951,13 +1963,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -1969,6 +1982,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -1984,6 +1998,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -2424,7 +2439,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -2436,6 +2451,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -2449,13 +2465,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -2467,6 +2484,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -2482,6 +2500,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -2920,7 +2939,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -2932,6 +2951,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -2945,13 +2965,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -2963,6 +2984,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -2978,6 +3000,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -3404,7 +3427,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -3416,6 +3439,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -3429,13 +3453,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -3447,6 +3472,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -3462,6 +3488,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -5229,7 +5256,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -5241,6 +5268,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -5254,13 +5282,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -5272,6 +5301,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -5287,6 +5317,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - name: filter[search]
@@ -5392,7 +5423,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -5404,6 +5435,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -5417,13 +5449,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -5435,6 +5468,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -5450,6 +5484,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - name: filter[search]
@@ -5556,6 +5591,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -5569,6 +5605,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5586,6 +5623,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -5601,6 +5639,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - name: filter[search]
@@ -5727,7 +5766,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -5739,6 +5778,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -5752,13 +5792,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -5770,6 +5811,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -5785,6 +5827,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -5924,7 +5967,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -5936,6 +5979,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -5949,13 +5993,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -5967,6 +6012,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -5982,6 +6028,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -6127,6 +6174,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -6140,6 +6188,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6157,6 +6206,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -6172,6 +6222,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - name: filter[search]
@@ -6347,7 +6398,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -6359,6 +6410,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -6372,13 +6424,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -6390,6 +6443,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -6405,6 +6459,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -6509,7 +6564,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -6521,6 +6576,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -6534,13 +6590,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -6552,6 +6609,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -6567,6 +6625,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -6695,7 +6754,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -6707,6 +6766,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -6720,13 +6780,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -6738,6 +6799,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -6753,6 +6815,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -7522,7 +7585,7 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -7534,6 +7597,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -7547,13 +7611,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -7565,6 +7630,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -7580,13 +7646,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -7598,6 +7665,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -7611,13 +7679,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -7629,6 +7698,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -7644,6 +7714,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - name: filter[search]
@@ -8273,7 +8344,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -8285,6 +8356,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -8298,13 +8370,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -8316,6 +8389,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -8331,6 +8405,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -8775,7 +8850,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -8787,6 +8862,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -8800,13 +8876,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -8818,6 +8895,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -8833,6 +8911,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -9090,7 +9169,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -9102,6 +9181,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -9115,13 +9195,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -9133,6 +9214,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -9148,6 +9230,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -9411,7 +9494,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -9423,6 +9506,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -9436,13 +9520,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -9454,6 +9539,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -9469,6 +9555,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -10266,7 +10353,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: 4b8815b179aa7216
           enum:
           - alibabacloud
           - aws
@@ -10278,6 +10365,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - openstack
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -10291,13 +10379,14 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: 4b8815b179aa7216
             enum:
             - alibabacloud
             - aws
@@ -10309,6 +10398,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - openstack
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -10324,6 +10414,7 @@ paths:
           * `oraclecloud` - Oracle Cloud Infrastructure
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
         explode: false
         style: form
       - in: query
@@ -10659,6 +10750,72 @@ paths:
           description: CSV file containing the compliance report
         '404':
           description: Compliance report not found
+  /api/v1/scans/{id}/csa:
+    get:
+      operationId: scans_csa_retrieve
+      description: Download CSA Cloud Controls Matrix (CCM) v4.0 compliance report
+        as a PDF file.
+      summary: Retrieve CSA CCM compliance report
+      parameters:
+      - in: query
+        name: fields[scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - trigger
+            - state
+            - unique_resource_count
+            - progress
+            - duration
+            - provider
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - scheduled_at
+            - next_scan_at
+            - processor
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: PDF file containing the CSA CCM compliance report
+        '202':
+          description: The task is in progress
+        '401':
+          description: API key missing or user not Authenticated
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no CSA CCM reports, or the CSA CCM report generation
+            task has not started yet
   /api/v1/scans/{id}/ens:
     get:
       operationId: scans_ens_retrieve
@@ -12438,8 +12595,14 @@ components:
               type: string
             name:
               type: string
+            short_description:
+              type: string
             description:
               type: string
+            attribution:
+              allOf:
+              - $ref: '#/components/schemas/AttackPathsQueryAttribution'
+              nullable: true
             provider:
               type: string
             parameters:
@@ -12449,9 +12612,35 @@ components:
           required:
           - id
           - name
+          - short_description
           - description
           - provider
           - parameters
+    AttackPathsQueryAttribution:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-query-attributions
+        id: {}
+        attributes:
+          type: object
+          properties:
+            text:
+              type: string
+            link:
+              type: string
+          required:
+          - text
+          - link
     AttackPathsQueryParameter:
       type: object
       required:
@@ -12617,6 +12806,8 @@ components:
               type: integer
               maximum: 2147483647
               minimum: -2147483648
+            graph_data_ready:
+              type: boolean
             provider_alias:
               type: string
               readOnly: true
@@ -17316,6 +17507,20 @@ components:
                     required:
                     - api_key
                     - api_email
+                  - type: object
+                    title: OpenStack clouds.yaml Credentials
+                    properties:
+                      clouds_yaml_content:
+                        type: string
+                        description: The full content of a clouds.yaml configuration
+                          file.
+                      clouds_yaml_cloud:
+                        type: string
+                        description: The name of the cloud to use from the clouds.yaml
+                          file.
+                    required:
+                    - clouds_yaml_content
+                    - clouds_yaml_cloud
                   writeOnly: true
               required:
               - secret
@@ -18315,6 +18520,7 @@ components:
               - oraclecloud
               - alibabacloud
               - cloudflare
+              - openstack
               type: string
               description: |-
                 * `aws` - AWS
@@ -18328,7 +18534,8 @@ components:
                 * `oraclecloud` - Oracle Cloud Infrastructure
                 * `alibabacloud` - Alibaba Cloud
                 * `cloudflare` - Cloudflare
-              x-spec-enum-id: 2d8d323e9cc0044b
+                * `openstack` - OpenStack
+              x-spec-enum-id: 4b8815b179aa7216
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -18445,8 +18652,9 @@ components:
               - oraclecloud
               - alibabacloud
               - cloudflare
+              - openstack
               type: string
-              x-spec-enum-id: 2d8d323e9cc0044b
+              x-spec-enum-id: 4b8815b179aa7216
               description: |-
                 Type of provider to create.
 
@@ -18461,6 +18669,7 @@ components:
                 * `oraclecloud` - Oracle Cloud Infrastructure
                 * `alibabacloud` - Alibaba Cloud
                 * `cloudflare` - Cloudflare
+                * `openstack` - OpenStack
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -18509,8 +18718,9 @@ components:
                   - oraclecloud
                   - alibabacloud
                   - cloudflare
+                  - openstack
                   type: string
-                  x-spec-enum-id: 2d8d323e9cc0044b
+                  x-spec-enum-id: 4b8815b179aa7216
                   description: |-
                     Type of provider to create.
 
@@ -18525,6 +18735,7 @@ components:
                     * `oraclecloud` - Oracle Cloud Infrastructure
                     * `alibabacloud` - Alibaba Cloud
                     * `cloudflare` - Cloudflare
+                    * `openstack` - OpenStack
                 uid:
                   type: string
                   minLength: 3
@@ -19346,6 +19557,19 @@ components:
                 required:
                 - api_key
                 - api_email
+              - type: object
+                title: OpenStack clouds.yaml Credentials
+                properties:
+                  clouds_yaml_content:
+                    type: string
+                    description: The full content of a clouds.yaml configuration file.
+                  clouds_yaml_cloud:
+                    type: string
+                    description: The name of the cloud to use from the clouds.yaml
+                      file.
+                required:
+                - clouds_yaml_content
+                - clouds_yaml_cloud
               writeOnly: true
           required:
           - secret_type
@@ -19732,6 +19956,20 @@ components:
                     required:
                     - api_key
                     - api_email
+                  - type: object
+                    title: OpenStack clouds.yaml Credentials
+                    properties:
+                      clouds_yaml_content:
+                        type: string
+                        description: The full content of a clouds.yaml configuration
+                          file.
+                      clouds_yaml_cloud:
+                        type: string
+                        description: The name of the cloud to use from the clouds.yaml
+                          file.
+                    required:
+                    - clouds_yaml_content
+                    - clouds_yaml_cloud
                   writeOnly: true
               required:
               - secret_type
@@ -20130,6 +20368,19 @@ components:
                 required:
                 - api_key
                 - api_email
+              - type: object
+                title: OpenStack clouds.yaml Credentials
+                properties:
+                  clouds_yaml_content:
+                    type: string
+                    description: The full content of a clouds.yaml configuration file.
+                  clouds_yaml_cloud:
+                    type: string
+                    description: The name of the cloud to use from the clouds.yaml
+                      file.
+                required:
+                - clouds_yaml_content
+                - clouds_yaml_cloud
               writeOnly: true
           required:
           - secret

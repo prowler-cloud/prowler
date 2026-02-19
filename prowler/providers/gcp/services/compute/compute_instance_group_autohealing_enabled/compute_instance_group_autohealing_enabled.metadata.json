@@ -13,8 +13,7 @@
   "Risk": "Without autohealing, MIGs cannot detect application-level failures such as crashes, freezes, or memory issues. Instances that are technically running but experiencing problems will remain undetected and unreplaced, leading to:\n\n- **Service degradation** from unhealthy instances\n- **Extended downtime** during application failures\n- **Manual intervention** required to detect and replace failed instances",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://cloud.google.com/compute/docs/instance-groups/autohealing-instances-in-migs",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-instance-group-autohealing.html"
+    "https://cloud.google.com/compute/docs/instance-groups/autohealing-instances-in-migs"
   ],
   "Remediation": {
     "Code": {

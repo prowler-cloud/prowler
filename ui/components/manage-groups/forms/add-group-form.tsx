@@ -7,8 +7,9 @@ import * as z from "zod";
 
 import { createProviderGroup } from "@/actions/manage-groups";
 import { Button } from "@/components/shadcn";
+import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
-import { CustomDropdownSelection, CustomInput } from "@/components/ui/custom";
+import { CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { ApiError } from "@/types";
 
@@ -39,6 +40,14 @@ export const AddGroupForm = ({
   });
 
   const isLoading = form.formState.isSubmitting;
+  const providerOptions = providers.map((provider) => ({
+    label: provider.name,
+    value: provider.id,
+  }));
+  const roleOptions = roles.map((role) => ({
+    label: role.name,
+    value: role.id,
+  }));
 
   const onSubmitClient = async (values: FormValues) => {
     try {
@@ -128,15 +137,19 @@ export const AddGroupForm = ({
           name="providers"
           control={form.control}
           render={({ field }) => (
-            <CustomDropdownSelection
-              label="Select Providers"
-              name="providers"
-              values={providers}
-              selectedKeys={field.value || []}
-              onChange={(name, selectedValues) =>
-                field.onChange(selectedValues)
-              }
-            />
+            <div className="flex flex-col gap-2">
+              <EnhancedMultiSelect
+                options={providerOptions}
+                onValueChange={field.onChange}
+                defaultValue={field.value || []}
+                placeholder="Select providers"
+                aria-label="Select providers"
+                searchable={true}
+                hideSelectAll={true}
+                emptyIndicator="No results found"
+                resetOnDefaultValueChange={true}
+              />
+            </div>
           )}
         />
         {form.formState.errors.providers && (
@@ -155,15 +168,19 @@ export const AddGroupForm = ({
           name="roles"
           control={form.control}
           render={({ field }) => (
-            <CustomDropdownSelection
-              label="Select Roles"
-              name="roles"
-              values={roles}
-              selectedKeys={field.value || []}
-              onChange={(name, selectedValues) =>
-                field.onChange(selectedValues)
-              }
-            />
+            <div className="flex flex-col gap-2">
+              <EnhancedMultiSelect
+                options={roleOptions}
+                onValueChange={field.onChange}
+                defaultValue={field.value || []}
+                placeholder="Select roles"
+                aria-label="Select roles"
+                searchable={true}
+                hideSelectAll={true}
+                emptyIndicator="No results found"
+                resetOnDefaultValueChange={true}
+              />
+            </div>
           )}
         />
         {form.formState.errors.roles && (
