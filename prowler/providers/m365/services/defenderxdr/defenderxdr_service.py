@@ -28,12 +28,15 @@ class DefenderXDR(M365Service):
     - Device security posture
     - Exposed credentials detection
     - Vulnerability assessments
+    - Critical Asset Management approvals
 
     Attributes:
         mde_status: Status of MDE deployment
             (None, "not_enabled", "no_devices", "active")
         exposed_credentials_privileged_users: List of privileged users
             with exposed credentials
+        pending_cam_approvals: List of pending Critical Asset Management
+            approvals (None if API error)
     """
 
     def __init__(self, provider: M365Provider):
@@ -52,15 +55,19 @@ class DefenderXDR(M365Service):
         self.exposed_credentials_privileged_users: Optional[
             List[ExposedCredentialPrivilegedUser]
         ] = []
+        self.pending_cam_approvals: Optional[List[PendingCAMApproval]] = []
 
         loop = self._get_event_loop()
         try:
-            self.mde_status, self.exposed_credentials_privileged_users = (
-                loop.run_until_complete(
-                    asyncio.gather(
-                        self._check_mde_status(),
-                        self._get_exposed_credentials_privileged_users(),
-                    )
+            (
+                self.mde_status,
+                self.exposed_credentials_privileged_users,
+                self.pending_cam_approvals,
+            ) = loop.run_until_complete(
+                asyncio.gather(
+                    self._check_mde_status(),
+                    self._get_exposed_credentials_privileged_users(),
+                    self._get_pending_cam_approvals(),
                 )
             )
         finally:
@@ -222,6 +229,63 @@ ExposureGraphEdges
             target_categories=target_categories,
         )
 
+    async def _get_pending_cam_approvals(
+        self,
+    ) -> Optional[List["PendingCAMApproval"]]:
+        """Query for pending Critical Asset Management approvals.
+
+        Queries the ExposureGraphNodes table to find assets with low criticality
+        confidence scores that require administrator approval.
+
+        Returns:
+            List of PendingCAMApproval objects, or None if API call failed.
+        """
+        logger.info(
+            "DefenderXDR - Querying for pending Critical Asset Management approvals..."
+        )
+
+        query = """
+ExposureGraphNodes
+| where isnotempty(parse_json(NodeProperties)['rawData']['criticalityConfidenceLow'])
+| mv-expand parse_json(NodeProperties)['rawData']['criticalityConfidenceLow']
+| extend Classification = tostring(NodeProperties_rawData_criticalityConfidenceLow)
+| summarize PendingApproval = count(), Assets = array_sort_asc(make_set(NodeName)) by Classification
+| sort by Classification asc
+"""
+
+        results, _ = await self._run_hunting_query(query)
+
+        if results is None:
+            return None
+
+        pending_approvals = []
+        for row in results:
+            if not row:
+                continue
+            classification = row.get("Classification", "")
+            pending_count = int(row.get("PendingApproval", 0))
+            assets_raw = row.get("Assets", "[]")
+
+            if isinstance(assets_raw, str):
+                try:
+                    assets = json.loads(assets_raw)
+                except (json.JSONDecodeError, ValueError):
+                    assets = []
+            elif isinstance(assets_raw, list):
+                assets = assets_raw
+            else:
+                assets = []
+
+            pending_approvals.append(
+                PendingCAMApproval(
+                    classification=classification,
+                    pending_count=pending_count,
+                    assets=assets,
+                )
+            )
+
+        return pending_approvals
+
 
 class ExposedCredentialPrivilegedUser(BaseModel):
     """Model for exposed credential data of a privileged user.
@@ -239,3 +303,20 @@ class ExposedCredentialPrivilegedUser(BaseModel):
     target_node_label: str
     credential_type: Optional[str] = None
     target_categories: list = []
+
+
+class PendingCAMApproval(BaseModel):
+    """Model for a pending Critical Asset Management approval classification.
+
+    Represents assets with low criticality confidence scores that require
+    security administrator review and approval.
+
+    Attributes:
+        classification: The asset classification name pending approval.
+        pending_count: The number of assets pending approval for this classification.
+        assets: List of asset names pending approval.
+    """
+
+    classification: str
+    pending_count: int
+    assets: List[str]
