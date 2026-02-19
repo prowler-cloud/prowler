@@ -41,7 +41,7 @@ class entra_seamless_sso_disabled(Check):
                 # Only FAIL for hybrid orgs; cloud-only orgs don't need this permission
                 if organization.on_premises_sync_enabled:
                     report.status = "FAIL"
-                    report.status_extended = f"Cannot verify Seamless SSO status for {organization.name}: {entra_client.directory_sync_error}"
+                    report.status_extended = f"Cannot verify Seamless SSO status for {organization.name}: {entra_client.directory_sync_error}."
                 else:
                     report.status = "PASS"
                     report.status_extended = f"Entra organization {organization.name} is cloud-only (no on-premises sync), Seamless SSO is not applicable."
