@@ -2517,7 +2517,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             database_name,
             query_definition,
             parameters,
-            provider_id=provider_id,
+            provider_id,
         )
         graph_database.clear_cache(database_name)
 

@@ -100,9 +100,12 @@ def execute_attack_paths_query(
 
 def _serialize_graph(graph, provider_id: str):
     nodes = []
+    kept_node_ids = set()
     for node in graph.nodes:
         if node._properties.get("provider_id") != provider_id:
             continue
+
+        kept_node_ids.add(node.element_id)
         nodes.append(
             {
                 "id": node.element_id,
@@ -111,17 +114,17 @@ def _serialize_graph(graph, provider_id: str):
             },
         )
 
-    kept_node_ids = {node["id"] for node in nodes}
-
     relationships = []
     for relationship in graph.relationships:
         if relationship._properties.get("provider_id") != provider_id:
             continue
+
         if (
             relationship.start_node.element_id not in kept_node_ids
             or relationship.end_node.element_id not in kept_node_ids
         ):
             continue
+
         relationships.append(
             {
                 "id": relationship.element_id,
