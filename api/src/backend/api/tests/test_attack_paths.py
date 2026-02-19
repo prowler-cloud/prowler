@@ -201,10 +201,13 @@ def test_serialize_graph_filters_by_provider_id(attack_paths_graph_stub_classes)
     rel_drop_by_provider = attack_paths_graph_stub_classes.Relationship(
         "r2", "OWNS", node_keep, node_drop, {"provider_id": "provider-other"}
     )
+    rel_drop_orphaned = attack_paths_graph_stub_classes.Relationship(
+        "r3", "OWNS", node_keep, node_drop, {"provider_id": provider_id}
+    )
 
     graph = SimpleNamespace(
         nodes=[node_keep, node_drop],
-        relationships=[rel_keep, rel_drop_by_provider],
+        relationships=[rel_keep, rel_drop_by_provider, rel_drop_orphaned],
     )
 
     result = views_helpers._serialize_graph(graph, provider_id)
