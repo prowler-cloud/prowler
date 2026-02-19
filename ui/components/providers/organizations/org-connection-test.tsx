@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { applyDiscovery } from "@/actions/organizations/organizations";
@@ -10,7 +10,11 @@ import {
   getOuIdsForSelectedAccounts,
 } from "@/actions/organizations/organizations.adapter";
 import { checkConnectionProvider } from "@/actions/providers/providers";
-import { Badge, Button } from "@/components/shadcn";
+import {
+  WIZARD_FOOTER_ACTION_TYPE,
+  WizardFooterConfig,
+} from "@/components/providers/wizard/steps/footer-controls";
+import { Badge } from "@/components/shadcn";
 import { TreeView } from "@/components/shadcn/tree-view";
 import { checkTaskStatus } from "@/lib";
 import { useOrgSetupStore } from "@/store/organizations/store";
@@ -22,12 +26,14 @@ interface OrgConnectionTestProps {
   onBack: () => void;
   onNext: () => void;
   onSkip: () => void;
+  onFooterChange: (config: WizardFooterConfig) => void;
 }
 
 export function OrgConnectionTest({
   onBack,
   onNext,
   onSkip,
+  onFooterChange,
 }: OrgConnectionTestProps) {
   const {
     organizationId,
@@ -51,6 +57,7 @@ export function OrgConnectionTest({
   >(new Map());
 
   const hasApplied = useRef(false);
+  const retryFailedActionRef = useRef<() => void>(() => {});
 
   // On mount: apply discovery, then test connections
   useEffect(() => {
@@ -168,21 +175,35 @@ export function OrgConnectionTest({
     }
   };
 
-  const handleRetryFailed = () => {
+  retryFailedActionRef.current = () => {
     const failedProviderIds = createdProviderIds.filter(
       (id) => connectionResults[id] === CONNECTION_TEST_STATUS.ERROR,
     );
     testAllConnections(failedProviderIds);
   };
 
+  const hasErrors = Object.values(connectionResults).some(
+    (s) => s === CONNECTION_TEST_STATUS.ERROR,
+  );
+
+  useEffect(() => {
+    onFooterChange({
+      showBack: true,
+      backLabel: "Back",
+      backDisabled: isApplying || isTesting,
+      onBack,
+      showAction: hasErrors || isTesting,
+      actionLabel: isTesting ? "Testing..." : "Test connections",
+      actionDisabled: isApplying || isTesting || !hasErrors,
+      actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
+      onAction: hasErrors ? () => retryFailedActionRef.current() : undefined,
+    });
+  }, [hasErrors, isApplying, isTesting, onBack, onFooterChange]);
+
   if (!discoveryResult) return null;
 
   const treeData = buildOrgTreeData(discoveryResult);
   const accountLookup = buildAccountLookup(discoveryResult);
-
-  const hasErrors = Object.values(connectionResults).some(
-    (s) => s === CONNECTION_TEST_STATUS.ERROR,
-  );
 
   return (
     <div className="flex flex-col gap-5">
@@ -244,12 +265,8 @@ export function OrgConnectionTest({
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex items-center justify-between">
-        <Button type="button" variant="ghost" onClick={onBack}>
-          Back
-        </Button>
-
+      {/* Optional skip */}
+      <div className="flex justify-end">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -258,20 +275,6 @@ export function OrgConnectionTest({
           >
             Skip Connection Validation
           </button>
-
-          {hasErrors && !isTesting && (
-            <Button type="button" onClick={handleRetryFailed}>
-              <RefreshCw className="mr-2 size-4" />
-              Test Connections
-            </Button>
-          )}
-
-          {isTesting && (
-            <Button disabled>
-              <Loader2 className="mr-2 size-4 animate-spin" />
-              Testing...
-            </Button>
-          )}
         </div>
       </div>
     </div>

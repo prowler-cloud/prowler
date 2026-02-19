@@ -2,18 +2,28 @@
 
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { scheduleDaily } from "@/actions/scans/scans";
-import { Badge, Button } from "@/components/shadcn";
+import {
+  WIZARD_FOOTER_ACTION_TYPE,
+  WizardFooterConfig,
+} from "@/components/providers/wizard/steps/footer-controls";
+import { Badge } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
 import { useOrgSetupStore } from "@/store/organizations/store";
 
 interface OrgLaunchScanProps {
   onClose: () => void;
+  onBack: () => void;
+  onFooterChange: (config: WizardFooterConfig) => void;
 }
 
-export function OrgLaunchScan({ onClose }: OrgLaunchScanProps) {
+export function OrgLaunchScan({
+  onClose,
+  onBack,
+  onFooterChange,
+}: OrgLaunchScanProps) {
   const router = useRouter();
   const { toast } = useToast();
   const {
@@ -24,12 +34,7 @@ export function OrgLaunchScan({ onClose }: OrgLaunchScanProps) {
   } = useOrgSetupStore();
 
   const [isLaunching, setIsLaunching] = useState(false);
-
-  const handleDone = () => {
-    reset();
-    onClose();
-    router.push("/providers");
-  };
+  const launchActionRef = useRef<() => void>(() => {});
 
   const handleLaunchScan = async () => {
     setIsLaunching(true);
@@ -56,6 +61,26 @@ export function OrgLaunchScan({ onClose }: OrgLaunchScanProps) {
       description: `Daily scan scheduled for ${successCount} account${successCount !== 1 ? "s" : ""}.`,
     });
   };
+
+  launchActionRef.current = () => {
+    void handleLaunchScan();
+  };
+
+  useEffect(() => {
+    onFooterChange({
+      showBack: true,
+      backLabel: "Back",
+      backDisabled: isLaunching,
+      onBack,
+      showAction: true,
+      actionLabel: isLaunching ? "Launching..." : "Launch scan",
+      actionDisabled: isLaunching,
+      actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
+      onAction: () => {
+        launchActionRef.current();
+      },
+    });
+  }, [isLaunching, onBack, onFooterChange]);
 
   return (
     <div className="flex flex-col items-center gap-6 py-6">
@@ -87,16 +112,12 @@ export function OrgLaunchScan({ onClose }: OrgLaunchScanProps) {
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-3">
-        <Button type="button" variant="outline" onClick={handleDone}>
-          Done
-        </Button>
-        <Button type="button" onClick={handleLaunchScan} disabled={isLaunching}>
-          {isLaunching && <Loader2 className="mr-2 size-4 animate-spin" />}
-          {isLaunching ? "Launching..." : "Launch Scan"}
-        </Button>
-      </div>
+      {isLaunching && (
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
+          <Loader2 className="size-4 animate-spin" />
+          Launching scans...
+        </div>
+      )}
     </div>
   );
 }

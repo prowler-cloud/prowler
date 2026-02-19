@@ -5,7 +5,7 @@ import { Spacer } from "@heroui/spacer";
 import { usePathname, useSearchParams } from "next/navigation";
 import React from "react";
 
-import { VerticalSteps } from "@/components/providers/workflow/vertical-steps";
+import { cn } from "@/lib/utils";
 import type { LighthouseProvider } from "@/types/lighthouse";
 
 import { getProviderConfig } from "../llm-provider-registry";
@@ -75,12 +75,60 @@ export const WorkflowConnectLLM = () => {
         value={currentStep + 1}
         valueLabel={`${currentStep + 1} of ${steps.length}`}
       />
-      <VerticalSteps
-        hideProgressBars
-        currentStep={currentStep}
-        stepClassName="border border-border-neutral-primary aria-[current]:bg-bg-neutral-primary cursor-default"
-        steps={steps}
-      />
+      <nav aria-label="Progress">
+        <ol className="flex flex-col gap-y-3">
+          {steps.map((step, index) => {
+            const isActive = index === currentStep;
+            const isComplete = index < currentStep;
+
+            return (
+              <li
+                key={step.title}
+                className="border-border-neutral-primary rounded-large border px-3 py-2.5"
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className={cn(
+                      "flex h-[34px] w-[34px] items-center justify-center rounded-full border text-sm font-semibold",
+                      isComplete &&
+                        "bg-button-primary border-button-primary text-white",
+                      isActive &&
+                        "border-button-primary text-button-primary bg-transparent",
+                      !isActive &&
+                        !isComplete &&
+                        "text-default-500 border-border-neutral-primary bg-transparent",
+                    )}
+                  >
+                    {index + 1}
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div
+                      className={cn(
+                        "text-medium font-medium",
+                        isActive || isComplete
+                          ? "text-default-foreground"
+                          : "text-default-500",
+                      )}
+                    >
+                      {step.title}
+                    </div>
+                    <div
+                      className={cn(
+                        "text-small",
+                        isActive || isComplete
+                          ? "text-default-600"
+                          : "text-default-500",
+                      )}
+                    >
+                      {step.description}
+                    </div>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
       <Spacer y={4} />
     </section>
   );

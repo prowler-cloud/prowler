@@ -1,12 +1,16 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect } from "react";
 
 import {
   buildAccountLookup,
   buildOrgTreeData,
 } from "@/actions/organizations/organizations.adapter";
-import { Badge, Button } from "@/components/shadcn";
+import {
+  WIZARD_FOOTER_ACTION_TYPE,
+  WizardFooterConfig,
+} from "@/components/providers/wizard/steps/footer-controls";
+import { Badge } from "@/components/shadcn";
 import { TreeView } from "@/components/shadcn/tree-view";
 import { useOrgSetupStore } from "@/store/organizations/store";
 
@@ -15,11 +19,13 @@ import { OrgAccountTreeItem, TREE_ITEM_MODE } from "./org-account-tree-item";
 interface OrgAccountSelectionProps {
   onBack: () => void;
   onNext: () => void;
+  onFooterChange: (config: WizardFooterConfig) => void;
 }
 
 export function OrgAccountSelection({
   onBack,
   onNext,
+  onFooterChange,
 }: OrgAccountSelectionProps) {
   const {
     organizationName,
@@ -30,6 +36,21 @@ export function OrgAccountSelection({
     setSelectedAccountIds,
     setAccountAlias,
   } = useOrgSetupStore();
+
+  const selectedCount = selectedAccountIds.length;
+
+  useEffect(() => {
+    onFooterChange({
+      showBack: true,
+      backLabel: "Back",
+      onBack,
+      showAction: true,
+      actionLabel: "Next",
+      actionDisabled: selectedCount === 0,
+      actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
+      onAction: onNext,
+    });
+  }, [onBack, onFooterChange, onNext, selectedCount]);
 
   if (!discoveryResult) {
     return (
@@ -43,7 +64,6 @@ export function OrgAccountSelection({
   const accountLookup = buildAccountLookup(discoveryResult);
 
   const totalAccounts = discoveryResult.accounts.length;
-  const selectedCount = selectedAccountIds.length;
 
   return (
     <div className="flex flex-col gap-5">
@@ -81,18 +101,6 @@ export function OrgAccountSelection({
             />
           )}
         />
-      </div>
-
-      {/* Actions */}
-      <div className="flex justify-end gap-3">
-        <Button type="button" variant="ghost" onClick={onBack}>
-          <ChevronLeft className="mr-1 size-4" />
-          Back
-        </Button>
-        <Button type="button" onClick={onNext} disabled={selectedCount === 0}>
-          Next
-          <ChevronRight className="ml-1 size-4" />
-        </Button>
       </div>
     </div>
   );

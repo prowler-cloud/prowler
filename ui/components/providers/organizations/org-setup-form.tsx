@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -11,7 +11,10 @@ import {
   createOrganizationSecret,
   triggerDiscovery,
 } from "@/actions/organizations/organizations";
-import { Button } from "@/components/shadcn";
+import {
+  WIZARD_FOOTER_ACTION_TYPE,
+  WizardFooterConfig,
+} from "@/components/providers/wizard/steps/footer-controls";
 import { Input } from "@/components/shadcn/input/input";
 import { useOrgSetupStore } from "@/store/organizations/store";
 
@@ -39,19 +42,27 @@ type OrgSetupFormData = z.infer<typeof orgSetupSchema>;
 interface OrgSetupFormProps {
   onBack: () => void;
   onNext: () => void;
+  onFooterChange: (config: WizardFooterConfig) => void;
 }
 
-export function OrgSetupForm({ onBack, onNext }: OrgSetupFormProps) {
+export function OrgSetupForm({
+  onBack,
+  onNext,
+  onFooterChange,
+}: OrgSetupFormProps) {
   const [apiError, setApiError] = useState<string | null>(null);
   const { setOrganization, setDiscovery } = useOrgSetupStore();
+  const formId = "org-wizard-setup-form";
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
     setError,
   } = useForm<OrgSetupFormData>({
     resolver: zodResolver(orgSetupSchema),
+    mode: "onChange",
+    reValidateMode: "onChange",
     defaultValues: {
       organizationName: "",
       awsOrgId: "",
@@ -59,6 +70,20 @@ export function OrgSetupForm({ onBack, onNext }: OrgSetupFormProps) {
       externalId: "",
     },
   });
+
+  useEffect(() => {
+    onFooterChange({
+      showBack: true,
+      backLabel: "Back",
+      backDisabled: isSubmitting,
+      onBack,
+      showAction: true,
+      actionLabel: "Next",
+      actionDisabled: isSubmitting || !isValid,
+      actionType: WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
+      actionFormId: formId,
+    });
+  }, [formId, isSubmitting, isValid, onBack, onFooterChange]);
 
   const onSubmit = async (data: OrgSetupFormData) => {
     setApiError(null);
@@ -131,7 +156,11 @@ export function OrgSetupForm({ onBack, onNext }: OrgSetupFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+    <form
+      id={formId}
+      onSubmit={handleSubmit(onSubmit)}
+      className="flex flex-col gap-5"
+    >
       <div className="flex flex-col gap-1">
         <h3 className="text-lg font-semibold">Organization Details</h3>
         <p className="text-muted-foreground text-sm">
@@ -211,20 +240,12 @@ export function OrgSetupForm({ onBack, onNext }: OrgSetupFormProps) {
         </div>
       </div>
 
-      <div className="flex justify-end gap-3">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={onBack}
-          disabled={isSubmitting}
-        >
-          Back
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
-          {isSubmitting ? "Setting up..." : "Next"}
-        </Button>
-      </div>
+      {isSubmitting && (
+        <div className="text-muted-foreground flex items-center justify-end gap-2 text-sm">
+          <Loader2 className="size-4 animate-spin" />
+          Setting up organization...
+        </div>
+      )}
     </form>
   );
 }
