@@ -929,13 +929,13 @@ class ImageProvider(Provider):
             elif registry_token:
                 env["TRIVY_REGISTRY_TOKEN"] = registry_token
 
-            # Test by running trivy with --skip-update to just test image access
+            # Test by pulling image metadata without scanning (no DB required)
             process = subprocess.run(
                 [
                     "trivy",
                     "image",
-                    "--skip-db-update",
-                    "--download-db-only=false",
+                    "--scanners",
+                    "none",
                     image,
                 ],
                 capture_output=True,
