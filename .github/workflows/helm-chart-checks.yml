@@ -1,0 +1,46 @@
+name: 'Helm: Chart Checks'
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - 'contrib/k8s/helm/prowler-app/**'
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - 'contrib/k8s/helm/prowler-app/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CHART_PATH: contrib/k8s/helm/prowler-app
+
+jobs:
+  helm-lint:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Set up Helm
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+
+      - name: Update chart dependencies
+        run: helm dependency update ${{ env.CHART_PATH }}
+
+      - name: Lint Helm chart
+        run: helm lint ${{ env.CHART_PATH }}
+
+      - name: Validate Helm chart template rendering
+        run: helm template prowler ${{ env.CHART_PATH }}
