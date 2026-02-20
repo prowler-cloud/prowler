@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OpenStackNetwork",
+  "ResourceType": "OS::Neutron::Net",
   "ResourceGroup": "network",
   "Description": "**OpenStack networks and ports** are evaluated to verify that **port security is enabled** (port_security_enabled=True). Port security prevents MAC and IP spoofing by enforcing anti-spoofing rules. When disabled, instances can forge source addresses, bypass network isolation, and enable man-in-the-middle attacks. Disabling is sometimes required for NFV/SR-IOV use cases.",
   "Risk": "Disabled port security allows MAC/IP spoofing attacks, bypassing network isolation. Attackers can intercept traffic via ARP poisoning (MITM attacks), bypass security group rules by forging source IPs, and attack other tenants in multi-tenant environments (cross-tenant data exfiltration). Security groups cannot be enforced properly. Violates compliance requirements (PCI-DSS, HIPAA, SOC 2).",

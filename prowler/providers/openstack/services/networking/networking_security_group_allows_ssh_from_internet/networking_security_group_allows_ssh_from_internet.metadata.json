@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OpenStackSecurityGroup",
+  "ResourceType": "OS::Neutron::SecurityGroup",
   "ResourceGroup": "network",
   "Description": "**OpenStack security groups** are evaluated to verify that SSH (port 22) is **not exposed to the Internet** (0.0.0.0/0 or ::/0). Security groups act as virtual firewalls controlling instance traffic. Unrestricted SSH access violates least privilege and creates significant attack surface. Best practices recommend restricting SSH to **known IP ranges**, **bastion hosts**, or **VPN gateways**.",
   "Risk": "Unrestricted SSH exposes instances to brute-force attacks, password testing, and SSH vulnerability exploitation (CVE-2023-38408, CVE-2021-41617) for initial access. Compromised instances enable persistence, privilege escalation, lateral movement, crypto mining, DDoS botnets, data exfiltration, and ransomware deployment. SSH exposure bypasses defense-in-depth and enables direct production access.",

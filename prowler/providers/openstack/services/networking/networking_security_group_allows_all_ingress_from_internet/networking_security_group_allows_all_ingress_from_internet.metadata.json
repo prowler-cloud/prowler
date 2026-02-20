@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "OpenStackSecurityGroup",
+  "ResourceType": "OS::Neutron::SecurityGroup",
   "ResourceGroup": "network",
   "Description": "**OpenStack security groups** are evaluated to verify that no rule allows **all ingress traffic** (any protocol, any port) from the Internet (0.0.0.0/0 or ::/0). A rule with no protocol and no port restriction is effectively a \"permit any\" firewall rule, completely bypassing network-level access controls. This is the most permissive possible configuration and should never be used in production.",
   "Risk": "Allowing all inbound traffic from the Internet exposes every service running on the instance to unauthorized access. Attackers can discover and exploit any listening service including databases, management interfaces, internal APIs, and debugging tools. This bypasses defense-in-depth and is equivalent to having no firewall. Combined with misconfigurations or unpatched services, it enables initial access, lateral movement, data exfiltration, and full infrastructure compromise.",

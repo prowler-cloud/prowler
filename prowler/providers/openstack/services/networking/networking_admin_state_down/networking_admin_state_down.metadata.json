@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OpenStackNetwork",
+  "ResourceType": "OS::Neutron::Net",
   "ResourceGroup": "network",
   "Description": "**OpenStack networks** are evaluated to verify that **admin_state_up is True** (administratively enabled). Networks with admin_state_up=False cannot carry traffic and are typically disabled temporarily during maintenance or troubleshooting. Best practices recommend re-enabling networks promptly after maintenance to prevent service outages from forgotten disabled networks.",
   "Risk": "Networks with admin_state_up=False cause complete connectivity loss for all attached instances, preventing access to databases, APIs, and storage. Forgotten disabled networks after maintenance result in prolonged outages that violate SLAs. Multi-tier applications (web-app-db) fail when inter-tier networks are disabled, breaking functionality even when instances are healthy.",
