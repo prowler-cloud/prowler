@@ -162,8 +162,9 @@ echo -e "${BLUE}Skill Sync - Updating AGENTS.md Auto-invoke sections${NC}"
 echo "========================================================"
 echo ""
 
-# Collect skills by scope
-declare -A SCOPE_SKILLS  # scope -> "skill1:action1|skill2:action2|..."
+# Collect skills by scope using temp files (Bash 3 compatible)
+SCOPE_TMPDIR=$(mktemp -d)
+trap 'rm -rf "$SCOPE_TMPDIR"' EXIT
 
 # Deterministic iteration order (stable diffs)
 # Note: macOS ships BSD find; avoid GNU-only flags.
@@ -177,39 +178,31 @@ while IFS= read -r skill_file; do
     # extract_metadata() returns:
     # - single action: "Action"
     # - multiple actions: "Action A|Action B" (pipe-delimited)
-    # But SCOPE_SKILLS also uses '|' to separate entries, so we protect it.
-    auto_invoke=${auto_invoke_raw//|/;;}
+    # We use ';;' as separator to avoid conflicts with '|' used between entries.
+    auto_invoke=$(echo "$auto_invoke_raw" | sed 's/|/;;/g')
 
     # Skip if no scope or auto_invoke defined
     [ -z "$scope_raw" ] || [ -z "$auto_invoke" ] && continue
 
     # Parse scope (can be comma-separated or space-separated)
-    IFS=', ' read -ra scopes <<< "$scope_raw"
-
-    for scope in "${scopes[@]}"; do
+    # Bash 3 compatible: use tr + read instead of read -ra with <<<
+    echo "$scope_raw" | tr ', ' '\n' | while read -r scope; do
         scope=$(echo "$scope" | tr -d '[:space:]')
         [ -z "$scope" ] && continue
 
         # Filter by scope if specified
         [ -n "$FILTER_SCOPE" ] && [ "$scope" != "$FILTER_SCOPE" ] && continue
 
-        # Append to scope's skill list
-        if [ -z "${SCOPE_SKILLS[$scope]}" ]; then
-            SCOPE_SKILLS[$scope]="$skill_name:$auto_invoke"
-        else
-            SCOPE_SKILLS[$scope]="${SCOPE_SKILLS[$scope]}|$skill_name:$auto_invoke"
-        fi
+        # Append to scope's skill file
+        echo "$skill_name:$auto_invoke" >> "$SCOPE_TMPDIR/$scope"
     done
 done < <(find "$SKILLS_DIR" -mindepth 2 -maxdepth 2 -name SKILL.md -print | sort)
 
 # Generate Auto-invoke section for each scope
 # Deterministic scope order (stable diffs)
-scopes_sorted=()
-while IFS= read -r scope; do
-    scopes_sorted+=("$scope")
-done < <(printf "%s\n" "${!SCOPE_SKILLS[@]}" | sort)
-
-for scope in "${scopes_sorted[@]}"; do
+for scope_file in "$SCOPE_TMPDIR"/*; do
+    [ -f "$scope_file" ] || continue
+    scope=$(basename "$scope_file")
     agents_path=$(get_agents_path "$scope")
 
     if [ -z "$agents_path" ] || [ ! -f "$agents_path" ]; then
@@ -228,28 +221,30 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 |--------|-------|"
 
     # Expand into sortable rows: "action<TAB>skill"
-    rows=()
+    rows_file=$(mktemp)
 
-    IFS='|' read -ra skill_entries <<< "${SCOPE_SKILLS[$scope]}"
-    for entry in "${skill_entries[@]}"; do
+    while IFS= read -r entry; do
+        [ -z "$entry" ] && continue
         skill_name="${entry%%:*}"
         actions_raw="${entry#*:}"
 
-        actions_raw=${actions_raw//;;/|}
-        IFS='|' read -ra actions <<< "$actions_raw"
-        for action in "${actions[@]}"; do
-            action="$(echo "$action" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+        # Restore '|' from ';;' and split actions
+        actions_raw=$(echo "$actions_raw" | sed 's/;;/|/g')
+        echo "$actions_raw" | tr '|' '\n' | while read -r action; do
+            action=$(echo "$action" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
             [ -z "$action" ] && continue
-            rows+=("$action	$skill_name")
+            printf "%s\t%s\n" "$action" "$skill_name" >> "$rows_file"
         done
-    done
+    done < "$scope_file"
 
     # Deterministic row order: Action then Skill
     while IFS=$'\t' read -r action skill_name; do
         [ -z "$action" ] && continue
         auto_invoke_section="$auto_invoke_section
 | $action | \`$skill_name\` |"
-    done < <(printf "%s\n" "${rows[@]}" | LC_ALL=C sort -t $'\t' -k1,1 -k2,2)
+    done < <(LC_ALL=C sort -t $'\t' -k1,1 -k2,2 "$rows_file")
+
+    rm -f "$rows_file"
 
     if $DRY_RUN; then
         echo -e "${YELLOW}[DRY RUN] Would update $agents_path with:${NC}"
@@ -315,7 +310,7 @@ while IFS= read -r skill_file; do
     skill_name=$(extract_field "$skill_file" "name")
     scope_raw=$(extract_metadata "$skill_file" "scope")
     auto_invoke_raw=$(extract_metadata "$skill_file" "auto_invoke")
-    auto_invoke=${auto_invoke_raw//|/;;}
+    auto_invoke=$(echo "$auto_invoke_raw" | sed 's/|/;;/g')
 
     if [ -z "$scope_raw" ] || [ -z "$auto_invoke" ]; then
         echo -e "  ${YELLOW}$skill_name${NC} - missing: ${scope_raw:+}${scope_raw:-scope} ${auto_invoke:+}${auto_invoke:-auto_invoke}"
