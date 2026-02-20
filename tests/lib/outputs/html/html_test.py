@@ -1,7 +1,7 @@
 import sys
 from io import StringIO
 
-from mock import patch
+from mock import MagicMock, patch
 
 from prowler.config.config import prowler_version, timestamp
 from prowler.lib.logger import logger
@@ -345,6 +345,62 @@ mongodbatlas_html_assessment_summary = """
                         list-group-flush">
                             <li class="list-group-item">
                                 <b>MongoDB Atlas authentication method:</b> API Key
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
+image_registry_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Image Assessment Summary
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Registry URL:</b> myregistry.io
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Image Credentials
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Image authentication method:</b> Docker login
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
+image_list_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Image Assessment Summary
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Images:</b> nginx:latest, alpine:3.18
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Image Credentials
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Image authentication method:</b> No auth
                             </li>
                         </ul>
                     </div>
@@ -853,6 +909,36 @@ class TestHTML:
         summary = output.get_assessment_summary(provider)
 
         assert summary == mongodbatlas_html_assessment_summary
+
+    def test_image_get_assessment_summary_with_registry(self):
+        """Test Image HTML assessment summary with registry URL."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "image"
+        provider.registry = "myregistry.io"
+        provider.images = ["nginx:latest", "alpine:3.18"]
+        provider.auth_method = "Docker login"
+
+        summary = output.get_assessment_summary(provider)
+
+        assert summary == image_registry_html_assessment_summary
+
+    def test_image_get_assessment_summary_with_images(self):
+        """Test Image HTML assessment summary with image list."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "image"
+        provider.registry = None
+        provider.images = ["nginx:latest", "alpine:3.18"]
+        provider.auth_method = "No auth"
+
+        summary = output.get_assessment_summary(provider)
+
+        assert summary == image_list_html_assessment_summary
 
     def test_process_markdown_bold_text(self):
         """Test that **text** is converted to <strong>text</strong>"""

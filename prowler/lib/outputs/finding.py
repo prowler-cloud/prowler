@@ -384,10 +384,12 @@ class Finding(BaseModel):
                 output_data["auth_method"] = provider.auth_method
                 output_data["account_uid"] = "image"
                 output_data["account_name"] = "image"
-                output_data["resource_name"] = getattr(
-                    check_output, "resource_name", ""
+                image_name = getattr(check_output, "resource_name", "")
+                image_sha = getattr(check_output, "image_sha", "")
+                output_data["resource_name"] = image_name
+                output_data["resource_uid"] = (
+                    f"{image_name}:{image_sha}" if image_sha else image_name
                 )
-                output_data["resource_uid"] = getattr(check_output, "resource_id", "")
                 output_data["region"] = getattr(check_output, "region", "container")
                 output_data["package_name"] = getattr(check_output, "package_name", "")
                 output_data["installed_version"] = getattr(

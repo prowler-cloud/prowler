@@ -27,6 +27,7 @@ from prowler.lib.scan.exceptions.exceptions import (
 from prowler.providers.common.models import Audit_Metadata, ProviderOutputOptions
 from prowler.providers.common.provider import Provider
 from prowler.providers.iac.iac_provider import IacProvider
+from prowler.providers.image.image_provider import ImageProvider
 
 
 class Scan:
@@ -92,10 +93,10 @@ class Scan:
             except ValueError:
                 raise ScanInvalidStatusError(f"Invalid status provided: {s}.")
 
-        # Special setup for IaC provider - override inputs to work with traditional flow
-        if provider.type == "iac":
-            # IaC doesn't use traditional Prowler checks, so clear all input parameters
-            # to avoid validation errors and let it flow through the normal logic
+        # Special setup for IaC/Image providers - override inputs to work with traditional flow
+        if provider.type in ("iac", "image"):
+            # These providers don't use traditional Prowler checks, so clear all input parameters
+            # to avoid validation errors and let them flow through the normal logic
             checks = None
             services = None
             excluded_checks = None
@@ -160,8 +161,8 @@ class Scan:
                     )
 
         # Load checks to execute
-        if provider.type == "iac":
-            self._checks_to_execute = ["iac_scan"]  # Dummy check name for IaC
+        if provider.type in ("iac", "image"):
+            self._checks_to_execute = [f"{provider.type}_scan"]
         else:
             self._checks_to_execute = sorted(
                 load_checks_to_execute(
@@ -200,8 +201,8 @@ class Scan:
         self._number_of_checks_to_execute = len(self._checks_to_execute)
 
         # Set up service-based checks tracking
-        if provider.type == "iac":
-            service_checks_to_execute = {"iac": set(["iac_scan"])}
+        if provider.type in ("iac", "image"):
+            service_checks_to_execute = {provider.type: set([f"{provider.type}_scan"])}
         else:
             service_checks_to_execute = get_service_checks_to_execute(
                 self._checks_to_execute
@@ -340,6 +341,75 @@ class Scan:
                     self._number_of_checks_to_execute = 1
 
                     yield (100.0, findings)
+
+                    # Calculate duration
+                    end_time = datetime.datetime.now()
+                    self._duration = int((end_time - start_time).total_seconds())
+                    return
+
+            # Special handling for Image provider
+            elif self._provider.type == "image":
+                if isinstance(self._provider, ImageProvider):
+                    logger.info("Running Image scan with Trivy...")
+
+                    total_images = len(self._provider.images)
+                    images_completed = 0
+
+                    for image_name, image_findings in self._provider.scan_per_image():
+                        findings = []
+
+                        for report in image_findings:
+                            finding_uid = f"{report.check_metadata.CheckID}-{report.resource_name}-{report.resource_id}"
+
+                            status_enum = (
+                                Status.FAIL if report.status == "FAIL" else Status.PASS
+                            )
+                            if report.muted:
+                                status_enum = Status.MUTED
+
+                            image_sha = getattr(report, "image_sha", "")
+                            resource_uid = (
+                                f"{image_name}:{image_sha}" if image_sha else image_name
+                            )
+
+                            finding = Finding(
+                                auth_method="Registry",
+                                timestamp=datetime.datetime.now(timezone.utc),
+                                account_uid=getattr(self._provider, "registry", None)
+                                or "image",
+                                account_name="Container Registry",
+                                metadata=report.check_metadata,
+                                uid=finding_uid,
+                                status=status_enum,
+                                status_extended=report.status_extended,
+                                muted=report.muted,
+                                resource_uid=resource_uid,
+                                resource_metadata=report.resource,
+                                resource_name=image_name,
+                                resource_details=report.resource_details,
+                                resource_tags={},
+                                region=report.region,
+                                compliance={},
+                                raw=report.resource,
+                            )
+                            findings.append(finding)
+
+                        # Filter the findings by the status
+                        if self._status:
+                            findings = [f for f in findings if f.status in self._status]
+
+                        images_completed += 1
+                        progress = (
+                            images_completed / total_images * 100
+                            if total_images > 0
+                            else 100.0
+                        )
+
+                        yield (progress, findings)
+
+                    # Update progress
+                    self._number_of_checks_completed = 1
+                    self._number_of_checks_to_execute = 1
 
                     # Calculate duration
                     end_time = datetime.datetime.now()

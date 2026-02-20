@@ -6,6 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🚀 Added
 
+- `image` provider support for container image scanning [(#10128)](https://github.com/prowler-cloud/prowler/pull/10128)
 - OpenStack provider support [(#10003)](https://github.com/prowler-cloud/prowler/pull/10003)
 - PDF report for the CSA CCM compliance framework [(#10088)](https://github.com/prowler-cloud/prowler/pull/10088)
 
