@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OpenStackImage",
+  "ResourceType": "OS::Glance::WebImage",
   "ResourceGroup": "storage",
   "Description": "**OpenStack images** are evaluated to verify that the **os_secure_boot property is set to 'required'**. Secure Boot ensures that only signed and trusted bootloaders and firmware execute during the boot process, protecting against bootkits, rootkits, and firmware-level attacks. Best practices recommend requiring Secure Boot for all production workloads.",
   "Risk": "Images without Secure Boot allow unauthorized bootloader and firmware modifications. Attackers can install bootkits or rootkits that persist across reboots and are invisible to operating system security tools. Without Secure Boot, compromised firmware can intercept all system operations including encryption key management.",

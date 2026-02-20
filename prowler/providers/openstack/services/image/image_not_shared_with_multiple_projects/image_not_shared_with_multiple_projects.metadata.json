@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OpenStackImage",
+  "ResourceType": "OS::Glance::WebImage",
   "ResourceGroup": "storage",
   "Description": "**OpenStack images** are evaluated to verify that **shared images do not exceed a configurable member threshold** (default: 5 accepted members). Images shared with many projects amplify the blast radius of any vulnerability found in the image, as all consuming projects would be affected. Best practices recommend limiting image sharing to the minimum set of projects required.",
   "Risk": "Images shared with many projects amplify the blast radius of image vulnerabilities, backdoors, or misconfigurations. If a widely shared image is compromised, all projects using it are affected. Oversharing also increases the risk of unauthorized access to proprietary software or sensitive OS configurations embedded in images.",

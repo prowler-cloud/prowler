@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OpenStackImage",
+  "ResourceType": "OS::Glance::WebImage",
   "ResourceGroup": "storage",
   "Description": "**OpenStack images** are evaluated to verify that the **protected flag is set to True**. Protected images cannot be deleted, preventing accidental or malicious removal of base images that dependent workloads rely on. Best practices recommend enabling deletion protection on all production images.",
   "Risk": "Unprotected images can be accidentally or maliciously deleted, breaking all dependent instances and workloads. Image deletion is irreversible and can cause prolonged outages while replacement images are built and tested. In multi-tenant environments, unauthorized deletion of shared images can impact multiple projects.",

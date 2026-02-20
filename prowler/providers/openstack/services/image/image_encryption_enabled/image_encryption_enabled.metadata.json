@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OpenStackImage",
+  "ResourceType": "OS::Glance::WebImage",
   "ResourceGroup": "storage",
   "Description": "**OpenStack images** are evaluated to verify that the **hw_mem_encryption property is set to True**. Hardware memory encryption (AMD SEV) protects guest memory from host-level attacks by encrypting it with a per-VM key managed by the CPU. Best practices recommend enabling memory encryption for workloads processing sensitive data in shared infrastructure.",
   "Risk": "Images without memory encryption enabled may expose guest memory to host-level attacks, hypervisor vulnerabilities, or malicious co-tenants. In shared infrastructure, an attacker with hypervisor access could read sensitive data from unencrypted guest memory, including cryptographic keys, credentials, and application data.",

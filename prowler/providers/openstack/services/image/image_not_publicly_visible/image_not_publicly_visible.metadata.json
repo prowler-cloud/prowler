@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OpenStackImage",
+  "ResourceType": "OS::Glance::WebImage",
   "ResourceGroup": "storage",
   "Description": "**OpenStack images** are evaluated to verify that **visibility is not set to 'public'**. Public images are accessible to all tenants in the cloud, potentially exposing operating system configurations, embedded credentials, proprietary software, and security hardening details. Best practices recommend keeping images private or shared only with specific trusted projects.",
   "Risk": "Public images expose operating system configurations, embedded credentials, and proprietary software to all tenants. Attackers can analyze public images to discover vulnerabilities, extract secrets, or clone them for malicious purposes. Public images may also violate compliance requirements for data isolation between tenants.",

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OpenStackImage",
+  "ResourceType": "OS::Glance::WebImage",
   "ResourceGroup": "storage",
   "Description": "**OpenStack images** are evaluated to verify that all **four signature properties** are configured: `img_signature`, `img_signature_hash_method`, `img_signature_key_type`, and `img_signature_certificate_uuid`. Signed images allow Nova to verify image integrity before booting, detecting tampering or corruption. Best practices recommend signing all production images using Barbican-managed certificates.",
   "Risk": "Unsigned images can be tampered with to inject backdoors, malware, or rootkits without detection. Without signature verification, compromised storage backends or man-in-the-middle attacks can modify images between upload and boot. Nova cannot verify the integrity of unsigned images, allowing corrupted or malicious images to be launched.",
