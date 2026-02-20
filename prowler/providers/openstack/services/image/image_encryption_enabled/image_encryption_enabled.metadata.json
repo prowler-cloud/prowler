@@ -1,0 +1,37 @@
+{
+  "Provider": "openstack",
+  "CheckID": "image_encryption_enabled",
+  "CheckTitle": "Images have hardware memory encryption enabled",
+  "CheckType": [],
+  "ServiceName": "image",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OS::Glance::WebImage",
+  "ResourceGroup": "storage",
+  "Description": "**OpenStack images** are evaluated to verify that the **hw_mem_encryption property is set to True**. Hardware memory encryption (AMD SEV) protects guest memory from host-level attacks by encrypting it with a per-VM key managed by the CPU. Best practices recommend enabling memory encryption for workloads processing sensitive data in shared infrastructure.",
+  "Risk": "Images without memory encryption enabled may expose guest memory to host-level attacks, hypervisor vulnerabilities, or malicious co-tenants. In shared infrastructure, an attacker with hypervisor access could read sensitive data from unencrypted guest memory, including cryptographic keys, credentials, and application data.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/security-guide/image-storage/checklist.html",
+    "https://docs.openstack.org/nova/latest/admin/sev.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack image set --property hw_mem_encryption=True <image_id>",
+      "NativeIaC": "",
+      "Other": "**Enable memory encryption:**\n1. Verify compute hosts support AMD SEV\n2. Set image property: `openstack image set --property hw_mem_encryption=True <image_id>`\n3. Ensure a flavor with SEV support is available\n4. Boot instances using the encrypted image with an SEV-enabled flavor",
+      "Terraform": "```hcl\nresource \"openstack_images_image_v2\" \"image\" {\n  name             = \"secure-image\"\n  container_format = \"bare\"\n  disk_format      = \"qcow2\"\n  visibility       = \"private\"\n\n  properties = {\n    hw_mem_encryption = \"true\"  # GOOD: Memory encryption enabled\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable hardware memory encryption on images processing sensitive data. Ensure compute hosts support AMD SEV or equivalent technology. Create dedicated SEV-enabled flavors and host aggregates. Test workload compatibility with memory encryption before production deployment.",
+      "Url": "https://hub.prowler.com/check/image_encryption_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check requires AMD SEV-capable hardware on compute nodes. Not all workloads are compatible with memory encryption. Some performance overhead is expected. The hw_mem_encryption property is a request - actual encryption depends on flavor and host capabilities."
+}

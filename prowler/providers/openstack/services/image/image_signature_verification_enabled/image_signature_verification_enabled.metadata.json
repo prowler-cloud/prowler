@@ -1,0 +1,38 @@
+{
+  "Provider": "openstack",
+  "CheckID": "image_signature_verification_enabled",
+  "CheckTitle": "Images have cryptographic signature verification enabled",
+  "CheckType": [],
+  "ServiceName": "image",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OS::Glance::WebImage",
+  "ResourceGroup": "storage",
+  "Description": "**OpenStack images** are evaluated to verify that all **four signature properties** are configured: `img_signature`, `img_signature_hash_method`, `img_signature_key_type`, and `img_signature_certificate_uuid`. Signed images allow Nova to verify image integrity before booting, detecting tampering or corruption. Best practices recommend signing all production images using Barbican-managed certificates.",
+  "Risk": "Unsigned images can be tampered with to inject backdoors, malware, or rootkits without detection. Without signature verification, compromised storage backends or man-in-the-middle attacks can modify images between upload and boot. Nova cannot verify the integrity of unsigned images, allowing corrupted or malicious images to be launched.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/security-guide/image-storage/checklist.html",
+    "https://docs.openstack.org/glance/latest/user/signature.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "**Sign images using Barbican:**\n1. Create a signing key and certificate in Barbican\n2. Sign the image data with the private key\n3. Upload the image with signature properties:\n   `openstack image create --property img_signature=<base64_signature> --property img_signature_hash_method=SHA-256 --property img_signature_key_type=RSA-PSS --property img_signature_certificate_uuid=<barbican_cert_uuid> <image_name>`\n4. Configure Nova to verify signatures: set `verify_glance_signatures = True` in nova.conf",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Sign all production images using Barbican-managed certificates. Enable signature verification in Nova (verify_glance_signatures=True). Implement an image signing pipeline in CI/CD. Regularly rotate signing certificates and audit image signatures.",
+      "Url": "https://hub.prowler.com/check/image_signature_verification_enabled"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check requires all four signature properties to be set. Partial configuration (e.g., only img_signature without the hash method or certificate UUID) is considered incomplete and will fail. Image signing requires Barbican (OpenStack Key Manager) to be deployed and configured."
+}
