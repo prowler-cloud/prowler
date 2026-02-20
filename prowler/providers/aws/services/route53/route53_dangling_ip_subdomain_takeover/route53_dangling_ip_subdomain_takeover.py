@@ -12,19 +12,30 @@ class route53_dangling_ip_subdomain_takeover(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
 
+        # Gather Elastic IPs from ALL regions since Route53 is global
+        public_ips = []
+        all_regions = (
+            ec2_client.provider._enabled_regions
+            or ec2_client.provider._identity.audited_regions
+        )
+        for region in all_regions:
+            try:
+                regional_client = ec2_client.session.client("ec2", region_name=region)
+                for addr in regional_client.describe_addresses().get("Addresses", []):
+                    if "PublicIp" in addr:
+                        public_ips.append(addr["PublicIp"])
+            except Exception:
+                # Gracefully skip regions with access errors (e.g., disabled regions, permission issues)
+                pass
+
+        # Add Network Interface public IPs
+        for ni in ec2_client.network_interfaces.values():
+            if ni.association and ni.association.get("PublicIp"):
+                public_ips.append(ni.association.get("PublicIp"))
+
         for record_set in route53_client.record_sets:
             # Check only A records and avoid aliases (only need to check IPs not AWS Resources)
             if record_set.type == "A" and not record_set.is_alias:
-                # Gather Elastic IPs and Network Interfaces Public IPs inside the AWS Account
-                public_ips = []
-                public_ips.extend([eip.public_ip for eip in ec2_client.elastic_ips])
-                # Add public IPs from Network Interfaces
-                for network_interface in ec2_client.network_interfaces.values():
-                    if (
-                        network_interface.association
-                        and network_interface.association.get("PublicIp")
-                    ):
-                        public_ips.append(network_interface.association.get("PublicIp"))
                 for record in record_set.records:
                     # Check if record is an IP Address
                     if validate_ip_address(record):
