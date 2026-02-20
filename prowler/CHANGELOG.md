@@ -56,7 +56,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [5.18.3] (Prowler UNRELEASED)
+## [5.18.4] (Prowler v5.18.4)
+
+### 🐞 Fixed
+
+- Handle serialization errors in OCSF output for non-serializable resource metadata [(#10129)](https://github.com/prowler-cloud/prowler/pull/10129)
+
+---
+
+## [5.18.3] (Prowler v5.18.3)
 
 ### 🐞 Fixed
 
