@@ -21,6 +21,7 @@ from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
+from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.github.github_provider import GithubProvider
 from prowler.providers.iac.iac_provider import IacProvider
@@ -190,48 +191,45 @@ class TestProwlerProviderConnectionTest:
         assert isinstance(connection.error, Provider.secret.RelatedObjectDoesNotExist)
         assert str(connection.error) == "Provider has no secret."
 
-    @patch(
-        "prowler.providers.image.lib.registry.factory.create_registry_adapter",
-    )
     @patch("api.utils.return_prowler_provider")
     def test_prowler_provider_connection_test_image_success(
-        self, mock_return_prowler_provider, mock_create_adapter
+        self, mock_return_prowler_provider
     ):
         provider = MagicMock()
         provider.provider = Provider.ProviderChoices.IMAGE.value
         provider.uid = "ghcr.io"
         provider.secret.secret = {"registry_token": "tok"}
 
-        mock_adapter = MagicMock()
-        mock_create_adapter.return_value = mock_adapter
+        prowler_provider = MagicMock()
+        prowler_provider.test_connection.return_value = Connection(is_connected=True)
+        mock_return_prowler_provider.return_value = prowler_provider
 
         connection = prowler_provider_connection_test(provider)
 
         assert connection.is_connected is True
         assert connection.error is None
-        mock_create_adapter.assert_called_once_with(
-            registry_url="ghcr.io",
-            username=None,
-            password=None,
-            token="tok",
+        prowler_provider.test_connection.assert_called_once_with(
+            registry="ghcr.io",
+            registry_username=None,
+            registry_password=None,
+            registry_token="tok",
+            raise_on_exception=False,
         )
-        mock_adapter.list_repositories.assert_called_once()
 
-    @patch(
-        "prowler.providers.image.lib.registry.factory.create_registry_adapter",
-    )
     @patch("api.utils.return_prowler_provider")
     def test_prowler_provider_connection_test_image_failure(
-        self, mock_return_prowler_provider, mock_create_adapter
+        self, mock_return_prowler_provider
     ):
         provider = MagicMock()
         provider.provider = Provider.ProviderChoices.IMAGE.value
         provider.uid = "ghcr.io"
         provider.secret.secret = {"registry_token": "bad-token"}
 
-        mock_adapter = MagicMock()
-        mock_adapter.list_repositories.side_effect = Exception("401 Unauthorized")
-        mock_create_adapter.return_value = mock_adapter
+        prowler_provider = MagicMock()
+        prowler_provider.test_connection.return_value = Connection(
+            is_connected=False, error="401 Unauthorized"
+        )
+        mock_return_prowler_provider.return_value = prowler_provider
 
         connection = prowler_provider_connection_test(provider)
 

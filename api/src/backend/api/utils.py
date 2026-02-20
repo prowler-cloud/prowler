@@ -323,19 +323,13 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         }
         return prowler_provider.test_connection(**openstack_kwargs)
     elif provider.provider == Provider.ProviderChoices.IMAGE.value:
-        from prowler.providers.image.lib.registry.factory import create_registry_adapter
-
-        try:
-            adapter = create_registry_adapter(
-                registry_url=provider.uid,
-                username=prowler_provider_kwargs.get("registry_username"),
-                password=prowler_provider_kwargs.get("registry_password"),
-                token=prowler_provider_kwargs.get("registry_token"),
-            )
-            adapter.list_repositories()
-            return Connection(is_connected=True)
-        except Exception as e:
-            return Connection(is_connected=False, error=str(e))
+        return prowler_provider.test_connection(
+            registry=provider.uid,
+            registry_username=prowler_provider_kwargs.get("registry_username"),
+            registry_password=prowler_provider_kwargs.get("registry_password"),
+            registry_token=prowler_provider_kwargs.get("registry_token"),
+            raise_on_exception=False,
+        )
     else:
         return prowler_provider.test_connection(
             **prowler_provider_kwargs,

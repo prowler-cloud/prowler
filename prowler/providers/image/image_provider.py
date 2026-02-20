@@ -896,17 +896,23 @@ class ImageProvider(Provider):
         image: str | None = None,
         raise_on_exception: bool = True,
         provider_id: str | None = None,
+        registry: str | None = None,
         registry_username: str | None = None,
         registry_password: str | None = None,
         registry_token: str | None = None,
     ) -> "Connection":
         """
-        Test connection to container registry by attempting to inspect an image.
+        Test connection to a container registry or individual image.
+
+        When ``registry`` is provided, validates registry-level connectivity
+        by listing repositories through the registry adapter.  Otherwise
+        falls back to testing access to an individual ``image`` via Trivy.
 
         Args:
-            image: Container image to test
+            image: Container image to test (individual image mode)
             raise_on_exception: Whether to raise exceptions
             provider_id: Fallback for image name
+            registry: Registry URL for registry-level connectivity test
             registry_username: Registry username for basic auth
             registry_password: Registry password for basic auth
             registry_token: Registry token for token-based auth
@@ -915,6 +921,22 @@ class ImageProvider(Provider):
             Connection: Connection object with success status
         """
         try:
+            # Registry-level connectivity test (used by API)
+            if registry:
+                from prowler.providers.image.lib.registry.factory import (
+                    create_registry_adapter,
+                )
+
+                adapter = create_registry_adapter(
+                    registry_url=registry,
+                    username=registry_username,
+                    password=registry_password,
+                    token=registry_token,
+                )
+                adapter.list_repositories()
+                return Connection(is_connected=True)
+
+            # Individual image test (existing behaviour)
             if provider_id and not image:
                 image = provider_id
 
