@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OpenStackVolume",
+  "ResourceType": "OS::Cinder::Volume",
   "ResourceGroup": "blockstorage",
   "Description": "**OpenStack block storage volumes** are evaluated to verify that at least one **backup** exists. Volume backups provide disaster recovery capability by storing volume data in a separate storage backend (e.g., Swift or Ceph). Without backups, data loss from volume corruption, accidental deletion, or infrastructure failure is irrecoverable.",
   "Risk": "Volumes without backups are vulnerable to permanent data loss from hardware failures, accidental deletion, software bugs, or ransomware attacks. Without backups, recovery from disasters requires rebuilding data from scratch, which may be impossible for stateful applications.",

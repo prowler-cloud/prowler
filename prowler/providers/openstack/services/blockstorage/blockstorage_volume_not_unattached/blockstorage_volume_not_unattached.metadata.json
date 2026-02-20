@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",
-  "ResourceType": "OpenStackVolume",
+  "ResourceType": "OS::Cinder::Volume",
   "ResourceGroup": "blockstorage",
   "Description": "**OpenStack block storage volumes** are evaluated to verify they are **attached to at least one instance**. Unattached volumes may indicate orphaned resources that are no longer in use but continue to incur storage costs and may contain sensitive data without active monitoring or access controls.",
   "Risk": "Unattached volumes may contain sensitive data that is no longer actively managed or monitored. Orphaned volumes increase storage costs and can be overlooked during security audits. If unattached volumes contain credentials or sensitive data, they may be accessed by unauthorized users who gain project access.",

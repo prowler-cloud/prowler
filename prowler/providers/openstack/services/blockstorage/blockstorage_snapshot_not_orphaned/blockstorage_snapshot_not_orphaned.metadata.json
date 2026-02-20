@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",
-  "ResourceType": "OpenStackSnapshot",
+  "ResourceType": "OS::Cinder::Snapshot",
   "ResourceGroup": "blockstorage",
   "Description": "**OpenStack block storage snapshots** are evaluated to verify they **reference existing volumes**. Orphaned snapshots (whose source volumes have been deleted) may contain stale data, incur unnecessary storage costs, and can be overlooked during security reviews. They may also contain sensitive data from deleted volumes that is no longer being managed.",
   "Risk": "Orphaned snapshots may contain sensitive data from deleted volumes that is no longer actively managed or monitored. These snapshots continue to consume storage resources and may be restored by unauthorized users to access old data. They can be overlooked during security audits and compliance reviews.",
