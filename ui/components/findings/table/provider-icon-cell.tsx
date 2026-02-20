@@ -2,6 +2,7 @@ import {
   AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
+  CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
   IacProviderBadge,
@@ -24,6 +25,7 @@ export const PROVIDER_ICONS = {
   oraclecloud: OracleCloudProviderBadge,
   mongodbatlas: MongoDBAtlasProviderBadge,
   alibabacloud: AlibabaCloudProviderBadge,
+  cloudflare: CloudflareProviderBadge,
   openstack: OpenStackProviderBadge,
 } as const;
 

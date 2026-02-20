@@ -46,8 +46,12 @@ export const useCredentialsForm = ({
     if (providerType === "gcp" && via === "service-account") {
       return addCredentialsServiceAccountFormSchema(providerType);
     }
-    // For GitHub and M365, we need to pass the via parameter to determine which fields are required
-    if (providerType === "github" || providerType === "m365") {
+    // For GitHub, M365, and Cloudflare, we need to pass the via parameter to determine which fields are required
+    if (
+      providerType === "github" ||
+      providerType === "m365" ||
+      providerType === "cloudflare"
+    ) {
       return addCredentialsFormSchema(providerType, via);
     }
     return addCredentialsFormSchema(providerType);
@@ -192,6 +196,22 @@ export const useCredentialsForm = ({
           [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: "",
           [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: "",
         };
+      case "cloudflare":
+        // Cloudflare credentials based on via parameter
+        if (via === "api_token") {
+          return {
+            ...baseDefaults,
+            [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]: "",
+          };
+        }
+        if (via === "api_key") {
+          return {
+            ...baseDefaults,
+            [ProviderCredentialFields.CLOUDFLARE_API_KEY]: "",
+            [ProviderCredentialFields.CLOUDFLARE_API_EMAIL]: "",
+          };
+        }
+        return baseDefaults;
       case "openstack":
         return {
           ...baseDefaults,

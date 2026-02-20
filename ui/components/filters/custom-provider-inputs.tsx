@@ -2,6 +2,7 @@ import {
   AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
+  CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
   IacProviderBadge,
@@ -98,6 +99,15 @@ export const CustomProviderInputAlibabaCloud = () => {
     <div className="flex items-center gap-x-2">
       <AlibabaCloudProviderBadge width={25} height={25} />
       <p className="text-sm">Alibaba Cloud</p>
+    </div>
+  );
+};
+
+export const CustomProviderInputCloudflare = () => {
+  return (
+    <div className="flex items-center gap-x-2">
+      <CloudflareProviderBadge width={25} height={25} />
+      <p className="text-sm">Cloudflare</p>
     </div>
   );
 };
