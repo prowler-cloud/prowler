@@ -253,13 +253,13 @@ export function ProviderWizardModal({
       open={open}
       onOpenChange={handleDialogOpenChange}
       size="4xl"
-      className="flex !h-[90vh] !max-h-[90vh] !min-h-[90vh] !max-w-[60vw] !min-w-[70vw] flex-col overflow-hidden p-8"
+      className="flex !h-[90vh] !max-h-[90vh] !min-h-[90vh] !w-[calc(100vw-24px)] !max-w-[1192px] flex-col overflow-hidden p-4 sm:!w-[calc(100vw-40px)] sm:p-6 lg:!w-[calc(100vw-64px)] lg:p-8"
     >
       <DialogHeader className="gap-2 p-0">
         <DialogTitle className="text-lg font-semibold">
           Adding A Cloud Provider
         </DialogTitle>
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
+        <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
           <Info className="size-4 shrink-0" />
           <span>For assistance connecting a Cloud Provider visit</span>
           <Button variant="link" size="link-sm" className="h-auto p-0" asChild>
@@ -271,8 +271,8 @@ export function ProviderWizardModal({
         </div>
       </DialogHeader>
 
-      <div className="mt-8 flex min-h-0 flex-1 justify-between overflow-hidden">
-        <div className="box-border w-[328px] shrink-0">
+      <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden lg:mt-8 lg:flex-row">
+        <div className="mb-4 box-border w-full shrink-0 lg:mb-0 lg:w-[328px]">
           {isProviderFlow ? (
             <WizardStepper currentStep={currentStep} />
           ) : (
@@ -283,9 +283,10 @@ export function ProviderWizardModal({
             />
           )}
         </div>
+        <div aria-hidden className="hidden w-[100px] min-w-0 shrink lg:block" />
 
         <div className="flex-1 overflow-hidden">
-          <div className="minimal-scrollbar ml-auto h-full w-full max-w-[620px] overflow-y-auto">
+          <div className="minimal-scrollbar h-full w-full overflow-y-auto lg:ml-auto lg:max-w-[620px] xl:max-w-[700px]">
             {isProviderFlow && currentStep === PROVIDER_WIZARD_STEP.CONNECT && (
               <ConnectStep
                 onNext={() => setCurrentStep(PROVIDER_WIZARD_STEP.CREDENTIALS)}
