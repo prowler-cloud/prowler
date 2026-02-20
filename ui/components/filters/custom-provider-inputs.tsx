@@ -8,6 +8,7 @@ import {
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
+  OpenStackProviderBadge,
   OracleCloudProviderBadge,
 } from "../icons/providers-badge";
 
@@ -97,6 +98,15 @@ export const CustomProviderInputAlibabaCloud = () => {
     <div className="flex items-center gap-x-2">
       <AlibabaCloudProviderBadge width={25} height={25} />
       <p className="text-sm">Alibaba Cloud</p>
+    </div>
+  );
+};
+
+export const CustomProviderInputOpenStack = () => {
+  return (
+    <div className="flex items-center gap-x-2">
+      <OpenStackProviderBadge width={25} height={25} />
+      <p className="text-sm">OpenStack</p>
     </div>
   );
 };

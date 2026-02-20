@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "defenderidentity_health_issues_no_open",
+  "CheckTitle": "Defender for Identity has no unresolved health issues affecting hybrid infrastructure monitoring",
+  "CheckType": [],
+  "ServiceName": "defenderidentity",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Defender for Identity Health Issue",
+  "ResourceGroup": "security",
+  "Description": "Microsoft Defender for Identity (MDI) monitors your hybrid identity infrastructure and detects advanced threats targeting Active Directory. This check verifies that MDI sensors are deployed and that there are no unresolved health issues that may affect the ability to detect identity-based attacks.",
+  "Risk": "Without deployed MDI sensors or with unresolved health issues, organizations face critical gaps in threat detection. Misconfigured or missing sensors fail to monitor domain controllers, allowing identity-based attacks like Pass-the-Hash, Golden Ticket, or lateral movement to go undetected. Attackers commonly exploit these blind spots to compromise hybrid environments while evading detection.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/defender-for-identity/health-alerts",
+    "https://learn.microsoft.com/en-us/graph/api/security-identitycontainer-list-healthissues"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Defender XDR portal at https://security.microsoft.com/\n2. Go to Settings > Identities > Health issues\n3. Review each open health issue and its recommendations\n4. Follow the specific remediation steps provided for each issue\n5. Verify the issue is resolved and status changes to closed",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Regularly monitor and resolve Defender for Identity health issues to maintain comprehensive visibility into identity-based threats across your hybrid infrastructure.",
+      "Url": "https://hub.prowler.com/check/defenderidentity_health_issues_no_open"
+    }
+  },
+  "Categories": [
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check requires SecurityIdentitiesHealth.Read.All permission and a hybrid identity environment with Active Directory on-premises connected to Microsoft Defender for Identity. Health issues can be global (domain-related, such as Directory Services account issues or auditing misconfigurations) or sensor-specific. If no hybrid AD environment is configured, this check will pass with no health issues detected, as MDI only monitors on-premises Active Directory infrastructure."
+}

@@ -30,4 +30,8 @@ export const PROVIDER_CREDENTIALS_ERROR_MAPPING: Record<string, string> = {
     ProviderCredentialFields.SERVICE_ACCOUNT_KEY,
   [ErrorPointers.ATLAS_PUBLIC_KEY]: ProviderCredentialFields.ATLAS_PUBLIC_KEY,
   [ErrorPointers.ATLAS_PRIVATE_KEY]: ProviderCredentialFields.ATLAS_PRIVATE_KEY,
+  [ErrorPointers.OPENSTACK_CLOUDS_YAML_CONTENT]:
+    ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT,
+  [ErrorPointers.OPENSTACK_CLOUDS_YAML_CLOUD]:
+    ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD,
 };

@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "defenderxdr_critical_asset_management_pending_approvals",
+  "CheckTitle": "Ensure all Critical Asset Management classifications are reviewed and approved in Microsoft Defender XDR",
+  "CheckType": [],
+  "ServiceName": "defenderxdr",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Defender XDR Critical Asset Management",
+  "ResourceGroup": "security",
+  "Description": "Assets with a lower classification confidence score in Microsoft Defender XDR must be approved by a security administrator.\n\nAsset classifications that have not yet been reviewed and approved may result in incomplete **critical asset** visibility.",
+  "Risk": "Stale pending approvals lead to limited visibility in Microsoft Defender XDR. **Critical assets** that are not properly identified and classified may not receive appropriate security monitoring and protections, creating gaps in the organization's security posture.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/security-exposure-management/classify-critical-assets",
+    "https://learn.microsoft.com/en-us/security-exposure-management/classify-critical-assets#review-critical-assets"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Microsoft Defender** at https://security.microsoft.com/\n2. Go to **Settings** > **Microsoft Defender XDR** > **Critical asset management**\n3. Review each pending approval listed in the check results\n4. Verify the correct classification for each asset\n5. Approve or reject the classification as appropriate",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Regularly review and approve pending critical asset classifications to ensure accurate asset visibility in Microsoft Defender XDR. Stale approvals reduce the effectiveness of security monitoring and incident response for critical assets.",
+      "Url": "https://hub.prowler.com/check/defenderxdr_critical_asset_management_pending_approvals"
+    }
+  },
+  "Categories": [
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check requires Microsoft Defender XDR with Security Exposure Management enabled. The ThreatHunting.Read.All permission is required to query the ExposureGraphNodes table via the Advanced Hunting API. Approved assets will be reflected in the classification table within 24 hours."
+}

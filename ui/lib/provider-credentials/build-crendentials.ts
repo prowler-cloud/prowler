@@ -250,6 +250,20 @@ export const buildAlibabaCloudSecret = (
   return filterEmptyValues(secret);
 };
 
+export const buildOpenStackSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]: getFormValue(
+      formData,
+      ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT,
+    ),
+    [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]: getFormValue(
+      formData,
+      ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 export const buildIacSecret = (formData: FormData) => {
   const secret = {
     [ProviderCredentialFields.REPOSITORY_URL]: getFormValue(
@@ -373,6 +387,10 @@ export const buildSecretConfig = (
         secret: buildAlibabaCloudSecret(formData, isRole),
       };
     },
+    openstack: () => ({
+      secretType: "static",
+      secret: buildOpenStackSecret(formData),
+    }),
   };
 
   const builder = secretBuilders[providerType];
