@@ -906,11 +906,17 @@ class ImageProvider(Provider):
         """
         Test connection to container registry by verifying image accessibility.
 
+        Handles two cases:
+        - Image reference (e.g. ``alpine:3.18``, ``ghcr.io/user/repo:tag``):
+          verifies the specific tag exists.
+        - Registry URL (e.g. ``docker.io/namespace``, ``ghcr.io/org``):
+          verifies we can list repositories in that namespace.
+
         Uses registry HTTP APIs directly instead of Trivy to avoid false
         failures caused by Trivy DB download issues.
 
         Args:
-            image: Container image to test
+            image: Container image or registry URL to test
             raise_on_exception: Whether to raise exceptions
             provider_id: Fallback for image name
             registry_username: Registry username for basic auth
@@ -935,6 +941,26 @@ class ImageProvider(Provider):
             else:
                 repo_and_tag = image
 
+            # Determine if this is a registry URL (namespace only) or a full
+            # image reference.  A registry URL like ``docker.io/andoniaf`` has
+            # a registry host but the remaining part contains no ``/`` (no
+            # repo) and no ``:`` (no tag).
+            is_registry_url = (
+                registry_host and "/" not in repo_and_tag and ":" not in repo_and_tag
+            )
+
+            if is_registry_url:
+                # Registry enumeration mode — test by listing repositories
+                adapter = create_registry_adapter(
+                    registry_url=image,
+                    username=registry_username,
+                    password=registry_password,
+                    token=registry_token,
+                )
+                adapter.list_repositories()
+                return Connection(is_connected=True)
+
+            # Image reference mode — verify the specific tag exists
             if ":" in repo_and_tag:
                 repository, tag = repo_and_tag.rsplit(":", 1)
             else:

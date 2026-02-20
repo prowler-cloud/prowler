@@ -325,6 +325,24 @@ class TestImageProvider:
         assert result.is_connected is False
         assert "not found" in result.error
 
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_registry_url(self, mock_factory):
+        """Test registry URL (namespace) uses list_repositories."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_repositories.return_value = ["andoniaf/myapp"]
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(image="docker.io/andoniaf")
+
+        assert result.is_connected is True
+        mock_factory.assert_called_once_with(
+            registry_url="docker.io/andoniaf",
+            username=None,
+            password=None,
+            token=None,
+        )
+        mock_adapter.list_repositories.assert_called_once()
+
     def test_build_status_extended(self):
         """Test status message content for different finding types."""
         provider = _make_provider()
