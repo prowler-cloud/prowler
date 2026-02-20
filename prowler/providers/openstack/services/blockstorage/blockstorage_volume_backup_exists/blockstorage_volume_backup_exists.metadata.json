@@ -1,0 +1,36 @@
+{
+  "Provider": "openstack",
+  "CheckID": "blockstorage_volume_backup_exists",
+  "CheckTitle": "Block storage volumes have at least one backup",
+  "CheckType": [],
+  "ServiceName": "blockstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OS::Cinder::Volume",
+  "ResourceGroup": "blockstorage",
+  "Description": "**OpenStack block storage volumes** are evaluated to verify that at least one **backup** exists. Volume backups provide disaster recovery capability by storing volume data in a separate storage backend (e.g., Swift or Ceph). Without backups, data loss from volume corruption, accidental deletion, or infrastructure failure is irrecoverable.",
+  "Risk": "Volumes without backups are vulnerable to permanent data loss from hardware failures, accidental deletion, software bugs, or ransomware attacks. Without backups, recovery from disasters requires rebuilding data from scratch, which may be impossible for stateful applications.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/cinder/latest/admin/volume-backups.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack volume backup create --name <backup_name> <volume_id>",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Block Storage > Volumes**\n2. Select the volume to back up\n3. Click **Create Backup**\n4. Provide a name and optional description\n5. Set up automated backup schedules using cron or orchestration tools",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create regular backups for all block storage volumes, especially those containing critical data. Implement automated backup schedules. Use incremental backups to reduce storage costs and backup time. Test backup restoration regularly to ensure recoverability.",
+      "Url": "https://hub.prowler.com/check/blockstorage_volume_backup_exists"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The backup service must be enabled in the Cinder configuration. Backups are stored in a separate backend (typically Swift or Ceph). This check verifies the existence of at least one backup, not backup freshness or scheduling."
+}

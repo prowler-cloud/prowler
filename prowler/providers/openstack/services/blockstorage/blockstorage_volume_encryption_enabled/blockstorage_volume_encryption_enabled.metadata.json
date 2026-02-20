@@ -1,0 +1,37 @@
+{
+  "Provider": "openstack",
+  "CheckID": "blockstorage_volume_encryption_enabled",
+  "CheckTitle": "Block storage volumes have encryption enabled",
+  "CheckType": [],
+  "ServiceName": "blockstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OS::Cinder::Volume",
+  "ResourceGroup": "blockstorage",
+  "Description": "**OpenStack block storage volumes** (Cinder) are evaluated to verify that **encryption** is enabled. Volume encryption protects data at rest by encrypting the entire volume using a key managed by the OpenStack Key Manager (Barbican). Without encryption, data stored on volumes is vulnerable to unauthorized access if the underlying storage is compromised.",
+  "Risk": "Unencrypted volumes expose data at rest to unauthorized access if physical storage media is compromised, stolen, or improperly decommissioned. Attackers with access to the storage backend can read sensitive data directly. Compliance frameworks (PCI-DSS, HIPAA, SOC2) require encryption of data at rest.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/cinder/latest/configuration/block-storage/volume-encryption.html",
+    "https://docs.openstack.org/barbican/latest/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack volume type create --encryption-provider luks --encryption-cipher aes-xts-plain64 --encryption-key-size 256 --encryption-control-location front-end encrypted_type\nopenstack volume create --size 10 --type encrypted_type encrypted-volume",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Block Storage > Volumes**\n2. Create a new volume using an encrypted volume type\n3. Migrate data from unencrypted volumes to encrypted ones\n4. Delete the old unencrypted volumes\n\nNote: Existing volumes cannot be encrypted in-place; data must be migrated.",
+      "Terraform": "```hcl\nresource \"openstack_blockstorage_volume_v3\" \"encrypted_volume\" {\n  name        = \"encrypted-volume\"\n  size        = 10\n  volume_type = openstack_blockstorage_volume_type_v3.encrypted.name\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable encryption on all block storage volumes using encrypted volume types backed by Barbican key management. Create encrypted volume types with strong ciphers (aes-xts-plain64) and adequate key sizes (256-bit). Migrate existing unencrypted volumes to encrypted ones.",
+      "Url": "https://hub.prowler.com/check/blockstorage_volume_encryption_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Volume encryption requires Barbican (OpenStack Key Manager) to be deployed and configured. Encryption is set at the volume type level and applies to all volumes created with that type. Existing volumes cannot be encrypted in-place."
+}

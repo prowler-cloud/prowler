@@ -1,0 +1,38 @@
+{
+  "Provider": "openstack",
+  "CheckID": "blockstorage_volume_metadata_sensitive_data",
+  "CheckTitle": "Block storage volume metadata does not contain sensitive data",
+  "CheckType": [],
+  "ServiceName": "blockstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "OS::Cinder::Volume",
+  "ResourceGroup": "blockstorage",
+  "Description": "**OpenStack block storage volume metadata** is evaluated to detect **sensitive data** such as passwords, API keys, secrets, and private keys. Volume metadata is accessible via the OpenStack API to any user with access to the project. Storing secrets in metadata exposes them to unauthorized access through the API.",
+  "Risk": "Volume metadata containing sensitive data exposes credentials through the OpenStack API, accessible to any project member. Attackers with project access can enumerate volume metadata to extract passwords, API keys, and private keys. Stolen credentials enable unauthorized modifications, privilege escalation, and data breaches.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/cinder/latest/cli/cli-manage-volumes.html",
+    "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack volume unset --property <sensitive_key> <volume_id>",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Block Storage > Volumes**\n2. Select volume with sensitive metadata\n3. Remove sensitive metadata keys using CLI command\n4. Rotate exposed credentials immediately\n5. Store secrets in Barbican or external secrets manager instead",
+      "Terraform": "```hcl\n# Use Barbican for secrets instead of volume metadata\nresource \"openstack_blockstorage_volume_v3\" \"secure_volume\" {\n  name = \"app-data\"\n  size = 10\n\n  # Safe metadata (non-sensitive labels only)\n  metadata = {\n    environment = \"production\"\n    application = \"web-app\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Never store secrets in volume metadata; use Barbican (OpenStack Key Manager), Vault, or external secrets management instead. Remove any sensitive data currently stored in volume metadata and rotate exposed credentials immediately. Implement metadata policies to prevent sensitive data from being added.",
+      "Url": "https://hub.prowler.com/check/blockstorage_volume_metadata_sensitive_data"
+    }
+  },
+  "Categories": [
+    "secrets",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check uses the detect-secrets library to scan for credentials. May produce false positives on metadata keys containing secret-like keywords. Findings should be reviewed manually. The audit_config allows configuring secrets_ignore_patterns to exclude specific patterns and detect_secrets_plugins to customize detection."
+}

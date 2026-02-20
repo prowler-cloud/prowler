@@ -1,0 +1,40 @@
+{
+  "Provider": "openstack",
+  "CheckID": "blockstorage_snapshot_metadata_sensitive_data",
+  "CheckTitle": "Block storage snapshot metadata does not contain sensitive data",
+  "CheckType": [],
+  "ServiceName": "blockstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "OS::Cinder::Snapshot",
+  "ResourceGroup": "blockstorage",
+  "Description": "**OpenStack block storage snapshot metadata** is evaluated to detect **sensitive data** such as passwords, API keys, secrets, and private keys. Snapshot metadata is accessible via the OpenStack API to any user with access to the project. Storing secrets in metadata exposes them to unauthorized access through the API.",
+  "Risk": "Snapshot metadata containing sensitive data exposes credentials through the OpenStack API, accessible to any project member. Attackers with project access can enumerate snapshot metadata to extract passwords, API keys, and private keys. Stolen credentials enable unauthorized modifications, privilege escalation, and data breaches.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/cinder/latest/cli/cli-manage-volumes.html",
+    "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack volume snapshot unset --property <sensitive_key> <snapshot_id>",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Block Storage > Snapshots**\n2. Select snapshot with sensitive metadata\n3. Remove sensitive metadata keys using CLI command\n4. Rotate exposed credentials immediately\n5. Store secrets in Barbican or external secrets manager instead",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Never store secrets in snapshot metadata; use Barbican (OpenStack Key Manager), Vault, or external secrets management instead. Remove any sensitive data currently stored in snapshot metadata and rotate exposed credentials immediately. Implement metadata policies to prevent sensitive data from being added.",
+      "Url": "https://hub.prowler.com/check/blockstorage_snapshot_metadata_sensitive_data"
+    }
+  },
+  "Categories": [
+    "secrets",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "blockstorage_volume_metadata_sensitive_data"
+  ],
+  "Notes": "This check uses the detect-secrets library to scan for credentials. May produce false positives on metadata keys containing secret-like keywords. Findings should be reviewed manually. The audit_config allows configuring secrets_ignore_patterns to exclude specific patterns and detect_secrets_plugins to customize detection."
+}

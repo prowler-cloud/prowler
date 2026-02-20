@@ -1,0 +1,36 @@
+{
+  "Provider": "openstack",
+  "CheckID": "blockstorage_snapshot_not_orphaned",
+  "CheckTitle": "Block storage snapshots reference existing volumes",
+  "CheckType": [],
+  "ServiceName": "blockstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "OS::Cinder::Snapshot",
+  "ResourceGroup": "blockstorage",
+  "Description": "**OpenStack block storage snapshots** are evaluated to verify they **reference existing volumes**. Orphaned snapshots (whose source volumes have been deleted) may contain stale data, incur unnecessary storage costs, and can be overlooked during security reviews. They may also contain sensitive data from deleted volumes that is no longer being managed.",
+  "Risk": "Orphaned snapshots may contain sensitive data from deleted volumes that is no longer actively managed or monitored. These snapshots continue to consume storage resources and may be restored by unauthorized users to access old data. They can be overlooked during security audits and compliance reviews.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/cinder/latest/cli/cli-manage-volumes.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack volume snapshot list\nopenstack volume snapshot delete <snapshot_id>",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Block Storage > Snapshots**\n2. Identify snapshots whose source volumes no longer exist\n3. Review each orphaned snapshot for necessity\n4. Back up data if needed by creating a volume from the snapshot\n5. Delete orphaned snapshots that are no longer needed",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review orphaned snapshots regularly and delete those no longer needed. Before deleting a volume, review and clean up associated snapshots. Implement snapshot lifecycle policies to prevent accumulation of orphaned snapshots. Tag snapshots with ownership and purpose metadata.",
+      "Url": "https://hub.prowler.com/check/blockstorage_snapshot_not_orphaned"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Orphaned snapshots may be intentionally retained for data recovery or compliance purposes. This check identifies snapshots referencing non-existent volumes for review. Organizations should evaluate each orphaned snapshot based on retention policies."
+}
