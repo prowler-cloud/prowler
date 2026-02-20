@@ -190,7 +190,6 @@ class TestProwlerProviderConnectionTest:
         assert isinstance(connection.error, Provider.secret.RelatedObjectDoesNotExist)
         assert str(connection.error) == "Provider has no secret."
 
-
     @patch("api.utils.return_prowler_provider")
     def test_prowler_provider_connection_test_image_provider(
         self, mock_return_prowler_provider
