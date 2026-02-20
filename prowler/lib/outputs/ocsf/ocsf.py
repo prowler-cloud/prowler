@@ -201,11 +201,6 @@ class OCSF(Output):
                     self._file_descriptor.write("[")
                 for finding in self._data:
                     try:
-<<<<<<< HEAD
-                        self._file_descriptor.write(
-                            finding.json(exclude_none=True, indent=4)
-                        )
-=======
                         if hasattr(finding, "model_dump_json"):
                             json_output = finding.model_dump_json(
                                 exclude_none=True, indent=4
@@ -213,7 +208,6 @@ class OCSF(Output):
                         else:
                             json_output = finding.json(exclude_none=True, indent=4)
                         self._file_descriptor.write(json_output)
->>>>>>> 9f6121bc0 (fix(ocsf): serialization errors non-serializable resource meta (#10129))
                         self._file_descriptor.write(",")
                     except Exception as error:
                         logger.error(
