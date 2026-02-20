@@ -4,9 +4,7 @@ title: 'Getting Started With OpenStack'
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
 
-<VersionBadge version="5.18.0" />
-
-Prowler for OpenStack allows you to audit your OpenStack cloud infrastructure for security misconfigurations, including compute instances, networking, identity and access management, storage, and more.
+Prowler supports OpenStack both from the CLI and from Prowler Cloud. This guide walks you through the requirements, how to connect the provider in the UI, and how to run scans from the command line.
 
 <Warning>
 Prowler currently supports **public cloud OpenStack providers** (OVH, Infomaniak, Vexxhost, etc.). Support for self-deployed OpenStack environments is not yet available, if you are interested in this feature, please [open an issue](https://github.com/prowler-cloud/prowler/issues/new) or [contact us](https://prowler.com/contact).
@@ -22,15 +20,47 @@ Before running Prowler with the OpenStack provider, ensure you have:
 4. Access to Prowler CLI (see [Installation](/getting-started/installation/prowler-cli)) or an account created in [Prowler Cloud](https://cloud.prowler.com)
 
 <CardGroup cols={2}>
-  <Card title="Prowler CLI" icon="terminal" href="#prowler-cli">
-    Run OpenStack security audits with Prowler CLI
+  <Card title="Prowler Cloud" icon="cloud" href="#prowler-cloud">
+    Onboard OpenStack using Prowler Cloud
   </Card>
-  <Card title="Authentication Methods" icon="key" href="/user-guide/providers/openstack/authentication">
-    Learn about OpenStack authentication options
+  <Card title="Prowler CLI" icon="terminal" href="#prowler-cli">
+    Onboard OpenStack using Prowler CLI
   </Card>
 </CardGroup>
 
+## Prowler Cloud
+
+<VersionBadge version="5.19.0" />
+
+### Step 1: Add the provider
+
+1. Navigate to **Cloud Providers** and click **Add Cloud Provider**.
+   {/* <!-- Screenshot: Add provider list showing OpenStack option --> */}
+2. Select **OpenStack** from the provider list.
+3. Enter your **Project ID** from your OpenStack provider.
+   {/* <!-- Screenshot: Add project ID form --> */}
+4. (Optional) Add a friendly alias to identify this project in dashboards.
+
+### Step 2: Provide credentials
+
+1. Click **Next** to open the credentials form.
+2. Paste the full content of your `clouds.yaml` file into the **Clouds YAML Content** field. You can download this file from your OpenStack provider's Horizon dashboard (see the [Authentication guide](/user-guide/providers/openstack/authentication) for detailed instructions).
+3. Enter the **Cloud Name** — this is the key that identifies your cloud entry inside the `clouds.yaml` file (e.g., `mycloud`).
+   {/* <!-- Screenshot: Credentials form with clouds.yaml content and cloud name fields --> */}
+
+### Step 3: Test the connection and start scanning
+
+1. Click **Test connection** to ensure Prowler Cloud can reach the OpenStack API.
+2. The provider will appear in the list with its current connection status.
+   {/* <!-- Screenshot: Provider list showing OpenStack with connection status --> */}
+3. Launch a scan from the provider row or from the **Scans** page.
+   {/* <!-- Screenshot: Launch scan button/page --> */}
+
+---
+
 ## Prowler CLI
+
+<VersionBadge version="5.18.0" />
 
 ### Step 1: Set Up Authentication
 
