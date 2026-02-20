@@ -299,7 +299,10 @@ export const addCredentialsFormSchema = (
                                   [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]:
                                     z
                                       .string()
-                                      .min(1, "Clouds YAML content is required"),
+                                      .min(
+                                        1,
+                                        "Clouds YAML content is required",
+                                      ),
                                   [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]:
                                     z.string().min(1, "Cloud name is required"),
                                 }
