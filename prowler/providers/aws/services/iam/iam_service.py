@@ -112,8 +112,8 @@ class IAM(AWSService):
 
     def _get_roles(self):
         logger.info("IAM - List Roles...")
+        roles = []
         try:
-            roles = []
             get_roles_paginator = self.client.get_paginator("list_roles")
             for page in get_roles_paginator.paginate():
                 for role in page["Roles"]:
@@ -142,8 +142,7 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return roles
+        return roles
 
     def _get_credential_report(self):
         logger.info("IAM - Get Credential Report...")
@@ -175,13 +174,12 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return credential_list
+        return credential_list
 
     def _get_groups(self):
         logger.info("IAM - Get Groups...")
+        groups = []
         try:
-            groups = []
             get_groups_paginator = self.client.get_paginator("list_groups")
             for page in get_groups_paginator.paginate():
                 for group in page["Groups"]:
@@ -194,25 +192,23 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return groups
+        return groups
 
     def _get_account_summary(self):
         logger.info("IAM - Get Account Summary...")
+        account_summary = None
         try:
             account_summary = self.client.get_account_summary()
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            account_summary = None
-        finally:
-            return account_summary
+        return account_summary
 
     def _get_password_policy(self):
         logger.info("IAM - Get Password Policy...")
+        stored_password_policy = None
         try:
-            stored_password_policy = None
             password_policy = self.client.get_account_password_policy()[
                 "PasswordPolicy"
             ]
@@ -274,14 +270,13 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-        finally:
-            return stored_password_policy
+        return stored_password_policy
 
     def _get_users(self):
         logger.info("IAM - Get Users...")
+        users = []
         try:
             get_users_paginator = self.client.get_paginator("list_users")
-            users = []
             for page in get_users_paginator.paginate():
                 for user in page["Users"]:
                     if not self.audit_resources or (
@@ -311,13 +306,12 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return users
+        return users
 
     def _list_virtual_mfa_devices(self):
         logger.info("IAM - List Virtual MFA Devices...")
+        mfa_devices = []
         try:
-            mfa_devices = []
             list_virtual_mfa_devices_paginator = self.client.get_paginator(
                 "list_virtual_mfa_devices"
             )
@@ -329,8 +323,7 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return mfa_devices
+        return mfa_devices
 
     def _list_attached_group_policies(self):
         logger.info("IAM - List Attached Group Policies...")
@@ -677,12 +670,11 @@ class IAM(AWSService):
 
     def _list_entities_role_for_policy(self, policy_arn):
         logger.info("IAM - List Entities Role For Policy...")
+        roles = []
         try:
-            roles = []
             roles = self.client.list_entities_for_policy(
                 PolicyArn=policy_arn, EntityFilter="Role"
             )["PolicyRoles"]
-            return roles
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDenied":
                 logger.error(
@@ -697,18 +689,16 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return roles
+        return roles
 
     def _list_entities_for_policy(self, policy_arn):
         logger.info("IAM - List Entities For Policy...")
+        entities = {
+            "Users": [],
+            "Groups": [],
+            "Roles": [],
+        }
         try:
-            entities = {
-                "Users": [],
-                "Groups": [],
-                "Roles": [],
-            }
-
             paginator = self.client.get_paginator("list_entities_for_policy")
             for response in paginator.paginate(PolicyArn=policy_arn):
                 entities["Users"].extend(
@@ -720,7 +710,6 @@ class IAM(AWSService):
                 entities["Roles"].extend(
                     role["RoleName"] for role in response.get("PolicyRoles", [])
                 )
-            return entities
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDenied":
                 logger.error(
@@ -735,13 +724,12 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return entities
+        return entities
 
     def _list_policies(self, scope):
         logger.info("IAM - List Policies...")
+        policies = {}
         try:
-            policies = {}
             list_policies_paginator = self.client.get_paginator("list_policies")
             for page in list_policies_paginator.paginate(
                 Scope=scope, OnlyAttached=False if scope == "Local" else True
@@ -762,8 +750,7 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return policies
+        return policies
 
     def _list_policies_version(self, policies):
         logger.info("IAM - List Policies Version...")
@@ -817,8 +804,8 @@ class IAM(AWSService):
 
     def _list_server_certificates(self) -> list:
         logger.info("IAM - List Server Certificates...")
+        server_certificates = []
         try:
-            server_certificates = []
             for certificate in self.client.list_server_certificates()[
                 "ServerCertificateMetadataList"
             ]:
@@ -837,8 +824,7 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return server_certificates
+        return server_certificates
 
     def _list_tags(self, resource: any):
         logger.info("IAM - List Tags...")
