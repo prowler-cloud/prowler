@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OpenStackInstance",
+  "ResourceType": "OS::Nova::Server",
   "ResourceGroup": "compute",
   "Description": "**OpenStack compute instances** are evaluated to verify they are **not exposed to the internet** via public IPs (floating IPs or access IPs). Instances with public IPs are directly reachable from the internet, increasing attack surface. Best practices recommend using **bastion hosts**, **VPN gateways**, or **load balancers** instead.",
   "Risk": "Instances with public IPs are directly reachable from the internet, enabling reconnaissance, port scanning, and vulnerability exploitation. Attackers can target instances for brute-force attacks, credential stuffing, and malware injection. Public exposure bypasses network segmentation and defense-in-depth. Compromised public instances become pivot points for lateral movement.",

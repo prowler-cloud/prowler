@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "OpenStackInstance",
+  "ResourceType": "OS::Nova::Server",
   "ResourceGroup": "compute",
   "Description": "**OpenStack compute instance metadata** is evaluated to detect **sensitive data** such as passwords, API keys, secrets, and private keys. Instance metadata is accessible via the metadata service (169.254.169.254) to any process inside the instance. Storing secrets in metadata exposes them to SSRF attacks, compromised applications, and unauthorized access.",
   "Risk": "Instance metadata containing sensitive data exposes credentials through the metadata service (169.254.169.254), accessible to any process inside the instance. Attackers exploiting SSRF, compromised applications, or insider threats can extract passwords, API keys, and private keys. Stolen credentials enable unauthorized modifications, privilege escalation, resource deletion, and cryptomining.",

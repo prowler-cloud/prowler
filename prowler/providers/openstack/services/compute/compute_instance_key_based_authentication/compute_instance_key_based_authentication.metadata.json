@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OpenStackInstance",
+  "ResourceType": "OS::Nova::Server",
   "ResourceGroup": "compute",
   "Description": "**OpenStack compute instances** (VMs) are evaluated to verify that **SSH key-based authentication** is configured by checking for an assigned keypair. Password-based authentication is vulnerable to brute-force attacks, credential stuffing, and phishing. SSH keys provide cryptographic authentication resistant to these attacks.",
   "Risk": "Instances without SSH key-based authentication are vulnerable to brute-force password attacks, credential stuffing, and password reuse. Attackers can test common passwords, intercept credentials, or exploit leaked passwords from other breaches. Successful SSH access enables malware injection, lateral movement, privilege escalation, and data exfiltration.",

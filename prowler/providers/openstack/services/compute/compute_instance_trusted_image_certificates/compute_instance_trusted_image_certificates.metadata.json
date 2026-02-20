@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OpenStackInstance",
+  "ResourceType": "OS::Nova::Server",
   "ResourceGroup": "compute",
   "Description": "**OpenStack compute instances** (VMs) are evaluated to verify that **trusted image certificates** are configured. Trusted image certificates enable cryptographic validation of image signatures using Glance image signing (OpenStack Image Signature Verification). This ensures instances are launched from verified, untampered images signed by trusted authorities.",
   "Risk": "Instances without trusted certificates can be launched from tampered images containing backdoors, rootkits, or malware. Attackers can inject malicious code into unsigned images, and without signature verification, Nova launches compromised images. Malicious images enable persistence, lateral movement, data exfiltration, service disruption, and cryptomining.",
