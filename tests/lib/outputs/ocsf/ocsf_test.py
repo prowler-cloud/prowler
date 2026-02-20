@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timezone
 from io import StringIO
+from typing import Optional
 
 import requests
 from freezegun import freeze_time
@@ -19,6 +20,7 @@ from py_ocsf_models.objects.organization import Organization
 from py_ocsf_models.objects.product import Product
 from py_ocsf_models.objects.remediation import Remediation
 from py_ocsf_models.objects.resource_details import ResourceDetails
+from pydantic.v1 import BaseModel as V1BaseModel
 
 from prowler.config.config import prowler_version
 from prowler.lib.outputs.ocsf.ocsf import OCSF
@@ -461,3 +463,134 @@ class TestOCSF:
     def test_suppressed_when_muted(self):
         muted = True
         assert OCSF.get_finding_status_id(muted) == StatusID.Suppressed
+
+    def test_sanitize_resource_data_plain_dict(self):
+        result = OCSF._sanitize_resource_data("details", {"key": "value"})
+        assert result == {
+            "details": "details",
+            "metadata": {"key": "value"},
+        }
+
+    def test_sanitize_resource_data_empty_dict(self):
+        result = OCSF._sanitize_resource_data("details", {})
+        assert result == {
+            "details": "details",
+            "metadata": {},
+        }
+
+    def test_sanitize_resource_data_with_pydantic_v1_models(self):
+        """Reproduces the Trail serialization bug: resource_metadata is a
+        dict[str, PydanticModel] when checks pass cloudtrail_client.trails."""
+
+        class EventSelector(V1BaseModel):
+            name: str = None
+            is_all: bool = False
+
+        class Trail(V1BaseModel):
+            name: str = None
+            region: str = "us-east-1"
+            is_logging: bool = True
+            latest_cloudwatch_delivery_time: datetime = None
+            data_events: list = []
+            tags: Optional[list] = []
+
+        trails = {
+            "arn:aws:cloudtrail:us-east-1:123456:trail/main": Trail(
+                name="main",
+                latest_cloudwatch_delivery_time=datetime(2026, 1, 15, 10, 30),
+                data_events=[EventSelector(name="s3", is_all=True)],
+            ),
+            "arn:aws:cloudtrail:eu-west-1:123456:trail/secondary": Trail(
+                name="secondary",
+            ),
+        }
+
+        result = OCSF._sanitize_resource_data("resource details", trails)
+
+        assert result["details"] == "resource details"
+        metadata = result["metadata"]
+        # Trail objects are converted to dicts, not strings
+        main_trail = metadata["arn:aws:cloudtrail:us-east-1:123456:trail/main"]
+        assert isinstance(main_trail, dict)
+        assert main_trail["name"] == "main"
+        assert main_trail["region"] == "us-east-1"
+        assert main_trail["is_logging"] is True
+        # datetime converted to string
+        assert "2026-01-15" in main_trail["latest_cloudwatch_delivery_time"]
+        # Nested models are also converted
+        assert main_trail["data_events"] == [{"name": "s3", "is_all": True}]
+
+        secondary_trail = metadata[
+            "arn:aws:cloudtrail:eu-west-1:123456:trail/secondary"
+        ]
+        assert isinstance(secondary_trail, dict)
+        assert secondary_trail["name"] == "secondary"
+        assert secondary_trail["latest_cloudwatch_delivery_time"] is None
+
+        # Entire result must be JSON-serializable
+        json.dumps(result)
+
+    def test_sanitize_resource_data_with_nested_non_serializable_types(self):
+        """Ensures datetimes and enums nested in dicts are handled."""
+        resource_metadata = {
+            "created_at": datetime(2026, 6, 15, 12, 0, 0),
+            "nested": {
+                "timestamp": datetime(2026, 1, 1),
+                "values": [1, "two", datetime(2025, 12, 31)],
+            },
+        }
+
+        result = OCSF._sanitize_resource_data("details", resource_metadata)
+
+        assert "2026-06-15" in result["metadata"]["created_at"]
+        assert "2026-01-01" in result["metadata"]["nested"]["timestamp"]
+        assert result["metadata"]["nested"]["values"][0] == 1
+        assert result["metadata"]["nested"]["values"][1] == "two"
+        assert "2025-12-31" in result["metadata"]["nested"]["values"][2]
+        json.dumps(result)
+
+    @freeze_time(datetime.now())
+    def test_batch_write_data_to_file_with_pydantic_model_in_resource_metadata(self):
+        """End-to-end test: OCSF output succeeds when resource_metadata
+        contains Pydantic v1 model objects (the Trail serialization bug)."""
+
+        class Trail(V1BaseModel):
+            name: str = None
+            region: str = "us-east-1"
+            is_logging: bool = True
+
+        finding = generate_finding_output(
+            status="FAIL",
+            severity="low",
+            muted=False,
+            region=AWS_REGION_EU_WEST_1,
+            timestamp=datetime.now(),
+            resource_details="trail details",
+            resource_name="main-trail",
+            resource_uid="arn:aws:cloudtrail:eu-west-1:123456:trail/main",
+            status_extended="CloudTrail trail is not logging",
+        )
+        # Simulate what happens when Check_Report receives
+        # resource=cloudtrail_client.trails (a dict of Trail models)
+        finding.resource_metadata = {
+            "arn:trail/main": Trail(name="main"),
+            "arn:trail/secondary": Trail(name="secondary", is_logging=False),
+        }
+
+        mock_file = StringIO()
+        output = OCSF([finding])
+        output._file_descriptor = mock_file
+
+        with patch.object(mock_file, "close", return_value=None):
+            output.batch_write_data_to_file()
+
+        mock_file.seek(0)
+        content = mock_file.read()
+        parsed = json.loads(content)
+
+        assert len(parsed) == 1
+        resource_data = parsed[0]["resources"][0]["data"]
+        assert resource_data["details"] == "trail details"
+        # Trail models should be serialized as proper dicts
+        assert resource_data["metadata"]["arn:trail/main"]["name"] == "main"
+        assert resource_data["metadata"]["arn:trail/secondary"]["is_logging"] is False
