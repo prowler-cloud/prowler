@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OpenStackSubnet",
+  "ResourceType": "OS::Neutron::Subnet",
   "ResourceGroup": "network",
   "Description": "**OpenStack subnets** are evaluated to verify that **DHCP is enabled** (enable_dhcp=True). DHCP automatically assigns IP addresses, DNS servers, and gateway information to instances at boot. Subnets with DHCP disabled require manual configuration, increasing operational complexity and IP conflict risk. Enable DHCP to simplify deployment and ensure cloud-init functionality.",
   "Risk": "Instances fail to acquire IP addresses and cannot communicate without manual intervention, breaking automated deployment pipelines (Heat, Terraform, Ansible). Manual configuration increases deployment time, error rates, and IP conflict risk. Cloud-init depends on DHCP for metadata service discovery; without DHCP, instances cannot retrieve SSH keys or user-data, breaking bootstrapping.",

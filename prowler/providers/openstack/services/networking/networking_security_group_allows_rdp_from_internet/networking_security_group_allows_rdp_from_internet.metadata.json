@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OpenStackSecurityGroup",
+  "ResourceType": "OS::Neutron::SecurityGroup",
   "ResourceGroup": "network",
   "Description": "**OpenStack security groups** are evaluated to verify that RDP (port 3389) is **not exposed to the Internet** (0.0.0.0/0 or ::/0). Security groups act as virtual firewalls controlling Windows instance traffic. Unrestricted RDP access violates least privilege and creates significant attack surface. Best practices recommend restricting RDP to **known IP ranges**, **RD Gateway**, or **VPN**.",
   "Risk": "Unrestricted RDP exposes Windows instances to brute-force attacks, password spraying, and RDP vulnerabilities (BlueKeep, DejaBlue). Compromised sessions enable ransomware deployment, credential theft, privilege escalation, and lateral movement. Successful compromise leads to domain controller access, Active Directory enumeration, and organization-wide data exfiltration.",

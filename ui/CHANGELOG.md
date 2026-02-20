@@ -26,6 +26,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
+- Dropdown selects in the "Send to Jira" modal and other dialogs not responding to clicks [(#10097)](https://github.com/prowler-cloud/prowler/pull/10097)
 - Update credentials for the Alibaba Cloud provider [(#10098)](https://github.com/prowler-cloud/prowler/pull/10098)
 
 ---

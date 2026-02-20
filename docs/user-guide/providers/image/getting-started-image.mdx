@@ -10,7 +10,7 @@ Prowler's Image provider enables comprehensive container image security scanning
 
 * **Trivy integration:** Prowler leverages [Trivy](https://trivy.dev/) to scan container images for vulnerabilities, secrets, misconfigurations, and license issues.
 * **Trivy required:** Trivy must be installed and available in the system PATH before running any scan.
-* **Authentication:** No registry authentication is required for public images. For private registries, configure Docker credentials via `docker login` before scanning.
+* **Authentication:** No registry authentication is required for public images. For private registries, credentials can be provided via environment variables or manual `docker login`.
 * **Output formats:** Results are output in the same formats as other Prowler providers (CSV, JSON, HTML, etc.).
 
 ## Prowler CLI
@@ -173,25 +173,147 @@ prowler image -I large-image:latest --timeout 10m
 
 The timeout accepts values in seconds (`s`), minutes (`m`), or hours (`h`). Default: `5m`.
 
-### Authentication for Private Registries
+### Registry Scan Mode
 
-The Image provider relies on Trivy for registry authentication. To scan images from private registries, configure Docker credentials before running the scan:
+Registry Scan Mode enumerates and scans all images from an OCI-compatible registry, Docker Hub namespace, or Amazon ECR registry. To activate it, use the `--registry` flag with the registry URL:
 
 ```bash
-# Log in to a private registry
-docker login myregistry.io
+prowler image --registry myregistry.io
+```
 
-# Then scan the image
+#### Discover Available Images
+
+To list all repositories and tags available in the registry without running a scan, use the `--registry-list` flag. This is useful for discovering image names and tags before building filter regexes:
+
+```bash
+prowler image --registry myregistry.io --registry-list
+```
+
+Example output:
+
+```text
+Registry: myregistry.io (3 repositories, 8 images)
+
+  api-service (2 tags)
+    latest, v3.1
+  hub-scanner (3 tags)
+    latest, v1.0, v2.0
+  web-frontend (3 tags)
+    latest, v1.0, v2.0
+```
+
+Filters can be combined with `--registry-list` to preview the results before scanning:
+
+```bash
+prowler image --registry myregistry.io --registry-list --image-filter "api.*"
+```
+
+#### Filter Repositories
+
+To filter repositories by name during enumeration, use the `--image-filter` flag with a Python regex pattern (matched via `re.search`):
+
+```bash
+# Scan only repositories starting with "prod/"
+prowler image --registry myregistry.io --image-filter "^prod/"
+```
+
+#### Filter Tags
+
+To filter tags during enumeration, use the `--tag-filter` flag with a Python regex pattern:
+
+```bash
+# Scan only semantic version tags
+prowler image --registry myregistry.io --tag-filter "^v\d+\.\d+\.\d+$"
+```
+
+Both filters can be combined:
+
+```bash
+prowler image --registry myregistry.io --image-filter "^prod/" --tag-filter "^(latest|v\d+)"
+```
+
+#### Limit the Number of Images
+
+To prevent accidentally scanning a large number of images, use the `--max-images` flag. The scan aborts if the discovered image count exceeds the limit:
+
+```bash
+prowler image --registry myregistry.io --max-images 10
+```
+
+Setting `--max-images` to `0` (default) disables the limit.
+
+<Note>
+When `--registry-list` is active, the `--max-images` limit is not enforced because no scan is performed.
+</Note>
+
+#### Skip TLS Verification
+
+To connect to registries with self-signed certificates, use the `--registry-insecure` flag:
+
+```bash
+prowler image --registry internal-registry.local --registry-insecure
+```
+
+<Warning>
+Skipping TLS verification disables certificate validation for registry connections. Use this flag only for trusted internal registries with self-signed certificates.
+</Warning>
+
+#### Supported Registries
+
+Registry Scan Mode supports the following registry types:
+
+* **OCI-compatible registries:** Any registry implementing the OCI Distribution Specification (e.g., Harbor, GitLab Container Registry, GitHub Container Registry).
+* **Docker Hub:** Specify a namespace with `--registry docker.io/{org_or_user}`. Public namespaces can be scanned without credentials; authenticated access is used automatically when `REGISTRY_USERNAME` and `REGISTRY_PASSWORD` are set.
+* **Amazon ECR:** Use the full ECR endpoint URL (e.g., `123456789.dkr.ecr.us-east-1.amazonaws.com`). Authentication is handled via AWS credentials.
+
+### Authentication for Private Registries
+
+To scan images from private registries, the Image provider supports three authentication methods. Prowler uses the first available method in this priority order:
+
+#### 1. Basic Authentication (Environment Variables)
+
+To authenticate with a username and password, set the `REGISTRY_USERNAME` and `REGISTRY_PASSWORD` environment variables. Prowler automatically runs `docker login`, pulls the image, and performs a `docker logout` after the scan completes:
+
+```bash
+export REGISTRY_USERNAME="myuser"
+export REGISTRY_PASSWORD="mypassword"
+
 prowler image -I myregistry.io/myapp:v1.0
 ```
 
-Trivy automatically uses credentials from Docker's credential store (`~/.docker/config.json`).
+Both variables must be set for this method to activate. Prowler handles the full lifecycle — login, pull, scan, and cleanup — without any manual Docker commands.
+
+#### 2. Token-Based Authentication
+
+To authenticate using a registry token (such as a bearer or OAuth2 token), set the `REGISTRY_TOKEN` environment variable. Prowler passes the token directly to Trivy:
+
+```bash
+export REGISTRY_TOKEN="my-registry-token"
+
+prowler image -I myregistry.io/myapp:v1.0
+```
+
+This method is useful for registries that support token-based access without requiring a username and password.
+
+#### 3. Manual Docker Login (Fallback)
+
+If no environment variables are set, Prowler relies on existing credentials in Docker's credential store (`~/.docker/config.json`). To configure credentials manually before scanning:
+
+```bash
+docker login myregistry.io
+
+prowler image -I myregistry.io/myapp:v1.0
+```
+
+<Note>
+When basic authentication is active (method 1), Prowler automatically logs out from all authenticated registries after the scan completes. Manual `docker login` sessions (method 3) are not affected by this cleanup.
+</Note>
 
 ### Troubleshooting Common Scan Errors
 
 The Image provider categorizes common Trivy errors with actionable guidance:
 
-* **Authentication failure (401/403):** Registry credentials are missing or invalid. Run `docker login` for the target registry and retry the scan.
+* **Authentication failure (401/403):** Registry credentials are missing or invalid. Verify the `REGISTRY_USERNAME`/`REGISTRY_PASSWORD` or `REGISTRY_TOKEN` environment variables, or run `docker login` for the target registry and retry the scan.
 * **Image not found (404):** The specified image name, tag, or registry is incorrect. Verify the image reference exists and is accessible.
 * **Rate limited (429):** The container registry is throttling requests. Wait before retrying, or authenticate to increase rate limits.
 * **Network issue:** Trivy cannot reach the registry due to connectivity problems. Check network access, DNS resolution, and firewall rules.
