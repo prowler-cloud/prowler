@@ -6,6 +6,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- `entra_app_registration_no_unused_privileged_permissions` check for m365 provider [(#10080)](https://github.com/prowler-cloud/prowler/pull/10080)
+- `defenderidentity_health_issues_no_open` check for M365 provider [(#10087)](https://github.com/prowler-cloud/prowler/pull/10087)
 - `organization_verified_badge` check for GitHub provider [(#10033)](https://github.com/prowler-cloud/prowler/pull/10033)
 - OpenStack provider `clouds_yaml_content` parameter for API integration [(#10003)](https://github.com/prowler-cloud/prowler/pull/10003)
 - `defender_safe_attachments_policy_enabled` check for M365 provider [(#9833)](https://github.com/prowler-cloud/prowler/pull/9833)
@@ -21,6 +23,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CSA CCM 4.0 for the Alibaba Cloud provider [(#10061)](https://github.com/prowler-cloud/prowler/pull/10061)
 - ECS Exec (ECS-006) privilege escalation detection via `ecs:ExecuteCommand` + `ecs:DescribeTasks` [(#10066)](https://github.com/prowler-cloud/prowler/pull/10066)
 - OpenStack network service with 6 security checks [(#9970)](https://github.com/prowler-cloud/prowler/pull/9970)
+- `defenderxdr_endpoint_privileged_user_exposed_credentials` check for M365 provider [(#10084)](https://github.com/prowler-cloud/prowler/pull/10084)
+- `defenderxdr_critical_asset_management_pending_approvals` check for M365 provider [(#10085)](https://github.com/prowler-cloud/prowler/pull/10085)
+- `entra_seamless_sso_disabled` check for m365 provider [(#10086)](https://github.com/prowler-cloud/prowler/pull/10086)
+- Registry scan mode for `image` provider: enumerate and scan all images from OCI standard, Docker Hub, and ECR [(#9985)](https://github.com/prowler-cloud/prowler/pull/9985)
 - Add file descriptor limits (`ulimits`) to Docker Compose worker services to prevent `Too many open files` errors [(#10107)](https://github.com/prowler-cloud/prowler/pull/10107)
 
 ### 🔄 Changed
