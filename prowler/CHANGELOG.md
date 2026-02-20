@@ -27,6 +27,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_seamless_sso_disabled` check for m365 provider [(#10086)](https://github.com/prowler-cloud/prowler/pull/10086)
 - Registry scan mode for `image` provider: enumerate and scan all images from OCI standard, Docker Hub, and ECR [(#9985)](https://github.com/prowler-cloud/prowler/pull/9985)
 - Add file descriptor limits (`ulimits`) to Docker Compose worker services to prevent `Too many open files` errors [(#10107)](https://github.com/prowler-cloud/prowler/pull/10107)
+- Openstack block storage 7 new checks [(#10120)](https://github.com/prowler-cloud/prowler/pull/10120)
 
 ### 🔄 Changed
 
