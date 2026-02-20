@@ -36,4 +36,8 @@ export const PROVIDER_CREDENTIALS_ERROR_MAPPING: Record<string, string> = {
     ProviderCredentialFields.CLOUDFLARE_API_KEY,
   [ErrorPointers.CLOUDFLARE_API_EMAIL]:
     ProviderCredentialFields.CLOUDFLARE_API_EMAIL,
+  [ErrorPointers.OPENSTACK_CLOUDS_YAML_CONTENT]:
+    ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT,
+  [ErrorPointers.OPENSTACK_CLOUDS_YAML_CLOUD]:
+    ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD,
 };

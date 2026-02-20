@@ -68,6 +68,11 @@ const CloudflareProviderBadge = lazy(() =>
     default: m.CloudflareProviderBadge,
   })),
 );
+const OpenStackProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.OpenStackProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -122,6 +127,10 @@ const PROVIDER_DATA: Record<
   cloudflare: {
     label: "Cloudflare",
     icon: CloudflareProviderBadge,
+  },
+  openstack: {
+    label: "OpenStack",
+    icon: OpenStackProviderBadge,
   },
 };
 

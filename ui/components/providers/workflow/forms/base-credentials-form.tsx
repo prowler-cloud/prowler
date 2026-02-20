@@ -27,6 +27,7 @@ import {
   M365ClientSecretCredentials,
   MongoDBAtlasCredentials,
   OCICredentials,
+  OpenStackCredentials,
   ProviderType,
 } from "@/types";
 
@@ -52,6 +53,7 @@ import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form
 import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { MongoDBAtlasCredentialsForm } from "./via-credentials/mongodbatlas-credentials-form";
+import { OpenStackCredentialsForm } from "./via-credentials/openstack-credentials-form";
 import { OracleCloudCredentialsForm } from "./via-credentials/oraclecloud-credentials-form";
 
 type BaseCredentialsFormProps = {
@@ -228,6 +230,11 @@ export const BaseCredentialsForm = ({
               }
             />
           )}
+        {providerType === "openstack" && (
+          <OpenStackCredentialsForm
+            control={form.control as unknown as Control<OpenStackCredentials>}
+          />
+        )}
 
         <div className="flex w-full justify-end gap-4">
           {showBackButton && requiresBackButton(searchParamsObj.get("via")) && (

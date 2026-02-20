@@ -9,6 +9,7 @@ import {
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
+  OpenStackProviderBadge,
   OracleCloudProviderBadge,
 } from "../icons/providers-badge";
 
@@ -107,6 +108,15 @@ export const CustomProviderInputCloudflare = () => {
     <div className="flex items-center gap-x-2">
       <CloudflareProviderBadge width={25} height={25} />
       <p className="text-sm">Cloudflare</p>
+    </div>
+  );
+};
+
+export const CustomProviderInputOpenStack = () => {
+  return (
+    <div className="flex items-center gap-x-2">
+      <OpenStackProviderBadge width={25} height={25} />
+      <p className="text-sm">OpenStack</p>
     </div>
   );
 };

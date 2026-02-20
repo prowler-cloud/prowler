@@ -12,6 +12,7 @@ import { IacProviderBadge } from "./iac-provider-badge";
 import { KS8ProviderBadge } from "./ks8-provider-badge";
 import { M365ProviderBadge } from "./m365-provider-badge";
 import { MongoDBAtlasProviderBadge } from "./mongodbatlas-provider-badge";
+import { OpenStackProviderBadge } from "./openstack-provider-badge";
 import { OracleCloudProviderBadge } from "./oraclecloud-provider-badge";
 
 export {
@@ -25,6 +26,7 @@ export {
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
+  OpenStackProviderBadge,
   OracleCloudProviderBadge,
 };
 
@@ -41,4 +43,5 @@ export const PROVIDER_ICONS: Record<string, FC<IconSvgProps>> = {
   "MongoDB Atlas": MongoDBAtlasProviderBadge,
   "Alibaba Cloud": AlibabaCloudProviderBadge,
   Cloudflare: CloudflareProviderBadge,
+  OpenStack: OpenStackProviderBadge,
 };

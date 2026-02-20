@@ -349,6 +349,12 @@ export type CloudflareCredentials =
   | CloudflareTokenCredentials
   | CloudflareApiKeyCredentials;
 
+export type OpenStackCredentials = {
+  [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]: string;
+  [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AWSCredentialsRole
@@ -362,7 +368,8 @@ export type CredentialsFormSchema =
   | MongoDBAtlasCredentials
   | AlibabaCloudCredentials
   | AlibabaCloudCredentialsRole
-  | CloudflareCredentials;
+  | CloudflareCredentials
+  | OpenStackCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;

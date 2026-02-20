@@ -9,6 +9,7 @@ import {
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
+  OpenStackProviderBadge,
   OracleCloudProviderBadge,
 } from "@/components/icons/providers-badge";
 import { ProviderType } from "@/types";
@@ -25,6 +26,7 @@ export const PROVIDER_ICONS = {
   mongodbatlas: MongoDBAtlasProviderBadge,
   alibabacloud: AlibabaCloudProviderBadge,
   cloudflare: CloudflareProviderBadge,
+  openstack: OpenStackProviderBadge,
 } as const;
 
 interface ProviderIconCellProps {

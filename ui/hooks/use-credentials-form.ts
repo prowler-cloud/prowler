@@ -212,6 +212,12 @@ export const useCredentialsForm = ({
           };
         }
         return baseDefaults;
+      case "openstack":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]: "",
+          [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]: "",
+        };
       default:
         return baseDefaults;
     }
