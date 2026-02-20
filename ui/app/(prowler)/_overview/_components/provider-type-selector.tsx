@@ -63,6 +63,11 @@ const AlibabaCloudProviderBadge = lazy(() =>
     default: m.AlibabaCloudProviderBadge,
   })),
 );
+const OpenStackProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.OpenStackProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -113,6 +118,10 @@ const PROVIDER_DATA: Record<
   alibabacloud: {
     label: "Alibaba Cloud",
     icon: AlibabaCloudProviderBadge,
+  },
+  openstack: {
+    label: "OpenStack",
+    icon: OpenStackProviderBadge,
   },
 };
 
