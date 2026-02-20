@@ -25,6 +25,7 @@ from api.models import Provider, ResourceFindingMapping
 from prowler.config import config as ProwlerConfig
 from tasks.jobs.attack_paths.config import (
     BATCH_SIZE,
+    get_deprecated_provider_resource_label,
     get_node_uid_field,
     get_provider_resource_label,
     get_root_node_label,
@@ -152,6 +153,9 @@ def add_resource_label(
         {
             "__ROOT_LABEL__": get_root_node_label(provider_type),
             "__RESOURCE_LABEL__": get_provider_resource_label(provider_type),
+            "__DEPRECATED_RESOURCE_LABEL__": get_deprecated_provider_resource_label(
+                provider_type
+            ),
         },
     )
 

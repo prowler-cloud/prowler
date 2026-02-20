@@ -5,6 +5,10 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 from tasks.jobs.attack_paths import findings as findings_module
 from tasks.jobs.attack_paths import internet as internet_module
+from tasks.jobs.attack_paths import sync as sync_module
+from tasks.jobs.attack_paths.config import (
+    get_deprecated_provider_resource_label,
+)
 from tasks.jobs.attack_paths.scan import run as attack_paths_run
 
 from api.models import (
@@ -1071,6 +1075,69 @@ class TestAttackPathsFindingsHelpers:
             findings_module.load_findings(mock_session, empty_gen(), provider, config)
 
         mock_session.run.assert_not_called()
+
+
+class TestProviderConfigAccessors:
+    def test_get_deprecated_provider_resource_label_known_provider(self):
+        assert get_deprecated_provider_resource_label("aws") == "AWSResource"
+
+    def test_get_deprecated_provider_resource_label_unknown_provider(self):
+        assert (
+            get_deprecated_provider_resource_label("unknown")
+            == "UnknownProviderResource"
+        )
+
+
+class TestAddResourceLabel:
+    def test_add_resource_label_applies_both_labels(self):
+        mock_session = MagicMock()
+
+        first_result = MagicMock()
+        first_result.single.return_value = {"labeled_count": 5}
+        second_result = MagicMock()
+        second_result.single.return_value = {"labeled_count": 0}
+        mock_session.run.side_effect = [first_result, second_result]
+
+        total = findings_module.add_resource_label(mock_session, "aws", "123456789012")
+
+        assert total == 5
+        assert mock_session.run.call_count == 2
+        query = mock_session.run.call_args_list[0].args[0]
+        assert "_AWSResource" in query
+        assert "AWSResource" in query
+
+
+class TestSyncNodes:
+    def test_sync_nodes_adds_both_labels(self):
+        mock_source_session = MagicMock()
+        mock_target_session = MagicMock()
+
+        row = {
+            "internal_id": 1,
+            "element_id": "elem-1",
+            "labels": ["SomeLabel"],
+            "props": {"key": "value"},
+        }
+        mock_source_session.run.side_effect = [[row], []]
+
+        source_ctx = MagicMock()
+        source_ctx.__enter__ = MagicMock(return_value=mock_source_session)
+        source_ctx.__exit__ = MagicMock(return_value=False)
+
+        target_ctx = MagicMock()
+        target_ctx.__enter__ = MagicMock(return_value=mock_target_session)
+        target_ctx.__exit__ = MagicMock(return_value=False)
+
+        with patch(
+            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            side_effect=[source_ctx, target_ctx],
+        ):
+            total = sync_module.sync_nodes("source-db", "target-db", "prov-1")
+
+        assert total == 1
+        query = mock_target_session.run.call_args.args[0]
+        assert "_ProviderResource" in query
+        assert "ProviderResource" in query
 
 
 class TestInternetAnalysis:

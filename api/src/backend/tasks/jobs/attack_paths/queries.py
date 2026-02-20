@@ -26,7 +26,7 @@ ADD_RESOURCE_LABEL_TEMPLATE = """
     MATCH (account:__ROOT_LABEL__ {id: $provider_uid})-->(r)
     WHERE NOT r:__ROOT_LABEL__ AND NOT r:__RESOURCE_LABEL__
     WITH r LIMIT $batch_size
-    SET r:__RESOURCE_LABEL__
+    SET r:__RESOURCE_LABEL__:__DEPRECATED_RESOURCE_LABEL__
     RETURN COUNT(r) AS labeled_count
 """
 
@@ -151,16 +151,20 @@ RELATIONSHIPS_FETCH_QUERY = """
 
 NODE_SYNC_TEMPLATE = """
     UNWIND $rows AS row
-    MERGE (n:__NODE_LABELS__ {provider_element_id: row.provider_element_id})
+    MERGE (n:__NODE_LABELS__ {_provider_element_id: row.provider_element_id})
     SET n += row.props
+    SET n._provider_id = $provider_id
+    SET n.provider_element_id = row.provider_element_id
     SET n.provider_id = $provider_id
-"""
+"""  # The last two lines are deprecated properties
 
 RELATIONSHIP_SYNC_TEMPLATE = f"""
     UNWIND $rows AS row
-    MATCH (s:{PROVIDER_RESOURCE_LABEL} {{provider_element_id: row.start_element_id}})
-    MATCH (t:{PROVIDER_RESOURCE_LABEL} {{provider_element_id: row.end_element_id}})
-    MERGE (s)-[r:__REL_TYPE__ {{provider_element_id: row.provider_element_id}}]->(t)
+    MATCH (s:{PROVIDER_RESOURCE_LABEL} {{_provider_element_id: row.start_element_id}})
+    MATCH (t:{PROVIDER_RESOURCE_LABEL} {{_provider_element_id: row.end_element_id}})
+    MERGE (s)-[r:__REL_TYPE__ {{_provider_element_id: row.provider_element_id}}]->(t)
     SET r += row.props
+    SET r._provider_id = $provider_id
+    SET r.provider_element_id = row.provider_element_id
     SET r.provider_id = $provider_id
-"""
+"""  # The last two lines are deprecated properties
