@@ -136,7 +136,11 @@ class M365PowerShell(PowerShellSession):
         else:
             # Application Auth
             self.execute(f'$clientID = "{credentials.client_id}"')
-            self.execute(f'$clientSecret = "{credentials.client_secret}"')
+            
+            # Sanitize secret for single-quoted string (replace ' with '')
+            sanitized_secret = credentials.client_secret.replace("'", "''")
+            self.execute(f"$clientSecret = '{sanitized_secret}'")
+            
             self.execute(f'$tenantID = "{credentials.tenant_id}"')
             self.execute(
                 '$graphtokenBody = @{ Grant_Type = "client_credentials"; Scope = "https://graph.microsoft.com/.default"; Client_Id = $clientID; Client_Secret = $clientSecret }'
@@ -196,7 +200,7 @@ class M365PowerShell(PowerShellSession):
         """Test Exchange Online API connection and raise exception if it fails."""
         try:
             self.execute(
-                '$SecureSecret = ConvertTo-SecureString "$clientSecret" -AsPlainText -Force'
+                '$SecureSecret = ConvertTo-SecureString $clientSecret -AsPlainText -Force'
             )
             self.execute(
                 '$exchangeToken = Get-MsalToken -clientID "$clientID" -tenantID "$tenantID" -clientSecret $SecureSecret -Scopes "https://outlook.office365.com/.default"'
