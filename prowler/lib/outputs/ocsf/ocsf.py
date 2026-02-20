@@ -201,9 +201,13 @@ class OCSF(Output):
                     self._file_descriptor.write("[")
                 for finding in self._data:
                     try:
-                        self._file_descriptor.write(
-                            finding.model_dump_json(exclude_none=True, indent=4)
-                        )
+                        if hasattr(finding, "model_dump_json"):
+                            json_output = finding.model_dump_json(
+                                exclude_none=True, indent=4
+                            )
+                        else:
+                            json_output = finding.json(exclude_none=True, indent=4)
+                        self._file_descriptor.write(json_output)
                         self._file_descriptor.write(",")
                     except Exception as error:
                         logger.error(
@@ -233,6 +237,8 @@ class OCSF(Output):
         """
 
         def _make_serializable(obj):
+            if hasattr(obj, "model_dump") and callable(obj.model_dump):
+                return _make_serializable(obj.model_dump())
             if hasattr(obj, "dict") and callable(obj.dict):
                 return _make_serializable(obj.dict())
             if isinstance(obj, dict):
@@ -244,7 +250,10 @@ class OCSF(Output):
         try:
             converted = _make_serializable(resource_metadata)
             sanitized_metadata = json.loads(json.dumps(converted, default=str))
-        except (TypeError, ValueError):
+        except (TypeError, ValueError) as error:
+            logger.warning(
+                f"Failed to serialize resource metadata, defaulting to empty: {error}"
+            )
             sanitized_metadata = {}
         return {
             "details": resource_details,
