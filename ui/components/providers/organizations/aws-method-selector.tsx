@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, Box } from "lucide-react";
+import { Ban, Box, Boxes } from "lucide-react";
 
 import { RadioCard } from "@/components/providers/radio-card";
 
@@ -28,7 +28,7 @@ export function AwsMethodSelector({
       />
 
       <RadioCard
-        icon={Ban}
+        icon={isCloudEnv ? Boxes : Ban}
         title="Add Multiple Accounts With AWS Organizations"
         onClick={onSelectOrganizations}
         disabled={!isCloudEnv}

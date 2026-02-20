@@ -12,10 +12,16 @@ import { OrgSetupForm } from "@/components/providers/organizations/org-setup-for
 import { Button } from "@/components/shadcn/button/button";
 import { DialogHeader, DialogTitle } from "@/components/shadcn/dialog";
 import { Modal } from "@/components/shadcn/modal";
+import { useScrollHint } from "@/hooks/use-scroll-hint";
 import { getProviderHelpText } from "@/lib";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
-import { ORG_WIZARD_STEP, OrgWizardStep } from "@/types/organizations";
+import {
+  ORG_SETUP_PHASE,
+  ORG_WIZARD_STEP,
+  OrgSetupPhase,
+  OrgWizardStep,
+} from "@/types/organizations";
 import {
   PROVIDER_WIZARD_MODE,
   PROVIDER_WIZARD_STEP,
@@ -24,6 +30,7 @@ import {
 } from "@/types/provider-wizard";
 import { ProviderType } from "@/types/providers";
 
+import { getOrganizationsStepperOffset } from "./provider-wizard-modal.utils";
 import { ConnectStep } from "./steps/connect-step";
 import { CredentialsStep } from "./steps/credentials-step";
 import {
@@ -96,6 +103,14 @@ export function ProviderWizardModal({
   const [providerTypeHint, setProviderTypeHint] = useState<ProviderType | null>(
     null,
   );
+  const [orgSetupPhase, setOrgSetupPhase] = useState<OrgSetupPhase>(
+    ORG_SETUP_PHASE.DETAILS,
+  );
+  const scrollHintRefreshToken = `${wizardVariant}-${currentStep}-${orgCurrentStep}-${orgSetupPhase}-${validatePhase}`;
+  const { containerRef, showScrollHint, handleScroll } = useScrollHint({
+    enabled: open,
+    refreshToken: scrollHintRefreshToken,
+  });
 
   const {
     reset: resetProviderWizard,
@@ -138,6 +153,7 @@ export function ProviderWizardModal({
       setValidatePhase(VALIDATE_PHASE.DISCOVERY);
       setFooterConfig(EMPTY_FOOTER_CONFIG);
       setProviderTypeHint(initialData.providerType);
+      setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
       return;
     }
 
@@ -149,6 +165,7 @@ export function ProviderWizardModal({
     setValidatePhase(VALIDATE_PHASE.DISCOVERY);
     setFooterConfig(EMPTY_FOOTER_CONFIG);
     setProviderTypeHint(null);
+    setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
   }, [
     initialData,
     open,
@@ -169,6 +186,7 @@ export function ProviderWizardModal({
     setValidatePhase(VALIDATE_PHASE.DISCOVERY);
     setFooterConfig(EMPTY_FOOTER_CONFIG);
     setProviderTypeHint(null);
+    setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
     onOpenChange(false);
   };
 
@@ -196,6 +214,7 @@ export function ProviderWizardModal({
     setValidatePhase(VALIDATE_PHASE.DISCOVERY);
     setFooterConfig(EMPTY_FOOTER_CONFIG);
     setProviderTypeHint(null);
+    setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
   };
 
   const backToProviderFlow = () => {
@@ -204,6 +223,7 @@ export function ProviderWizardModal({
     setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT);
     setFooterConfig(EMPTY_FOOTER_CONFIG);
     setProviderTypeHint(null);
+    setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
   };
 
   const isProviderFlow = wizardVariant === WIZARD_VARIANT.PROVIDER;
@@ -240,6 +260,7 @@ export function ProviderWizardModal({
         backLabel: "Back",
         onBack: () => {
           setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
+          setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
         },
         showAction: false,
         actionLabel: "Next",
@@ -278,15 +299,22 @@ export function ProviderWizardModal({
           ) : (
             <WizardStepper
               currentStep={orgCurrentStep}
-              stepOffset={1}
+              stepOffset={getOrganizationsStepperOffset(
+                orgCurrentStep,
+                orgSetupPhase,
+              )}
               hasConnectionErrors={hasConnectionErrors}
             />
           )}
         </div>
         <div aria-hidden className="hidden w-[100px] min-w-0 shrink lg:block" />
 
-        <div className="flex-1 overflow-hidden">
-          <div className="minimal-scrollbar h-full w-full overflow-y-auto lg:ml-auto lg:max-w-[620px] xl:max-w-[700px]">
+        <div className="relative flex-1 overflow-hidden">
+          <div
+            ref={containerRef}
+            className="minimal-scrollbar h-full w-full overflow-y-scroll [scrollbar-gutter:stable] lg:ml-auto lg:max-w-[620px] xl:max-w-[700px]"
+            onScroll={handleScroll}
+          >
             {isProviderFlow && currentStep === PROVIDER_WIZARD_STEP.CONNECT && (
               <ConnectStep
                 onNext={() => setCurrentStep(PROVIDER_WIZARD_STEP.CREDENTIALS)}
@@ -324,9 +352,10 @@ export function ProviderWizardModal({
                 onBack={backToProviderFlow}
                 onNext={() => {
                   setOrgCurrentStep(ORG_WIZARD_STEP.VALIDATE);
-                  setValidatePhase(VALIDATE_PHASE.DISCOVERY);
+                  setValidatePhase(VALIDATE_PHASE.SELECTION);
                 }}
                 onFooterChange={setFooterConfig}
+                onPhaseChange={setOrgSetupPhase}
               />
             )}
 
@@ -346,6 +375,7 @@ export function ProviderWizardModal({
                 <OrgAccountSelection
                   onBack={() => {
                     setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
+                    setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
                   }}
                   onNext={() => {
                     setValidatePhase(VALIDATE_PHASE.TESTING);
@@ -382,6 +412,17 @@ export function ProviderWizardModal({
               />
             )}
           </div>
+
+          {showScrollHint && (
+            <div className="pointer-events-none absolute right-0 bottom-0 left-0 z-10">
+              <div className="from-bg-neutral-secondary h-12 bg-gradient-to-t to-transparent" />
+              <div className="absolute inset-x-0 bottom-2 flex justify-center">
+                <span className="bg-bg-neutral-secondary/85 text-text-neutral-tertiary rounded-full px-3 py-1 text-xs backdrop-blur-sm">
+                  Scroll to see more
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

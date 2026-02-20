@@ -52,6 +52,14 @@ export const ORG_WIZARD_STEP = {
 export type OrgWizardStep =
   (typeof ORG_WIZARD_STEP)[keyof typeof ORG_WIZARD_STEP];
 
+export const ORG_SETUP_PHASE = {
+  DETAILS: "details",
+  ACCESS: "access",
+} as const;
+
+export type OrgSetupPhase =
+  (typeof ORG_SETUP_PHASE)[keyof typeof ORG_SETUP_PHASE];
+
 // ─── Discovery Result Interfaces ──────────────────────────────────────────────
 
 export interface AccountRegistration {
