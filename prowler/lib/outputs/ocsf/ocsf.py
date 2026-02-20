@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import datetime
 from typing import List
@@ -115,10 +116,10 @@ class OCSF(Output):
                                 # TODO: this should be included only if using the Cloud profile
                                 cloud_partition=finding.partition,
                                 region=finding.region,
-                                data={
-                                    "details": finding.resource_details,
-                                    "metadata": finding.resource_metadata,
-                                },
+                                data=self._sanitize_resource_data(
+                                    finding.resource_details,
+                                    finding.resource_metadata,
+                                ),
                             )
                         ]
                         if finding.metadata.Provider != "kubernetes"
@@ -129,10 +130,10 @@ class OCSF(Output):
                                 uid=finding.resource_uid,
                                 group=Group(name=finding.metadata.ServiceName),
                                 type=finding.metadata.ResourceType,
-                                data={
-                                    "details": finding.resource_details,
-                                    "metadata": finding.resource_metadata,
-                                },
+                                data=self._sanitize_resource_data(
+                                    finding.resource_details,
+                                    finding.resource_metadata,
+                                ),
                                 namespace=finding.region.replace("namespace: ", ""),
                             )
                         ]
@@ -200,9 +201,13 @@ class OCSF(Output):
                     self._file_descriptor.write("[")
                 for finding in self._data:
                     try:
-                        self._file_descriptor.write(
-                            finding.json(exclude_none=True, indent=4)
-                        )
+                        if hasattr(finding, "model_dump_json"):
+                            json_output = finding.model_dump_json(
+                                exclude_none=True, indent=4
+                            )
+                        else:
+                            json_output = finding.json(exclude_none=True, indent=4)
+                        self._file_descriptor.write(json_output)
                         self._file_descriptor.write(",")
                     except Exception as error:
                         logger.error(
@@ -220,6 +225,40 @@ class OCSF(Output):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    @staticmethod
+    def _sanitize_resource_data(resource_details: str, resource_metadata: dict) -> dict:
+        """Ensures resource data is JSON-serializable.
+
+        The resource_metadata dict may contain non-serializable objects
+        (e.g., Pydantic models passed as raw dicts with model values)
+        from service resource conversion. This method converts them to
+        plain dicts and roundtrips through JSON to guarantee serializability.
+        """
+
+        def _make_serializable(obj):
+            if hasattr(obj, "model_dump") and callable(obj.model_dump):
+                return _make_serializable(obj.model_dump())
+            if hasattr(obj, "dict") and callable(obj.dict):
+                return _make_serializable(obj.dict())
+            if isinstance(obj, dict):
+                return {str(k): _make_serializable(v) for k, v in obj.items()}
+            if isinstance(obj, (list, tuple)):
+                return [_make_serializable(v) for v in obj]
+            return obj
+
+        try:
+            converted = _make_serializable(resource_metadata)
+            sanitized_metadata = json.loads(json.dumps(converted, default=str))
+        except (TypeError, ValueError) as error:
+            logger.warning(
+                f"Failed to serialize resource metadata, defaulting to empty: {error}"
+            )
+            sanitized_metadata = {}
+        return {
+            "details": resource_details,
+            "metadata": sanitized_metadata,
+        }
 
     @staticmethod
     def get_account_type_id_by_provider(provider: str) -> TypeID:
