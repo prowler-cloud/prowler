@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightCircle, Ban, Box } from "lucide-react";
+import { Ban, Box } from "lucide-react";
 
 import { RadioCard } from "@/components/providers/radio-card";
 
@@ -52,9 +52,8 @@ function CtaBadge() {
       }}
     >
       <div className="flex items-center gap-1.5">
-        <ArrowRightCircle className="text-primary-foreground size-5" />
         <span className="text-primary-foreground text-sm leading-6 font-bold">
-          Get Prowler Cloud
+          Available in Prowler Cloud
         </span>
       </div>
     </a>
