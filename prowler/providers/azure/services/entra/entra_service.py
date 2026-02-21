@@ -16,6 +16,8 @@ class Entra(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(GraphServiceClient, provider)
 
+        self.tenant_ids = provider.identity.tenant_ids
+
         created_loop = False
         try:
             loop = asyncio.get_running_loop()
@@ -214,6 +216,7 @@ class Entra(AzureService):
                     group_settings[tenant].update(
                         {
                             group_setting.id: GroupSetting(
+                                id=group_setting.id,
                                 name=getattr(group_setting, "display_name", None),
                                 template_id=getattr(group_setting, "template_id", None),
                                 settings=[
@@ -434,6 +437,7 @@ class SettingValue(BaseModel):
 
 
 class GroupSetting(BaseModel):
+    id: str
     name: Optional[str] = None
     template_id: Optional[str] = None
     settings: List[SettingValue]

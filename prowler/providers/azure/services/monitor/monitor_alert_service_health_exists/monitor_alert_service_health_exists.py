@@ -38,8 +38,10 @@ class monitor_alert_service_health_exists(Check):
             else:
                 report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.subscription = subscription_name
-                report.resource_name = "Monitor"
-                report.resource_id = "Monitor"
+                report.resource_name = subscription_name
+                report.resource_id = (
+                    f"/subscriptions/{monitor_client.subscriptions[subscription_name]}"
+                )
                 report.status = "FAIL"
                 report.status_extended = f"There is no activity log alert for Service Health in subscription {subscription_name}."
 

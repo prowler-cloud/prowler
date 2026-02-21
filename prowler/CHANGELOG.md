@@ -29,6 +29,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add file descriptor limits (`ulimits`) to Docker Compose worker services to prevent `Too many open files` errors [(#10107)](https://github.com/prowler-cloud/prowler/pull/10107)
 - CIS 6.0 for the AWS provider [(#10127)](https://github.com/prowler-cloud/prowler/pull/10127)
 
+### 🐞 Fixed
+
+- Standardize resource_id values across Azure checks to use actual Azure resource IDs and prevent duplicate resource entries [(#9994)](https://github.com/prowler-cloud/prowler/pull/9994)
+
 ### 🔄 Changed
 
 - Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)

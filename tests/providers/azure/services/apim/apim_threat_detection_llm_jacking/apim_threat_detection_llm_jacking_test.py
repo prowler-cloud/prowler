@@ -184,6 +184,7 @@ class Test_apim_threat_detection_llm_jacking:
                 )
             ]
         }
+        apim_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
         apim_client.audit_config = {
             "apim_threat_detection_llm_jacking_threshold": 0.9,
             "apim_threat_detection_llm_jacking_minutes": 1440,
@@ -301,6 +302,7 @@ class Test_apim_threat_detection_llm_jacking:
                 )
             ]
         }
+        apim_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
         apim_client.audit_config = {
             "apim_threat_detection_llm_jacking_threshold": 0.9,
             "apim_threat_detection_llm_jacking_minutes": 1440,
@@ -365,6 +367,7 @@ class Test_apim_threat_detection_llm_jacking:
                 )
             ]
         }
+        apim_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
         apim_client.audit_config = {
             "apim_threat_detection_llm_jacking_threshold": 0.9,
             "apim_threat_detection_llm_jacking_minutes": 1440,
@@ -435,6 +438,10 @@ class Test_apim_threat_detection_llm_jacking:
                     log_analytics_workspace_id="/subscriptions/another-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/another-workspace",
                 )
             ],
+        }
+        apim_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID,
+            "another-subscription": "another-subscription-id",
         }
         apim_client.audit_config = {
             "apim_threat_detection_llm_jacking_threshold": 0.9,

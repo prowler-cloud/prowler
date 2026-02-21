@@ -13,8 +13,10 @@ class defender_ensure_wdatp_is_enabled(Check):
             if "WDATP" not in settings:
                 report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.subscription = subscription_name
-                report.resource_name = "WDATP"
-                report.resource_id = "WDATP"
+                report.resource_name = subscription_name
+                report.resource_id = (
+                    f"/subscriptions/{defender_client.subscriptions[subscription_name]}"
+                )
                 report.status = "FAIL"
                 report.status_extended = f"Microsoft Defender for Endpoint integration not exists for subscription {subscription_name}."
             else:
@@ -22,7 +24,6 @@ class defender_ensure_wdatp_is_enabled(Check):
                     metadata=self.metadata(), resource=settings["WDATP"]
                 )
                 report.subscription = subscription_name
-                report.resource_name = "WDATP"
                 if settings["WDATP"].enabled:
                     report.status = "PASS"
                     report.status_extended = f"Microsoft Defender for Endpoint integration is enabled for subscription {subscription_name}."

@@ -30,6 +30,7 @@ class Test_entra_policy_guest_invite_only_for_admin_roles:
 
     def test_entra_empty_tenant(self):
         entra_client = mock.MagicMock
+        id = str(uuid4())
 
         with (
             mock.patch(
@@ -44,8 +45,22 @@ class Test_entra_policy_guest_invite_only_for_admin_roles:
             from prowler.providers.azure.services.entra.entra_policy_guest_invite_only_for_admin_roles.entra_policy_guest_invite_only_for_admin_roles import (
                 entra_policy_guest_invite_only_for_admin_roles,
             )
+            from prowler.providers.azure.services.entra.entra_service import (
+                AuthorizationPolicy,
+                DefaultUserRolePermissions,
+            )
 
-            entra_client.authorization_policy = {DOMAIN: {}}
+            # Policy with default settings (everyone can invite guests)
+            entra_client.authorization_policy = {
+                DOMAIN: AuthorizationPolicy(
+                    id=id,
+                    name="Authorization Policy",
+                    description="Default policy",
+                    default_user_role_permissions=DefaultUserRolePermissions(),
+                    guest_invite_settings="everyone",
+                    guest_user_role_id=uuid4(),
+                )
+            }
 
             check = entra_policy_guest_invite_only_for_admin_roles()
             result = check.execute()
@@ -53,7 +68,7 @@ class Test_entra_policy_guest_invite_only_for_admin_roles:
             assert result[0].status == "FAIL"
             assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Authorization Policy"
-            assert result[0].resource_id == "authorizationPolicy"
+            assert result[0].resource_id == id
             assert (
                 result[0].status_extended
                 == "Guest invitations are not restricted to users with specific administrative roles only."
