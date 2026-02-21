@@ -29,6 +29,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add file descriptor limits (`ulimits`) to Docker Compose worker services to prevent `Too many open files` errors [(#10107)](https://github.com/prowler-cloud/prowler/pull/10107)
 - CIS 6.0 for the AWS provider [(#10127)](https://github.com/prowler-cloud/prowler/pull/10127)
 
+### 🐛 Fixed
+
+- CloudFront logging check now detects Standard Logging v2 via CloudWatch Log Delivery [(#10090)](https://github.com/prowler-cloud/prowler/pull/10090)
+
 ### 🔄 Changed
 
 - Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
