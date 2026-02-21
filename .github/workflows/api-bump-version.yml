@@ -28,7 +28,7 @@ jobs:
       current_api_version: ${{ steps.get_api_version.outputs.current_api_version }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Get current API version
         id: get_api_version
@@ -78,7 +78,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Calculate next API minor version
         run: |
@@ -129,7 +129,7 @@ jobs:
             By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
 
       - name: Checkout version branch
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: v${{ needs.detect-release-type.outputs.major_version }}.${{ needs.detect-release-type.outputs.minor_version }}
 
@@ -192,7 +192,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Calculate next API patch version
         run: |
