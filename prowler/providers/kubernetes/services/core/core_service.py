@@ -65,6 +65,21 @@ class Core(KubernetesService):
                                 if container.security_context
                                 else {}
                             ),
+                            resources=(
+                                container.resources.to_dict()
+                                if getattr(container, "resources", None)
+                                else None
+                            ),
+                            liveness_probe=(
+                                container.liveness_probe.to_dict()
+                                if getattr(container, "liveness_probe", None)
+                                else None
+                            ),
+                            readiness_probe=(
+                                container.readiness_probe.to_dict()
+                                if getattr(container, "readiness_probe", None)
+                                else None
+                            ),
                         )
                     self.pods[pod.metadata.uid] = Pod(
                         name=pod.metadata.name,
@@ -156,6 +171,9 @@ class Container(BaseModel):
     ports: Optional[List[dict]]
     env: Optional[List[dict]]
     security_context: dict
+    resources: Optional[dict] = None
+    liveness_probe: Optional[dict] = None
+    readiness_probe: Optional[dict] = None
 
 
 class Pod(BaseModel):
