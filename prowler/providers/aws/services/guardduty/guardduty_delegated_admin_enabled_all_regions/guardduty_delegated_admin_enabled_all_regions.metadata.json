@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "guardduty_delegated_admin_enabled_all_regions",
+  "CheckTitle": "GuardDuty has delegated admin configured and is enabled in all regions with organization auto-enable",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "guardduty",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsGuardDutyDetector",
+  "ResourceGroup": "security",
+  "Description": "Ensures **GuardDuty** has a delegated administrator configured at the organization level, detectors are enabled in all opted-in regions, and organization auto-enable is active for new member accounts.",
+  "Risk": "Without org-wide GuardDuty configuration, gaps can occur where GuardDuty may be enabled in some regions but not others. Delegated admin may not be set consistently, and new accounts may not be automatically enrolled. This fragments **threat visibility**, delays **incident response**, and allows adversaries to exploit unmonitored regions or accounts for **lateral movement**, **persistence**, and **data exfiltration**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_organizations.html",
+    "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_multi-account.html",
+    "https://docs.aws.amazon.com/organizations/latest/userguide/services-that-can-integrate-guardduty.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws guardduty enable-organization-admin-account --admin-account-id <ADMIN_ACCOUNT_ID> && aws guardduty update-organization-configuration --detector-id <DETECTOR_ID> --auto-enable-organization-members ALL",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the AWS Organizations management account\n2. Open the AWS Organizations console\n3. Navigate to Services > Amazon GuardDuty\n4. Click Register delegated administrator and enter the security account ID\n5. Switch to the delegated admin account\n6. In GuardDuty console, go to Settings > Accounts\n7. Enable auto-enable for all organization members\n8. Repeat detector enablement for all opted-in regions",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure a **delegated administrator** for GuardDuty via AWS Organizations. Enable GuardDuty detectors in **all opted-in regions** and configure **auto-enable** to automatically enroll new member accounts. This ensures consistent threat detection coverage across the entire organization.",
+      "Url": "https://hub.prowler.com/check/guardduty_delegated_admin_enabled_all_regions"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "guardduty_is_enabled",
+    "guardduty_centrally_managed"
+  ],
+  "Notes": "This check requires execution from the organization management account or delegated administrator account to access organization-level APIs."
+}
