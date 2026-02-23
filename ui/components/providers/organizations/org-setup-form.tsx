@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Copy, ExternalLink, Loader2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { FormEvent, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -10,7 +11,10 @@ import {
   createOrganization,
   createOrganizationSecret,
   getDiscovery,
+  listOrganizationsByExternalId,
+  listOrganizationSecretsByOrganizationId,
   triggerDiscovery,
+  updateOrganizationSecret,
 } from "@/actions/organizations/organizations";
 import {
   buildOrgTreeData,
@@ -37,7 +41,6 @@ import {
 
 const DISCOVERY_POLL_INTERVAL_MS = 3000;
 const DISCOVERY_MAX_RETRIES = 60;
-const DEBUG_SCOPE = "[OrgSetupForm]";
 
 const orgSetupSchema = z.object({
   organizationName: z.string().trim().optional(),
@@ -77,20 +80,10 @@ export function OrgSetupForm({
   onFooterChange,
   onPhaseChange,
 }: OrgSetupFormProps) {
-  const debugLog = (message: string, payload?: unknown) => {
-    if (process.env.NODE_ENV === "production") return;
-
-    if (payload === undefined) {
-      console.error(`${DEBUG_SCOPE} ${message}`);
-      return;
-    }
-
-    console.error(`${DEBUG_SCOPE} ${message}`, payload);
-  };
-
+  const { data: session } = useSession();
   const [apiError, setApiError] = useState<string | null>(null);
   const [isExternalIdCopied, setIsExternalIdCopied] = useState(false);
-  const [stackSetExternalId] = useState(() => generateStackSetExternalId());
+  const stackSetExternalId = session?.tenantId ?? "";
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(
     ORG_SETUP_PHASE.DETAILS,
   );
@@ -116,10 +109,15 @@ export function OrgSetupForm({
       stackSetDeployed: false,
     },
   });
+  const awsOrgIdField = register("awsOrgId", {
+    setValueAs: (value: unknown) =>
+      typeof value === "string" ? value.toLowerCase() : value,
+  });
 
   const awsOrgId = watch("awsOrgId") || "";
   const isOrgIdValid = /^o-[a-z0-9]{10,32}$/.test(awsOrgId.trim());
   const stackSetQuickLink =
+    stackSetExternalId &&
     getAWSCredentialsTemplateLinks(stackSetExternalId).cloudformationQuickLink;
 
   useEffect(() => {
@@ -148,7 +146,7 @@ export function OrgSetupForm({
       onBack: () => setSetupPhase(ORG_SETUP_PHASE.DETAILS),
       showAction: true,
       actionLabel: "Authenticate",
-      actionDisabled: isSubmitting || !isValid,
+      actionDisabled: isSubmitting || !isValid || !stackSetExternalId,
       actionType: WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
       actionFormId: formId,
     });
@@ -159,6 +157,7 @@ export function OrgSetupForm({
     isValid,
     onBack,
     onFooterChange,
+    stackSetExternalId,
     setupPhase,
   ]);
 
@@ -190,44 +189,85 @@ export function OrgSetupForm({
   const onSubmit = async (data: OrgSetupFormData) => {
     try {
       setApiError(null);
-      debugLog("Authenticate submit started", {
-        awsOrgId: data.awsOrgId,
-        hasRoleArn: Boolean(data.roleArn),
-        stackSetDeployed: data.stackSetDeployed,
-      });
       const resolvedOrganizationName =
         data.organizationName?.trim() || data.awsOrgId;
 
-      // Step 1: Create Organization
-      const orgFormData = new FormData();
-      orgFormData.set("name", resolvedOrganizationName);
-      orgFormData.set("externalId", data.awsOrgId);
+      // Step 1: Resolve existing organization by external_id. If missing, create it.
+      const existingOrganizationsResult = await listOrganizationsByExternalId(
+        data.awsOrgId,
+      );
 
-      const orgResult = await createOrganization(orgFormData);
-      debugLog("createOrganization response received", {
-        hasError: Boolean(orgResult?.error),
-        hasErrorsArray: Boolean(orgResult?.errors?.length),
-      });
-
-      if (orgResult?.error) {
-        handleServerError(orgResult, "Organization");
+      if (existingOrganizationsResult?.error) {
+        setApiError(existingOrganizationsResult.error);
         return;
       }
 
-      const orgId = orgResult.data.id;
-      setOrganization(orgId, resolvedOrganizationName, data.awsOrgId);
+      const existingOrganization = Array.isArray(existingOrganizationsResult?.data)
+        ? existingOrganizationsResult.data.find(
+            (organization: {
+              id: string;
+              attributes?: { external_id?: string; org_type?: string };
+            }) =>
+              organization?.attributes?.external_id === data.awsOrgId &&
+              organization?.attributes?.org_type === "aws",
+          )
+        : null;
 
-      // Step 2: Create Organization Secret
-      const secretFormData = new FormData();
-      secretFormData.set("organizationId", orgId);
-      secretFormData.set("roleArn", data.roleArn);
-      secretFormData.set("externalId", stackSetExternalId);
+      let orgId = existingOrganization?.id as string | undefined;
 
-      const secretResult = await createOrganizationSecret(secretFormData);
-      debugLog("createOrganizationSecret response received", {
-        hasError: Boolean(secretResult?.error),
-        hasErrorsArray: Boolean(secretResult?.errors?.length),
-      });
+      if (!orgId) {
+        const orgFormData = new FormData();
+        orgFormData.set("name", resolvedOrganizationName);
+        orgFormData.set("externalId", data.awsOrgId);
+
+        const orgResult = await createOrganization(orgFormData);
+
+        if (orgResult?.error) {
+          handleServerError(orgResult, "Organization");
+          return;
+        }
+
+        orgId = orgResult.data.id;
+      }
+
+      if (!orgId) {
+        setApiError("Unable to resolve organization ID for authentication.");
+        return;
+      }
+
+      const organizationNameForStore =
+        existingOrganization?.attributes?.name ?? resolvedOrganizationName;
+      setOrganization(orgId, organizationNameForStore, data.awsOrgId);
+
+      // Step 2: Create or update organization secret.
+      const existingSecretsResult =
+        await listOrganizationSecretsByOrganizationId(orgId);
+
+      if (existingSecretsResult?.error) {
+        setApiError(existingSecretsResult.error);
+        return;
+      }
+
+      const existingSecretId =
+        Array.isArray(existingSecretsResult?.data) &&
+        existingSecretsResult.data.length > 0
+          ? (existingSecretsResult.data[0]?.id as string | undefined)
+          : undefined;
+
+      let secretResult;
+      if (existingSecretId) {
+        const patchSecretFormData = new FormData();
+        patchSecretFormData.set("organizationSecretId", existingSecretId);
+        patchSecretFormData.set("roleArn", data.roleArn);
+        patchSecretFormData.set("externalId", stackSetExternalId);
+        secretResult = await updateOrganizationSecret(patchSecretFormData);
+      } else {
+        const createSecretFormData = new FormData();
+        createSecretFormData.set("organizationId", orgId);
+        createSecretFormData.set("roleArn", data.roleArn);
+        createSecretFormData.set("externalId", stackSetExternalId);
+        secretResult = await createOrganizationSecret(createSecretFormData);
+      }
 
       if (secretResult?.error) {
         handleServerError(secretResult, "Secret");
@@ -236,10 +276,6 @@ export function OrgSetupForm({
 
       // Step 3: Trigger Discovery
       const discoveryResult = await triggerDiscovery(orgId);
-      debugLog("triggerDiscovery response received", {
-        hasError: Boolean(discoveryResult?.error),
-        discoveryId: discoveryResult?.data?.id ?? null,
-      });
 
       if (discoveryResult?.error) {
         setApiError(discoveryResult.error);
@@ -254,7 +290,6 @@ export function OrgSetupForm({
       );
 
       if (!resolvedDiscoveryResult) {
-        debugLog("pollDiscoveryResult returned null (authentication failed)");
         return;
       }
 
@@ -266,12 +301,8 @@ export function OrgSetupForm({
       setSelectedAccountIds(selectableAccountIds);
 
       // Discovery succeeded; advance to next wizard step.
-      debugLog("Authenticate flow succeeded, advancing to next step", {
-        discoveryId,
-      });
       onNext();
-    } catch (error) {
-      console.error(`${DEBUG_SCOPE} Unexpected authenticate error`, error);
+    } catch {
       setApiError(
         "Authentication failed. Please verify the StackSet deployment and Role ARN, then try again.",
       );
@@ -283,19 +314,9 @@ export function OrgSetupForm({
     discoveryId: string,
   ): Promise<DiscoveryResult | null> => {
     for (let attempt = 0; attempt < DISCOVERY_MAX_RETRIES; attempt += 1) {
-      debugLog("Polling discovery status", {
-        attempt: attempt + 1,
-        maxAttempts: DISCOVERY_MAX_RETRIES,
-        organizationId,
-        discoveryId,
-      });
       const result = await getDiscovery(organizationId, discoveryId);
 
       if (result?.error) {
-        console.error(`${DEBUG_SCOPE} getDiscovery returned error`, {
-          attempt: attempt + 1,
-          error: result.error,
-        });
         setApiError(
           `Authentication failed. Please verify the StackSet deployment and Role ARN, then try again. ${result.error}`,
         );
@@ -303,22 +324,13 @@ export function OrgSetupForm({
       }
 
       const status = result.data.attributes.status;
-      debugLog("Discovery status response", {
-        attempt: attempt + 1,
-        status,
-      });
 
       if (status === DISCOVERY_STATUS.SUCCEEDED) {
-        debugLog("Discovery succeeded");
         return result.data.attributes.result as DiscoveryResult;
       }
 
       if (status === DISCOVERY_STATUS.FAILED) {
         const backendError = result.data.attributes.error;
-        console.error(`${DEBUG_SCOPE} Discovery failed`, {
-          attempt: attempt + 1,
-          backendError,
-        });
         setApiError(
           backendError
             ? `Authentication failed. Please verify the StackSet deployment and Role ARN, then try again. ${backendError}`
@@ -335,10 +347,6 @@ export function OrgSetupForm({
     setApiError(
       "Authentication timed out. Please verify the credentials and try again.",
     );
-    console.error(`${DEBUG_SCOPE} Discovery polling timed out`, {
-      maxAttempts: DISCOVERY_MAX_RETRIES,
-      pollIntervalMs: DISCOVERY_POLL_INTERVAL_MS,
-    });
     return null;
   };
 
@@ -349,11 +357,6 @@ export function OrgSetupForm({
     },
     context: string,
   ) => {
-    console.error(`${DEBUG_SCOPE} handleServerError`, {
-      context,
-      error: result.error ?? null,
-      errors: result.errors ?? [],
-    });
     if (result.errors?.length) {
       for (const err of result.errors) {
         const pointer = err.source?.pointer ?? "";
@@ -401,7 +404,7 @@ export function OrgSetupForm({
         </div>
       )}
 
-      {setupPhase === ORG_SETUP_PHASE.ACCESS && !isSubmitting && (
+      {setupPhase === ORG_SETUP_PHASE.ACCESS && (
         <div className="flex flex-col gap-8">
           <div className="flex items-center gap-4">
             <AWSProviderBadge size={32} />
@@ -440,7 +443,16 @@ export function OrgSetupForm({
               placeholder="e.g. o-123456789-abcdefg"
               required
               aria-required="true"
-              {...register("awsOrgId")}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              {...awsOrgIdField}
+              onInput={(event) => {
+                const loweredValue = event.currentTarget.value.toLowerCase();
+                if (event.currentTarget.value !== loweredValue) {
+                  event.currentTarget.value = loweredValue;
+                }
+              }}
             />
             {errors.awsOrgId && (
               <span className="text-text-error-primary text-xs">
@@ -481,10 +493,11 @@ export function OrgSetupForm({
               variant="outline"
               size="lg"
               className="border-border-input-primary bg-bg-input-primary text-button-tertiary hover:bg-bg-input-primary active:bg-bg-input-primary h-12 w-full justify-start"
+              disabled={!stackSetQuickLink}
               asChild
             >
               <a
-                href={stackSetQuickLink}
+                href={stackSetQuickLink || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -507,10 +520,11 @@ export function OrgSetupForm({
               </span>
               <div className="bg-bg-neutral-tertiary border-border-input-primary flex h-10 max-w-full items-center gap-3 rounded-full border px-4">
                 <span className="truncate text-xs font-medium">
-                  {stackSetExternalId}
+                  {stackSetExternalId || "Loading organization external ID..."}
                 </span>
                 <button
                   type="button"
+                  disabled={!stackSetExternalId}
                   onClick={async () => {
                     try {
                       await navigator.clipboard.writeText(stackSetExternalId);
@@ -600,17 +614,4 @@ export function OrgSetupForm({
       )}
     </form>
   );
-}
-
-function generateStackSetExternalId() {
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const parts = [3, 4, 4, 3, 6, 6];
-
-  return parts
-    .map((length) =>
-      Array.from({ length }, () =>
-        characters.charAt(Math.floor(Math.random() * characters.length)),
-      ).join(""),
-    )
-    .join("-");
 }
