@@ -30,6 +30,10 @@ SERVICE_UNAVAILABLE_MAX_RETRIES = env.int(
 READ_QUERY_TIMEOUT_SECONDS = env.int(
     "ATTACK_PATHS_READ_QUERY_TIMEOUT_SECONDS", default=30
 )
+READ_EXCEPTION_CODES = [
+    "Neo.ClientError.Statement.AccessMode",
+    "Neo.ClientError.Procedure.ProcedureNotFound",
+]
 
 # Module-level process-wide driver singleton
 _driver: neo4j.Driver | None = None
@@ -101,6 +105,14 @@ def get_session(
         yield session_wrapper
 
     except neo4j.exceptions.Neo4jError as exc:
+        if (
+            default_access_mode == neo4j.READ_ACCESS
+            and exc.code in READ_EXCEPTION_CODES
+        ):
+            message = "Read query not allowed"
+            code = READ_EXCEPTION_CODES[0]
+            raise ReadQueryNotAllowedException(message=message, code=code)
+
         message = exc.message if exc.message is not None else str(exc)
         raise GraphDatabaseQueryException(message=message, code=exc.code)
 
@@ -210,3 +222,7 @@ class GraphDatabaseQueryException(Exception):
             return f"{self.code}: {self.message}"
 
         return self.message
+
+
+class ReadQueryNotAllowedException(GraphDatabaseQueryException):
+    pass

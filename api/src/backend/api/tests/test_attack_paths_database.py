@@ -320,6 +320,68 @@ class TestExecuteReadQuery:
         run_result.graph.assert_called_once_with()
 
 
+class TestGetSessionReadOnly:
+    """Test that get_session translates Neo4j read-mode errors."""
+
+    @pytest.fixture(autouse=True)
+    def reset_module_state(self):
+        import api.attack_paths.database as db_module
+
+        original_driver = db_module._driver
+        db_module._driver = None
+        yield
+        db_module._driver = original_driver
+
+    @pytest.mark.parametrize(
+        "neo4j_code",
+        [
+            "Neo.ClientError.Statement.AccessMode",
+            "Neo.ClientError.Procedure.ProcedureNotFound",
+        ],
+    )
+    def test_get_session_raises_read_query_not_allowed(self, neo4j_code):
+        """Read-mode Neo4j errors should raise ReadQueryNotAllowedException."""
+        import api.attack_paths.database as db_module
+
+        mock_session = MagicMock()
+        neo4j_error = neo4j.exceptions.Neo4jError._hydrate_neo4j(
+            code=neo4j_code,
+            message="Write operations are not allowed",
+        )
+        mock_session.run.side_effect = neo4j_error
+
+        mock_driver = MagicMock()
+        mock_driver.session.return_value = mock_session
+        db_module._driver = mock_driver
+
+        with pytest.raises(db_module.ReadQueryNotAllowedException):
+            with db_module.get_session(
+                default_access_mode=neo4j.READ_ACCESS
+            ) as session:
+                session.run("CREATE (n) RETURN n")
+
+    def test_get_session_raises_generic_exception_for_other_errors(self):
+        """Non-read-mode Neo4j errors should raise GraphDatabaseQueryException."""
+        import api.attack_paths.database as db_module
+
+        mock_session = MagicMock()
+        neo4j_error = neo4j.exceptions.Neo4jError._hydrate_neo4j(
+            code="Neo.ClientError.Statement.SyntaxError",
+            message="Invalid syntax",
+        )
+        mock_session.run.side_effect = neo4j_error
+
+        mock_driver = MagicMock()
+        mock_driver.session.return_value = mock_session
+        db_module._driver = mock_driver
+
+        with pytest.raises(db_module.GraphDatabaseQueryException):
+            with db_module.get_session(
+                default_access_mode=neo4j.READ_ACCESS
+            ) as session:
+                session.run("INVALID CYPHER")
+
+
 class TestThreadSafety:
     """Test thread-safe initialization."""
 

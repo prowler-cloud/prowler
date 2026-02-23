@@ -2,7 +2,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 import pytest
 
-from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 
 from api.attack_paths import database as graph_database
 from api.attack_paths import views_helpers
@@ -172,6 +172,33 @@ def test_execute_attack_paths_query_wraps_graph_errors(
             )
 
     mock_logger.error.assert_called_once()
+
+
+def test_execute_attack_paths_query_raises_permission_denied_on_read_only(
+    attack_paths_query_definition_factory,
+):
+    definition = attack_paths_query_definition_factory(
+        id="aws-rds",
+        name="RDS",
+        short_description="Short desc",
+        description="",
+        cypher="MATCH (n) RETURN n",
+        parameters=[],
+    )
+    database_name = "db-tenant-test-tenant-id"
+    parameters = {"provider_uid": "123"}
+
+    with patch(
+        "api.attack_paths.views_helpers.graph_database.execute_read_query",
+        side_effect=graph_database.ReadQueryNotAllowedException(
+            message="Read query not allowed",
+            code="Neo.ClientError.Statement.AccessMode",
+        ),
+    ):
+        with pytest.raises(PermissionDenied):
+            views_helpers.execute_attack_paths_query(
+                database_name, definition, parameters, provider_id="test-provider-123"
+            )
 
 
 def test_serialize_graph_filters_by_provider_id(attack_paths_graph_stub_classes):
