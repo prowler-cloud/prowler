@@ -68,6 +68,11 @@ export const ProviderCredentialFields = {
   ALIBABACLOUD_ROLE_ARN: "role_arn",
   ALIBABACLOUD_ROLE_SESSION_NAME: "role_session_name",
 
+  // Cloudflare fields
+  CLOUDFLARE_API_TOKEN: "api_token",
+  CLOUDFLARE_API_KEY: "api_key",
+  CLOUDFLARE_API_EMAIL: "api_email",
+
   // OpenStack fields
   OPENSTACK_CLOUDS_YAML_CONTENT: "clouds_yaml_content",
   OPENSTACK_CLOUDS_YAML_CLOUD: "clouds_yaml_cloud",
@@ -115,6 +120,9 @@ export const ErrorPointers = {
   ALIBABACLOUD_ACCESS_KEY_SECRET: "/data/attributes/secret/access_key_secret",
   ALIBABACLOUD_ROLE_ARN: "/data/attributes/secret/role_arn",
   ALIBABACLOUD_ROLE_SESSION_NAME: "/data/attributes/secret/role_session_name",
+  CLOUDFLARE_API_TOKEN: "/data/attributes/secret/api_token",
+  CLOUDFLARE_API_KEY: "/data/attributes/secret/api_key",
+  CLOUDFLARE_API_EMAIL: "/data/attributes/secret/api_email",
   OPENSTACK_CLOUDS_YAML_CONTENT: "/data/attributes/secret/clouds_yaml_content",
   OPENSTACK_CLOUDS_YAML_CLOUD: "/data/attributes/secret/clouds_yaml_cloud",
 } as const;

@@ -5,6 +5,7 @@ import { IconSvgProps } from "@/types";
 import { AlibabaCloudProviderBadge } from "./alibabacloud-provider-badge";
 import { AWSProviderBadge } from "./aws-provider-badge";
 import { AzureProviderBadge } from "./azure-provider-badge";
+import { CloudflareProviderBadge } from "./cloudflare-provider-badge";
 import { GCPProviderBadge } from "./gcp-provider-badge";
 import { GitHubProviderBadge } from "./github-provider-badge";
 import { IacProviderBadge } from "./iac-provider-badge";
@@ -18,6 +19,7 @@ export {
   AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
+  CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
   IacProviderBadge,
@@ -40,5 +42,6 @@ export const PROVIDER_ICONS: Record<string, FC<IconSvgProps>> = {
   "Oracle Cloud Infrastructure": OracleCloudProviderBadge,
   "MongoDB Atlas": MongoDBAtlasProviderBadge,
   "Alibaba Cloud": AlibabaCloudProviderBadge,
+  Cloudflare: CloudflareProviderBadge,
   OpenStack: OpenStackProviderBadge,
 };

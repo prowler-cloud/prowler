@@ -27,6 +27,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_seamless_sso_disabled` check for m365 provider [(#10086)](https://github.com/prowler-cloud/prowler/pull/10086)
 - Registry scan mode for `image` provider: enumerate and scan all images from OCI standard, Docker Hub, and ECR [(#9985)](https://github.com/prowler-cloud/prowler/pull/9985)
 - Add file descriptor limits (`ulimits`) to Docker Compose worker services to prevent `Too many open files` errors [(#10107)](https://github.com/prowler-cloud/prowler/pull/10107)
+- CIS 6.0 for the AWS provider [(#10127)](https://github.com/prowler-cloud/prowler/pull/10127)
 
 ### 🔄 Changed
 
@@ -48,6 +49,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure Key Vault service metadata to new format [(#9621)](https://github.com/prowler-cloud/prowler/pull/9621)
 - Update Azure Entra ID service metadata to new format [(#9619)](https://github.com/prowler-cloud/prowler/pull/9619)
 - Update Azure Virtual Machines service metadata to new format [(#9629)](https://github.com/prowler-cloud/prowler/pull/9629)
+- Cloudflare provider credential validation with specific exceptions [(#9910)](https://github.com/prowler-cloud/prowler/pull/9910)
+
+### 🐞 Fixed
+
+- Update AWS checks metadata URLs to replace deprecated Trend Micro CloudOne Conformity (EOL July 2026) with Vision One and remove docs.prowler.com references [(#10068)](https://github.com/prowler-cloud/prowler/pull/10068)
 
 ### 🔐 Security
 
@@ -55,7 +61,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [5.18.3] (Prowler UNRELEASED)
+## [5.18.4] (Prowler v5.18.4)
+
+### 🐞 Fixed
+
+- Handle serialization errors in OCSF output for non-serializable resource metadata [(#10129)](https://github.com/prowler-cloud/prowler/pull/10129)
+
+---
+
+## [5.18.3] (Prowler v5.18.3)
 
 ### 🐞 Fixed
 

@@ -678,21 +678,25 @@ def scans_fixture(tenants_fixture, providers_fixture):
     tenant, *_ = tenants_fixture
     provider, provider2, *_ = providers_fixture
 
+    now = datetime.now(timezone.utc)
+
     scan1 = Scan.objects.create(
         name="Scan 1",
         provider=provider,
         trigger=Scan.TriggerChoices.MANUAL,
         state=StateChoices.COMPLETED,
         tenant_id=tenant.id,
-        started_at="2024-01-02T00:00:00Z",
+        started_at=now,
+        completed_at=now,
     )
     scan2 = Scan.objects.create(
         name="Scan 2",
-        provider=provider,
+        provider=provider2,
         trigger=Scan.TriggerChoices.SCHEDULED,
-        state=StateChoices.FAILED,
+        state=StateChoices.COMPLETED,
         tenant_id=tenant.id,
-        started_at="2024-01-02T00:00:00Z",
+        started_at=now,
+        completed_at=now,
     )
     scan3 = Scan.objects.create(
         name="Scan 3",
@@ -1952,6 +1956,275 @@ def tenant_compliance_summary_fixture(tenants_fixture):
     ]
 
     return summaries
+
+
+@pytest.fixture
+def finding_groups_fixture(
+    tenants_fixture, providers_fixture, scans_fixture, resources_fixture
+):
+    """
+    Create a comprehensive set of findings for testing Finding Groups aggregation.
+
+    Creates findings for multiple check_ids with varying:
+    - Statuses (PASS, FAIL)
+    - Severities (critical, high, medium, low)
+    - Deltas (new, changed, None)
+    - Muted states (True, False)
+
+    This fixture tests aggregation logic for:
+    - Multiple findings per check_id
+    - Status aggregation (FAIL > PASS > MUTED)
+    - Severity aggregation (max severity)
+    - Provider aggregation (distinct list)
+    - Resource counts
+    - Finding counts (pass, fail, muted, new, changed)
+    """
+    tenant = tenants_fixture[0]
+    provider1, provider2, *_ = providers_fixture
+    scan1, scan2, *_ = scans_fixture
+    resource1, resource2, *_ = resources_fixture
+
+    findings = []
+
+    # Check 1: s3_bucket_public_access - Multiple FAIL findings (critical)
+    # Should aggregate to: status=FAIL, severity=critical, fail_count=2, pass_count=0
+    finding1a = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_s3_check_1a",
+        scan=scan1,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="S3 bucket allows public access",
+        impact=Severity.critical,
+        impact_extended="Critical security risk",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL, "severity": Severity.critical},
+        tags={"env": "prod"},
+        check_id="s3_bucket_public_access",
+        check_metadata={
+            "CheckId": "s3_bucket_public_access",
+            "checktitle": "Ensure S3 buckets do not allow public access",
+            "Description": "S3 buckets should be configured to restrict public access.",
+        },
+        first_seen_at="2024-01-02T00:00:00Z",
+        muted=False,
+    )
+    finding1a.add_resources([resource1])
+    findings.append(finding1a)
+
+    finding1b = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_s3_check_1b",
+        scan=scan1,
+        delta="changed",
+        status=Status.FAIL,
+        status_extended="S3 bucket allows public read",
+        impact=Severity.high,
+        impact_extended="High security risk",
+        severity=Severity.high,
+        raw_result={"status": Status.FAIL, "severity": Severity.high},
+        tags={"env": "staging"},
+        check_id="s3_bucket_public_access",
+        check_metadata={
+            "CheckId": "s3_bucket_public_access",
+            "checktitle": "Ensure S3 buckets do not allow public access",
+            "Description": "S3 buckets should be configured to restrict public access.",
+        },
+        first_seen_at="2024-01-03T00:00:00Z",
+        muted=False,
+    )
+    finding1b.add_resources([resource2])
+    findings.append(finding1b)
+
+    # Check 2: ec2_instance_public_ip - Mixed PASS/FAIL (high severity max)
+    # Should aggregate to: status=FAIL, severity=high, fail_count=1, pass_count=1
+    finding2a = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_ec2_check_2a",
+        scan=scan1,
+        delta=None,
+        status=Status.PASS,
+        status_extended="EC2 instance has no public IP",
+        impact=Severity.medium,
+        impact_extended="Medium risk",
+        severity=Severity.medium,
+        raw_result={"status": Status.PASS, "severity": Severity.medium},
+        tags={"env": "dev"},
+        check_id="ec2_instance_public_ip",
+        check_metadata={
+            "CheckId": "ec2_instance_public_ip",
+            "checktitle": "Ensure EC2 instances do not have public IPs",
+            "Description": "EC2 instances should use private IPs only.",
+        },
+        first_seen_at="2024-01-04T00:00:00Z",
+        muted=False,
+    )
+    finding2a.add_resources([resource1])
+    findings.append(finding2a)
+
+    finding2b = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_ec2_check_2b",
+        scan=scan1,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="EC2 instance has public IP assigned",
+        impact=Severity.high,
+        impact_extended="High risk",
+        severity=Severity.high,
+        raw_result={"status": Status.FAIL, "severity": Severity.high},
+        tags={"env": "prod"},
+        check_id="ec2_instance_public_ip",
+        check_metadata={
+            "CheckId": "ec2_instance_public_ip",
+            "checktitle": "Ensure EC2 instances do not have public IPs",
+            "Description": "EC2 instances should use private IPs only.",
+        },
+        first_seen_at="2024-01-05T00:00:00Z",
+        muted=False,
+    )
+    finding2b.add_resources([resource2])
+    findings.append(finding2b)
+
+    # Check 3: iam_password_policy - All PASS (low severity)
+    # Should aggregate to: status=PASS, severity=low, fail_count=0, pass_count=2
+    finding3a = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_iam_check_3a",
+        scan=scan1,
+        delta=None,
+        status=Status.PASS,
+        status_extended="Password policy is compliant",
+        impact=Severity.low,
+        impact_extended="Low risk",
+        severity=Severity.low,
+        raw_result={"status": Status.PASS, "severity": Severity.low},
+        tags={"env": "prod"},
+        check_id="iam_password_policy",
+        check_metadata={
+            "CheckId": "iam_password_policy",
+            "checktitle": "Ensure IAM password policy is strong",
+            "Description": "IAM password policy should enforce complexity.",
+        },
+        first_seen_at="2024-01-06T00:00:00Z",
+        muted=False,
+    )
+    finding3a.add_resources([resource1])
+    findings.append(finding3a)
+
+    finding3b = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_iam_check_3b",
+        scan=scan1,
+        delta=None,
+        status=Status.PASS,
+        status_extended="Password policy meets requirements",
+        impact=Severity.low,
+        impact_extended="Low risk",
+        severity=Severity.low,
+        raw_result={"status": Status.PASS, "severity": Severity.low},
+        tags={"env": "staging"},
+        check_id="iam_password_policy",
+        check_metadata={
+            "CheckId": "iam_password_policy",
+            "checktitle": "Ensure IAM password policy is strong",
+            "Description": "IAM password policy should enforce complexity.",
+        },
+        first_seen_at="2024-01-07T00:00:00Z",
+        muted=False,
+    )
+    finding3b.add_resources([resource2])
+    findings.append(finding3b)
+
+    # Check 4: rds_encryption - All muted (medium severity)
+    # Should aggregate to: status=MUTED, severity=medium, fail_count=0, pass_count=0, muted_count=2
+    finding4a = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_rds_check_4a",
+        scan=scan1,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="RDS instance not encrypted",
+        impact=Severity.medium,
+        impact_extended="Medium risk",
+        severity=Severity.medium,
+        raw_result={"status": Status.FAIL, "severity": Severity.medium},
+        tags={"env": "dev"},
+        check_id="rds_encryption",
+        check_metadata={
+            "CheckId": "rds_encryption",
+            "checktitle": "Ensure RDS instances are encrypted",
+            "Description": "RDS instances should use encryption at rest.",
+        },
+        first_seen_at="2024-01-08T00:00:00Z",
+        muted=True,
+    )
+    finding4a.add_resources([resource1])
+    findings.append(finding4a)
+
+    finding4b = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_rds_check_4b",
+        scan=scan1,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="RDS encryption disabled",
+        impact=Severity.medium,
+        impact_extended="Medium risk",
+        severity=Severity.medium,
+        raw_result={"status": Status.FAIL, "severity": Severity.medium},
+        tags={"env": "test"},
+        check_id="rds_encryption",
+        check_metadata={
+            "CheckId": "rds_encryption",
+            "checktitle": "Ensure RDS instances are encrypted",
+            "Description": "RDS instances should use encryption at rest.",
+        },
+        first_seen_at="2024-01-09T00:00:00Z",
+        muted=True,
+    )
+    finding4b.add_resources([resource2])
+    findings.append(finding4b)
+
+    # Check 5: cloudtrail_enabled - Multiple providers (from scan2 which uses provider2)
+    # Should aggregate to: impacted_providers contains both provider types
+    finding5 = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_cloudtrail_check_5",
+        scan=scan2,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="CloudTrail not enabled",
+        impact=Severity.critical,
+        impact_extended="Critical risk",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL, "severity": Severity.critical},
+        tags={"env": "prod"},
+        check_id="cloudtrail_enabled",
+        check_metadata={
+            "CheckId": "cloudtrail_enabled",
+            "checktitle": "Ensure CloudTrail is enabled",
+            "Description": "CloudTrail should be enabled for audit logging.",
+        },
+        first_seen_at="2024-01-10T00:00:00Z",
+        muted=False,
+    )
+    finding5.add_resources([resource1])
+    findings.append(finding5)
+
+    # Aggregate findings into FindingGroupDailySummary for the endpoint to read
+    from tasks.jobs.scan import aggregate_finding_group_summaries
+
+    aggregate_finding_group_summaries(
+        tenant_id=str(tenant.id),
+        scan_id=str(scan1.id),
+    )
+    aggregate_finding_group_summaries(
+        tenant_id=str(tenant.id),
+        scan_id=str(scan2.id),
+    )
+
+    return findings
 
 
 def pytest_collection_modifyitems(items):

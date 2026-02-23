@@ -17,7 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/redshift-controls.html#redshift-8",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/master-username.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Redshift/master-username.html",
     "https://docs.aws.amazon.com/redshift/latest/gsg/rs-gsg-prereq.html"
   ],
   "Remediation": {

@@ -17,6 +17,8 @@ import {
   AWSCredentials,
   AWSCredentialsRole,
   AzureCredentials,
+  CloudflareApiKeyCredentials,
+  CloudflareTokenCredentials,
   GCPDefaultCredentials,
   GCPServiceAccountKey,
   IacCredentials,
@@ -36,6 +38,10 @@ import {
 } from "./select-credentials-type/alibabacloud/credentials-type";
 import { AWSStaticCredentialsForm } from "./select-credentials-type/aws/credentials-type";
 import { AWSRoleCredentialsForm } from "./select-credentials-type/aws/credentials-type/aws-role-credentials-form";
+import {
+  CloudflareApiKeyCredentialsForm,
+  CloudflareApiTokenCredentialsForm,
+} from "./select-credentials-type/cloudflare";
 import { GCPDefaultCredentialsForm } from "./select-credentials-type/gcp/credentials-type";
 import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credentials-type/gcp-service-account-key-form";
 import {
@@ -205,6 +211,22 @@ export const BaseCredentialsForm = ({
             <AlibabaCloudStaticCredentialsForm
               control={
                 form.control as unknown as Control<AlibabaCloudCredentials>
+              }
+            />
+          )}
+        {providerType === "cloudflare" &&
+          searchParamsObj.get("via") === "api_token" && (
+            <CloudflareApiTokenCredentialsForm
+              control={
+                form.control as unknown as Control<CloudflareTokenCredentials>
+              }
+            />
+          )}
+        {providerType === "cloudflare" &&
+          searchParamsObj.get("via") === "api_key" && (
+            <CloudflareApiKeyCredentialsForm
+              control={
+                form.control as unknown as Control<CloudflareApiKeyCredentials>
               }
             />
           )}

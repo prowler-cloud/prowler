@@ -17,7 +17,7 @@
   "Risk": "Without **mTLS**, adversaries can impersonate clients or intercept sessions, compromising **confidentiality** and **integrity**. Unauthorized producers/consumers can read or alter topics, poison data streams, and flood brokers, degrading **availability** and impacting downstream systems.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/enable-mutual-tls-authentication-for-kafka-clients.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/MSK/enable-mutual-tls-authentication-for-kafka-clients.html",
     "https://docs.aws.amazon.com/msk/latest/developerguide/msk-update-security.html",
     "https://docs.aws.amazon.com/msk/latest/developerguide/msk-authentication.html"
   ],

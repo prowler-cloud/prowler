@@ -2,6 +2,7 @@ import {
   AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
+  CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
   IacProviderBadge,
@@ -35,6 +36,8 @@ export const getProviderLogo = (provider: ProviderType) => {
       return <MongoDBAtlasProviderBadge width={35} height={35} />;
     case "alibabacloud":
       return <AlibabaCloudProviderBadge width={35} height={35} />;
+    case "cloudflare":
+      return <CloudflareProviderBadge width={35} height={35} />;
     case "openstack":
       return <OpenStackProviderBadge width={35} height={35} />;
     default:
@@ -64,6 +67,8 @@ export const getProviderName = (provider: ProviderType): string => {
       return "MongoDB Atlas";
     case "alibabacloud":
       return "Alibaba Cloud";
+    case "cloudflare":
+      return "Cloudflare";
     case "openstack":
       return "OpenStack";
     default:

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OpenStackInstance",
+  "ResourceType": "OS::Nova::Server",
   "ResourceGroup": "compute",
   "Description": "**OpenStack compute instances** (VMs) are evaluated to verify **network isolation** by ensuring they have private IP addresses without mixed public/private exposure. Proper network segmentation requires instances to be deployed in private networks and accessed via controlled entry points (bastion hosts, VPN, load balancers) rather than direct public exposure.",
   "Risk": "Instances with mixed public/private exposure or only public IPs lack network isolation, allowing unauthorized internet access that bypasses segmentation controls. Attackers can pivot from compromised public instances to internal infrastructure for lateral movement. Flat topology exposes internal services to internet attacks including DDoS and exploit attempts.",
