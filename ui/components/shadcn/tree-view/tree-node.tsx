@@ -5,6 +5,11 @@ import { ChevronRightIcon } from "lucide-react";
 import { KeyboardEvent } from "react";
 
 import { Checkbox } from "@/components/shadcn/checkbox";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
 import { TreeNodeProps } from "@/types/tree";
 
@@ -34,11 +39,27 @@ export function TreeNode({
   onExpandedChange,
   showCheckboxes,
   renderItem,
-  expandAll,
   enableSelectChildren,
 }: TreeNodeProps) {
-  const isExpanded = expandAll || expandedIds.includes(item.id);
+  const isExpanded = expandedIds.includes(item.id);
   const isSelected = selectedIds.includes(item.id);
+  const statusIcon =
+    !item.isLoading && item.status ? (
+      item.status === "error" && item.errorMessage ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span>
+              <TreeStatusIcon status={item.status} />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs">{item.errorMessage}</p>
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <TreeStatusIcon status={item.status} />
+      )
+    ) : null;
 
   // Calculate indeterminate state based on descendant selection
   const descendantIds = getAllDescendantIds(item);
@@ -91,7 +112,6 @@ export function TreeNode({
           "flex items-center gap-2 rounded-md px-2 py-1.5",
           "hover:bg-prowler-white/5 cursor-pointer",
           "focus-visible:ring-border-input-primary-press focus-visible:ring-2 focus-visible:outline-none",
-          isSelected && "bg-prowler-white/10",
           item.disabled && "cursor-not-allowed opacity-50",
           item.className,
         )}
@@ -125,9 +145,7 @@ export function TreeNode({
           )}
         </button>
 
-        {!item.isLoading && item.status && (
-          <TreeStatusIcon status={item.status} />
-        )}
+        {statusIcon}
 
         {showCheckboxes && (
           <Checkbox
@@ -170,7 +188,7 @@ export function TreeNode({
           >
             {item.children?.map((child) => (
               <li key={child.id}>
-                {child.children ? (
+                {child.children && child.children.length > 0 ? (
                   <TreeNode
                     item={child}
                     level={level + 1}
@@ -180,7 +198,6 @@ export function TreeNode({
                     onExpandedChange={onExpandedChange}
                     showCheckboxes={showCheckboxes}
                     renderItem={renderItem}
-                    expandAll={expandAll}
                     enableSelectChildren={enableSelectChildren}
                   />
                 ) : (
