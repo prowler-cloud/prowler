@@ -29,8 +29,7 @@ The entire Organizations flow lives in a **modal dialog** (not separate pages). 
 
 **Step 3 sub-phases:**
 - **Phase A — Discovery**: Polls `getDiscovery()` every 3s. Shows spinner + "Discovering your AWS Organization..."
-- **Phase B — Account Selection**: TreeView with checkboxes + "Name (optional)" input fields. User selects accounts, enters aliases, clicks "Next"
-- **Phase C — Apply + Test**: Calls `applyDiscovery()`, then `checkConnectionProvider()` for each created provider. TreeView updates with status icons (✓/✗). Buttons: "Back", "Skip Connection Validation", "Test Connections"
+- **Phase B — Account Selection + In-place Testing**: TreeView with checkboxes + "Name (optional)" input fields. User selects accounts and clicks "Test Connections". The same TreeView stays visible while apply + connection tests run in place (checkboxes become spinners/status icons).
 
 **Step 4 behavior:**
 - Shows org name + UID badge
@@ -59,8 +58,7 @@ ui/
 │   ├── aws-method-selector.tsx                             # "Single Account" vs "Organizations" radio
 │   ├── org-setup-form.tsx                                  # Step 2: Org details form
 │   ├── org-discovery-loader.tsx                            # Step 3 Phase A: Discovery polling spinner
-│   ├── org-account-selection.tsx                           # Step 3 Phase B: Tree + checkboxes + names
-│   ├── org-connection-test.tsx                             # Step 3 Phase C: Tree + status icons + test
+│   ├── org-account-selection.tsx                           # Step 3: Tree + checkboxes + in-place apply/test
 │   ├── org-launch-scan.tsx                                 # Step 4: Success + scan schedule
 │   └── org-account-tree-item.tsx                           # Custom renderItem for TreeView
 ```
@@ -271,29 +269,29 @@ Renders:
 - Pre-selects all `ready` accounts
 - Blocked accounts shown as disabled with reason tooltip
 
-Buttons: "Back" (go to step 2), "Next" (advance to Phase C / Apply)
+Buttons: "Back" (go to step 2), "Test Connections" (starts in-place Apply + Test), "Skip Connection Validation" (advance to step 4)
 
-### 7.8 `org-connection-test.tsx` — Step 3 Phase C: Apply + Test Connections
+### 7.8 In-place Apply + Test (inside `org-account-selection.tsx`)
 
-**On mount:**
+**On "Test Connections" click:**
 1. Calls `applyDiscovery()` with selected account IDs + aliases from Zustand
 2. Stores returned `createdProviderIds` in Zustand
 3. Automatically tests all connections: for each provider ID, calls `checkConnectionProvider()` then polls `checkTaskStatus()`
 4. Updates TreeView status icons in real-time via `connectionResults` in store
 
-**TreeView display** (from Figma):
-- Table headers: "Account ID" | "Name (optional)"
-- Each node: expand arrow + status icon (✓ green / ✗ red / spinner) + folder/shield icon + ID + name field
-- Uses `TreeDataItem.status` and `TreeDataItem.isLoading` for built-in spinner/icon support
+**TreeView display behavior:**
+- The same TreeView remains visible (no screen/step change).
+- Selected account checkboxes switch to spinner/status icons while testing.
+- Failed accounts can be retried via "Test Connections".
 
 **Error state** (from Figma `10160:2965`):
 - Red error banner: "There was a problem connecting to some accounts. Ensure the Prowler StackSet has successfully deployed then retry testing connections."
 - "Test Connections" button retries all failed connections
-- "Skip Connection Validation" link advances to step 4 anyway
+- "Skip Connection Validation" advances to step 4 anyway
 
 **Success:** All connections pass → automatically advance to step 4
 
-Buttons: "Back", "Skip Connection Validation" (text link), "Test Connections" (primary)
+Buttons: "Back", "Skip Connection Validation" (secondary), "Test Connections" (primary)
 
 ### 7.9 `org-launch-scan.tsx` — Step 4: Launch Scan
 
@@ -317,13 +315,13 @@ From Figma (`10004:102323`):
 
 ### 7.10 `org-account-tree-item.tsx` — Custom Tree Renderer
 
-Used in both Phase B (selection) and Phase C (testing) via `renderItem` prop.
+Used in both selection and in-place testing modes via `renderItem` prop.
 
 **Phase B (selection mode):**
 - Shows: account ID text + "Name (optional)" input field
 - Checkboxes handled by TreeView's built-in checkbox support
 
-**Phase C (testing mode):**
+**Testing mode (in-place):**
 - Shows: status icon (✓/✗/spinner) + account ID + "Name (optional)" input (read-only or editable)
 - OUs show aggregate status (all children pass = ✓, any fail = ✗)
 - Uses `item.status` ("success"/"error") and `item.isLoading` from TreeDataItem
@@ -357,12 +355,11 @@ const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
 | 7 | `OrgSetupForm` component | Actions, Store |
 | 8 | `OrgDiscoveryLoader` component | Actions, Store |
 | 9 | `OrgAccountTreeItem` component | Adapter, Types |
-| 10 | `OrgAccountSelection` component | TreeView, TreeItem, Store |
-| 11 | `OrgConnectionTest` component | Actions, Store, TreeView |
-| 12 | `OrgLaunchScan` component | Scan actions, Store |
-| 13 | `OrgWizardModal` (shell + step router) | All above components |
-| 14 | Modify `connect-account-form.tsx` | AwsMethodSelector, OrgWizardModal |
-| 15 | Wire exports (`store/index.ts`, `types/index.ts`) | All |
+| 10 | `OrgAccountSelection` component (selection + in-place test) | TreeView, TreeItem, Actions, Store |
+| 11 | `OrgLaunchScan` component | Scan actions, Store |
+| 12 | `OrgWizardModal` (shell + step router) | All above components |
+| 13 | Modify `connect-account-form.tsx` | AwsMethodSelector, OrgWizardModal |
+| 14 | Wire exports (`store/index.ts`, `types/index.ts`) | All |
 
 ---
 
