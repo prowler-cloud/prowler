@@ -1215,6 +1215,7 @@
       "Id": "5.1.5.1",
       "Description": "User consent to apps accessing company data on their behalf allows users to grant permissions to applications without administrator involvement. The recommended state is Do not allow user consent.",
       "Checks": [
+        "entra_app_registration_no_unused_privileged_permissions",
         "entra_policy_restricts_user_consent_for_apps"
       ],
       "Attributes": [

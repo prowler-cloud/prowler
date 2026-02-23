@@ -169,6 +169,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             sync.create_sync_indexes(tenant_neo4j_session)
 
         logger.info(f"Deleting existing provider graph in {tenant_database_name}")
+        db_utils.set_provider_graph_data_ready(attack_paths_scan, False)
         graph_database.drop_subgraph(
             database=tenant_database_name,
             provider_id=str(prowler_api_provider.id),
@@ -183,6 +184,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             target_database=tenant_database_name,
             provider_id=str(prowler_api_provider.id),
         )
+        db_utils.set_graph_data_ready(attack_paths_scan, True)
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 99)
 
         logger.info(f"Clearing Neo4j cache for database {tenant_database_name}")
@@ -209,6 +211,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         # Handling databases changes
         try:
             graph_database.drop_database(tmp_cartography_config.neo4j_database)
+
         except Exception:
             logger.exception(
                 f"Failed to drop temporary Neo4j database {tmp_cartography_config.neo4j_database} during cleanup"

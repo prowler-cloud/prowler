@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OpenStackInstance",
+  "ResourceType": "OS::Nova::Server",
   "ResourceGroup": "compute",
   "Description": "**OpenStack compute instances** (VMs) are evaluated to verify that at least one **security group** is attached. Security groups act as virtual firewalls, controlling ingress and egress traffic. Instances without security groups may have **unrestricted network access**, violating defense-in-depth principles.",
   "Risk": "Instances without security groups are exposed to unrestricted network traffic from any source. Attackers can probe open ports, exploit vulnerable services, conduct injection attacks, and tamper with data without firewall barriers. Lack of network access controls enables unauthorized access, data exfiltration, lateral movement, DDoS attacks, and resource exhaustion.",
