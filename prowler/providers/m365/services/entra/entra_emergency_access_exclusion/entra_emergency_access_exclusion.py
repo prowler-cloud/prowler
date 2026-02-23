@@ -7,7 +7,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 
 
-class entra_conditional_access_policy_emergency_access_exclusion(Check):
+class entra_emergency_access_exclusion(Check):
     """Check if at least one emergency access account or group is excluded from all Conditional Access policies.
 
     This check ensures that the tenant has at least one emergency/break glass account

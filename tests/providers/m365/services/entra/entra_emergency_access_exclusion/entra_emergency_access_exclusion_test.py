@@ -17,7 +17,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
-class Test_entra_conditional_access_policy_emergency_access_exclusion:
+class Test_entra_emergency_access_exclusion:
     def test_entra_no_conditional_access_policies(self):
         """Test when there are no Conditional Access policies."""
         entra_client = mock.MagicMock
@@ -29,17 +29,17 @@ class Test_entra_conditional_access_policy_emergency_access_exclusion:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion.entra_client",
+                "prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion import (
-                entra_conditional_access_policy_emergency_access_exclusion,
+            from prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion import (
+                entra_emergency_access_exclusion,
             )
 
             entra_client.conditional_access_policies = {}
 
-            check = entra_conditional_access_policy_emergency_access_exclusion()
+            check = entra_emergency_access_exclusion()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -65,12 +65,12 @@ class Test_entra_conditional_access_policy_emergency_access_exclusion:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion.entra_client",
+                "prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion import (
-                entra_conditional_access_policy_emergency_access_exclusion,
+            from prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion import (
+                entra_emergency_access_exclusion,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -114,7 +114,7 @@ class Test_entra_conditional_access_policy_emergency_access_exclusion:
                 )
             }
 
-            check = entra_conditional_access_policy_emergency_access_exclusion()
+            check = entra_emergency_access_exclusion()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -137,12 +137,12 @@ class Test_entra_conditional_access_policy_emergency_access_exclusion:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion.entra_client",
+                "prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion import (
-                entra_conditional_access_policy_emergency_access_exclusion,
+            from prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion import (
+                entra_emergency_access_exclusion,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -223,7 +223,7 @@ class Test_entra_conditional_access_policy_emergency_access_exclusion:
                 ),
             }
 
-            check = entra_conditional_access_policy_emergency_access_exclusion()
+            check = entra_emergency_access_exclusion()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -250,12 +250,12 @@ class Test_entra_conditional_access_policy_emergency_access_exclusion:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion.entra_client",
+                "prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion import (
-                entra_conditional_access_policy_emergency_access_exclusion,
+            from prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion import (
+                entra_emergency_access_exclusion,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -335,7 +335,7 @@ class Test_entra_conditional_access_policy_emergency_access_exclusion:
                 ),
             }
 
-            check = entra_conditional_access_policy_emergency_access_exclusion()
+            check = entra_emergency_access_exclusion()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -359,12 +359,12 @@ class Test_entra_conditional_access_policy_emergency_access_exclusion:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion.entra_client",
+                "prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion import (
-                entra_conditional_access_policy_emergency_access_exclusion,
+            from prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion import (
+                entra_emergency_access_exclusion,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -444,7 +444,7 @@ class Test_entra_conditional_access_policy_emergency_access_exclusion:
                 ),
             }
 
-            check = entra_conditional_access_policy_emergency_access_exclusion()
+            check = entra_emergency_access_exclusion()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -469,12 +469,12 @@ class Test_entra_conditional_access_policy_emergency_access_exclusion:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion.entra_client",
+                "prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion import (
-                entra_conditional_access_policy_emergency_access_exclusion,
+            from prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion import (
+                entra_emergency_access_exclusion,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -554,7 +554,7 @@ class Test_entra_conditional_access_policy_emergency_access_exclusion:
                 ),
             }
 
-            check = entra_conditional_access_policy_emergency_access_exclusion()
+            check = entra_emergency_access_exclusion()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -578,12 +578,12 @@ class Test_entra_conditional_access_policy_emergency_access_exclusion:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion.entra_client",
+                "prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion import (
-                entra_conditional_access_policy_emergency_access_exclusion,
+            from prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion import (
+                entra_emergency_access_exclusion,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -663,7 +663,7 @@ class Test_entra_conditional_access_policy_emergency_access_exclusion:
                 ),
             }
 
-            check = entra_conditional_access_policy_emergency_access_exclusion()
+            check = entra_emergency_access_exclusion()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -688,12 +688,12 @@ class Test_entra_conditional_access_policy_emergency_access_exclusion:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion.entra_client",
+                "prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_emergency_access_exclusion.entra_conditional_access_policy_emergency_access_exclusion import (
-                entra_conditional_access_policy_emergency_access_exclusion,
+            from prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion import (
+                entra_emergency_access_exclusion,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -774,7 +774,7 @@ class Test_entra_conditional_access_policy_emergency_access_exclusion:
                 ),
             }
 
-            check = entra_conditional_access_policy_emergency_access_exclusion()
+            check = entra_emergency_access_exclusion()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
