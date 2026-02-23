@@ -9,10 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
-import {
-  APPLY_STATUS,
-  DiscoveredAccount,
-} from "@/types/organizations";
+import { APPLY_STATUS, DiscoveredAccount } from "@/types/organizations";
 import { TreeRenderItemParams } from "@/types/tree";
 
 const TREE_ITEM_MODE = {
@@ -51,7 +48,9 @@ export function OrgAccountTreeItem({
     return (
       <div className="flex flex-1 items-center gap-3">
         <div className={`${idColumnClass} flex items-center gap-2`}>
-          {ItemIcon && <ItemIcon className="text-muted-foreground size-4 shrink-0" />}
+          {ItemIcon && (
+            <ItemIcon className="text-muted-foreground size-4 shrink-0" />
+          )}
           <span className="text-sm">{item.id}</span>
         </div>
         <div className="min-w-0 flex-1">
@@ -85,7 +84,9 @@ export function OrgAccountTreeItem({
     <div className="flex flex-1 items-center gap-3">
       {/* Account ID */}
       <div className={cn(idColumnClass, "flex items-center gap-2")}>
-        {ItemIcon && <ItemIcon className="text-muted-foreground size-4 shrink-0" />}
+        {ItemIcon && (
+          <ItemIcon className="text-muted-foreground size-4 shrink-0" />
+        )}
         <span className={cn("text-sm", isBlocked && "text-muted-foreground")}>
           {account.id}
         </span>

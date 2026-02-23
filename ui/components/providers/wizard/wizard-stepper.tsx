@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  CircleCheckBig,
-  FolderGit2,
-  KeyRound,
-  Rocket,
-} from "lucide-react";
+import { CircleCheckBig, FolderGit2, KeyRound, Rocket } from "lucide-react";
 import { ReactElement } from "react";
 
 import { ProwlerShort } from "@/components/icons/prowler/ProwlerIcons";
@@ -69,7 +64,11 @@ export function WizardStepper({
         return (
           <div key={step.label} className="flex items-start gap-3">
             <div className="flex flex-col items-center">
-              <StepCircle isComplete={isComplete} isActive={isActive} icon={step.icon} />
+              <StepCircle
+                isComplete={isComplete}
+                isActive={isActive}
+                icon={step.icon}
+              />
               {index < STEPS.length - 1 && (
                 <StepConnector isComplete={isComplete} />
               )}
@@ -103,11 +102,7 @@ interface StepCircleProps {
   icon: IconComponent;
 }
 
-function StepCircle({
-  isComplete,
-  isActive,
-  icon: Icon,
-}: StepCircleProps) {
+function StepCircle({ isComplete, isActive, icon: Icon }: StepCircleProps) {
   if (isComplete) {
     return (
       <div className="bg-button-primary-press flex size-[44px] shrink-0 items-center justify-center rounded-full">
