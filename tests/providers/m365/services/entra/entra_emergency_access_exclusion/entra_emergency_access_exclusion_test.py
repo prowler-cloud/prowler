@@ -42,10 +42,10 @@ class Test_entra_emergency_access_exclusion:
             check = entra_emergency_access_exclusion()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "No enabled Conditional Access policies found. Emergency access exclusions cannot be evaluated."
+                == "No enabled Conditional Access policies found. Emergency access exclusions are not required."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"
@@ -117,10 +117,10 @@ class Test_entra_emergency_access_exclusion:
             check = entra_emergency_access_exclusion()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "No enabled Conditional Access policies found. Emergency access exclusions cannot be evaluated."
+                == "No enabled Conditional Access policies found. Emergency access exclusions are not required."
             )
 
     def test_entra_no_emergency_access_exclusion(self):
@@ -225,15 +225,17 @@ class Test_entra_emergency_access_exclusion:
 
             check = entra_emergency_access_exclusion()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == "No emergency access account or group is excluded from all Conditional Access policies."
-            )
-            assert result[0].resource == {}
-            assert result[0].resource_name == "Conditional Access Policies"
-            assert result[0].resource_id == "conditionalAccessPolicies"
+            assert len(result) == 2
+            for finding in result:
+                assert finding.status == "FAIL"
+                assert (
+                    "does not have any user or group excluded as emergency access"
+                    in finding.status_extended
+                )
+            assert result[0].resource_name == "Policy 1"
+            assert result[0].resource_id == policy_id_1
+            assert result[1].resource_name == "Policy 2"
+            assert result[1].resource_id == policy_id_2
 
     def test_entra_user_excluded_from_all_policies(self):
         """Test when a user is excluded from all enabled policies."""
@@ -337,12 +339,17 @@ class Test_entra_emergency_access_exclusion:
 
             check = entra_emergency_access_exclusion()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == "Emergency access exclusion found: 1 user(s) excluded from all 2 enabled Conditional Access policies."
-            )
+            assert len(result) == 2
+            for finding in result:
+                assert finding.status == "PASS"
+                assert (
+                    "1 user(s) excluded as emergency access across all 2 enabled policies"
+                    in finding.status_extended
+                )
+            assert result[0].resource_name == "Policy 1"
+            assert result[0].resource_id == policy_id_1
+            assert result[1].resource_name == "Policy 2"
+            assert result[1].resource_id == policy_id_2
 
     def test_entra_group_excluded_from_all_policies(self):
         """Test when a group is excluded from all enabled policies."""
@@ -446,12 +453,13 @@ class Test_entra_emergency_access_exclusion:
 
             check = entra_emergency_access_exclusion()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == "Emergency access exclusion found: 1 group(s) excluded from all 2 enabled Conditional Access policies."
-            )
+            assert len(result) == 2
+            for finding in result:
+                assert finding.status == "PASS"
+                assert (
+                    "1 group(s) excluded as emergency access across all 2 enabled policies"
+                    in finding.status_extended
+                )
 
     def test_entra_user_and_group_excluded_from_all_policies(self):
         """Test when both a user and group are excluded from all enabled policies."""
@@ -556,12 +564,13 @@ class Test_entra_emergency_access_exclusion:
 
             check = entra_emergency_access_exclusion()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == "Emergency access exclusion found: 1 user(s) and 1 group(s) excluded from all 2 enabled Conditional Access policies."
-            )
+            assert len(result) == 2
+            for finding in result:
+                assert finding.status == "PASS"
+                assert (
+                    "1 user(s) and 1 group(s) excluded as emergency access across all 2 enabled policies"
+                    in finding.status_extended
+                )
 
     def test_entra_disabled_policies_ignored(self):
         """Test that disabled policies are ignored when checking exclusions."""
@@ -665,12 +674,14 @@ class Test_entra_emergency_access_exclusion:
 
             check = entra_emergency_access_exclusion()
             result = check.execute()
+            # Only 1 enabled policy, so only 1 finding
             assert len(result) == 1
             assert result[0].status == "PASS"
-            # Only 1 enabled policy, user is excluded from it
+            assert result[0].resource_name == "Enabled Policy"
+            assert result[0].resource_id == policy_id_1
             assert (
-                result[0].status_extended
-                == "Emergency access exclusion found: 1 user(s) excluded from all 1 enabled Conditional Access policies."
+                "1 user(s) excluded as emergency access across all 1 enabled policies"
+                in result[0].status_extended
             )
 
     def test_entra_enabled_for_reporting_policies_included(self):
@@ -776,9 +787,10 @@ class Test_entra_emergency_access_exclusion:
 
             check = entra_emergency_access_exclusion()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == "Emergency access exclusion found: 1 user(s) excluded from all 2 enabled Conditional Access policies."
-            )
+            assert len(result) == 2
+            for finding in result:
+                assert finding.status == "PASS"
+                assert (
+                    "1 user(s) excluded as emergency access across all 2 enabled policies"
+                    in finding.status_extended
+                )

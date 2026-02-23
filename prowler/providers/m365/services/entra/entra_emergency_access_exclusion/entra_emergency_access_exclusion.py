@@ -15,7 +15,8 @@ class entra_emergency_access_exclusion(Check):
     This prevents accidental lockout scenarios where misconfigured CA policies could
     block all administrative access to the tenant.
 
-    - PASS: At least one user or group is excluded from all enabled Conditional Access policies.
+    - PASS: At least one user or group is excluded from all enabled Conditional Access policies,
+            or there are no enabled policies.
     - FAIL: No user or group is excluded from all enabled Conditional Access policies.
     """
 
@@ -27,15 +28,6 @@ class entra_emergency_access_exclusion(Check):
         """
         findings = []
 
-        report = CheckReportM365(
-            metadata=self.metadata(),
-            resource={},
-            resource_name="Conditional Access Policies",
-            resource_id="conditionalAccessPolicies",
-        )
-        report.status = "FAIL"
-        report.status_extended = "No emergency access account or group is excluded from all Conditional Access policies."
-
         # Get all enabled CA policies (excluding disabled ones)
         enabled_policies = [
             policy
@@ -45,8 +37,14 @@ class entra_emergency_access_exclusion(Check):
 
         # If there are no enabled policies, there's nothing to exclude from
         if not enabled_policies:
-            report.status = "FAIL"
-            report.status_extended = "No enabled Conditional Access policies found. Emergency access exclusions cannot be evaluated."
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Conditional Access Policies",
+                resource_id="conditionalAccessPolicies",
+            )
+            report.status = "PASS"
+            report.status_extended = "No enabled Conditional Access policies found. Emergency access exclusions are not required."
             findings.append(report)
             return findings
 
@@ -82,15 +80,32 @@ class entra_emergency_access_exclusion(Check):
             if count == total_policy_count
         ]
 
-        # If at least one user or group is excluded from all policies, PASS
-        if users_excluded_from_all or groups_excluded_from_all:
-            report.status = "PASS"
-            exclusion_details = []
-            if users_excluded_from_all:
-                exclusion_details.append(f"{len(users_excluded_from_all)} user(s)")
-            if groups_excluded_from_all:
-                exclusion_details.append(f"{len(groups_excluded_from_all)} group(s)")
-            report.status_extended = f"Emergency access exclusion found: {' and '.join(exclusion_details)} excluded from all {total_policy_count} enabled Conditional Access policies."
+        has_emergency_exclusion = bool(
+            users_excluded_from_all or groups_excluded_from_all
+        )
 
-        findings.append(report)
+        for policy in enabled_policies:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource=policy,
+                resource_name=policy.display_name,
+                resource_id=policy.id,
+            )
+
+            if has_emergency_exclusion:
+                report.status = "PASS"
+                exclusion_details = []
+                if users_excluded_from_all:
+                    exclusion_details.append(f"{len(users_excluded_from_all)} user(s)")
+                if groups_excluded_from_all:
+                    exclusion_details.append(
+                        f"{len(groups_excluded_from_all)} group(s)"
+                    )
+                report.status_extended = f"Conditional Access Policy '{policy.display_name}' has {' and '.join(exclusion_details)} excluded as emergency access across all {total_policy_count} enabled policies."
+            else:
+                report.status = "FAIL"
+                report.status_extended = f"Conditional Access Policy '{policy.display_name}' does not have any user or group excluded as emergency access from all enabled Conditional Access policies."
+
+            findings.append(report)
+
         return findings

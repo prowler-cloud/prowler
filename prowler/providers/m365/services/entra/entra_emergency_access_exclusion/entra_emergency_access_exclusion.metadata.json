@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "Conditional Access Policy",
   "ResourceGroup": "IAM",
-  "Description": "This check verifies that at least one emergency access (break glass) account or group is excluded from all Conditional Access policies. Emergency access accounts provide a fallback mechanism when normal administrative access is blocked due to misconfigured policies.",
+  "Description": "This check verifies that at least one **emergency access** (break glass) account or group is excluded from all **Conditional Access policies**. Emergency access accounts provide a fallback mechanism when normal administrative access is blocked due to misconfigured policies.",
   "Risk": "Without emergency access accounts excluded from Conditional Access policies, a misconfiguration could lock out all administrators from the tenant. This creates a **critical availability risk** where legitimate administrators cannot access or remediate issues in the environment.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -37,5 +37,5 @@
     "entra_legacy_authentication_blocked",
     "entra_managed_device_required_for_authentication"
   ],
-  "Notes": "This check is equivalent to Maester test MT.1005. It verifies that at least one user or group is excluded from all enabled Conditional Access policies, serving as an emergency access mechanism."
+  "Notes": ""
 }
