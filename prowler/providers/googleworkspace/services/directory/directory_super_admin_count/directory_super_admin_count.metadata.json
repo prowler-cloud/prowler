@@ -7,13 +7,14 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "GoogleWorkspaceDomain",
-  "ResourceGroup": "identity",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
   "Description": "Google Workspace domain has between **2 and 4 super administrators**.\n\nHaving too few super admins creates a **single point of failure** and administrative access issues if the only admin is unavailable. Having too many super admins increases the **attack surface** and the risk of unauthorized access to critical administrative functions.",
   "Risk": "Having fewer than 2 super administrators creates a **single point of failure** and may prevent administrative access in emergencies.\n\nHaving more than 4 super administrators increases the security risk by expanding the **attack surface** for compromised accounts with full **administrative privileges**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.google.com/a/answer/2405986"
+    "https://knowledge.workspace.google.com/admin/users/prebuilt-administrator-roles",
+    "https://support.google.com/a/answer/9011373"
   ],
   "Remediation": {
     "Code": {

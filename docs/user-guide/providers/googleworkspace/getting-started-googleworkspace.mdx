@@ -61,17 +61,8 @@ export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
 prowler googleworkspace
 ```
 
-### Using CLI Arguments
-
-You can pass the delegated user directly via the CLI:
-
-```bash
-prowler googleworkspace \
-  --delegated-user admin@yourdomain.com
-```
-
 <Note>
-The `--delegated-user` flag must be a super admin email in your Google Workspace organization. The service account credentials must be provided via environment variables (`GOOGLEWORKSPACE_CREDENTIALS_FILE` or `GOOGLEWORKSPACE_CREDENTIALS_CONTENT`).
+The delegated user must be a super admin email in your Google Workspace organization. The service account credentials must be provided via environment variables (`GOOGLEWORKSPACE_CREDENTIALS_FILE` or `GOOGLEWORKSPACE_CREDENTIALS_CONTENT`).
 </Note>
 
 ## Understanding the Output

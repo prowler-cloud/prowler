@@ -32,7 +32,7 @@ class GoogleWorkspaceBaseException(ProwlerException):
         },
         (12006, "GoogleWorkspaceMissingDelegatedUserError"): {
             "message": "Delegated user email is required for Domain-Wide Delegation",
-            "remediation": "Provide --delegated-user with a valid user email from your domain.",
+            "remediation": "Set the GOOGLEWORKSPACE_DELEGATED_USER environment variable with a valid super admin email from your domain.",
         },
         (12007, "GoogleWorkspaceInsufficientScopesError"): {
             "message": "Service Account does not have required OAuth scopes",

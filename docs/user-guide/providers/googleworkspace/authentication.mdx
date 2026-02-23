@@ -101,10 +101,7 @@ Prowler resolves credentials in the following order:
 1. `GOOGLEWORKSPACE_CREDENTIALS_FILE` environment variable
 2. `GOOGLEWORKSPACE_CREDENTIALS_CONTENT` environment variable
 
-The delegated user is resolved in this order:
-
-1. `--delegated-user` CLI argument
-2. `GOOGLEWORKSPACE_DELEGATED_USER` environment variable
+The delegated user must be provided via the `GOOGLEWORKSPACE_DELEGATED_USER` environment variable.
 
 ## Best Practices
 
@@ -124,12 +121,10 @@ chmod 600 /path/to/googleworkspace-sa.json
 
 ### `GoogleWorkspaceMissingDelegatedUserError`
 
-The delegated user email was not provided. Set it via:
+The delegated user email was not provided. Set it via environment variable:
 
 ```bash
 export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
-# or
-prowler googleworkspace --delegated-user admin@yourdomain.com
 ```
 
 ### `GoogleWorkspaceNoCredentialsError`

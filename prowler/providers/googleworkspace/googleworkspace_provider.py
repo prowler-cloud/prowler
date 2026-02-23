@@ -1,5 +1,7 @@
 import json
+import logging
 import os
+import re
 from os import environ
 
 from colorama import Fore, Style
@@ -17,11 +19,11 @@ from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.googleworkspace.exceptions.exceptions import (
     GoogleWorkspaceImpersonationError,
+    GoogleWorkspaceInsufficientScopesError,
     GoogleWorkspaceInvalidCredentialsError,
     GoogleWorkspaceMissingDelegatedUserError,
     GoogleWorkspaceNoCredentialsError,
     GoogleWorkspaceSetUpIdentityError,
-    GoogleWorkspaceSetUpSessionError,
 )
 from prowler.providers.googleworkspace.lib.mutelist.mutelist import (
     GoogleWorkspaceMutelist,
@@ -92,12 +94,10 @@ class GoogleworkspaceProvider(Provider):
         logger.info("Instantiating Google Workspace Provider...")
 
         # Mute Google API library logs to reduce noise
-        import logging
-
         logging.getLogger("googleapiclient.discovery").setLevel(logging.ERROR)
         logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
 
-        self._session = GoogleworkspaceProvider.setup_session(
+        self._session, resolved_delegated_user = GoogleworkspaceProvider.setup_session(
             credentials_file,
             credentials_content,
             delegated_user,
@@ -105,7 +105,7 @@ class GoogleworkspaceProvider(Provider):
 
         self._identity = GoogleworkspaceProvider.setup_identity(
             self._session,
-            delegated_user,
+            resolved_delegated_user,
         )
 
         # Audit Config
@@ -168,7 +168,7 @@ class GoogleworkspaceProvider(Provider):
         credentials_file: str = None,
         credentials_content: str = None,
         delegated_user: str = None,
-    ) -> GoogleWorkspaceSession:
+    ) -> tuple[GoogleWorkspaceSession, str]:
         """
         Sets up the Google Workspace session with Service Account and Domain-Wide Delegation.
 
@@ -178,7 +178,7 @@ class GoogleworkspaceProvider(Provider):
             delegated_user (str): Email of the user to impersonate via Domain-Wide Delegation.
 
         Returns:
-            GoogleWorkspaceSession: Authenticated session with delegated credentials.
+            tuple[GoogleWorkspaceSession, str]: Tuple containing the authenticated session and resolved delegated user email.
 
         Raises:
             GoogleWorkspaceNoCredentialsError: If no credentials are provided.
@@ -187,107 +187,151 @@ class GoogleworkspaceProvider(Provider):
             GoogleWorkspaceImpersonationError: If impersonation fails.
             GoogleWorkspaceSetUpSessionError: If session setup fails.
         """
-        try:
-            # Check if delegated_user is provided (required for Domain-Wide Delegation)
+        # Check if delegated_user is provided (required for Domain-Wide Delegation)
+        if not delegated_user:
+            # Try environment variable
+            delegated_user = environ.get("GOOGLEWORKSPACE_DELEGATED_USER", "")
             if not delegated_user:
-                # Try environment variable
-                delegated_user = environ.get("GOOGLEWORKSPACE_DELEGATED_USER", "")
-                if not delegated_user:
-                    raise GoogleWorkspaceMissingDelegatedUserError(
-                        file=os.path.basename(__file__),
-                        message="Delegated user email is required for Domain-Wide Delegation authentication",
-                    )
-
-            # Determine credentials source
-            if credentials_file:
-                logger.info(
-                    f"Using Service Account credentials from file: {credentials_file}"
+                raise GoogleWorkspaceMissingDelegatedUserError(
+                    file=os.path.basename(__file__),
+                    message="Delegated user email is required for Domain-Wide Delegation authentication",
                 )
+
+        # Validate email format with regex
+        email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+        if not email_pattern.match(delegated_user):
+            raise GoogleWorkspaceInvalidCredentialsError(
+                file=os.path.basename(__file__),
+                message=f"Invalid delegated user email format: {delegated_user}. Must be a valid email address.",
+            )
+
+        # Determine credentials source
+        if credentials_file:
+            logger.info(
+                f"Using Service Account credentials from file: {credentials_file}"
+            )
+            try:
                 credentials = service_account.Credentials.from_service_account_file(
                     credentials_file,
                     scopes=GoogleworkspaceProvider.DIRECTORY_SCOPES,
                 )
-            elif credentials_content:
-                logger.info("Using Service Account credentials from content")
+            except FileNotFoundError as error:
+                raise GoogleWorkspaceInvalidCredentialsError(
+                    file=os.path.basename(__file__),
+                    original_exception=error,
+                    message=f"Credentials file not found: {credentials_file}",
+                )
+            except ValueError as error:
+                raise GoogleWorkspaceInvalidCredentialsError(
+                    file=os.path.basename(__file__),
+                    original_exception=error,
+                    message=f"Invalid service account credentials file: {credentials_file}",
+                )
+        elif credentials_content:
+            logger.info("Using Service Account credentials from content")
+            try:
+                credentials_data = json.loads(credentials_content)
+            except json.JSONDecodeError as error:
+                raise GoogleWorkspaceInvalidCredentialsError(
+                    file=os.path.basename(__file__),
+                    original_exception=error,
+                    message="Invalid JSON in credentials content",
+                )
+            credentials = service_account.Credentials.from_service_account_info(
+                credentials_data,
+                scopes=GoogleworkspaceProvider.DIRECTORY_SCOPES,
+            )
+        else:
+            # Try environment variables
+            logger.info(
+                "Looking for GOOGLEWORKSPACE_CREDENTIALS_FILE or GOOGLEWORKSPACE_CREDENTIALS_CONTENT environment variables..."
+            )
+            env_file = environ.get("GOOGLEWORKSPACE_CREDENTIALS_FILE", "")
+            env_content = environ.get("GOOGLEWORKSPACE_CREDENTIALS_CONTENT", "")
+
+            if env_file:
+                logger.info(
+                    f"Using Service Account credentials from environment variable file: {env_file}"
+                )
                 try:
-                    credentials_data = json.loads(credentials_content)
+                    credentials = service_account.Credentials.from_service_account_file(
+                        env_file,
+                        scopes=GoogleworkspaceProvider.DIRECTORY_SCOPES,
+                    )
+                except FileNotFoundError as error:
+                    raise GoogleWorkspaceInvalidCredentialsError(
+                        file=os.path.basename(__file__),
+                        original_exception=error,
+                        message=f"Credentials file not found: {env_file}",
+                    )
+                except ValueError as error:
+                    raise GoogleWorkspaceInvalidCredentialsError(
+                        file=os.path.basename(__file__),
+                        original_exception=error,
+                        message=f"Invalid service account credentials file: {env_file}",
+                    )
+            elif env_content:
+                logger.info(
+                    "Using Service Account credentials from environment variable content"
+                )
+                try:
+                    credentials_data = json.loads(env_content)
                 except json.JSONDecodeError as error:
                     raise GoogleWorkspaceInvalidCredentialsError(
                         file=os.path.basename(__file__),
                         original_exception=error,
-                        message="Invalid JSON in credentials content",
+                        message="Invalid JSON in GOOGLEWORKSPACE_CREDENTIALS_CONTENT",
                     )
                 credentials = service_account.Credentials.from_service_account_info(
                     credentials_data,
                     scopes=GoogleworkspaceProvider.DIRECTORY_SCOPES,
                 )
             else:
-                # Try environment variables
-                logger.info(
-                    "Looking for GOOGLEWORKSPACE_CREDENTIALS_FILE or GOOGLEWORKSPACE_CREDENTIALS_CONTENT environment variables..."
+                raise GoogleWorkspaceNoCredentialsError(
+                    file=os.path.basename(__file__),
+                    message="No credentials provided. Set the GOOGLEWORKSPACE_CREDENTIALS_FILE or GOOGLEWORKSPACE_CREDENTIALS_CONTENT environment variable.",
                 )
-                env_file = environ.get("GOOGLEWORKSPACE_CREDENTIALS_FILE", "")
-                env_content = environ.get("GOOGLEWORKSPACE_CREDENTIALS_CONTENT", "")
 
-                if env_file:
-                    logger.info(
-                        f"Using Service Account credentials from environment variable file: {env_file}"
-                    )
-                    credentials = service_account.Credentials.from_service_account_file(
-                        env_file,
-                        scopes=GoogleworkspaceProvider.DIRECTORY_SCOPES,
-                    )
-                elif env_content:
-                    logger.info(
-                        "Using Service Account credentials from environment variable content"
-                    )
-                    try:
-                        credentials_data = json.loads(env_content)
-                    except json.JSONDecodeError as error:
-                        raise GoogleWorkspaceInvalidCredentialsError(
-                            file=os.path.basename(__file__),
-                            original_exception=error,
-                            message="Invalid JSON in GOOGLEWORKSPACE_CREDENTIALS_CONTENT",
-                        )
-                    credentials = service_account.Credentials.from_service_account_info(
-                        credentials_data,
-                        scopes=GoogleworkspaceProvider.DIRECTORY_SCOPES,
-                    )
-                else:
-                    raise GoogleWorkspaceNoCredentialsError(
-                        file=os.path.basename(__file__),
-                        message="No credentials provided. Set the GOOGLEWORKSPACE_CREDENTIALS_FILE or GOOGLEWORKSPACE_CREDENTIALS_CONTENT environment variable.",
-                    )
+        # Perform Domain-Wide Delegation impersonation
+        logger.info(f"Impersonating user: {delegated_user}")
+        # Note: with_subject() never fails - it just creates an object
+        # We need to verify the delegation actually works by making an API call
+        delegated_credentials = credentials.with_subject(delegated_user)
 
-            # Perform Domain-Wide Delegation impersonation
-            logger.info(f"Impersonating user: {delegated_user}")
-            try:
-                delegated_credentials = credentials.with_subject(delegated_user)
-            except Exception as error:
+        # Test the delegation by making an actual API call to verify it works
+        try:
+            test_service = build(
+                "admin",
+                "directory_v1",
+                credentials=delegated_credentials,
+                cache_discovery=False,
+            )
+            # Try to get the delegated user's info to verify delegation works
+            test_service.users().get(userKey=delegated_user).execute()
+            logger.info(f"Domain-Wide Delegation verified for user: {delegated_user}")
+        except Exception as error:
+            # Check if it's a permission/delegation error
+            error_message = str(error).lower()
+            if (
+                "403" in str(error)
+                or "forbidden" in error_message
+                or "insufficient" in error_message
+                or "unauthorized" in error_message
+            ):
+                raise GoogleWorkspaceInsufficientScopesError(
+                    file=os.path.basename(__file__),
+                    original_exception=error,
+                    message=f"Domain-Wide Delegation is not configured or user '{delegated_user}' lacks required permissions. Ensure the Service Account Client ID is authorized in Google Workspace Admin Console with the required OAuth scopes.",
+                )
+            else:
                 raise GoogleWorkspaceImpersonationError(
                     file=os.path.basename(__file__),
                     original_exception=error,
-                    message=f"Failed to impersonate user '{delegated_user}'. Ensure Domain-Wide Delegation is configured.",
+                    message=f"Failed to verify delegation for user '{delegated_user}': {error}",
                 )
 
-            session = GoogleWorkspaceSession(credentials=delegated_credentials)
-            return session
-
-        except (
-            GoogleWorkspaceNoCredentialsError,
-            GoogleWorkspaceMissingDelegatedUserError,
-            GoogleWorkspaceInvalidCredentialsError,
-            GoogleWorkspaceImpersonationError,
-        ):
-            # Re-raise specific exceptions
-            raise
-        except Exception as error:
-            logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            raise GoogleWorkspaceSetUpSessionError(
-                original_exception=error,
-            )
+        session = GoogleWorkspaceSession(credentials=delegated_credentials)
+        return session, delegated_user
 
     @staticmethod
     def setup_identity(
@@ -307,60 +351,51 @@ class GoogleworkspaceProvider(Provider):
         Raises:
             GoogleWorkspaceSetUpIdentityError: If identity setup fails.
         """
-        try:
-            # Resolve delegated_user from environment if not provided
-            if not delegated_user:
-                delegated_user = environ.get("GOOGLEWORKSPACE_DELEGATED_USER", "")
-                if not delegated_user:
-                    raise GoogleWorkspaceMissingDelegatedUserError(
-                        file=os.path.basename(__file__),
-                        message="Delegated user email is required for identity setup",
-                    )
+        # Build the Admin SDK Directory service
+        service = build(
+            "admin",
+            "directory_v1",
+            credentials=session.credentials,
+            cache_discovery=False,
+        )
 
-            # Build the Admin SDK Directory service
-            service = build(
-                "admin",
-                "directory_v1",
-                credentials=session.credentials,
-                cache_discovery=False,
-            )
+        # Extract domain from delegated user email for validation
+        # (email format already validated in setup_session)
+        user_domain = delegated_user.split("@")[-1]
 
-            # Get customer information (domain and customer ID)
-            # First, extract domain from delegated user email
-            domain = (
-                delegated_user.split("@")[-1] if "@" in delegated_user else "unknown"
-            )
+        # Fetch customer information using the Directory API
+        # This validates that the delegated user belongs to a Google Workspace domain
+        customer_info = service.customers().get(customerKey="my_customer").execute()
+        customer_id = customer_info.get("id", "")
 
-            # Fetch customer ID using the Directory API
-            # We'll use the special 'my_customer' alias to get the current customer
-            try:
-                customer_info = (
-                    service.customers().get(customerKey="my_customer").execute()
-                )
-                customer_id = customer_info.get("id", "unknown")
-            except Exception as error:
-                logger.warning(
-                    f"Could not fetch customer info, using 'my_customer': {error}"
-                )
-                customer_id = "my_customer"
-
-            identity = GoogleWorkspaceIdentityInfo(
-                domain=domain,
-                customer_id=customer_id,
-                delegated_user=delegated_user,
-                profile="default",
-            )
-
-            logger.info(f"Google Workspace identity set up for domain: {domain}")
-            return identity
-
-        except Exception as error:
-            logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+        # Validate customer ID was retrieved successfully
+        if not customer_id:
             raise GoogleWorkspaceSetUpIdentityError(
-                original_exception=error,
+                file=os.path.basename(__file__),
+                message="Failed to retrieve customer ID from Google Workspace API. Ensure the delegated user has proper access.",
             )
+
+        # Get the primary domain from customer info to validate against user domain
+        customer_domain = customer_info.get("customerDomain", "")
+
+        # Validate that the delegated user's domain matches the workspace domain
+        if customer_domain and user_domain.lower() != customer_domain.lower():
+            raise GoogleWorkspaceInvalidCredentialsError(
+                file=os.path.basename(__file__),
+                message=f"Delegated user domain '{user_domain}' does not match Google Workspace domain '{customer_domain}'. Ensure the delegated user belongs to the correct workspace.",
+            )
+
+        identity = GoogleWorkspaceIdentityInfo(
+            domain=user_domain,
+            customer_id=customer_id,
+            delegated_user=delegated_user,
+            profile="default",
+        )
+
+        logger.info(
+            f"Google Workspace identity set up for domain: {user_domain}, customer: {customer_id}"
+        )
+        return identity
 
     def print_credentials(self):
         """
@@ -413,14 +448,14 @@ class GoogleworkspaceProvider(Provider):
         """
         try:
             # Set up the Google Workspace session
-            session = GoogleworkspaceProvider.setup_session(
+            session, resolved_delegated_user = GoogleworkspaceProvider.setup_session(
                 credentials_file=credentials_file,
                 credentials_content=credentials_content,
                 delegated_user=delegated_user,
             )
 
             # Set up the identity to test the connection
-            GoogleworkspaceProvider.setup_identity(session, delegated_user)
+            GoogleworkspaceProvider.setup_identity(session, resolved_delegated_user)
 
             return Connection(is_connected=True)
         except Exception as error:

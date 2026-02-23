@@ -35,7 +35,10 @@ class TestGoogleWorkspaceProvider:
         with (
             patch(
                 "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_session",
-                return_value=GoogleWorkspaceSession(credentials=mock_credentials),
+                return_value=(
+                    GoogleWorkspaceSession(credentials=mock_credentials),
+                    DELEGATED_USER,
+                ),
             ),
             patch(
                 "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_identity",
@@ -75,7 +78,10 @@ class TestGoogleWorkspaceProvider:
         with (
             patch(
                 "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_session",
-                return_value=GoogleWorkspaceSession(credentials=mock_credentials),
+                return_value=(
+                    GoogleWorkspaceSession(credentials=mock_credentials),
+                    DELEGATED_USER,
+                ),
             ),
             patch(
                 "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_identity",
@@ -128,7 +134,10 @@ class TestGoogleWorkspaceProvider:
         with (
             patch(
                 "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_session",
-                return_value=GoogleWorkspaceSession(credentials=mock_credentials),
+                return_value=(
+                    GoogleWorkspaceSession(credentials=mock_credentials),
+                    DELEGATED_USER,
+                ),
             ),
             patch(
                 "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_identity",
@@ -173,7 +182,10 @@ class TestGoogleWorkspaceProvider:
         with (
             patch(
                 "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_session",
-                return_value=GoogleWorkspaceSession(credentials=mock_credentials),
+                return_value=(
+                    GoogleWorkspaceSession(credentials=mock_credentials),
+                    DELEGATED_USER,
+                ),
             ),
             patch(
                 "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_identity",

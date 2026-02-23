@@ -1,4 +1,4 @@
-from pydantic.v1 import BaseModel
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.googleworkspace.lib.service.service import GoogleWorkspaceService
