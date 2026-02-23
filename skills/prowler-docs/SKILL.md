@@ -6,119 +6,101 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
-  scope: [root]
+  version: "1.1"
+  scope: [root, docs]
   auto_invoke: "Writing documentation"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
 ## When to Use
 
-Use this skill when writing Prowler documentation for:
+Use this skill when writing or reviewing Prowler documentation for:
 - Feature documentation
 - API/SDK references
 - Tutorials and guides
 - Release notes
+- PR documentation reviews
 
-## Brand Voice
+## Source of Truth
 
-### Unbiased Communication
-- Avoid gendered pronouns (use "you/your" or "they/them")
-- Use inclusive alternatives: businessman → businessperson, mankind → humanity
-- No generalizations about gender, race, nationality, culture
-- Avoid militaristic language: fight → address, kill chain → cyberattack chain
+**CRITICAL**: Read `docs/AGENTS.md` for the complete documentation style guide. This file contains all brand voice guidelines, formatting standards, SEO rules, and writing conventions.
 
-### Technical Terminology
-- Define key terms and acronyms on first use: "Identity and Access Management (IAM)"
-- Prefer verbal over nominal constructions: "The report was created" not "The creation of the report"
-- Use clear, accessible language; minimize jargon
-
-## Formatting Standards
-
-### Title Case Capitalization
-Use Title Case for all headers:
-- Good: "How to Configure Security Scanning"
-- Bad: "How to configure security scanning"
-
-### Hyphenation
-- Prenominal position: "world-leading company"
-- Postnominal position: "features built in"
-
-### Bullet Points
-Use when information can be logically divided:
-```markdown
-Prowler CLI includes:
-* **Industry standards:** CIS, NIST 800, NIST CSF
-* **Regulatory compliance:** RBI, FedRAMP, PCI-DSS
-* **Privacy frameworks:** GDPR, HIPAA, FFIEC
+```bash
+# Read the full documentation style guide
+cat docs/AGENTS.md
 ```
 
-### Interaction Verbs
-- Desktop: Click, Double-click, Right-click, Drag, Scroll
-- Touch: Tap, Double-tap, Press and hold, Swipe, Pinch
+The `docs/AGENTS.md` file is the authoritative source for:
+- Brand voice and tone
+- Unbiased communication guidelines
+- Naming conventions (Prowler features as proper nouns)
+- Verbal vs nominal constructions
+- Title-case capitalization rules
+- Hyphenation patterns
+- Bullet point formatting
+- Quotation mark usage
+- Interaction verbs (click, tap, etc.)
+- SEO optimization (sentence structure, headers)
+- Section titles and headers
+- Version badge usage
+- Warnings and danger calls
 
-## SEO Optimization
+## Quick Reference (Summary)
 
-### Sentence Structure
-Place keywords at the beginning:
-- Good: "To create a custom role, open a terminal..."
-- Bad: "Open a terminal to create a custom role..."
+These are highlights — always consult `docs/AGENTS.md` for complete guidance:
 
-### Headers
-- H1: Primary (unique, descriptive)
-- H2-H6: Subheadings (logical hierarchy)
-- Include keywords naturally
+### Brand Voice
+- Avoid gendered pronouns (use "you/your" or "they/them")
+- Use inclusive alternatives: businessman → businessperson
+- Avoid militaristic language: fight → address, kill chain → cyberattack chain
 
-## MDX Components
+### Formatting
+- **Title Case** for all headers: "How to Configure Security Scanning"
+- **Verbal constructions** preferred: "The report was created" not "The creation of the report"
+- **Keywords first** in sentences for SEO: "To create a role, open terminal..."
 
-### Version Badge
+### Prowler Features (Proper Nouns)
+Reference without articles: Prowler App, Prowler CLI, Prowler SDK, Prowler Cloud, Prowler Studio
+
+### MDX Components
 ```mdx
 import { VersionBadge } from "/snippets/version-badge.mdx"
 
-## New Feature Name
+## New Feature
 
 <VersionBadge version="4.5.0" />
-
-Description of the feature...
 ```
-
-### Warnings and Danger Calls
-```mdx
-<Warning>
-Disabling encryption may expose sensitive data to unauthorized access.
-</Warning>
-
-<Danger>
-Running this command will **permanently delete all data**.
-</Danger>
-```
-
-## Prowler Features (Proper Nouns)
-
-Reference without articles:
-- Prowler App, Prowler CLI, Prowler SDK
-- Prowler Cloud, Prowler Studio, Prowler Registry
-- Built-in Compliance Checks
-- Multi-cloud Security Scanning
-- Autonomous Cloud Security Analyst (AI)
 
 ## Documentation Structure
 
 ```
 docs/
+├── AGENTS.md              # Documentation style guide (SOURCE OF TRUTH)
 ├── getting-started/
 ├── tutorials/
 ├── providers/
 │   ├── aws/
 │   ├── azure/
-│   ├── gcp/
-│   └── ...
+│   └── gcp/
 ├── api/
 ├── sdk/
 ├── compliance/
 └── developer-guide/
 ```
 
+## Review Checklist
+
+When reviewing documentation PRs, verify against `docs/AGENTS.md`:
+- [ ] Title case capitalization on headers
+- [ ] No gendered pronouns
+- [ ] Verbal constructions (not nominal)
+- [ ] Keywords at beginning of sentences
+- [ ] Prowler features referenced as proper nouns (no articles)
+- [ ] Acronyms defined on first use
+- [ ] Version badge for new features
+- [ ] Bullet points for lists (3+ items)
+
 ## Resources
 
-- **Documentation**: See [references/](references/) for links to local developer guide
+- **Full Style Guide**: `docs/AGENTS.md`
+- **Developer Guide**: `docs/developer-guide/documentation.mdx`
