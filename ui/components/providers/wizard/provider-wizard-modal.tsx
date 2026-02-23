@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { OrgAccountSelection } from "@/components/providers/organizations/org-account-selection";
-import { OrgDiscoveryLoader } from "@/components/providers/organizations/org-discovery-loader";
 import { OrgLaunchScan } from "@/components/providers/organizations/org-launch-scan";
 import { OrgSetupForm } from "@/components/providers/organizations/org-setup-form";
 import { Button } from "@/components/shadcn/button/button";
@@ -46,13 +45,6 @@ const WIZARD_VARIANT = {
 } as const;
 
 type WizardVariant = (typeof WIZARD_VARIANT)[keyof typeof WIZARD_VARIANT];
-
-const VALIDATE_PHASE = {
-  DISCOVERY: "discovery",
-  SELECTION: "selection",
-} as const;
-
-type ValidatePhase = (typeof VALIDATE_PHASE)[keyof typeof VALIDATE_PHASE];
 
 const EMPTY_FOOTER_CONFIG: WizardFooterConfig = {
   showBack: false,
@@ -97,9 +89,6 @@ export function ProviderWizardModal({
   const [orgCurrentStep, setOrgCurrentStep] = useState<OrgWizardStep>(
     ORG_WIZARD_STEP.SETUP,
   );
-  const [validatePhase, setValidatePhase] = useState<ValidatePhase>(
-    VALIDATE_PHASE.DISCOVERY,
-  );
   const [footerConfig, setFooterConfig] =
     useState<WizardFooterConfig>(EMPTY_FOOTER_CONFIG);
   const [providerTypeHint, setProviderTypeHint] = useState<ProviderType | null>(
@@ -108,7 +97,7 @@ export function ProviderWizardModal({
   const [orgSetupPhase, setOrgSetupPhase] = useState<OrgSetupPhase>(
     ORG_SETUP_PHASE.DETAILS,
   );
-  const scrollHintRefreshToken = `${wizardVariant}-${currentStep}-${orgCurrentStep}-${orgSetupPhase}-${validatePhase}`;
+  const scrollHintRefreshToken = `${wizardVariant}-${currentStep}-${orgCurrentStep}-${orgSetupPhase}`;
   const { containerRef, showScrollHint, handleScroll } = useScrollHint({
     enabled: open,
     refreshToken: scrollHintRefreshToken,
@@ -123,11 +112,7 @@ export function ProviderWizardModal({
     mode,
     providerType,
   } = useProviderWizardStore();
-  const { connectionResults, reset: resetOrgWizard } = useOrgSetupStore();
-
-  const hasConnectionErrors = Object.values(connectionResults).some(
-    (status) => status === "error",
-  );
+  const { reset: resetOrgWizard } = useOrgSetupStore();
 
   useEffect(() => {
     if (!open) {
@@ -152,7 +137,6 @@ export function ProviderWizardModal({
       );
       setCurrentStep(PROVIDER_WIZARD_STEP.CREDENTIALS);
       setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
-      setValidatePhase(VALIDATE_PHASE.DISCOVERY);
       setFooterConfig(EMPTY_FOOTER_CONFIG);
       setProviderTypeHint(initialData.providerType);
       setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
@@ -164,7 +148,6 @@ export function ProviderWizardModal({
     setWizardVariant(WIZARD_VARIANT.PROVIDER);
     setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT);
     setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
-    setValidatePhase(VALIDATE_PHASE.DISCOVERY);
     setFooterConfig(EMPTY_FOOTER_CONFIG);
     setProviderTypeHint(null);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
@@ -185,7 +168,6 @@ export function ProviderWizardModal({
     setWizardVariant(WIZARD_VARIANT.PROVIDER);
     setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT);
     setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
-    setValidatePhase(VALIDATE_PHASE.DISCOVERY);
     setFooterConfig(EMPTY_FOOTER_CONFIG);
     setProviderTypeHint(null);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
@@ -213,7 +195,6 @@ export function ProviderWizardModal({
     resetOrgWizard();
     setWizardVariant(WIZARD_VARIANT.ORGANIZATIONS);
     setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
-    setValidatePhase(VALIDATE_PHASE.DISCOVERY);
     setFooterConfig(EMPTY_FOOTER_CONFIG);
     setProviderTypeHint(null);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
@@ -252,33 +233,6 @@ export function ProviderWizardModal({
         }
       : footerConfig;
 
-  useEffect(() => {
-    if (isProviderFlow) {
-      return;
-    }
-
-    if (
-      orgCurrentStep === ORG_WIZARD_STEP.VALIDATE &&
-      validatePhase === VALIDATE_PHASE.DISCOVERY
-    ) {
-      setFooterConfig({
-        showBack: true,
-        backLabel: "Back",
-        onBack: () => {
-          setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
-          setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
-        },
-        showSecondaryAction: false,
-        secondaryActionLabel: "",
-        secondaryActionVariant: "outline",
-        secondaryActionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
-        showAction: false,
-        actionLabel: "Next",
-        actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
-      });
-    }
-  }, [isProviderFlow, orgCurrentStep, validatePhase]);
-
   return (
     <Modal
       open={open}
@@ -313,7 +267,6 @@ export function ProviderWizardModal({
                 orgCurrentStep,
                 orgSetupPhase,
               )}
-              hasConnectionErrors={hasConnectionErrors}
             />
           )}
         </div>
@@ -362,7 +315,6 @@ export function ProviderWizardModal({
                 onBack={backToProviderFlow}
                 onNext={() => {
                   setOrgCurrentStep(ORG_WIZARD_STEP.VALIDATE);
-                  setValidatePhase(VALIDATE_PHASE.SELECTION);
                 }}
                 onFooterChange={setFooterConfig}
                 onPhaseChange={setOrgSetupPhase}
@@ -370,40 +322,27 @@ export function ProviderWizardModal({
               />
             )}
 
-            {!isProviderFlow &&
-              orgCurrentStep === ORG_WIZARD_STEP.VALIDATE &&
-              validatePhase === VALIDATE_PHASE.DISCOVERY && (
-                <OrgDiscoveryLoader
-                  onDiscoveryComplete={() => {
-                    setValidatePhase(VALIDATE_PHASE.SELECTION);
-                  }}
-                />
-              )}
-
-            {!isProviderFlow &&
-              orgCurrentStep === ORG_WIZARD_STEP.VALIDATE &&
-              validatePhase === VALIDATE_PHASE.SELECTION && (
-                <OrgAccountSelection
-                  onBack={() => {
-                    setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
-                    setOrgSetupPhase(ORG_SETUP_PHASE.ACCESS);
-                  }}
-                  onNext={() => {
-                    setOrgCurrentStep(ORG_WIZARD_STEP.LAUNCH);
-                  }}
-                  onSkip={() => {
-                    setOrgCurrentStep(ORG_WIZARD_STEP.LAUNCH);
-                  }}
-                  onFooterChange={setFooterConfig}
-                />
-              )}
+            {!isProviderFlow && orgCurrentStep === ORG_WIZARD_STEP.VALIDATE && (
+              <OrgAccountSelection
+                onBack={() => {
+                  setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
+                  setOrgSetupPhase(ORG_SETUP_PHASE.ACCESS);
+                }}
+                onNext={() => {
+                  setOrgCurrentStep(ORG_WIZARD_STEP.LAUNCH);
+                }}
+                onSkip={() => {
+                  setOrgCurrentStep(ORG_WIZARD_STEP.LAUNCH);
+                }}
+                onFooterChange={setFooterConfig}
+              />
+            )}
 
             {!isProviderFlow && orgCurrentStep === ORG_WIZARD_STEP.LAUNCH && (
               <OrgLaunchScan
                 onClose={handleClose}
                 onBack={() => {
                   setOrgCurrentStep(ORG_WIZARD_STEP.VALIDATE);
-                  setValidatePhase(VALIDATE_PHASE.SELECTION);
                 }}
                 onFooterChange={setFooterConfig}
               />

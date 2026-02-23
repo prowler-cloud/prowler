@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Copy, ExternalLink, Loader2 } from "lucide-react";
+import { Check, Copy, ExternalLink } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { FormEvent, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -610,13 +610,6 @@ export function OrgSetupForm({
               {errors.stackSetDeployed.message}
             </span>
           )}
-        </div>
-      )}
-
-      {setupPhase === ORG_SETUP_PHASE.DETAILS && isSubmitting && (
-        <div className="text-muted-foreground flex items-center justify-end gap-2 text-sm">
-          <Loader2 className="size-4 animate-spin" />
-          Setting up organization...
         </div>
       )}
     </form>

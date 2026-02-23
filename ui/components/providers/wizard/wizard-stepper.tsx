@@ -9,7 +9,6 @@ import { IconComponent, IconSvgProps } from "@/types/components";
 
 interface WizardStepperProps {
   currentStep: number;
-  hasConnectionErrors?: boolean;
   stepOffset?: number;
 }
 
@@ -46,7 +45,6 @@ const STEPS: StepConfig[] = [
 
 export function WizardStepper({
   currentStep,
-  hasConnectionErrors: _hasConnectionErrors = false,
   stepOffset = 0,
 }: WizardStepperProps) {
   const activeVisualStep = Math.max(
