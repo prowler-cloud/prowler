@@ -12,8 +12,10 @@ class OpenStackService:
         self.regional_connections = provider.regional_connections
         self.audited_regions = list(provider.regional_connections.keys())
         self.session = provider.session
-        self.region = provider.session.region_name or ", ".join(
-            provider.session.regions or []
+        self.region = (
+            provider.session.region_name
+            or ", ".join(provider.session.regions or [])
+            or "global"
         )
         self.project_id = provider.session.project_id
         self.identity = provider.identity
