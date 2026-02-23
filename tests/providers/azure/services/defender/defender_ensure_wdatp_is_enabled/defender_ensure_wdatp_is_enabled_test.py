@@ -38,6 +38,7 @@ class Test_defender_ensure_wdatp_is_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "WDATP": Setting(
                     resource_id=resource_id,
+                    resource_name="WDATP",
                     resource_type="Microsoft.Security/locations/settings",
                     kind="DataExportSettings",
                     enabled=False,
@@ -68,7 +69,7 @@ class Test_defender_ensure_wdatp_is_enabled:
                 == f"Microsoft Defender for Endpoint integration is disabled for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            # resource_name comes from the Setting object via Check_Report_Azure constructor
+            assert result[0].resource_name == "WDATP"
             assert result[0].resource_id == resource_id
 
     def test_defender_wdatp_enabled(self):
@@ -78,6 +79,7 @@ class Test_defender_ensure_wdatp_is_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "WDATP": Setting(
                     resource_id=resource_id,
+                    resource_name="WDATP",
                     resource_type="Microsoft.Security/locations/settings",
                     kind="DataExportSettings",
                     enabled=True,
@@ -108,7 +110,7 @@ class Test_defender_ensure_wdatp_is_enabled:
                 == f"Microsoft Defender for Endpoint integration is enabled for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            # resource_name comes from the Setting object via Check_Report_Azure constructor
+            assert result[0].resource_name == "WDATP"
             assert result[0].resource_id == resource_id
 
     def test_defender_wdatp_no_settings(self):

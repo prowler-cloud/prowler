@@ -38,6 +38,7 @@ class Test_defender_ensure_mcas_is_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "MCAS": Setting(
                     resource_id=resource_id,
+                    resource_name="MCAS",
                     resource_type="Microsoft.Security/locations/settings",
                     kind="DataExportSettings",
                     enabled=False,
@@ -68,7 +69,7 @@ class Test_defender_ensure_mcas_is_enabled:
                 == f"Microsoft Defender for Cloud Apps is disabled for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            # resource_name comes from the Setting object via Check_Report_Azure constructor
+            assert result[0].resource_name == "MCAS"
             assert result[0].resource_id == resource_id
 
     def test_defender_mcas_enabled(self):
@@ -78,6 +79,7 @@ class Test_defender_ensure_mcas_is_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "MCAS": Setting(
                     resource_id=resource_id,
+                    resource_name="MCAS",
                     resource_type="Microsoft.Security/locations/settings",
                     kind="DataExportSettings",
                     enabled=True,
@@ -108,7 +110,7 @@ class Test_defender_ensure_mcas_is_enabled:
                 == f"Microsoft Defender for Cloud Apps is enabled for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            # resource_name comes from the Setting object via Check_Report_Azure constructor
+            assert result[0].resource_name == "MCAS"
             assert result[0].resource_id == resource_id
 
     def test_defender_mcas_no_settings(self):
