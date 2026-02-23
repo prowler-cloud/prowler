@@ -243,6 +243,7 @@
         "entra_legacy_authentication_blocked",
         "entra_managed_device_required_for_authentication",
         "entra_seamless_sso_disabled",
+        "entra_sign_in_frequency_for_non_corporate_devices",
         "entra_users_mfa_enabled",
         "exchange_organization_modern_authentication_enabled",
         "exchange_transport_config_smtp_auth_disabled",
@@ -616,6 +617,7 @@
         "entra_users_mfa_enabled",
         "entra_managed_device_required_for_mfa_registration",
         "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_sign_in_frequency_for_non_corporate_devices",
         "entra_users_mfa_capable"
       ]
     },
@@ -687,6 +689,7 @@
         "entra_admin_users_mfa_enabled",
         "entra_managed_device_required_for_authentication",
         "entra_seamless_sso_disabled",
+        "entra_sign_in_frequency_for_non_corporate_devices",
         "entra_users_mfa_enabled",
         "entra_identity_protection_sign_in_risk_enabled"
       ]

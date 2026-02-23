@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_sign_in_frequency_for_non_corporate_devices",
+  "CheckTitle": "Conditional Access Policy enforces sign-in frequency for non-corporate devices",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
+  "Description": "At least one Conditional Access Policy targets **all users** and **all cloud apps** with **sign-in frequency** controls enabled, reducing the session lifetime on unmanaged or non-corporate devices.",
+  "Risk": "Without sign-in frequency controls, sessions on non-corporate or unmanaged devices can remain active indefinitely. Attackers who steal a session token from such a device can maintain access for an extended period, increasing the risk of **data exfiltration** and **lateral movement**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-session-lifetime"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center (https://entra.microsoft.com/).\n2. Go to **Protection** > **Conditional Access** > **Policies**.\n3. Click **New policy**.\n4. Under **Users**, select **All users**.\n5. Under **Target resources**, select **All cloud apps**.\n6. Under **Session**, enable **Sign-in frequency** and set it to a value appropriate for your organization (e.g., 1 hour for unmanaged devices).\n7. Set the policy state to **On** and click **Create**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a Conditional Access Policy that enforces a short sign-in frequency for non-corporate devices. This limits the window of exposure from stolen tokens on unmanaged endpoints and aligns with **zero trust** principles.",
+      "Url": "https://hub.prowler.com/check/entra_sign_in_frequency_for_non_corporate_devices"
+    }
+  },
+  "Categories": [
+    "e3",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
