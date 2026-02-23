@@ -10,8 +10,8 @@ from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIR
 from django_celery_beat.models import PeriodicTask
 from tasks.jobs.attack_paths import (
     attack_paths_scan,
-    db_utils as attack_paths_db_utils,
     can_provider_run_attack_paths_scan,
+    db_utils as attack_paths_db_utils,
 )
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
@@ -906,11 +906,11 @@ def jira_integration_task(
 @handle_provider_deletion
 def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: str):
     """
-    Optimized task to generate ThreatScore, ENS, and NIS2 reports with shared queries.
+    Optimized task to generate ThreatScore, ENS, NIS2, and CSA CCM reports with shared queries.
 
     This task is more efficient than running separate report tasks because it reuses database queries:
-    - Provider object fetched once (instead of three times)
-    - Requirement statistics aggregated once (instead of three times)
+    - Provider object fetched once (instead of multiple times)
+    - Requirement statistics aggregated once (instead of multiple times)
     - Can reduce database load by up to 50-70%
 
     Args:
@@ -928,6 +928,7 @@ def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: 
         generate_threatscore=True,
         generate_ens=True,
         generate_nis2=True,
+        generate_csa=True,
     )
 
 

@@ -89,7 +89,6 @@ def test_execute_attack_paths_query_serializes_graph(
         parameters=[],
     )
     parameters = {"provider_uid": "123"}
-    attack_paths_scan = SimpleNamespace(graph_database="tenant-db")
 
     node = attack_paths_graph_stub_classes.Node(
         element_id="node-1",
@@ -123,15 +122,17 @@ def test_execute_attack_paths_query_serializes_graph(
     session_ctx.__enter__.return_value = session
     session_ctx.__exit__.return_value = False
 
+    database_name = "db-tenant-test-tenant-id"
+
     with patch(
         "api.attack_paths.views_helpers.graph_database.get_session",
         return_value=session_ctx,
     ) as mock_get_session:
         result = views_helpers.execute_attack_paths_query(
-            attack_paths_scan, definition, parameters
+            database_name, definition, parameters
         )
 
-    mock_get_session.assert_called_once_with("tenant-db")
+    mock_get_session.assert_called_once_with(database_name)
     session.run.assert_called_once_with(definition.cypher, parameters)
     assert result["nodes"][0]["id"] == "node-1"
     assert result["nodes"][0]["properties"]["complex"]["items"][0] == "value"
@@ -149,7 +150,7 @@ def test_execute_attack_paths_query_wraps_graph_errors(
         cypher="MATCH (n) RETURN n",
         parameters=[],
     )
-    attack_paths_scan = SimpleNamespace(graph_database="tenant-db")
+    database_name = "db-tenant-test-tenant-id"
     parameters = {"provider_uid": "123"}
 
     class ExplodingContext:
@@ -168,7 +169,7 @@ def test_execute_attack_paths_query_wraps_graph_errors(
     ):
         with pytest.raises(APIException):
             views_helpers.execute_attack_paths_query(
-                attack_paths_scan, definition, parameters
+                database_name, definition, parameters
             )
 
     mock_logger.error.assert_called_once()

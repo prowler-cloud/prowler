@@ -1145,6 +1145,7 @@ class AttackPathsScanSerializer(RLSSerializer):
             "id",
             "state",
             "progress",
+            "graph_data_ready",
             "provider",
             "provider_alias",
             "provider_type",

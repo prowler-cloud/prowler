@@ -1080,6 +1080,11 @@ class TestProviderViewSet:
                 {"provider": "aws", "uid": "111111111111", "alias": "test"},
                 {"provider": "gcp", "uid": "a12322-test54321", "alias": "test"},
                 {
+                    "provider": "gcp",
+                    "uid": "example.com:my-project-123456",
+                    "alias": "legacy-gcp",
+                },
+                {
                     "provider": "kubernetes",
                     "uid": "kubernetes-test-123456789",
                     "alias": "test",
@@ -1203,6 +1208,11 @@ class TestProviderViewSet:
             [
                 {"provider": "aws", "uid": "111111111111", "alias": "test"},
                 {"provider": "gcp", "uid": "a12322-test54321", "alias": "test"},
+                {
+                    "provider": "gcp",
+                    "uid": "example.com:my-project-123456",
+                    "alias": "legacy-gcp",
+                },
                 {
                     "provider": "kubernetes",
                     "uid": "kubernetes-test-123456789",
@@ -3922,7 +3932,7 @@ class TestAttackPathsScanViewSet:
         attack_paths_scan = create_attack_paths_scan(
             provider,
             scan=scans_fixture[0],
-            graph_database="tenant-db",
+            graph_data_ready=True,
         )
         query_definition = AttackPathsQueryDefinition(
             id="aws-rds",
@@ -3953,10 +3963,16 @@ class TestAttackPathsScanViewSet:
             ],
         }
 
+        expected_db_name = f"db-tenant-{attack_paths_scan.provider.tenant_id}"
+
         with (
             patch(
                 "api.v1.views.get_query_by_id", return_value=query_definition
             ) as mock_get_query,
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value=expected_db_name,
+            ) as mock_get_db_name,
             patch(
                 "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
                 return_value=prepared_parameters,
@@ -3978,23 +3994,24 @@ class TestAttackPathsScanViewSet:
 
         assert response.status_code == status.HTTP_200_OK
         mock_get_query.assert_called_once_with("aws-rds")
+        mock_get_db_name.assert_called_once_with(attack_paths_scan.provider.tenant_id)
         mock_prepare.assert_called_once_with(
             query_definition,
             {},
             attack_paths_scan.provider.uid,
         )
         mock_execute.assert_called_once_with(
-            attack_paths_scan,
+            expected_db_name,
             query_definition,
             prepared_parameters,
         )
-        mock_clear_cache.assert_called_once_with(attack_paths_scan.graph_database)
+        mock_clear_cache.assert_called_once_with(expected_db_name)
         result = response.json()["data"]
         attributes = result["attributes"]
         assert attributes["nodes"] == graph_payload["nodes"]
         assert attributes["relationships"] == graph_payload["relationships"]
 
-    def test_run_attack_paths_query_requires_completed_scan(
+    def test_run_attack_paths_query_blocks_when_graph_data_not_ready(
         self,
         authenticated_client,
         providers_fixture,
@@ -4006,6 +4023,7 @@ class TestAttackPathsScanViewSet:
             provider,
             scan=scans_fixture[0],
             state=StateChoices.EXECUTING,
+            graph_data_ready=False,
         )
 
         response = authenticated_client.post(
@@ -4017,9 +4035,9 @@ class TestAttackPathsScanViewSet:
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "must be completed" in response.json()["errors"][0]["detail"]
+        assert "not available" in response.json()["errors"][0]["detail"]
 
-    def test_run_attack_paths_query_requires_graph_database(
+    def test_run_attack_paths_query_allows_executing_scan_when_graph_data_ready(
         self,
         authenticated_client,
         providers_fixture,
@@ -4030,19 +4048,100 @@ class TestAttackPathsScanViewSet:
         attack_paths_scan = create_attack_paths_scan(
             provider,
             scan=scans_fixture[0],
-            graph_database=None,
+            state=StateChoices.EXECUTING,
+            graph_data_ready=True,
+        )
+        query_definition = AttackPathsQueryDefinition(
+            id="aws-test",
+            name="Test",
+            short_description="Test query.",
+            description="Test query",
+            provider=provider.provider,
+            cypher="MATCH (n) RETURN n",
+            parameters=[],
         )
 
-        response = authenticated_client.post(
-            reverse(
-                "attack-paths-scans-queries-run", kwargs={"pk": attack_paths_scan.id}
+        with (
+            patch("api.v1.views.get_query_by_id", return_value=query_definition),
+            patch(
+                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                return_value={"provider_uid": provider.uid},
             ),
-            data=self._run_payload(),
-            content_type=API_JSON_CONTENT_TYPE,
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
+                return_value={
+                    "nodes": [{"id": "n1", "labels": ["AWSAccount"], "properties": {}}],
+                    "relationships": [],
+                },
+            ),
+            patch("api.v1.views.graph_database.clear_cache"),
+            patch(
+                "api.v1.views.graph_database.get_database_name", return_value="db-test"
+            ),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-run",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._run_payload("aws-test"),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_run_attack_paths_query_allows_failed_scan_when_graph_data_ready(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            state=StateChoices.FAILED,
+            graph_data_ready=True,
+        )
+        query_definition = AttackPathsQueryDefinition(
+            id="aws-test",
+            name="Test",
+            short_description="Test query.",
+            description="Test query",
+            provider=provider.provider,
+            cypher="MATCH (n) RETURN n",
+            parameters=[],
         )
 
-        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert "does not reference a graph database" in str(response.json())
+        with (
+            patch("api.v1.views.get_query_by_id", return_value=query_definition),
+            patch(
+                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                return_value={"provider_uid": provider.uid},
+            ),
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
+                return_value={
+                    "nodes": [{"id": "n1", "labels": ["AWSAccount"], "properties": {}}],
+                    "relationships": [],
+                },
+            ),
+            patch("api.v1.views.graph_database.clear_cache"),
+            patch(
+                "api.v1.views.graph_database.get_database_name", return_value="db-test"
+            ),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-run",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._run_payload("aws-test"),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_200_OK
 
     def test_run_attack_paths_query_unknown_query(
         self,
@@ -4055,6 +4154,7 @@ class TestAttackPathsScanViewSet:
         attack_paths_scan = create_attack_paths_scan(
             provider,
             scan=scans_fixture[0],
+            graph_data_ready=True,
         )
 
         with patch("api.v1.views.get_query_by_id", return_value=None):
@@ -4081,6 +4181,7 @@ class TestAttackPathsScanViewSet:
         attack_paths_scan = create_attack_paths_scan(
             provider,
             scan=scans_fixture[0],
+            graph_data_ready=True,
         )
         query_definition = AttackPathsQueryDefinition(
             id="aws-empty",

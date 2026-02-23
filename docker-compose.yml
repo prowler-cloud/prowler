@@ -117,6 +117,10 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     entrypoint:
       - "/home/prowler/docker-entrypoint.sh"
       - "worker"
@@ -131,6 +135,10 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     entrypoint:
       - "../docker-entrypoint.sh"
       - "beat"

@@ -327,10 +327,13 @@ class Provider(RowLevelSecurityProtectedModel):
 
     @staticmethod
     def validate_gcp_uid(value):
-        if not re.match(r"^[a-z][a-z0-9-]{5,29}$", value):
+        # Standard format: 6-30 chars, starts with letter, lowercase + digits + hyphens
+        # Legacy App Engine format: domain.com:project-id
+        if not re.match(r"^([a-z][a-z0-9.-]*:)?[a-z][a-z0-9-]{5,29}$", value):
             raise ModelValidationError(
-                detail="GCP provider ID must be 6 to 30 characters, start with a letter, and contain only lowercase "
-                "letters, numbers, and hyphens.",
+                detail="GCP provider ID must be a valid project ID: 6 to 30 characters, start with a letter, "
+                "and contain only lowercase letters, numbers, and hyphens. "
+                "Legacy App Engine project IDs with a domain prefix (e.g., example.com:my-project) are also accepted.",
                 code="gcp-uid",
                 pointer="/data/attributes/uid",
             )
@@ -655,6 +658,7 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
 
     state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
     progress = models.IntegerField(default=0)
+    graph_data_ready = models.BooleanField(default=False)
 
     # Timing
     started_at = models.DateTimeField(null=True, blank=True)
@@ -691,8 +695,6 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
     update_tag = models.BigIntegerField(
         null=True, blank=True, help_text="Cartography update tag (epoch)"
     )
-    graph_database = models.CharField(max_length=63, null=True, blank=True)
-    is_graph_database_deleted = models.BooleanField(default=False)
     ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
@@ -718,21 +720,6 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "scan_id"],
                 name="aps_scan_lookup_idx",
-            ),
-            models.Index(
-                fields=["tenant_id", "provider_id"],
-                name="aps_active_graph_idx",
-                include=["graph_database", "id"],
-                condition=Q(is_graph_database_deleted=False),
-            ),
-            models.Index(
-                fields=["tenant_id", "provider_id", "-completed_at"],
-                name="aps_completed_graph_idx",
-                include=["graph_database", "id"],
-                condition=Q(
-                    state=StateChoices.COMPLETED,
-                    is_graph_database_deleted=False,
-                ),
             ),
         ]
 

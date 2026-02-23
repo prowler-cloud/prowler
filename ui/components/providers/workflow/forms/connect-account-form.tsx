@@ -49,8 +49,8 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
       };
     case "github":
       return {
-        label: "Username",
-        placeholder: "e.g. your-github-username",
+        label: "Username/Organization",
+        placeholder: "e.g. username or organization-name",
       };
     case "iac":
       return {
@@ -71,6 +71,16 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
       return {
         label: "Account ID",
         placeholder: "e.g. 1234567890123456",
+      };
+    case "cloudflare":
+      return {
+        label: "Account ID",
+        placeholder: "e.g. a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+      };
+    case "openstack":
+      return {
+        label: "Project ID",
+        placeholder: "e.g. a1b2c3d4-e5f6-7890-abcd-ef1234567890",
       };
     default:
       return {
