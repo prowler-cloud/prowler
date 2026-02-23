@@ -249,8 +249,10 @@ class TestExecuteReadQuery:
         import api.attack_paths.database as db_module
 
         tx = MagicMock()
-        expected_result = MagicMock()
-        tx.run.return_value = expected_result
+        expected_graph = MagicMock()
+        run_result = MagicMock()
+        run_result.graph.return_value = expected_graph
+        tx.run.return_value = run_result
 
         session = MagicMock()
 
@@ -283,13 +285,16 @@ class TestExecuteReadQuery:
             {"provider_uid": "123"},
             timeout=db_module.READ_QUERY_TIMEOUT_SECONDS,
         )
-        assert result is expected_result
+        run_result.graph.assert_called_once_with()
+        assert result is expected_graph
 
     def test_execute_read_query_defaults_parameters_to_empty_dict(self):
         import api.attack_paths.database as db_module
 
         tx = MagicMock()
-        tx.run.return_value = MagicMock()
+        run_result = MagicMock()
+        run_result.graph.return_value = MagicMock()
+        tx.run.return_value = run_result
 
         session = MagicMock()
         session.execute_read.side_effect = lambda fn: fn(tx)
@@ -312,6 +317,7 @@ class TestExecuteReadQuery:
             {},
             timeout=db_module.READ_QUERY_TIMEOUT_SECONDS,
         )
+        run_result.graph.assert_called_once_with()
 
 
 class TestThreadSafety:

@@ -121,14 +121,15 @@ def test_execute_attack_paths_query_serializes_graph(
     )
     graph = SimpleNamespace(nodes=[node, node_2], relationships=[relationship])
 
-    run_result = MagicMock()
-    run_result.graph.return_value = graph
+    graph_result = MagicMock()
+    graph_result.nodes = graph.nodes
+    graph_result.relationships = graph.relationships
 
     database_name = "db-tenant-test-tenant-id"
 
     with patch(
         "api.attack_paths.views_helpers.graph_database.execute_read_query",
-        return_value=run_result,
+        return_value=graph_result,
     ) as mock_execute_read_query:
         result = views_helpers.execute_attack_paths_query(
             database_name, definition, parameters, provider_id=provider_id

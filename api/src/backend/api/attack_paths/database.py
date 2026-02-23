@@ -117,7 +117,10 @@ def execute_read_query(
     with get_session(database, default_access_mode=neo4j.READ_ACCESS) as session:
 
         def _run(tx: neo4j.ManagedTransaction) -> neo4j.graph.Graph:
-            return tx.run(cypher, parameters or {}, timeout=READ_QUERY_TIMEOUT_SECONDS)
+            result = tx.run(
+                cypher, parameters or {}, timeout=READ_QUERY_TIMEOUT_SECONDS
+            )
+            return result.graph()
 
         return session.execute_read(_run)
 

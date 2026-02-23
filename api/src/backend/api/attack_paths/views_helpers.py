@@ -87,12 +87,12 @@ def execute_attack_paths_query(
     provider_id: str,
 ) -> dict[str, Any]:
     try:
-        result = graph_database.execute_read_query(
+        graph = graph_database.execute_read_query(
             database=database_name,
             cypher=definition.cypher,
             parameters=parameters,
         )
-        return _serialize_graph(result.graph(), provider_id)
+        return _serialize_graph(graph, provider_id)
 
     except graph_database.GraphDatabaseQueryException as exc:
         logger.error(f"Query failed for Attack Paths query `{definition.id}`: {exc}")
