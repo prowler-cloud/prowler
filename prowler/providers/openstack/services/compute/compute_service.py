@@ -118,16 +118,12 @@ class Compute(OpenStackService):
                             private_v6=private_v6,
                             networks=networks_dict,
                             # Configuration Security
-                            has_config_drive=getattr(
-                                server, "has_config_drive", False
-                            ),
+                            has_config_drive=getattr(server, "has_config_drive", False),
                             metadata=getattr(server, "metadata", {}),
                             user_data=getattr(server, "user_data", ""),
                             # Image Trust
                             trusted_image_certificates=(
-                                trusted_certs
-                                if isinstance(trusted_certs, list)
-                                else []
+                                trusted_certs if isinstance(trusted_certs, list) else []
                             ),
                         )
                     )

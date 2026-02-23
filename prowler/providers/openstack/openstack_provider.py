@@ -92,17 +92,13 @@ class OpenstackProvider(Provider):
             self._regional_connections: dict[str, OpenStackConnection] = {}
             for region in self._session.regions:
                 self._regional_connections[region] = (
-                    OpenstackProvider._create_connection(
-                        self._session, region=region
-                    )
+                    OpenstackProvider._create_connection(self._session, region=region)
                 )
             # Default connection = first region (used for identity setup, etc.)
             self._connection = next(iter(self._regional_connections.values()))
         else:
             self._connection = OpenstackProvider._create_connection(self._session)
-            self._regional_connections = {
-                self._session.region_name: self._connection
-            }
+            self._regional_connections = {self._session.region_name: self._connection}
 
         self._identity = OpenstackProvider.setup_identity(
             self._connection, self._session
@@ -547,8 +543,7 @@ class OpenstackProvider(Provider):
             username=user_name,
             project_id=project_id,
             project_name=project_name,
-            region_name=session.region_name
-            or ", ".join(session.regions or []),
+            region_name=session.region_name or ", ".join(session.regions or []),
             user_domain_name=session.user_domain_name,
             project_domain_name=session.project_domain_name,
         )

@@ -446,8 +446,8 @@ class TestComputeService:
         mock_server.trusted_image_certificates = []
 
         mock_conn_ok.compute.servers.return_value = [mock_server]
-        mock_conn_fail.compute.servers.side_effect = (
-            openstack_exceptions.SDKException("API error in DE1")
+        mock_conn_fail.compute.servers.side_effect = openstack_exceptions.SDKException(
+            "API error in DE1"
         )
 
         compute = Compute(provider)
