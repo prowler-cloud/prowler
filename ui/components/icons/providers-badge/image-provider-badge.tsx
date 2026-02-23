@@ -19,7 +19,7 @@ export const ImageProviderBadge: FC<IconSvgProps> = ({
     width={size || width}
     {...props}
   >
-    <rect width="256" height="256" fill="#ea580c" rx="60" />
+    <rect width="256" height="256" fill="#1c1917" rx="60" />
     <g
       transform="translate(20, 20) scale(9)"
       fill="none"
