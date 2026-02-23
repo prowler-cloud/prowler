@@ -697,6 +697,35 @@ class TestExtractRegistry:
         assert ImageProvider._extract_registry("nginx") is None
 
 
+class TestIsRegistryUrl:
+    def test_registry_url_with_namespace(self):
+        assert ImageProvider._is_registry_url("docker.io/andoniaf") is True
+
+    def test_registry_url_ghcr(self):
+        assert ImageProvider._is_registry_url("ghcr.io/org") is True
+
+    def test_image_ref_with_tag(self):
+        assert ImageProvider._is_registry_url("ghcr.io/user/image:tag") is False
+
+    def test_image_ref_with_repo(self):
+        assert ImageProvider._is_registry_url("ghcr.io/user/image") is False
+
+    def test_dockerhub_short_image(self):
+        assert ImageProvider._is_registry_url("alpine:3.18") is False
+
+    def test_dockerhub_with_namespace(self):
+        assert ImageProvider._is_registry_url("andoniaf/test:tag") is False
+
+    def test_bare_image_name(self):
+        assert ImageProvider._is_registry_url("nginx") is False
+
+    def test_localhost_namespace(self):
+        assert ImageProvider._is_registry_url("localhost:5000/myns") is True
+
+    def test_localhost_image_with_tag(self):
+        assert ImageProvider._is_registry_url("localhost:5000/myns/image:v1") is False
+
+
 class TestCleanup:
     def test_cleanup_idempotent(self):
         """Test cleanup is safe to call multiple times."""

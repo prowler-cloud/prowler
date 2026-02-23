@@ -230,28 +230,16 @@ def get_prowler_provider_kwargs(
     elif provider.provider == Provider.ProviderChoices.IMAGE.value:
         # Detect whether uid is a registry URL (e.g. "docker.io/andoniaf") or
         # a concrete image reference (e.g. "docker.io/andoniaf/myimage:latest").
-        # Uses the same heuristic as ImageProvider.test_connection.
         from prowler.providers.image.image_provider import ImageProvider
 
-        image_uid = provider.uid
-        registry_host = ImageProvider._extract_registry(image_uid)
-        if registry_host:
-            repo_and_tag = image_uid[len(registry_host) + 1 :]
-        else:
-            repo_and_tag = image_uid
-
-        is_registry_url = (
-            registry_host and "/" not in repo_and_tag and ":" not in repo_and_tag
-        )
-
-        if is_registry_url:
+        if ImageProvider._is_registry_url(provider.uid):
             prowler_provider_kwargs = {
-                "registry": image_uid,
+                "registry": provider.uid,
                 **{k: v for k, v in prowler_provider_kwargs.items() if v},
             }
         else:
             prowler_provider_kwargs = {
-                "images": [image_uid],
+                "images": [provider.uid],
                 **{k: v for k, v in prowler_provider_kwargs.items() if v},
             }
 

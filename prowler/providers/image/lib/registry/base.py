@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import time
 from abc import ABC, abstractmethod
+from urllib.parse import urlparse
 
 import requests
 
@@ -137,5 +138,9 @@ class RegistryAdapter(ABC):
             return None
         match = re.search(r'<([^>]+)>;\s*rel="next"', link_header)
         if match:
-            return match.group(1)
+            url = match.group(1)
+            if url.startswith("/"):
+                parsed = urlparse(resp.url)
+                return f"{parsed.scheme}://{parsed.netloc}{url}"
+            return url
         return None

@@ -325,6 +325,19 @@ class ImageProvider(Provider):
             return parts[0]
         return None
 
+    @staticmethod
+    def _is_registry_url(image_uid: str) -> bool:
+        """Determine whether an image UID is a registry URL (namespace only).
+
+        A registry URL like ``docker.io/andoniaf`` has a registry host but
+        the remaining part contains no ``/`` (no repo) and no ``:`` (no tag).
+        """
+        registry_host = ImageProvider._extract_registry(image_uid)
+        if not registry_host:
+            return False
+        repo_and_tag = image_uid[len(registry_host) + 1 :]
+        return "/" not in repo_and_tag and ":" not in repo_and_tag
+
     def cleanup(self) -> None:
         """Clean up any resources after scanning."""
 
@@ -488,7 +501,7 @@ class ImageProvider(Provider):
                     raise
                 except Exception as error:
                     logger.error(f"Error scanning image {image}: {error}")
-                    continue
+                    yield (image, [])
         finally:
             self.cleanup()
 
@@ -933,23 +946,7 @@ class ImageProvider(Provider):
             if not image:
                 return Connection(is_connected=False, error="Image name is required")
 
-            # Parse registry, repository, and tag from image reference
-            registry_host = ImageProvider._extract_registry(image)
-
-            if registry_host:
-                repo_and_tag = image[len(registry_host) + 1 :]
-            else:
-                repo_and_tag = image
-
-            # Determine if this is a registry URL (namespace only) or a full
-            # image reference.  A registry URL like ``docker.io/andoniaf`` has
-            # a registry host but the remaining part contains no ``/`` (no
-            # repo) and no ``:`` (no tag).
-            is_registry_url = (
-                registry_host and "/" not in repo_and_tag and ":" not in repo_and_tag
-            )
-
-            if is_registry_url:
+            if ImageProvider._is_registry_url(image):
                 # Registry enumeration mode — test by listing repositories
                 adapter = create_registry_adapter(
                     registry_url=image,
@@ -961,6 +958,8 @@ class ImageProvider(Provider):
                 return Connection(is_connected=True)
 
             # Image reference mode — verify the specific tag exists
+            registry_host = ImageProvider._extract_registry(image)
+            repo_and_tag = image[len(registry_host) + 1 :] if registry_host else image
             if ":" in repo_and_tag:
                 repository, tag = repo_and_tag.rsplit(":", 1)
             else:

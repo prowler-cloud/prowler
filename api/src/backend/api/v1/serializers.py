@@ -1712,6 +1712,21 @@ class ImageProviderSecret(serializers.Serializer):
     class Meta:
         resource_name = "provider-secrets"
 
+    def validate(self, attrs):
+        token = attrs.get("registry_token")
+        username = attrs.get("registry_username")
+        password = attrs.get("registry_password")
+        if not token:
+            if username and not password:
+                raise serializers.ValidationError(
+                    "registry_password is required when registry_username is provided."
+                )
+            if password and not username:
+                raise serializers.ValidationError(
+                    "registry_username is required when registry_password is provided."
+                )
+        return attrs
+
 
 class AlibabaCloudProviderSecret(serializers.Serializer):
     access_key_id = serializers.CharField()

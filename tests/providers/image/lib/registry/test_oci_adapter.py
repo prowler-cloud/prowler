@@ -300,6 +300,16 @@ class TestOciAdapterNextPageUrl:
             == "https://reg.io/v2/_catalog?n=200&last=b"
         )
 
+    def test_link_header_relative_url(self):
+        resp = MagicMock(
+            headers={"Link": '</v2/_catalog?n=200&last=b>; rel="next"'},
+            url="https://reg.io/v2/_catalog?n=200",
+        )
+        assert (
+            OciRegistryAdapter._next_page_url(resp)
+            == "https://reg.io/v2/_catalog?n=200&last=b"
+        )
+
     def test_link_header_no_next(self):
         resp = MagicMock(
             headers={"Link": '<https://reg.io/v2/_catalog?n=200>; rel="prev"'}
