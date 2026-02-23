@@ -217,9 +217,7 @@ def get_prowler_provider_kwargs(
         }
     elif provider.provider == Provider.ProviderChoices.OPENSTACK.value:
         # No extra kwargs needed: clouds_yaml_content and clouds_yaml_cloud from the
-        # secret are sufficient. Validating project_id (provider.uid) against the
-        # clouds.yaml is not feasible because not all auth methods include it and the
-        # Keystone API is unavailable on public clouds.
+        # secret are sufficient. Provider ID validation is handled in test_connection().
         pass
 
     if mutelist_processor:
@@ -294,6 +292,7 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         openstack_kwargs = {
             "clouds_yaml_content": prowler_provider_kwargs["clouds_yaml_content"],
             "clouds_yaml_cloud": prowler_provider_kwargs["clouds_yaml_cloud"],
+            "provider_id": provider.uid,
             "raise_on_exception": False,
         }
         return prowler_provider.test_connection(**openstack_kwargs)
