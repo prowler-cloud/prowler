@@ -86,13 +86,13 @@ export function OrgLaunchScan({
       onBack,
       showAction: true,
       actionLabel: "Launch scan",
-      actionDisabled: isLaunching,
+      actionDisabled: isLaunching || createdProviderIds.length === 0,
       actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
       onAction: () => {
         launchActionRef.current();
       },
     });
-  }, [isLaunching, onBack, onFooterChange]);
+  }, [createdProviderIds.length, isLaunching, onBack, onFooterChange]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-8">
@@ -132,6 +132,13 @@ export function OrgLaunchScan({
           <p className="text-text-neutral-secondary text-sm">
             Your accounts are connected to Prowler and ready to Scan!
           </p>
+
+          {createdProviderIds.length === 0 && (
+            <p className="text-text-error-primary text-sm">
+              No successfully connected accounts are available to launch scans.
+              Go back and retry connection tests.
+            </p>
+          )}
 
           <div className="flex flex-col gap-4">
             <p className="text-text-neutral-secondary text-sm">

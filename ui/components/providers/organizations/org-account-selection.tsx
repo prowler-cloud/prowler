@@ -10,8 +10,10 @@ import {
   getOuIdsForSelectedAccounts,
   getSelectableAccountIds,
 } from "@/actions/organizations/organizations.adapter";
-import { checkConnectionProvider } from "@/actions/providers/providers";
-import { getTask } from "@/actions/task/tasks";
+import {
+  checkConnectionProvider,
+  getProvider,
+} from "@/actions/providers/providers";
 import { AWSProviderBadge } from "@/components/icons/providers-badge";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
@@ -19,7 +21,6 @@ import {
 } from "@/components/providers/wizard/steps/footer-controls";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { TreeView } from "@/components/shadcn/tree-view";
-import { checkTaskStatus } from "@/lib";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import {
   CONNECTION_TEST_STATUS,
@@ -28,6 +29,13 @@ import {
 } from "@/types/organizations";
 import { TREE_ITEM_STATUS, TreeDataItem } from "@/types/tree";
 
+import {
+  buildAccountToProviderMap,
+  canAdvanceToLaunchStep,
+  getLaunchableProviderIds,
+  pollConnectionTask,
+  runWithConcurrencyLimit,
+} from "./org-account-selection.utils";
 import { OrgAccountTreeItem, TREE_ITEM_MODE } from "./org-account-tree-item";
 
 interface OrgAccountSelectionProps {
@@ -233,6 +241,14 @@ export function OrgAccountSelection({
   const hasConnectionErrors = Object.values(connectionResults).some(
     (status) => status === CONNECTION_TEST_STATUS.ERROR,
   );
+  const launchableProviderIds = getLaunchableProviderIds(
+    createdProviderIds,
+    connectionResults,
+  );
+  const canAdvanceToLaunch = canAdvanceToLaunchStep(
+    createdProviderIds,
+    connectionResults,
+  );
   const showHeaderHelperText = !isTestingView || isApplying || isTesting;
   const treeDataWithConnectionState = isTestingView
     ? buildTreeWithConnectionState(
@@ -270,7 +286,7 @@ export function OrgAccountSelection({
       setConnectionError(id, null);
     }
 
-    const testPromises = providerIds.map(async (providerId) => {
+    await runWithConcurrencyLimit(providerIds, 5, async (providerId) => {
       try {
         const formData = new FormData();
         formData.set("providerId", providerId);
@@ -292,39 +308,18 @@ export function OrgAccountSelection({
           return;
         }
 
-        const taskResult = await checkTaskStatus(taskId);
-        if (!taskResult.completed) {
-          setConnectionResult(providerId, CONNECTION_TEST_STATUS.ERROR);
-          setConnectionError(
-            providerId,
-            taskResult.error || "Connection test task failed.",
-          );
-          return;
-        }
-
-        const task = await getTask(taskId);
-        if (task?.error) {
-          setConnectionResult(providerId, CONNECTION_TEST_STATUS.ERROR);
-          setConnectionError(providerId, task.error);
-          return;
-        }
-
-        const resultPayload = task?.data?.attributes?.result as
-          | { connected?: boolean; error?: string }
-          | undefined;
-        const isConnected = resultPayload?.connected ?? taskResult.completed;
-
+        const taskResult = await pollConnectionTask(taskId);
         setConnectionResult(
           providerId,
-          isConnected
+          taskResult.success
             ? CONNECTION_TEST_STATUS.SUCCESS
             : CONNECTION_TEST_STATUS.ERROR,
         );
         setConnectionError(
           providerId,
-          isConnected
+          taskResult.success
             ? null
-            : resultPayload?.error || "Connection failed for this account.",
+            : taskResult.error || "Connection failed for this account.",
         );
       } catch {
         setConnectionResult(providerId, CONNECTION_TEST_STATUS.ERROR);
@@ -335,7 +330,6 @@ export function OrgAccountSelection({
       }
     });
 
-    await Promise.allSettled(testPromises);
     setIsTesting(false);
 
     const latestResults = useOrgSetupStore.getState().connectionResults;
@@ -376,8 +370,8 @@ export function OrgAccountSelection({
       organizationalUnits,
     );
 
-    if (result?.error) {
-      setApplyError(result.error);
+    if (result?.error || result?.errors?.length) {
+      setApplyError(extractErrorMessage(result, "Failed to apply discovery."));
       setIsApplying(false);
       hasAppliedRef.current = false;
       return;
@@ -389,12 +383,23 @@ export function OrgAccountSelection({
       ) ?? [];
 
     setCreatedProviderIds(providerIds);
+    const mapping = await buildAccountToProviderMap({
+      selectedAccountIds: sanitizedSelectedAccountIds,
+      providerIds,
+      applyResult: result,
+      resolveProviderUidById: async (providerId) => {
+        const providerFormData = new FormData();
+        providerFormData.set("id", providerId);
+        const providerResponse = await getProvider(providerFormData);
 
-    const mapping = new Map<string, string>();
-    sanitizedSelectedAccountIds.forEach((accountId, index) => {
-      if (providerIds[index]) {
-        mapping.set(accountId, providerIds[index]);
-      }
+        if (providerResponse?.error || providerResponse?.errors?.length) {
+          return null;
+        }
+
+        return typeof providerResponse?.data?.attributes?.uid === "string"
+          ? providerResponse.data.attributes.uid
+          : null;
+      },
     });
     setAccountToProviderMap(mapping);
     setIsApplying(false);
@@ -456,10 +461,13 @@ export function OrgAccountSelection({
       onBack: () => setIsTestingView(false),
       showSecondaryAction: true,
       secondaryActionLabel: "Skip Connection Validation",
-      secondaryActionDisabled: false,
+      secondaryActionDisabled: isApplying || isTesting || !canAdvanceToLaunch,
       secondaryActionVariant: "link",
       secondaryActionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
-      onSecondaryAction: onSkip,
+      onSecondaryAction: () => {
+        setCreatedProviderIds(launchableProviderIds);
+        onSkip();
+      },
       showAction: isApplying || isTesting || canRetry,
       actionLabel: "Test Connections",
       actionDisabled: isApplying || isTesting || !canRetry,
@@ -477,11 +485,14 @@ export function OrgAccountSelection({
     isApplying,
     isTesting,
     isTestingView,
+    launchableProviderIds,
     onBack,
     onFooterChange,
     onSkip,
     selectedCount,
+    canAdvanceToLaunch,
     setConnectionError,
+    setCreatedProviderIds,
   ]);
 
   const handleTreeSelectionChange = (ids: string[]) => {
@@ -538,8 +549,9 @@ export function OrgAccountSelection({
         <Alert variant="error">
           <AlertTriangle />
           <AlertDescription className="text-text-error-primary">
-            There was a problem connecting to some accounts. Hover each account
-            to check the error.
+            {canAdvanceToLaunch
+              ? "There was a problem connecting to some accounts. Hover each account to check the error."
+              : "No accounts connected successfully. Fix the connection errors and retry before launching scans."}
           </AlertDescription>
         </Alert>
       )}
