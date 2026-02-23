@@ -1,8 +1,8 @@
-import * as React from "react";
+import { FC } from "react";
 
 import { IconSvgProps } from "@/types";
 
-export const ImageProviderBadge: React.FC<IconSvgProps> = ({
+export const ImageProviderBadge: FC<IconSvgProps> = ({
   size,
   width,
   height,
