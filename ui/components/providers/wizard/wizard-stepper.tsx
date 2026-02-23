@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  AlertCircle,
   CircleCheckBig,
   FolderGit2,
   KeyRound,
@@ -52,7 +51,7 @@ const STEPS: StepConfig[] = [
 
 export function WizardStepper({
   currentStep,
-  hasConnectionErrors = false,
+  hasConnectionErrors: _hasConnectionErrors = false,
   stepOffset = 0,
 }: WizardStepperProps) {
   const activeVisualStep = Math.max(
@@ -66,17 +65,11 @@ export function WizardStepper({
         const isComplete = index < activeVisualStep;
         const isActive = index === activeVisualStep;
         const isInactive = index > activeVisualStep;
-        const isErrorStep = index === 2 && hasConnectionErrors && isActive;
 
         return (
           <div key={step.label} className="flex items-start gap-3">
             <div className="flex flex-col items-center">
-              <StepCircle
-                isComplete={isComplete}
-                isActive={isActive}
-                isError={isErrorStep}
-                icon={step.icon}
-              />
+              <StepCircle isComplete={isComplete} isActive={isActive} icon={step.icon} />
               {index < STEPS.length - 1 && (
                 <StepConnector isComplete={isComplete} />
               )}
@@ -89,7 +82,6 @@ export function WizardStepper({
                   isActive && "text-[#f4f4f5]",
                   isComplete && "text-[#f4f4f5]",
                   isInactive && "text-[#f4f4f5]/60",
-                  isErrorStep && "text-destructive",
                 )}
               >
                 {step.label}
@@ -108,24 +100,14 @@ export function WizardStepper({
 interface StepCircleProps {
   isComplete: boolean;
   isActive: boolean;
-  isError: boolean;
   icon: IconComponent;
 }
 
 function StepCircle({
   isComplete,
   isActive,
-  isError,
   icon: Icon,
 }: StepCircleProps) {
-  if (isError) {
-    return (
-      <div className="border-destructive flex size-[44px] shrink-0 items-center justify-center rounded-full border bg-[#121110]">
-        <AlertCircle className="text-destructive size-6" />
-      </div>
-    );
-  }
-
   if (isComplete) {
     return (
       <div className="bg-button-primary-press flex size-[44px] shrink-0 items-center justify-center rounded-full">

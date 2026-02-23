@@ -22,6 +22,7 @@ interface OrgSetupState {
 
   // Connection test results
   connectionResults: Record<string, ConnectionTestStatus>;
+  connectionErrors: Record<string, string>;
 
   // Actions
   setOrganization: (id: string, name: string, externalId: string) => void;
@@ -29,6 +30,8 @@ interface OrgSetupState {
   setSelectedAccountIds: (ids: string[]) => void;
   setAccountAlias: (accountId: string, alias: string) => void;
   setCreatedProviderIds: (ids: string[]) => void;
+  clearValidationState: () => void;
+  setConnectionError: (providerId: string, error: string | null) => void;
   setConnectionResult: (
     providerId: string,
     status: ConnectionTestStatus,
@@ -46,6 +49,7 @@ const initialState = {
   accountAliases: {},
   createdProviderIds: [],
   connectionResults: {},
+  connectionErrors: {},
 };
 
 export const useOrgSetupStore = create<OrgSetupState>()(
@@ -71,6 +75,28 @@ export const useOrgSetupStore = create<OrgSetupState>()(
         })),
 
       setCreatedProviderIds: (ids) => set({ createdProviderIds: ids }),
+
+      clearValidationState: () =>
+        set({
+          createdProviderIds: [],
+          connectionResults: {},
+          connectionErrors: {},
+        }),
+
+      setConnectionError: (providerId, error) =>
+        set((state) => {
+          if (!error) {
+            const { [providerId]: _, ...rest } = state.connectionErrors;
+            return { connectionErrors: rest };
+          }
+
+          return {
+            connectionErrors: {
+              ...state.connectionErrors,
+              [providerId]: error,
+            },
+          };
+        }),
 
       setConnectionResult: (providerId, status) =>
         set((state) => ({

@@ -87,8 +87,12 @@ export function OrgSetupForm({
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(
     ORG_SETUP_PHASE.DETAILS,
   );
-  const { setOrganization, setDiscovery, setSelectedAccountIds } =
-    useOrgSetupStore();
+  const {
+    setOrganization,
+    setDiscovery,
+    setSelectedAccountIds,
+    clearValidationState,
+  } = useOrgSetupStore();
   const formId = "org-wizard-setup-form";
 
   const {
@@ -189,6 +193,7 @@ export function OrgSetupForm({
   const onSubmit = async (data: OrgSetupFormData) => {
     try {
       setApiError(null);
+      clearValidationState();
       const resolvedOrganizationName =
         data.organizationName?.trim() || data.awsOrgId;
 

@@ -1,4 +1,4 @@
-import { Building2, FolderTree, ShieldCheck } from "lucide-react";
+import { Box, Folder, FolderTree } from "lucide-react";
 
 import {
   APPLY_STATUS,
@@ -10,7 +10,8 @@ import { TreeDataItem } from "@/types/tree";
 /**
  * Transforms flat API discovery arrays into hierarchical TreeDataItem[] for TreeView.
  *
- * Structure: Root → OUs → Accounts (leaf nodes)
+ * Structure: OUs → nested OUs/Accounts (leaf nodes)
+ * Root nodes are used only internally for parent linking and are not rendered.
  * Accounts with apply_status === "blocked" are marked disabled.
  */
 export function buildOrgTreeData(result: DiscoveryResult): TreeDataItem[] {
@@ -32,7 +33,7 @@ export function buildOrgTreeData(result: DiscoveryResult): TreeDataItem[] {
     nodeMap.set(ou.id, {
       id: ou.id,
       name: ou.name,
-      icon: Building2,
+      icon: Folder,
       children: [],
     });
   }
@@ -45,7 +46,7 @@ export function buildOrgTreeData(result: DiscoveryResult): TreeDataItem[] {
     nodeMap.set(account.id, {
       id: account.id,
       name: `${account.id} — ${account.name}`,
-      icon: ShieldCheck,
+      icon: Box,
       disabled: isBlocked,
     });
   }
@@ -70,10 +71,11 @@ export function buildOrgTreeData(result: DiscoveryResult): TreeDataItem[] {
     }
   }
 
-  // 7. Return root-level nodes as the tree
-  return result.roots
-    .map((root) => nodeMap.get(root.id))
-    .filter((node): node is TreeDataItem => node !== undefined);
+  // 7. Return root children as top-level nodes (roots are not rendered).
+  return result.roots.flatMap((root) => {
+    const rootNode = nodeMap.get(root.id);
+    return rootNode?.children ?? [];
+  });
 }
 
 /**

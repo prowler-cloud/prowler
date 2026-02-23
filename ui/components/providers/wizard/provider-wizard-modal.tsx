@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { OrgAccountSelection } from "@/components/providers/organizations/org-account-selection";
-import { OrgConnectionTest } from "@/components/providers/organizations/org-connection-test";
 import { OrgDiscoveryLoader } from "@/components/providers/organizations/org-discovery-loader";
 import { OrgLaunchScan } from "@/components/providers/organizations/org-launch-scan";
 import { OrgSetupForm } from "@/components/providers/organizations/org-setup-form";
@@ -51,7 +50,6 @@ type WizardVariant = (typeof WIZARD_VARIANT)[keyof typeof WIZARD_VARIANT];
 const VALIDATE_PHASE = {
   DISCOVERY: "discovery",
   SELECTION: "selection",
-  TESTING: "testing",
 } as const;
 
 type ValidatePhase = (typeof VALIDATE_PHASE)[keyof typeof VALIDATE_PHASE];
@@ -59,6 +57,10 @@ type ValidatePhase = (typeof VALIDATE_PHASE)[keyof typeof VALIDATE_PHASE];
 const EMPTY_FOOTER_CONFIG: WizardFooterConfig = {
   showBack: false,
   backLabel: "Back",
+  showSecondaryAction: false,
+  secondaryActionLabel: "",
+  secondaryActionVariant: "outline",
+  secondaryActionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
   showAction: false,
   actionLabel: "Next",
   actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
@@ -236,6 +238,10 @@ export function ProviderWizardModal({
           showBack: true,
           backLabel: "Back",
           onBack: () => setCurrentStep(PROVIDER_WIZARD_STEP.TEST),
+          showSecondaryAction: false,
+          secondaryActionLabel: "",
+          secondaryActionVariant: "outline",
+          secondaryActionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
           showAction: true,
           actionLabel: "Go to scans",
           actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
@@ -262,6 +268,10 @@ export function ProviderWizardModal({
           setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
           setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
         },
+        showSecondaryAction: false,
+        secondaryActionLabel: "",
+        secondaryActionVariant: "outline",
+        secondaryActionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
         showAction: false,
         actionLabel: "Next",
         actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
@@ -378,20 +388,6 @@ export function ProviderWizardModal({
                     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
                   }}
                   onNext={() => {
-                    setValidatePhase(VALIDATE_PHASE.TESTING);
-                  }}
-                  onFooterChange={setFooterConfig}
-                />
-              )}
-
-            {!isProviderFlow &&
-              orgCurrentStep === ORG_WIZARD_STEP.VALIDATE &&
-              validatePhase === VALIDATE_PHASE.TESTING && (
-                <OrgConnectionTest
-                  onBack={() => {
-                    setValidatePhase(VALIDATE_PHASE.SELECTION);
-                  }}
-                  onNext={() => {
                     setOrgCurrentStep(ORG_WIZARD_STEP.LAUNCH);
                   }}
                   onSkip={() => {
@@ -406,7 +402,7 @@ export function ProviderWizardModal({
                 onClose={handleClose}
                 onBack={() => {
                   setOrgCurrentStep(ORG_WIZARD_STEP.VALIDATE);
-                  setValidatePhase(VALIDATE_PHASE.TESTING);
+                  setValidatePhase(VALIDATE_PHASE.SELECTION);
                 }}
                 onFooterChange={setFooterConfig}
               />
@@ -426,7 +422,9 @@ export function ProviderWizardModal({
         </div>
       </div>
 
-      {(resolvedFooterConfig.showBack || resolvedFooterConfig.showAction) && (
+      {(resolvedFooterConfig.showBack ||
+        resolvedFooterConfig.showSecondaryAction ||
+        resolvedFooterConfig.showAction) && (
         <div className="mt-8 pt-6">
           <div className="flex items-center justify-between">
             <div>
@@ -442,7 +440,39 @@ export function ProviderWizardModal({
                 </Button>
               )}
             </div>
-            <div>
+            <div className="flex items-center gap-6">
+              {resolvedFooterConfig.showSecondaryAction && (
+                <Button
+                  size={
+                    resolvedFooterConfig.secondaryActionVariant === "link"
+                      ? "link-sm"
+                      : "xl"
+                  }
+                  className={
+                    resolvedFooterConfig.secondaryActionVariant === "link"
+                      ? "h-auto p-0"
+                      : undefined
+                  }
+                  variant={resolvedFooterConfig.secondaryActionVariant}
+                  type={
+                    resolvedFooterConfig.secondaryActionType ===
+                    WIZARD_FOOTER_ACTION_TYPE.SUBMIT
+                      ? "submit"
+                      : "button"
+                  }
+                  form={resolvedFooterConfig.secondaryActionFormId}
+                  disabled={resolvedFooterConfig.secondaryActionDisabled}
+                  onClick={
+                    resolvedFooterConfig.secondaryActionType ===
+                    WIZARD_FOOTER_ACTION_TYPE.BUTTON
+                      ? resolvedFooterConfig.onSecondaryAction
+                      : undefined
+                  }
+                >
+                  {resolvedFooterConfig.secondaryActionLabel}
+                </Button>
+              )}
+
               {resolvedFooterConfig.showAction && (
                 <Button
                   size="xl"
