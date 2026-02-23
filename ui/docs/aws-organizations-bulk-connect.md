@@ -274,7 +274,7 @@ Frontend                                              Backend
    |-- POST /.../discoveries/{id}/apply --------------->|  (6) Apply selections
    |<-- 200 { providers_created_count, ... } -----------|
    |                                                     |
-   |  (Redirect to test-connection for created providers)|
+   |  (Continue inside modal to Validate Connection step) |
    |                                                     |
 ```
 
@@ -741,34 +741,40 @@ When the backend detects an AWS account has been closed/suspended:
 
 ## 8. Existing Frontend Architecture
 
-### Current Provider Form Structure
+### Current Provider Form Structure (Modal Wizard - Current)
 
 ```
 ui/
-├── app/(prowler)/providers/(set-up-provider)/
-│   ├── layout.tsx                          # Sidebar stepper + content area
-│   ├── connect-account/page.tsx            # Step 1 page
-│   ├── add-credentials/page.tsx            # Step 2 page
-│   ├── test-connection/page.tsx            # Step 3 page
-│   └── update-credentials/page.tsx
 ├── components/providers/
 │   ├── add-provider-button.tsx             # Entry point button
-│   ├── radio-group-provider.tsx            # Provider type radio selector
-│   ├── workflow/
-│   │   ├── workflow-add-provider.tsx        # Main stepper display (3 steps)
-│   │   ├── vertical-steps.tsx              # Custom stepper with Framer Motion
-│   │   └── forms/
-│   │       ├── connect-account-form.tsx     # Step 1: Choose provider + enter UID
-│   │       ├── test-connection-form.tsx     # Step 3: Test & scan
-│   │       ├── add-via-role-form.tsx        # AWS role-based credentials
-│   │       └── add-via-credentials-form.tsx # AWS static credentials
+│   ├── wizard/provider-wizard-modal.tsx    # Main modal wizard owner
+│   ├── wizard/steps/                        # Connect/Credentials/Validate/Launch steps
+│   ├── organizations/org-setup-form.tsx    # Org setup + discovery polling owner
+│   ├── organizations/org-account-selection.tsx # Apply + Test Connections
+│   ├── organizations/org-launch-scan.tsx   # Launch schedule (daily/single)
+│   └── workflow/forms/                      # Reused provider forms inside modal steps
 ├── actions/providers/
 │   └── providers.ts                        # Server actions (addProvider, etc.)
+├── actions/organizations/
+│   └── organizations.ts                    # Organizations/discovery/apply server actions
 ├── hooks/
 │   └── use-credentials-form.ts             # Form schema + state management
+├── store/organizations/
+│   └── store.ts                            # Organizations wizard client state
 └── types/
-    └── providers.ts                        # TypeScript interfaces
+    ├── providers.ts                        # Provider interfaces
+    └── organizations.ts                    # Organizations/discovery/apply interfaces
 ```
+
+### Legacy Route-Based Flow (Deprecated)
+
+Sections in this document that reference routes such as:
+- `/providers/connect-account`
+- `/providers/add-credentials`
+- `/providers/test-connection`
+- `/providers/update-credentials`
+
+are historical context only. The active implementation runs end-to-end inside `provider-wizard-modal.tsx` and validates step transitions by modal content/state, not by URL.
 
 ### Tech Stack
 
