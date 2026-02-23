@@ -1,6 +1,5 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
-
 import pytest
 
 from rest_framework.exceptions import APIException, ValidationError
@@ -125,25 +124,21 @@ def test_execute_attack_paths_query_serializes_graph(
     run_result = MagicMock()
     run_result.graph.return_value = graph
 
-    session = MagicMock()
-    session.run.return_value = run_result
-
-    session_ctx = MagicMock()
-    session_ctx.__enter__.return_value = session
-    session_ctx.__exit__.return_value = False
-
     database_name = "db-tenant-test-tenant-id"
 
     with patch(
-        "api.attack_paths.views_helpers.graph_database.get_session",
-        return_value=session_ctx,
-    ) as mock_get_session:
+        "api.attack_paths.views_helpers.graph_database.execute_read_query",
+        return_value=run_result,
+    ) as mock_execute_read_query:
         result = views_helpers.execute_attack_paths_query(
             database_name, definition, parameters, provider_id=provider_id
         )
 
-    mock_get_session.assert_called_once_with(database_name)
-    session.run.assert_called_once_with(definition.cypher, parameters)
+    mock_execute_read_query.assert_called_once_with(
+        database=database_name,
+        cypher=definition.cypher,
+        parameters=parameters,
+    )
     assert result["nodes"][0]["id"] == "node-1"
     assert result["nodes"][0]["properties"]["complex"]["items"][0] == "value"
     assert result["relationships"][0]["label"] == "OWNS"
@@ -163,17 +158,10 @@ def test_execute_attack_paths_query_wraps_graph_errors(
     database_name = "db-tenant-test-tenant-id"
     parameters = {"provider_uid": "123"}
 
-    class ExplodingContext:
-        def __enter__(self):
-            raise graph_database.GraphDatabaseQueryException("boom")
-
-        def __exit__(self, exc_type, exc, tb):
-            return False
-
     with (
         patch(
-            "api.attack_paths.views_helpers.graph_database.get_session",
-            return_value=ExplodingContext(),
+            "api.attack_paths.views_helpers.graph_database.execute_read_query",
+            side_effect=graph_database.GraphDatabaseQueryException("boom"),
         ),
         patch("api.attack_paths.views_helpers.logger") as mock_logger,
     ):

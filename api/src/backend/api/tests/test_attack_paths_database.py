@@ -9,6 +9,7 @@ remain lazy. These tests validate the database module behavior itself.
 import threading
 from unittest.mock import MagicMock, patch
 
+import neo4j
 import pytest
 
 
@@ -239,6 +240,78 @@ class TestCloseDriver:
 
         # Driver should still be cleared
         assert db_module._driver is None
+
+
+class TestExecuteReadQuery:
+    """Test read query execution helper."""
+
+    def test_execute_read_query_calls_read_session_and_returns_result(self):
+        import api.attack_paths.database as db_module
+
+        tx = MagicMock()
+        expected_result = MagicMock()
+        tx.run.return_value = expected_result
+
+        session = MagicMock()
+
+        def execute_read_side_effect(fn):
+            return fn(tx)
+
+        session.execute_read.side_effect = execute_read_side_effect
+
+        session_ctx = MagicMock()
+        session_ctx.__enter__.return_value = session
+        session_ctx.__exit__.return_value = False
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ) as mock_get_session:
+            result = db_module.execute_read_query(
+                "db-tenant-test-tenant-id",
+                "MATCH (n) RETURN n",
+                {"provider_uid": "123"},
+            )
+
+        mock_get_session.assert_called_once_with(
+            "db-tenant-test-tenant-id",
+            default_access_mode=neo4j.READ_ACCESS,
+        )
+        session.execute_read.assert_called_once()
+        tx.run.assert_called_once_with(
+            "MATCH (n) RETURN n",
+            {"provider_uid": "123"},
+            timeout=db_module.READ_QUERY_TIMEOUT_SECONDS,
+        )
+        assert result is expected_result
+
+    def test_execute_read_query_defaults_parameters_to_empty_dict(self):
+        import api.attack_paths.database as db_module
+
+        tx = MagicMock()
+        tx.run.return_value = MagicMock()
+
+        session = MagicMock()
+        session.execute_read.side_effect = lambda fn: fn(tx)
+
+        session_ctx = MagicMock()
+        session_ctx.__enter__.return_value = session
+        session_ctx.__exit__.return_value = False
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ):
+            db_module.execute_read_query(
+                "db-tenant-test-tenant-id",
+                "MATCH (n) RETURN n",
+            )
+
+        tx.run.assert_called_once_with(
+            "MATCH (n) RETURN n",
+            {},
+            timeout=db_module.READ_QUERY_TIMEOUT_SECONDS,
+        )
 
 
 class TestThreadSafety:
