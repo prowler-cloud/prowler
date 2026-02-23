@@ -983,6 +983,7 @@
       "Id": "5.1.5.1",
       "Description": "Control when end users and group owners are allowed to grant consent to applications, and when they will be required to request administrator review and approval. Allowing users to grant apps access to data helps them acquire useful applications and be productive but can represent a risk in some situations if it's not monitored and controlled carefully.",
       "Checks": [
+        "entra_app_registration_no_unused_privileged_permissions",
         "entra_policy_restricts_user_consent_for_apps"
       ],
       "Attributes": [

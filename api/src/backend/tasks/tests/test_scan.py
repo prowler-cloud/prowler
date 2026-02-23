@@ -4093,6 +4093,10 @@ class TestUpdateProviderComplianceScores:
         tenant_id = str(tenant.id)
         scan_id = str(scan.id)
 
+        scan.state = StateChoices.AVAILABLE
+        scan.completed_at = None
+        scan.save()
+
         result = update_provider_compliance_scores(tenant_id, scan_id)
 
         assert result["status"] == "skipped"

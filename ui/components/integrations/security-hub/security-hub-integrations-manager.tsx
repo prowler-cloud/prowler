@@ -1,6 +1,5 @@
 "use client";
 
-import { Chip } from "@heroui/chip";
 import { format } from "date-fns";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
@@ -16,7 +15,7 @@ import {
   IntegrationCardHeader,
   IntegrationSkeleton,
 } from "@/components/integrations/shared";
-import { Button } from "@/components/shadcn";
+import { Badge, Button } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
@@ -385,14 +384,13 @@ export const SecurityHubIntegrationsManager = ({
                       {enabledRegions.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {enabledRegions.map((region) => (
-                            <Chip
+                            <Badge
                               key={region}
-                              size="sm"
-                              variant="flat"
-                              className="bg-bg-neutral-secondary"
+                              variant="outline"
+                              className="border-border-neutral-secondary bg-bg-neutral-secondary text-text-neutral-primary text-xs font-normal"
                             >
                               {region}
-                            </Chip>
+                            </Badge>
                           ))}
                         </div>
                       )}

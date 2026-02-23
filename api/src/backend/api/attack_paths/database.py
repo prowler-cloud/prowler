@@ -12,7 +12,10 @@ import neo4j.exceptions
 from django.conf import settings
 
 from api.attack_paths.retryable_session import RetryableSession
-from tasks.jobs.attack_paths.config import BATCH_SIZE, PROVIDER_RESOURCE_LABEL
+from tasks.jobs.attack_paths.config import (
+    BATCH_SIZE,
+    DEPRECATED_PROVIDER_RESOURCE_LABEL,
+)
 
 # Without this Celery goes crazy with Neo4j logging
 logging.getLogger("neo4j").setLevel(logging.ERROR)
@@ -128,7 +131,7 @@ def drop_subgraph(database: str, provider_id: str) -> int:
             while deleted_count > 0:
                 result = session.run(
                     f"""
-                    MATCH (n:{PROVIDER_RESOURCE_LABEL} {{provider_id: $provider_id}})
+                    MATCH (n:{DEPRECATED_PROVIDER_RESOURCE_LABEL} {{provider_id: $provider_id}})
                     WITH n LIMIT $batch_size
                     DETACH DELETE n
                     RETURN COUNT(n) AS deleted_nodes_count

@@ -13,8 +13,7 @@
   "Risk": "Without 2FA enforcement, compromised credentials (stolen SSH keys or passwords) grant immediate access to VM instances. Attackers could:\n\n- Gain unauthorized shell access to production systems\n- Exfiltrate sensitive data or deploy malware\n- Move laterally within the infrastructure\n\nThis single point of failure significantly increases the attack surface.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://cloud.google.com/compute/docs/oslogin/set-up-oslogin",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-os-login-with-2fa-authentication.html"
+    "https://cloud.google.com/compute/docs/oslogin/set-up-oslogin"
   ],
   "Remediation": {
     "Code": {

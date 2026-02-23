@@ -9,8 +9,9 @@ import * as z from "zod";
 
 import { updateProviderGroup } from "@/actions/manage-groups/manage-groups";
 import { Button } from "@/components/shadcn";
+import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
-import { CustomDropdownSelection, CustomInput } from "@/components/ui/custom";
+import { CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { ApiError } from "@/types";
 
@@ -176,18 +177,29 @@ export const EditGroupForm = ({
             ];
 
             return (
-              <CustomDropdownSelection
-                label="Select Providers"
-                name="providers"
-                values={combinedProviders}
-                selectedKeys={field.value?.map((p) => p.id) || []}
-                onChange={(name, selectedValues) => {
-                  const selectedProviders = combinedProviders.filter(
-                    (provider) => selectedValues.includes(provider.id),
-                  );
-                  field.onChange(selectedProviders);
-                }}
-              />
+              <div className="flex flex-col gap-2">
+                <EnhancedMultiSelect
+                  options={combinedProviders.map((provider) => ({
+                    label: provider.name,
+                    value: provider.id,
+                  }))}
+                  onValueChange={(selectedValues) => {
+                    const selectedProviders = combinedProviders.filter(
+                      (provider) => selectedValues.includes(provider.id),
+                    );
+                    field.onChange(selectedProviders);
+                  }}
+                  defaultValue={
+                    field.value?.map((provider) => provider.id) || []
+                  }
+                  placeholder="Select providers"
+                  aria-label="Select providers"
+                  searchable={true}
+                  hideSelectAll={true}
+                  emptyIndicator="No results found"
+                  resetOnDefaultValueChange={true}
+                />
+              </div>
             );
           }}
         />
@@ -216,18 +228,27 @@ export const EditGroupForm = ({
             ];
 
             return (
-              <CustomDropdownSelection
-                label="Select Roles"
-                name="roles"
-                values={combinedRoles}
-                selectedKeys={field.value?.map((r) => r.id) || []}
-                onChange={(name, selectedValues) => {
-                  const selectedRoles = combinedRoles.filter((role) =>
-                    selectedValues.includes(role.id),
-                  );
-                  field.onChange(selectedRoles);
-                }}
-              />
+              <div className="flex flex-col gap-2">
+                <EnhancedMultiSelect
+                  options={combinedRoles.map((role) => ({
+                    label: role.name,
+                    value: role.id,
+                  }))}
+                  onValueChange={(selectedValues) => {
+                    const selectedRoles = combinedRoles.filter((role) =>
+                      selectedValues.includes(role.id),
+                    );
+                    field.onChange(selectedRoles);
+                  }}
+                  defaultValue={field.value?.map((role) => role.id) || []}
+                  placeholder="Select roles"
+                  aria-label="Select roles"
+                  searchable={true}
+                  hideSelectAll={true}
+                  emptyIndicator="No results found"
+                  resetOnDefaultValueChange={true}
+                />
+              </div>
             );
           }}
         />

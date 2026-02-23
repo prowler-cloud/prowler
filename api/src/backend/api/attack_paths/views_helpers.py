@@ -5,7 +5,6 @@ from typing import Any, Iterable
 from rest_framework.exceptions import APIException, ValidationError
 
 from api.attack_paths import database as graph_database, AttackPathsQueryDefinition
-from api.models import AttackPathsScan
 from config.custom_logging import BackendLogger
 from tasks.jobs.attack_paths.config import INTERNAL_LABELS
 
@@ -36,6 +35,7 @@ def prepare_query_parameters(
     definition: AttackPathsQueryDefinition,
     provided_parameters: dict[str, Any],
     provider_uid: str,
+    provider_id: str,
 ) -> dict[str, Any]:
     parameters = dict(provided_parameters or {})
     expected_names = {parameter.name for parameter in definition.parameters}
@@ -57,6 +57,7 @@ def prepare_query_parameters(
 
     clean_parameters = {
         "provider_uid": str(provider_uid),
+        "provider_id": str(provider_id),
     }
 
     for definition_parameter in definition.parameters:
@@ -80,14 +81,15 @@ def prepare_query_parameters(
 
 
 def execute_attack_paths_query(
-    attack_paths_scan: AttackPathsScan,
+    database_name: str,
     definition: AttackPathsQueryDefinition,
     parameters: dict[str, Any],
+    provider_id: str,
 ) -> dict[str, Any]:
     try:
-        with graph_database.get_session(attack_paths_scan.graph_database) as session:
+        with graph_database.get_session(database_name) as session:
             result = session.run(definition.cypher, parameters)
-            return _serialize_graph(result.graph())
+            return _serialize_graph(result.graph(), provider_id)
 
     except graph_database.GraphDatabaseQueryException as exc:
         logger.error(f"Query failed for Attack Paths query `{definition.id}`: {exc}")
@@ -96,9 +98,14 @@ def execute_attack_paths_query(
         )
 
 
-def _serialize_graph(graph):
+def _serialize_graph(graph, provider_id: str):
     nodes = []
+    kept_node_ids = set()
     for node in graph.nodes:
+        if node._properties.get("provider_id") != provider_id:
+            continue
+
+        kept_node_ids.add(node.element_id)
         nodes.append(
             {
                 "id": node.element_id,
@@ -109,6 +116,15 @@ def _serialize_graph(graph):
 
     relationships = []
     for relationship in graph.relationships:
+        if relationship._properties.get("provider_id") != provider_id:
+            continue
+
+        if (
+            relationship.start_node.element_id not in kept_node_ids
+            or relationship.end_node.element_id not in kept_node_ids
+        ):
+            continue
+
         relationships.append(
             {
                 "id": relationship.element_id,

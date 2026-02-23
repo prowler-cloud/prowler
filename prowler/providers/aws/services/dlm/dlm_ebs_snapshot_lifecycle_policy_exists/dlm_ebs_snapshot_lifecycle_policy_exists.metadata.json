@@ -16,7 +16,7 @@
   "Risk": "Without **automated lifecycle policies**, backups become inconsistent and error-prone, reducing availability and weakening recovery objectives. Missing retention rules cause premature deletion or snapshot sprawl, increasing cost and exposing stale data. Lack of cross-Region/account copies limits resilience to regional outages and malicious deletion.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DLM/ebs-snapshot-automation.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/DLM/ebs-snapshot-automation.html",
     "https://repost.aws/articles/ARmYgZmA8MRQi89pWd9D7eFw/how-to-create-a-automate-backup-aws-data-lifecycle-management-using-snapshots",
     "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshot-lifecycle.html#dlm-elements"
   ],

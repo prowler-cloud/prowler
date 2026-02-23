@@ -16,7 +16,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://aws.amazon.com/premiumsupport/technology/trusted-advisor/best-practice-checklist/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/TrustedAdvisor/checks.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/TrustedAdvisor/checks.html"
   ],
   "Remediation": {
     "Code": {
