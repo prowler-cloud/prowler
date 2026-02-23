@@ -1189,7 +1189,8 @@
       "Id": "5.2.2.4",
       "Description": "In complex deployments, organizations might have a need to restrict authentication sessions. Conditional Access policies allow for the targeting of specific user accounts. Some scenarios might include:- Resource access from an unmanaged or shared device- Access to sensitive information from an external network- High-privileged users- Business-critical applicationsEnsure Sign-in frequency periodic reauthentication does not exceed `4 hours` for E3 tenants, or `24 hours` for E5 tenants using Privileged Identity Management.Ensure `Persistent browser session` is set to `Never persistent`**Note:** This CA policy can be added to the previous CA policy in this benchmark \"Ensure multifactor authentication is enabled for all users in administrative roles\"",
       "Checks": [
-        "entra_admin_users_sign_in_frequency_enabled"
+        "entra_admin_users_sign_in_frequency_enabled",
+        "entra_sign_in_frequency_for_non_corporate_devices"
       ],
       "Attributes": [
         {
