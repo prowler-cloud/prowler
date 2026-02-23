@@ -24,6 +24,7 @@ import { useOrgSetupStore } from "@/store/organizations/store";
 import {
   CONNECTION_TEST_STATUS,
   ConnectionTestStatus,
+  DiscoveredAccount,
 } from "@/types/organizations";
 import { TREE_ITEM_STATUS, TreeDataItem } from "@/types/tree";
 
@@ -208,18 +209,15 @@ export function OrgAccountSelection({
     Map<string, string>
   >(new Map());
   const hasAppliedRef = useRef(false);
+  const startTestingActionRef = useRef<() => void>(() => {});
 
-  if (!discoveryResult) {
-    return (
-      <div className="text-muted-foreground py-8 text-center text-sm">
-        No discovery data available.
-      </div>
-    );
-  }
-
-  const treeData = buildOrgTreeData(discoveryResult);
-  const accountLookup = buildAccountLookup(discoveryResult);
-  const selectableAccountIds = getSelectableAccountIds(discoveryResult);
+  const treeData = discoveryResult ? buildOrgTreeData(discoveryResult) : [];
+  const accountLookup: Map<string, DiscoveredAccount> = discoveryResult
+    ? buildAccountLookup(discoveryResult)
+    : new Map<string, DiscoveredAccount>();
+  const selectableAccountIds = discoveryResult
+    ? getSelectableAccountIds(discoveryResult)
+    : [];
   const selectableAccountIdSet = new Set(selectableAccountIds);
   const sanitizedSelectedAccountIds = selectedAccountIds.filter((id) =>
     selectableAccountIdSet.has(id),
@@ -248,12 +246,21 @@ export function OrgAccountSelection({
     : treeData;
 
   useEffect(() => {
+    if (!discoveryResult) {
+      return;
+    }
+
     if (sanitizedSelectedAccountIds.length === selectedAccountIds.length) {
       return;
     }
 
     setSelectedAccountIds(sanitizedSelectedAccountIds);
-  }, [sanitizedSelectedAccountIds, selectedAccountIds, setSelectedAccountIds]);
+  }, [
+    discoveryResult,
+    sanitizedSelectedAccountIds,
+    selectedAccountIds,
+    setSelectedAccountIds,
+  ]);
 
   const testAllConnections = async (providerIds: string[]) => {
     setIsTesting(true);
@@ -345,7 +352,7 @@ export function OrgAccountSelection({
   };
 
   const handleApplyAndTest = async () => {
-    if (!organizationId || !discoveryId) {
+    if (!organizationId || !discoveryId || !discoveryResult) {
       return;
     }
 
@@ -417,6 +424,7 @@ export function OrgAccountSelection({
       failedProviderIds.length > 0 ? failedProviderIds : createdProviderIds;
     void testAllConnections(providerIdsToTest);
   };
+  startTestingActionRef.current = handleStartTesting;
 
   useEffect(() => {
     if (!isTestingView) {
@@ -432,7 +440,9 @@ export function OrgAccountSelection({
         actionLabel: "Test Connections",
         actionDisabled: selectedCount === 0,
         actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
-        onAction: handleStartTesting,
+        onAction: () => {
+          startTestingActionRef.current();
+        },
       });
       return;
     }
@@ -454,7 +464,11 @@ export function OrgAccountSelection({
       actionLabel: "Test Connections",
       actionDisabled: isApplying || isTesting || !canRetry,
       actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
-      onAction: canRetry ? handleStartTesting : undefined,
+      onAction: canRetry
+        ? () => {
+            startTestingActionRef.current();
+          }
+        : undefined,
     });
   }, [
     applyError,
@@ -473,6 +487,14 @@ export function OrgAccountSelection({
   const handleTreeSelectionChange = (ids: string[]) => {
     setSelectedAccountIds(ids.filter((id) => selectableAccountIdSet.has(id)));
   };
+
+  if (!discoveryResult) {
+    return (
+      <div className="text-muted-foreground py-8 text-center text-sm">
+        No discovery data available.
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-5">
