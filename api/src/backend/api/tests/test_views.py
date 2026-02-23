@@ -3995,15 +3995,18 @@ class TestAttackPathsScanViewSet:
         assert response.status_code == status.HTTP_200_OK
         mock_get_query.assert_called_once_with("aws-rds")
         mock_get_db_name.assert_called_once_with(attack_paths_scan.provider.tenant_id)
+        provider_id = str(attack_paths_scan.provider_id)
         mock_prepare.assert_called_once_with(
             query_definition,
             {},
             attack_paths_scan.provider.uid,
+            provider_id,
         )
         mock_execute.assert_called_once_with(
             expected_db_name,
             query_definition,
             prepared_parameters,
+            provider_id,
         )
         mock_clear_cache.assert_called_once_with(expected_db_name)
         result = response.json()["data"]
