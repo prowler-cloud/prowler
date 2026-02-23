@@ -366,6 +366,7 @@ export function ProviderWizardModal({
                 }}
                 onFooterChange={setFooterConfig}
                 onPhaseChange={setOrgSetupPhase}
+                initialPhase={orgSetupPhase}
               />
             )}
 
@@ -385,7 +386,7 @@ export function ProviderWizardModal({
                 <OrgAccountSelection
                   onBack={() => {
                     setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
-                    setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
+                    setOrgSetupPhase(ORG_SETUP_PHASE.ACCESS);
                   }}
                   onNext={() => {
                     setOrgCurrentStep(ORG_WIZARD_STEP.LAUNCH);

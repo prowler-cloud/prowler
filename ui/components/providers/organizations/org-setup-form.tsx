@@ -72,6 +72,7 @@ interface OrgSetupFormProps {
   onNext: () => void;
   onFooterChange: (config: WizardFooterConfig) => void;
   onPhaseChange: (phase: OrgSetupPhase) => void;
+  initialPhase?: OrgSetupPhase;
 }
 
 export function OrgSetupForm({
@@ -79,14 +80,13 @@ export function OrgSetupForm({
   onNext,
   onFooterChange,
   onPhaseChange,
+  initialPhase = ORG_SETUP_PHASE.DETAILS,
 }: OrgSetupFormProps) {
   const { data: session } = useSession();
   const [apiError, setApiError] = useState<string | null>(null);
   const [isExternalIdCopied, setIsExternalIdCopied] = useState(false);
   const stackSetExternalId = session?.tenantId ?? "";
-  const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(
-    ORG_SETUP_PHASE.DETAILS,
-  );
+  const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
   const {
     setOrganization,
     setDiscovery,
@@ -207,7 +207,9 @@ export function OrgSetupForm({
         return;
       }
 
-      const existingOrganization = Array.isArray(existingOrganizationsResult?.data)
+      const existingOrganization = Array.isArray(
+        existingOrganizationsResult?.data,
+      )
         ? existingOrganizationsResult.data.find(
             (organization: {
               id: string;
