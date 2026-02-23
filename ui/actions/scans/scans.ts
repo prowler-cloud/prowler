@@ -165,6 +165,72 @@ export const scheduleDaily = async (formData: FormData) => {
   }
 };
 
+export const launchOrganizationScans = async (
+  providerIds: string[],
+  scheduleOption: "daily" | "single",
+) => {
+  const validProviderIds = providerIds.filter(Boolean);
+  if (validProviderIds.length === 0) {
+    return {
+      successCount: 0,
+      failureCount: 0,
+      totalCount: 0,
+    };
+  }
+
+  const launchPromises = validProviderIds.map(async (providerId) => {
+    const formData = new FormData();
+    formData.set("providerId", providerId);
+
+    const result =
+      scheduleOption === "daily"
+        ? await scheduleDaily(formData)
+        : await scanOnDemand(formData);
+
+    return {
+      providerId,
+      ok: !result?.error,
+      error: result?.error ? String(result.error) : null,
+    };
+  });
+
+  const settled = await Promise.allSettled(launchPromises);
+  const summary = settled.reduce(
+    (acc, item) => {
+      if (item.status === "fulfilled") {
+        if (item.value.ok) {
+          acc.successCount += 1;
+        } else {
+          acc.failureCount += 1;
+          acc.errors.push({
+            providerId: item.value.providerId,
+            error: item.value.error || "Failed to launch scan.",
+          });
+        }
+        return acc;
+      }
+
+      acc.failureCount += 1;
+      acc.errors.push({
+        providerId: "",
+        error:
+          item.reason instanceof Error
+            ? item.reason.message
+            : String(item.reason),
+      });
+      return acc;
+    },
+    {
+      successCount: 0,
+      failureCount: 0,
+      totalCount: validProviderIds.length,
+      errors: [] as Array<{ providerId: string; error: string }>,
+    },
+  );
+
+  return summary;
+};
+
 export const updateScan = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
 

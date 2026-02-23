@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { scanOnDemand, scheduleDaily } from "@/actions/scans/scans";
+import { launchOrganizationScans } from "@/actions/scans/scans";
 import { AWSProviderBadge } from "@/components/icons/providers-badge";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
@@ -54,20 +54,11 @@ export function OrgLaunchScan({
   const handleLaunchScan = async () => {
     setIsLaunching(true);
 
-    let successCount = 0;
-
-    for (const providerId of createdProviderIds) {
-      const formData = new FormData();
-      formData.set("providerId", providerId);
-
-      const result =
-        scheduleOption === SCAN_SCHEDULE.DAILY
-          ? await scheduleDaily(formData)
-          : await scanOnDemand(formData);
-      if (!result?.error) {
-        successCount++;
-      }
-    }
+    const result = await launchOrganizationScans(
+      createdProviderIds,
+      scheduleOption,
+    );
+    const successCount = result.successCount;
 
     setIsLaunching(false);
     reset();
