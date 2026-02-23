@@ -1,23 +1,39 @@
 "use client";
 
-import { CheckCircle2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { scheduleDaily } from "@/actions/scans/scans";
+import { scanOnDemand, scheduleDaily } from "@/actions/scans/scans";
+import { AWSProviderBadge } from "@/components/icons/providers-badge";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
 } from "@/components/providers/wizard/steps/footer-controls";
-import { Badge } from "@/components/shadcn";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcn/select/select";
+import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
+import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
 import { useToast } from "@/components/ui";
 import { useOrgSetupStore } from "@/store/organizations/store";
+import { TREE_ITEM_STATUS } from "@/types/tree";
 
 interface OrgLaunchScanProps {
   onClose: () => void;
   onBack: () => void;
   onFooterChange: (config: WizardFooterConfig) => void;
 }
+
+const SCAN_SCHEDULE = {
+  DAILY: "daily",
+  SINGLE: "single",
+} as const;
+
+type ScanScheduleOption = (typeof SCAN_SCHEDULE)[keyof typeof SCAN_SCHEDULE];
 
 export function OrgLaunchScan({
   onClose,
@@ -26,14 +42,13 @@ export function OrgLaunchScan({
 }: OrgLaunchScanProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const {
-    organizationName,
-    organizationExternalId,
-    createdProviderIds,
-    reset,
-  } = useOrgSetupStore();
+  const { organizationExternalId, createdProviderIds, reset } =
+    useOrgSetupStore();
 
   const [isLaunching, setIsLaunching] = useState(false);
+  const [scheduleOption, setScheduleOption] = useState<ScanScheduleOption>(
+    SCAN_SCHEDULE.DAILY,
+  );
   const launchActionRef = useRef<() => void>(() => {});
 
   const handleLaunchScan = async () => {
@@ -45,7 +60,10 @@ export function OrgLaunchScan({
       const formData = new FormData();
       formData.set("providerId", providerId);
 
-      const result = await scheduleDaily(formData);
+      const result =
+        scheduleOption === SCAN_SCHEDULE.DAILY
+          ? await scheduleDaily(formData)
+          : await scanOnDemand(formData);
       if (!result?.error) {
         successCount++;
       }
@@ -58,7 +76,10 @@ export function OrgLaunchScan({
 
     toast({
       title: "Scan Launched",
-      description: `Daily scan scheduled for ${successCount} account${successCount !== 1 ? "s" : ""}.`,
+      description:
+        scheduleOption === SCAN_SCHEDULE.DAILY
+          ? `Daily scan scheduled for ${successCount} account${successCount !== 1 ? "s" : ""}.`
+          : `Single scan launched for ${successCount} account${successCount !== 1 ? "s" : ""}.`,
     });
   };
 
@@ -73,7 +94,7 @@ export function OrgLaunchScan({
       backDisabled: isLaunching,
       onBack,
       showAction: true,
-      actionLabel: isLaunching ? "Launching..." : "Launch scan",
+      actionLabel: "Launch scan",
       actionDisabled: isLaunching,
       actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
       onAction: () => {
@@ -83,39 +104,68 @@ export function OrgLaunchScan({
   }, [isLaunching, onBack, onFooterChange]);
 
   return (
-    <div className="flex flex-col items-center gap-6 py-6">
-      {/* Org info */}
-      <div className="flex items-center gap-2">
-        <Badge variant="outline">AWS</Badge>
-        <span className="text-sm font-medium">{organizationName}</span>
-        {organizationExternalId && (
-          <Badge variant="secondary">{organizationExternalId}</Badge>
-        )}
-      </div>
+    <div className="flex min-h-0 flex-1 flex-col gap-8">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-4">
+          <AWSProviderBadge size={32} />
+          <h3 className="text-base font-semibold">My Organization</h3>
+        </div>
 
-      {/* Success message */}
-      <div className="flex flex-col items-center gap-2">
-        <CheckCircle2 className="size-12 text-green-500" />
-        <h3 className="text-lg font-semibold">Accounts Connected!</h3>
-        <p className="text-muted-foreground text-center text-sm">
-          Your accounts are connected to Prowler and ready to scan!
-        </p>
-      </div>
-
-      {/* Scan schedule info */}
-      <div className="flex flex-col items-center gap-2">
-        <p className="text-muted-foreground text-sm">
-          Select a Prowler scan schedule for these accounts.
-        </p>
-        <div className="bg-muted/30 rounded-md border px-4 py-2 text-sm">
-          Scan Daily (every 24 hours)
+        <div className="ml-12 flex items-center gap-3">
+          <span className="text-text-neutral-tertiary text-xs">UID:</span>
+          <div className="bg-bg-neutral-tertiary border-border-input-primary inline-flex h-10 items-center rounded-full border px-4">
+            <span className="text-xs font-medium">
+              {organizationExternalId || "N/A"}
+            </span>
+          </div>
         </div>
       </div>
 
-      {isLaunching && (
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
-          <Loader2 className="size-4 animate-spin" />
-          Launching scans...
+      {isLaunching ? (
+        <div className="flex min-h-[220px] items-center justify-center">
+          <div className="flex items-center gap-3 py-2">
+            <TreeSpinner className="size-6" />
+            <p className="text-sm font-medium">Launching scans...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="flex max-w-2xl flex-col gap-6">
+          <div className="flex items-center gap-3">
+            <TreeStatusIcon
+              status={TREE_ITEM_STATUS.SUCCESS}
+              className="size-6"
+            />
+            <h3 className="text-sm font-semibold">Accounts Connected!</h3>
+          </div>
+
+          <p className="text-text-neutral-secondary text-sm">
+            Your accounts are connected to Prowler and ready to Scan!
+          </p>
+
+          <div className="flex flex-col gap-4">
+            <p className="text-text-neutral-secondary text-sm">
+              Select a Prowler scan schedule for these accounts.
+            </p>
+            <Select
+              value={scheduleOption}
+              onValueChange={(value) =>
+                setScheduleOption(value as ScanScheduleOption)
+              }
+              disabled={isLaunching}
+            >
+              <SelectTrigger className="w-full max-w-[376px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={SCAN_SCHEDULE.DAILY}>
+                  Scan Daily (every 24 hours)
+                </SelectItem>
+                <SelectItem value={SCAN_SCHEDULE.SINGLE}>
+                  Run a single scan (no recurring schedule)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       )}
     </div>
