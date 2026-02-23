@@ -17,7 +17,6 @@
   "Risk": "Relying on the default service-owned key reduces control over **confidentiality**: no custom key policies, limited auditability, and no independent rotation or disablement. This weakens least-privilege enforcement and incident response, and can impede meeting mandates that require customer-controlled keys.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-dynamodb-tables-are-encrypted#terraform",
     "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/EncryptionAtRest.html"
   ],
   "Remediation": {

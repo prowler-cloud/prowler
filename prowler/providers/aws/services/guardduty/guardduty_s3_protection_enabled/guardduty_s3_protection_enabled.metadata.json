@@ -19,7 +19,7 @@
   "AdditionalURLs": [
     "https://docs.amazonaws.cn/en_us/guardduty/latest/ug/guardduty_finding-types-s3.html",
     "https://docs.aws.amazon.com/guardduty/latest/ug/s3_detection.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/GuardDuty/enable-s3-protection.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/GuardDuty/enable-s3-protection.html",
     "https://docs.aws.amazon.com/guardduty/latest/ug/s3-protection.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-10"
   ],
