@@ -45,6 +45,7 @@
       "Id": "1.1.3",
       "Description": "Ensure multifactor authentication is enabled for all users",
       "Checks": [
+        "entra_guest_users_mfa_enabled",
         "entra_users_mfa_enabled"
       ],
       "Attributes": [
@@ -189,6 +190,7 @@
       "Id": "1.1.11",
       "Description": "Ensure that 'Multi-Factor Auth Status' is 'Enabled' for all Non-Privileged Users",
       "Checks": [
+        "entra_guest_users_mfa_enabled",
         "entra_users_mfa_enabled"
       ],
       "Attributes": [
@@ -769,6 +771,7 @@
       "Id": "1.3.6",
       "Description": "Ensure that guest user access is restricted",
       "Checks": [
+        "entra_guest_users_mfa_enabled",
         "entra_policy_guest_users_access_restrictions"
       ],
       "Attributes": [

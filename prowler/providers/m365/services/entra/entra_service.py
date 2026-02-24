@@ -245,6 +245,20 @@ class Entra(M365Service):
                                     [],
                                 )
                             ],
+                            included_guests_or_external_users=Entra._parse_guests_or_external_users(
+                                getattr(
+                                    policy.conditions.users,
+                                    "include_guests_or_external_users",
+                                    None,
+                                )
+                            ),
+                            excluded_guests_or_external_users=Entra._parse_guests_or_external_users(
+                                getattr(
+                                    policy.conditions.users,
+                                    "exclude_guests_or_external_users",
+                                    None,
+                                )
+                            ),
                         ),
                         client_app_types=[
                             ClientAppType(client_app_type)
@@ -351,6 +365,30 @@ class Entra(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return conditional_access_policies
+
+    @staticmethod
+    def _parse_guests_or_external_users(sdk_value):
+        """Parse a ConditionalAccessGuestsOrExternalUsers SDK object into a GuestsOrExternalUsers model.
+
+        Args:
+            sdk_value: The SDK object from the Microsoft Graph API, or None.
+
+        Returns:
+            A GuestsOrExternalUsers instance, or None if the SDK value is absent.
+        """
+        if sdk_value is None:
+            return None
+        raw_types = getattr(sdk_value, "guest_or_external_user_types", None)
+        if not raw_types:
+            return GuestsOrExternalUsers(guest_or_external_user_types=[])
+        guest_types = []
+        for type_str in str(raw_types).split(","):
+            type_str = type_str.strip()
+            try:
+                guest_types.append(GuestOrExternalUserType(type_str))
+            except ValueError:
+                pass
+        return GuestsOrExternalUsers(guest_or_external_user_types=guest_types)
 
     async def _get_admin_consent_policy(self):
         logger.info("Entra - Getting group settings...")
@@ -681,6 +719,26 @@ class ApplicationsConditions(BaseModel):
     included_user_actions: List[UserAction]
 
 
+class GuestOrExternalUserType(Enum):
+    """Guest or external user types for Conditional Access policies.
+
+    Reference: https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccessguestsorexternalusers
+    """
+
+    INTERNAL_GUEST = "internalGuest"
+    B2B_COLLABORATION_GUEST = "b2bCollaborationGuest"
+    B2B_COLLABORATION_MEMBER = "b2bCollaborationMember"
+    B2B_DIRECT_CONNECT_USER = "b2bDirectConnectUser"
+    OTHER_EXTERNAL_USER = "otherExternalUser"
+    SERVICE_PROVIDER = "serviceProvider"
+
+
+class GuestsOrExternalUsers(BaseModel):
+    """Guests or external users targeted by a Conditional Access policy."""
+
+    guest_or_external_user_types: List[GuestOrExternalUserType] = []
+
+
 class UsersConditions(BaseModel):
     included_groups: List[str]
     excluded_groups: List[str]
@@ -688,6 +746,8 @@ class UsersConditions(BaseModel):
     excluded_users: List[str]
     included_roles: List[str]
     excluded_roles: List[str]
+    included_guests_or_external_users: Optional[GuestsOrExternalUsers] = None
+    excluded_guests_or_external_users: Optional[GuestsOrExternalUsers] = None
 
 
 class RiskLevel(Enum):
