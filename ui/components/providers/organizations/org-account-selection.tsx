@@ -33,6 +33,7 @@ export function OrgAccountSelection({
     hasConnectionErrors,
     isTesting,
     isTestingView,
+    isSelectionLocked,
     organizationExternalId,
     selectedCount,
     selectedIdsForTree,
@@ -111,7 +112,7 @@ export function OrgAccountSelection({
           expandAll
           selectedIds={selectedIdsForTree}
           onSelectionChange={
-            isTestingView ? () => {} : handleTreeSelectionChange
+            isSelectionLocked ? () => {} : handleTreeSelectionChange
           }
           renderItem={(params) => (
             <OrgAccountTreeItem

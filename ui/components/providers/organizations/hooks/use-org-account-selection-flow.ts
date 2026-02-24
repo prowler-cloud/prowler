@@ -244,6 +244,7 @@ export function useOrgAccountSelectionFlow({
     connectionResults,
   );
   const showHeaderHelperText = !isTestingView || isApplying || isTesting;
+  const isSelectionLocked = isApplying || isTesting;
   const treeDataWithConnectionState = isTestingView
     ? buildTreeWithConnectionState(
         treeData,
@@ -468,6 +469,7 @@ export function useOrgAccountSelectionFlow({
     }
 
     const canRetry = hasConnectionErrors || Boolean(applyError);
+    const hasSelectedAccounts = selectedCount > 0;
 
     onFooterChange({
       showBack: true,
@@ -483,11 +485,12 @@ export function useOrgAccountSelectionFlow({
         setCreatedProviderIds(launchableProviderIds);
         onSkip();
       },
-      showAction: isApplying || isTesting || canRetry,
+      showAction:
+        isApplying || isTesting || canRetry || hasSelectedAccounts,
       actionLabel: "Test Connections",
-      actionDisabled: isApplying || isTesting || !canRetry,
+      actionDisabled: isApplying || isTesting || !hasSelectedAccounts,
       actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
-      onAction: canRetry
+      onAction: hasSelectedAccounts
         ? () => {
             startTestingActionRef.current();
           }
@@ -533,6 +536,7 @@ export function useOrgAccountSelectionFlow({
     hasConnectionErrors,
     isTesting,
     isTestingView,
+    isSelectionLocked,
     organizationExternalId,
     selectedCount,
     selectedIdsForTree,
