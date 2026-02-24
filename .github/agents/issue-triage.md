@@ -261,10 +261,10 @@ Load these skills from `AGENTS.md` before starting:
 #### Test Specification
 Write tests FIRST (TDD). The skills contain all testing conventions and patterns.
 
-| # | Test Scenario | Expected Result | Must FAIL today? |
-|---|--------------|-----------------|------------------|
-| 1 | {scenario}   | {expected}      | Yes / No         |
-| 2 | {scenario}   | {expected}      | Yes / No         |
+| Test Scenario | Expected Result | Must FAIL today? |
+|--------------|-----------------|------------------|
+| {scenario}   | {expected}      | Yes / No         |
+| {scenario}   | {expected}      | Yes / No         |
 
 **Test location**: `tests/providers/{provider}/services/{service}/{check_id}/`
 **Mock pattern**: {Moto `@mock_aws` | MagicMock on service client}
@@ -346,10 +346,10 @@ Load these skills from `AGENTS.md` before starting:
 #### Test Specification
 Write tests FIRST (TDD). The skills contain all testing conventions and patterns.
 
-| # | Test Scenario | Expected Result | Must FAIL today? |
-|---|--------------|-----------------|------------------|
-| 1 | {scenario}   | {expected}      | Yes / No         |
-| 2 | {scenario}   | {expected}      | Yes / No         |
+| Test Scenario | Expected Result | Must FAIL today? |
+|--------------|-----------------|------------------|
+| {scenario}   | {expected}      | Yes / No         |
+| {scenario}   | {expected}      | Yes / No         |
 
 **Test location**: `tests/{path}` (follow existing directory structure)
 
