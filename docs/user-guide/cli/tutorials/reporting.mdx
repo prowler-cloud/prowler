@@ -46,9 +46,15 @@ prowler <provider> -M csv json-ocsf json-asff -o <custom_report_directory>
 ```
 
 <Note>
-Both flags can be used simultaneously to provide a custom directory and filename. `console prowler <provider> -M csv json-ocsf json-asff \ -F <custom_report_name> -o <custom_report_directory>`
+Both flags can be used simultaneously to provide a custom directory and filename:
+
+```console
+prowler <provider> -M csv json-ocsf json-asff \
+  -F <custom_report_name> -o <custom_report_directory>
+```
 
 </Note>
+
 ## Output timestamp format
 
 By default, the timestamp format of the output files is ISO 8601. This can be changed with the flag `--unix-timestamp` generating the timestamp fields in pure unix timestamp format.
@@ -368,13 +374,14 @@ Each finding is a `json` object within a list.
 The following image is an example of the HTML output:
 
 <img src="/images/cli/reporting/html-output.png" />
+
 ## V4 Deprecations
 
 Some deprecations have been made to unify formats and improve outputs.
 
 ### JSON
 
-Native JSON format has been deprecated in favor of JSON [OCSF](https://schema.ocsf.io/) `v1.1.0`.
+Native JSON format has been deprecated in favor of JSON [OCSF](https://schema.ocsf.io/) `v1.3.0`.
 
 The following is the mapping between the native JSON and the Detection Finding from the JSON-OCSF:
 
