@@ -216,8 +216,8 @@ def get_prowler_provider_kwargs(
             "filter_accounts": [provider.uid],
         }
     elif provider.provider == Provider.ProviderChoices.OPENSTACK.value:
-        # No extra kwargs needed: clouds_yaml_content and clouds_yaml_cloud from the
-        # secret are sufficient. Provider ID validation is handled in test_connection().
+        # clouds_yaml_content, clouds_yaml_cloud and provider_id are validated
+        # in the provider itself, so it's not needed here.
         pass
 
     if mutelist_processor:
