@@ -13,6 +13,41 @@ import {
 } from "@/lib/provider-filters";
 import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
+
+const ORGANIZATION_SCAN_CONCURRENCY_LIMIT = 5;
+
+export async function runWithConcurrencyLimit<T, R>(
+  items: T[],
+  concurrencyLimit: number,
+  worker: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const normalizedConcurrency = Math.max(1, Math.floor(concurrencyLimit));
+  const results = new Array<R>(items.length);
+  let currentIndex = 0;
+
+  const runWorker = async () => {
+    while (currentIndex < items.length) {
+      const assignedIndex = currentIndex;
+      currentIndex += 1;
+      results[assignedIndex] = await worker(
+        items[assignedIndex],
+        assignedIndex,
+      );
+    }
+  };
+
+  const workers = Array.from(
+    { length: Math.min(normalizedConcurrency, items.length) },
+    () => runWorker(),
+  );
+
+  await Promise.all(workers);
+  return results;
+}
 export const getScans = async ({
   page = 1,
   query = "",
@@ -163,6 +198,73 @@ export const scheduleDaily = async (formData: FormData) => {
   } catch (error) {
     return handleApiError(error);
   }
+};
+
+export const launchOrganizationScans = async (
+  providerIds: string[],
+  scheduleOption: "daily" | "single",
+) => {
+  const validProviderIds = providerIds.filter(Boolean);
+  if (validProviderIds.length === 0) {
+    return {
+      successCount: 0,
+      failureCount: 0,
+      totalCount: 0,
+    };
+  }
+
+  const launchResults = await runWithConcurrencyLimit(
+    validProviderIds,
+    ORGANIZATION_SCAN_CONCURRENCY_LIMIT,
+    async (providerId) => {
+      try {
+        const formData = new FormData();
+        formData.set("providerId", providerId);
+
+        const result =
+          scheduleOption === "daily"
+            ? await scheduleDaily(formData)
+            : await scanOnDemand(formData);
+
+        return {
+          providerId,
+          ok: !result?.error,
+          error: result?.error ? String(result.error) : null,
+        };
+      } catch (error) {
+        return {
+          providerId,
+          ok: false,
+          error:
+            error instanceof Error ? error.message : "Failed to launch scan.",
+        };
+      }
+    },
+  );
+
+  const summary = launchResults.reduce(
+    (acc, item) => {
+      if (item.ok) {
+        acc.successCount += 1;
+        return acc;
+      }
+
+      acc.failureCount += 1;
+      acc.errors.push({
+        providerId: item.providerId,
+        error: item.error || "Failed to launch scan.",
+      });
+      return acc;
+    },
+    {
+      successCount: 0,
+      failureCount: 0,
+      totalCount: validProviderIds.length,
+      errors: [] as Array<{ providerId: string; error: string }>,
+    },
+  );
+
+  return summary;
 };
 
 export const updateScan = async (formData: FormData) => {
