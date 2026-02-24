@@ -268,7 +268,7 @@ Monitor the progress of an ingestion job.
 ```bash
 curl -X GET \
   -H "Authorization: Api-Key ${PROWLER_API_KEY}" \
-  -H "Content-Type: application/vnd.api+json" \
+  -H "Accept: application/vnd.api+json" \
   https://api.prowler.com/api/v1/ingestions/3650fef9-8e5f-4808-a95f-74f0afae8499
 ```
 
@@ -320,7 +320,7 @@ Retrieve a list of ingestion jobs for the tenant.
 ```bash
 curl -X GET \
   -H "Authorization: Api-Key ${PROWLER_API_KEY}" \
-  -H "Content-Type: application/vnd.api+json" \
+  -H "Accept: application/vnd.api+json" \
   "https://api.prowler.com/api/v1/ingestions?filter[status]=completed&page[size]=10"
 ```
 
@@ -334,7 +334,7 @@ Retrieve error details for a specific ingestion job.
 ```bash
 curl -X GET \
   -H "Authorization: Api-Key ${PROWLER_API_KEY}" \
-  -H "Content-Type: application/vnd.api+json" \
+  -H "Accept: application/vnd.api+json" \
   https://api.prowler.com/api/v1/ingestions/3650fef9-8e5f-4808-a95f-74f0afae8499/errors
 ```
 
@@ -374,7 +374,6 @@ Prowler must be installed in the CI/CD environment before running scans. Refer t
 prowler_scan:
   script:
     - pip install prowler
-    - export PROWLER_API_KEY=$PROWLER_API_KEY
     - prowler aws --services s3,iam --export-ocsf
   variables:
     PROWLER_API_KEY: $PROWLER_API_KEY
