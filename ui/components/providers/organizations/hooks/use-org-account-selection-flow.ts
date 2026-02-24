@@ -485,8 +485,7 @@ export function useOrgAccountSelectionFlow({
         setCreatedProviderIds(launchableProviderIds);
         onSkip();
       },
-      showAction:
-        isApplying || isTesting || canRetry || hasSelectedAccounts,
+      showAction: isApplying || isTesting || canRetry || hasSelectedAccounts,
       actionLabel: "Test Connections",
       actionDisabled: isApplying || isTesting || !hasSelectedAccounts,
       actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
