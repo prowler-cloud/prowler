@@ -85,7 +85,9 @@ class ImageProvider(Provider):
 
         self.images = images if images is not None else []
         self.image_list_file = image_list_file
-        self.scanners = scanners if scanners is not None else ["vuln", "secret"]
+        self.scanners = (
+            scanners if scanners is not None else ["vuln", "secret", "misconfig"]
+        )
         self.image_config_scanners = (
             image_config_scanners if image_config_scanners is not None else []
         )
@@ -318,6 +320,25 @@ class ImageProvider(Provider):
         if len(parts) >= 2 and ("." in parts[0] or ":" in parts[0]):
             return parts[0]
         return None
+
+    @staticmethod
+    def _is_registry_url(image_uid: str) -> bool:
+        """Determine whether an image UID is a registry URL (namespace only).
+
+        Bare hostnames like "714274078102.dkr.ecr.eu-west-1.amazonaws.com"
+        or "myregistry.com:5000" are registry URLs (dots in host, no slash).
+        Image references like "alpine:3.18" or "nginx" are not.
+        """
+        if "/" not in image_uid:
+            host_part = image_uid.split(":")[0]
+            if "." in host_part:
+                return True
+
+        registry_host = ImageProvider._extract_registry(image_uid)
+        if not registry_host:
+            return False
+        repo_and_tag = image_uid[len(registry_host) + 1 :]
+        return "/" not in repo_and_tag and ":" not in repo_and_tag
 
     def cleanup(self) -> None:
         """Clean up any resources after scanning."""

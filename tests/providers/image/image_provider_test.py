@@ -53,7 +53,7 @@ class TestImageProvider:
         assert provider._type == "image"
         assert provider.type == "image"
         assert provider.images == ["alpine:3.18"]
-        assert provider.scanners == ["vuln", "secret"]
+        assert provider.scanners == ["vuln", "secret", "misconfig"]
         assert provider.image_config_scanners == []
         assert provider.trivy_severity == []
         assert provider.ignore_unfixed is False
