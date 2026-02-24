@@ -5,7 +5,7 @@ import api.db_utils
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0080_backfill_attack_paths_graph_data_ready"),
+        ("api", "0082_backfill_finding_group_summaries"),
     ]
 
     operations = [
