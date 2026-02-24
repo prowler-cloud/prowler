@@ -277,3 +277,95 @@ def _serialize_properties(properties: dict[str, Any]) -> dict[str, Any]:
         return value
 
     return {key: _serialize_value(val) for key, val in properties.items()}
+
+
+# Text serialization
+
+
+def serialize_graph_as_text(graph: dict[str, Any]) -> str:
+    """
+    Convert a serialized graph dict into a compact text format for LLM consumption.
+
+    Follows the incident-encoding pattern (nodes with context + sequential edges)
+    which research shows is optimal for LLM path-reasoning tasks.
+    """
+    nodes = graph.get("nodes", [])
+    relationships = graph.get("relationships", [])
+
+    node_lookup = {node["id"]: node for node in nodes}
+
+    lines = [f"## Nodes ({len(nodes)})"]
+    for node in nodes:
+        lines.append(f"- {_format_node_signature(node)}")
+
+    lines.append("")
+    lines.append(f"## Relationships ({len(relationships)})")
+    for rel in relationships:
+        source = node_lookup.get(rel["source"])
+        target = node_lookup.get(rel["target"])
+        source_sig = (
+            _format_node_reference(source) if source else f'? "{rel["source"]}"'
+        )
+        target_sig = (
+            _format_node_reference(target) if target else f'? "{rel["target"]}"'
+        )
+
+        rel_props = _format_properties(rel.get("properties", {}))
+        rel_label = f"{rel['label']} {rel_props}" if rel_props else rel["label"]
+
+        lines.append(f"- {source_sig} -[{rel_label}]-> {target_sig}")
+
+    lines.append("")
+    lines.append("## Summary")
+    lines.append(f"- Total nodes: {graph.get('total_nodes', len(nodes))}")
+    lines.append(f"- Truncated: {str(graph.get('truncated', False)).lower()}")
+
+    return "\n".join(lines)
+
+
+def _format_node_signature(node: dict[str, Any]) -> str:
+    properties = _format_properties(node.get("properties", {}))
+    reference = _format_node_reference(node)
+
+    if properties:
+        return f"{reference} {properties}"
+
+    return reference
+
+
+def _format_node_reference(node: dict[str, Any]) -> str:
+    labels = ", ".join(node.get("labels", []))
+    return f'{labels} "{node["id"]}"'
+
+
+def _format_properties(properties: dict[str, Any]) -> str:
+    filtered = {
+        k: v for k, v in properties.items() if k not in ("provider_id", "lastupdated")
+    }
+
+    if not filtered:
+        return ""
+
+    parts = [f"{k}: {_format_value(v)}" for k, v in filtered.items()]
+    return f"({', '.join(parts)})"
+
+
+def _format_value(value: Any) -> str:
+    if isinstance(value, str):
+        return f'"{value}"'
+
+    if isinstance(value, bool):
+        return str(value).lower()
+
+    if isinstance(value, (list, tuple)):
+        inner = ", ".join(_format_value(v) for v in value)
+        return f"[{inner}]"
+
+    if isinstance(value, dict):
+        inner = ", ".join(f"{k}: {_format_value(v)}" for k, v in value.items())
+        return f"{{{inner}}}"
+
+    if value is None:
+        return "null"
+
+    return str(value)

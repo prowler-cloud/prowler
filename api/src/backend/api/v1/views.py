@@ -2448,6 +2448,26 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_SCANS]
 
+    _VALID_OUTPUT_FORMATS = ("json", "text")
+    _output_format_parameter = OpenApiParameter(
+        name="output",
+        description="Response format. 'json' returns JSON:API (default), 'text' returns a compact plain-text format optimized for LLM consumption.",
+        required=False,
+        type={"type": "string", "enum": list(_VALID_OUTPUT_FORMATS), "default": "json"},
+        location=OpenApiParameter.QUERY,
+    )
+
+    @staticmethod
+    def _validate_output_format(request) -> str:
+        output_format = request.query_params.get("output", "json")
+        if output_format not in AttackPathsScanViewSet._VALID_OUTPUT_FORMATS:
+            raise ValidationError(
+                {
+                    "output": f"Invalid output format '{output_format}'. Must be one of: {', '.join(AttackPathsScanViewSet._VALID_OUTPUT_FORMATS)}"
+                }
+            )
+        return output_format
+
     def set_required_permissions(self):
         if self.request.method in SAFE_METHODS:
             self.required_permissions = []
@@ -2525,6 +2545,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         serializer = AttackPathsQuerySerializer(queries, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(parameters=[_output_format_parameter])
     @action(
         detail=True,
         methods=["post"],
@@ -2532,6 +2553,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         url_name="queries-run",
     )
     def run_attack_paths_query(self, request, pk=None):
+        output_format = self._validate_output_format(request)
         attack_paths_scan = self.get_object()
 
         if not attack_paths_scan.graph_data_ready:
@@ -2577,9 +2599,14 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         if not graph.get("nodes"):
             status_code = status.HTTP_404_NOT_FOUND
 
+        if output_format == "text":
+            text = attack_paths_views_helpers.serialize_graph_as_text(graph)
+            return Response(text, status=status_code, content_type="text/plain")
+
         response_serializer = AttackPathsQueryResultSerializer(graph)
         return Response(response_serializer.data, status=status_code)
 
+    @extend_schema(parameters=[_output_format_parameter])
     @action(
         detail=True,
         methods=["post"],
@@ -2587,6 +2614,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         url_name="queries-custom",
     )
     def run_custom_attack_paths_query(self, request, pk=None):
+        output_format = self._validate_output_format(request)
         attack_paths_scan = self.get_object()
 
         if not attack_paths_scan.graph_data_ready:
@@ -2617,6 +2645,10 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         status_code = status.HTTP_200_OK
         if not graph.get("nodes"):
             status_code = status.HTTP_404_NOT_FOUND
+
+        if output_format == "text":
+            text = attack_paths_views_helpers.serialize_graph_as_text(graph)
+            return Response(text, status=status_code, content_type="text/plain")
 
         response_serializer = AttackPathsQueryResultSerializer(graph)
         return Response(response_serializer.data, status=status_code)
