@@ -1237,6 +1237,7 @@
       "Id": "5.2.2.6",
       "Description": "Microsoft Entra ID Protection user risk policies detect the probability that a user account has been compromised. **Note:** While Identity Protection also provides two risk policies with limited conditions, Microsoft highly recommends setting up risk-based policies in Conditional Access as opposed to the \"legacy method\" for the following benefits:- Enhanced diagnostic data- Report-only mode integration- Graph API support- Use more Conditional Access attributes like sign-in frequency in the policy",
       "Checks": [
+        "entra_conditional_access_policy_require_password_change_high_risk_users",
         "entra_identity_protection_user_risk_enabled"
       ],
       "Attributes": [

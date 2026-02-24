@@ -388,6 +388,7 @@
       "Description": "Enable Identity Protection user risk policies",
       "Checks": [
         "defenderxdr_endpoint_privileged_user_exposed_credentials",
+        "entra_conditional_access_policy_require_password_change_high_risk_users",
         "entra_identity_protection_user_risk_enabled"
       ],
       "Attributes": [
