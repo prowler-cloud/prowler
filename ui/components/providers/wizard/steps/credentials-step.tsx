@@ -175,6 +175,7 @@ export function CredentialsStep({
     hideActions: true,
     onLoadingChange: setIsFormLoading,
     onValidityChange: setIsFormValid,
+    validationMode: "onChange" as const,
   };
 
   if (formType === "credentials") {

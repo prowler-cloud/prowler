@@ -24,6 +24,7 @@ type UseCredentialsFormProps = {
   via?: string | null;
   onSuccess?: () => void;
   onBack?: () => void;
+  validationMode?: "onSubmit" | "onChange";
 };
 
 export const useCredentialsForm = ({
@@ -35,6 +36,7 @@ export const useCredentialsForm = ({
   via: viaOverride,
   onSuccess,
   onBack,
+  validationMode = "onChange",
 }: UseCredentialsFormProps) => {
   const router = useRouter();
   const searchParamsObj = useSearchParams();
@@ -208,7 +210,7 @@ export const useCredentialsForm = ({
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: defaultValues,
-    mode: "onChange",
+    mode: validationMode,
     reValidateMode: "onChange",
     criteriaMode: "all", // Show all errors for each field
   });

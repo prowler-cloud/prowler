@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
+import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 
-import { getOrganizationsStepperOffset } from "./provider-wizard-modal.utils";
+import {
+  getOrganizationsStepperOffset,
+  getProviderWizardModalTitle,
+} from "./provider-wizard-modal.utils";
 
 describe("getOrganizationsStepperOffset", () => {
   it("keeps step 1 active during organization details", () => {
@@ -30,5 +34,19 @@ describe("getOrganizationsStepperOffset", () => {
     );
 
     expect(offset).toBe(1);
+  });
+});
+
+describe("getProviderWizardModalTitle", () => {
+  it("returns add title for add mode", () => {
+    const title = getProviderWizardModalTitle(PROVIDER_WIZARD_MODE.ADD);
+
+    expect(title).toBe("Adding A Cloud Provider");
+  });
+
+  it("returns update title for update mode", () => {
+    const title = getProviderWizardModalTitle(PROVIDER_WIZARD_MODE.UPDATE);
+
+    expect(title).toBe("Update Provider Credentials");
   });
 });

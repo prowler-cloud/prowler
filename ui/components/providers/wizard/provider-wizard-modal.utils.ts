@@ -4,6 +4,10 @@ import {
   OrgSetupPhase,
   OrgWizardStep,
 } from "@/types/organizations";
+import {
+  PROVIDER_WIZARD_MODE,
+  ProviderWizardMode,
+} from "@/types/provider-wizard";
 
 export function getOrganizationsStepperOffset(
   currentStep: OrgWizardStep,
@@ -14,4 +18,12 @@ export function getOrganizationsStepperOffset(
   }
 
   return 1;
+}
+
+export function getProviderWizardModalTitle(mode: ProviderWizardMode) {
+  if (mode === PROVIDER_WIZARD_MODE.UPDATE) {
+    return "Update Provider Credentials";
+  }
+
+  return "Adding A Cloud Provider";
 }

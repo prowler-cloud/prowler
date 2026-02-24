@@ -64,6 +64,7 @@ type BaseCredentialsFormProps = {
   onValidityChange?: (isValid: boolean) => void;
   submitButtonText?: string;
   showBackButton?: boolean;
+  validationMode?: "onSubmit" | "onChange";
 };
 
 export const BaseCredentialsForm = ({
@@ -81,6 +82,7 @@ export const BaseCredentialsForm = ({
   onValidityChange,
   submitButtonText = "Next",
   showBackButton = true,
+  validationMode,
 }: BaseCredentialsFormProps) => {
   const {
     form,
@@ -99,6 +101,7 @@ export const BaseCredentialsForm = ({
     via,
     onSuccess,
     onBack,
+    validationMode,
   });
 
   useEffect(() => {
