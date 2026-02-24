@@ -3,13 +3,16 @@ import glob
 import json
 import logging
 import os
+
 from collections import defaultdict
+from enum import StrEnum
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from urllib.parse import urljoin
 
 import sentry_sdk
+
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -2448,25 +2451,35 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_SCANS]
 
-    _VALID_OUTPUT_FORMATS = ("json", "text")
+    class OutputFormat(StrEnum):
+        JSON = "json"
+        TEXT = "text"
+
     _output_format_parameter = OpenApiParameter(
         name="output",
         description="Response format. 'json' returns JSON:API (default), 'text' returns a compact plain-text format optimized for LLM consumption.",
         required=False,
-        type={"type": "string", "enum": list(_VALID_OUTPUT_FORMATS), "default": "json"},
+        type={
+            "type": "string",
+            "enum": [f.value for f in OutputFormat],
+            "default": OutputFormat.JSON,
+        },
         location=OpenApiParameter.QUERY,
     )
 
     @staticmethod
-    def _validate_output_format(request) -> str:
-        output_format = request.query_params.get("output", "json")
-        if output_format not in AttackPathsScanViewSet._VALID_OUTPUT_FORMATS:
+    def _validate_output_format(request) -> "AttackPathsScanViewSet.OutputFormat":
+        raw = request.query_params.get(
+            "output", AttackPathsScanViewSet.OutputFormat.JSON
+        )
+        try:
+            return AttackPathsScanViewSet.OutputFormat(raw)
+        except ValueError:
             raise ValidationError(
                 {
-                    "output": f"Invalid output format '{output_format}'. Must be one of: {', '.join(AttackPathsScanViewSet._VALID_OUTPUT_FORMATS)}"
+                    "output": f"Invalid output format '{raw}'. Must be one of: {', '.join(AttackPathsScanViewSet.OutputFormat)}"
                 }
             )
-        return output_format
 
     def set_required_permissions(self):
         if self.request.method in SAFE_METHODS:
@@ -2599,7 +2612,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         if not graph.get("nodes"):
             status_code = status.HTTP_404_NOT_FOUND
 
-        if output_format == "text":
+        if output_format is self.OutputFormat.TEXT:
             text = attack_paths_views_helpers.serialize_graph_as_text(graph)
             return Response(text, status=status_code, content_type="text/plain")
 
@@ -2646,7 +2659,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         if not graph.get("nodes"):
             status_code = status.HTTP_404_NOT_FOUND
 
-        if output_format == "text":
+        if output_format is self.OutputFormat.TEXT:
             text = attack_paths_views_helpers.serialize_graph_as_text(graph)
             return Response(text, status=status_code, content_type="text/plain")
 
