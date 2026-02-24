@@ -53,7 +53,7 @@ On the profile page, find the "SAML SSO Integration" card and click "Enable" to 
 
 ![Enable SAML Integration](/images/prowler-app/saml/saml-step-2.png)
 
-Next section will explain how to fill the IdP configuration based on your Identity Provider.
+The next section explains how to configure the IdP settings based on the selected Identity Provider.
 
 #### Step 3: Configure the Identity Provider (IdP)
 Choose a Method:
@@ -87,7 +87,7 @@ Choose a Method:
         |----------------|---------------------------------------------------------------------------------------------------------|----------|
         | `firstName`    | The user's first name.                                                                                  | Yes      |
         | `lastName`     | The user's last name.                                                                                   | Yes      |
-        | `userType`     | The Prowler role to be assigned to the user (e.g., `admin`, `auditor`). If a role with that name already exists, it will be used; if it does not exist, a new role with that name will be created without permissions. If `userType` is not defined, the user is assigned the `no_permissions` role. Role permissions can be edited in the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac). | No       |
+        | `userType`     | Determines which Prowler role the user receives (e.g., `admin`, `auditor`). If a role with that name already exists, the user receives it automatically; if it does not exist, Prowler App creates a new role with that name without permissions. If `userType` is not defined, the user is assigned the `no_permissions` role. Role permissions can be edited in the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac). | No       |
         | `companyName`  | The user's company name. This is automatically populated if the IdP sends an `organization` attribute. | No       |
 
         <Info>

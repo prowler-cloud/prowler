@@ -380,6 +380,25 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.region
 
+            elif provider.type == "image":
+                output_data["auth_method"] = provider.auth_method
+                output_data["account_uid"] = "image"
+                output_data["account_name"] = "image"
+                image_name = getattr(check_output, "resource_name", "")
+                image_sha = getattr(check_output, "image_sha", "")
+                output_data["resource_name"] = image_name
+                output_data["resource_uid"] = (
+                    f"{image_name}:{image_sha}" if image_sha else image_name
+                )
+                output_data["region"] = getattr(check_output, "region", "container")
+                output_data["package_name"] = getattr(check_output, "package_name", "")
+                output_data["installed_version"] = getattr(
+                    check_output, "installed_version", ""
+                )
+                output_data["fixed_version"] = getattr(
+                    check_output, "fixed_version", ""
+                )
+
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are findings without resource_name

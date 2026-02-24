@@ -143,6 +143,36 @@ NIS2_SECTION_TITLES = {
     "12": "12. Asset Management",
 }
 
+# CSA CCM sections (Cloud Controls Matrix v4.0 domains)
+CSA_CCM_SECTIONS = [
+    "Application & Interface Security",
+    "Audit & Assurance",
+    "Business Continuity Management and Operational Resilience",
+    "Change Control and Configuration Management",
+    "Cryptography, Encryption & Key Management",
+    "Data Security and Privacy Lifecycle Management",
+    "Datacenter Security",
+    "Governance, Risk and Compliance",
+    "Identity & Access Management",
+    "Infrastructure & Virtualization Security",
+    "Interoperability & Portability",
+    "Logging and Monitoring",
+    "Security Incident Management, E-Discovery, & Cloud Forensics",
+    "Threat & Vulnerability Management",
+    "Universal Endpoint Management",
+]
+
+# Short names for CSA CCM sections (used in chart labels)
+CSA_CCM_SECTION_SHORT_NAMES = {
+    "Application & Interface Security": "App & Interface Security",
+    "Business Continuity Management and Operational Resilience": "Business Continuity",
+    "Change Control and Configuration Management": "Change Control & Config",
+    "Cryptography, Encryption & Key Management": "Cryptography & Encryption",
+    "Data Security and Privacy Lifecycle Management": "Data Security & Privacy",
+    "Security Incident Management, E-Discovery, & Cloud Forensics": "Incident Mgmt & Forensics",
+    "Infrastructure & Virtualization Security": "Infrastructure & Virtualization",
+}
+
 # Table column widths
 COL_WIDTH_SMALL = 0.4 * inch
 COL_WIDTH_MEDIUM = 0.9 * inch
@@ -261,6 +291,28 @@ FRAMEWORK_REGISTRY: dict[str, FrameworkConfig] = {
         has_niveles=False,
         has_weight=False,
     ),
+    "csa_ccm": FrameworkConfig(
+        name="csa_ccm",
+        display_name="CSA Cloud Controls Matrix (CCM)",
+        logo_filename=None,
+        primary_color=COLOR_BLUE,
+        secondary_color=COLOR_LIGHT_BLUE,
+        bg_color=COLOR_BG_BLUE,
+        attribute_fields=[
+            "Section",
+            "CCMLite",
+            "IaaS",
+            "PaaS",
+            "SaaS",
+            "ScopeApplicability",
+        ],
+        sections=CSA_CCM_SECTIONS,
+        language="en",
+        has_risk_levels=False,
+        has_dimensions=False,
+        has_niveles=False,
+        has_weight=False,
+    ),
 }
 
 
@@ -282,5 +334,7 @@ def get_framework_config(compliance_id: str) -> FrameworkConfig | None:
         return FRAMEWORK_REGISTRY["ens"]
     if "nis2" in compliance_lower:
         return FRAMEWORK_REGISTRY["nis2"]
+    if "csa" in compliance_lower or "ccm" in compliance_lower:
+        return FRAMEWORK_REGISTRY["csa_ccm"]
 
     return None

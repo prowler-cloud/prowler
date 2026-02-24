@@ -17,7 +17,7 @@
   "Risk": "Absent **in-transit encryption**, traffic between apps and Redis or between nodes can be **eavesdropped** or **tampered**.\n\nThis exposes keys, tokens, and cached sensitive data, enables **MITM** and session hijacking, and can corrupt replication, harming **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ElastiCache/in-transit-and-at-rest-encryption.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/ElastiCache/in-transit-and-at-rest-encryption.html",
     "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/in-transit-encryption-enable.html",
     "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/in-transit-encryption.html"
   ],

@@ -1,231 +1,447 @@
 ---
-title: 'GitHub Authentication in Prowler'
+title: "GitHub Authentication in Prowler"
 ---
 
-Prowler supports multiple methods to [authenticate with GitHub](https://docs.github.com/en/rest/authentication/authenticating-to-the-rest-api). These include:
+Prowler for GitHub offers multiple authentication types across Prowler Cloud and Prowler CLI.
 
-- [Personal Access Token (PAT)](/user-guide/providers/github/authentication#personal-access-token-pat)
-- [OAuth App Token](/user-guide/providers/github/authentication#oauth-app-token)
-- [GitHub App Credentials](/user-guide/providers/github/authentication#github-app-credentials)
+## Common Setup
 
-This flexibility enables scanning and analysis of GitHub accounts, including repositories, organizations, and applications, using the method that best suits the use case.
+### Authentication Methods Overview
 
-## Personal Access Token (PAT)
+Prowler offers three authentication methods. Fine-Grained Personal Access Tokens are recommended for most use cases.
 
-Personal Access Tokens provide the simplest GitHub authentication method, but it can only access resources owned by a single user or organization.
+| Method | Best For | Key Benefit |
+|--------|----------|-------------|
+| [**Fine-Grained Personal Access Token**](#fine-grained-personal-access-token-recommended) | Individual users, quick setup | Simple, user-scoped access |
+| [**GitHub App**](#github-app-credentials) | Organizations, automation, CI/CD | Organization-scoped, no personal account dependency |
+| [**OAuth App Token**](#oauth-app-token) | Delegated user authorization | User-consented access flows |
 
-<Warning>
-**Classic Tokens Deprecated**
+<Note>
+**Which should I choose?**
 
-GitHub has deprecated Personal Access Tokens (classic) in favor of fine-grained Personal Access Tokens. We recommend using fine-grained tokens as they provide better security through more granular permissions and resource-specific access control.
+- **Personal scanning or quick setup**: Use Fine-Grained PAT
+- **Organization-wide scanning or CI/CD pipelines**: Use GitHub App (recommended for production)
+- **Building apps with user authorization**: Use OAuth App
+</Note>
 
-</Warning>
-#### **Option 1: Create a Fine-Grained Personal Access Token (Recommended)**
-
-1. **Navigate to GitHub Settings**
-    - Open [GitHub](https://github.com) and sign in
-    - Click the profile picture in the top right corner
-    - Select "Settings" from the dropdown menu
-
-2. **Access Developer Settings**
-    - Scroll down the left sidebar
-    - Click "Developer settings"
-
-3. **Generate Fine-Grained Token**
-    - Click "Personal access tokens"
-    - Select "Fine-grained tokens"
-    - Click "Generate new token"
-
-4. **Configure Token Settings**
-    - **Token name**: Give your token a descriptive name (e.g., "Prowler Security Scanner")
-    - **Resource owner**: Select the account that owns the resources to scan — either a personal account or a specific organization
-    - **Expiration**: Set an appropriate expiration date (recommended: 90 days or less)
-    - **Repository access**: Choose "All repositories" or "Only select repositories" based on your needs
-
-    <Note>
-    **Public repositories**
-
-        Even if you select 'Only select repositories', the token will have access to the public repositories that you own or are a member of.
-
-    </Note>
-5. **Configure Token Permissions**
-    To enable Prowler functionality, configure the following permissions:
-
-    - **Repository permissions:**
-        - **Administration**: Read-only access
-        - **Contents**: Read-only access
-        - **Metadata**: Read-only access
-        - **Pull requests**: Read-only access
-
-    - **Organization permissions** (available when an organization is selected as Resource Owner):
-        - **Administration**: Read-only access
-        - **Members**: Read-only access
-
-    - **Account permissions** (available when a personal account is selected as Resource Owner):
-        - **Email addresses**: Read-only access
-
-6. **Copy and Store the Token**
-    - Copy the generated token immediately (GitHub displays tokens only once)
-    - Store tokens securely using environment variables
-
-![GitHub Personal Access Token Permissions](/images/providers/github-pat-permissions.png)
-
-#### **Option 2: Create a Classic Personal Access Token (Not Recommended)**
 
 <Warning>
-**Security Risk**
+**Classic Personal Access Tokens**
 
-Classic tokens provide broad permissions that may exceed what Prowler actually needs. Use fine-grained tokens instead for better security.
+GitHub has deprecated classic Personal Access Tokens. Use Fine-Grained Tokens instead - they provide granular permission control and better security.
 
 </Warning>
-1. **Navigate to GitHub Settings**
-    - Open [GitHub](https://github.com) and sign in
-    - Click the profile picture in the top right corner
-    - Select "Settings" from the dropdown menu
 
-2. **Access Developer Settings**
-    - Scroll down the left sidebar
-    - Click "Developer settings"
+### Required Permissions
 
-3. **Generate Classic Token**
-    - Click "Personal access tokens"
-    - Select "Tokens (classic)"
-    - Click "Generate new token"
+Required permissions depend on the scan scope: user repositories, organization repositories, or both.
 
-4. **Configure Token Permissions**
-    To enable Prowler functionality, configure the following scopes:
-    - `repo`: Full control of private repositories (includes `repo:status` and `repo:contents`)
-    - `read:org`: Read organization and team membership
-    - `read:user`: Read user profile data
-    - `security_events`: Access security events (secret scanning and Dependabot alerts)
-    - `read:enterprise`: Read enterprise data (if using GitHub Enterprise)
+#### Repository Permissions
 
-5. **Copy and Store the Token**
-    - Copy the generated token immediately (GitHub displays tokens only once)
-    - Store tokens securely using environment variables
+Required for scanning repository security settings:
 
-## OAuth App Token
+| Permission | Access Level | Purpose | Checks Enabled |
+|------------|-------------|---------|----------------|
+| **Administration** | Read | Branch protection, security settings | All branch protection checks, secret scanning status |
+| **Contents** | Read | File existence checks | `repository_public_has_securitymd_file`, `repository_has_codeowners_file` |
+| **Metadata** | Read | Basic repository information | All checks (automatically granted) |
+| **Dependabot alerts** | Read | Dependency vulnerability scanning | `repository_dependency_scanning_enabled` |
 
-OAuth Apps enable applications to act on behalf of users with explicit consent.
+<Note>
+**Pull requests permission is optional.** It's only needed if you want to audit PR-specific settings beyond what branch protection provides.
+</Note>
 
-### Create an OAuth App Token
+#### Organization Permissions
 
-1. **Navigate to Developer Settings**
-    - Open GitHub Settings → Developer settings
-    - Click "OAuth Apps"
+Required for scanning organization-level security settings:
 
-2. **Register New Application**
-    - Click "New OAuth App"
-    - Complete the required fields:
-        - **Application name**: Descriptive application name
-        - **Homepage URL**: Application homepage
-        - **Authorization callback URL**: User redirection URL after authorization
+<Note>
+**For Fine-Grained PATs:** Organization permissions only appear when the **Resource Owner** is set to an organization (not your personal account).
 
-3. **Obtain Authorization Code**
-    - Request authorization code (replace `{app_id}` with the application ID):
+**For GitHub Apps:** Organization permissions are configured during app creation and apply to all organizations where the app is installed.
+</Note>
+
+| Permission | Access Level | Purpose | Checks Enabled |
+|------------|-------------|---------|----------------|
+| **Administration** | Read | Organization security policies | `organization_members_mfa_required`, `organization_repository_creation_limited`, `organization_default_repository_permission_strict` |
+| **Members** | Read | Member access reviews | Organization membership auditing |
+
+#### Account Permissions (Fine-Grained PAT only)
+
+| Permission | Access Level | Purpose |
+|------------|-------------|---------|
+| **Email addresses** | Read | User email verification |
+
+<Note>
+GitHub Apps don't have account-level permissions - they operate at the organization/repository level.
+</Note>
+
+### Permissions and Check Coverage
+
+With the **Read-only permissions** listed above, Prowler can run:
+
+| Check Category | Coverage | Notes |
+|----------------|----------|-------|
+| Branch protection checks (12 checks) | ✅ Full | Signed commits, status checks, PR reviews, etc. |
+| Repository security checks | ✅ Full | Secret scanning, Dependabot, SECURITY.md, CODEOWNERS |
+| Organization checks (3 checks) | ✅ Full | MFA, repo creation policies, default permissions |
+| Compliance frameworks | ✅ Full | CIS GitHub Benchmark and others |
+| Merge settings (`delete_branch_on_merge`) | ⚠️ MANUAL | Requires write permission (see below) |
+
+**Check that returns `MANUAL` status with Read-only permissions:**
+- `repository_branch_delete_on_merge_enabled`
+
+<Warning>
+**About Write Permissions**
+
+The `delete_branch_on_merge` setting is only returned by the GitHub API when the token has **Administration: Read and write** permission.
+
+**Granting Write permissions is not recommended under any circumstances:**
+- Token can modify repository settings
+- Token can change branch protection rules
+- Violates the principle of least privilege
+
+**Recommendation:** Accept `MANUAL` status for this single check rather than granting write access. This limitation applies equally to Fine-Grained PATs and GitHub Apps.
+</Warning>
+
+### Step-by-Step Permission Assignment
+
+#### Fine-Grained Personal Access Token (Recommended for Individual Use)
+
+**Benefits of Fine-Grained Tokens**
+
+Fine-Grained Personal Access Tokens are ideal for:
+- **Individual users** scanning their own repositories
+- **Quick setup** without app registration overhead
+- **Temporary access** with mandatory expiration
+- **Repository-specific access** when you only need to scan certain repos
+
+**Create a Fine-Grained Token:**
+
+1. Navigate to **GitHub Settings** > **Developer settings**.
+
+2. Click **Personal access tokens** > **Fine-grained tokens** > **Generate new token**.
+
+3. Configure basic settings:
+   - **Token name**: Descriptive name (e.g., "Prowler Security Scanner")
+   - **Expiration**: 90 days or less (recommended)
+   - **Resource owner**:
+     - Personal account (for user repositories)
+     - Organization name (for organization scanning - requires admin approval)
+   - **Repository access**: "All repositories" (recommended)
+
+4. Configure **Repository permissions**:
+   - Administration: Read
+   - Contents: Read
+   - Metadata: Read (auto-selected)
+   - Dependabot alerts: Read
+
+5. Configure **Organization permissions** (only appears when Resource owner is an organization):
+   - Administration: Read
+   - Members: Read
+
+6. Configure **Account permissions**:
+   - Email addresses: Read (optional)
+
+7. Click **Generate token** and copy the token immediately.
+
+<Warning>
+GitHub shows the token only once. Store it securely.
+
+</Warning>
+
+![GitHub Fine-Grained Token Permissions](/images/providers/github-pat-permissions.png)
+
+#### OAuth App Token
+
+**Recommended OAuth App Use Cases:**
+
+Use OAuth App Tokens when building applications that need delegated user permissions and explicit user authorization.
+
+**OAuth Scopes:**
+
+- `repo`: Full control of repositories
+- `read:org`: Read organization and team membership
+- `read:user`: Read user profile data
+
+**Create an OAuth App:**
+
+1. Navigate to **GitHub Settings** > **Developer settings** > **OAuth Apps**.
+
+2. Click **New OAuth App** and complete:
+   - Application name
+   - Homepage URL
+   - Authorization callback URL
+
+3. Obtain authorization code:
    ```
    https://github.com/login/oauth/authorize?client_id={app_id}
    ```
 
-4. **Exchange Code for Token**
-    - Exchange authorization code for access token (replace `{app_id}`, `{secret}`, and `{code}`):
+4. Exchange authorization code for access token:
    ```
    https://github.com/login/oauth/access_token?code={code}&client_id={app_id}&client_secret={secret}
    ```
 
-## GitHub App Credentials
-GitHub Apps provide the recommended integration method for accessing multiple repositories or organizations.
+#### GitHub App Credentials
 
-### Create a GitHub App
+<Note>
+**When to Use GitHub Apps**
 
-1. **Navigate to Developer Settings**
-    - Open GitHub Settings → Developer settings
-    - Click "GitHub Apps"
+GitHub Apps are ideal for:
+- **Organization-wide scanning** without tying access to a personal account
+- **CI/CD pipelines** where you need machine identity (not user-based)
+- **Multi-organization setups** with centralized app management
+- **Audit compliance** where you need to track app-level access separately from users
 
-2. **Create New GitHub App**
-    - Click "New GitHub App"
-    - Complete the required fields:
-        - **GitHub App name**: Choose a unique, descriptive name (e.g., "Prowler Security Scanner")
-        - **Homepage URL**: Enter your organization's website or the Prowler documentation URL (e.g., `https://prowler.com` or `https://docs.prowler.com`). This is just for reference and doesn't affect functionality.
-        - **Webhook URL**: Leave blank or uncheck "Active" under Webhook. Prowler doesn't require webhooks since it performs on-demand scans rather than responding to GitHub events.
-        - **Webhook secret**: Leave blank (not needed for Prowler)
-        - **Permissions**: Configure in the next step (see below)
+GitHub Apps use the same permission model as Fine-Grained PATs - both provide full access to all Prowler checks.
+</Note>
 
-    <Note>
-    **About Homepage URL and Webhooks**
+**GitHub App Permissions:**
 
-    The Homepage URL is purely informational and can be any valid URL - it's just displayed to users who view the app. Use your company website, your GitHub organization URL, or even `https://docs.prowler.com`.
+If a GitHub App is required:
 
-    Webhooks are **not required** for Prowler. Since Prowler performs on-demand security scans when you run it (rather than automatically responding to GitHub events), you can safely disable webhooks or leave the URL blank.
-    </Note>
+**Repository permissions:**
 
-3. **Configure Permissions**
-    To enable Prowler functionality, configure these permissions:
-    - **Repository permissions**:
-        - Contents (Read)
-        - Metadata (Read)
-        - Pull requests (Read)
-    - **Organization permissions**:
-        - Members (Read)
-        - Administration (Read)
-    - **Account permissions**:
-        - Email addresses (Read)
+| Permission | Access Level | Purpose | Checks Enabled |
+|------------|-------------|---------|----------------|
+| **Administration** | Read | Branch protection, security settings | All branch protection checks, `repository_secret_scanning_enabled` |
+| **Contents** | Read | File existence checks | `repository_public_has_securitymd_file`, `repository_has_codeowners_file` |
+| **Metadata** | Read | Basic repository information | All checks (automatically granted) |
+| **Dependabot alerts** | Read | Dependency vulnerability scanning | `repository_dependency_scanning_enabled` |
 
-4. **Where can this GitHub App be installed?**
-    - Select "Any account" to be able to install the GitHub App in any organization.
+**Organization permissions:**
 
-5. **Generate Private Key**
-    - Scroll to the "Private keys" section after app creation
-    - Click "Generate a private key"
-    - Download the `.pem` file and store securely
+| Permission | Access Level | Purpose | Checks Enabled |
+|------------|-------------|---------|----------------|
+| **Administration** | Read | Organization security policies | `organization_members_mfa_required`, `organization_repository_creation_limited`, `organization_default_repository_permission_strict` |
+| **Members** | Read | Member access reviews | Organization membership auditing |
 
-5. **Record App ID**
-    - Locate the App ID at the top of the GitHub App settings page
+**Create a GitHub App:**
 
-### Install the GitHub App
+1. Navigate to **GitHub Settings** > **Developer settings** > **GitHub Apps**.
 
-1. **Install Application**
-    - Navigate to GitHub App settings
-    - Click "Install App" in the left sidebar
-    - Select the target account/organization
-    - Choose specific repositories or select "All repositories"
+2. Click **New GitHub App** and complete:
+   - **GitHub App name**: Descriptive name (e.g., "Prowler Security Scanner")
+   - **Homepage URL**: Your organization's URL or Prowler documentation
+   - **Webhook**: Uncheck "Active" (Prowler doesn't need webhooks)
 
-## Best Practices
+3. Configure **Repository permissions** (see table above):
+   - Administration: Read
+   - Contents: Read
+   - Metadata: Read (auto-selected)
+   - Dependabot alerts: Read
 
-### Security Considerations
+4. Configure **Organization permissions** (see table above):
+   - Administration: Read
+   - Members: Read
 
-Implement the following security measures:
+5. Under **Where can this GitHub App be installed?**, select:
+   - "Only on this account" for single-organization use
+   - "Any account" if you need to install across multiple organizations
 
-- **Secure Credential Storage**: Store credentials using environment variables instead of hardcoding tokens
-- **Secrets Management**: Use dedicated secrets management systems in production environments
-- **Regular Token Rotation**: Rotate tokens and keys regularly
-- **Least Privilege Principle**: Grant only minimum required permissions
-- **Permission Auditing**: Review and audit permissions regularly
-- **Token Expiration**: Set appropriate expiration times for tokens
-- **Usage Monitoring**: Monitor token usage and revoke unused tokens
+6. Click **Create GitHub App**.
 
-### Authentication Method Selection
+7. On the app settings page:
+   - Record the **App ID** (displayed at the top)
+   - Click **Generate a private key** and download the `.pem` file
 
-Choose the appropriate method based on use case:
+8. Install the GitHub App:
+   - Click **Install App** in the left sidebar
+   - Select target account/organization
+   - Choose "All repositories" or select specific repositories
+   - Click **Install**
 
-- **Personal Access Token**: Individual use, testing, or simple automation
-- **OAuth App Token**: Applications requiring user consent and delegation
-- **GitHub App**: Production integrations, especially for organizations
+<Warning>
+**Private Key Security**
 
-## Troubleshooting Common Issues
+Store the `.pem` private key securely. Anyone with this key can authenticate as your GitHub App. Never commit it to version control.
+</Warning>
 
-### Insufficient Permissions
-- Verify token/app has necessary scopes/permissions
-- Check organization restrictions on third-party applications
+---
 
-### Token Expiration
-- Confirm token has not expired
-- Verify fine-grained tokens have correct resource access
+## Prowler Cloud Authentication
+
+For step-by-step setup instructions for Prowler Cloud, see the [Getting Started Guide](/user-guide/providers/github/getting-started-github#prowler-cloudapp).
+
+### Using Personal Access Token
+
+1. In Prowler Cloud, navigate to **Configuration** > **Cloud Providers** > **Add Cloud Provider** > **GitHub**.
+
+2. Enter your GitHub Account ID (username or organization name).
+
+3. Select **Personal Access Token** as the authentication method.
+
+4. Enter your Fine-Grained Personal Access Token.
+
+5. Click **Verify** to test the connection, then **Save**.
+
+### Using OAuth App Token
+
+1. Follow the same steps as Personal Access Token.
+
+2. Select **OAuth App Token** as the authentication method.
+
+3. Enter your OAuth App Token.
+
+### Using GitHub App
+
+1. Follow the same steps as Personal Access Token.
+
+2. Select **GitHub App** as the authentication method.
+
+3. Enter your GitHub App ID and upload the private key (`.pem` file).
+
+For complete step-by-step instructions, see the [Getting Started Guide](/user-guide/providers/github/getting-started-github#prowler-cloudapp).
+
+---
+
+## Prowler CLI Authentication
+
+### Authentication Methods
+
+Prowler CLI automatically detects credentials using environment variables in this order:
+
+1. `GITHUB_PERSONAL_ACCESS_TOKEN`
+2. `GITHUB_OAUTH_APP_TOKEN`
+3. `GITHUB_APP_ID` and `GITHUB_APP_KEY`
+
+### Using Environment Variables (Recommended)
+
+```bash
+# Personal Access Token (Recommended)
+export GITHUB_PERSONAL_ACCESS_TOKEN="ghp_xxxxxxxxxxxx"
+prowler github
+
+# OAuth App Token
+export GITHUB_OAUTH_APP_TOKEN="oauth_token_here"
+prowler github
+
+# GitHub App
+export GITHUB_APP_ID="123456"
+export GITHUB_APP_KEY="$(cat /path/to/private-key.pem)"
+prowler github
+```
+
+### Using CLI Flags
+
+```bash
+# Personal Access Token
+prowler github --personal-access-token ghp_xxxxxxxxxxxx
+
+# OAuth App Token
+prowler github --oauth-app-token oauth_token_here
+
+# GitHub App
+prowler github --github-app-id 123456 --github-app-key-path /path/to/private-key.pem
+```
+
+### Scan Scope
+
+<Warning>
+**Understanding Scan Scope**
+
+What Prowler scans depends on the invocation method:
+
+| Command | What Gets Scanned | Organization Checks? |
+|---------|------------------|---------------------|
+| `prowler github` | All accessible repositories | No |
+| `prowler github --repository owner/repo` | Single repository | No |
+| `prowler github --organization org-name` | Organization repos + settings | Yes |
+
+**Key Point:** Scanning user repositories does NOT include organization-level checks. To audit organization MFA, security policies, etc., you must use `--organization`.
+
+</Warning>
+
+**Scan user repositories:**
+
+```bash
+prowler github
+prowler github --repository username/my-repo
+```
+
+**Scan organizations:**
+
+```bash
+prowler github --organization org-name
+prowler github --organization org1 --organization org2
+```
+
+**Filter scans:**
+
+```bash
+prowler github --severity critical
+prowler github --checks repository_default_branch_protection_enabled
+prowler github --compliance cis_1.0_github
+```
+
+For complete step-by-step instructions, see the [Getting Started Guide](/user-guide/providers/github/getting-started-github#prowler-cli).
+
+---
+
+## Troubleshooting
+
+### "Insufficient Permissions" Errors
+
+**Symptom:** Checks fail or return `MANUAL` status.
+
+**Solutions:**
+1. Verify token has all required permissions
+2. For organization scans, ensure organization approved the Fine-Grained Token
+3. For merge settings checks, accept `MANUAL` status (Write permission not recommended)
+
+### "No Organizations Found"
+
+**Symptom:** Prowler doesn't find organizations even though you're a member.
+
+**Cause:** Fine-Grained Token's Resource Owner is set to personal account.
+
+**Solution:** Create a new token with Resource Owner set to the organization and get it approved by an admin.
+
+### Organization Checks Return `MANUAL`
+
+**Symptom:** Checks like `organization_members_mfa_required` return `MANUAL`.
+
+**Cause:** Token lacks `Organization → Administration: Read` permission.
+
+**Solutions:**
+1. Edit token and grant `Organization → Administration: Read`
+2. Ensure token's **Resource owner** is the organization (not personal account)
+3. Get organization admin approval
+
+### Token Not Showing Organization Permissions
+
+**Symptom:** Can't find Organization permissions section when creating token.
+
+**Cause:** **Resource owner** is set to personal account.
+
+**Solution:** Change **Resource owner** dropdown to the organization name. Organization permissions section will appear.
 
 ### Rate Limiting
-- GitHub implements API call rate limits
-- Consider GitHub Apps for higher rate limits
 
-### Organization Settings
-- Some organizations restrict third-party applications
-- Contact organization administrator if access is denied
+**Symptom:** "API rate limit exceeded" errors.
+
+**Solutions:**
+- Scan during off-peak hours
+- Use `--repository` to scan specific repos instead of all
+- Implement delays between scans
+
+### Token Expired or Revoked
+
+**Symptom:** Authentication fails with valid-looking token.
+
+**Solutions:**
+1. Check token expiration date in GitHub settings
+2. Verify token wasn't revoked
+3. For Fine-Grained Tokens, check if organization approval was revoked
+4. Generate a new token
+
+---
+
+## Additional Resources
+
+- [GitHub REST API Authentication](https://docs.github.com/en/rest/authentication)
+- [Fine-Grained Personal Access Tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token)
+- [GitHub Apps Documentation](https://docs.github.com/en/apps)
+- [GitHub API Rate Limits](https://docs.github.com/en/rest/overview/rate-limits-for-the-rest-api)
+- [Getting Started Guide](/user-guide/providers/github/getting-started-github)

@@ -57,8 +57,6 @@ jobs:
           title: 'feat(oraclecloud): Update commercial regions'
           labels: |
             status/waiting-for-revision
-            severity/low
-            provider/oraclecloud
             no-changelog
           body: |
             ### Description

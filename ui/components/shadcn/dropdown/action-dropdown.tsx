@@ -81,8 +81,9 @@ export function ActionDropdownItem({
   return (
     <DropdownMenuItem
       className={cn(
-        "flex cursor-pointer items-start gap-2",
-        destructive && "text-text-error-primary focus:text-text-error-primary",
+        "hover:bg-bg-neutral-tertiary flex cursor-pointer items-start gap-2 rounded-md transition-colors",
+        destructive &&
+          "text-text-error-primary focus:text-text-error-primary hover:bg-destructive/10",
         className,
       )}
       {...props}

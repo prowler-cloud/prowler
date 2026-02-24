@@ -17,7 +17,7 @@
   "Risk": "Running an **unsupported Kubernetes version** removes upstream and EKS security fixes, exposing clusters to known CVEs and privilege escalation bugs (**confidentiality/integrity**). Deprecated or removed APIs can break controllers and add-ons, causing outages (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EKS/kubernetes-version.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/EKS/kubernetes-version.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/eks-controls.html#eks-2",
     "https://docs.aws.amazon.com/eks/latest/userguide/platform-versions.html"
   ],

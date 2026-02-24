@@ -254,6 +254,11 @@ privilege_escalation_policies_combination = {
         "iam:PassRole",
         "ecs:RunTask",
     },
+    # Prerequisite: Running ECS task with ECS Exec enabled and admin task role
+    "ECS+ExecuteCommand": {
+        "ecs:ExecuteCommand",
+        "ecs:DescribeTasks",
+    },
     # SageMaker-based privilege escalation patterns
     "PassRole+SageMakerCreateNotebookInstance": {
         "iam:PassRole",

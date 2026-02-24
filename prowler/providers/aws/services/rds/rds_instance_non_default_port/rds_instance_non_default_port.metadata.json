@@ -16,7 +16,7 @@
   "Risk": "Using a **default DB port** increases exposure to broad scans and eases **service fingerprinting**. With weak network controls, attackers can run **credential brute force**, target known **engine exploits**, or trigger **DoS** on the predictable port, threatening confidentiality and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-default-port.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/RDS/rds-default-port.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-23",
     "https://docs.aws.amazon.com/cli/latest/reference/rds/modify-db-instance.html"
   ],

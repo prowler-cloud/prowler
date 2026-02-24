@@ -3,57 +3,94 @@
 import { Loader2 } from "lucide-react";
 
 import { Badge } from "@/components/shadcn/badge/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import type { ScanState } from "@/types/attack-paths";
+import { SCAN_STATES } from "@/types/attack-paths";
+
+const BADGE_CONFIG: Record<
+  ScanState,
+  { className: string; label: string; showGraphDot: boolean }
+> = {
+  [SCAN_STATES.SCHEDULED]: {
+    className: "bg-bg-neutral-tertiary text-text-neutral-primary",
+    label: "Scheduled",
+    showGraphDot: true,
+  },
+  [SCAN_STATES.AVAILABLE]: {
+    className: "bg-bg-neutral-tertiary text-text-neutral-primary",
+    label: "Queued",
+    showGraphDot: true,
+  },
+  [SCAN_STATES.EXECUTING]: {
+    className: "bg-bg-warning-secondary text-text-neutral-primary",
+    label: "In Progress",
+    showGraphDot: false,
+  },
+  [SCAN_STATES.COMPLETED]: {
+    className: "bg-bg-pass-secondary text-text-success-primary",
+    label: "Completed",
+    showGraphDot: false,
+  },
+  [SCAN_STATES.FAILED]: {
+    className: "bg-bg-fail-secondary text-text-error-primary",
+    label: "Failed",
+    showGraphDot: true,
+  },
+};
 
 interface ScanStatusBadgeProps {
   status: ScanState;
   progress?: number;
+  graphDataReady?: boolean;
 }
 
-/**
- * Status badge for attack path scan status
- * Shows visual indicator and text for scan progress
- */
 export const ScanStatusBadge = ({
   status,
   progress = 0,
+  graphDataReady = false,
 }: ScanStatusBadgeProps) => {
-  if (status === "scheduled") {
-    return (
-      <Badge className="bg-bg-neutral-tertiary text-text-neutral-primary gap-2">
-        <span>Scheduled</span>
-      </Badge>
-    );
-  }
+  const config = BADGE_CONFIG[status];
 
-  if (status === "available") {
-    return (
-      <Badge className="bg-bg-neutral-tertiary text-text-neutral-primary gap-2">
-        <span>Queued</span>
-      </Badge>
-    );
-  }
+  const graphDot = graphDataReady && config.showGraphDot && (
+    <span className="inline-block size-2 rounded-full bg-green-500" />
+  );
 
-  if (status === "executing") {
-    return (
-      <Badge className="bg-bg-warning-secondary text-text-neutral-primary gap-2">
-        <Loader2 size={14} className="animate-spin" />
-        <span>In Progress ({progress}%)</span>
-      </Badge>
-    );
-  }
+  const tooltipText = graphDataReady
+    ? "Graph available"
+    : status === SCAN_STATES.FAILED || status === SCAN_STATES.COMPLETED
+      ? "Graph not available"
+      : "Graph not available yet";
 
-  if (status === "completed") {
-    return (
-      <Badge className="bg-bg-pass-secondary text-text-success-primary gap-2">
-        <span>Completed</span>
-      </Badge>
+  const icon =
+    status === SCAN_STATES.EXECUTING ? (
+      <Loader2
+        size={14}
+        className={
+          graphDataReady ? "animate-spin text-green-500" : "animate-spin"
+        }
+      />
+    ) : (
+      graphDot
     );
-  }
+
+  const label =
+    status === SCAN_STATES.EXECUTING
+      ? `${config.label} (${progress}%)`
+      : config.label;
 
   return (
-    <Badge className="bg-bg-fail-secondary text-text-error-primary gap-2">
-      <span>Failed</span>
-    </Badge>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge className={`${config.className} gap-2`}>
+          {icon}
+          <span>{label}</span>
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent>{tooltipText}</TooltipContent>
+    </Tooltip>
   );
 };
