@@ -76,14 +76,14 @@ export function WizardStepper({
               <span
                 className={cn(
                   "text-lg leading-7 font-normal",
-                  isActive && "text-[#f4f4f5]",
-                  isComplete && "text-[#f4f4f5]",
-                  isInactive && "text-[#f4f4f5]/60",
+                  isActive && "text-text-neutral-primary",
+                  isComplete && "text-text-neutral-primary",
+                  isInactive && "text-text-neutral-tertiary",
                 )}
               >
                 {step.label}
               </span>
-              <p className="text-xs leading-5 text-[#d4d4d8]">
+              <p className="text-text-neutral-secondary text-xs leading-5">
                 {step.description}
               </p>
             </div>
@@ -111,15 +111,15 @@ function StepCircle({ isComplete, isActive, icon: Icon }: StepCircleProps) {
 
   if (isActive) {
     return (
-      <div className="border-border-input-primary-pressed flex size-[44px] shrink-0 items-center justify-center rounded-full border bg-[#121110]">
+      <div className="border-border-input-primary-pressed bg-bg-neutral-secondary flex size-[44px] shrink-0 items-center justify-center rounded-full border">
         <StepIcon icon={Icon} className="text-border-input-primary-pressed" />
       </div>
     );
   }
 
   return (
-    <div className="flex size-[44px] shrink-0 items-center justify-center rounded-full border border-[#202020] bg-[#121110]">
-      <StepIcon icon={Icon} className="text-[#525252]" />
+    <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex size-[44px] shrink-0 items-center justify-center rounded-full border">
+      <StepIcon icon={Icon} className="text-text-neutral-tertiary" />
     </div>
   );
 }
