@@ -99,6 +99,7 @@
               },
               "user-guide/tutorials/prowler-app-rbac",
               "user-guide/tutorials/prowler-app-api-keys",
+              "user-guide/tutorials/prowler-app-findings-ingestion",
               {
                 "group": "Mutelist",
                 "expanded": true,
