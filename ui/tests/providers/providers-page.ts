@@ -291,12 +291,16 @@ export class ProvidersPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.wizardModal = page.getByRole("dialog", {
-      name: /Adding A Cloud Provider/i,
-    });
+    this.wizardModal = page
+      .getByRole("dialog")
+      .filter({
+        has: page.getByRole("heading", {
+          name: /Adding A Cloud Provider|Update Provider Credentials/i,
+        }),
+      })
+      .first();
     this.wizardTitle = page.getByRole("heading", {
-      name: "Adding A Cloud Provider",
-      exact: true,
+      name: /Adding A Cloud Provider|Update Provider Credentials/i,
     });
 
     // Button to add a new cloud provider
@@ -614,7 +618,9 @@ export class ProvidersPage extends BasePage {
     await expect(this.page.getByText(/Accounts Connected!/i)).toBeVisible();
   }
 
-  async chooseOrganizationsScanSchedule(option: "daily" | "single"): Promise<void> {
+  async chooseOrganizationsScanSchedule(
+    option: "daily" | "single",
+  ): Promise<void> {
     const trigger = this.page.getByRole("combobox");
     await trigger.click();
 
@@ -628,6 +634,14 @@ export class ProvidersPage extends BasePage {
 
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
     // Fill the AWS provider details
+    const singleAccountButton = this.page.getByRole("button", {
+      name: "Add A Single AWS Cloud Account",
+      exact: true,
+    });
+
+    if (await singleAccountButton.isVisible().catch(() => false)) {
+      await singleAccountButton.click();
+    }
 
     await this.accountIdInput.fill(data.accountId);
 
@@ -1269,7 +1283,12 @@ export class ProvidersPage extends BasePage {
     await this.verifyWizardModalOpen();
     const testConnectionAction = this.page
       .getByRole("button", { name: "Launch scan", exact: true })
-      .or(this.page.getByRole("button", { name: "Check connection", exact: true }));
+      .or(
+        this.page.getByRole("button", {
+          name: "Check connection",
+          exact: true,
+        }),
+      );
     await expect(testConnectionAction).toBeVisible();
   }
 }
