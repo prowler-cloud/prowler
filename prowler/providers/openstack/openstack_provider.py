@@ -396,26 +396,13 @@ class OpenstackProvider(Provider):
                     message=f"Missing required fields in clouds.yaml for cloud '{clouds_yaml_cloud}': {', '.join(missing_fields)}",
                 )
 
-            # Read raw YAML to validate region configuration.
-            # The SDK's CloudRegion processes 'regions' internally and may not
-            # preserve it in cloud_config.config, so we check the raw YAML.
-            raw_cloud_config = {}
-            raw_yaml_path = config_path if clouds_yaml_file else None
-            if not raw_yaml_path:
-                for search_path in [
-                    Path.home() / ".config" / "openstack" / "clouds.yaml",
-                    Path("/etc/openstack/clouds.yaml"),
-                    Path("./clouds.yaml"),
-                ]:
-                    if search_path.exists():
-                        raw_yaml_path = search_path
-                        break
-            if raw_yaml_path:
-                raw_parsed = safe_load(raw_yaml_path.read_text())
-                if isinstance(raw_parsed, dict):
-                    raw_cloud_config = raw_parsed.get("clouds", {}).get(
-                        clouds_yaml_cloud, {}
-                    )
+            # Get raw cloud config to validate region configuration.
+            # cloud_config.config is the SDK-processed config (CloudRegion),
+            # which may not preserve the 'regions' key. os_config.cloud_config
+            # holds the original parsed YAML before SDK processing.
+            raw_cloud_config = os_config.cloud_config.get("clouds", {}).get(
+                clouds_yaml_cloud, {}
+            )
 
             region_name = raw_cloud_config.get("region_name")
             regions = raw_cloud_config.get("regions")
@@ -581,6 +568,7 @@ class OpenstackProvider(Provider):
             region_name: OpenStack region name
             user_domain_name: User domain name (default: "Default")
             project_domain_name: Project domain name (default: "Default")
+            provider_id: OpenStack provider ID for validation (optional)
             raise_on_exception: Whether to raise exception on failure (default: True)
 
         Returns:
