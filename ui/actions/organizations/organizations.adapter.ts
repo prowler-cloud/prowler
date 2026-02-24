@@ -79,14 +79,20 @@ export function buildOrgTreeData(result: DiscoveryResult): TreeDataItem[] {
 }
 
 /**
- * Returns IDs of accounts that can be selected (apply_status === "ready").
+ * Returns IDs of accounts that can be selected.
+ * Accounts are selectable when registration is READY or not yet present.
+ * Accounts with explicit non-ready states are excluded.
  * Used to pre-select all selectable accounts in the tree.
  */
 export function getSelectableAccountIds(result: DiscoveryResult): string[] {
   return result.accounts
-    .filter(
-      (account) => account.registration?.apply_status === APPLY_STATUS.READY,
-    )
+    .filter((account) => {
+      const applyStatus = account.registration?.apply_status;
+      if (!applyStatus) {
+        return true;
+      }
+      return applyStatus === APPLY_STATUS.READY;
+    })
     .map((account) => account.id);
 }
 

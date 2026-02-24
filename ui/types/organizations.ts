@@ -81,7 +81,7 @@ export interface DiscoveredAccount {
   joined_method: "INVITED" | "CREATED";
   joined_timestamp: string;
   parent_id: string;
-  registration: AccountRegistration;
+  registration?: AccountRegistration;
 }
 
 export interface DiscoveredOu {

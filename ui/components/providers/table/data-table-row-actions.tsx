@@ -15,29 +15,26 @@ import {
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
-import { ProviderType } from "@/types/providers";
+import { ProviderProps } from "@/types/providers";
 
 import { EditForm } from "../forms";
 import { DeleteForm } from "../forms/delete-form";
 
-interface DataTableRowActionsProps<ProviderProps> {
+interface DataTableRowActionsProps {
   row: Row<ProviderProps>;
 }
 
-export function DataTableRowActions<ProviderProps>({
-  row,
-}: DataTableRowActionsProps<ProviderProps>) {
+export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const providerId = (row.original as { id: string }).id;
-  const providerType = (row.original as any).attributes
-    ?.provider as ProviderType;
-  const providerUid = (row.original as any).attributes?.uid || "";
-  const providerAlias = (row.original as any).attributes?.alias || null;
-  const providerSecretId =
-    (row.original as any).relationships?.secret?.data?.id || null;
+  const provider = row.original;
+  const providerId = provider.id;
+  const providerType = provider.attributes.provider;
+  const providerUid = provider.attributes.uid;
+  const providerAlias = provider.attributes.alias ?? null;
+  const providerSecretId = provider.relationships.secret.data?.id ?? null;
 
   const handleTestConnection = async () => {
     setLoading(true);
@@ -47,7 +44,7 @@ export function DataTableRowActions<ProviderProps>({
     setLoading(false);
   };
 
-  const hasSecret = (row.original as any).relationships?.secret?.data;
+  const hasSecret = Boolean(provider.relationships.secret.data);
 
   return (
     <>
