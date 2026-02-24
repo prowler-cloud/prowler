@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -18,7 +19,7 @@ import {
 } from "@/components/shadcn/select/select";
 import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
-import { useToast } from "@/components/ui";
+import { ToastAction, useToast } from "@/components/ui";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { TREE_ITEM_STATUS } from "@/types/tree";
 
@@ -71,6 +72,11 @@ export function OrgLaunchScan({
         scheduleOption === SCAN_SCHEDULE.DAILY
           ? `Daily scan scheduled for ${successCount} account${successCount !== 1 ? "s" : ""}.`
           : `Single scan launched for ${successCount} account${successCount !== 1 ? "s" : ""}.`,
+      action: (
+        <ToastAction altText="Go to scans" asChild>
+          <Link href="/scans">Go to scans</Link>
+        </ToastAction>
+      ),
     });
   };
 
