@@ -19,7 +19,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_finding-unused.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/IAM/access-keys-rotated-45-days.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement-staging/knowledge-base/aws/IAM/access-keys-rotated-45-days.html"
   ],
   "Remediation": {
     "Code": {

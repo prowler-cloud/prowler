@@ -1528,6 +1528,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                     )
             elif provider_type == Provider.ProviderChoices.OPENSTACK.value:
                 serializer = OpenStackCloudsYamlProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.IMAGE.value:
+                serializer = ImageProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1700,6 +1702,30 @@ class OpenStackCloudsYamlProviderSecret(serializers.Serializer):
 
     class Meta:
         resource_name = "provider-secrets"
+
+
+class ImageProviderSecret(serializers.Serializer):
+    registry_username = serializers.CharField(required=False)
+    registry_password = serializers.CharField(required=False)
+    registry_token = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+    def validate(self, attrs):
+        token = attrs.get("registry_token")
+        username = attrs.get("registry_username")
+        password = attrs.get("registry_password")
+        if not token:
+            if username and not password:
+                raise serializers.ValidationError(
+                    "registry_password is required when registry_username is provided."
+                )
+            if password and not username:
+                raise serializers.ValidationError(
+                    "registry_username is required when registry_password is provided."
+                )
+        return attrs
 
 
 class AlibabaCloudProviderSecret(serializers.Serializer):
@@ -4051,3 +4077,98 @@ class ResourceEventSerializer(BaseSerializerV1):
 
     class Meta:
         resource_name = "resource-events"
+
+
+# Finding Groups - Virtual aggregation entities
+
+
+class FindingGroupSerializer(BaseSerializerV1):
+    """
+    Serializer for Finding Groups - aggregated findings by check_id.
+
+    This is a non-model serializer since FindingGroup is a virtual entity
+    created by aggregating the Finding model.
+    """
+
+    id = serializers.CharField(source="check_id")
+    check_id = serializers.CharField()
+    check_title = serializers.CharField(required=False, allow_null=True)
+    check_description = serializers.CharField(required=False, allow_null=True)
+    severity = serializers.CharField()
+    status = serializers.CharField()
+    impacted_providers = serializers.ListField(
+        child=serializers.CharField(), required=False
+    )
+    resources_fail = serializers.IntegerField()
+    resources_total = serializers.IntegerField()
+    pass_count = serializers.IntegerField()
+    fail_count = serializers.IntegerField()
+    muted_count = serializers.IntegerField()
+    new_count = serializers.IntegerField()
+    changed_count = serializers.IntegerField()
+    first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
+    last_seen_at = serializers.DateTimeField(required=False, allow_null=True)
+    failing_since = serializers.DateTimeField(required=False, allow_null=True)
+
+    class JSONAPIMeta:
+        resource_name = "finding-groups"
+
+
+class FindingGroupResourceSerializer(BaseSerializerV1):
+    """
+    Serializer for Finding Group Resources - resources within a finding group.
+
+    Returns individual resources with their current status, severity,
+    and timing information.
+    """
+
+    id = serializers.UUIDField(source="resource_id")
+    resource = serializers.SerializerMethodField()
+    provider = serializers.SerializerMethodField()
+    status = serializers.CharField()
+    severity = serializers.CharField()
+    first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
+    last_seen_at = serializers.DateTimeField(required=False, allow_null=True)
+
+    class JSONAPIMeta:
+        resource_name = "finding-group-resources"
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "properties": {
+                "uid": {"type": "string"},
+                "name": {"type": "string"},
+                "service": {"type": "string"},
+                "region": {"type": "string"},
+                "type": {"type": "string"},
+            },
+        }
+    )
+    def get_resource(self, obj):
+        """Return nested resource object."""
+        return {
+            "uid": obj.get("resource_uid", ""),
+            "name": obj.get("resource_name", ""),
+            "service": obj.get("resource_service", ""),
+            "region": obj.get("resource_region", ""),
+            "type": obj.get("resource_type", ""),
+        }
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "properties": {
+                "type": {"type": "string"},
+                "uid": {"type": "string"},
+                "alias": {"type": "string"},
+            },
+        }
+    )
+    def get_provider(self, obj):
+        """Return nested provider object."""
+        return {
+            "type": obj.get("provider_type", ""),
+            "uid": obj.get("provider_uid", ""),
+            "alias": obj.get("provider_alias", ""),
+        }

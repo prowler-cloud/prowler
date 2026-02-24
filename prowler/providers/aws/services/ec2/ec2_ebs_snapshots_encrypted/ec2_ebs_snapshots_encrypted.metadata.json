@@ -19,7 +19,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html#encryption-by-default",
     "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EBS/snapshot-encrypted.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/EBS/snapshot-encrypted.html"
   ],
   "Remediation": {
     "Code": {

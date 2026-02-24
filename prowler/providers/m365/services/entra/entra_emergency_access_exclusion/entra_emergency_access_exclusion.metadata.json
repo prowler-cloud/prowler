@@ -1,0 +1,41 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_emergency_access_exclusion",
+  "CheckTitle": "Emergency access exclusions prevent lockout from Conditional Access policies",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
+  "Description": "This check verifies that at least one **emergency access** (break glass) account or group is excluded from all **Conditional Access policies**. Emergency access accounts provide a fallback mechanism when normal administrative access is blocked due to misconfigured policies.",
+  "Risk": "Without emergency access accounts excluded from Conditional Access policies, a misconfiguration could lock out all administrators from the tenant. This creates a **critical availability risk** where legitimate administrators cannot access or remediate issues in the environment.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/security-emergency-access",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-block-access"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Create dedicated emergency access accounts or a security group in Microsoft Entra admin center.\n2. Navigate to Protection > Conditional Access > Policies.\n3. For each Conditional Access policy, add the emergency access account or group to the exclusion list under Users > Exclude.\n4. Ensure the emergency accounts are protected with strong credentials and limited usage.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create and maintain at least two emergency access accounts that are excluded from all Conditional Access policies. Store credentials securely offline, monitor usage, and test access regularly. Follow **least privilege** principles for these accounts while ensuring they can recover tenant access when needed.",
+      "Url": "https://hub.prowler.com/check/entra_emergency_access_exclusion"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_legacy_authentication_blocked",
+    "entra_managed_device_required_for_authentication"
+  ],
+  "Notes": ""
+}

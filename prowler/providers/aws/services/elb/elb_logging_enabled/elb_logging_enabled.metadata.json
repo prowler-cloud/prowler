@@ -19,7 +19,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/enable-access-logs.html",
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/access-log-collection.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ElasticBeanstalk/enable-access-logs.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/ElasticBeanstalk/enable-access-logs.html",
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/enable-access-logging.html"
   ],
   "Remediation": {

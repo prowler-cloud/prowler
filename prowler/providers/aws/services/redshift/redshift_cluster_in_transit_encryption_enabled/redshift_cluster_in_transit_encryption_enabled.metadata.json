@@ -19,7 +19,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/redshift/latest/mgmt/security-encryption-in-transit.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/redshift-controls.html#redshift-2",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/redshift-parameter-groups-require-ssl.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Redshift/redshift-parameter-groups-require-ssl.html"
   ],
   "Remediation": {
     "Code": {
