@@ -6,10 +6,12 @@ import pytest
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS, OperationalError
 from freezegun import freeze_time
+from psycopg2 import sql as psycopg2_sql
 from rest_framework_json_api.serializers import ValidationError
 
 from api.db_utils import (
     POSTGRES_TENANT_VAR,
+    PostgresEnumMigration,
     _should_create_index_on_partition,
     batch_delete,
     create_objects_in_batches,
@@ -910,3 +912,48 @@ class TestRlsTransaction:
             cursor.execute("SELECT 1")
             result = cursor.fetchone()
             assert result[0] == 1
+
+
+class TestPostgresEnumMigration:
+    """
+    Verify that PostgresEnumMigration builds DDL statements via psycopg2.sql
+    so that enum type names and values are always properly quoted — preventing
+    SQL injection through f-string interpolation.
+    """
+
+    def _make_mock_schema_editor(self):
+        mock_cursor = MagicMock()
+        mock_conn = MagicMock()
+        mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+        mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+        mock_schema_editor = MagicMock()
+        mock_schema_editor.connection = mock_conn
+        return mock_schema_editor, mock_cursor
+
+    def test_create_uses_parameterized_identifier(self):
+        """create_enum_type passes a psycopg2_sql.Composable to cursor.execute."""
+        migration = PostgresEnumMigration("my_enum", ("val_a", "val_b"))
+        schema_editor, mock_cursor = self._make_mock_schema_editor()
+
+        migration.create_enum_type(apps=None, schema_editor=schema_editor)
+
+        mock_cursor.execute.assert_called_once()
+        query_arg = mock_cursor.execute.call_args[0][0]
+        assert isinstance(query_arg, psycopg2_sql.Composable), (
+            "create_enum_type must pass a psycopg2.sql.Composable to cursor.execute, "
+            "not a raw f-string, to prevent SQL injection."
+        )
+
+    def test_drop_uses_parameterized_identifier(self):
+        """drop_enum_type passes a psycopg2_sql.Composable to cursor.execute."""
+        migration = PostgresEnumMigration("my_enum", ("val_a",))
+        schema_editor, mock_cursor = self._make_mock_schema_editor()
+
+        migration.drop_enum_type(apps=None, schema_editor=schema_editor)
+
+        mock_cursor.execute.assert_called_once()
+        query_arg = mock_cursor.execute.call_args[0][0]
+        assert isinstance(query_arg, psycopg2_sql.Composable), (
+            "drop_enum_type must pass a psycopg2.sql.Composable to cursor.execute, "
+            "not a raw f-string, to prevent SQL injection."
+        )
