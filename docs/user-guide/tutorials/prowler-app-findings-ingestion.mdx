@@ -7,10 +7,10 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 <VersionBadge version="5.19.0" />
 
-Findings Ingestion enables uploading scan results in OCSF (Open Cybersecurity Schema Framework) format to Prowler Cloud. This feature supports importing findings from the Prowler CLI using the [Detection Finding](https://schema.ocsf.io/classes/detection_finding) class.
+Findings Ingestion enables uploading OCSF (Open Cybersecurity Schema Framework) scan results to Prowler Cloud. This feature supports importing findings from Prowler CLI output files that use the [Detection Finding](https://schema.ocsf.io/classes/detection_finding) class.
 
 <Note>
-This feature is available exclusively in **Prowler Cloud**.
+Exporting findings to Prowler Cloud is available exclusively in **Prowler Cloud**. Prowler CLI can still generate OCSF files locally.
 </Note>
 
 ## OCSF Detection Finding format
@@ -21,56 +21,108 @@ The ingestion API accepts `.ocsf.json` files containing a JSON array of OCSF Det
 
 ```json
 {
-  "activity_id": 1,
-  "activity_name": "Create",
-  "category_name": "Findings",
-  "category_uid": 2,
-  "class_name": "Detection Finding",
-  "class_uid": 2004,
-  "cloud": {
-    "account": {
-      "uid": "123456789012"
-    },
-    "provider": "aws",
-    "region": "us-east-1"
-  },
-  "finding_info": {
-    "desc": "IAM Access Analyzer ConsoleAnalyzer-4562ae17-e0d0-4fd6-9992-86e1079758c7 has 21 active findings.",
-    "product_uid": "prowler",
-    "title": "IAM Access Analyzer analyzer is active and has no active findings",
-    "uid": "prowler-aws-accessanalyzer_enabled_without_findings-123456789012-us-east-1-ConsoleAnalyzer-4562ae17"
-  },
-  "message": "IAM Access Analyzer ConsoleAnalyzer-4562ae17-e0d0-4fd6-9992-86e1079758c7 has 21 active findings.",
+  "message": "IAM Access Analyzer in account 730736567048 is not enabled.",
   "metadata": {
+    "event_code": "accessanalyzer_enabled",
     "product": {
       "name": "Prowler",
+      "uid": "prowler",
       "vendor_name": "Prowler",
-      "version": "5.19.0"
+      "version": "5.17.1"
     },
-    "version": "1.4.0"
+    "profiles": [
+      "cloud",
+      "datetime"
+    ],
+    "tenant_uid": "",
+    "version": "1.5.0"
+  },
+  "severity_id": 2,
+  "severity": "Low",
+  "status": "New",
+  "status_code": "FAIL",
+  "status_detail": "IAM Access Analyzer in account 730736567048 is not enabled.",
+  "status_id": 1,
+  "unmapped": {
+    "related_url": "",
+    "categories": [
+      "identity-access",
+      "trust-boundaries"
+    ],
+    "depends_on": [],
+    "related_to": [],
+    "additional_urls": [],
+    "notes": "",
+    "scan_id": "019c2c86-3b2e-7c39-98fb-2f88643c246e"
+  },
+  "activity_name": "Create",
+  "activity_id": 1,
+  "finding_info": {
+    "created_time": 1770273520,
+    "created_time_dt": "2026-02-05T06:38:40.430622+00:00",
+    "desc": "**IAM Access Analyzer** presence and status are evaluated per account and Region. An analyzer in `ACTIVE` state indicates continuous analysis of supported resources and IAM activity to identify external, internal, and unused access.",
+    "title": "IAM Access Analyzer is enabled",
+    "types": [
+      "Software and Configuration Checks/AWS Security Best Practices",
+      "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+    ],
+    "uid": "prowler-aws-accessanalyzer_enabled-730736567048-ap-northeast-1-analyzer/unknown"
   },
   "resources": [
     {
       "cloud_partition": "aws",
-      "region": "us-east-1",
-      "type": "AwsIamAccessAnalyzer",
-      "uid": "arn:aws:access-analyzer:us-east-1:123456789012:analyzer/ConsoleAnalyzer-4562ae17"
+      "region": "ap-northeast-1",
+      "data": {
+        "details": "",
+        "metadata": {
+          "arn": "arn:aws:accessanalyzer:ap-northeast-1:730736567048:analyzer/unknown",
+          "name": "analyzer/unknown",
+          "status": "NOT_AVAILABLE",
+          "findings": [],
+          "tags": [],
+          "type": "",
+          "region": "ap-northeast-1"
+        }
+      },
+      "group": {
+        "name": "accessanalyzer"
+      },
+      "labels": [],
+      "name": "analyzer/unknown",
+      "type": "Other",
+      "uid": "arn:aws:accessanalyzer:ap-northeast-1:730736567048:analyzer/unknown"
     }
   ],
-  "severity": "Low",
-  "severity_id": 2,
-  "status": "New",
-  "status_id": 1,
-  "time": 1739798139,
-  "type_name": "Detection Finding: Create",
-  "type_uid": 200401,
-  "unmapped": {
-    "check_id": "accessanalyzer_enabled_without_findings",
+  "category_name": "Findings",
+  "class_name": "Detection Finding",
+  "cloud": {
+    "account": {
+      "name": "",
+      "type": "AWS Account",
+      "type_id": 10,
+      "uid": "730736567048",
+      "labels": []
+    },
+    "org": {
+      "name": "",
+      "uid": ""
+    },
     "provider": "aws",
-    "related_url": "",
-    "risk": "Unresolved Active findings indicate unintended external or internal access paths.",
-    "scan_id": "019c6bf4-eb15-7966-b129-85ee538a03f9"
-  }
+    "region": "ap-northeast-1"
+  },
+  "remediation": {
+    "desc": "Enable **IAM Access Analyzer** across all accounts and active Regions (*or organization-wide*). Operate on least privilege: continuously review findings, remove unintended access, and trim unused permissions. Use archive rules sparingly, integrate reviews into change/CI/CD workflows, and enforce separation of duties on policy changes.",
+    "references": [
+      "https://hub.prowler.com/check/accessanalyzer_enabled"
+    ]
+  },
+  "risk_details": "Without an active analyzer, visibility into unintended public, cross-account, or risky internal access is lost. Adversaries can exploit exposed S3, snapshots, KMS keys, or permissive role trusts for data exfiltration and escalation. Unused permissions persist, enlarging the attack surface. This degrades confidentiality and integrity.",
+  "time": 1770273520,
+  "time_dt": "2026-02-05T06:38:40.430622+00:00",
+  "type_uid": 200401,
+  "type_name": "Detection Finding: Create",
+  "category_uid": 2,
+  "class_uid": 2004
 }
 ```
 
@@ -80,7 +132,7 @@ Only **Detection Finding** (`class_uid: 2004`) records are accepted. Other OCSF 
 
 ## Required permissions
 
-The **Manage Ingestions** RBAC permission controls access to the ingestion endpoints. Without this permission, users cannot submit findings via the API.
+The **Manage Ingestions** RBAC permission controls access to the ingestion endpoints. Without this permission, findings cannot be submitted via the API or `--export-ocsf`.
 
 For more information about RBAC permissions, refer to the [Prowler App RBAC documentation](/user-guide/tutorials/prowler-app-rbac).
 
@@ -105,11 +157,13 @@ prowler aws --export-ocsf
 
 When using `--export-ocsf` with custom output formats that exclude OCSF, Prowler generates a temporary OCSF file for upload:
 
+The temporary OCSF file is saved in the system temporary directory and not in the output path passed with `-o`.
+
 ```bash
 prowler aws --services accessanalyzer -M csv --export-ocsf -o /tmp/scan-output
 ```
 
-When default output formats include OCSF, Prowler reuses the existing file:
+When default output formats include OCSF, Prowler reuses the existing file. Default output formats include JSON-OCSF:
 
 ```bash
 prowler aws --services accessanalyzer --export-ocsf -o /tmp/scan-output
@@ -134,13 +188,15 @@ environment variable to enable it. Scan results were saved to
 **API unreachable:**
 ```
 WARNING: OCSF export skipped: could not reach the Prowler Cloud API at
-https://api.prowler.com. Check the URL and your network connection.
+https://api.prowler.com. Check the URL and your network connection. Scan results
+were saved to /tmp/scan-output/prowler-output-123456789012-20260217131755.ocsf.json
 ```
 
 **Invalid API key:**
 ```
 WARNING: OCSF export failed: the API returned HTTP 401. Verify your API key is
-valid and has the right permissions.
+valid and has the right permissions. Scan results were saved to
+/tmp/scan-output/prowler-output-123456789012-20260217131755.ocsf.json
 ```
 
 <Note>
