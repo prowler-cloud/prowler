@@ -267,6 +267,7 @@ class Provider(ABC):
                         github_username=arguments.github_username,
                         personal_access_token=arguments.personal_access_token,
                         oauth_app_token=arguments.oauth_app_token,
+                        branch=arguments.branch,
                     )
                 elif "llm" in provider_class_name.lower():
                     provider_class(

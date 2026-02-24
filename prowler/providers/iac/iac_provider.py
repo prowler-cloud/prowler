@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -30,7 +31,7 @@ class IacProvider(Provider):
         self,
         scan_path: str = ".",
         scan_repository_url: str = None,
-        scanners: list[str] = ["vuln", "misconfig", "secret"],
+        scanners: list[str] = ["misconfig", "secret"],
         exclude_path: list[str] = [],
         config_path: str = None,
         config_content: dict = None,
@@ -260,8 +261,6 @@ class IacProvider(Provider):
             str: The branch name, defaulting to "main" if detection fails
         """
         try:
-            import os
-
             # Read .git/HEAD to detect the current branch
             head_file = os.path.join(repo_path, ".git", "HEAD")
             if os.path.exists(head_file):
@@ -361,14 +360,18 @@ class IacProvider(Provider):
                 porcelain.clone(repository_url, temporary_directory, **clone_kwargs)
                 logger.info("Repository cloned successfully!")
 
-            # Detect the branch name from the cloned repository
-            branch_name = self._detect_branch_name(temporary_directory)
+            # Use the specified branch or detect from the cloned repository
+            if branch:
+                branch_name = branch
+            else:
+                branch_name = self._detect_branch_name(temporary_directory)
 
             return temporary_directory, branch_name
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
+            sys.exit(1)
 
     def run(self) -> List[CheckReportIAC]:
         """
@@ -571,8 +574,8 @@ class IacProvider(Provider):
                 f"Directory: {Fore.YELLOW}{self.scan_path}{Style.RESET_ALL}",
             ]
 
-        if self.branch:
-            report_lines.append(f"Branch: {Fore.YELLOW}{self.branch}{Style.RESET_ALL}")
+        if self.scan_repository_url:
+            report_lines.append(f"Branch: {Fore.YELLOW}{self.region}{Style.RESET_ALL}")
 
         if self.exclude_path:
             report_lines.append(

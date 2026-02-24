@@ -141,9 +141,7 @@ class TestIacProvider:
             "prowler.providers.iac.iac_provider.IacProvider.run_scan",
         ) as mock_run_scan:
             provider.run()
-            mock_run_scan.assert_called_with(
-                scan_path, ["vuln", "misconfig", "secret"], []
-            )
+            mock_run_scan.assert_called_with(scan_path, ["misconfig", "secret"], [])
 
     @mock.patch.dict(os.environ, {}, clear=True)
     def test_provider_run_remote_scan(self):
@@ -173,9 +171,7 @@ class TestIacProvider:
                 provider.run()
 
                 # Verify scan was called with the cloned directory
-                mock_run_scan.assert_called_with(
-                    temp_dir, ["vuln", "misconfig", "secret"], []
-                )
+                mock_run_scan.assert_called_with(temp_dir, ["misconfig", "secret"], [])
 
     @mock.patch.dict(os.environ, {}, clear=True)
     def test_print_credentials_local(self):

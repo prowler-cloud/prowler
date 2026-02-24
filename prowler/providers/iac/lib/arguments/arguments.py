@@ -31,6 +31,14 @@ def init_parser(self):
     )
 
     iac_scan_subparser.add_argument(
+        "--branch",
+        "-B",
+        dest="branch",
+        default=None,
+        help="Git branch to clone when using --scan-repository-url. If not specified, the default branch of the repository will be used.",
+    )
+
+    iac_scan_subparser.add_argument(
         "--scanners",
         "--scanner",
         dest="scanners",
@@ -73,6 +81,7 @@ def init_parser(self):
 def validate_arguments(arguments):
     scan_path = getattr(arguments, "scan_path", None)
     scan_repository_url = getattr(arguments, "scan_repository_url", None)
+    branch = getattr(arguments, "branch", None)
     if scan_path and scan_repository_url:
         # If scan_path is set to default ("."), allow scan_repository_url
         if scan_path != ".":
@@ -80,4 +89,9 @@ def validate_arguments(arguments):
                 False,
                 "--scan-path (-P) and --scan-repository-url (-R) are mutually exclusive. Please specify only one.",
             )
+    if branch and not scan_repository_url:
+        return (
+            False,
+            "--branch (-B) requires --scan-repository-url (-R). It cannot be used with local scans.",
+        )
     return (True, "")
