@@ -14,9 +14,44 @@ class entra_conditional_access_policy_app_enforced_restrictions(Check):
     from unmanaged devices.
 
     - PASS: At least one policy is enabled with application enforced restrictions targeting
-            all users, all client app types, and Office365 applications.
+            all users, all client app types, and either the Office365 suite or
+            SharePoint Online and Exchange Online individually.
     - FAIL: No policy meets the criteria for application enforced restrictions.
     """
+
+    # SharePoint Online / OneDrive for Business
+    SHAREPOINT_APP_ID = "00000003-0000-0ff1-ce00-000000000000"
+    # Exchange Online
+    EXCHANGE_APP_ID = "00000002-0000-0ff1-ce00-000000000000"
+    # Office 365 suite (includes SharePoint, OneDrive, and Exchange)
+    OFFICE365_APP_ID = "Office365"
+
+    REQUIRED_APPS = {SHAREPOINT_APP_ID, EXCHANGE_APP_ID}
+    MODERN_CLIENT_APP_TYPES = {
+        ClientAppType.BROWSER,
+        ClientAppType.MOBILE_APPS_AND_DESKTOP_CLIENTS,
+    }
+
+    def _targets_all_client_apps(self, client_app_types: list[ClientAppType]) -> bool:
+        """Check if the policy targets all modern client app types.
+
+        Returns True if the policy includes ALL explicitly or both
+        Browser and Mobile apps and desktop clients.
+        """
+        client_app_set = set(client_app_types)
+        if ClientAppType.ALL in client_app_set:
+            return True
+        return self.MODERN_CLIENT_APP_TYPES.issubset(client_app_set)
+
+    def _targets_required_apps(self, included_applications: list[str]) -> bool:
+        """Check if the policy targets the required applications.
+
+        Returns True if the policy includes Office365 (the suite) or both
+        SharePoint Online and Exchange Online individually.
+        """
+        if self.OFFICE365_APP_ID in included_applications:
+            return True
+        return self.REQUIRED_APPS.issubset(set(included_applications))
 
     def execute(self) -> list[CheckReportM365]:
         """Execute the check for application enforced restrictions in Conditional Access policies.
@@ -41,12 +76,11 @@ class entra_conditional_access_policy_app_enforced_restrictions(Check):
             if "All" not in policy.conditions.user_conditions.included_users:
                 continue
 
-            if ClientAppType.ALL not in policy.conditions.client_app_types:
+            if not self._targets_all_client_apps(policy.conditions.client_app_types):
                 continue
 
-            if (
-                "Office365"
-                not in policy.conditions.application_conditions.included_applications
+            if not self._targets_required_apps(
+                policy.conditions.application_conditions.included_applications
             ):
                 continue
 
@@ -61,10 +95,10 @@ class entra_conditional_access_policy_app_enforced_restrictions(Check):
             )
             if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
                 report.status = "FAIL"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' reports application enforced restrictions but does not enforce them."
+                report.status_extended = f"Conditional Access Policy {policy.display_name} reports application enforced restrictions but does not enforce them."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' enforces application restrictions for unmanaged devices."
+                report.status_extended = f"Conditional Access Policy {policy.display_name} enforces application restrictions for unmanaged devices."
                 break
 
         findings.append(report)

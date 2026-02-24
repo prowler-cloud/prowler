@@ -215,7 +215,7 @@ class Test_entra_conditional_access_policy_app_enforced_restrictions:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' reports application enforced restrictions but does not enforce them."
+                == f"Conditional Access Policy {display_name} reports application enforced restrictions but does not enforce them."
             )
             assert (
                 result[0].resource
@@ -474,10 +474,10 @@ class Test_entra_conditional_access_policy_app_enforced_restrictions:
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_app_enforced_restrictions_missing_office365_app(self):
-        """Test FAIL when policy does not include Office365 application."""
+    def test_entra_app_enforced_restrictions_missing_required_apps(self):
+        """Test FAIL when policy does not include Office365 or the required individual apps."""
         id = str(uuid4())
-        display_name = "Policy Missing Office365"
+        display_name = "Policy Missing Required Apps"
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
@@ -557,6 +557,269 @@ class Test_entra_conditional_access_policy_app_enforced_restrictions:
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
+    def test_entra_app_enforced_restrictions_individual_apps_pass(self):
+        """Test PASS when policy targets SharePoint and Exchange individually."""
+        id = str(uuid4())
+        display_name = "Individual Apps Policy"
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions import (
+                entra_conditional_access_policy_app_enforced_restrictions,
+            )
+            from prowler.providers.m365.services.entra.entra_service import (
+                ConditionalAccessPolicy,
+            )
+
+            entra_client.conditional_access_policies = {
+                id: ConditionalAccessPolicy(
+                    id=id,
+                    display_name=display_name,
+                    conditions=Conditions(
+                        application_conditions=ApplicationsConditions(
+                            included_applications=[
+                                "00000003-0000-0ff1-ce00-000000000000",
+                                "00000002-0000-0ff1-ce00-000000000000",
+                            ],
+                            excluded_applications=[],
+                            included_user_actions=[],
+                        ),
+                        user_conditions=UsersConditions(
+                            included_groups=[],
+                            excluded_groups=[],
+                            included_users=["All"],
+                            excluded_users=[],
+                            included_roles=[],
+                            excluded_roles=[],
+                        ),
+                        client_app_types=[ClientAppType.ALL],
+                        user_risk_levels=[],
+                    ),
+                    grant_controls=GrantControls(
+                        built_in_controls=[],
+                        operator=GrantControlOperator.AND,
+                        authentication_strength=None,
+                    ),
+                    session_controls=SessionControls(
+                        persistent_browser=PersistentBrowser(
+                            is_enabled=False, mode="always"
+                        ),
+                        sign_in_frequency=SignInFrequency(
+                            is_enabled=False,
+                            frequency=None,
+                            type=None,
+                            interval=SignInFrequencyInterval.TIME_BASED,
+                        ),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=True
+                        ),
+                    ),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                )
+            }
+
+            check = entra_conditional_access_policy_app_enforced_restrictions()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Conditional Access Policy {display_name} enforces application restrictions for unmanaged devices."
+            )
+            assert (
+                result[0].resource
+                == entra_client.conditional_access_policies[id].dict()
+            )
+            assert result[0].resource_name == display_name
+            assert result[0].resource_id == id
+            assert result[0].location == "global"
+
+    def test_entra_app_enforced_restrictions_only_sharepoint_fail(self):
+        """Test FAIL when policy targets only SharePoint but not Exchange."""
+        id = str(uuid4())
+        display_name = "Only SharePoint Policy"
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions import (
+                entra_conditional_access_policy_app_enforced_restrictions,
+            )
+            from prowler.providers.m365.services.entra.entra_service import (
+                ConditionalAccessPolicy,
+            )
+
+            entra_client.conditional_access_policies = {
+                id: ConditionalAccessPolicy(
+                    id=id,
+                    display_name=display_name,
+                    conditions=Conditions(
+                        application_conditions=ApplicationsConditions(
+                            included_applications=[
+                                "00000003-0000-0ff1-ce00-000000000000",
+                            ],
+                            excluded_applications=[],
+                            included_user_actions=[],
+                        ),
+                        user_conditions=UsersConditions(
+                            included_groups=[],
+                            excluded_groups=[],
+                            included_users=["All"],
+                            excluded_users=[],
+                            included_roles=[],
+                            excluded_roles=[],
+                        ),
+                        client_app_types=[ClientAppType.ALL],
+                        user_risk_levels=[],
+                    ),
+                    grant_controls=GrantControls(
+                        built_in_controls=[],
+                        operator=GrantControlOperator.AND,
+                        authentication_strength=None,
+                    ),
+                    session_controls=SessionControls(
+                        persistent_browser=PersistentBrowser(
+                            is_enabled=False, mode="always"
+                        ),
+                        sign_in_frequency=SignInFrequency(
+                            is_enabled=False,
+                            frequency=None,
+                            type=None,
+                            interval=SignInFrequencyInterval.TIME_BASED,
+                        ),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=True
+                        ),
+                    ),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                )
+            }
+
+            check = entra_conditional_access_policy_app_enforced_restrictions()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "No Conditional Access Policy enforces application restrictions for unmanaged devices."
+            )
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
+            assert result[0].location == "global"
+
+    def test_entra_app_enforced_restrictions_browser_and_mobile_pass(self):
+        """Test PASS when policy uses browser + mobile apps instead of ALL."""
+        id = str(uuid4())
+        display_name = "Browser and Mobile Apps Policy"
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions import (
+                entra_conditional_access_policy_app_enforced_restrictions,
+            )
+            from prowler.providers.m365.services.entra.entra_service import (
+                ConditionalAccessPolicy,
+            )
+
+            entra_client.conditional_access_policies = {
+                id: ConditionalAccessPolicy(
+                    id=id,
+                    display_name=display_name,
+                    conditions=Conditions(
+                        application_conditions=ApplicationsConditions(
+                            included_applications=["Office365"],
+                            excluded_applications=[],
+                            included_user_actions=[],
+                        ),
+                        user_conditions=UsersConditions(
+                            included_groups=[],
+                            excluded_groups=[],
+                            included_users=["All"],
+                            excluded_users=[],
+                            included_roles=[],
+                            excluded_roles=[],
+                        ),
+                        client_app_types=[
+                            ClientAppType.BROWSER,
+                            ClientAppType.MOBILE_APPS_AND_DESKTOP_CLIENTS,
+                        ],
+                        user_risk_levels=[],
+                    ),
+                    grant_controls=GrantControls(
+                        built_in_controls=[],
+                        operator=GrantControlOperator.AND,
+                        authentication_strength=None,
+                    ),
+                    session_controls=SessionControls(
+                        persistent_browser=PersistentBrowser(
+                            is_enabled=False, mode="always"
+                        ),
+                        sign_in_frequency=SignInFrequency(
+                            is_enabled=False,
+                            frequency=None,
+                            type=None,
+                            interval=SignInFrequencyInterval.TIME_BASED,
+                        ),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=True
+                        ),
+                    ),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                )
+            }
+
+            check = entra_conditional_access_policy_app_enforced_restrictions()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Conditional Access Policy {display_name} enforces application restrictions for unmanaged devices."
+            )
+            assert (
+                result[0].resource
+                == entra_client.conditional_access_policies[id].dict()
+            )
+            assert result[0].resource_name == display_name
+            assert result[0].resource_id == id
+            assert result[0].location == "global"
+
     def test_entra_app_enforced_restrictions_enabled(self):
         """Test PASS when a compliant policy with app enforced restrictions is enabled."""
         id = str(uuid4())
@@ -633,7 +896,7 @@ class Test_entra_conditional_access_policy_app_enforced_restrictions:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' enforces application restrictions for unmanaged devices."
+                == f"Conditional Access Policy {display_name} enforces application restrictions for unmanaged devices."
             )
             assert (
                 result[0].resource
@@ -762,7 +1025,7 @@ class Test_entra_conditional_access_policy_app_enforced_restrictions:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name2}' enforces application restrictions for unmanaged devices."
+                == f"Conditional Access Policy {display_name2} enforces application restrictions for unmanaged devices."
             )
             assert result[0].resource_name == display_name2
             assert result[0].resource_id == id2
