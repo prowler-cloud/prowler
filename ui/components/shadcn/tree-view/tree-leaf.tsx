@@ -3,6 +3,11 @@
 import { KeyboardEvent } from "react";
 
 import { Checkbox } from "@/components/shadcn/checkbox";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
 import { TreeLeafProps } from "@/types/tree";
 
@@ -30,6 +35,25 @@ export function TreeLeaf({
   renderItem,
 }: TreeLeafProps) {
   const isSelected = selectedIds.includes(item.id);
+  const shouldReplaceCheckboxWithState =
+    showCheckboxes && (item.isLoading || Boolean(item.status));
+  const statusIcon =
+    !item.isLoading && item.status ? (
+      item.status === "error" && item.errorMessage ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span>
+              <TreeStatusIcon status={item.status} />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs">{item.errorMessage}</p>
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <TreeStatusIcon status={item.status} />
+      )
+    ) : null;
 
   const handleSelect = () => {
     if (!item.disabled) {
@@ -50,7 +74,6 @@ export function TreeLeaf({
         "flex items-center gap-2 rounded-md px-2 py-1.5",
         "hover:bg-prowler-white/5 cursor-pointer",
         "focus-visible:ring-border-input-primary-press focus-visible:ring-2 focus-visible:outline-none",
-        isSelected && "bg-prowler-white/10",
         item.disabled && "cursor-not-allowed opacity-50",
         item.className,
       )}
@@ -62,12 +85,17 @@ export function TreeLeaf({
       aria-selected={isSelected}
       aria-disabled={item.disabled}
     >
-      {item.isLoading && <TreeSpinner />}
-      {!item.isLoading && item.status && (
-        <TreeStatusIcon status={item.status} />
+      {!showCheckboxes && item.isLoading && <TreeSpinner />}
+      {!showCheckboxes && statusIcon}
+
+      {showCheckboxes && shouldReplaceCheckboxWithState && (
+        <>
+          {item.isLoading && <TreeSpinner />}
+          {statusIcon}
+        </>
       )}
 
-      {showCheckboxes && (
+      {showCheckboxes && !shouldReplaceCheckboxWithState && (
         <Checkbox
           size="sm"
           checked={isSelected}

@@ -9,6 +9,25 @@ import { TreeLeaf } from "./tree-leaf";
 import { TreeNode } from "./tree-node";
 import { getAllDescendantIds } from "./utils";
 
+function getInitialExpandedIds(data: TreeDataItem[] | TreeDataItem): string[] {
+  const items = Array.isArray(data) ? data : [data];
+
+  const expandableIds: string[] = [];
+  const stack = [...items];
+
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (!current) continue;
+
+    if (current.children && current.children.length > 0) {
+      expandableIds.push(current.id);
+      stack.push(...current.children);
+    }
+  }
+
+  return expandableIds;
+}
+
 /**
  * TreeView component for rendering hierarchical data structures.
  *
@@ -56,7 +75,9 @@ export function TreeView({
   renderItem,
 }: TreeViewProps) {
   const [internalSelectedIds, setInternalSelectedIds] = useState<string[]>([]);
-  const [internalExpandedIds, setInternalExpandedIds] = useState<string[]>([]);
+  const [internalExpandedIds, setInternalExpandedIds] = useState<string[]>(
+    expandAll ? getInitialExpandedIds(data) : [],
+  );
 
   const selectedIds = controlledSelectedIds ?? internalSelectedIds;
   const expandedIds = controlledExpandedIds ?? internalExpandedIds;
@@ -108,7 +129,7 @@ export function TreeView({
       <ul className="space-y-1">
         {items.map((item) => (
           <li key={item.id}>
-            {item.children ? (
+            {item.children && item.children.length > 0 ? (
               <TreeNode
                 item={item}
                 level={0}
@@ -118,7 +139,6 @@ export function TreeView({
                 onExpandedChange={handleExpandedChange}
                 showCheckboxes={showCheckboxes}
                 renderItem={renderItem}
-                expandAll={expandAll}
                 enableSelectChildren={enableSelectChildren}
               />
             ) : (
