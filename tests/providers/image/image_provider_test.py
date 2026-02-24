@@ -616,6 +616,99 @@ class TestExtractRegistry:
         assert ImageProvider._extract_registry("nginx") is None
 
 
+class TestIsRegistryUrl:
+    def test_bare_ecr_hostname(self):
+        assert ImageProvider._is_registry_url(
+            "714274078102.dkr.ecr.eu-west-1.amazonaws.com"
+        )
+
+    def test_bare_hostname_with_port(self):
+        assert ImageProvider._is_registry_url("myregistry.com:5000")
+
+    def test_bare_ghcr(self):
+        assert ImageProvider._is_registry_url("ghcr.io")
+
+    def test_registry_with_namespace_only(self):
+        """Registry URL with a single path segment (no tag) is a registry URL."""
+        assert ImageProvider._is_registry_url("ghcr.io/myorg")
+
+    def test_image_reference_not_registry(self):
+        """Full image reference with repo and tag is not a registry URL."""
+        assert not ImageProvider._is_registry_url("ghcr.io/myorg/repo:tag")
+
+    def test_simple_image_name(self):
+        assert not ImageProvider._is_registry_url("alpine:3.18")
+
+    def test_bare_image_no_tag(self):
+        assert not ImageProvider._is_registry_url("nginx")
+
+    def test_dockerhub_namespace(self):
+        assert not ImageProvider._is_registry_url("library/alpine")
+
+
+class TestTestRegistryConnection:
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_registry_connection_success(self, mock_factory):
+        """Test that a bare hostname triggers registry catalog test."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_repositories.return_value = ["repo1"]
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(
+            image="714274078102.dkr.ecr.eu-west-1.amazonaws.com",
+            registry_username="user",
+            registry_password="pass",
+        )
+
+        assert result.is_connected is True
+        mock_factory.assert_called_once_with(
+            registry_url="714274078102.dkr.ecr.eu-west-1.amazonaws.com",
+            username="user",
+            password="pass",
+            token=None,
+        )
+        mock_adapter.list_repositories.assert_called_once()
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_registry_connection_auth_failure(self, mock_factory):
+        """Test that 401 from registry adapter returns auth failure."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_repositories.side_effect = Exception("401 unauthorized")
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(
+            image="714274078102.dkr.ecr.eu-west-1.amazonaws.com",
+        )
+
+        assert result.is_connected is False
+        assert "Authentication failed" in result.error
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_registry_connection_generic_error(self, mock_factory):
+        """Test that a generic error from registry adapter returns error message."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_repositories.side_effect = Exception("connection refused")
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(
+            image="myregistry.example.com",
+        )
+
+        assert result.is_connected is False
+        assert "Failed to connect to registry" in result.error
+
+    @patch("subprocess.run")
+    def test_image_reference_still_uses_trivy(self, mock_subprocess):
+        """Test that a full image reference still uses trivy (not registry catalog)."""
+        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
+
+        result = ImageProvider.test_connection(image="alpine:3.18")
+
+        assert result.is_connected is True
+        assert mock_subprocess.call_count == 1
+        assert mock_subprocess.call_args.args[0][0] == "trivy"
+
+
 class TestTrivyAuthIntegration:
     @patch("subprocess.run")
     def test_run_scan_passes_trivy_env_with_credentials(self, mock_subprocess):

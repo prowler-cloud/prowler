@@ -60,7 +60,7 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
     case "image":
       return {
         label: "Registry URL",
-        placeholder: "e.g. https://registry.example.com",
+        placeholder: "e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com",
       };
     case "oraclecloud":
       return {

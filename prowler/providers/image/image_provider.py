@@ -871,6 +871,9 @@ class ImageProvider(Provider):
         """
         Test connection to container registry by attempting to inspect an image.
 
+        For bare registry hostnames (e.g. ECR URLs passed by the API as provider_uid),
+        uses the OCI catalog endpoint instead of trivy image.
+
         Args:
             image: Container image to test
             raise_on_exception: Whether to raise exceptions
@@ -889,6 +892,16 @@ class ImageProvider(Provider):
             if not image:
                 return Connection(is_connected=False, error="Image name is required")
 
+            # Registry URL (bare hostname) → test via OCI catalog
+            if ImageProvider._is_registry_url(image):
+                return ImageProvider._test_registry_connection(
+                    registry_url=image,
+                    registry_username=registry_username,
+                    registry_password=registry_password,
+                    registry_token=registry_token,
+                )
+
+            # Image reference → test via trivy
             # Build env with registry credentials
             env = dict(os.environ)
             if registry_username and registry_password:
@@ -948,4 +961,38 @@ class ImageProvider(Provider):
             return Connection(
                 is_connected=False,
                 error=f"Unexpected error: {str(error)}",
+            )
+
+    @staticmethod
+    def _test_registry_connection(
+        registry_url: str,
+        registry_username: str | None = None,
+        registry_password: str | None = None,
+        registry_token: str | None = None,
+    ) -> "Connection":
+        """Test connection to a registry URL by listing repositories via OCI catalog."""
+        try:
+            adapter = create_registry_adapter(
+                registry_url=registry_url,
+                username=registry_username,
+                password=registry_password,
+                token=registry_token,
+            )
+            adapter.list_repositories()
+            return Connection(is_connected=True)
+        except Exception as error:
+            error_str = str(error).lower()
+            if "401" in error_str or "unauthorized" in error_str:
+                return Connection(
+                    is_connected=False,
+                    error="Authentication failed. Check registry credentials.",
+                )
+            elif "404" in error_str or "not found" in error_str:
+                return Connection(
+                    is_connected=False,
+                    error="Registry catalog not found.",
+                )
+            return Connection(
+                is_connected=False,
+                error=f"Failed to connect to registry: {str(error)[:200]}",
             )
