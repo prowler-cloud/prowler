@@ -1356,7 +1356,8 @@
       "Id": "5.2.2.1",
       "Description": "Multifactor authentication is a process that requires an additional form of identification during the sign-in process, such as a code from a mobile device or a fingerprint scan, to enhance security. Ensure users in administrator roles have MFA capabilities enabled.",
       "Checks": [
-        "entra_admin_users_mfa_enabled"
+        "entra_admin_users_mfa_enabled",
+        "entra_conditional_access_policy_require_mfa_for_management_api"
       ],
       "Attributes": [
         {
@@ -1379,6 +1380,7 @@
       "Id": "5.2.2.2",
       "Description": "Enable multifactor authentication for all users in the Microsoft 365 tenant. Users will be prompted to authenticate with a second factor upon logging in to Microsoft 365 services.",
       "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
         "entra_users_mfa_enabled"
       ],
       "Attributes": [
