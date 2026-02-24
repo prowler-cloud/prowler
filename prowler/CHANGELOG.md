@@ -28,6 +28,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Registry scan mode for `image` provider: enumerate and scan all images from OCI standard, Docker Hub, and ECR [(#9985)](https://github.com/prowler-cloud/prowler/pull/9985)
 - Add file descriptor limits (`ulimits`) to Docker Compose worker services to prevent `Too many open files` errors [(#10107)](https://github.com/prowler-cloud/prowler/pull/10107)
 - CIS 6.0 for the AWS provider [(#10127)](https://github.com/prowler-cloud/prowler/pull/10127)
+- OpenStack provider multiple regions support [(#10135)](https://github.com/prowler-cloud/prowler/pull/10135)
 
 ### 🐞 Fixed
 
@@ -100,6 +101,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- `entra_emergency_access_exclusion` check for M365 provider [(#9903)](https://github.com/prowler-cloud/prowler/pull/9903)
 - `defender_zap_for_teams_enabled` check for M365 provider [(#9838)](https://github.com/prowler-cloud/prowler/pull/9838)
 - `compute_instance_suspended_without_persistent_disks` check for GCP provider [(#9747)](https://github.com/prowler-cloud/prowler/pull/9747)
 - `codebuild_project_webhook_filters_use_anchored_patterns` check for AWS provider to detect CodeBreach vulnerability [(#9840)](https://github.com/prowler-cloud/prowler/pull/9840)

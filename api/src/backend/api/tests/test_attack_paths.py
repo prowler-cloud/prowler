@@ -1,12 +1,19 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
-
 import pytest
 
-from rest_framework.exceptions import APIException, ValidationError
+import neo4j
+import neo4j.exceptions
+
+from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 
 from api.attack_paths import database as graph_database
 from api.attack_paths import views_helpers
+
+
+def _make_neo4j_error(message, code):
+    """Build a Neo4jError with the given message and code."""
+    return neo4j.exceptions.Neo4jError._hydrate_neo4j(code=code, message=message)
 
 
 def test_normalize_run_payload_extracts_attributes_section():
@@ -122,28 +129,25 @@ def test_execute_attack_paths_query_serializes_graph(
     )
     graph = SimpleNamespace(nodes=[node, node_2], relationships=[relationship])
 
-    run_result = MagicMock()
-    run_result.graph.return_value = graph
-
-    session = MagicMock()
-    session.run.return_value = run_result
-
-    session_ctx = MagicMock()
-    session_ctx.__enter__.return_value = session
-    session_ctx.__exit__.return_value = False
+    graph_result = MagicMock()
+    graph_result.nodes = graph.nodes
+    graph_result.relationships = graph.relationships
 
     database_name = "db-tenant-test-tenant-id"
 
     with patch(
-        "api.attack_paths.views_helpers.graph_database.get_session",
-        return_value=session_ctx,
-    ) as mock_get_session:
+        "api.attack_paths.views_helpers.graph_database.execute_read_query",
+        return_value=graph_result,
+    ) as mock_execute_read_query:
         result = views_helpers.execute_attack_paths_query(
             database_name, definition, parameters, provider_id=provider_id
         )
 
-    mock_get_session.assert_called_once_with(database_name)
-    session.run.assert_called_once_with(definition.cypher, parameters)
+    mock_execute_read_query.assert_called_once_with(
+        database=database_name,
+        cypher=definition.cypher,
+        parameters=parameters,
+    )
     assert result["nodes"][0]["id"] == "node-1"
     assert result["nodes"][0]["properties"]["complex"]["items"][0] == "value"
     assert result["relationships"][0]["label"] == "OWNS"
@@ -163,17 +167,10 @@ def test_execute_attack_paths_query_wraps_graph_errors(
     database_name = "db-tenant-test-tenant-id"
     parameters = {"provider_uid": "123"}
 
-    class ExplodingContext:
-        def __enter__(self):
-            raise graph_database.GraphDatabaseQueryException("boom")
-
-        def __exit__(self, exc_type, exc, tb):
-            return False
-
     with (
         patch(
-            "api.attack_paths.views_helpers.graph_database.get_session",
-            return_value=ExplodingContext(),
+            "api.attack_paths.views_helpers.graph_database.execute_read_query",
+            side_effect=graph_database.GraphDatabaseQueryException("boom"),
         ),
         patch("api.attack_paths.views_helpers.logger") as mock_logger,
     ):
@@ -183,6 +180,33 @@ def test_execute_attack_paths_query_wraps_graph_errors(
             )
 
     mock_logger.error.assert_called_once()
+
+
+def test_execute_attack_paths_query_raises_permission_denied_on_read_only(
+    attack_paths_query_definition_factory,
+):
+    definition = attack_paths_query_definition_factory(
+        id="aws-rds",
+        name="RDS",
+        short_description="Short desc",
+        description="",
+        cypher="MATCH (n) RETURN n",
+        parameters=[],
+    )
+    database_name = "db-tenant-test-tenant-id"
+    parameters = {"provider_uid": "123"}
+
+    with patch(
+        "api.attack_paths.views_helpers.graph_database.execute_read_query",
+        side_effect=graph_database.WriteQueryNotAllowedException(
+            message="Read query not allowed",
+            code="Neo.ClientError.Statement.AccessMode",
+        ),
+    ):
+        with pytest.raises(PermissionDenied):
+            views_helpers.execute_attack_paths_query(
+                database_name, definition, parameters, provider_id="test-provider-123"
+            )
 
 
 def test_serialize_graph_filters_by_provider_id(attack_paths_graph_stub_classes):
@@ -216,3 +240,105 @@ def test_serialize_graph_filters_by_provider_id(attack_paths_graph_stub_classes)
     assert result["nodes"][0]["id"] == "n1"
     assert len(result["relationships"]) == 1
     assert result["relationships"][0]["id"] == "r1"
+
+
+# -- execute_read_query read-only enforcement ---------------------------------
+
+
+@pytest.fixture
+def mock_neo4j_session():
+    """Mock the Neo4j driver so execute_read_query uses a fake session."""
+    mock_session = MagicMock(spec=neo4j.Session)
+    mock_driver = MagicMock(spec=neo4j.Driver)
+    mock_driver.session.return_value = mock_session
+
+    with patch("api.attack_paths.database.get_driver", return_value=mock_driver):
+        yield mock_session
+
+
+def test_execute_read_query_succeeds_with_select(mock_neo4j_session):
+    mock_graph = MagicMock(spec=neo4j.graph.Graph)
+    mock_neo4j_session.execute_read.return_value = mock_graph
+
+    result = graph_database.execute_read_query(
+        database="test-db",
+        cypher="MATCH (n:AWSAccount) RETURN n LIMIT 10",
+    )
+
+    assert result is mock_graph
+
+
+def test_execute_read_query_rejects_create(mock_neo4j_session):
+    mock_neo4j_session.execute_read.side_effect = _make_neo4j_error(
+        "Writing in read access mode not allowed",
+        "Neo.ClientError.Statement.AccessMode",
+    )
+
+    with pytest.raises(graph_database.WriteQueryNotAllowedException):
+        graph_database.execute_read_query(
+            database="test-db",
+            cypher="CREATE (n:Node {name: 'test'}) RETURN n",
+        )
+
+
+def test_execute_read_query_rejects_update(mock_neo4j_session):
+    mock_neo4j_session.execute_read.side_effect = _make_neo4j_error(
+        "Writing in read access mode not allowed",
+        "Neo.ClientError.Statement.AccessMode",
+    )
+
+    with pytest.raises(graph_database.WriteQueryNotAllowedException):
+        graph_database.execute_read_query(
+            database="test-db",
+            cypher="MATCH (n:Node) SET n.name = 'updated' RETURN n",
+        )
+
+
+def test_execute_read_query_rejects_delete(mock_neo4j_session):
+    mock_neo4j_session.execute_read.side_effect = _make_neo4j_error(
+        "Writing in read access mode not allowed",
+        "Neo.ClientError.Statement.AccessMode",
+    )
+
+    with pytest.raises(graph_database.WriteQueryNotAllowedException):
+        graph_database.execute_read_query(
+            database="test-db",
+            cypher="MATCH (n:Node) DELETE n",
+        )
+
+
+@pytest.mark.parametrize(
+    "cypher",
+    [
+        "CALL apoc.create.vNode(['Label'], {name: 'test'}) YIELD node RETURN node",
+        "MATCH (a)-[r]->(b) CALL apoc.create.vRelationship(a, 'REL', {}, b) YIELD rel RETURN rel",
+    ],
+    ids=["apoc.create.vNode", "apoc.create.vRelationship"],
+)
+def test_execute_read_query_succeeds_with_apoc_virtual_create(
+    mock_neo4j_session, cypher
+):
+    mock_graph = MagicMock(spec=neo4j.graph.Graph)
+    mock_neo4j_session.execute_read.return_value = mock_graph
+
+    result = graph_database.execute_read_query(database="test-db", cypher=cypher)
+
+    assert result is mock_graph
+
+
+@pytest.mark.parametrize(
+    "cypher",
+    [
+        "CALL apoc.create.node(['Label'], {name: 'test'}) YIELD node RETURN node",
+        "MATCH (a), (b) CALL apoc.create.relationship(a, 'REL', {}, b) YIELD rel RETURN rel",
+    ],
+    ids=["apoc.create.Node", "apoc.create.Relationship"],
+)
+def test_execute_read_query_rejects_apoc_real_create(mock_neo4j_session, cypher):
+    mock_neo4j_session.execute_read.side_effect = _make_neo4j_error(
+        "There is no procedure with the name `apoc.create.node` registered",
+        "Neo.ClientError.Procedure.ProcedureNotFound",
+    )
+
+    with pytest.raises(graph_database.WriteQueryNotAllowedException):
+        graph_database.execute_read_query(database="test-db", cypher=cypher)

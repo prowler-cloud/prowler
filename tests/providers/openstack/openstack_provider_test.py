@@ -14,11 +14,14 @@ from prowler.config.config import (
 )
 from prowler.providers.common.models import Connection
 from prowler.providers.openstack.exceptions.exceptions import (
+    OpenStackAmbiguousRegionError,
     OpenStackAuthenticationError,
     OpenStackCloudNotFoundError,
     OpenStackConfigFileNotFoundError,
     OpenStackCredentialsError,
     OpenStackInvalidConfigError,
+    OpenStackInvalidProviderIdError,
+    OpenStackNoRegionError,
 )
 from prowler.providers.openstack.models import OpenStackIdentityInfo, OpenStackSession
 from prowler.providers.openstack.openstack_provider import OpenstackProvider
@@ -1023,3 +1026,623 @@ clouds:
             assert provider.session.auth_url == "https://openstack.example.com:5000/v3"
             assert provider.session.username == "test-user"
             assert provider.session.project_id == "test-project"
+
+
+class TestOpenstackProviderRegionValidation:
+    """Test suite for OpenStack Provider region validation (region_name XOR regions)."""
+
+    @pytest.fixture(autouse=True)
+    def clean_openstack_env(self, monkeypatch):
+        """Ensure clean OpenStack environment for all tests."""
+        openstack_env_vars = [
+            "OS_AUTH_URL",
+            "OS_USERNAME",
+            "OS_PASSWORD",
+            "OS_PROJECT_ID",
+            "OS_REGION_NAME",
+            "OS_CLOUD",
+            "OS_IDENTITY_API_VERSION",
+            "OS_USER_DOMAIN_NAME",
+            "OS_PROJECT_DOMAIN_NAME",
+        ]
+        for env_var in openstack_env_vars:
+            monkeypatch.delenv(env_var, raising=False)
+
+    def test_clouds_yaml_content_with_region_name_only(self):
+        """Test that clouds.yaml content with only region_name produces a valid session."""
+        clouds_yaml_content = """
+clouds:
+  test-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    region_name: RegionOne
+    identity_api_version: 3
+"""
+        session = OpenstackProvider._setup_session_from_clouds_yaml_content(
+            clouds_yaml_content=clouds_yaml_content,
+            clouds_yaml_cloud="test-cloud",
+        )
+
+        assert session.region_name == "RegionOne"
+        assert session.regions is None
+
+    def test_clouds_yaml_content_with_regions_list_only(self):
+        """Test that clouds.yaml content with only regions list produces a valid session."""
+        clouds_yaml_content = """
+clouds:
+  test-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    regions:
+      - RegionOne
+      - RegionTwo
+    identity_api_version: 3
+"""
+        session = OpenstackProvider._setup_session_from_clouds_yaml_content(
+            clouds_yaml_content=clouds_yaml_content,
+            clouds_yaml_cloud="test-cloud",
+        )
+
+        assert session.region_name is None
+        assert session.regions == ["RegionOne", "RegionTwo"]
+
+    def test_clouds_yaml_content_with_both_region_name_and_regions(self):
+        """Test that clouds.yaml content with both region_name and regions raises error."""
+        clouds_yaml_content = """
+clouds:
+  test-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    region_name: RegionOne
+    regions:
+      - RegionOne
+      - RegionTwo
+    identity_api_version: 3
+"""
+        with pytest.raises(OpenStackAmbiguousRegionError) as excinfo:
+            OpenstackProvider._setup_session_from_clouds_yaml_content(
+                clouds_yaml_content=clouds_yaml_content,
+                clouds_yaml_cloud="test-cloud",
+            )
+
+        assert "both 'region_name' and 'regions'" in str(excinfo.value)
+
+    def test_clouds_yaml_content_with_neither_region_name_nor_regions(self):
+        """Test that clouds.yaml content with neither region_name nor regions raises error."""
+        clouds_yaml_content = """
+clouds:
+  test-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    identity_api_version: 3
+"""
+        with pytest.raises(OpenStackNoRegionError) as excinfo:
+            OpenstackProvider._setup_session_from_clouds_yaml_content(
+                clouds_yaml_content=clouds_yaml_content,
+                clouds_yaml_cloud="test-cloud",
+            )
+
+        assert "neither 'region_name' nor 'regions'" in str(excinfo.value)
+
+    def test_clouds_yaml_file_with_regions_list(self, tmp_path):
+        """Test loading clouds.yaml file with regions list."""
+        clouds_yaml = tmp_path / "clouds.yaml"
+        clouds_yaml.write_text(
+            """
+clouds:
+  test-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    regions:
+      - RegionOne
+      - RegionTwo
+    identity_api_version: 3
+"""
+        )
+
+        mock_connection = MagicMock()
+        mock_connection.authorize.return_value = None
+        mock_connection.current_user_id = None
+        mock_connection.current_project_id = "test-project-id"
+        mock_connection.identity.get_project.return_value = None
+
+        with patch(
+            "prowler.providers.openstack.openstack_provider.connect"
+        ) as mock_connect:
+            mock_connect.return_value = mock_connection
+
+            provider = OpenstackProvider(
+                clouds_yaml_file=str(clouds_yaml),
+                clouds_yaml_cloud="test-cloud",
+            )
+
+            assert provider.session.region_name is None
+            assert provider.session.regions == ["RegionOne", "RegionTwo"]
+
+    def test_clouds_yaml_file_with_both_regions_raises_error(self, tmp_path):
+        """Test that clouds.yaml file with both region_name and regions raises error."""
+        clouds_yaml = tmp_path / "clouds.yaml"
+        clouds_yaml.write_text(
+            """
+clouds:
+  test-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    region_name: RegionOne
+    regions:
+      - RegionOne
+      - RegionTwo
+    identity_api_version: 3
+"""
+        )
+
+        with pytest.raises(OpenStackAmbiguousRegionError):
+            OpenstackProvider(
+                clouds_yaml_file=str(clouds_yaml),
+                clouds_yaml_cloud="test-cloud",
+            )
+
+    def test_clouds_yaml_file_with_no_region_raises_error(self, tmp_path):
+        """Test that clouds.yaml file with neither region_name nor regions raises error."""
+        clouds_yaml = tmp_path / "clouds.yaml"
+        clouds_yaml.write_text(
+            """
+clouds:
+  test-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    identity_api_version: 3
+"""
+        )
+
+        with pytest.raises(OpenStackNoRegionError):
+            OpenstackProvider(
+                clouds_yaml_file=str(clouds_yaml),
+                clouds_yaml_cloud="test-cloud",
+            )
+
+    def test_session_as_sdk_config_with_regions_list(self):
+        """Test OpenStackSession.as_sdk_config() with regions list uses first region."""
+        session = OpenStackSession(
+            auth_url="https://openstack.example.com:5000/v3",
+            identity_api_version="3",
+            username="test-user",
+            password="test-password",
+            project_id="test-project",
+            regions=["RegionOne", "RegionTwo"],
+            user_domain_name="Default",
+            project_domain_name="Default",
+        )
+
+        sdk_config = session.as_sdk_config()
+
+        # SDK does not iterate over regions automatically, so we pass the
+        # first region as region_name for the default connection
+        assert sdk_config["region_name"] == "RegionOne"
+        assert "regions" not in sdk_config
+
+    def test_session_as_sdk_config_with_region_name(self):
+        """Test OpenStackSession.as_sdk_config() with single region_name."""
+        session = OpenStackSession(
+            auth_url="https://openstack.example.com:5000/v3",
+            identity_api_version="3",
+            username="test-user",
+            password="test-password",
+            project_id="test-project",
+            region_name="RegionOne",
+            user_domain_name="Default",
+            project_domain_name="Default",
+        )
+
+        sdk_config = session.as_sdk_config()
+
+        assert sdk_config["region_name"] == "RegionOne"
+        assert "regions" not in sdk_config
+
+
+class TestOpenstackProviderIdValidation:
+    """Test suite for OpenStack Provider ID validation."""
+
+    @pytest.fixture(autouse=True)
+    def clean_openstack_env(self, monkeypatch):
+        """Ensure clean OpenStack environment for all tests."""
+        openstack_env_vars = [
+            "OS_AUTH_URL",
+            "OS_USERNAME",
+            "OS_PASSWORD",
+            "OS_PROJECT_ID",
+            "OS_REGION_NAME",
+            "OS_CLOUD",
+            "OS_IDENTITY_API_VERSION",
+            "OS_USER_DOMAIN_NAME",
+            "OS_PROJECT_DOMAIN_NAME",
+        ]
+        for env_var in openstack_env_vars:
+            monkeypatch.delenv(env_var, raising=False)
+
+    def test_test_connection_provider_id_matches(self):
+        """Test test_connection succeeds when provider_id matches project_id."""
+        mock_connection = MagicMock()
+        mock_connection.authorize.return_value = None
+
+        with patch(
+            "prowler.providers.openstack.openstack_provider.connect"
+        ) as mock_connect:
+            mock_connect.return_value = mock_connection
+
+            connection_result = OpenstackProvider.test_connection(
+                auth_url="https://openstack.example.com:5000/v3",
+                username="test-user",
+                password="test-password",
+                project_id="test-project-id",
+                region_name="RegionOne",
+                provider_id="test-project-id",
+                raise_on_exception=False,
+            )
+
+            assert connection_result.is_connected is True
+            assert connection_result.error is None
+
+    def test_test_connection_provider_id_does_not_match(self):
+        """Test test_connection fails when provider_id doesn't match project_id."""
+        connection_result = OpenstackProvider.test_connection(
+            auth_url="https://openstack.example.com:5000/v3",
+            username="test-user",
+            password="test-password",
+            project_id="actual-project-id",
+            region_name="RegionOne",
+            provider_id="different-project-id",
+            raise_on_exception=False,
+        )
+
+        assert connection_result.is_connected is False
+        assert isinstance(connection_result.error, OpenStackInvalidProviderIdError)
+
+    def test_test_connection_provider_id_mismatch_raises(self):
+        """Test test_connection raises when provider_id doesn't match and raise_on_exception=True."""
+        with pytest.raises(OpenStackInvalidProviderIdError) as excinfo:
+            OpenstackProvider.test_connection(
+                auth_url="https://openstack.example.com:5000/v3",
+                username="test-user",
+                password="test-password",
+                project_id="actual-project-id",
+                region_name="RegionOne",
+                provider_id="different-project-id",
+                raise_on_exception=True,
+            )
+
+        assert "different-project-id" in str(excinfo.value)
+        assert "actual-project-id" in str(excinfo.value)
+
+    def test_test_connection_no_provider_id_skips_validation(self):
+        """Test test_connection skips provider_id validation when not provided."""
+        mock_connection = MagicMock()
+        mock_connection.authorize.return_value = None
+
+        with patch(
+            "prowler.providers.openstack.openstack_provider.connect"
+        ) as mock_connect:
+            mock_connect.return_value = mock_connection
+
+            connection_result = OpenstackProvider.test_connection(
+                auth_url="https://openstack.example.com:5000/v3",
+                username="test-user",
+                password="test-password",
+                project_id="test-project-id",
+                region_name="RegionOne",
+                raise_on_exception=False,
+            )
+
+            assert connection_result.is_connected is True
+
+    def test_test_connection_provider_id_with_clouds_yaml_content(self):
+        """Test test_connection validates provider_id against clouds.yaml content project_id."""
+        clouds_yaml_content = """
+clouds:
+  test-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: yaml-project-id
+    region_name: RegionOne
+"""
+        connection_result = OpenstackProvider.test_connection(
+            clouds_yaml_content=clouds_yaml_content,
+            clouds_yaml_cloud="test-cloud",
+            provider_id="wrong-project-id",
+            raise_on_exception=False,
+        )
+
+        assert connection_result.is_connected is False
+        assert isinstance(connection_result.error, OpenStackInvalidProviderIdError)
+
+    def test_test_connection_region_error_surfaced(self):
+        """Test test_connection surfaces region validation errors."""
+        clouds_yaml_content = """
+clouds:
+  test-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    identity_api_version: 3
+"""
+        connection_result = OpenstackProvider.test_connection(
+            clouds_yaml_content=clouds_yaml_content,
+            clouds_yaml_cloud="test-cloud",
+            raise_on_exception=False,
+        )
+
+        assert connection_result.is_connected is False
+        assert isinstance(connection_result.error, OpenStackNoRegionError)
+
+
+class TestOpenstackProviderRegionalConnections:
+    """Test suite for OpenStack Provider regional_connections."""
+
+    @pytest.fixture(autouse=True)
+    def clean_openstack_env(self, monkeypatch):
+        """Ensure clean OpenStack environment for all tests."""
+        openstack_env_vars = [
+            "OS_AUTH_URL",
+            "OS_USERNAME",
+            "OS_PASSWORD",
+            "OS_PROJECT_ID",
+            "OS_REGION_NAME",
+            "OS_CLOUD",
+            "OS_IDENTITY_API_VERSION",
+            "OS_USER_DOMAIN_NAME",
+            "OS_PROJECT_DOMAIN_NAME",
+        ]
+        for env_var in openstack_env_vars:
+            monkeypatch.delenv(env_var, raising=False)
+
+    def test_single_region_regional_connections(self):
+        """Test regional_connections has one entry for single-region provider."""
+        mock_connection = MagicMock()
+        mock_connection.authorize.return_value = None
+        mock_connection.current_user_id = None
+        mock_connection.current_project_id = "test-project"
+        mock_connection.identity.get_project.return_value = None
+
+        with patch(
+            "prowler.providers.openstack.openstack_provider.connect"
+        ) as mock_connect:
+            mock_connect.return_value = mock_connection
+
+            provider = OpenstackProvider(
+                auth_url="https://openstack.example.com:5000/v3",
+                username="test-user",
+                password="test-password",
+                project_id="test-project",
+                region_name="RegionOne",
+            )
+
+            assert len(provider.regional_connections) == 1
+            assert "RegionOne" in provider.regional_connections
+            assert provider.regional_connections["RegionOne"] is provider.connection
+            mock_connect.assert_called_once()
+
+    def test_multi_region_regional_connections(self):
+        """Test regional_connections has entries for each region in multi-region setup."""
+        mock_conn_region1 = MagicMock()
+        mock_conn_region1.authorize.return_value = None
+        mock_conn_region1.current_user_id = None
+        mock_conn_region1.current_project_id = "test-project-id"
+        mock_conn_region1.identity.get_project.return_value = None
+
+        mock_conn_region2 = MagicMock()
+        mock_conn_region2.authorize.return_value = None
+
+        clouds_yaml_content = """
+clouds:
+  multi-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    regions:
+      - UK1
+      - DE1
+    identity_api_version: 3
+"""
+        with patch(
+            "prowler.providers.openstack.openstack_provider.connect"
+        ) as mock_connect:
+            mock_connect.side_effect = [mock_conn_region1, mock_conn_region2]
+
+            provider = OpenstackProvider(
+                clouds_yaml_content=clouds_yaml_content,
+                clouds_yaml_cloud="multi-cloud",
+            )
+
+            assert len(provider.regional_connections) == 2
+            assert "UK1" in provider.regional_connections
+            assert "DE1" in provider.regional_connections
+            assert provider.regional_connections["UK1"] is mock_conn_region1
+            assert provider.regional_connections["DE1"] is mock_conn_region2
+            # Default connection should be the first region
+            assert provider.connection is mock_conn_region1
+            assert mock_connect.call_count == 2
+
+    def test_multi_region_test_connection_tests_all_regions(self):
+        """Test test_connection tests connectivity to every region."""
+        mock_connection = MagicMock()
+        mock_connection.authorize.return_value = None
+
+        clouds_yaml_content = """
+clouds:
+  multi-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    regions:
+      - UK1
+      - DE1
+    identity_api_version: 3
+"""
+        with patch(
+            "prowler.providers.openstack.openstack_provider.connect"
+        ) as mock_connect:
+            mock_connect.return_value = mock_connection
+
+            result = OpenstackProvider.test_connection(
+                clouds_yaml_content=clouds_yaml_content,
+                clouds_yaml_cloud="multi-cloud",
+                raise_on_exception=False,
+            )
+
+            assert result.is_connected is True
+            # Should have called connect once per region
+            assert mock_connect.call_count == 2
+
+    def test_multi_region_test_connection_fails_if_one_region_fails(self):
+        """Test test_connection fails if any region fails."""
+        mock_conn_ok = MagicMock()
+        mock_conn_ok.authorize.return_value = None
+
+        mock_conn_fail = MagicMock()
+        mock_conn_fail.authorize.side_effect = openstack_exceptions.SDKException(
+            "Connection failed in DE1"
+        )
+
+        clouds_yaml_content = """
+clouds:
+  multi-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    regions:
+      - UK1
+      - DE1
+    identity_api_version: 3
+"""
+        with patch(
+            "prowler.providers.openstack.openstack_provider.connect"
+        ) as mock_connect:
+            mock_connect.side_effect = [mock_conn_ok, mock_conn_fail]
+
+            result = OpenstackProvider.test_connection(
+                clouds_yaml_content=clouds_yaml_content,
+                clouds_yaml_cloud="multi-cloud",
+                raise_on_exception=False,
+            )
+
+            assert result.is_connected is False
+
+    def test_session_as_sdk_config_region_override(self):
+        """Test as_sdk_config with region_override overrides region_name."""
+        session = OpenStackSession(
+            auth_url="https://openstack.example.com:5000/v3",
+            identity_api_version="3",
+            username="test-user",
+            password="test-password",
+            project_id="test-project",
+            region_name="RegionOne",
+            user_domain_name="Default",
+            project_domain_name="Default",
+        )
+
+        sdk_config = session.as_sdk_config(region_override="RegionTwo")
+        assert sdk_config["region_name"] == "RegionTwo"
+
+    def test_session_as_sdk_config_region_override_with_regions_list(self):
+        """Test as_sdk_config with region_override overrides regions list."""
+        session = OpenStackSession(
+            auth_url="https://openstack.example.com:5000/v3",
+            identity_api_version="3",
+            username="test-user",
+            password="test-password",
+            project_id="test-project",
+            regions=["UK1", "DE1"],
+            user_domain_name="Default",
+            project_domain_name="Default",
+        )
+
+        sdk_config = session.as_sdk_config(region_override="DE1")
+        assert sdk_config["region_name"] == "DE1"
+
+    def test_multi_region_test_connection_provider_id_matches(self):
+        """Test test_connection validates provider_id in multi-region setup."""
+        mock_connection = MagicMock()
+        mock_connection.authorize.return_value = None
+
+        clouds_yaml_content = """
+clouds:
+  multi-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    regions:
+      - UK1
+      - DE1
+    identity_api_version: 3
+"""
+        with patch(
+            "prowler.providers.openstack.openstack_provider.connect"
+        ) as mock_connect:
+            mock_connect.return_value = mock_connection
+
+            result = OpenstackProvider.test_connection(
+                clouds_yaml_content=clouds_yaml_content,
+                clouds_yaml_cloud="multi-cloud",
+                provider_id="test-project-id",
+                raise_on_exception=False,
+            )
+
+            assert result.is_connected is True
+
+    def test_multi_region_test_connection_provider_id_mismatch(self):
+        """Test test_connection fails when provider_id doesn't match in multi-region."""
+        clouds_yaml_content = """
+clouds:
+  multi-cloud:
+    auth:
+      auth_url: https://openstack.example.com:5000/v3
+      username: test-user
+      password: test-password
+      project_id: actual-project-id
+    regions:
+      - UK1
+      - DE1
+    identity_api_version: 3
+"""
+        result = OpenstackProvider.test_connection(
+            clouds_yaml_content=clouds_yaml_content,
+            clouds_yaml_cloud="multi-cloud",
+            provider_id="wrong-project-id",
+            raise_on_exception=False,
+        )
+
+        assert result.is_connected is False
+        assert isinstance(result.error, OpenStackInvalidProviderIdError)

@@ -2,6 +2,8 @@ import atexit
 import logging
 import threading
 
+from typing import Any
+
 from contextlib import contextmanager
 from typing import Iterator
 from uuid import UUID
@@ -12,6 +14,7 @@ import neo4j.exceptions
 from django.conf import settings
 
 from api.attack_paths.retryable_session import RetryableSession
+from config.env import env
 from tasks.jobs.attack_paths.config import (
     BATCH_SIZE,
     DEPRECATED_PROVIDER_RESOURCE_LABEL,
@@ -21,7 +24,16 @@ from tasks.jobs.attack_paths.config import (
 logging.getLogger("neo4j").setLevel(logging.ERROR)
 logging.getLogger("neo4j").propagate = False
 
-SERVICE_UNAVAILABLE_MAX_RETRIES = 3
+SERVICE_UNAVAILABLE_MAX_RETRIES = env.int(
+    "ATTACK_PATHS_SERVICE_UNAVAILABLE_MAX_RETRIES", default=3
+)
+READ_QUERY_TIMEOUT_SECONDS = env.int(
+    "ATTACK_PATHS_READ_QUERY_TIMEOUT_SECONDS", default=30
+)
+READ_EXCEPTION_CODES = [
+    "Neo.ClientError.Statement.AccessMode",
+    "Neo.ClientError.Procedure.ProcedureNotFound",
+]
 
 # Module-level process-wide driver singleton
 _driver: neo4j.Driver | None = None
@@ -78,23 +90,51 @@ def close_driver() -> None:  # TODO: Use it
 
 
 @contextmanager
-def get_session(database: str | None = None) -> Iterator[RetryableSession]:
+def get_session(
+    database: str | None = None, default_access_mode: str | None = None
+) -> Iterator[RetryableSession]:
     session_wrapper: RetryableSession | None = None
 
     try:
         session_wrapper = RetryableSession(
-            session_factory=lambda: get_driver().session(database=database),
+            session_factory=lambda: get_driver().session(
+                database=database, default_access_mode=default_access_mode
+            ),
             max_retries=SERVICE_UNAVAILABLE_MAX_RETRIES,
         )
         yield session_wrapper
 
     except neo4j.exceptions.Neo4jError as exc:
+        if (
+            default_access_mode == neo4j.READ_ACCESS
+            and exc.code in READ_EXCEPTION_CODES
+        ):
+            message = "Read query not allowed"
+            code = READ_EXCEPTION_CODES[0]
+            raise WriteQueryNotAllowedException(message=message, code=code)
+
         message = exc.message if exc.message is not None else str(exc)
         raise GraphDatabaseQueryException(message=message, code=exc.code)
 
     finally:
         if session_wrapper is not None:
             session_wrapper.close()
+
+
+def execute_read_query(
+    database: str,
+    cypher: str,
+    parameters: dict[str, Any] | None = None,
+) -> neo4j.graph.Graph:
+    with get_session(database, default_access_mode=neo4j.READ_ACCESS) as session:
+
+        def _run(tx: neo4j.ManagedTransaction) -> neo4j.graph.Graph:
+            result = tx.run(
+                cypher, parameters or {}, timeout=READ_QUERY_TIMEOUT_SECONDS
+            )
+            return result.graph()
+
+        return session.execute_read(_run)
 
 
 def create_database(database: str) -> None:
@@ -182,3 +222,7 @@ class GraphDatabaseQueryException(Exception):
             return f"{self.code}: {self.message}"
 
         return self.message
+
+
+class WriteQueryNotAllowedException(GraphDatabaseQueryException):
+    pass
