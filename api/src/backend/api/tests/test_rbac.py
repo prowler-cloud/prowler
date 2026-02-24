@@ -800,6 +800,57 @@ class TestUserRoleLinkPermissions:
         # Assert
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
+    def test_permission_granted_via_secondary_role(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        """
+        Regression test: a user with two roles should be granted access when the
+        *second* role (not index 0) satisfies the required permission.
+
+        Before the fix, HasPermissions only checked user_roles[0], so a user whose
+        first role lacked a permission was always denied even if another role
+        granted it.
+        """
+        mu_user = authenticated_client_rbac_manage_users_only.user
+        mu_membership = Membership.objects.filter(user=mu_user).first()
+        tenant = mu_membership.tenant
+
+        # Add a second role that grants manage_account — the permission required
+        # to create roles (role-list POST).
+        extra_role = Role.objects.create(
+            name="secondary_manage_account",
+            tenant_id=tenant.id,
+            manage_users=False,
+            manage_account=True,
+        )
+        UserRoleRelationship.objects.create(
+            user=mu_user,
+            role=extra_role,
+            tenant_id=tenant.id,
+        )
+
+        data = {
+            "data": {
+                "type": "roles",
+                "attributes": {
+                    "name": "Multi Role Test",
+                    "manage_users": "false",
+                    "manage_account": "false",
+                    "manage_providers": "false",
+                    "manage_scans": "false",
+                    "unlimited_visibility": "false",
+                },
+                "relationships": {"provider_groups": {"data": []}},
+            }
+        }
+        response = authenticated_client_rbac_manage_users_only.post(
+            reverse("role-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        # User should be granted access because the secondary role has manage_account
+        assert response.status_code == status.HTTP_201_CREATED
+
     def test_link_user_roles_with_manage_users_only_forbidden(
         self, authenticated_client_rbac_manage_users_only
     ):
