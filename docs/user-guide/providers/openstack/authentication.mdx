@@ -337,6 +337,99 @@ prowler openstack --clouds-yaml-cloud ovh-staging --output-directory ./reports/o
 prowler openstack --clouds-yaml-cloud infomaniak-production --output-directory ./reports/infomaniak/
 ```
 
+## Multi-Region Scanning
+
+Many OpenStack providers (OVH, Infomaniak, etc.) offer resources across multiple regions within the same project. By default, the `clouds.yaml` file downloaded from Horizon uses `region_name` which targets a **single region**. Prowler supports scanning **all regions** in a single run by using the `regions` key instead.
+
+### Configuring Multi-Region
+
+Replace the `region_name` key with a `regions` list in your `clouds.yaml`:
+
+```yaml
+clouds:
+  ovh-multiregion:
+    auth:
+      auth_url: https://auth.cloud.ovh.net/v3
+      username: user-xxxxxxxxxx
+      password: your-password-here
+      project_id: your-project-id
+      user_domain_name: Default
+      project_domain_name: Default
+    regions:
+      - UK1
+      - DE1
+    identity_api_version: "3"
+```
+
+Then run Prowler as usual:
+
+```bash
+prowler openstack --clouds-yaml-cloud ovh-multiregion
+```
+
+Prowler will create a separate connection to each region and scan all resources across them. Findings in the output will include the region where each resource was found.
+
+<Warning>
+You must use **either** `region_name` (single region) **or** `regions` (multi-region), not both. Prowler will raise an error if both keys are present in the same cloud configuration.
+</Warning>
+
+### How It Works
+
+The `region_name` and `regions` keys are part of the [OpenStack SDK configuration format](https://docs.openstack.org/openstacksdk/latest/user/config/configuration.html#site-specific-file-locations). When `regions` is set, the SDK can produce a separate cloud config object for each region — but it does not iterate over them automatically. Prowler uses this to create one authenticated connection per region and iterates over all of them when listing resources. This means:
+
+- **Authentication** is tested against every configured region during connection setup
+- **Resources** from all regions are collected in a single scan
+- **Findings** include the specific region for each resource
+- If a single region fails to connect, the entire scan fails (fail-fast)
+
+### Finding Your Available Regions
+
+To discover which regions are available for your project, use the OpenStack CLI:
+
+```bash
+openstack --os-cloud your-cloud region list
+```
+
+Or check your provider's control panel for a list of available regions.
+
+### Single-Region vs Multi-Region
+
+| Configuration | Key | Behavior |
+|--------------|-----|----------|
+| Single region | `region_name: UK1` | Scans resources in UK1 only |
+| Multi-region | `regions: [UK1, DE1]` | Scans resources in both UK1 and DE1 |
+
+You can keep both configurations as separate cloud entries in the same `clouds.yaml` file:
+
+```yaml
+clouds:
+  # Single region entry — targets UK1 only
+  ovh:
+    auth:
+      auth_url: https://auth.cloud.ovh.net/v3
+      username: user-xxxxxxxxxx
+      password: your-password-here
+      project_id: your-project-id
+      user_domain_name: Default
+      project_domain_name: Default
+    region_name: UK1
+    identity_api_version: "3"
+
+  # Multi-region entry — targets UK1 and DE1
+  ovh-multiregion:
+    auth:
+      auth_url: https://auth.cloud.ovh.net/v3
+      username: user-xxxxxxxxxx
+      password: your-password-here
+      project_id: your-project-id
+      user_domain_name: Default
+      project_domain_name: Default
+    regions:
+      - UK1
+      - DE1
+    identity_api_version: "3"
+```
+
 ## Creating a User With Reader Role
 
 For security auditing, Prowler only needs **read-only access** to your OpenStack resources.
@@ -534,3 +627,4 @@ Using Public Cloud credentials can limit Keystone API access, so the command abo
 - [OpenStack Documentation](https://docs.openstack.org/)
 - [OpenStack Security Guide](https://docs.openstack.org/security-guide/)
 - [clouds.yaml Format](https://docs.openstack.org/python-openstackclient/latest/configuration/index.html)
+- [OpenStack SDK Configuration (`region_name` / `regions`)](https://docs.openstack.org/openstacksdk/latest/user/config/configuration.html#site-specific-file-locations)

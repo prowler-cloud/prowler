@@ -2,7 +2,7 @@ import logging
 
 from typing import Any, Iterable
 
-from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 
 from api.attack_paths import database as graph_database, AttackPathsQueryDefinition
 from config.custom_logging import BackendLogger
@@ -87,9 +87,17 @@ def execute_attack_paths_query(
     provider_id: str,
 ) -> dict[str, Any]:
     try:
-        with graph_database.get_session(database_name) as session:
-            result = session.run(definition.cypher, parameters)
-            return _serialize_graph(result.graph(), provider_id)
+        graph = graph_database.execute_read_query(
+            database=database_name,
+            cypher=definition.cypher,
+            parameters=parameters,
+        )
+        return _serialize_graph(graph, provider_id)
+
+    except graph_database.WriteQueryNotAllowedException:
+        raise PermissionDenied(
+            "Attack Paths query execution failed: read-only queries are enforced"
+        )
 
     except graph_database.GraphDatabaseQueryException as exc:
         logger.error(f"Query failed for Attack Paths query `{definition.id}`: {exc}")

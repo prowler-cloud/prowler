@@ -13,6 +13,7 @@ OCI_USER_AGENT = "Prowler"
 
 # OCI Regions - Commercial Regions
 OCI_COMMERCIAL_REGIONS = {
+    "af-casablanca-1": "af-casablanca-1",
     "af-johannesburg-1": "af-johannesburg-1",
     "ap-batam-1": "ap-batam-1",
     "ap-chuncheon-1": "ap-chuncheon-1",

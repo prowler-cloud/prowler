@@ -31,7 +31,9 @@
     {
       "Id": "1.1.2",
       "Description": "Emergency access or 'break glass' accounts are limited for emergency scenarios where normal administrative accounts are unavailable. They are not assigned to a specific user and will have a combination of physical and technical controls to prevent them from being accessed outside a true emergency. Ensure two Emergency Access accounts have been defined.",
-      "Checks": [],
+      "Checks": [
+        "entra_emergency_access_exclusion"
+      ],
       "Attributes": [
         {
           "Section": "1 Microsoft 365 admin center",
