@@ -54,8 +54,12 @@ export const useCredentialsForm = ({
     if (providerType === "gcp" && effectiveVia === "service-account") {
       return addCredentialsServiceAccountFormSchema(providerType);
     }
-    // For GitHub and M365, we need to pass the via parameter to determine which fields are required
-    if (providerType === "github" || providerType === "m365") {
+    // For GitHub, M365, and Cloudflare, we need to pass the via parameter to determine which fields are required
+    if (
+      providerType === "github" ||
+      providerType === "m365" ||
+      providerType === "cloudflare"
+    ) {
       return addCredentialsFormSchema(providerType, effectiveVia);
     }
     return addCredentialsFormSchema(providerType);
@@ -199,6 +203,28 @@ export const useCredentialsForm = ({
           ...baseDefaults,
           [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: "",
           [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: "",
+        };
+      case "cloudflare":
+        // Cloudflare credentials based on via parameter
+        if (effectiveVia === "api_token") {
+          return {
+            ...baseDefaults,
+            [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]: "",
+          };
+        }
+        if (effectiveVia === "api_key") {
+          return {
+            ...baseDefaults,
+            [ProviderCredentialFields.CLOUDFLARE_API_KEY]: "",
+            [ProviderCredentialFields.CLOUDFLARE_API_EMAIL]: "",
+          };
+        }
+        return baseDefaults;
+      case "openstack":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]: "",
+          [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]: "",
         };
       default:
         return baseDefaults;

@@ -18,7 +18,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/encrypting-cloudtrail-log-files-with-aws-kms.html",
-    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudTrail/cloudtrail-logs-encrypted.html",
+    "https://trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudTrail/cloudtrail-logs-encrypted.html",
     "https://www.stream.security/rules/ensure-cloudtrail-logs-are-encrypted-at-rest",
     "https://www.clouddefense.ai/compliance-rules/cis-v130/logging/cis-v130-3-7"
   ],
