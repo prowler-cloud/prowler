@@ -30,7 +30,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack Paths: Query results now filtered by provider, preventing future cross-tenant and cross-provider data leakage [(#10118)](https://github.com/prowler-cloud/prowler/pull/10118)
 - Attack Paths: Add private labels and properties in Attack Paths graphs for avoiding future overlapping with Cartography's ones [(#10124)](https://github.com/prowler-cloud/prowler/pull/10124)
 - Attack Paths: Query endpoint executes them in read only mode [(#10140)](https://github.com/prowler-cloud/prowler/pull/10140)
-- Attack Paths: `output` query parameter for query endpoints, supporting compact plain-text formator LLM consumption [(#10161)](https://github.com/prowler-cloud/prowler/pull/10161)
+- Attack Paths: `output` query parameter for query endpoints, supporting compact plain-text formator LLM consumption [(#10162)](https://github.com/prowler-cloud/prowler/pull/10162)
 
 ### 🐞 Fixed
 
