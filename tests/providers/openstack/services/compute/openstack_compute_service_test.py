@@ -28,9 +28,10 @@ class TestComputeService:
             assert compute.service_name == "Compute"
             assert compute.provider == provider
             assert compute.connection == provider.connection
+            assert compute.regional_connections == provider.regional_connections
+            assert compute.audited_regions == [OPENSTACK_REGION]
             assert compute.region == OPENSTACK_REGION
             assert compute.project_id == OPENSTACK_PROJECT_ID
-            assert compute.client == provider.connection.compute
             assert compute.instances == []
             mock_list.assert_called_once()
 
@@ -303,6 +304,8 @@ class TestComputeService:
             assert hasattr(compute, "service_name")
             assert hasattr(compute, "provider")
             assert hasattr(compute, "connection")
+            assert hasattr(compute, "regional_connections")
+            assert hasattr(compute, "audited_regions")
             assert hasattr(compute, "session")
             assert hasattr(compute, "region")
             assert hasattr(compute, "project_id")
@@ -343,3 +346,153 @@ class TestComputeService:
         assert len(compute.instances) == 1
         assert compute.instances[0].id == "instance-1"
         assert compute.instances[0].networks == {}  # Should default to empty dict
+
+    def test_compute_list_instances_multi_region(self):
+        """Test listing instances across multiple regions."""
+        provider = set_mocked_openstack_provider()
+
+        # Create two mock connections for two regions
+        mock_conn_uk1 = MagicMock()
+        mock_conn_de1 = MagicMock()
+
+        # Set up regional connections
+        provider.regional_connections = {"UK1": mock_conn_uk1, "DE1": mock_conn_de1}
+
+        mock_server_uk = MagicMock()
+        mock_server_uk.id = "instance-uk"
+        mock_server_uk.name = "Instance UK"
+        mock_server_uk.status = "ACTIVE"
+        mock_server_uk.flavor = {"id": "flavor-1"}
+        mock_server_uk.security_groups = [{"name": "default"}]
+        mock_server_uk.is_locked = False
+        mock_server_uk.locked_reason = ""
+        mock_server_uk.key_name = ""
+        mock_server_uk.user_id = ""
+        mock_server_uk.access_ipv4 = ""
+        mock_server_uk.access_ipv6 = ""
+        mock_server_uk.public_v4 = ""
+        mock_server_uk.public_v6 = ""
+        mock_server_uk.private_v4 = "10.0.0.1"
+        mock_server_uk.private_v6 = ""
+        mock_server_uk.addresses = {"private": [{"version": 4, "addr": "10.0.0.1"}]}
+        mock_server_uk.has_config_drive = False
+        mock_server_uk.metadata = {}
+        mock_server_uk.user_data = ""
+        mock_server_uk.trusted_image_certificates = []
+
+        mock_server_de = MagicMock()
+        mock_server_de.id = "instance-de"
+        mock_server_de.name = "Instance DE"
+        mock_server_de.status = "ACTIVE"
+        mock_server_de.flavor = {"id": "flavor-2"}
+        mock_server_de.security_groups = [{"name": "default"}]
+        mock_server_de.is_locked = False
+        mock_server_de.locked_reason = ""
+        mock_server_de.key_name = ""
+        mock_server_de.user_id = ""
+        mock_server_de.access_ipv4 = ""
+        mock_server_de.access_ipv6 = ""
+        mock_server_de.public_v4 = ""
+        mock_server_de.public_v6 = ""
+        mock_server_de.private_v4 = "10.0.0.2"
+        mock_server_de.private_v6 = ""
+        mock_server_de.addresses = {"private": [{"version": 4, "addr": "10.0.0.2"}]}
+        mock_server_de.has_config_drive = False
+        mock_server_de.metadata = {}
+        mock_server_de.user_data = ""
+        mock_server_de.trusted_image_certificates = []
+
+        mock_conn_uk1.compute.servers.return_value = [mock_server_uk]
+        mock_conn_de1.compute.servers.return_value = [mock_server_de]
+
+        compute = Compute(provider)
+
+        assert len(compute.instances) == 2
+        # Verify instances have correct region tags
+        uk_instance = next(i for i in compute.instances if i.id == "instance-uk")
+        de_instance = next(i for i in compute.instances if i.id == "instance-de")
+        assert uk_instance.region == "UK1"
+        assert de_instance.region == "DE1"
+
+    def test_compute_list_instances_multi_region_partial_failure(self):
+        """Test that a failing region doesn't prevent other regions from being listed."""
+        provider = set_mocked_openstack_provider()
+
+        mock_conn_ok = MagicMock()
+        mock_conn_fail = MagicMock()
+
+        provider.regional_connections = {"UK1": mock_conn_ok, "DE1": mock_conn_fail}
+
+        mock_server = MagicMock()
+        mock_server.id = "instance-uk"
+        mock_server.name = "Instance UK"
+        mock_server.status = "ACTIVE"
+        mock_server.flavor = {"id": "flavor-1"}
+        mock_server.security_groups = [{"name": "default"}]
+        mock_server.is_locked = False
+        mock_server.locked_reason = ""
+        mock_server.key_name = ""
+        mock_server.user_id = ""
+        mock_server.access_ipv4 = ""
+        mock_server.access_ipv6 = ""
+        mock_server.public_v4 = ""
+        mock_server.public_v6 = ""
+        mock_server.private_v4 = "10.0.0.1"
+        mock_server.private_v6 = ""
+        mock_server.addresses = {}
+        mock_server.has_config_drive = False
+        mock_server.metadata = {}
+        mock_server.user_data = ""
+        mock_server.trusted_image_certificates = []
+
+        mock_conn_ok.compute.servers.return_value = [mock_server]
+        mock_conn_fail.compute.servers.side_effect = openstack_exceptions.SDKException(
+            "API error in DE1"
+        )
+
+        compute = Compute(provider)
+
+        # Should have the instance from UK1, DE1 failure is logged but doesn't crash
+        assert len(compute.instances) == 1
+        assert compute.instances[0].id == "instance-uk"
+        assert compute.instances[0].region == "UK1"
+
+    def test_compute_list_instances_multi_region_one_empty(self):
+        """Test multi-region where one region has instances and the other is empty."""
+        provider = set_mocked_openstack_provider()
+
+        mock_conn_uk1 = MagicMock()
+        mock_conn_de1 = MagicMock()
+
+        provider.regional_connections = {"UK1": mock_conn_uk1, "DE1": mock_conn_de1}
+
+        mock_server = MagicMock()
+        mock_server.id = "instance-uk"
+        mock_server.name = "Instance UK"
+        mock_server.status = "ACTIVE"
+        mock_server.flavor = {"id": "flavor-1"}
+        mock_server.security_groups = [{"name": "default"}]
+        mock_server.is_locked = False
+        mock_server.locked_reason = ""
+        mock_server.key_name = ""
+        mock_server.user_id = ""
+        mock_server.access_ipv4 = ""
+        mock_server.access_ipv6 = ""
+        mock_server.public_v4 = ""
+        mock_server.public_v6 = ""
+        mock_server.private_v4 = "10.0.0.1"
+        mock_server.private_v6 = ""
+        mock_server.addresses = {}
+        mock_server.has_config_drive = False
+        mock_server.metadata = {}
+        mock_server.user_data = ""
+        mock_server.trusted_image_certificates = []
+
+        mock_conn_uk1.compute.servers.return_value = [mock_server]
+        mock_conn_de1.compute.servers.return_value = []  # Empty region
+
+        compute = Compute(provider)
+
+        assert len(compute.instances) == 1
+        assert compute.instances[0].id == "instance-uk"
+        assert compute.instances[0].region == "UK1"

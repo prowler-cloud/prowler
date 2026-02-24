@@ -1528,6 +1528,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                     )
             elif provider_type == Provider.ProviderChoices.OPENSTACK.value:
                 serializer = OpenStackCloudsYamlProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.IMAGE.value:
+                serializer = ImageProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1700,6 +1702,30 @@ class OpenStackCloudsYamlProviderSecret(serializers.Serializer):
 
     class Meta:
         resource_name = "provider-secrets"
+
+
+class ImageProviderSecret(serializers.Serializer):
+    registry_username = serializers.CharField(required=False)
+    registry_password = serializers.CharField(required=False)
+    registry_token = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+    def validate(self, attrs):
+        token = attrs.get("registry_token")
+        username = attrs.get("registry_username")
+        password = attrs.get("registry_password")
+        if not token:
+            if username and not password:
+                raise serializers.ValidationError(
+                    "registry_password is required when registry_username is provided."
+                )
+            if password and not username:
+                raise serializers.ValidationError(
+                    "registry_username is required when registry_password is provided."
+                )
+        return attrs
 
 
 class AlibabaCloudProviderSecret(serializers.Serializer):

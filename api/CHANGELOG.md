@@ -9,6 +9,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Finding group summaries and resources endpoints for hierarchical findings views [(#9961)](https://github.com/prowler-cloud/prowler/pull/9961)
 - OpenStack provider support [(#10003)](https://github.com/prowler-cloud/prowler/pull/10003)
 - PDF report for the CSA CCM compliance framework [(#10088)](https://github.com/prowler-cloud/prowler/pull/10088)
+- `image` provider support for container image scanning [(#10128)](https://github.com/prowler-cloud/prowler/pull/10128)
 
 ### 🔄 Changed
 
