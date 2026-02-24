@@ -1,13 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 
 import { useProviderWizardStore } from "./store";
 
 describe("useProviderWizardStore", () => {
-  it("stores provider identity and mode, then resets to defaults", () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+    localStorage.clear();
     useProviderWizardStore.getState().reset();
+  });
 
+  it("stores provider identity and mode, then resets to defaults", () => {
     useProviderWizardStore.getState().setProvider({
       id: "provider-1",
       type: "aws",
@@ -37,5 +41,22 @@ describe("useProviderWizardStore", () => {
     expect(afterReset.via).toBeNull();
     expect(afterReset.secretId).toBeNull();
     expect(afterReset.mode).toBe(PROVIDER_WIZARD_MODE.ADD);
+  });
+
+  it("persists provider wizard state in sessionStorage", () => {
+    // Given
+    useProviderWizardStore.getState().setProvider({
+      id: "provider-1",
+      type: "aws",
+      uid: "123456789012",
+      alias: "prod-account",
+    });
+
+    // When
+    const persistedValue = sessionStorage.getItem("provider-wizard-store");
+
+    // Then
+    expect(persistedValue).toBeTruthy();
+    expect(localStorage.getItem("provider-wizard-store")).toBeNull();
   });
 });
