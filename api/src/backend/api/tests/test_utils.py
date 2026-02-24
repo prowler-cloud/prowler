@@ -281,6 +281,7 @@ class TestGetProwlerProviderKwargs:
         provider.provider = Provider.ProviderChoices.IAC.value
         provider.secret = secret_mock
         provider.uid = provider_uid
+        provider.scanner_args = {}
 
         result = get_prowler_provider_kwargs(provider)
 
@@ -301,10 +302,54 @@ class TestGetProwlerProviderKwargs:
         provider.provider = Provider.ProviderChoices.IAC.value
         provider.secret = secret_mock
         provider.uid = provider_uid
+        provider.scanner_args = {}
 
         result = get_prowler_provider_kwargs(provider)
 
         expected_result = {"scan_repository_url": provider_uid}
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_iac_provider_with_branch(self):
+        """Test that IaC provider passes branch from scanner_args."""
+        provider_uid = "https://github.com/org/repo"
+        secret_dict = {"access_token": "test_token"}
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IAC.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+        provider.scanner_args = {"branch": "develop"}
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {
+            "scan_repository_url": provider_uid,
+            "oauth_app_token": "test_token",
+            "branch": "develop",
+        }
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_iac_provider_with_empty_branch(self):
+        """Test that IaC provider does not pass empty branch."""
+        provider_uid = "https://github.com/org/repo"
+        secret_dict = {"access_token": "test_token"}
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IAC.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+        provider.scanner_args = {"branch": ""}
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {
+            "scan_repository_url": provider_uid,
+            "oauth_app_token": "test_token",
+        }
         assert result == expected_result
 
     def test_get_prowler_provider_kwargs_iac_provider_ignores_mutelist(self):
@@ -325,6 +370,7 @@ class TestGetProwlerProviderKwargs:
         provider.provider = Provider.ProviderChoices.IAC.value
         provider.secret = secret_mock
         provider.uid = provider_uid
+        provider.scanner_args = {}
 
         result = get_prowler_provider_kwargs(provider, mutelist_processor)
 

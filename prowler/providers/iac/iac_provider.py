@@ -38,6 +38,7 @@ class IacProvider(Provider):
         github_username: str = None,
         personal_access_token: str = None,
         oauth_app_token: str = None,
+        branch: str = None,
     ):
         logger.info("Instantiating IAC Provider...")
 
@@ -51,6 +52,7 @@ class IacProvider(Provider):
         self._identity = "prowler"
         self._auth_method = "No auth"
         self._temp_clone_dir = None  # Track temporary directory for cleanup
+        self.branch = branch
 
         if scan_repository_url:
             oauth_app_token = oauth_app_token or environ.get("GITHUB_OAUTH_APP_TOKEN")
@@ -88,6 +90,7 @@ class IacProvider(Provider):
                 self.github_username,
                 self.personal_access_token,
                 self.oauth_app_token,
+                self.branch,
             )
             # Update scan_path to point to the cloned repository
             self.scan_path = self._temp_clone_dir
@@ -284,9 +287,17 @@ class IacProvider(Provider):
         github_username: str = None,
         personal_access_token: str = None,
         oauth_app_token: str = None,
+        branch: str = None,
     ) -> tuple[str, str]:
         """
         Clone a git repository to a temporary directory, supporting GitHub authentication.
+
+        Args:
+            repository_url: The URL of the repository to clone.
+            github_username: GitHub username for PAT authentication.
+            personal_access_token: GitHub personal access token.
+            oauth_app_token: OAuth app token for authentication.
+            branch: Specific branch to clone. If None, clones the default branch.
 
         Returns:
             tuple[str, str]: (temporary_directory, branch_name)
@@ -310,6 +321,12 @@ class IacProvider(Provider):
                 f"Cloning repository {original_url} into {temporary_directory}..."
             )
 
+            # Build clone kwargs
+            clone_kwargs = {"depth": 1}
+            if branch:
+                clone_kwargs["branch"] = branch
+                logger.info(f"Cloning specific branch: {branch}")
+
             # Check if we're in an environment with a TTY
             # Celery workers and other non-interactive environments don't have TTY
             #   and cannot use the alive_bar
@@ -325,7 +342,9 @@ class IacProvider(Provider):
                         try:
                             bar.title = f"-> Cloning {original_url}..."
                             porcelain.clone(
-                                repository_url, temporary_directory, depth=1
+                                repository_url,
+                                temporary_directory,
+                                **clone_kwargs,
                             )
                             bar.title = "-> Repository cloned successfully!"
                         except Exception as clone_error:
@@ -334,12 +353,12 @@ class IacProvider(Provider):
                 else:
                     # No TTY, just clone without progress bar
                     logger.info(f"Cloning {original_url}...")
-                    porcelain.clone(repository_url, temporary_directory, depth=1)
+                    porcelain.clone(repository_url, temporary_directory, **clone_kwargs)
                     logger.info("Repository cloned successfully!")
             except (AttributeError, OSError):
                 # Fallback if isatty() check fails
                 logger.info(f"Cloning {original_url}...")
-                porcelain.clone(repository_url, temporary_directory, depth=1)
+                porcelain.clone(repository_url, temporary_directory, **clone_kwargs)
                 logger.info("Repository cloned successfully!")
 
             # Detect the branch name from the cloned repository
@@ -551,6 +570,9 @@ class IacProvider(Provider):
             report_lines = [
                 f"Directory: {Fore.YELLOW}{self.scan_path}{Style.RESET_ALL}",
             ]
+
+        if self.branch:
+            report_lines.append(f"Branch: {Fore.YELLOW}{self.branch}{Style.RESET_ALL}")
 
         if self.exclude_path:
             report_lines.append(

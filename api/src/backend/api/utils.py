@@ -205,6 +205,10 @@ def get_prowler_provider_kwargs(
             prowler_provider_kwargs["oauth_app_token"] = provider.secret.secret[
                 "access_token"
             ]
+        # Extract branch from scanner_args if specified
+        branch = (provider.scanner_args or {}).get("branch")
+        if branch:
+            prowler_provider_kwargs["branch"] = branch
     elif provider.provider == Provider.ProviderChoices.MONGODBATLAS.value:
         prowler_provider_kwargs = {
             **prowler_provider_kwargs,

@@ -28,6 +28,16 @@ export const IacCredentialsForm = ({
         type="password"
         isRequired={false}
       />
+      <CustomInput
+        control={control}
+        name="branch"
+        type="text"
+        label="Branch (optional)"
+        labelPlacement="inside"
+        placeholder="e.g. develop (defaults to repository default branch)"
+        variant="bordered"
+        isRequired={false}
+      />
     </>
   );
 };

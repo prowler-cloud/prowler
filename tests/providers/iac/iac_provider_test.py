@@ -163,7 +163,7 @@ class TestIacProvider:
 
                 # Verify clone was called during initialization
                 mock_clone.assert_called_once_with(
-                    scan_repository_url, None, None, None
+                    scan_repository_url, None, None, None, None
                 )
 
                 # Verify region was updated with branch name
@@ -757,3 +757,72 @@ class TestIacProvider:
         # Pass a non-existent directory
         branch_name = provider._detect_branch_name("/non/existent/path")
         assert branch_name == "main"
+
+    @mock.patch.dict(os.environ, {}, clear=True)
+    def test_provider_init_with_branch(self):
+        """Test IAC provider initialization with branch parameter"""
+        scan_repository_url = "https://github.com/user/repo"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with (
+                mock.patch(
+                    "prowler.providers.iac.iac_provider.IacProvider._clone_repository",
+                    return_value=(temp_dir, "develop"),
+                ) as mock_clone,
+                mock.patch("prowler.providers.iac.iac_provider.IacProvider.run_scan"),
+            ):
+                provider = IacProvider(
+                    scan_repository_url=scan_repository_url, branch="develop"
+                )
+
+                mock_clone.assert_called_once_with(
+                    scan_repository_url, None, None, None, "develop"
+                )
+                assert provider.branch == "develop"
+                assert provider.region == "develop"
+
+    @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
+    @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
+    def test_clone_repository_with_branch(self, _mock_mkdtemp, mock_clone):
+        """Test _clone_repository passes branch to porcelain.clone"""
+        provider = IacProvider()
+        url = "https://github.com/user/repo.git"
+        with mock.patch.object(
+            provider, "_detect_branch_name", return_value="feature-branch"
+        ):
+            temp_dir, branch_name = provider._clone_repository(
+                url, branch="feature-branch"
+            )
+        mock_clone.assert_called_with(
+            url, "/tmp/fake-dir", depth=1, branch="feature-branch"
+        )
+        assert temp_dir == "/tmp/fake-dir"
+        assert branch_name == "feature-branch"
+
+    @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
+    @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
+    def test_clone_repository_without_branch(self, _mock_mkdtemp, mock_clone):
+        """Test _clone_repository without branch uses default"""
+        provider = IacProvider()
+        url = "https://github.com/user/repo.git"
+        with mock.patch.object(provider, "_detect_branch_name", return_value="main"):
+            temp_dir, branch_name = provider._clone_repository(url)
+        mock_clone.assert_called_with(url, "/tmp/fake-dir", depth=1)
+        assert temp_dir == "/tmp/fake-dir"
+        assert branch_name == "main"
+
+    @mock.patch.dict(os.environ, {}, clear=True)
+    def test_print_credentials_with_branch(self):
+        """Test print_credentials shows branch info"""
+        repo_url = "https://github.com/user/repo"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with mock.patch(
+                "prowler.providers.iac.iac_provider.IacProvider._clone_repository",
+                return_value=(temp_dir, "develop"),
+            ):
+                provider = IacProvider(scan_repository_url=repo_url, branch="develop")
+                with mock.patch("builtins.print") as mock_print:
+                    provider.print_credentials()
+                    assert any(
+                        "Branch:" in call.args[0] and "develop" in call.args[0]
+                        for call in mock_print.call_args_list
+                    )

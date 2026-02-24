@@ -52,6 +52,7 @@ export const ProviderCredentialFields = {
   // IaC fields
   REPOSITORY_URL: "repository_url",
   ACCESS_TOKEN: "access_token",
+  BRANCH: "branch",
 
   // OCI fields
   OCI_USER: "user",

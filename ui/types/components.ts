@@ -301,6 +301,7 @@ export type KubernetesCredentials = {
 export type IacCredentials = {
   [ProviderCredentialFields.REPOSITORY_URL]: string;
   [ProviderCredentialFields.ACCESS_TOKEN]?: string;
+  branch?: string;
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 

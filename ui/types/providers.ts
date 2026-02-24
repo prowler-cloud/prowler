@@ -54,6 +54,7 @@ export interface ProviderProps {
       only_logs: boolean;
       excluded_checks: string[];
       aws_retries_max_attempts: number;
+      branch?: string;
     };
     inserted_at: string;
     updated_at: string;

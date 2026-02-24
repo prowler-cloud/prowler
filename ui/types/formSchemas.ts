@@ -229,6 +229,7 @@ export const addCredentialsFormSchema = (
                         [ProviderCredentialFields.ACCESS_TOKEN]: z
                           .string()
                           .optional(),
+                        branch: z.string().optional(),
                       }
                     : providerType === "oraclecloud"
                       ? {
