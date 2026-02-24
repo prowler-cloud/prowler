@@ -5,6 +5,36 @@ import { revalidatePath } from "next/cache";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
+const PATH_IDENTIFIER_PATTERN = /^[A-Za-z0-9_-]+$/;
+
+type PathIdentifierValidationResult = { value: string } | { error: string };
+
+function validatePathIdentifier(
+  value: string | null | undefined,
+  requiredError: string,
+  invalidError: string,
+): PathIdentifierValidationResult {
+  const normalizedValue = value?.trim();
+
+  if (!normalizedValue) {
+    return { error: requiredError };
+  }
+
+  if (!PATH_IDENTIFIER_PATTERN.test(normalizedValue)) {
+    return { error: invalidError };
+  }
+
+  return { value: normalizedValue };
+}
+
+function hasActionError(result: unknown): result is { error: unknown } {
+  return Boolean(
+    result &&
+      typeof result === "object" &&
+      "error" in (result as Record<string, unknown>),
+  );
+}
+
 /**
  * Creates an AWS Organization resource.
  * POST /api/v1/organizations
@@ -106,16 +136,23 @@ export const createOrganizationSecret = async (formData: FormData) => {
  */
 export const updateOrganizationSecret = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
-  const organizationSecretId = formData.get("organizationSecretId") as string;
+  const organizationSecretId = formData.get("organizationSecretId") as
+    | string
+    | null;
   const roleArn = formData.get("roleArn") as string;
   const externalId = formData.get("externalId") as string;
 
-  if (!organizationSecretId) {
-    return { error: "Organization secret ID is required" };
+  const organizationSecretIdValidation = validatePathIdentifier(
+    organizationSecretId,
+    "Organization secret ID is required",
+    "Invalid organization secret ID",
+  );
+  if ("error" in organizationSecretIdValidation) {
+    return organizationSecretIdValidation;
   }
 
   const url = new URL(
-    `${apiBaseUrl}/organization-secrets/${organizationSecretId}`,
+    `${apiBaseUrl}/organization-secrets/${encodeURIComponent(organizationSecretIdValidation.value)}`,
   );
 
   try {
@@ -125,7 +162,7 @@ export const updateOrganizationSecret = async (formData: FormData) => {
       body: JSON.stringify({
         data: {
           type: "organization-secrets",
-          id: organizationSecretId,
+          id: organizationSecretIdValidation.value,
           attributes: {
             secret_type: "role",
             secret: {
@@ -168,7 +205,17 @@ export const listOrganizationSecretsByOrganizationId = async (
  */
 export const triggerDiscovery = async (organizationId: string) => {
   const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/organizations/${organizationId}/discover`);
+  const organizationIdValidation = validatePathIdentifier(
+    organizationId,
+    "Organization ID is required",
+    "Invalid organization ID",
+  );
+  if ("error" in organizationIdValidation) {
+    return organizationIdValidation;
+  }
+  const url = new URL(
+    `${apiBaseUrl}/organizations/${encodeURIComponent(organizationIdValidation.value)}/discover`,
+  );
 
   try {
     const response = await fetch(url.toString(), {
@@ -191,8 +238,24 @@ export const getDiscovery = async (
   discoveryId: string,
 ) => {
   const headers = await getAuthHeaders({ contentType: false });
+  const organizationIdValidation = validatePathIdentifier(
+    organizationId,
+    "Organization ID is required",
+    "Invalid organization ID",
+  );
+  if ("error" in organizationIdValidation) {
+    return organizationIdValidation;
+  }
+  const discoveryIdValidation = validatePathIdentifier(
+    discoveryId,
+    "Discovery ID is required",
+    "Invalid discovery ID",
+  );
+  if ("error" in discoveryIdValidation) {
+    return discoveryIdValidation;
+  }
   const url = new URL(
-    `${apiBaseUrl}/organizations/${organizationId}/discoveries/${discoveryId}`,
+    `${apiBaseUrl}/organizations/${encodeURIComponent(organizationIdValidation.value)}/discoveries/${encodeURIComponent(discoveryIdValidation.value)}`,
   );
 
   try {
@@ -215,8 +278,24 @@ export const applyDiscovery = async (
   organizationalUnits: Array<{ id: string }>,
 ) => {
   const headers = await getAuthHeaders({ contentType: true });
+  const organizationIdValidation = validatePathIdentifier(
+    organizationId,
+    "Organization ID is required",
+    "Invalid organization ID",
+  );
+  if ("error" in organizationIdValidation) {
+    return organizationIdValidation;
+  }
+  const discoveryIdValidation = validatePathIdentifier(
+    discoveryId,
+    "Discovery ID is required",
+    "Invalid discovery ID",
+  );
+  if ("error" in discoveryIdValidation) {
+    return discoveryIdValidation;
+  }
   const url = new URL(
-    `${apiBaseUrl}/organizations/${organizationId}/discoveries/${discoveryId}/apply`,
+    `${apiBaseUrl}/organizations/${encodeURIComponent(organizationIdValidation.value)}/discoveries/${encodeURIComponent(discoveryIdValidation.value)}/apply`,
   );
 
   try {
@@ -234,8 +313,11 @@ export const applyDiscovery = async (
       }),
     });
 
-    revalidatePath("/providers");
-    return handleApiResponse(response);
+    const result = await handleApiResponse(response);
+    if (!hasActionError(result)) {
+      revalidatePath("/providers");
+    }
+    return result;
   } catch (error) {
     return handleApiError(error);
   }
