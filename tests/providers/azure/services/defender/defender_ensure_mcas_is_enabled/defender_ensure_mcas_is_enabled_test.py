@@ -38,6 +38,7 @@ class Test_defender_ensure_mcas_is_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "MCAS": Setting(
                     resource_id=resource_id,
+                    resource_name="MCAS",
                     resource_type="Microsoft.Security/locations/settings",
                     kind="DataExportSettings",
                     enabled=False,
@@ -78,6 +79,7 @@ class Test_defender_ensure_mcas_is_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "MCAS": Setting(
                     resource_id=resource_id,
+                    resource_name="MCAS",
                     resource_type="Microsoft.Security/locations/settings",
                     kind="DataExportSettings",
                     enabled=True,
@@ -114,6 +116,7 @@ class Test_defender_ensure_mcas_is_enabled:
     def test_defender_mcas_no_settings(self):
         defender_client = mock.MagicMock
         defender_client.settings = {AZURE_SUBSCRIPTION_ID: {}}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
 
         with (
             mock.patch(
@@ -138,5 +141,5 @@ class Test_defender_ensure_mcas_is_enabled:
                 == f"Microsoft Defender for Cloud Apps not exists for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == "MCAS"
-            assert result[0].resource_id == "MCAS"
+            assert result[0].resource_name == AZURE_SUBSCRIPTION_ID
+            assert result[0].resource_id == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
