@@ -14,76 +14,78 @@ class Image(OpenStackService):
 
     def __init__(self, provider) -> None:
         super().__init__(__class__.__name__, provider)
-        self.client = self.connection.image
         self.images: List[ImageResource] = []
         self._list_images()
 
     def _list_images(self) -> None:
-        """List all images with their properties."""
+        """List all images with their properties across all audited regions."""
         logger.info("Image - Listing images...")
-        try:
-            for img in self.client.images():
-                # Skip images not owned by the current project (e.g. provider public images)
-                owner = getattr(img, "owner_id", getattr(img, "owner", ""))
-                if owner != self.project_id:
-                    continue
+        for region, conn in self.regional_connections.items():
+            try:
+                for img in conn.image.images():
+                    # Skip images not owned by the current project (e.g. provider public images)
+                    owner = getattr(img, "owner_id", getattr(img, "owner", ""))
+                    if owner != self.project_id:
+                        continue
 
-                # Signature properties may be direct attributes or inside a properties dict
-                properties = getattr(img, "properties", {}) or {}
+                    # Signature properties may be direct attributes or inside a properties dict
+                    properties = getattr(img, "properties", {}) or {}
 
-                visibility = getattr(img, "visibility", "private")
+                    visibility = getattr(img, "visibility", "private")
 
-                members = []
-                if visibility == "shared":
-                    members = self._list_image_members(getattr(img, "id", ""))
+                    members = []
+                    if visibility == "shared":
+                        members = self._list_image_members(conn, getattr(img, "id", ""))
 
-                self.images.append(
-                    ImageResource(
-                        id=getattr(img, "id", ""),
-                        name=getattr(img, "name", ""),
-                        status=getattr(img, "status", ""),
-                        visibility=visibility,
-                        protected=getattr(img, "is_protected", False),
-                        owner=getattr(img, "owner_id", getattr(img, "owner", "")),
-                        img_signature=self._resolve_property(
-                            img, "img_signature", properties
-                        ),
-                        img_signature_hash_method=self._resolve_property(
-                            img, "img_signature_hash_method", properties
-                        ),
-                        img_signature_key_type=self._resolve_property(
-                            img, "img_signature_key_type", properties
-                        ),
-                        img_signature_certificate_uuid=self._resolve_property(
-                            img, "img_signature_certificate_uuid", properties
-                        ),
-                        hw_mem_encryption=self._parse_bool(
-                            self._resolve_property(img, "hw_mem_encryption", properties)
-                        ),
-                        os_secure_boot=self._resolve_property(
-                            img,
-                            "needs_secure_boot",
-                            properties,
-                            fallback_attr="os_secure_boot",
-                        ),
-                        members=members,
-                        tags=getattr(img, "tags", []),
-                        project_id=getattr(
-                            img, "project_id", getattr(img, "owner", "")
-                        ),
-                        region=self.region,
+                    self.images.append(
+                        ImageResource(
+                            id=getattr(img, "id", ""),
+                            name=getattr(img, "name", ""),
+                            status=getattr(img, "status", ""),
+                            visibility=visibility,
+                            protected=getattr(img, "is_protected", False),
+                            owner=getattr(img, "owner_id", getattr(img, "owner", "")),
+                            img_signature=self._resolve_property(
+                                img, "img_signature", properties
+                            ),
+                            img_signature_hash_method=self._resolve_property(
+                                img, "img_signature_hash_method", properties
+                            ),
+                            img_signature_key_type=self._resolve_property(
+                                img, "img_signature_key_type", properties
+                            ),
+                            img_signature_certificate_uuid=self._resolve_property(
+                                img, "img_signature_certificate_uuid", properties
+                            ),
+                            hw_mem_encryption=self._parse_bool(
+                                self._resolve_property(
+                                    img, "hw_mem_encryption", properties
+                                )
+                            ),
+                            os_secure_boot=self._resolve_property(
+                                img,
+                                "needs_secure_boot",
+                                properties,
+                                fallback_attr="os_secure_boot",
+                            ),
+                            members=members,
+                            tags=getattr(img, "tags", []),
+                            project_id=getattr(
+                                img, "project_id", getattr(img, "owner", "")
+                            ),
+                            region=region,
+                        )
                     )
+            except openstack_exceptions.SDKException as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
+                    f"Failed to list images in region {region}: {error}"
                 )
-        except openstack_exceptions.SDKException as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
-                f"Failed to list images: {error}"
-            )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
-                f"Unexpected error listing images: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
+                    f"Unexpected error listing images in region {region}: {error}"
+                )
 
     @staticmethod
     def _resolve_property(
@@ -133,10 +135,11 @@ class Image(OpenStackService):
             return value.lower() == "true"
         return None
 
-    def _list_image_members(self, image_id: str) -> List[ImageMember]:
+    def _list_image_members(self, conn, image_id: str) -> List[ImageMember]:
         """List members (shared projects) for a specific image.
 
         Args:
+            conn: The regional OpenStack connection to use.
             image_id: The image UUID to list members for.
 
         Returns:
@@ -144,7 +147,7 @@ class Image(OpenStackService):
         """
         members = []
         try:
-            for member in self.client.members(image_id):
+            for member in conn.image.members(image_id):
                 members.append(
                     ImageMember(
                         member_id=getattr(

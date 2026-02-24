@@ -29,9 +29,10 @@ class TestImageService:
             assert image_service.service_name == "Image"
             assert image_service.provider == provider
             assert image_service.connection == provider.connection
+            assert image_service.regional_connections == provider.regional_connections
+            assert image_service.audited_regions == [OPENSTACK_REGION]
             assert image_service.region == OPENSTACK_REGION
             assert image_service.project_id == OPENSTACK_PROJECT_ID
-            assert image_service.client == provider.connection.image
             assert image_service.images == []
 
     def test_image_list_images_success(self):
@@ -411,3 +412,182 @@ class TestImageService:
 
         assert len(image_service.images) == 1
         assert image_service.images[0].os_secure_boot == "required"
+
+    def test_image_list_images_multi_region(self):
+        """Test listing images across multiple regions."""
+        provider = set_mocked_openstack_provider()
+
+        mock_conn_uk1 = MagicMock()
+        mock_conn_de1 = MagicMock()
+
+        provider.regional_connections = {"UK1": mock_conn_uk1, "DE1": mock_conn_de1}
+
+        mock_img_uk = MagicMock()
+        mock_img_uk.id = "img-uk"
+        mock_img_uk.name = "ubuntu-uk"
+        mock_img_uk.status = "active"
+        mock_img_uk.visibility = "private"
+        mock_img_uk.is_protected = False
+        mock_img_uk.owner_id = OPENSTACK_PROJECT_ID
+        mock_img_uk.owner = OPENSTACK_PROJECT_ID
+        mock_img_uk.img_signature = None
+        mock_img_uk.img_signature_hash_method = None
+        mock_img_uk.img_signature_key_type = None
+        mock_img_uk.img_signature_certificate_uuid = None
+        mock_img_uk.hw_mem_encryption = None
+        mock_img_uk.needs_secure_boot = None
+        mock_img_uk.os_secure_boot = None
+        mock_img_uk.tags = []
+        mock_img_uk.project_id = OPENSTACK_PROJECT_ID
+        mock_img_uk.properties = {}
+
+        mock_img_de = MagicMock()
+        mock_img_de.id = "img-de"
+        mock_img_de.name = "ubuntu-de"
+        mock_img_de.status = "active"
+        mock_img_de.visibility = "private"
+        mock_img_de.is_protected = False
+        mock_img_de.owner_id = OPENSTACK_PROJECT_ID
+        mock_img_de.owner = OPENSTACK_PROJECT_ID
+        mock_img_de.img_signature = None
+        mock_img_de.img_signature_hash_method = None
+        mock_img_de.img_signature_key_type = None
+        mock_img_de.img_signature_certificate_uuid = None
+        mock_img_de.hw_mem_encryption = None
+        mock_img_de.needs_secure_boot = None
+        mock_img_de.os_secure_boot = None
+        mock_img_de.tags = []
+        mock_img_de.project_id = OPENSTACK_PROJECT_ID
+        mock_img_de.properties = {}
+
+        mock_conn_uk1.image.images.return_value = [mock_img_uk]
+        mock_conn_de1.image.images.return_value = [mock_img_de]
+
+        image_service = Image(provider)
+
+        assert len(image_service.images) == 2
+        uk_img = next(i for i in image_service.images if i.id == "img-uk")
+        de_img = next(i for i in image_service.images if i.id == "img-de")
+        assert uk_img.region == "UK1"
+        assert de_img.region == "DE1"
+
+    def test_image_list_images_multi_region_partial_failure(self):
+        """Test that a failing region doesn't prevent other regions from being listed."""
+        provider = set_mocked_openstack_provider()
+
+        mock_conn_ok = MagicMock()
+        mock_conn_fail = MagicMock()
+
+        provider.regional_connections = {"UK1": mock_conn_ok, "DE1": mock_conn_fail}
+
+        mock_img = MagicMock()
+        mock_img.id = "img-uk"
+        mock_img.name = "ubuntu-uk"
+        mock_img.status = "active"
+        mock_img.visibility = "private"
+        mock_img.is_protected = False
+        mock_img.owner_id = OPENSTACK_PROJECT_ID
+        mock_img.owner = OPENSTACK_PROJECT_ID
+        mock_img.img_signature = None
+        mock_img.img_signature_hash_method = None
+        mock_img.img_signature_key_type = None
+        mock_img.img_signature_certificate_uuid = None
+        mock_img.hw_mem_encryption = None
+        mock_img.needs_secure_boot = None
+        mock_img.os_secure_boot = None
+        mock_img.tags = []
+        mock_img.project_id = OPENSTACK_PROJECT_ID
+        mock_img.properties = {}
+
+        mock_conn_ok.image.images.return_value = [mock_img]
+        mock_conn_fail.image.images.side_effect = openstack_exceptions.SDKException(
+            "API error in DE1"
+        )
+
+        image_service = Image(provider)
+
+        assert len(image_service.images) == 1
+        assert image_service.images[0].id == "img-uk"
+        assert image_service.images[0].region == "UK1"
+
+    def test_image_list_images_multi_region_one_empty(self):
+        """Test multi-region where one region has images and the other is empty."""
+        provider = set_mocked_openstack_provider()
+
+        mock_conn_uk1 = MagicMock()
+        mock_conn_de1 = MagicMock()
+
+        provider.regional_connections = {"UK1": mock_conn_uk1, "DE1": mock_conn_de1}
+
+        mock_img = MagicMock()
+        mock_img.id = "img-uk"
+        mock_img.name = "ubuntu-uk"
+        mock_img.status = "active"
+        mock_img.visibility = "private"
+        mock_img.is_protected = False
+        mock_img.owner_id = OPENSTACK_PROJECT_ID
+        mock_img.owner = OPENSTACK_PROJECT_ID
+        mock_img.img_signature = None
+        mock_img.img_signature_hash_method = None
+        mock_img.img_signature_key_type = None
+        mock_img.img_signature_certificate_uuid = None
+        mock_img.hw_mem_encryption = None
+        mock_img.needs_secure_boot = None
+        mock_img.os_secure_boot = None
+        mock_img.tags = []
+        mock_img.project_id = OPENSTACK_PROJECT_ID
+        mock_img.properties = {}
+
+        mock_conn_uk1.image.images.return_value = [mock_img]
+        mock_conn_de1.image.images.return_value = []
+
+        image_service = Image(provider)
+
+        assert len(image_service.images) == 1
+        assert image_service.images[0].id == "img-uk"
+        assert image_service.images[0].region == "UK1"
+
+    def test_image_list_images_multi_region_shared_with_members(self):
+        """Test listing shared images fetches members using the correct regional connection."""
+        provider = set_mocked_openstack_provider()
+
+        mock_conn_uk1 = MagicMock()
+        mock_conn_de1 = MagicMock()
+
+        provider.regional_connections = {"UK1": mock_conn_uk1, "DE1": mock_conn_de1}
+
+        mock_img = MagicMock()
+        mock_img.id = "img-shared-uk"
+        mock_img.name = "shared-uk"
+        mock_img.status = "active"
+        mock_img.visibility = "shared"
+        mock_img.is_protected = False
+        mock_img.owner_id = OPENSTACK_PROJECT_ID
+        mock_img.owner = OPENSTACK_PROJECT_ID
+        mock_img.img_signature = None
+        mock_img.img_signature_hash_method = None
+        mock_img.img_signature_key_type = None
+        mock_img.img_signature_certificate_uuid = None
+        mock_img.hw_mem_encryption = None
+        mock_img.needs_secure_boot = None
+        mock_img.os_secure_boot = None
+        mock_img.tags = []
+        mock_img.project_id = OPENSTACK_PROJECT_ID
+        mock_img.properties = {}
+
+        mock_member = MagicMock()
+        mock_member.member_id = "project-2"
+        mock_member.id = "project-2"
+        mock_member.status = "accepted"
+
+        mock_conn_uk1.image.images.return_value = [mock_img]
+        mock_conn_uk1.image.members.return_value = [mock_member]
+        mock_conn_de1.image.images.return_value = []
+
+        image_service = Image(provider)
+
+        assert len(image_service.images) == 1
+        assert image_service.images[0].region == "UK1"
+        assert len(image_service.images[0].members) == 1
+        assert image_service.images[0].members[0].member_id == "project-2"
+        mock_conn_uk1.image.members.assert_called_once_with("img-shared-uk")
