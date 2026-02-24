@@ -1,10 +1,7 @@
 "use client";
 
-import { Input } from "@heroui/input";
-import { Select, SelectItem } from "@heroui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Selection } from "@react-types/shared";
-import { Search, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -14,16 +11,11 @@ import {
   pollJiraDispatchTask,
   sendFindingToJira,
 } from "@/actions/integrations/jira-dispatch";
-import { JiraIcon } from "@/components/icons/services/IconServices";
 import { Modal } from "@/components/shadcn/modal";
+import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
 import { CustomBanner } from "@/components/ui/custom/custom-banner";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormField, FormMessage } from "@/components/ui/form";
 import { FormButtons } from "@/components/ui/form/form-buttons";
 import { IntegrationProps } from "@/types/integrations";
 
@@ -42,15 +34,6 @@ const sendToJiraSchema = z.object({
 
 type SendToJiraFormData = z.infer<typeof sendToJiraSchema>;
 
-const selectorClassNames = {
-  trigger: "min-h-12",
-  popoverContent: "bg-bg-neutral-secondary",
-  listboxWrapper: "max-h-[300px] bg-bg-neutral-secondary",
-  listbox: "gap-0",
-  label: "tracking-tight font-light !text-text-neutral-secondary text-xs z-0!",
-  value: "text-text-neutral-secondary text-small",
-};
-
 // The commented code is related to issue types, which are not required for the first implementation, but will be used in the future
 export const SendToJiraModal = ({
   isOpen,
@@ -61,8 +44,6 @@ export const SendToJiraModal = ({
   const { toast } = useToast();
   const [integrations, setIntegrations] = useState<IntegrationProps[]>([]);
   const [isFetchingIntegrations, setIsFetchingIntegrations] = useState(false);
-  const [searchProjectValue, setSearchProjectValue] = useState("");
-  // const [searchIssueTypeValue, setSearchIssueTypeValue] = useState("");
 
   const form = useForm<SendToJiraFormData>({
     resolver: zodResolver(sendToJiraSchema),
@@ -75,17 +56,10 @@ export const SendToJiraModal = ({
   });
 
   const selectedIntegration = form.watch("integration");
-  // const selectedProject = form.watch("project");
 
   const hasConnectedIntegration = integrations.some(
     (i) => i.attributes.connected === true,
   );
-
-  const getSelectedValue = (keys: Selection): string => {
-    if (keys === "all") return "";
-    const first = Array.from(keys)[0];
-    return first !== null ? String(first) : "";
-  };
 
   const setOpenForFormButtons: Dispatch<SetStateAction<boolean>> = (value) => {
     const next = typeof value === "function" ? value(isOpen) : value;
@@ -129,8 +103,6 @@ export const SendToJiraModal = ({
     } else {
       // Reset form when modal closes
       form.reset();
-      setSearchProjectValue("");
-      // setSearchIssueTypeValue("");
     }
   }, [isOpen, form, toast]);
 
@@ -187,32 +159,16 @@ export const SendToJiraModal = ({
     ({} as Record<string, string>);
 
   const projectEntries = Object.entries(projects);
-  const shouldShowProjectSearch = projectEntries.length > 5;
-  // const issueTypes: string[] =
-  //   selectedIntegrationData?.attributes.configuration.issue_types ||
-  //   ([] as string[]);
 
-  // Filter projects based on search
-  const filteredProjects = (() => {
-    if (!searchProjectValue) return projectEntries;
+  const integrationOptions = integrations.map((integration) => ({
+    value: integration.id,
+    label: integration.attributes.configuration.domain || integration.id,
+  }));
 
-    const lowerSearch = searchProjectValue.toLowerCase();
-    return projectEntries.filter(
-      ([key, name]) =>
-        key.toLowerCase().includes(lowerSearch) ||
-        name.toLowerCase().includes(lowerSearch),
-    );
-  })();
-
-  // Filter issue types based on search
-  // const filteredIssueTypes = useMemo(() => {
-  //   if (!searchIssueTypeValue) return issueTypes;
-
-  //   const lowerSearch = searchIssueTypeValue.toLowerCase();
-  //   return issueTypes.filter((type) =>
-  //     type.toLowerCase().includes(lowerSearch),
-  //   );
-  // }, [issueTypes, searchIssueTypeValue]);
+  const projectOptions = projectEntries.map(([key, name]) => ({
+    value: key,
+    label: `${key} - ${name}`,
+  }));
 
   return (
     <Modal
@@ -236,127 +192,72 @@ export const SendToJiraModal = ({
               control={form.control}
               name="integration"
               render={({ field }) => (
-                <>
-                  <FormControl>
-                    <Select
-                      label="Jira Integration"
-                      placeholder="Select a Jira integration"
-                      selectedKeys={
-                        field.value ? new Set([field.value]) : new Set()
-                      }
-                      onSelectionChange={(keys: Selection) => {
-                        const value = getSelectedValue(keys);
-                        field.onChange(value);
-                        // Reset dependent fields
-                        form.setValue("project", "");
-                        // Keep issue type defaulting to Task
-                        form.setValue("issueType", "Task");
-                        setSearchProjectValue("");
-                        // setSearchIssueTypeValue("");
-                      }}
-                      variant="bordered"
-                      labelPlacement="inside"
-                      isDisabled={isFetchingIntegrations}
-                      isInvalid={!!form.formState.errors.integration}
-                      startContent={<JiraIcon size={16} />}
-                      classNames={selectorClassNames}
-                    >
-                      {integrations.map((integration) => (
-                        <SelectItem
-                          key={integration.id}
-                          textValue={
-                            integration.attributes.configuration.domain
-                          }
-                        >
-                          <div className="flex items-center gap-2">
-                            <JiraIcon size={16} />
-                            <span>
-                              {integration.attributes.configuration.domain}
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    htmlFor="jira-integration-select"
+                    className="text-text-neutral-secondary text-xs font-light tracking-tight"
+                  >
+                    Jira Integration
+                  </label>
+                  <EnhancedMultiSelect
+                    id="jira-integration-select"
+                    options={integrationOptions}
+                    onValueChange={(values) => {
+                      const selectedValue = values.at(-1) ?? "";
+                      field.onChange(selectedValue);
+                      // Reset dependent fields
+                      form.setValue("project", "");
+                      form.setValue("issueType", "Task");
+                    }}
+                    defaultValue={field.value ? [field.value] : []}
+                    placeholder="Select a Jira integration"
+                    searchable={true}
+                    emptyIndicator="No integrations found."
+                    disabled={isFetchingIntegrations}
+                    hideSelectAll={true}
+                    maxCount={1}
+                    closeOnSelect={true}
+                    resetOnDefaultValueChange={true}
+                  />
                   <FormMessage className="text-text-error text-xs" />
-                </>
+                </div>
               )}
             />
           )}
 
-          {/* Project Selection - Enhanced Style */}
-          {selectedIntegration && Object.keys(projects).length > 0 && (
+          {/* Project Selection */}
+          {selectedIntegration && projectEntries.length > 0 && (
             <FormField
               control={form.control}
               name="project"
               render={({ field }) => (
-                <>
-                  <FormControl>
-                    <Select
-                      label="Project"
-                      placeholder="Select a Jira project"
-                      selectedKeys={
-                        field.value ? new Set([field.value]) : new Set()
-                      }
-                      onSelectionChange={(keys: Selection) => {
-                        const value = getSelectedValue(keys);
-                        field.onChange(value);
-                        // Keep issue type defaulting to Task when project changes
-                        form.setValue("issueType", "Task");
-                        // setSearchIssueTypeValue("");
-                      }}
-                      variant="bordered"
-                      labelPlacement="inside"
-                      isInvalid={!!form.formState.errors.project}
-                      classNames={selectorClassNames}
-                      listboxProps={{
-                        topContent: shouldShowProjectSearch ? (
-                          <div className="sticky top-0 z-10 py-2">
-                            <Input
-                              isClearable
-                              placeholder="Search projects..."
-                              size="sm"
-                              variant="bordered"
-                              startContent={<Search size={16} />}
-                              value={searchProjectValue}
-                              onValueChange={setSearchProjectValue}
-                              onClear={() => setSearchProjectValue("")}
-                              classNames={{
-                                inputWrapper:
-                                  "border-border-input-primary bg-bg-input-primary hover:bg-bg-neutral-secondary",
-                                input: "text-small",
-                                clearButton: "text-default-400",
-                              }}
-                            />
-                          </div>
-                        ) : null,
-                      }}
-                    >
-                      {filteredProjects.map(([key, name]) => (
-                        <SelectItem key={key} textValue={`${key} - ${name}`}>
-                          <div className="flex w-full items-center justify-between py-1">
-                            <div className="flex min-w-0 flex-1 items-center gap-3">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-small font-semibold">
-                                    {key}
-                                  </span>
-                                  <span className="text-tiny text-default-500">
-                                    -
-                                  </span>
-                                  <span className="text-small truncate">
-                                    {name}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    htmlFor="jira-project-select"
+                    className="text-text-neutral-secondary text-xs font-light tracking-tight"
+                  >
+                    Project
+                  </label>
+                  <EnhancedMultiSelect
+                    id="jira-project-select"
+                    options={projectOptions}
+                    onValueChange={(values) => {
+                      const selectedValue = values.at(-1) ?? "";
+                      field.onChange(selectedValue);
+                      // Keep issue type defaulting to Task when project changes
+                      form.setValue("issueType", "Task");
+                    }}
+                    defaultValue={field.value ? [field.value] : []}
+                    placeholder="Select a Jira project"
+                    searchable={true}
+                    emptyIndicator="No projects found."
+                    hideSelectAll={true}
+                    maxCount={1}
+                    closeOnSelect={true}
+                    resetOnDefaultValueChange={true}
+                  />
                   <FormMessage className="text-text-error text-xs" />
-                </>
+                </div>
               )}
             />
           )}

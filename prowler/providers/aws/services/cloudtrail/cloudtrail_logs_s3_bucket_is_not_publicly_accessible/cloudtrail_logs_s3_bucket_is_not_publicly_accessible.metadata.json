@@ -18,7 +18,7 @@
   "Risk": "Exposed CloudTrail logs erode **confidentiality** and **integrity**.\n\nAdversaries can harvest API activity to map accounts, roles, and keys, enabling **reconnaissance** and evasion. If write is allowed, logs can be **poisoned** or deleted, thwarting investigations and compromising incident timelines.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudTrail/cloudtrail-bucket-publicly-accessible.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudTrail/cloudtrail-bucket-publicly-accessible.html",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
     "https://docs.aws.amazon.com/config/latest/developerguide/cloudtrail-s3-bucket-public-access-prohibited.html",
     "https://docs.panther.com/alerts/alert-runbooks/built-in-policies/aws-cloudtrail-logs-s3-bucket-not-publicly-accessible"

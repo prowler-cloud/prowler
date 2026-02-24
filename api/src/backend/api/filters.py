@@ -23,13 +23,14 @@ from api.db_utils import (
     StatusEnumField,
 )
 from api.models import (
+    AttackPathsScan,
     AttackSurfaceOverview,
     ComplianceRequirementOverview,
     DailySeveritySummary,
     Finding,
+    FindingGroupDailySummary,
     Integration,
     Invitation,
-    AttackPathsScan,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
     Membership,
@@ -181,7 +182,7 @@ class CommonFindingFilters(FilterSet):
         help_text="If this filter is not provided, muted and non-muted findings will be returned."
     )
 
-    resources = UUIDInFilter(field_name="resource__id", lookup_expr="in")
+    resources = UUIDInFilter(field_name="resources__id", lookup_expr="in")
 
     region = CharFilter(method="filter_resource_region")
     region__in = CharInFilter(field_name="resource_regions", lookup_expr="overlap")
@@ -469,9 +470,10 @@ class ResourceFilter(ProviderRelationshipFilterSet):
     class Meta:
         model = Resource
         fields = {
+            "id": ["exact", "in"],
             "provider": ["exact", "in"],
-            "uid": ["exact", "icontains"],
-            "name": ["exact", "icontains"],
+            "uid": ["exact", "icontains", "in"],
+            "name": ["exact", "icontains", "in"],
             "region": ["exact", "icontains", "in"],
             "service": ["exact", "icontains", "in"],
             "type": ["exact", "icontains", "in"],
@@ -554,9 +556,10 @@ class LatestResourceFilter(ProviderRelationshipFilterSet):
     class Meta:
         model = Resource
         fields = {
+            "id": ["exact", "in"],
             "provider": ["exact", "in"],
-            "uid": ["exact", "icontains"],
-            "name": ["exact", "icontains"],
+            "uid": ["exact", "icontains", "in"],
+            "name": ["exact", "icontains", "in"],
             "region": ["exact", "icontains", "in"],
             "service": ["exact", "icontains", "in"],
             "type": ["exact", "icontains", "in"],
@@ -647,16 +650,15 @@ class FindingFilter(CommonFindingFilters):
                 ]
             )
 
-        gte_date = (
-            datetime.strptime(self.data.get("inserted_at__gte"), "%Y-%m-%d").date()
-            if self.data.get("inserted_at__gte")
-            else datetime.now(timezone.utc).date()
-        )
-        lte_date = (
-            datetime.strptime(self.data.get("inserted_at__lte"), "%Y-%m-%d").date()
-            if self.data.get("inserted_at__lte")
-            else datetime.now(timezone.utc).date()
-        )
+        cleaned = self.form.cleaned_data
+        exact_date = cleaned.get("inserted_at") or cleaned.get("inserted_at__date")
+        gte_date = cleaned.get("inserted_at__gte") or exact_date
+        lte_date = cleaned.get("inserted_at__lte") or exact_date
+
+        if gte_date is None:
+            gte_date = datetime.now(timezone.utc).date()
+        if lte_date is None:
+            lte_date = datetime.now(timezone.utc).date()
 
         if abs(lte_date - gte_date) > timedelta(
             days=settings.FINDINGS_MAX_DAYS_IN_RANGE
@@ -776,6 +778,267 @@ class LatestFindingFilter(CommonFindingFilters):
             SeverityEnumField: {
                 "filter_class": CharFilter,
             },
+        }
+
+
+class FindingGroupFilter(CommonFindingFilters):
+    """
+    Filter for FindingGroup aggregations.
+
+    Requires at least one date filter for performance (partition pruning).
+    Inherits all provider, status, severity, region, service filters from CommonFindingFilters.
+    """
+
+    inserted_at = DateFilter(method="filter_inserted_at", lookup_expr="date")
+    inserted_at__date = DateFilter(method="filter_inserted_at", lookup_expr="date")
+    inserted_at__gte = DateFilter(
+        method="filter_inserted_at_gte",
+        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+    )
+    inserted_at__lte = DateFilter(
+        method="filter_inserted_at_lte",
+        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+    )
+
+    check_id = CharFilter(field_name="check_id", lookup_expr="exact")
+    check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
+    check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+
+    class Meta:
+        model = Finding
+        fields = {
+            "check_id": ["exact", "in", "icontains"],
+        }
+
+    def filter_queryset(self, queryset):
+        """Validate that at least one date filter is provided."""
+        if not (
+            self.data.get("inserted_at")
+            or self.data.get("inserted_at__date")
+            or self.data.get("inserted_at__gte")
+            or self.data.get("inserted_at__lte")
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": "At least one date filter is required: filter[inserted_at], filter[inserted_at.gte], "
+                        "or filter[inserted_at.lte].",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/inserted_at"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        # Validate date range doesn't exceed maximum
+        cleaned = self.form.cleaned_data
+        exact_date = cleaned.get("inserted_at") or cleaned.get("inserted_at__date")
+        gte_date = cleaned.get("inserted_at__gte") or exact_date
+        lte_date = cleaned.get("inserted_at__lte") or exact_date
+
+        if gte_date is None:
+            gte_date = datetime.now(timezone.utc).date()
+        if lte_date is None:
+            lte_date = datetime.now(timezone.utc).date()
+
+        if abs(lte_date - gte_date) > timedelta(
+            days=settings.FINDINGS_MAX_DAYS_IN_RANGE
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"The date range cannot exceed {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/inserted_at"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        return super().filter_queryset(queryset)
+
+    def filter_inserted_at(self, queryset, name, value):
+        """Filter by exact date using UUIDv7 partition-aware filtering."""
+        datetime_value = self._maybe_date_to_datetime(value)
+        start = uuid7_start(datetime_to_uuid7(datetime_value))
+        end = uuid7_start(datetime_to_uuid7(datetime_value + timedelta(days=1)))
+        return queryset.filter(id__gte=start, id__lt=end)
+
+    def filter_inserted_at_gte(self, queryset, name, value):
+        """Filter by start date using UUIDv7 partition-aware filtering."""
+        datetime_value = self._maybe_date_to_datetime(value)
+        start = uuid7_start(datetime_to_uuid7(datetime_value))
+        return queryset.filter(id__gte=start)
+
+    def filter_inserted_at_lte(self, queryset, name, value):
+        """Filter by end date using UUIDv7 partition-aware filtering."""
+        datetime_value = self._maybe_date_to_datetime(value)
+        end = uuid7_start(datetime_to_uuid7(datetime_value + timedelta(days=1)))
+        return queryset.filter(id__lt=end)
+
+    @staticmethod
+    def _maybe_date_to_datetime(value):
+        """Convert date to datetime if needed."""
+        dt = value
+        if isinstance(value, date):
+            dt = datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc)
+        return dt
+
+
+class LatestFindingGroupFilter(CommonFindingFilters):
+    """
+    Filter for FindingGroup resources in /latest endpoint.
+
+    Same as FindingGroupFilter but without date validation.
+    """
+
+    check_id = CharFilter(field_name="check_id", lookup_expr="exact")
+    check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
+    check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+
+    class Meta:
+        model = Finding
+        fields = {
+            "check_id": ["exact", "in", "icontains"],
+        }
+
+
+class FindingGroupSummaryFilter(FilterSet):
+    """
+    Filter for FindingGroupDailySummary queries.
+
+    Filters the pre-aggregated summary table by date range, check_id, and provider.
+    Requires at least one date filter for performance.
+    """
+
+    inserted_at = DateFilter(method="filter_inserted_at", lookup_expr="date")
+    inserted_at__date = DateFilter(method="filter_inserted_at", lookup_expr="date")
+    inserted_at__gte = DateFilter(
+        method="filter_inserted_at_gte",
+        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+    )
+    inserted_at__lte = DateFilter(
+        method="filter_inserted_at_lte",
+        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+    )
+
+    # Check ID filters
+    check_id = CharFilter(field_name="check_id", lookup_expr="exact")
+    check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
+    check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+
+    # Provider filters
+    provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="provider_id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = CharInFilter(field_name="provider__provider", lookup_expr="in")
+
+    class Meta:
+        model = FindingGroupDailySummary
+        fields = {
+            "check_id": ["exact", "in", "icontains"],
+            "inserted_at": ["date", "gte", "lte"],
+            "provider_id": ["exact", "in"],
+        }
+
+    def filter_queryset(self, queryset):
+        if not (
+            self.data.get("inserted_at")
+            or self.data.get("inserted_at__date")
+            or self.data.get("inserted_at__gte")
+            or self.data.get("inserted_at__lte")
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": "At least one date filter is required: filter[inserted_at], filter[inserted_at.gte], "
+                        "or filter[inserted_at.lte].",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/inserted_at"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        cleaned = self.form.cleaned_data
+        exact_date = cleaned.get("inserted_at") or cleaned.get("inserted_at__date")
+        gte_date = cleaned.get("inserted_at__gte") or exact_date
+        lte_date = cleaned.get("inserted_at__lte") or exact_date
+
+        if gte_date is None:
+            gte_date = datetime.now(timezone.utc).date()
+        if lte_date is None:
+            lte_date = datetime.now(timezone.utc).date()
+
+        if abs(lte_date - gte_date) > timedelta(
+            days=settings.FINDINGS_MAX_DAYS_IN_RANGE
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"The date range cannot exceed {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/inserted_at"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        return super().filter_queryset(queryset)
+
+    def filter_inserted_at(self, queryset, name, value):
+        """Filter by exact inserted_at date."""
+        datetime_value = self._maybe_date_to_datetime(value)
+        start = datetime_value
+        end = datetime_value + timedelta(days=1)
+        return queryset.filter(inserted_at__gte=start, inserted_at__lt=end)
+
+    def filter_inserted_at_gte(self, queryset, name, value):
+        """Filter by inserted_at >= value (date boundary)."""
+        datetime_value = self._maybe_date_to_datetime(value)
+        return queryset.filter(inserted_at__gte=datetime_value)
+
+    def filter_inserted_at_lte(self, queryset, name, value):
+        """Filter by inserted_at <= value (inclusive date boundary)."""
+        datetime_value = self._maybe_date_to_datetime(value)
+        return queryset.filter(inserted_at__lt=datetime_value + timedelta(days=1))
+
+    @staticmethod
+    def _maybe_date_to_datetime(value):
+        dt = value
+        if isinstance(value, date):
+            dt = datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc)
+        return dt
+
+
+class LatestFindingGroupSummaryFilter(FilterSet):
+    """
+    Filter for FindingGroupDailySummary /latest endpoint.
+
+    Same as FindingGroupSummaryFilter but without date validation.
+    Used when the endpoint automatically determines the date.
+    """
+
+    # Check ID filters
+    check_id = CharFilter(field_name="check_id", lookup_expr="exact")
+    check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
+    check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+
+    # Provider filters
+    provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="provider_id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = CharInFilter(field_name="provider__provider", lookup_expr="in")
+
+    class Meta:
+        model = FindingGroupDailySummary
+        fields = {
+            "check_id": ["exact", "in", "icontains"],
+            "provider_id": ["exact", "in"],
         }
 
 

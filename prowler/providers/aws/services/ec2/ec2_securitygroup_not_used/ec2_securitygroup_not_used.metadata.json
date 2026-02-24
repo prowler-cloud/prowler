@@ -15,7 +15,7 @@
   "Risk": "Orphaned security groups may later be attached with **overly permissive rules** without review, enabling unintended inbound or lateral access that compromises **confidentiality** and **integrity**. They also create **configuration drift**, increasing the chance of misapplied access controls.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/default-security-group-unrestricted.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/EC2/default-security-group-unrestricted.html",
     "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-security-groups.html"
   ],
   "Remediation": {

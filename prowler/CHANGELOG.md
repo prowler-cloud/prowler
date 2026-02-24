@@ -6,6 +6,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- `entra_app_registration_no_unused_privileged_permissions` check for m365 provider [(#10080)](https://github.com/prowler-cloud/prowler/pull/10080)
+- `defenderidentity_health_issues_no_open` check for M365 provider [(#10087)](https://github.com/prowler-cloud/prowler/pull/10087)
 - `organization_verified_badge` check for GitHub provider [(#10033)](https://github.com/prowler-cloud/prowler/pull/10033)
 - OpenStack provider `clouds_yaml_content` parameter for API integration [(#10003)](https://github.com/prowler-cloud/prowler/pull/10003)
 - `defender_safe_attachments_policy_enabled` check for M365 provider [(#9833)](https://github.com/prowler-cloud/prowler/pull/9833)
@@ -20,6 +22,16 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - OpenStack compute 7 new checks [(#9944)](https://github.com/prowler-cloud/prowler/pull/9944)
 - CSA CCM 4.0 for the Alibaba Cloud provider [(#10061)](https://github.com/prowler-cloud/prowler/pull/10061)
 - ECS Exec (ECS-006) privilege escalation detection via `ecs:ExecuteCommand` + `ecs:DescribeTasks` [(#10066)](https://github.com/prowler-cloud/prowler/pull/10066)
+- `defenderxdr_endpoint_privileged_user_exposed_credentials` check for M365 provider [(#10084)](https://github.com/prowler-cloud/prowler/pull/10084)
+- `defenderxdr_critical_asset_management_pending_approvals` check for M365 provider [(#10085)](https://github.com/prowler-cloud/prowler/pull/10085)
+- `entra_seamless_sso_disabled` check for m365 provider [(#10086)](https://github.com/prowler-cloud/prowler/pull/10086)
+- Registry scan mode for `image` provider: enumerate and scan all images from OCI standard, Docker Hub, and ECR [(#9985)](https://github.com/prowler-cloud/prowler/pull/9985)
+- Add file descriptor limits (`ulimits`) to Docker Compose worker services to prevent `Too many open files` errors [(#10107)](https://github.com/prowler-cloud/prowler/pull/10107)
+- CIS 6.0 for the AWS provider [(#10127)](https://github.com/prowler-cloud/prowler/pull/10127)
+
+### 🐞 Fixed
+
+- Standardize resource_id values across Azure checks to use actual Azure resource IDs and prevent duplicate resource entries [(#9994)](https://github.com/prowler-cloud/prowler/pull/9994)
 
 ### 🔄 Changed
 
@@ -41,6 +53,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure Key Vault service metadata to new format [(#9621)](https://github.com/prowler-cloud/prowler/pull/9621)
 - Update Azure Entra ID service metadata to new format [(#9619)](https://github.com/prowler-cloud/prowler/pull/9619)
 - Update Azure Virtual Machines service metadata to new format [(#9629)](https://github.com/prowler-cloud/prowler/pull/9629)
+- Cloudflare provider credential validation with specific exceptions [(#9910)](https://github.com/prowler-cloud/prowler/pull/9910)
+
+### 🐞 Fixed
+
+- Update AWS checks metadata URLs to replace deprecated Trend Micro CloudOne Conformity (EOL July 2026) with Vision One and remove docs.prowler.com references [(#10068)](https://github.com/prowler-cloud/prowler/pull/10068)
 
 ### 🔐 Security
 
@@ -48,12 +65,21 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [5.18.3] (Prowler UNRELEASED)
+## [5.18.4] (Prowler v5.18.4)
+
+### 🐞 Fixed
+
+- Handle serialization errors in OCSF output for non-serializable resource metadata [(#10129)](https://github.com/prowler-cloud/prowler/pull/10129)
+
+---
+
+## [5.18.3] (Prowler v5.18.3)
 
 ### 🐞 Fixed
 
 - `pip install prowler` failing on systems without C compiler due to `netifaces` transitive dependency from `openstacksdk` [(#10055)](https://github.com/prowler-cloud/prowler/pull/10055)
 - `kms_key_not_publicly_accessible` false negative for specific KMS actions (e.g., `kms:DescribeKey`, `kms:Decrypt`) with unrestricted principals [(#10071)](https://github.com/prowler-cloud/prowler/pull/10071)
+- Remove account_id and location for manual requirements in M365CIS [(#10105)](https://github.com/prowler-cloud/prowler/pull/10105)
 
 ---
 

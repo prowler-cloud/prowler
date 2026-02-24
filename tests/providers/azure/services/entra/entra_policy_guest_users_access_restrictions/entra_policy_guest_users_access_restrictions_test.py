@@ -30,6 +30,7 @@ class Test_entra_policy_guest_users_access_restrictions:
 
     def test_entra_tenant_empty(self):
         entra_client = mock.MagicMock
+        id = str(uuid4())
 
         with (
             mock.patch(
@@ -44,8 +45,20 @@ class Test_entra_policy_guest_users_access_restrictions:
             from prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions import (
                 entra_policy_guest_users_access_restrictions,
             )
+            from prowler.providers.azure.services.entra.entra_service import (
+                AuthorizationPolicy,
+            )
 
-            entra_client.authorization_policy = {DOMAIN: {}}
+            # Policy with guest user role set to same as member (not restricted)
+            entra_client.authorization_policy = {
+                DOMAIN: AuthorizationPolicy(
+                    id=id,
+                    name="Authorization Policy",
+                    description="",
+                    guest_invite_settings="none",
+                    guest_user_role_id=UUID("a0b1b346-4d3e-4e8b-98f8-753987be4970"),
+                )
+            }
 
             check = entra_policy_guest_users_access_restrictions()
             result = check.execute()
@@ -53,7 +66,7 @@ class Test_entra_policy_guest_users_access_restrictions:
             assert result[0].status == "FAIL"
             assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Authorization Policy"
-            assert result[0].resource_id == "authorizationPolicy"
+            assert result[0].resource_id == id
             assert (
                 result[0].status_extended
                 == "Guest user access is not restricted to properties and memberships of their own directory objects"
