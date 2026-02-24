@@ -5,12 +5,77 @@ description: 'Upload OCSF scan results to Prowler Cloud from external sources or
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
 
-<VersionBadge version="5.14.0" />
+<VersionBadge version="5.19.0" />
 
-Findings Ingestion enables uploading scan results in OCSF (Open Cybersecurity Schema Framework) format to Prowler Cloud. This feature supports importing findings from the Prowler CLI or external security tools that produce OCSF-compliant output.
+Findings Ingestion enables uploading scan results in OCSF (Open Cybersecurity Schema Framework) format to Prowler Cloud. This feature supports importing findings from the Prowler CLI using the [Detection Finding](https://schema.ocsf.io/1.0.0/classes/detection_finding) class.
 
 <Note>
 This feature is available exclusively in **Prowler Cloud**.
+</Note>
+
+## OCSF Detection Finding format
+
+The ingestion API accepts `.ocsf.json` files containing a JSON array of OCSF Detection Finding records. Each finding represents a security check result from Prowler.
+
+**Example Detection Finding record:**
+
+```json
+{
+  "activity_id": 1,
+  "activity_name": "Create",
+  "category_name": "Findings",
+  "category_uid": 2,
+  "class_name": "Detection Finding",
+  "class_uid": 2004,
+  "cloud": {
+    "account": {
+      "uid": "123456789012"
+    },
+    "provider": "aws",
+    "region": "us-east-1"
+  },
+  "finding_info": {
+    "desc": "IAM Access Analyzer ConsoleAnalyzer-4562ae17-e0d0-4fd6-9992-86e1079758c7 has 21 active findings.",
+    "product_uid": "prowler",
+    "title": "IAM Access Analyzer analyzer is active and has no active findings",
+    "uid": "prowler-aws-accessanalyzer_enabled_without_findings-123456789012-us-east-1-ConsoleAnalyzer-4562ae17"
+  },
+  "message": "IAM Access Analyzer ConsoleAnalyzer-4562ae17-e0d0-4fd6-9992-86e1079758c7 has 21 active findings.",
+  "metadata": {
+    "product": {
+      "name": "Prowler",
+      "vendor_name": "Prowler",
+      "version": "5.19.0"
+    },
+    "version": "1.4.0"
+  },
+  "resources": [
+    {
+      "cloud_partition": "aws",
+      "region": "us-east-1",
+      "type": "AwsIamAccessAnalyzer",
+      "uid": "arn:aws:access-analyzer:us-east-1:123456789012:analyzer/ConsoleAnalyzer-4562ae17"
+    }
+  ],
+  "severity": "Low",
+  "severity_id": 2,
+  "status": "New",
+  "status_id": 1,
+  "time": 1739798139,
+  "type_name": "Detection Finding: Create",
+  "type_uid": 200401,
+  "unmapped": {
+    "check_id": "accessanalyzer_enabled_without_findings",
+    "provider": "aws",
+    "related_url": "",
+    "risk": "Unresolved Active findings indicate unintended external or internal access paths.",
+    "scan_id": "019c6bf4-eb15-7966-b129-85ee538a03f9"
+  }
+}
+```
+
+<Note>
+Only **Detection Finding** (`class_uid: 2004`) records are accepted. Other OCSF classes are not supported for ingestion.
 </Note>
 
 ## Required permissions
@@ -101,7 +166,7 @@ curl -X POST \
 
 ### Submit an ingestion batch
 
-Upload a `.ocsf.json` file containing a JSON array of OCSF records. Currently, only Detection Finding records (Prowler findings) are accepted.
+Upload a `.ocsf.json` file containing a JSON array of OCSF Detection Finding records. See [OCSF Detection Finding format](#ocsf-detection-finding-format) for the expected structure.
 
 **Endpoint:** `POST /api/v1/ingestions`
 
