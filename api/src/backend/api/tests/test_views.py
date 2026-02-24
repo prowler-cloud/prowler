@@ -4006,11 +4006,11 @@ class TestAttackPathsScanViewSet:
                 return_value=expected_db_name,
             ) as mock_get_db_name,
             patch(
-                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                "api.v1.views.attack_paths_views_helpers.prepare_parameters",
                 return_value=prepared_parameters,
             ) as mock_prepare,
             patch(
-                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
+                "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value=graph_payload,
             ) as mock_execute,
             patch("api.v1.views.graph_database.clear_cache") as mock_clear_cache,
@@ -4099,11 +4099,11 @@ class TestAttackPathsScanViewSet:
         with (
             patch("api.v1.views.get_query_by_id", return_value=query_definition),
             patch(
-                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                "api.v1.views.attack_paths_views_helpers.prepare_parameters",
                 return_value={"provider_uid": provider.uid},
             ),
             patch(
-                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
+                "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value={
                     "nodes": [{"id": "n1", "labels": ["AWSAccount"], "properties": {}}],
                     "relationships": [],
@@ -4152,11 +4152,11 @@ class TestAttackPathsScanViewSet:
         with (
             patch("api.v1.views.get_query_by_id", return_value=query_definition),
             patch(
-                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                "api.v1.views.attack_paths_views_helpers.prepare_parameters",
                 return_value={"provider_uid": provider.uid},
             ),
             patch(
-                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
+                "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value={
                     "nodes": [{"id": "n1", "labels": ["AWSAccount"], "properties": {}}],
                     "relationships": [],
@@ -4230,11 +4230,11 @@ class TestAttackPathsScanViewSet:
         with (
             patch("api.v1.views.get_query_by_id", return_value=query_definition),
             patch(
-                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                "api.v1.views.attack_paths_views_helpers.prepare_parameters",
                 return_value={"provider_uid": provider.uid},
             ),
             patch(
-                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
+                "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value={"nodes": [], "relationships": []},
             ),
             patch("api.v1.views.graph_database.clear_cache"),
@@ -4256,6 +4256,113 @@ class TestAttackPathsScanViewSet:
             assert attributes.get("relationships") == []
         else:
             assert "errors" in payload
+
+    # -- cartography_schema action ------------------------------------------------
+
+    def test_cartography_schema_returns_urls(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        schema_data = {
+            "provider": "aws",
+            "cartography_version": "0.129.0",
+            "schema_url": "https://github.com/cartography-cncf/cartography/blob/0.129.0/docs/root/modules/aws/schema.md",
+            "raw_schema_url": "https://raw.githubusercontent.com/cartography-cncf/cartography/refs/tags/0.129.0/docs/root/modules/aws/schema.md",
+        }
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.get_cartography_schema",
+                return_value=schema_data,
+            ) as mock_get_schema,
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+        ):
+            response = authenticated_client.get(
+                reverse(
+                    "attack-paths-scans-schema",
+                    kwargs={"pk": attack_paths_scan.id},
+                )
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_get_schema.assert_called_once_with(
+            "db-test", str(attack_paths_scan.provider_id)
+        )
+        attributes = response.json()["data"]["attributes"]
+        assert attributes["provider"] == "aws"
+        assert attributes["cartography_version"] == "0.129.0"
+        assert "schema.md" in attributes["schema_url"]
+        assert "raw.githubusercontent.com" in attributes["raw_schema_url"]
+
+    def test_cartography_schema_returns_404_when_no_metadata(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.get_cartography_schema",
+                return_value=None,
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+        ):
+            response = authenticated_client.get(
+                reverse(
+                    "attack-paths-scans-schema",
+                    kwargs={"pk": attack_paths_scan.id},
+                )
+            )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert "No cartography schema metadata" in str(response.json())
+
+    def test_cartography_schema_returns_400_when_graph_not_ready(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=False,
+        )
+
+        response = authenticated_client.get(
+            reverse(
+                "attack-paths-scans-schema",
+                kwargs={"pk": attack_paths_scan.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
 @pytest.mark.django_db
