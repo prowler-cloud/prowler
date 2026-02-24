@@ -220,7 +220,7 @@ Detailed documentation at https://docs.prowler.com
             action="store_true",
             help=(
                 "Send OCSF output to Prowler Cloud ingestion endpoint. "
-                "Requires PROWLER_API_KEY and optional PROWLER_CLOUD_API_BASE environment variables."
+                "Requires PROWLER_API_KEY environment variable."
             ),
         )
 
