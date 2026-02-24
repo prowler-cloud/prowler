@@ -304,6 +304,15 @@ export type IacCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type ImageCredentials = {
+  [ProviderCredentialFields.REGISTRY_USERNAME]?: string;
+  [ProviderCredentialFields.REGISTRY_PASSWORD]?: string;
+  [ProviderCredentialFields.REGISTRY_TOKEN]?: string;
+  [ProviderCredentialFields.IMAGE_FILTER]?: string;
+  [ProviderCredentialFields.TAG_FILTER]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type OCICredentials = {
   [ProviderCredentialFields.OCI_USER]: string;
   [ProviderCredentialFields.OCI_FINGERPRINT]: string;
@@ -342,6 +351,7 @@ export type CredentialsFormSchema =
   | GCPServiceAccountKey
   | KubernetesCredentials
   | IacCredentials
+  | ImageCredentials
   | M365Credentials
   | OCICredentials
   | MongoDBAtlasCredentials

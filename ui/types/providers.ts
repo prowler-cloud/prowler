@@ -7,6 +7,7 @@ export const PROVIDER_TYPES = [
   "mongodbatlas",
   "github",
   "iac",
+  "image",
   "oraclecloud",
   "alibabacloud",
 ] as const;
@@ -22,6 +23,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   mongodbatlas: "MongoDB Atlas",
   github: "GitHub",
   iac: "Infrastructure as Code",
+  image: "Container Registry",
   oraclecloud: "Oracle Cloud Infrastructure",
   alibabacloud: "Alibaba Cloud",
 };

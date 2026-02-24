@@ -53,6 +53,13 @@ export const ProviderCredentialFields = {
   REPOSITORY_URL: "repository_url",
   ACCESS_TOKEN: "access_token",
 
+  // Image (Container Registry) fields
+  REGISTRY_USERNAME: "registry_username",
+  REGISTRY_PASSWORD: "registry_password",
+  REGISTRY_TOKEN: "registry_token",
+  IMAGE_FILTER: "image_filter",
+  TAG_FILTER: "tag_filter",
+
   // OCI fields
   OCI_USER: "user",
   OCI_FINGERPRINT: "fingerprint",
@@ -97,6 +104,11 @@ export const ErrorPointers = {
   GITHUB_APP_KEY: "/data/attributes/secret/github_app_key_content",
   REPOSITORY_URL: "/data/attributes/secret/repository_url",
   ACCESS_TOKEN: "/data/attributes/secret/access_token",
+  REGISTRY_USERNAME: "/data/attributes/secret/registry_username",
+  REGISTRY_PASSWORD: "/data/attributes/secret/registry_password",
+  REGISTRY_TOKEN: "/data/attributes/secret/registry_token",
+  IMAGE_FILTER: "/data/attributes/secret/image_filter",
+  TAG_FILTER: "/data/attributes/secret/tag_filter",
   CERTIFICATE_CONTENT: "/data/attributes/secret/certificate_content",
   OCI_USER: "/data/attributes/secret/user",
   OCI_FINGERPRINT: "/data/attributes/secret/fingerprint",

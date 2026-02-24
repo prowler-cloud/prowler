@@ -116,6 +116,11 @@ export const addProviderFormSchema = z
         providerUid: z.string(),
       }),
       z.object({
+        providerType: z.literal("image"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
+      z.object({
         providerType: z.literal("oraclecloud"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
@@ -259,7 +264,25 @@ export const addCredentialsFormSchema = (
                                   .string()
                                   .min(1, "Access Key Secret is required"),
                             }
-                          : {}),
+                          : providerType === "image"
+                            ? {
+                                [ProviderCredentialFields.REGISTRY_USERNAME]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.REGISTRY_PASSWORD]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.REGISTRY_TOKEN]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.IMAGE_FILTER]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.TAG_FILTER]: z
+                                  .string()
+                                  .optional(),
+                              }
+                            : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {
