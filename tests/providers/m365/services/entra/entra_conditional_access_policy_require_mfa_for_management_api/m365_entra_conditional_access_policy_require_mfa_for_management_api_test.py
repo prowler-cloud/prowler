@@ -21,7 +21,7 @@ AZURE_MANAGEMENT_API_APP_ID = "797f4846-ba00-4fd7-ba43-dac1f8f63013"
 CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api"
 
 
-class Test_entra_conditional_access_policy_require_mfa_for_management_api:
+class Test_m365_entra_conditional_access_policy_require_mfa_for_management_api:
     def test_no_conditional_access_policies(self):
         """Test FAIL when there are no Conditional Access policies."""
         entra_client = mock.MagicMock
@@ -207,7 +207,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' targets Azure Management API with MFA but is only in report-only mode."
+                == f"Conditional Access Policy {display_name} targets Azure Management API with MFA but is only in report-only mode."
             )
             assert (
                 result[0].resource
@@ -601,7 +601,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' requires MFA for Azure Management API."
+                == f"Conditional Access Policy {display_name} requires MFA for Azure Management API."
             )
             assert (
                 result[0].resource

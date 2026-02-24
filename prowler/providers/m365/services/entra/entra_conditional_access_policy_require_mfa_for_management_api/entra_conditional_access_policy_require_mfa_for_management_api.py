@@ -68,10 +68,10 @@ class entra_conditional_access_policy_require_mfa_for_management_api(Check):
 
             if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
                 report.status = "FAIL"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' targets Azure Management API with MFA but is only in report-only mode."
+                report.status_extended = f"Conditional Access Policy {policy.display_name} targets Azure Management API with MFA but is only in report-only mode."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' requires MFA for Azure Management API."
+                report.status_extended = f"Conditional Access Policy {policy.display_name} requires MFA for Azure Management API."
                 break
 
         findings.append(report)

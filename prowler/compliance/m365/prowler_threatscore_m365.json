@@ -27,8 +27,7 @@
       "Id": "1.1.2",
       "Description": "Ensure multifactor authentication is enabled for all users in administrative roles",
       "Checks": [
-        "entra_admin_users_mfa_enabled",
-        "entra_conditional_access_policy_require_mfa_for_management_api"
+        "entra_admin_users_mfa_enabled"
       ],
       "Attributes": [
         {
@@ -172,8 +171,7 @@
       "Id": "1.1.10",
       "Description": "Ensure that 'Multi-Factor Auth Status' is 'Enabled' for all Privileged Users",
       "Checks": [
-        "entra_admin_users_mfa_enabled",
-        "entra_conditional_access_policy_require_mfa_for_management_api"
+        "entra_admin_users_mfa_enabled"
       ],
       "Attributes": [
         {
