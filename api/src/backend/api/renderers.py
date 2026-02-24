@@ -1,8 +1,19 @@
 from contextlib import nullcontext
 
+from rest_framework.renderers import BaseRenderer
 from rest_framework_json_api.renderers import JSONRenderer
 
 from api.db_utils import rls_transaction
+
+
+class PlainTextRenderer(BaseRenderer):
+    media_type = "text/plain"
+    format = "text"
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        if isinstance(data, str):
+            return data.encode(self.charset)
+        return data
 
 
 class APIJSONRenderer(JSONRenderer):

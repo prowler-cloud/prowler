@@ -5,7 +5,6 @@ import logging
 import os
 
 from collections import defaultdict
-from enum import StrEnum
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
@@ -100,6 +99,7 @@ from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
+from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
@@ -2451,36 +2451,6 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_SCANS]
 
-    class OutputFormat(StrEnum):
-        JSON = "json"
-        TEXT = "text"
-
-    _output_format_parameter = OpenApiParameter(
-        name="output",
-        description="Response format. 'json' returns JSON:API (default), 'text' returns a compact plain-text format optimized for LLM consumption.",
-        required=False,
-        type={
-            "type": "string",
-            "enum": [f.value for f in OutputFormat],
-            "default": OutputFormat.JSON,
-        },
-        location=OpenApiParameter.QUERY,
-    )
-
-    @staticmethod
-    def _validate_output_format(request) -> "AttackPathsScanViewSet.OutputFormat":
-        raw = request.query_params.get(
-            "output", AttackPathsScanViewSet.OutputFormat.JSON
-        )
-        try:
-            return AttackPathsScanViewSet.OutputFormat(raw)
-        except ValueError:
-            raise ValidationError(
-                {
-                    "output": f"Invalid output format '{raw}'. Must be one of: {', '.join(AttackPathsScanViewSet.OutputFormat)}"
-                }
-            )
-
     def set_required_permissions(self):
         if self.request.method in SAFE_METHODS:
             self.required_permissions = []
@@ -2558,15 +2528,14 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         serializer = AttackPathsQuerySerializer(queries, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @extend_schema(parameters=[_output_format_parameter])
     @action(
         detail=True,
         methods=["post"],
         url_path="queries/run",
         url_name="queries-run",
+        renderer_classes=[APIJSONRenderer, PlainTextRenderer],
     )
     def run_attack_paths_query(self, request, pk=None):
-        output_format = self._validate_output_format(request)
         attack_paths_scan = self.get_object()
 
         if not attack_paths_scan.graph_data_ready:
@@ -2612,22 +2581,21 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         if not graph.get("nodes"):
             status_code = status.HTTP_404_NOT_FOUND
 
-        if output_format is self.OutputFormat.TEXT:
+        if isinstance(request.accepted_renderer, PlainTextRenderer):
             text = attack_paths_views_helpers.serialize_graph_as_text(graph)
             return Response(text, status=status_code, content_type="text/plain")
 
         response_serializer = AttackPathsQueryResultSerializer(graph)
         return Response(response_serializer.data, status=status_code)
 
-    @extend_schema(parameters=[_output_format_parameter])
     @action(
         detail=True,
         methods=["post"],
         url_path="queries/custom",
         url_name="queries-custom",
+        renderer_classes=[APIJSONRenderer, PlainTextRenderer],
     )
     def run_custom_attack_paths_query(self, request, pk=None):
-        output_format = self._validate_output_format(request)
         attack_paths_scan = self.get_object()
 
         if not attack_paths_scan.graph_data_ready:
@@ -2659,7 +2627,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         if not graph.get("nodes"):
             status_code = status.HTTP_404_NOT_FOUND
 
-        if output_format is self.OutputFormat.TEXT:
+        if isinstance(request.accepted_renderer, PlainTextRenderer):
             text = attack_paths_views_helpers.serialize_graph_as_text(graph)
             return Response(text, status=status_code, content_type="text/plain")
 
