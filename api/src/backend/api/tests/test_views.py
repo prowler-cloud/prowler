@@ -4340,11 +4340,11 @@ class TestAttackPathsScanViewSet:
     # -- run_custom_attack_paths_query action ------------------------------------
 
     @staticmethod
-    def _custom_query_payload(cypher="MATCH (n) RETURN n"):
+    def _custom_query_payload(query="MATCH (n) RETURN n"):
         return {
             "data": {
                 "type": "attack-paths-custom-query-run-requests",
-                "attributes": {"cypher": cypher},
+                "attributes": {"query": query},
             }
         }
 

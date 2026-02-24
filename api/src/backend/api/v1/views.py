@@ -2405,7 +2405,7 @@ class TaskViewSet(BaseRLSViewSet):
     ),
     run_custom_attack_paths_query=extend_schema(
         tags=["Attack Paths"],
-        summary="Execute a custom Cypher query",
+        summary="Execute a custom openCypher query",
         description="Execute a raw openCypher query against the Attack Paths graph. "
         "Results are filtered to the scan's provider and truncated to a maximum node count.",
         request=AttackPathsCustomQueryRunRequestSerializer,
@@ -2620,7 +2620,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
 
         graph = attack_paths_views_helpers.execute_custom_query(
             database_name,
-            serializer.validated_data["cypher"],
+            serializer.validated_data["query"],
             provider_id,
         )
         graph_database.clear_cache(database_name)

@@ -409,19 +409,19 @@ def test_serialize_graph_as_text_complex_property_values():
 # -- normalize_custom_query_payload ------------------------------------------------
 
 
-def test_normalize_custom_query_payload_extracts_cypher():
+def test_normalize_custom_query_payload_extracts_query():
     payload = {
         "data": {
             "type": "attack-paths-custom-query-run-requests",
             "attributes": {
-                "cypher": "MATCH (n) RETURN n",
+                "query": "MATCH (n) RETURN n",
             },
         }
     }
 
     result = views_helpers.normalize_custom_query_payload(payload)
 
-    assert result == {"cypher": "MATCH (n) RETURN n"}
+    assert result == {"query": "MATCH (n) RETURN n"}
 
 
 def test_normalize_custom_query_payload_passthrough_for_non_dict():
@@ -430,11 +430,11 @@ def test_normalize_custom_query_payload_passthrough_for_non_dict():
 
 
 def test_normalize_custom_query_payload_passthrough_for_flat_dict():
-    payload = {"cypher": "MATCH (n) RETURN n"}
+    payload = {"query": "MATCH (n) RETURN n"}
 
     result = views_helpers.normalize_custom_query_payload(payload)
 
-    assert result == {"cypher": "MATCH (n) RETURN n"}
+    assert result == {"query": "MATCH (n) RETURN n"}
 
 
 # -- execute_custom_query ----------------------------------------------

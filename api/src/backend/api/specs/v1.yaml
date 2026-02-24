@@ -690,7 +690,7 @@ paths:
       description: Execute a raw openCypher query against the Attack Paths graph.
         Results are filtered to the scan's provider and truncated to a maximum node
         count.
-      summary: Execute a custom Cypher query
+      summary: Execute a custom openCypher query
       parameters:
       - in: path
         name: id
@@ -13277,11 +13277,11 @@ components:
             attributes:
               type: object
               properties:
-                cypher:
+                query:
                   type: string
                   minLength: 1
               required:
-              - cypher
+              - query
       required:
       - data
     AttackPathsNode:

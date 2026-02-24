@@ -125,7 +125,7 @@ def normalize_custom_query_payload(raw_data):
     if "data" in raw_data and isinstance(raw_data.get("data"), dict):
         data_section = raw_data.get("data") or {}
         attributes = data_section.get("attributes") or {}
-        return {"cypher": attributes.get("cypher")}
+        return {"query": attributes.get("query")}
 
     return raw_data
 
