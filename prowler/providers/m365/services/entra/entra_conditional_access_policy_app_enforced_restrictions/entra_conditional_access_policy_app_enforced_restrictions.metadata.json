@@ -15,7 +15,6 @@
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-policy-app-enforced-restriction",
     "https://learn.microsoft.com/en-us/sharepoint/control-access-from-unmanaged-devices",
-    "https://maester.dev/docs/tests/MT.1019"
   ],
   "Remediation": {
     "Code": {
@@ -36,5 +35,5 @@
   "RelatedTo": [
     "entra_managed_device_required_for_authentication"
   ],
-  "Notes": "This check is equivalent to Maester test MT.1019. Application enforced restrictions only work with Exchange Online and SharePoint Online (including OneDrive)."
+  "Notes": "Application enforced restrictions only work with Exchange Online and SharePoint Online (including OneDrive)."
 }
