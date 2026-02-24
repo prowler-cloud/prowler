@@ -14,7 +14,6 @@ class Networking(OpenStackService):
 
     def __init__(self, provider) -> None:
         super().__init__(__class__.__name__, provider)
-        self.client = self.connection.network
         self.security_groups: List[SecurityGroup] = []
         self.networks: List[NetworkResource] = []
         self.subnets: List[Subnet] = []
@@ -25,169 +24,179 @@ class Networking(OpenStackService):
         self._list_ports()
 
     def _list_security_groups(self) -> None:
-        """List all security groups with rules."""
+        """List all security groups with rules across all audited regions."""
         logger.info("Networking - Listing security groups...")
-        try:
-            for sg in self.client.security_groups():
-                # Parse security group rules
-                rules = []
-                for rule in getattr(sg, "security_group_rules", []):
-                    # Rules are returned as dictionaries, use .get() instead of getattr()
-                    if isinstance(rule, dict):
-                        rules.append(
-                            SecurityGroupRule(
-                                id=rule.get("id", ""),
-                                security_group_id=rule.get("security_group_id", ""),
-                                direction=rule.get("direction", "ingress"),
-                                protocol=rule.get("protocol", None),
-                                ethertype=rule.get("ethertype", "IPv4"),
-                                port_range_min=rule.get("port_range_min", None),
-                                port_range_max=rule.get("port_range_max", None),
-                                remote_ip_prefix=rule.get("remote_ip_prefix", None),
-                                remote_group_id=rule.get("remote_group_id", None),
+        for region, conn in self.regional_connections.items():
+            try:
+                for sg in conn.network.security_groups():
+                    # Parse security group rules
+                    rules = []
+                    for rule in getattr(sg, "security_group_rules", []):
+                        # Rules are returned as dictionaries, use .get() instead of getattr()
+                        if isinstance(rule, dict):
+                            rules.append(
+                                SecurityGroupRule(
+                                    id=rule.get("id", ""),
+                                    security_group_id=rule.get("security_group_id", ""),
+                                    direction=rule.get("direction", "ingress"),
+                                    protocol=rule.get("protocol", None),
+                                    ethertype=rule.get("ethertype", "IPv4"),
+                                    port_range_min=rule.get("port_range_min", None),
+                                    port_range_max=rule.get("port_range_max", None),
+                                    remote_ip_prefix=rule.get("remote_ip_prefix", None),
+                                    remote_group_id=rule.get("remote_group_id", None),
+                                )
                             )
-                        )
-                    else:
-                        # Fallback for object-style rules
-                        rules.append(
-                            SecurityGroupRule(
-                                id=getattr(rule, "id", ""),
-                                security_group_id=getattr(
-                                    rule, "security_group_id", ""
-                                ),
-                                direction=getattr(rule, "direction", "ingress"),
-                                protocol=getattr(rule, "protocol", None),
-                                ethertype=getattr(rule, "ethertype", "IPv4"),
-                                port_range_min=getattr(rule, "port_range_min", None),
-                                port_range_max=getattr(rule, "port_range_max", None),
-                                remote_ip_prefix=getattr(
-                                    rule, "remote_ip_prefix", None
-                                ),
-                                remote_group_id=getattr(rule, "remote_group_id", None),
+                        else:
+                            # Fallback for object-style rules
+                            rules.append(
+                                SecurityGroupRule(
+                                    id=getattr(rule, "id", ""),
+                                    security_group_id=getattr(
+                                        rule, "security_group_id", ""
+                                    ),
+                                    direction=getattr(rule, "direction", "ingress"),
+                                    protocol=getattr(rule, "protocol", None),
+                                    ethertype=getattr(rule, "ethertype", "IPv4"),
+                                    port_range_min=getattr(
+                                        rule, "port_range_min", None
+                                    ),
+                                    port_range_max=getattr(
+                                        rule, "port_range_max", None
+                                    ),
+                                    remote_ip_prefix=getattr(
+                                        rule, "remote_ip_prefix", None
+                                    ),
+                                    remote_group_id=getattr(
+                                        rule, "remote_group_id", None
+                                    ),
+                                )
                             )
+
+                    # Check if this is a default security group
+                    is_default = getattr(sg, "name", "") == "default"
+
+                    self.security_groups.append(
+                        SecurityGroup(
+                            id=getattr(sg, "id", ""),
+                            name=getattr(sg, "name", ""),
+                            description=getattr(sg, "description", ""),
+                            security_group_rules=rules,
+                            project_id=getattr(sg, "project_id", ""),
+                            region=region,
+                            is_default=is_default,
+                            tags=getattr(sg, "tags", []),
                         )
-
-                # Check if this is a default security group
-                is_default = getattr(sg, "name", "") == "default"
-
-                self.security_groups.append(
-                    SecurityGroup(
-                        id=getattr(sg, "id", ""),
-                        name=getattr(sg, "name", ""),
-                        description=getattr(sg, "description", ""),
-                        security_group_rules=rules,
-                        project_id=getattr(sg, "project_id", ""),
-                        region=self.region,
-                        is_default=is_default,
-                        tags=getattr(sg, "tags", []),
                     )
+            except openstack_exceptions.SDKException as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
+                    f"Failed to list security groups in region {region}: {error}"
                 )
-        except openstack_exceptions.SDKException as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
-                f"Failed to list security groups: {error}"
-            )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
-                f"Unexpected error listing security groups: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
+                    f"Unexpected error listing security groups in region {region}: {error}"
+                )
 
     def _list_networks(self) -> None:
-        """List all networks."""
+        """List all networks across all audited regions."""
         logger.info("Networking - Listing networks...")
-        try:
-            for net in self.client.networks():
-                self.networks.append(
-                    NetworkResource(
-                        id=getattr(net, "id", ""),
-                        name=getattr(net, "name", ""),
-                        status=getattr(net, "status", ""),
-                        admin_state_up=getattr(net, "is_admin_state_up", True),
-                        shared=getattr(net, "is_shared", False),
-                        external=getattr(net, "is_router_external", False),
-                        port_security_enabled=getattr(
-                            net, "is_port_security_enabled", True
-                        ),
-                        subnets=getattr(net, "subnet_ids", []),
-                        project_id=getattr(net, "project_id", ""),
-                        region=self.region,
-                        tags=getattr(net, "tags", []),
+        for region, conn in self.regional_connections.items():
+            try:
+                for net in conn.network.networks():
+                    self.networks.append(
+                        NetworkResource(
+                            id=getattr(net, "id", ""),
+                            name=getattr(net, "name", ""),
+                            status=getattr(net, "status", ""),
+                            admin_state_up=getattr(net, "is_admin_state_up", True),
+                            shared=getattr(net, "is_shared", False),
+                            external=getattr(net, "is_router_external", False),
+                            port_security_enabled=getattr(
+                                net, "is_port_security_enabled", True
+                            ),
+                            subnets=getattr(net, "subnet_ids", []),
+                            project_id=getattr(net, "project_id", ""),
+                            region=region,
+                            tags=getattr(net, "tags", []),
+                        )
                     )
+            except openstack_exceptions.SDKException as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
+                    f"Failed to list networks in region {region}: {error}"
                 )
-        except openstack_exceptions.SDKException as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
-                f"Failed to list networks: {error}"
-            )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
-                f"Unexpected error listing networks: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
+                    f"Unexpected error listing networks in region {region}: {error}"
+                )
 
     def _list_subnets(self) -> None:
-        """List all subnets."""
+        """List all subnets across all audited regions."""
         logger.info("Networking - Listing subnets...")
-        try:
-            for subnet in self.client.subnets():
-                self.subnets.append(
-                    Subnet(
-                        id=getattr(subnet, "id", ""),
-                        name=getattr(subnet, "name", ""),
-                        network_id=getattr(subnet, "network_id", ""),
-                        ip_version=getattr(subnet, "ip_version", 4),
-                        cidr=getattr(subnet, "cidr", ""),
-                        gateway_ip=getattr(subnet, "gateway_ip", None),
-                        enable_dhcp=getattr(subnet, "is_dhcp_enabled", True),
-                        dns_nameservers=getattr(subnet, "dns_nameservers", []),
-                        project_id=getattr(subnet, "project_id", ""),
-                        region=self.region,
+        for region, conn in self.regional_connections.items():
+            try:
+                for subnet in conn.network.subnets():
+                    self.subnets.append(
+                        Subnet(
+                            id=getattr(subnet, "id", ""),
+                            name=getattr(subnet, "name", ""),
+                            network_id=getattr(subnet, "network_id", ""),
+                            ip_version=getattr(subnet, "ip_version", 4),
+                            cidr=getattr(subnet, "cidr", ""),
+                            gateway_ip=getattr(subnet, "gateway_ip", None),
+                            enable_dhcp=getattr(subnet, "is_dhcp_enabled", True),
+                            dns_nameservers=getattr(subnet, "dns_nameservers", []),
+                            project_id=getattr(subnet, "project_id", ""),
+                            region=region,
+                        )
                     )
+            except openstack_exceptions.SDKException as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
+                    f"Failed to list subnets in region {region}: {error}"
                 )
-        except openstack_exceptions.SDKException as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
-                f"Failed to list subnets: {error}"
-            )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
-                f"Unexpected error listing subnets: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
+                    f"Unexpected error listing subnets in region {region}: {error}"
+                )
 
     def _list_ports(self) -> None:
-        """List all ports."""
+        """List all ports across all audited regions."""
         logger.info("Networking - Listing ports...")
-        try:
-            for port in self.client.ports():
-                self.ports.append(
-                    Port(
-                        id=getattr(port, "id", ""),
-                        name=getattr(port, "name", ""),
-                        network_id=getattr(port, "network_id", ""),
-                        mac_address=getattr(port, "mac_address", ""),
-                        fixed_ips=getattr(port, "fixed_ips", []),
-                        port_security_enabled=getattr(
-                            port, "is_port_security_enabled", True
-                        ),
-                        security_groups=getattr(port, "security_groups", []),
-                        device_owner=getattr(port, "device_owner", ""),
-                        device_id=getattr(port, "device_id", ""),
-                        project_id=getattr(port, "project_id", ""),
-                        region=self.region,
+        for region, conn in self.regional_connections.items():
+            try:
+                for port in conn.network.ports():
+                    self.ports.append(
+                        Port(
+                            id=getattr(port, "id", ""),
+                            name=getattr(port, "name", ""),
+                            network_id=getattr(port, "network_id", ""),
+                            mac_address=getattr(port, "mac_address", ""),
+                            fixed_ips=getattr(port, "fixed_ips", []),
+                            port_security_enabled=getattr(
+                                port, "is_port_security_enabled", True
+                            ),
+                            security_groups=getattr(port, "security_groups", []),
+                            device_owner=getattr(port, "device_owner", ""),
+                            device_id=getattr(port, "device_id", ""),
+                            project_id=getattr(port, "project_id", ""),
+                            region=region,
+                        )
                     )
+            except openstack_exceptions.SDKException as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
+                    f"Failed to list ports in region {region}: {error}"
                 )
-        except openstack_exceptions.SDKException as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
-                f"Failed to list ports: {error}"
-            )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
-                f"Unexpected error listing ports: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
+                    f"Unexpected error listing ports in region {region}: {error}"
+                )
 
 
 @dataclass
