@@ -360,7 +360,7 @@ def test_truncate_graph_no_truncation_needed():
 
 
 def test_truncate_graph_truncates_nodes_and_removes_orphan_relationships():
-    with patch.object(graph_database, "MAX_GRAPH_NODES", 3):
+    with patch.object(graph_database, "MAX_CUSTOM_QUERY_NODES", 3):
         graph = {
             "nodes": [{"id": f"n{i}"} for i in range(5)],
             "relationships": [

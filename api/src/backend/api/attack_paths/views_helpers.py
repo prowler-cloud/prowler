@@ -196,10 +196,10 @@ def get_cartography_schema(
 
 def _truncate_graph(graph: dict[str, Any]) -> dict[str, Any]:
     graph["total_nodes"] = len(graph["nodes"])
-    graph["truncated"] = graph["total_nodes"] > graph_database.MAX_GRAPH_NODES
+    graph["truncated"] = graph["total_nodes"] > graph_database.MAX_CUSTOM_QUERY_NODES
 
     if graph["truncated"]:
-        graph["nodes"] = graph["nodes"][: graph_database.MAX_GRAPH_NODES]
+        graph["nodes"] = graph["nodes"][: graph_database.MAX_CUSTOM_QUERY_NODES]
         kept_node_ids = {node["id"] for node in graph["nodes"]}
         graph["relationships"] = [
             rel

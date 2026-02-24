@@ -100,6 +100,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- `entra_emergency_access_exclusion` check for M365 provider [(#9903)](https://github.com/prowler-cloud/prowler/pull/9903)
 - `defender_zap_for_teams_enabled` check for M365 provider [(#9838)](https://github.com/prowler-cloud/prowler/pull/9838)
 - `compute_instance_suspended_without_persistent_disks` check for GCP provider [(#9747)](https://github.com/prowler-cloud/prowler/pull/9747)
 - `codebuild_project_webhook_filters_use_anchored_patterns` check for AWS provider to detect CodeBreach vulnerability [(#9840)](https://github.com/prowler-cloud/prowler/pull/9840)
