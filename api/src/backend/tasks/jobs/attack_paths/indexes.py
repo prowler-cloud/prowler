@@ -6,6 +6,7 @@ from cartography.client.core.tx import run_write_query
 from celery.utils.log import get_task_logger
 
 from tasks.jobs.attack_paths.config import (
+    DEPRECATED_PROVIDER_RESOURCE_LABEL,
     INTERNET_NODE_LABEL,
     PROWLER_FINDING_LABEL,
     PROVIDER_RESOURCE_LABEL,
@@ -23,9 +24,11 @@ class IndexType(Enum):
 
 # Indexes for Prowler findings and resource lookups
 FINDINGS_INDEX_STATEMENTS = [
-    # Resources indexes for quick Prowler Finding lookups
-    "CREATE INDEX aws_resource_arn IF NOT EXISTS FOR (n:AWSResource) ON (n.arn);",
-    "CREATE INDEX aws_resource_id IF NOT EXISTS FOR (n:AWSResource) ON (n.id);",
+    # Resource indexes for Prowler Finding lookups
+    "CREATE INDEX aws_resource_arn IF NOT EXISTS FOR (n:_AWSResource) ON (n.arn);",
+    "CREATE INDEX aws_resource_id IF NOT EXISTS FOR (n:_AWSResource) ON (n.id);",
+    "CREATE INDEX deprecated_aws_resource_arn IF NOT EXISTS FOR (n:AWSResource) ON (n.arn);",
+    "CREATE INDEX deprecated_aws_resource_id IF NOT EXISTS FOR (n:AWSResource) ON (n.id);",
     # Prowler Finding indexes
     f"CREATE INDEX prowler_finding_id IF NOT EXISTS FOR (n:{PROWLER_FINDING_LABEL}) ON (n.id);",
     f"CREATE INDEX prowler_finding_provider_uid IF NOT EXISTS FOR (n:{PROWLER_FINDING_LABEL}) ON (n.provider_uid);",
@@ -37,8 +40,10 @@ FINDINGS_INDEX_STATEMENTS = [
 
 # Indexes for provider resource sync operations
 SYNC_INDEX_STATEMENTS = [
-    f"CREATE INDEX provider_element_id IF NOT EXISTS FOR (n:{PROVIDER_RESOURCE_LABEL}) ON (n.provider_element_id);",
-    f"CREATE INDEX provider_resource_provider_id IF NOT EXISTS FOR (n:{PROVIDER_RESOURCE_LABEL}) ON (n.provider_id);",
+    f"CREATE INDEX provider_element_id IF NOT EXISTS FOR (n:{PROVIDER_RESOURCE_LABEL}) ON (n._provider_element_id);",
+    f"CREATE INDEX provider_resource_provider_id IF NOT EXISTS FOR (n:{PROVIDER_RESOURCE_LABEL}) ON (n._provider_id);",
+    f"CREATE INDEX deprecated_provider_element_id IF NOT EXISTS FOR (n:{DEPRECATED_PROVIDER_RESOURCE_LABEL}) ON (n.provider_element_id);",
+    f"CREATE INDEX deprecated_provider_resource_provider_id IF NOT EXISTS FOR (n:{DEPRECATED_PROVIDER_RESOURCE_LABEL}) ON (n.provider_id);",
 ]
 
 

@@ -200,7 +200,24 @@ export default function AttackPathAnalysisPage() {
         parameters,
       );
 
-      if (result?.data?.attributes) {
+      if (result && "error" in result) {
+        const apiError = result as unknown as { error: string; status: number };
+        graphState.resetGraph();
+
+        if (apiError.status === 404) {
+          graphState.setError("No data found");
+          showErrorToast("No data found", "The query returned no data");
+        } else if (apiError.status === 403) {
+          graphState.setError("Not enough permissions to execute this query");
+          showErrorToast(
+            "Error",
+            "Not enough permissions to execute this query",
+          );
+        } else {
+          graphState.setError(apiError.error);
+          showErrorToast("Error", apiError.error);
+        }
+      } else if (result?.data?.attributes) {
         const graphData = adaptQueryResultToGraphData(result.data.attributes);
         graphState.updateGraphData(graphData);
         toast({
@@ -218,8 +235,11 @@ export default function AttackPathAnalysisPage() {
         }, 100);
       } else {
         graphState.resetGraph();
-        graphState.setError("No data returned from query");
-        showErrorToast("Error", "Query returned no data");
+        graphState.setError("Failed to execute query due to an unknown error");
+        showErrorToast(
+          "Error",
+          "Failed to execute query due to an unknown error",
+        );
       }
     } catch (error) {
       const errorMsg =

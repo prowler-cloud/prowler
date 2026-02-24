@@ -18,7 +18,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-server-side-encryption.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SQS/queue-encrypted-with-kms-customer-master-keys.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/SQS/queue-encrypted-with-kms-customer-master-keys.html",
     "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-sse-existing-queue.html"
   ],
   "Remediation": {

@@ -285,19 +285,6 @@ class Provider(ABC):
                         timeout=arguments.timeout,
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
-                        registry_username=getattr(arguments, "registry_username", None),
-                        registry_password=getattr(arguments, "registry_password", None),
-                        registry_token=getattr(arguments, "registry_token", None),
-                        registry=getattr(arguments, "registry", None),
-                        image_filter=getattr(arguments, "image_filter", None),
-                        tag_filter=getattr(arguments, "tag_filter", None),
-                        max_images=getattr(arguments, "max_images", 0),
-                        registry_insecure=getattr(
-                            arguments, "registry_insecure", False
-                        ),
-                        registry_list_images=getattr(
-                            arguments, "registry_list_images", False
-                        ),
                     )
                 elif "mongodbatlas" in provider_class_name.lower():
                     provider_class(

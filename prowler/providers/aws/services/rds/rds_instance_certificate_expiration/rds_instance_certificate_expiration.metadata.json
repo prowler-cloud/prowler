@@ -18,7 +18,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL-certificate-rotation.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rotate-rds-certificates.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/RDS/rotate-rds-certificates.html"
   ],
   "Remediation": {
     "Code": {

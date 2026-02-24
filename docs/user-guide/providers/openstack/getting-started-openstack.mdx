@@ -180,6 +180,36 @@ prowler openstack --clouds-yaml-cloud production --output-directory ./reports/pr
 prowler openstack --clouds-yaml-cloud staging --output-directory ./reports/staging/
 ```
 
+**Scan all regions in a single run:**
+
+If your OpenStack project spans multiple regions, replace `region_name` with a `regions` list in your `clouds.yaml`:
+
+```yaml
+clouds:
+  ovh-multiregion:
+    auth:
+      auth_url: https://auth.cloud.ovh.net/v3
+      username: user-xxxxxxxxxx
+      password: your-password-here
+      project_id: your-project-id
+      user_domain_name: Default
+      project_domain_name: Default
+    regions:
+      - UK1
+      - DE1
+    identity_api_version: "3"
+```
+
+```bash
+prowler openstack --clouds-yaml-cloud ovh-multiregion
+```
+
+Prowler will connect to each region and scan resources across all of them. See the [Authentication guide](/user-guide/providers/openstack/authentication#multi-region-scanning) for more details.
+
+<Note>
+You must use either `region_name` (single region) or `regions` (multi-region list), not both.
+</Note>
+
 **Use mutelist to suppress findings:**
 
 Create a mutelist file to suppress known findings:
