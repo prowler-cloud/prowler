@@ -119,23 +119,79 @@ The CSV format follows a standardized structure across all providers. The follow
 
 #### CSV Headers Mapping
 
-The following table shows the mapping between the CSV headers and the the providers fields:
+The following tables show the mapping between the CSV headers and the provider-specific fields.
 
-| Open Source Consolidated| AWS| GCP| AZURE| KUBERNETES
-|----------|----------|----------|----------|----------
-| auth\_method| profile| principal| identity\_type : identity\_id| in-cluster/kube-config
-| provider| provider| provider| provider| provider
-| account\_uid| account\_id / account\_arn| project\_id| subscription\_id| cluster
-| account\_name| account\_name| project\_name| subscription\_name| context:context
-| account\_email| account\_email| N/A| N/A| N/A
-| account\_organization\_uid| account\_organizations\_arn| project\_organization\_id| tenant\_id| N/A
-| account\_organization\_name| account\_org| project\_organization\_display\_name| tenant\_domain| N/A
-| account\_tags| account\_tags| project\_labels| subscription\_tags| N/A
-| partition| partition| N/A| region\_config.name| N/A
-| region| region| location| location| namespace:namespace
-| resource\_name| resource\_id| resource\_name| resource\_name| resource\_name
-| resource\_uid| resource\_arn| resource\_id| resource\_id| resource\_id
-| finding\_uid| finding\_unique\_id| finding\_unique\_id| finding\_unique\_id| finding\_unique\_id
+##### Core Cloud Providers
+
+| Open Source Consolidated | AWS | GCP | Azure | Kubernetes |
+|--------------------------|-----|-----|-------|------------|
+| auth\_method | profile | principal | identity\_type : identity\_id | in-cluster/kube-config |
+| provider | provider | provider | provider | provider |
+| account\_uid | account\_id / account\_arn | project\_id | subscription\_id | cluster |
+| account\_name | account\_name | project\_name | subscription\_name | context:context |
+| account\_email | account\_email | N/A | N/A | N/A |
+| account\_organization\_uid | account\_organizations\_arn | project\_organization\_id | tenant\_id | N/A |
+| account\_organization\_name | account\_org | project\_organization\_display\_name | tenant\_domain | N/A |
+| account\_tags | account\_tags | project\_labels | subscription\_tags | N/A |
+| partition | partition | N/A | region\_config.name | N/A |
+| region | region | location | location | namespace:namespace |
+| resource\_name | resource\_id | resource\_name | resource\_name | resource\_name |
+| resource\_uid | resource\_arn | resource\_id | resource\_id | resource\_id |
+| finding\_uid | finding\_unique\_id | finding\_unique\_id | finding\_unique\_id | finding\_unique\_id |
+
+##### Additional Cloud Providers
+
+| Open Source Consolidated | Alibaba Cloud | Oracle Cloud | OpenStack |
+|--------------------------|---------------|--------------|-----------|
+| auth\_method | identity\_arn | profile | username |
+| provider | provider | provider | provider |
+| account\_uid | account\_id | tenancy\_id | project\_id |
+| account\_name | account\_name | tenancy\_name | project\_name |
+| account\_email | N/A | N/A | N/A |
+| account\_organization\_uid | N/A | N/A | N/A |
+| account\_organization\_name | N/A | N/A | N/A |
+| account\_tags | N/A | N/A | N/A |
+| partition | N/A | N/A | N/A |
+| region | region | region | region |
+| resource\_name | resource\_id | resource\_name | resource\_name |
+| resource\_uid | resource\_arn | resource\_id | resource\_id |
+| finding\_uid | finding\_unique\_id | finding\_unique\_id | finding\_unique\_id |
+
+##### SaaS & Identity Providers
+
+| Open Source Consolidated | Microsoft 365 | GitHub | Cloudflare | MongoDB Atlas |
+|--------------------------|---------------|--------|------------|---------------|
+| auth\_method | identity\_type : identity\_id | auth\_method | api\_token | api\_key |
+| provider | provider | provider | provider | provider |
+| account\_uid | tenant\_id | account\_id / app\_id | account\_id | organization\_id |
+| account\_name | tenant\_domain | account\_name / app\_name | account\_id | organization\_name |
+| account\_email | N/A | account\_email | N/A | N/A |
+| account\_organization\_uid | N/A | N/A | N/A | N/A |
+| account\_organization\_name | N/A | N/A | N/A | N/A |
+| account\_tags | N/A | N/A | N/A | N/A |
+| partition | N/A | N/A | N/A | N/A |
+| region | location | owner | zone\_name | location |
+| resource\_name | resource\_name | resource\_name | resource\_name | resource\_name |
+| resource\_uid | resource\_id | resource\_id | resource\_id | resource\_id |
+| finding\_uid | finding\_unique\_id | finding\_unique\_id | finding\_unique\_id | finding\_unique\_id |
+
+##### Specialized Providers
+
+| Open Source Consolidated | IaC | Image | LLM |
+|--------------------------|-----|-------|-----|
+| auth\_method | auth\_method | auth\_method | auth\_method |
+| provider | provider | provider | provider |
+| account\_uid | iac | image | llm |
+| account\_name | iac | image | llm |
+| account\_email | N/A | N/A | N/A |
+| account\_organization\_uid | N/A | N/A | N/A |
+| account\_organization\_name | N/A | N/A | N/A |
+| account\_tags | N/A | N/A | N/A |
+| partition | N/A | N/A | N/A |
+| region | global | container | model |
+| resource\_name | resource\_name | resource\_name | model |
+| resource\_uid | resource\_name | resource\_id | model |
+| finding\_uid | finding\_unique\_id | finding\_unique\_id | finding\_unique\_id |
 
 ### JSON-OCSF
 
