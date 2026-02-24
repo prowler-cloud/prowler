@@ -29,7 +29,7 @@ export {
 };
 
 // Map provider display names to their icon components
-export const PROVIDER_ICONS: Record<string, FC<IconSvgProps>> = {
+export const PROVIDER_BADGE_BY_NAME: Record<string, FC<IconSvgProps>> = {
   AWS: AWSProviderBadge,
   Azure: AzureProviderBadge,
   "Google Cloud": GCPProviderBadge,

@@ -344,6 +344,18 @@ export const addCredentialsFormSchema = (
           }
         }
       }
+
+      if (providerType === "image") {
+        const password = data[ProviderCredentialFields.REGISTRY_PASSWORD];
+        const username = data[ProviderCredentialFields.REGISTRY_USERNAME];
+        if (password && (!username || username.trim() === "")) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Registry Username is required when providing a password",
+            path: [ProviderCredentialFields.REGISTRY_USERNAME],
+          });
+        }
+      }
     });
 
 export const addCredentialsRoleFormSchema = (providerType: string) =>
