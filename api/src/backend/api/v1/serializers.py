@@ -1249,14 +1249,15 @@ class AttackPathsRelationshipSerializer(BaseSerializerV1):
 class AttackPathsQueryResultSerializer(BaseSerializerV1):
     nodes = AttackPathsNodeSerializer(many=True)
     relationships = AttackPathsRelationshipSerializer(many=True)
-    total_nodes = serializers.IntegerField(default=0)
-    truncated = serializers.BooleanField(default=False)
+    total_nodes = serializers.IntegerField()
+    truncated = serializers.BooleanField()
 
     class JSONAPIMeta:
         resource_name = "attack-paths-query-results"
 
 
 class AttackPathsCartographySchemaSerializer(BaseSerializerV1):
+    id = serializers.CharField()
     provider = serializers.CharField()
     cartography_version = serializers.CharField()
     schema_url = serializers.URLField()

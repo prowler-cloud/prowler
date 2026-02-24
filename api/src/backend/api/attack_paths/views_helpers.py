@@ -184,6 +184,7 @@ def get_cartography_schema(
     provider = module_name.split(":")[1]
 
     return {
+        "id": f"{provider}-{version}",
         "provider": provider,
         "cartography_version": version,
         "schema_url": GITHUB_SCHEMA_URL.format(version=version, provider=provider),
@@ -195,12 +196,12 @@ def get_cartography_schema(
 
 
 def _truncate_graph(graph: dict[str, Any]) -> dict[str, Any]:
-    graph["total_nodes"] = len(graph["nodes"])
-    graph["truncated"] = graph["total_nodes"] > graph_database.MAX_CUSTOM_QUERY_NODES
+    if graph["total_nodes"] > graph_database.MAX_CUSTOM_QUERY_NODES:
+        graph["truncated"] = True
 
-    if graph["truncated"]:
         graph["nodes"] = graph["nodes"][: graph_database.MAX_CUSTOM_QUERY_NODES]
         kept_node_ids = {node["id"] for node in graph["nodes"]}
+
         graph["relationships"] = [
             rel
             for rel in graph["relationships"]
@@ -210,7 +211,7 @@ def _truncate_graph(graph: dict[str, Any]) -> dict[str, Any]:
     return graph
 
 
-def _serialize_graph(graph, provider_id: str):
+def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
     nodes = []
     kept_node_ids = set()
     for node in graph.nodes:
@@ -250,6 +251,8 @@ def _serialize_graph(graph, provider_id: str):
     return {
         "nodes": nodes,
         "relationships": relationships,
+        "total_nodes": len(nodes),
+        "truncated": False,
     }
 
 

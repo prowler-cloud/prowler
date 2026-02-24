@@ -30,6 +30,7 @@ from django.test import RequestFactory
 from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from api.attack_paths import (
@@ -3993,6 +3994,8 @@ class TestAttackPathsScanViewSet:
                     "properties": {},
                 }
             ],
+            "total_nodes": 1,
+            "truncated": False,
         }
 
         expected_db_name = f"db-tenant-{attack_paths_scan.provider.tenant_id}"
@@ -4107,6 +4110,8 @@ class TestAttackPathsScanViewSet:
                 return_value={
                     "nodes": [{"id": "n1", "labels": ["AWSAccount"], "properties": {}}],
                     "relationships": [],
+                    "total_nodes": 1,
+                    "truncated": False,
                 },
             ),
             patch("api.v1.views.graph_database.clear_cache"),
@@ -4160,6 +4165,8 @@ class TestAttackPathsScanViewSet:
                 return_value={
                     "nodes": [{"id": "n1", "labels": ["AWSAccount"], "properties": {}}],
                     "relationships": [],
+                    "total_nodes": 1,
+                    "truncated": False,
                 },
             ),
             patch("api.v1.views.graph_database.clear_cache"),
@@ -4235,7 +4242,12 @@ class TestAttackPathsScanViewSet:
             ),
             patch(
                 "api.v1.views.attack_paths_views_helpers.execute_query",
-                return_value={"nodes": [], "relationships": []},
+                return_value={
+                    "nodes": [],
+                    "relationships": [],
+                    "total_nodes": 0,
+                    "truncated": False,
+                },
             ),
             patch("api.v1.views.graph_database.clear_cache"),
         ):
@@ -4257,6 +4269,178 @@ class TestAttackPathsScanViewSet:
         else:
             assert "errors" in payload
 
+    # -- run_custom_attack_paths_query action ------------------------------------
+
+    @staticmethod
+    def _custom_query_payload(cypher="MATCH (n) RETURN n"):
+        return {
+            "data": {
+                "type": "attack-paths-custom-query-run-requests",
+                "attributes": {"cypher": cypher},
+            }
+        }
+
+    def test_run_custom_query_returns_graph(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+        graph_payload = {
+            "nodes": [
+                {
+                    "id": "node-1",
+                    "labels": ["AWSAccount"],
+                    "properties": {"name": "root"},
+                }
+            ],
+            "relationships": [],
+            "total_nodes": 1,
+            "truncated": False,
+        }
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                return_value=graph_payload,
+            ) as mock_execute,
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+            patch("api.v1.views.graph_database.clear_cache"),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_execute.assert_called_once_with(
+            "db-test",
+            "MATCH (n) RETURN n",
+            str(attack_paths_scan.provider_id),
+        )
+        attributes = response.json()["data"]["attributes"]
+        assert len(attributes["nodes"]) == 1
+        assert attributes["total_nodes"] == 1
+        assert attributes["truncated"] is False
+
+    def test_run_custom_query_returns_404_when_no_nodes(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                return_value={
+                    "nodes": [],
+                    "relationships": [],
+                    "total_nodes": 0,
+                    "truncated": False,
+                },
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+            patch("api.v1.views.graph_database.clear_cache"),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_run_custom_query_returns_400_when_graph_not_ready(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=False,
+        )
+
+        response = authenticated_client.post(
+            reverse(
+                "attack-paths-scans-queries-custom",
+                kwargs={"pk": attack_paths_scan.id},
+            ),
+            data=self._custom_query_payload(),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "not available" in response.json()["errors"][0]["detail"]
+
+    def test_run_custom_query_returns_403_for_write_query(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                side_effect=PermissionDenied(
+                    "Attack Paths query execution failed: read-only queries are enforced"
+                ),
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload("CREATE (n) RETURN n"),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
     # -- cartography_schema action ------------------------------------------------
 
     def test_cartography_schema_returns_urls(
@@ -4274,6 +4458,7 @@ class TestAttackPathsScanViewSet:
         )
 
         schema_data = {
+            "id": "aws-0.129.0",
             "provider": "aws",
             "cartography_version": "0.129.0",
             "schema_url": "https://github.com/cartography-cncf/cartography/blob/0.129.0/docs/root/modules/aws/schema.md",

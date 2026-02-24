@@ -782,6 +782,7 @@ paths:
           items:
             type: string
             enum:
+            - id
             - provider
             - cartography_version
             - schema_url
@@ -13143,6 +13144,8 @@ components:
         attributes:
           type: object
           properties:
+            id:
+              type: string
             provider:
               type: string
             cartography_version:
@@ -13154,6 +13157,7 @@ components:
               type: string
               format: uri
           required:
+          - id
           - provider
           - cartography_version
           - schema_url
@@ -13341,13 +13345,13 @@ components:
                 $ref: '#/components/schemas/AttackPathsRelationship'
             total_nodes:
               type: integer
-              default: 0
             truncated:
               type: boolean
-              default: false
           required:
           - nodes
           - relationships
+          - total_nodes
+          - truncated
     AttackPathsQueryRunRequestRequest:
       type: object
       properties:

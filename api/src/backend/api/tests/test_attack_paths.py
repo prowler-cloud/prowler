@@ -349,6 +349,8 @@ def test_truncate_graph_no_truncation_needed():
     graph = {
         "nodes": [{"id": f"n{i}"} for i in range(5)],
         "relationships": [{"id": "r1", "source": "n0", "target": "n1"}],
+        "total_nodes": 5,
+        "truncated": False,
     }
 
     result = views_helpers._truncate_graph(graph)
@@ -368,6 +370,8 @@ def test_truncate_graph_truncates_nodes_and_removes_orphan_relationships():
                 {"id": "r2", "source": "n0", "target": "n4"},
                 {"id": "r3", "source": "n3", "target": "n4"},
             ],
+            "total_nodes": 5,
+            "truncated": False,
         }
 
         result = views_helpers._truncate_graph(graph)
@@ -382,7 +386,7 @@ def test_truncate_graph_truncates_nodes_and_removes_orphan_relationships():
 
 
 def test_truncate_graph_empty_graph():
-    graph = {"nodes": [], "relationships": []}
+    graph = {"nodes": [], "relationships": [], "total_nodes": 0, "truncated": False}
 
     result = views_helpers._truncate_graph(graph)
 
@@ -522,6 +526,7 @@ def test_get_cartography_schema_returns_urls(mock_schema_session):
     result = views_helpers.get_cartography_schema("db-tenant-test", "provider-123")
 
     mock_session.run.assert_called_once()
+    assert result["id"] == "aws-0.129.0"
     assert result["provider"] == "aws"
     assert result["cartography_version"] == "0.129.0"
     assert "0.129.0" in result["schema_url"]
@@ -558,6 +563,7 @@ def test_get_cartography_schema_extracts_provider(
 
     result = views_helpers.get_cartography_schema("db-tenant-test", "provider-123")
 
+    assert result["id"] == f"{expected_provider}-1.0.0"
     assert result["provider"] == expected_provider
 
 
