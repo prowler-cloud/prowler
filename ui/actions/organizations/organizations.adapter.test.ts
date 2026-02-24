@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { APPLY_STATUS, DiscoveryResult } from "@/types/organizations";
+import {
+  APPLY_STATUS,
+  ApplyStatus,
+  DiscoveryResult,
+} from "@/types/organizations";
 
 import {
   buildAccountLookup,
@@ -135,7 +139,7 @@ describe("getSelectableAccountIds", () => {
             organization_relation: "link_required",
             organizational_unit_relation: "link_required",
             provider_secret_state: "will_create",
-            apply_status: "pending" as unknown as APPLY_STATUS,
+            apply_status: "pending" as unknown as ApplyStatus,
             blocked_reasons: [],
           },
         },
