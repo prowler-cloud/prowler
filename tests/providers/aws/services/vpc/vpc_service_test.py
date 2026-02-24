@@ -3,6 +3,7 @@ import json
 import botocore
 import mock
 from boto3 import client, resource
+from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from prowler.providers.aws.services.vpc.vpc_service import VPC, Route
@@ -50,6 +51,85 @@ def mock_make_api_call_endpoint_services(self, operation_name, kwarg):
         }
     if operation_name == "DescribeVpcEndpointServicePermissions":
         return {"AllowedPrincipals": []}
+    return make_api_call(self, operation_name, kwarg)
+
+
+def mock_make_api_call_endpoint_services_access_denied(self, operation_name, kwarg):
+    """Mock where DescribeVpcEndpointServicePermissions raises AccessDenied."""
+    if operation_name == "DescribeVpcEndpointServices":
+        return {
+            "ServiceDetails": [
+                {
+                    "ServiceId": "vpce-svc-owned123",
+                    "ServiceName": "com.amazonaws.vpce.us-east-1.vpce-svc-owned123",
+                    "ServiceType": [{"ServiceType": "Interface"}],
+                    "Owner": AWS_ACCOUNT_NUMBER,
+                    "Tags": [],
+                },
+            ],
+            "ServiceNames": [],
+        }
+    if operation_name == "DescribeVpcEndpointServicePermissions":
+        raise ClientError(
+            {"Error": {"Code": "AccessDenied", "Message": "Access denied"}},
+            operation_name,
+        )
+    return make_api_call(self, operation_name, kwarg)
+
+
+def mock_make_api_call_endpoint_services_unauthorized(self, operation_name, kwarg):
+    """Mock where DescribeVpcEndpointServicePermissions raises UnauthorizedOperation."""
+    if operation_name == "DescribeVpcEndpointServices":
+        return {
+            "ServiceDetails": [
+                {
+                    "ServiceId": "vpce-svc-owned123",
+                    "ServiceName": "com.amazonaws.vpce.us-east-1.vpce-svc-owned123",
+                    "ServiceType": [{"ServiceType": "Interface"}],
+                    "Owner": AWS_ACCOUNT_NUMBER,
+                    "Tags": [],
+                },
+            ],
+            "ServiceNames": [],
+        }
+    if operation_name == "DescribeVpcEndpointServicePermissions":
+        raise ClientError(
+            {
+                "Error": {
+                    "Code": "UnauthorizedOperation",
+                    "Message": "Unauthorized",
+                }
+            },
+            operation_name,
+        )
+    return make_api_call(self, operation_name, kwarg)
+
+
+def mock_make_api_call_endpoint_services_not_found(self, operation_name, kwarg):
+    """Mock where DescribeVpcEndpointServicePermissions raises InvalidVpcEndpointServiceId.NotFound."""
+    if operation_name == "DescribeVpcEndpointServices":
+        return {
+            "ServiceDetails": [
+                {
+                    "ServiceId": "vpce-svc-owned123",
+                    "ServiceName": "com.amazonaws.vpce.us-east-1.vpce-svc-owned123",
+                    "ServiceType": [{"ServiceType": "Interface"}],
+                    "Owner": AWS_ACCOUNT_NUMBER,
+                    "Tags": [],
+                },
+            ],
+            "ServiceNames": [],
+        }
+    if operation_name == "DescribeVpcEndpointServicePermissions":
+        raise ClientError(
+            {
+                "Error": {
+                    "Code": "InvalidVpcEndpointServiceId.NotFound",
+                    "Message": "Service not found",
+                }
+            },
+            operation_name,
+        )
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -536,3 +616,45 @@ class Test_VPC_Service:
         for svc in vpc.vpc_endpoint_services:
             assert svc.owner_id != THIRD_PARTY_ACCOUNT
             assert svc.owner_id != "amazon"
+
+    # Test that AccessDenied in DescribeVpcEndpointServicePermissions is handled gracefully
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_endpoint_services_access_denied,
+    )
+    def test_describe_vpc_endpoint_service_permissions_access_denied(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        vpc = VPC(aws_provider)
+
+        assert len(vpc.vpc_endpoint_services) == 1
+        assert vpc.vpc_endpoint_services[0].id == "vpce-svc-owned123"
+        # allowed_principals must remain empty when AccessDenied is raised
+        assert vpc.vpc_endpoint_services[0].allowed_principals == []
+
+    # Test that UnauthorizedOperation in DescribeVpcEndpointServicePermissions is handled gracefully
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_endpoint_services_unauthorized,
+    )
+    def test_describe_vpc_endpoint_service_permissions_unauthorized(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        vpc = VPC(aws_provider)
+
+        assert len(vpc.vpc_endpoint_services) == 1
+        assert vpc.vpc_endpoint_services[0].id == "vpce-svc-owned123"
+        # allowed_principals must remain empty when UnauthorizedOperation is raised
+        assert vpc.vpc_endpoint_services[0].allowed_principals == []
+
+    # Test that InvalidVpcEndpointServiceId.NotFound in DescribeVpcEndpointServicePermissions is handled gracefully
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_endpoint_services_not_found,
+    )
+    def test_describe_vpc_endpoint_service_permissions_not_found(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        vpc = VPC(aws_provider)
+
+        assert len(vpc.vpc_endpoint_services) == 1
+        assert vpc.vpc_endpoint_services[0].id == "vpce-svc-owned123"
+        # allowed_principals must remain empty when service is not found
+        assert vpc.vpc_endpoint_services[0].allowed_principals == []
