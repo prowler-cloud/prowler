@@ -111,7 +111,7 @@ def get_session(
         ):
             message = "Read query not allowed"
             code = READ_EXCEPTION_CODES[0]
-            raise ReadQueryNotAllowedException(message=message, code=code)
+            raise WriteQueryNotAllowedException(message=message, code=code)
 
         message = exc.message if exc.message is not None else str(exc)
         raise GraphDatabaseQueryException(message=message, code=exc.code)
@@ -224,5 +224,5 @@ class GraphDatabaseQueryException(Exception):
         return self.message
 
 
-class ReadQueryNotAllowedException(GraphDatabaseQueryException):
+class WriteQueryNotAllowedException(GraphDatabaseQueryException):
     pass

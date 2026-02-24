@@ -94,7 +94,7 @@ def execute_attack_paths_query(
         )
         return _serialize_graph(graph, provider_id)
 
-    except graph_database.ReadQueryNotAllowedException:
+    except graph_database.WriteQueryNotAllowedException:
         raise PermissionDenied(
             "Attack Paths query execution failed: read-only queries are enforced"
         )

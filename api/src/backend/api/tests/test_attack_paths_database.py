@@ -339,8 +339,8 @@ class TestGetSessionReadOnly:
             "Neo.ClientError.Procedure.ProcedureNotFound",
         ],
     )
-    def test_get_session_raises_read_query_not_allowed(self, neo4j_code):
-        """Read-mode Neo4j errors should raise ReadQueryNotAllowedException."""
+    def test_get_session_raises_write_query_not_allowed(self, neo4j_code):
+        """Read-mode Neo4j errors should raise `WriteQueryNotAllowedException`."""
         import api.attack_paths.database as db_module
 
         mock_session = MagicMock()
@@ -354,7 +354,7 @@ class TestGetSessionReadOnly:
         mock_driver.session.return_value = mock_session
         db_module._driver = mock_driver
 
-        with pytest.raises(db_module.ReadQueryNotAllowedException):
+        with pytest.raises(db_module.WriteQueryNotAllowedException):
             with db_module.get_session(
                 default_access_mode=neo4j.READ_ACCESS
             ) as session:
