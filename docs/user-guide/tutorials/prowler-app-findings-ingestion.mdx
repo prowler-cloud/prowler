@@ -7,7 +7,7 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 <VersionBadge version="5.19.0" />
 
-Findings Ingestion enables uploading scan results in OCSF (Open Cybersecurity Schema Framework) format to Prowler Cloud. This feature supports importing findings from the Prowler CLI using the [Detection Finding](https://schema.ocsf.io/1.0.0/classes/detection_finding) class.
+Findings Ingestion enables uploading scan results in OCSF (Open Cybersecurity Schema Framework) format to Prowler Cloud. This feature supports importing findings from the Prowler CLI using the [Detection Finding](https://schema.ocsf.io/classes/detection_finding) class.
 
 <Note>
 This feature is available exclusively in **Prowler Cloud**.
@@ -293,11 +293,18 @@ curl -X GET \
 
 ## CI/CD integration
 
-Automate findings ingestion in CI/CD pipelines by setting the API key as a secret:
+Automate findings ingestion in CI/CD pipelines by setting the API key as a secret.
+
+<Note>
+Prowler must be installed in the CI/CD environment before running scans. Refer to the [Prowler CLI installation guide](/getting-started/installation/prowler-cli) for setup instructions.
+</Note>
 
 ### GitHub Actions
 
 ```yaml
+- name: Install Prowler
+  run: pip install prowler
+
 - name: Run Prowler and upload to Cloud
   env:
     PROWLER_API_KEY: ${{ secrets.PROWLER_API_KEY }}
@@ -310,6 +317,7 @@ Automate findings ingestion in CI/CD pipelines by setting the API key as a secre
 ```yaml
 prowler_scan:
   script:
+    - pip install prowler
     - export PROWLER_API_KEY=$PROWLER_API_KEY
     - prowler aws --services s3,iam --export-ocsf
   variables:
