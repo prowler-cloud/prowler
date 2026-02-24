@@ -85,7 +85,9 @@ class ImageProvider(Provider):
 
         self.images = images if images is not None else []
         self.image_list_file = image_list_file
-        self.scanners = scanners if scanners is not None else ["vuln", "secret"]
+        self.scanners = (
+            scanners if scanners is not None else ["vuln", "secret", "misconfig"]
+        )
         self.image_config_scanners = (
             image_config_scanners if image_config_scanners is not None else []
         )
