@@ -34,9 +34,10 @@ class TestBlockStorageService:
             assert block_storage.service_name == "BlockStorage"
             assert block_storage.provider == provider
             assert block_storage.connection == provider.connection
+            assert block_storage.regional_connections == provider.regional_connections
+            assert block_storage.audited_regions == [OPENSTACK_REGION]
             assert block_storage.region == OPENSTACK_REGION
             assert block_storage.project_id == OPENSTACK_PROJECT_ID
-            assert block_storage.client == provider.connection.block_storage
             assert block_storage.volumes == []
             assert block_storage.snapshots == []
             assert block_storage.backups == []
@@ -300,3 +301,219 @@ class TestBlockStorageService:
         assert backup.id == "backup-1"
         assert backup.volume_id == "vol-1"
         assert backup.is_incremental is True
+
+    def test_blockstorage_list_volumes_multi_region(self):
+        """Test listing volumes across multiple regions."""
+        provider = set_mocked_openstack_provider()
+
+        mock_conn_uk1 = MagicMock()
+        mock_conn_de1 = MagicMock()
+
+        provider.regional_connections = {"UK1": mock_conn_uk1, "DE1": mock_conn_de1}
+
+        mock_vol_uk = MagicMock()
+        mock_vol_uk.id = "vol-uk"
+        mock_vol_uk.name = "Volume UK"
+        mock_vol_uk.status = "in-use"
+        mock_vol_uk.size = 100
+        mock_vol_uk.volume_type = "standard"
+        mock_vol_uk.is_encrypted = False
+        mock_vol_uk.is_bootable = "false"
+        mock_vol_uk.is_multiattach = False
+        mock_vol_uk.attachments = []
+        mock_vol_uk.metadata = {}
+        mock_vol_uk.availability_zone = "nova"
+        mock_vol_uk.snapshot_id = None
+        mock_vol_uk.source_volume_id = None
+
+        mock_vol_de = MagicMock()
+        mock_vol_de.id = "vol-de"
+        mock_vol_de.name = "Volume DE"
+        mock_vol_de.status = "available"
+        mock_vol_de.size = 200
+        mock_vol_de.volume_type = "encrypted"
+        mock_vol_de.is_encrypted = True
+        mock_vol_de.is_bootable = "true"
+        mock_vol_de.is_multiattach = False
+        mock_vol_de.attachments = []
+        mock_vol_de.metadata = {}
+        mock_vol_de.availability_zone = "nova"
+        mock_vol_de.snapshot_id = None
+        mock_vol_de.source_volume_id = None
+
+        mock_conn_uk1.block_storage.volumes.return_value = [mock_vol_uk]
+        mock_conn_de1.block_storage.volumes.return_value = [mock_vol_de]
+        mock_conn_uk1.block_storage.snapshots.return_value = []
+        mock_conn_de1.block_storage.snapshots.return_value = []
+        mock_conn_uk1.block_storage.backups.return_value = []
+        mock_conn_de1.block_storage.backups.return_value = []
+
+        block_storage = BlockStorage(provider)
+
+        assert len(block_storage.volumes) == 2
+        uk_vol = next(v for v in block_storage.volumes if v.id == "vol-uk")
+        de_vol = next(v for v in block_storage.volumes if v.id == "vol-de")
+        assert uk_vol.region == "UK1"
+        assert de_vol.region == "DE1"
+
+    def test_blockstorage_list_snapshots_multi_region(self):
+        """Test listing snapshots across multiple regions."""
+        provider = set_mocked_openstack_provider()
+
+        mock_conn_uk1 = MagicMock()
+        mock_conn_de1 = MagicMock()
+
+        provider.regional_connections = {"UK1": mock_conn_uk1, "DE1": mock_conn_de1}
+
+        mock_snap_uk = MagicMock()
+        mock_snap_uk.id = "snap-uk"
+        mock_snap_uk.name = "Snapshot UK"
+        mock_snap_uk.status = "available"
+        mock_snap_uk.size = 50
+        mock_snap_uk.volume_id = "vol-uk"
+        mock_snap_uk.metadata = {}
+
+        mock_snap_de = MagicMock()
+        mock_snap_de.id = "snap-de"
+        mock_snap_de.name = "Snapshot DE"
+        mock_snap_de.status = "available"
+        mock_snap_de.size = 75
+        mock_snap_de.volume_id = "vol-de"
+        mock_snap_de.metadata = {}
+
+        mock_conn_uk1.block_storage.volumes.return_value = []
+        mock_conn_de1.block_storage.volumes.return_value = []
+        mock_conn_uk1.block_storage.snapshots.return_value = [mock_snap_uk]
+        mock_conn_de1.block_storage.snapshots.return_value = [mock_snap_de]
+        mock_conn_uk1.block_storage.backups.return_value = []
+        mock_conn_de1.block_storage.backups.return_value = []
+
+        block_storage = BlockStorage(provider)
+
+        assert len(block_storage.snapshots) == 2
+        uk_snap = next(s for s in block_storage.snapshots if s.id == "snap-uk")
+        de_snap = next(s for s in block_storage.snapshots if s.id == "snap-de")
+        assert uk_snap.region == "UK1"
+        assert de_snap.region == "DE1"
+
+    def test_blockstorage_list_backups_multi_region(self):
+        """Test listing backups across multiple regions."""
+        provider = set_mocked_openstack_provider()
+
+        mock_conn_uk1 = MagicMock()
+        mock_conn_de1 = MagicMock()
+
+        provider.regional_connections = {"UK1": mock_conn_uk1, "DE1": mock_conn_de1}
+
+        mock_backup_uk = MagicMock()
+        mock_backup_uk.id = "backup-uk"
+        mock_backup_uk.name = "Backup UK"
+        mock_backup_uk.status = "available"
+        mock_backup_uk.size = 100
+        mock_backup_uk.volume_id = "vol-uk"
+        mock_backup_uk.is_incremental = False
+        mock_backup_uk.availability_zone = "nova"
+
+        mock_backup_de = MagicMock()
+        mock_backup_de.id = "backup-de"
+        mock_backup_de.name = "Backup DE"
+        mock_backup_de.status = "available"
+        mock_backup_de.size = 200
+        mock_backup_de.volume_id = "vol-de"
+        mock_backup_de.is_incremental = True
+        mock_backup_de.availability_zone = "nova"
+
+        mock_conn_uk1.block_storage.volumes.return_value = []
+        mock_conn_de1.block_storage.volumes.return_value = []
+        mock_conn_uk1.block_storage.snapshots.return_value = []
+        mock_conn_de1.block_storage.snapshots.return_value = []
+        mock_conn_uk1.block_storage.backups.return_value = [mock_backup_uk]
+        mock_conn_de1.block_storage.backups.return_value = [mock_backup_de]
+
+        block_storage = BlockStorage(provider)
+
+        assert len(block_storage.backups) == 2
+        uk_backup = next(b for b in block_storage.backups if b.id == "backup-uk")
+        de_backup = next(b for b in block_storage.backups if b.id == "backup-de")
+        assert uk_backup.region == "UK1"
+        assert de_backup.region == "DE1"
+
+    def test_blockstorage_multi_region_partial_failure(self):
+        """Test that a failing region doesn't prevent other regions from being listed."""
+        provider = set_mocked_openstack_provider()
+
+        mock_conn_ok = MagicMock()
+        mock_conn_fail = MagicMock()
+
+        provider.regional_connections = {"UK1": mock_conn_ok, "DE1": mock_conn_fail}
+
+        mock_vol = MagicMock()
+        mock_vol.id = "vol-uk"
+        mock_vol.name = "Volume UK"
+        mock_vol.status = "in-use"
+        mock_vol.size = 100
+        mock_vol.volume_type = "standard"
+        mock_vol.is_encrypted = False
+        mock_vol.is_bootable = "false"
+        mock_vol.is_multiattach = False
+        mock_vol.attachments = []
+        mock_vol.metadata = {}
+        mock_vol.availability_zone = "nova"
+        mock_vol.snapshot_id = None
+        mock_vol.source_volume_id = None
+
+        mock_conn_ok.block_storage.volumes.return_value = [mock_vol]
+        mock_conn_fail.block_storage.volumes.side_effect = (
+            openstack_exceptions.SDKException("API error in DE1")
+        )
+        mock_conn_ok.block_storage.snapshots.return_value = []
+        mock_conn_fail.block_storage.snapshots.side_effect = (
+            openstack_exceptions.SDKException("API error in DE1")
+        )
+        mock_conn_ok.block_storage.backups.return_value = []
+        mock_conn_fail.block_storage.backups.side_effect = (
+            openstack_exceptions.SDKException("API error in DE1")
+        )
+
+        block_storage = BlockStorage(provider)
+
+        assert len(block_storage.volumes) == 1
+        assert block_storage.volumes[0].id == "vol-uk"
+        assert block_storage.volumes[0].region == "UK1"
+
+    def test_blockstorage_multi_region_one_empty(self):
+        """Test multi-region where one region has resources and the other is empty."""
+        provider = set_mocked_openstack_provider()
+
+        mock_conn_uk1 = MagicMock()
+        mock_conn_de1 = MagicMock()
+
+        provider.regional_connections = {"UK1": mock_conn_uk1, "DE1": mock_conn_de1}
+
+        mock_vol = MagicMock()
+        mock_vol.id = "vol-uk"
+        mock_vol.name = "Volume UK"
+        mock_vol.status = "available"
+        mock_vol.size = 50
+        mock_vol.volume_type = "standard"
+        mock_vol.is_encrypted = False
+        mock_vol.is_bootable = "false"
+        mock_vol.is_multiattach = False
+        mock_vol.attachments = []
+        mock_vol.metadata = {}
+        mock_vol.availability_zone = "nova"
+        mock_vol.snapshot_id = None
+        mock_vol.source_volume_id = None
+
+        mock_conn_uk1.block_storage.volumes.return_value = [mock_vol]
+        mock_conn_de1.block_storage.volumes.return_value = []
+        mock_conn_uk1.block_storage.snapshots.return_value = []
+        mock_conn_de1.block_storage.snapshots.return_value = []
+        mock_conn_uk1.block_storage.backups.return_value = []
+        mock_conn_de1.block_storage.backups.return_value = []
+
+        block_storage = BlockStorage(provider)
+
+        assert len(block_storage.volumes) == 1
+        assert block_storage.volumes[0].id == "vol-uk"
+        assert block_storage.volumes[0].region == "UK1"
