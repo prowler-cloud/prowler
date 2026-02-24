@@ -1,7 +1,45 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
-import { ConnectionTestStatus, DiscoveryResult } from "@/types/organizations";
+import {
+  buildAccountLookup,
+  buildOrgTreeData,
+  getSelectableAccountIds,
+} from "@/actions/organizations/organizations.adapter";
+import {
+  ConnectionTestStatus,
+  DiscoveredAccount,
+  DiscoveryResult,
+} from "@/types/organizations";
+import { TreeDataItem } from "@/types/tree";
+
+interface DerivedDiscoveryState {
+  treeData: TreeDataItem[];
+  accountLookup: Map<string, DiscoveredAccount>;
+  selectableAccountIds: string[];
+  selectableAccountIdSet: Set<string>;
+}
+
+function buildDerivedDiscoveryState(
+  discoveryResult: DiscoveryResult | null,
+): DerivedDiscoveryState {
+  if (!discoveryResult) {
+    return {
+      treeData: [],
+      accountLookup: new Map<string, DiscoveredAccount>(),
+      selectableAccountIds: [],
+      selectableAccountIdSet: new Set<string>(),
+    };
+  }
+
+  const selectableAccountIds = getSelectableAccountIds(discoveryResult);
+  return {
+    treeData: buildOrgTreeData(discoveryResult),
+    accountLookup: buildAccountLookup(discoveryResult),
+    selectableAccountIds,
+    selectableAccountIdSet: new Set(selectableAccountIds),
+  };
+}
 
 interface OrgSetupState {
   // Identity
@@ -12,6 +50,10 @@ interface OrgSetupState {
 
   // Discovery
   discoveryResult: DiscoveryResult | null;
+  treeData: TreeDataItem[];
+  accountLookup: Map<string, DiscoveredAccount>;
+  selectableAccountIds: string[];
+  selectableAccountIdSet: Set<string>;
 
   // Selection + aliases
   selectedAccountIds: string[];
@@ -45,6 +87,10 @@ const initialState = {
   organizationExternalId: null,
   discoveryId: null,
   discoveryResult: null,
+  treeData: [],
+  accountLookup: new Map<string, DiscoveredAccount>(),
+  selectableAccountIds: [],
+  selectableAccountIdSet: new Set<string>(),
   selectedAccountIds: [],
   accountAliases: {},
   createdProviderIds: [],
@@ -65,9 +111,24 @@ export const useOrgSetupStore = create<OrgSetupState>()(
         }),
 
       setDiscovery: (id, result) =>
-        set({ discoveryId: id, discoveryResult: result }),
+        set((state) => {
+          const derivedState = buildDerivedDiscoveryState(result);
+          return {
+            discoveryId: id,
+            discoveryResult: result,
+            ...derivedState,
+            selectedAccountIds: state.selectedAccountIds.filter((accountId) =>
+              derivedState.selectableAccountIdSet.has(accountId),
+            ),
+          };
+        }),
 
-      setSelectedAccountIds: (ids) => set({ selectedAccountIds: ids }),
+      setSelectedAccountIds: (ids) =>
+        set((state) => ({
+          selectedAccountIds: ids.filter((accountId) =>
+            state.selectableAccountIdSet.has(accountId),
+          ),
+        })),
 
       setAccountAlias: (accountId, alias) =>
         set((state) => ({
@@ -110,6 +171,33 @@ export const useOrgSetupStore = create<OrgSetupState>()(
     }),
     {
       name: "org-setup-store",
+      storage: createJSONStorage(() => sessionStorage),
+      merge: (persistedState, currentState) => {
+        const mergedState = {
+          ...currentState,
+          ...(persistedState as Partial<OrgSetupState>),
+        };
+        const derivedState = buildDerivedDiscoveryState(
+          mergedState.discoveryResult,
+        );
+
+        return {
+          ...mergedState,
+          ...derivedState,
+          selectedAccountIds: mergedState.selectedAccountIds.filter(
+            (accountId) => derivedState.selectableAccountIdSet.has(accountId),
+          ),
+        };
+      },
+      partialize: (state) => ({
+        organizationId: state.organizationId,
+        organizationName: state.organizationName,
+        organizationExternalId: state.organizationExternalId,
+        discoveryId: state.discoveryId,
+        discoveryResult: state.discoveryResult,
+        selectedAccountIds: state.selectedAccountIds,
+        accountAliases: state.accountAliases,
+      }),
     },
   ),
 );

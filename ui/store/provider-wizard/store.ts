@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 import {
   PROVIDER_WIZARD_MODE,
@@ -51,6 +51,7 @@ export const useProviderWizardStore = create<ProviderWizardState>()(
     }),
     {
       name: "provider-wizard-store",
+      storage: createJSONStorage(() => sessionStorage),
     },
   ),
 );
