@@ -237,10 +237,17 @@ class GoogleworkspaceProvider(Provider):
                     original_exception=error,
                     message="Invalid JSON in credentials content",
                 )
-            credentials = service_account.Credentials.from_service_account_info(
-                credentials_data,
-                scopes=GoogleworkspaceProvider.DIRECTORY_SCOPES,
-            )
+            try:
+                credentials = service_account.Credentials.from_service_account_info(
+                    credentials_data,
+                    scopes=GoogleworkspaceProvider.DIRECTORY_SCOPES,
+                )
+            except ValueError as error:
+                raise GoogleWorkspaceInvalidCredentialsError(
+                    file=os.path.basename(__file__),
+                    original_exception=error,
+                    message="Invalid service account credentials in content",
+                )
         else:
             # Try environment variables
             logger.info(
@@ -282,10 +289,17 @@ class GoogleworkspaceProvider(Provider):
                         original_exception=error,
                         message="Invalid JSON in GOOGLEWORKSPACE_CREDENTIALS_CONTENT",
                     )
-                credentials = service_account.Credentials.from_service_account_info(
-                    credentials_data,
-                    scopes=GoogleworkspaceProvider.DIRECTORY_SCOPES,
-                )
+                try:
+                    credentials = service_account.Credentials.from_service_account_info(
+                        credentials_data,
+                        scopes=GoogleworkspaceProvider.DIRECTORY_SCOPES,
+                    )
+                except ValueError as error:
+                    raise GoogleWorkspaceInvalidCredentialsError(
+                        file=os.path.basename(__file__),
+                        original_exception=error,
+                        message="Invalid service account credentials in GOOGLEWORKSPACE_CREDENTIALS_CONTENT",
+                    )
             else:
                 raise GoogleWorkspaceNoCredentialsError(
                     file=os.path.basename(__file__),
@@ -311,6 +325,9 @@ class GoogleworkspaceProvider(Provider):
             logger.info(f"Domain-Wide Delegation verified for user: {delegated_user}")
         except Exception as error:
             # Check if it's a permission/delegation error
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
             error_message = str(error).lower()
             if (
                 "403" in str(error)
@@ -321,13 +338,13 @@ class GoogleworkspaceProvider(Provider):
                 raise GoogleWorkspaceInsufficientScopesError(
                     file=os.path.basename(__file__),
                     original_exception=error,
-                    message=f"Domain-Wide Delegation is not configured or user '{delegated_user}' lacks required permissions. Ensure the Service Account Client ID is authorized in Google Workspace Admin Console with the required OAuth scopes.",
+                    message=f"Domain-Wide Delegation is not configured or user {delegated_user} lacks required permissions. Ensure the Service Account Client ID is authorized in Google Workspace Admin Console with the required OAuth scopes.",
                 )
             else:
                 raise GoogleWorkspaceImpersonationError(
                     file=os.path.basename(__file__),
                     original_exception=error,
-                    message=f"Failed to verify delegation for user '{delegated_user}': {error}",
+                    message=f"Failed to verify delegation for user {delegated_user}: {error}",
                 )
 
         session = GoogleWorkspaceSession(credentials=delegated_credentials)
@@ -352,12 +369,22 @@ class GoogleworkspaceProvider(Provider):
             GoogleWorkspaceSetUpIdentityError: If identity setup fails.
         """
         # Build the Admin SDK Directory service
-        service = build(
-            "admin",
-            "directory_v1",
-            credentials=session.credentials,
-            cache_discovery=False,
-        )
+        try:
+            service = build(
+                "admin",
+                "directory_v1",
+                credentials=session.credentials,
+                cache_discovery=False,
+            )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            raise GoogleWorkspaceSetUpIdentityError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+                message=f"Failed to build Admin SDK service. Ensure the Admin SDK API is enabled: {error}",
+            )
 
         # Extract domain from delegated user email for validation
         # (email format already validated in setup_session)
@@ -365,8 +392,18 @@ class GoogleworkspaceProvider(Provider):
 
         # Fetch customer information using the Directory API
         # This validates that the delegated user belongs to a Google Workspace domain
-        customer_info = service.customers().get(customerKey="my_customer").execute()
-        customer_id = customer_info.get("id", "")
+        try:
+            customer_info = service.customers().get(customerKey="my_customer").execute()
+            customer_id = customer_info.get("id", "")
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            raise GoogleWorkspaceSetUpIdentityError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+                message=f"Failed to fetch customer information from Google Workspace API: {error}",
+            )
 
         # Validate customer ID was retrieved successfully
         if not customer_id:
@@ -375,14 +412,37 @@ class GoogleworkspaceProvider(Provider):
                 message="Failed to retrieve customer ID from Google Workspace API. Ensure the delegated user has proper access.",
             )
 
-        # Get the primary domain from customer info to validate against user domain
-        customer_domain = customer_info.get("customerDomain", "")
+        # Fetch all domains (primary + aliases) to support domain aliases
+        # The scope admin.directory.domain.readonly is already in DIRECTORY_SCOPES
+        try:
+            domains_response = service.domains().list(customer="my_customer").execute()
+            valid_domains = [
+                domain.get("domainName", "").lower()
+                for domain in domains_response.get("domains", [])
+                if domain.get("domainName")
+            ]
+        except Exception as error:
+            # No fallback - fail if we cannot fetch domains
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            raise GoogleWorkspaceSetUpIdentityError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+                message=f"Failed to fetch domain list from Google Workspace API: {error}",
+            )
 
-        # Validate that the delegated user's domain matches the workspace domain
-        if customer_domain and user_domain.lower() != customer_domain.lower():
+        # Validate that the delegated user's domain is in the workspace (primary or alias)
+        if not valid_domains:
+            raise GoogleWorkspaceSetUpIdentityError(
+                file=os.path.basename(__file__),
+                message="No domains found in Google Workspace. Ensure the delegated user has proper access.",
+            )
+
+        if user_domain.lower() not in valid_domains:
             raise GoogleWorkspaceInvalidCredentialsError(
                 file=os.path.basename(__file__),
-                message=f"Delegated user domain '{user_domain}' does not match Google Workspace domain '{customer_domain}'. Ensure the delegated user belongs to the correct workspace.",
+                message=f"Delegated user domain {user_domain} is not configured in this Google Workspace. Valid domains: {', '.join(valid_domains)}. Ensure the delegated user belongs to the correct workspace or domain alias.",
             )
 
         identity = GoogleWorkspaceIdentityInfo(

@@ -50,7 +50,7 @@ class GoogleWorkspaceService:
             context: Description of what operation was being performed
             resource_name: Name of the resource being accessed (optional)
         """
-        resource_info = f"'{resource_name}'" if resource_name else ""
+        resource_info = resource_name if resource_name else ""
 
         if isinstance(error, HttpError):
             if error.resp.status == 403:
