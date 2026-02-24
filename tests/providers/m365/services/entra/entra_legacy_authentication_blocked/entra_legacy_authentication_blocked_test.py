@@ -117,7 +117,9 @@ class Test_entra_legacy_authentication_blocked:
                             type=None,
                             interval=SignInFrequencyInterval.EVERY_TIME,
                         ),
-                        application_enforced_restrictions=ApplicationEnforcedRestrictions(is_enabled=False),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
+                        ),
                     ),
                     state=ConditionalAccessPolicyState.DISABLED,
                 )
@@ -200,7 +202,9 @@ class Test_entra_legacy_authentication_blocked:
                             type=None,
                             interval=SignInFrequencyInterval.EVERY_TIME,
                         ),
-                        application_enforced_restrictions=ApplicationEnforcedRestrictions(is_enabled=False),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
+                        ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
                 )
@@ -286,7 +290,9 @@ class Test_entra_legacy_authentication_blocked:
                             type=None,
                             interval=SignInFrequencyInterval.EVERY_TIME,
                         ),
-                        application_enforced_restrictions=ApplicationEnforcedRestrictions(is_enabled=False),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
+                        ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED,
                 )

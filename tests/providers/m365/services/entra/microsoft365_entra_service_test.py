@@ -88,7 +88,9 @@ async def mock_entra_get_conditional_access_policies(_):
                     type=SignInFrequencyType.HOURS,
                     interval=SignInFrequencyInterval.TIME_BASED,
                 ),
-                application_enforced_restrictions=ApplicationEnforcedRestrictions(is_enabled=False),
+                application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                    is_enabled=False
+                ),
             ),
             state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
         )
@@ -240,7 +242,9 @@ class Test_Entra_Service:
                         type=SignInFrequencyType.HOURS,
                         interval=SignInFrequencyInterval.TIME_BASED,
                     ),
-                    application_enforced_restrictions=ApplicationEnforcedRestrictions(is_enabled=False),
+                    application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                        is_enabled=False
+                    ),
                 ),
                 state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
             )
