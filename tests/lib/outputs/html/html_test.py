@@ -930,6 +930,7 @@ class TestHTML:
             "<b>Authentication Method:</b> Service Account with Domain-Wide Delegation"
             in summary
         )
+
     def test_image_get_assessment_summary_with_registry(self):
         """Test Image HTML assessment summary with registry URL."""
         findings = [generate_finding_output()]
