@@ -699,16 +699,6 @@ paths:
           format: uuid
         description: A UUID string identifying this attack paths scan.
         required: true
-      - in: query
-        name: output
-        schema:
-          type: string
-          enum:
-          - json
-          - text
-          default: json
-        description: Response format. 'json' returns JSON:API (default), 'text' returns
-          a compact plain-text format optimized for LLM consumption.
       tags:
       - Attack Paths
       requestBody:
@@ -731,6 +721,9 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AttackPathsQueryResult'
           description: ''
         '403':
           description: Read-only queries are enforced
@@ -752,16 +745,6 @@ paths:
           format: uuid
         description: A UUID string identifying this attack paths scan.
         required: true
-      - in: query
-        name: output
-        schema:
-          type: string
-          enum:
-          - json
-          - text
-          default: json
-        description: Response format. 'json' returns JSON:API (default), 'text' returns
-          a compact plain-text format optimized for LLM consumption.
       tags:
       - Attack Paths
       requestBody:
@@ -784,6 +767,9 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AttackPathsQueryResult'
           description: ''
         '400':
           description: Bad request (e.g., Unknown Attack Paths query for the selected

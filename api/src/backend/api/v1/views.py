@@ -2528,6 +2528,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         serializer = AttackPathsQuerySerializer(queries, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(parameters=[OpenApiParameter("format", exclude=True)])
     @action(
         detail=True,
         methods=["post"],
@@ -2588,6 +2589,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         response_serializer = AttackPathsQueryResultSerializer(graph)
         return Response(response_serializer.data, status=status_code)
 
+    @extend_schema(parameters=[OpenApiParameter("format", exclude=True)])
     @action(
         detail=True,
         methods=["post"],
