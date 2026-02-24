@@ -14,7 +14,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-policy-app-enforced-restriction",
-    "https://learn.microsoft.com/en-us/sharepoint/control-access-from-unmanaged-devices",
+    "https://learn.microsoft.com/en-us/sharepoint/control-access-from-unmanaged-devices"
   ],
   "Remediation": {
     "Code": {
