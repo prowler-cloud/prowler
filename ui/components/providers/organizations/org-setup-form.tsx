@@ -7,19 +7,6 @@ import { FormEvent, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import {
-  createOrganization,
-  createOrganizationSecret,
-  getDiscovery,
-  listOrganizationsByExternalId,
-  listOrganizationSecretsByOrganizationId,
-  triggerDiscovery,
-  updateOrganizationSecret,
-} from "@/actions/organizations/organizations";
-import {
-  buildOrgTreeData,
-  getSelectableAccountIds,
-} from "@/actions/organizations/organizations.adapter";
 import { AWSProviderBadge } from "@/components/icons/providers-badge";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
@@ -31,16 +18,9 @@ import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
 import { Input } from "@/components/shadcn/input/input";
 import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
 import { getAWSCredentialsTemplateLinks } from "@/lib";
-import { useOrgSetupStore } from "@/store/organizations/store";
-import {
-  DISCOVERY_STATUS,
-  DiscoveryResult,
-  ORG_SETUP_PHASE,
-  OrgSetupPhase,
-} from "@/types/organizations";
+import { ORG_SETUP_PHASE, OrgSetupPhase } from "@/types/organizations";
 
-const DISCOVERY_POLL_INTERVAL_MS = 3000;
-const DISCOVERY_MAX_RETRIES = 60;
+import { useOrgSetupSubmission } from "./hooks/use-org-setup-submission";
 
 const orgSetupSchema = z.object({
   organizationName: z.string().trim().optional(),
@@ -83,16 +63,9 @@ export function OrgSetupForm({
   initialPhase = ORG_SETUP_PHASE.DETAILS,
 }: OrgSetupFormProps) {
   const { data: session } = useSession();
-  const [apiError, setApiError] = useState<string | null>(null);
   const [isExternalIdCopied, setIsExternalIdCopied] = useState(false);
   const stackSetExternalId = session?.tenantId ?? "";
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
-  const {
-    setOrganization,
-    setDiscovery,
-    setSelectedAccountIds,
-    clearValidationState,
-  } = useOrgSetupStore();
   const formId = "org-wizard-setup-form";
 
   const {
@@ -123,6 +96,15 @@ export function OrgSetupForm({
   const stackSetQuickLink =
     stackSetExternalId &&
     getAWSCredentialsTemplateLinks(stackSetExternalId).cloudformationQuickLink;
+
+  const { apiError, setApiError, submitOrganizationSetup } =
+    useOrgSetupSubmission({
+      stackSetExternalId,
+      onNext,
+      setFieldError: (field, message) => {
+        setError(field, { message });
+      },
+    });
 
   useEffect(() => {
     onPhaseChange(setupPhase);
@@ -187,199 +169,7 @@ export function OrgSetupForm({
       return;
     }
 
-    void handleSubmit(onSubmit)(event);
-  };
-
-  const onSubmit = async (data: OrgSetupFormData) => {
-    try {
-      setApiError(null);
-      clearValidationState();
-      const resolvedOrganizationName =
-        data.organizationName?.trim() || data.awsOrgId;
-
-      // Step 1: Resolve existing organization by external_id. If missing, create it.
-      const existingOrganizationsResult = await listOrganizationsByExternalId(
-        data.awsOrgId,
-      );
-
-      if (existingOrganizationsResult?.error) {
-        setApiError(existingOrganizationsResult.error);
-        return;
-      }
-
-      const existingOrganization = Array.isArray(
-        existingOrganizationsResult?.data,
-      )
-        ? existingOrganizationsResult.data.find(
-            (organization: {
-              id: string;
-              attributes?: { external_id?: string; org_type?: string };
-            }) =>
-              organization?.attributes?.external_id === data.awsOrgId &&
-              organization?.attributes?.org_type === "aws",
-          )
-        : null;
-
-      let orgId = existingOrganization?.id as string | undefined;
-
-      if (!orgId) {
-        const orgFormData = new FormData();
-        orgFormData.set("name", resolvedOrganizationName);
-        orgFormData.set("externalId", data.awsOrgId);
-
-        const orgResult = await createOrganization(orgFormData);
-
-        if (orgResult?.error) {
-          handleServerError(orgResult, "Organization");
-          return;
-        }
-
-        orgId = orgResult.data.id;
-      }
-
-      if (!orgId) {
-        setApiError("Unable to resolve organization ID for authentication.");
-        return;
-      }
-
-      const organizationNameForStore =
-        existingOrganization?.attributes?.name ?? resolvedOrganizationName;
-      setOrganization(orgId, organizationNameForStore, data.awsOrgId);
-
-      // Step 2: Create or update organization secret.
-      const existingSecretsResult =
-        await listOrganizationSecretsByOrganizationId(orgId);
-
-      if (existingSecretsResult?.error) {
-        setApiError(existingSecretsResult.error);
-        return;
-      }
-
-      const existingSecretId =
-        Array.isArray(existingSecretsResult?.data) &&
-        existingSecretsResult.data.length > 0
-          ? (existingSecretsResult.data[0]?.id as string | undefined)
-          : undefined;
-
-      let secretResult;
-      if (existingSecretId) {
-        const patchSecretFormData = new FormData();
-        patchSecretFormData.set("organizationSecretId", existingSecretId);
-        patchSecretFormData.set("roleArn", data.roleArn);
-        patchSecretFormData.set("externalId", stackSetExternalId);
-        secretResult = await updateOrganizationSecret(patchSecretFormData);
-      } else {
-        const createSecretFormData = new FormData();
-        createSecretFormData.set("organizationId", orgId);
-        createSecretFormData.set("roleArn", data.roleArn);
-        createSecretFormData.set("externalId", stackSetExternalId);
-        secretResult = await createOrganizationSecret(createSecretFormData);
-      }
-
-      if (secretResult?.error) {
-        handleServerError(secretResult, "Secret");
-        return;
-      }
-
-      // Step 3: Trigger Discovery
-      const discoveryResult = await triggerDiscovery(orgId);
-
-      if (discoveryResult?.error) {
-        setApiError(discoveryResult.error);
-        return;
-      }
-
-      const discoveryId = discoveryResult.data.id;
-
-      const resolvedDiscoveryResult = await pollDiscoveryResult(
-        orgId,
-        discoveryId,
-      );
-
-      if (!resolvedDiscoveryResult) {
-        return;
-      }
-
-      const selectableAccountIds = getSelectableAccountIds(
-        resolvedDiscoveryResult,
-      );
-      buildOrgTreeData(resolvedDiscoveryResult);
-      setDiscovery(discoveryId, resolvedDiscoveryResult);
-      setSelectedAccountIds(selectableAccountIds);
-
-      // Discovery succeeded; advance to next wizard step.
-      onNext();
-    } catch {
-      setApiError(
-        "Authentication failed. Please verify the StackSet deployment and Role ARN, then try again.",
-      );
-    }
-  };
-
-  const pollDiscoveryResult = async (
-    organizationId: string,
-    discoveryId: string,
-  ): Promise<DiscoveryResult | null> => {
-    for (let attempt = 0; attempt < DISCOVERY_MAX_RETRIES; attempt += 1) {
-      const result = await getDiscovery(organizationId, discoveryId);
-
-      if (result?.error) {
-        setApiError(
-          `Authentication failed. Please verify the StackSet deployment and Role ARN, then try again. ${result.error}`,
-        );
-        return null;
-      }
-
-      const status = result.data.attributes.status;
-
-      if (status === DISCOVERY_STATUS.SUCCEEDED) {
-        return result.data.attributes.result as DiscoveryResult;
-      }
-
-      if (status === DISCOVERY_STATUS.FAILED) {
-        const backendError = result.data.attributes.error;
-        setApiError(
-          backendError
-            ? `Authentication failed. Please verify the StackSet deployment and Role ARN, then try again. ${backendError}`
-            : "Authentication failed. Please verify the StackSet deployment and Role ARN, then try again.",
-        );
-        return null;
-      }
-
-      await new Promise((resolve) =>
-        setTimeout(resolve, DISCOVERY_POLL_INTERVAL_MS),
-      );
-    }
-
-    setApiError(
-      "Authentication timed out. Please verify the credentials and try again.",
-    );
-    return null;
-  };
-
-  const handleServerError = (
-    result: {
-      error?: string;
-      errors?: Array<{ detail: string; source?: { pointer: string } }>;
-    },
-    context: string,
-  ) => {
-    if (result.errors?.length) {
-      for (const err of result.errors) {
-        const pointer = err.source?.pointer ?? "";
-
-        if (pointer.includes("external_id") && context === "Organization") {
-          setError("awsOrgId", { message: err.detail });
-          setApiError(err.detail);
-        } else if (pointer.includes("name")) {
-          setError("organizationName", { message: err.detail });
-        } else {
-          setApiError(err.detail);
-        }
-      }
-    } else {
-      setApiError(result.error ?? `Failed to create ${context}`);
-    }
+    void handleSubmit((data) => submitOrganizationSetup(data))(event);
   };
 
   useEffect(() => {

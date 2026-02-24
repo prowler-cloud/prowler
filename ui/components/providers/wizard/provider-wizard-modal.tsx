@@ -1,8 +1,6 @@
 "use client";
 
 import { ExternalLink, Info } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 
 import { OrgAccountSelection } from "@/components/providers/organizations/org-account-selection";
 import { OrgLaunchScan } from "@/components/providers/organizations/org-launch-scan";
@@ -11,62 +9,18 @@ import { Button } from "@/components/shadcn/button/button";
 import { DialogHeader, DialogTitle } from "@/components/shadcn/dialog";
 import { Modal } from "@/components/shadcn/modal";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
-import { getProviderHelpText } from "@/lib";
-import { useOrgSetupStore } from "@/store/organizations/store";
-import { useProviderWizardStore } from "@/store/provider-wizard/store";
-import {
-  ORG_SETUP_PHASE,
-  ORG_WIZARD_STEP,
-  OrgSetupPhase,
-  OrgWizardStep,
-} from "@/types/organizations";
-import {
-  PROVIDER_WIZARD_MODE,
-  PROVIDER_WIZARD_STEP,
-  ProviderWizardMode,
-  ProviderWizardStep,
-} from "@/types/provider-wizard";
-import { ProviderType } from "@/types/providers";
+import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
+import { PROVIDER_WIZARD_STEP } from "@/types/provider-wizard";
 
+import { useProviderWizardController } from "./hooks/use-provider-wizard-controller";
 import { getOrganizationsStepperOffset } from "./provider-wizard-modal.utils";
 import { ConnectStep } from "./steps/connect-step";
 import { CredentialsStep } from "./steps/credentials-step";
-import {
-  WIZARD_FOOTER_ACTION_TYPE,
-  WizardFooterConfig,
-} from "./steps/footer-controls";
+import { WIZARD_FOOTER_ACTION_TYPE } from "./steps/footer-controls";
 import { LaunchStep } from "./steps/launch-step";
 import { TestConnectionStep } from "./steps/test-connection-step";
+import type { ProviderWizardInitialData } from "./types";
 import { WizardStepper } from "./wizard-stepper";
-
-const WIZARD_VARIANT = {
-  PROVIDER: "provider",
-  ORGANIZATIONS: "organizations",
-} as const;
-
-type WizardVariant = (typeof WIZARD_VARIANT)[keyof typeof WIZARD_VARIANT];
-
-const EMPTY_FOOTER_CONFIG: WizardFooterConfig = {
-  showBack: false,
-  backLabel: "Back",
-  showSecondaryAction: false,
-  secondaryActionLabel: "",
-  secondaryActionVariant: "outline",
-  secondaryActionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
-  showAction: false,
-  actionLabel: "Next",
-  actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
-};
-
-export interface ProviderWizardInitialData {
-  providerId: string;
-  providerType: ProviderType;
-  providerUid: string;
-  providerAlias: string | null;
-  secretId?: string | null;
-  via?: string | null;
-  mode?: ProviderWizardMode;
-}
 
 interface ProviderWizardModalProps {
   open: boolean;
@@ -79,159 +33,35 @@ export function ProviderWizardModal({
   onOpenChange,
   initialData,
 }: ProviderWizardModalProps) {
-  const router = useRouter();
-  const [wizardVariant, setWizardVariant] = useState<WizardVariant>(
-    WIZARD_VARIANT.PROVIDER,
-  );
-  const [currentStep, setCurrentStep] = useState<ProviderWizardStep>(
-    PROVIDER_WIZARD_STEP.CONNECT,
-  );
-  const [orgCurrentStep, setOrgCurrentStep] = useState<OrgWizardStep>(
-    ORG_WIZARD_STEP.SETUP,
-  );
-  const [footerConfig, setFooterConfig] =
-    useState<WizardFooterConfig>(EMPTY_FOOTER_CONFIG);
-  const [providerTypeHint, setProviderTypeHint] = useState<ProviderType | null>(
-    null,
-  );
-  const [orgSetupPhase, setOrgSetupPhase] = useState<OrgSetupPhase>(
-    ORG_SETUP_PHASE.DETAILS,
-  );
+  const {
+    backToProviderFlow,
+    currentStep,
+    docsLink,
+    handleClose,
+    handleDialogOpenChange,
+    handleTestSuccess,
+    isProviderFlow,
+    modalTitle,
+    openOrganizationsFlow,
+    orgCurrentStep,
+    orgSetupPhase,
+    resolvedFooterConfig,
+    setCurrentStep,
+    setFooterConfig,
+    setOrgCurrentStep,
+    setOrgSetupPhase,
+    setProviderTypeHint,
+    wizardVariant,
+  } = useProviderWizardController({
+    open,
+    onOpenChange,
+    initialData,
+  });
   const scrollHintRefreshToken = `${wizardVariant}-${currentStep}-${orgCurrentStep}-${orgSetupPhase}`;
   const { containerRef, showScrollHint, handleScroll } = useScrollHint({
     enabled: open,
     refreshToken: scrollHintRefreshToken,
   });
-
-  const {
-    reset: resetProviderWizard,
-    setProvider,
-    setVia,
-    setSecretId,
-    setMode,
-    mode,
-    providerType,
-  } = useProviderWizardStore();
-  const { reset: resetOrgWizard } = useOrgSetupStore();
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    if (initialData) {
-      setWizardVariant(WIZARD_VARIANT.PROVIDER);
-      setProvider({
-        id: initialData.providerId,
-        type: initialData.providerType,
-        uid: initialData.providerUid,
-        alias: initialData.providerAlias,
-      });
-      setVia(initialData.via || null);
-      setSecretId(initialData.secretId || null);
-      setMode(
-        initialData.mode ||
-          (initialData.secretId
-            ? PROVIDER_WIZARD_MODE.UPDATE
-            : PROVIDER_WIZARD_MODE.ADD),
-      );
-      setCurrentStep(PROVIDER_WIZARD_STEP.CREDENTIALS);
-      setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
-      setFooterConfig(EMPTY_FOOTER_CONFIG);
-      setProviderTypeHint(initialData.providerType);
-      setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
-      return;
-    }
-
-    resetProviderWizard();
-    resetOrgWizard();
-    setWizardVariant(WIZARD_VARIANT.PROVIDER);
-    setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT);
-    setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
-    setFooterConfig(EMPTY_FOOTER_CONFIG);
-    setProviderTypeHint(null);
-    setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
-  }, [
-    initialData,
-    open,
-    resetOrgWizard,
-    resetProviderWizard,
-    setMode,
-    setProvider,
-    setSecretId,
-    setVia,
-  ]);
-
-  const handleClose = () => {
-    resetProviderWizard();
-    resetOrgWizard();
-    setWizardVariant(WIZARD_VARIANT.PROVIDER);
-    setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT);
-    setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
-    setFooterConfig(EMPTY_FOOTER_CONFIG);
-    setProviderTypeHint(null);
-    setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
-    onOpenChange(false);
-  };
-
-  const handleDialogOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) {
-      onOpenChange(true);
-      return;
-    }
-    handleClose();
-  };
-
-  const handleTestSuccess = () => {
-    if (mode === PROVIDER_WIZARD_MODE.UPDATE) {
-      handleClose();
-      return;
-    }
-
-    setCurrentStep(PROVIDER_WIZARD_STEP.LAUNCH);
-  };
-
-  const openOrganizationsFlow = () => {
-    resetOrgWizard();
-    setWizardVariant(WIZARD_VARIANT.ORGANIZATIONS);
-    setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
-    setFooterConfig(EMPTY_FOOTER_CONFIG);
-    setProviderTypeHint(null);
-    setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
-  };
-
-  const backToProviderFlow = () => {
-    resetOrgWizard();
-    setWizardVariant(WIZARD_VARIANT.PROVIDER);
-    setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT);
-    setFooterConfig(EMPTY_FOOTER_CONFIG);
-    setProviderTypeHint(null);
-    setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
-  };
-
-  const isProviderFlow = wizardVariant === WIZARD_VARIANT.PROVIDER;
-  const docsLink = getProviderHelpText(
-    isProviderFlow ? (providerTypeHint ?? providerType ?? "") : "aws",
-  ).link;
-  const resolvedFooterConfig: WizardFooterConfig =
-    isProviderFlow && currentStep === PROVIDER_WIZARD_STEP.LAUNCH
-      ? {
-          showBack: true,
-          backLabel: "Back",
-          onBack: () => setCurrentStep(PROVIDER_WIZARD_STEP.TEST),
-          showSecondaryAction: false,
-          secondaryActionLabel: "",
-          secondaryActionVariant: "outline",
-          secondaryActionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
-          showAction: true,
-          actionLabel: "Go to scans",
-          actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
-          onAction: () => {
-            handleClose();
-            router.push("/scans");
-          },
-        }
-      : footerConfig;
 
   return (
     <Modal
@@ -242,7 +72,7 @@ export function ProviderWizardModal({
     >
       <DialogHeader className="gap-2 p-0">
         <DialogTitle className="text-lg font-semibold">
-          Adding A Cloud Provider
+          {modalTitle}
         </DialogTitle>
         <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
           <Info className="size-4 shrink-0" />
