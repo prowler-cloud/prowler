@@ -287,7 +287,18 @@ export const addCredentialsFormSchema = (
                                 [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]:
                                   z.string().min(1, "Cloud name is required"),
                               }
-                            : {}),
+                            : providerType === "alibabacloud"
+                              ? {
+                                  [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]:
+                                    z
+                                      .string()
+                                      .min(1, "Access Key ID is required"),
+                                  [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]:
+                                    z
+                                      .string()
+                                      .min(1, "Access Key Secret is required"),
+                                }
+                              : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {
