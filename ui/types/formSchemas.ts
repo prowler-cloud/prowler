@@ -230,73 +230,74 @@ export const addCredentialsFormSchema = (
                           .string()
                           .optional(),
                       }
-                    : providerType === "image"
+                    : providerType === "oraclecloud"
                       ? {
-                          [ProviderCredentialFields.REGISTRY_USERNAME]: z
+                          [ProviderCredentialFields.OCI_USER]: z
                             .string()
-                            .optional(),
-                          [ProviderCredentialFields.REGISTRY_PASSWORD]: z
+                            .min(1, "User OCID is required"),
+                          [ProviderCredentialFields.OCI_FINGERPRINT]: z
                             .string()
-                            .optional(),
-                          [ProviderCredentialFields.REGISTRY_TOKEN]: z
+                            .min(1, "Fingerprint is required"),
+                          [ProviderCredentialFields.OCI_KEY_CONTENT]: z
                             .string()
-                            .optional(),
-                          [ProviderCredentialFields.IMAGE_FILTER]: z
+                            .min(1, "Private Key Content is required"),
+                          [ProviderCredentialFields.OCI_TENANCY]: z
                             .string()
-                            .optional(),
-                          [ProviderCredentialFields.TAG_FILTER]: z
+                            .min(1, "Tenancy OCID is required"),
+                          [ProviderCredentialFields.OCI_REGION]: z
                             .string()
+                            .min(1, "Region is required"),
+                          [ProviderCredentialFields.OCI_PASS_PHRASE]: z
+                            .union([z.string(), z.literal("")])
                             .optional(),
                         }
-                      : providerType === "oraclecloud"
+                      : providerType === "mongodbatlas"
                         ? {
-                            [ProviderCredentialFields.OCI_USER]: z
+                            [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: z
                               .string()
-                              .min(1, "User OCID is required"),
-                            [ProviderCredentialFields.OCI_FINGERPRINT]: z
+                              .min(1, "Atlas Public Key is required"),
+                            [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: z
                               .string()
-                              .min(1, "Fingerprint is required"),
-                            [ProviderCredentialFields.OCI_KEY_CONTENT]: z
-                              .string()
-                              .min(1, "Private Key Content is required"),
-                            [ProviderCredentialFields.OCI_TENANCY]: z
-                              .string()
-                              .min(1, "Tenancy OCID is required"),
-                            [ProviderCredentialFields.OCI_REGION]: z
-                              .string()
-                              .min(1, "Region is required"),
-                            [ProviderCredentialFields.OCI_PASS_PHRASE]: z
-                              .union([z.string(), z.literal("")])
-                              .optional(),
+                              .min(1, "Atlas Private Key is required"),
                           }
-                        : providerType === "mongodbatlas"
+                        : providerType === "alibabacloud"
                           ? {
-                              [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: z
-                                .string()
-                                .min(1, "Atlas Public Key is required"),
-                              [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: z
-                                .string()
-                                .min(1, "Atlas Private Key is required"),
+                              [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]:
+                                z.string().min(1, "Access Key ID is required"),
+                              [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]:
+                                z
+                                  .string()
+                                  .min(1, "Access Key Secret is required"),
                             }
-                          : providerType === "openstack"
+                          : providerType === "image"
                             ? {
-                                [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]:
-                                  z
-                                    .string()
-                                    .min(1, "Clouds YAML content is required"),
-                                [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]:
-                                  z.string().min(1, "Cloud name is required"),
+                                [ProviderCredentialFields.REGISTRY_USERNAME]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.REGISTRY_PASSWORD]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.REGISTRY_TOKEN]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.IMAGE_FILTER]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.TAG_FILTER]: z
+                                  .string()
+                                  .optional(),
                               }
-                            : providerType === "alibabacloud"
+                            : providerType === "openstack"
                               ? {
-                                  [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]:
+                                  [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]:
                                     z
                                       .string()
-                                      .min(1, "Access Key ID is required"),
-                                  [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]:
-                                    z
-                                      .string()
-                                      .min(1, "Access Key Secret is required"),
+                                      .min(
+                                        1,
+                                        "Clouds YAML content is required",
+                                      ),
+                                  [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]:
+                                    z.string().min(1, "Cloud name is required"),
                                 }
                               : {}),
     })
