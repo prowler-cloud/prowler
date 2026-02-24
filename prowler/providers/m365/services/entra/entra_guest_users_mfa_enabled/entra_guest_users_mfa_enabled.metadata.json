@@ -1,0 +1,40 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_guest_users_mfa_enabled",
+  "CheckTitle": "Conditional Access policy enforces MFA for guest users",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
+  "Description": "At least one Conditional Access policy requires **multifactor authentication** for all guest and external user types across all cloud applications.\n\nThis covers internal guests, B2B collaboration guests and members, B2B direct connect users, other external users, and service providers.",
+  "Risk": "Guest and external users authenticate from environments outside the organization's control. Without MFA, a compromised guest credential can grant an attacker access to tenant resources, leading to **data exfiltration** or **lateral movement** across collaboration boundaries.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-policy-mfa-guest",
+    "https://maester.dev/docs/tests/MT.1016"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Click **New policy**.\n4. Under **Users**, select **Include** > **Select users and groups** > check **Guest or external users** and select all guest types.\n5. Under **Target resources**, include **All cloud apps**.\n6. Under **Grant**, select **Grant Access** and check **Require multifactor authentication**.\n7. Set the policy to **Report Only** for initial testing, then switch to **On**.\n8. Click **Create**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce MFA for all guest and external user types through a Conditional Access policy. Apply the **zero trust** principle to external identities by treating them as untrusted by default and requiring strong authentication before granting access to any cloud application.",
+      "Url": "https://hub.prowler.com/check/entra_guest_users_mfa_enabled"
+    }
+  },
+  "Categories": [
+    "e3",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_users_mfa_enabled"
+  ],
+  "Notes": "Equivalent to Maester test MT.1016 (Test-MtCaMfaForGuest)."
+}

@@ -1377,6 +1377,7 @@
       "Id": "5.2.2.2",
       "Description": "Enable multifactor authentication for all users in the Microsoft 365 tenant. Users will be prompted to authenticate with a second factor upon logging in to Microsoft 365 services.",
       "Checks": [
+        "entra_guest_users_mfa_enabled",
         "entra_users_mfa_enabled"
       ],
       "Attributes": [
