@@ -17,7 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-snapshots.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EBS/ebs-volumes-recent-snapshots.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/EBS/ebs-volumes-recent-snapshots.html"
   ],
   "Remediation": {
     "Code": {
