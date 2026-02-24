@@ -7,7 +7,7 @@ interface UseScrollHintOptions {
   refreshToken?: string | number;
 }
 
-const SCROLL_THRESHOLD_PX = 2;
+const SCROLL_THRESHOLD_PX = 4;
 
 function shouldShowScrollHint(element: HTMLDivElement) {
   const hasOverflow =
@@ -32,22 +32,22 @@ export function useScrollHint({
       return;
     }
 
-    const frame = requestAnimationFrame(() => {
-      const element = containerRef.current;
-      if (!element) return;
-      setShowScrollHint(shouldShowScrollHint(element));
-    });
+    const element = containerRef.current;
+    if (!element) return;
 
-    const handleResize = () => {
-      const element = containerRef.current;
-      if (!element) return;
-      setShowScrollHint(shouldShowScrollHint(element));
+    const recalculate = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      setShowScrollHint(shouldShowScrollHint(el));
     };
 
-    window.addEventListener("resize", handleResize);
+    const observer = new ResizeObserver(recalculate);
+    observer.observe(element);
+
+    recalculate();
+
     return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("resize", handleResize);
+      observer.disconnect();
     };
   }, [enabled, refreshToken]);
 
