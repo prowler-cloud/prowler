@@ -89,12 +89,13 @@ services:
       - NEO4J_server_memory_heap_initial__size=${NEO4J_SERVER_MEMORY_HEAP_INITIAL__SIZE:-1G}
       - NEO4J_server_memory_heap_max__size=${NEO4J_SERVER_MEMORY_HEAP_MAX__SIZE:-1G}
       # APOC
-      - apoc.export.file.enabled=${NEO4J_POC_EXPORT_FILE_ENABLED:-true}
-      - apoc.import.file.enabled=${NEO4J_APOC_IMPORT_FILE_ENABLED:-true}
-      - apoc.import.file.use_neo4j_config=${NEO4J_APOC_IMPORT_FILE_USE_NEO4J_CONFIG:-true}
       - "NEO4J_PLUGINS=${NEO4J_PLUGINS:-[\"apoc\"]}"
       - "NEO4J_dbms_security_procedures_allowlist=${NEO4J_DBMS_SECURITY_PROCEDURES_ALLOWLIST:-apoc.*}"
-      - "NEO4J_dbms_security_procedures_unrestricted=${NEO4J_DBMS_SECURITY_PROCEDURES_UNRESTRICTED:-apoc.*}"
+      - "NEO4J_dbms_security_procedures_unrestricted=${NEO4J_DBMS_SECURITY_PROCEDURES_UNRESTRICTED:-}"
+      - apoc.export.file.enabled=${NEO4J_APOC_EXPORT_FILE_ENABLED:-false}
+      - apoc.import.file.enabled=${NEO4J_APOC_IMPORT_FILE_ENABLED:-false}
+      - apoc.import.file.use_neo4j_config=${NEO4J_APOC_IMPORT_FILE_USE_NEO4J_CONFIG:-true}
+      - apoc.trigger.enabled=${NEO4J_APOC_TRIGGER_ENABLED:-false}
       # Networking
       - "dbms.connector.bolt.listen_address=${NEO4J_DBMS_CONNECTOR_BOLT_LISTEN_ADDRESS:-0.0.0.0:7687}"
     ports:

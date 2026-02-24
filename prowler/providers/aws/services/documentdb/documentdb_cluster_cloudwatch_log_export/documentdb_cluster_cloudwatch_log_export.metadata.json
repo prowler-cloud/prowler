@@ -17,7 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-4",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DocumentDB/enable-profiler.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/DocumentDB/enable-profiler.html",
     "https://docs.aws.amazon.com/cli/latest/reference/docdb/create-db-cluster.html"
   ],
   "Remediation": {

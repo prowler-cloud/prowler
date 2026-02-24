@@ -25,7 +25,7 @@ class networking_subnet_dhcp_disabled(Check):
         for subnet in networking_client.subnets:
             report = CheckReportOpenStack(metadata=self.metadata(), resource=subnet)
             report.resource_id = subnet.id
-            report.resource_name = subnet.name
+            report.resource_name = subnet.name or f"subnet-{subnet.id[:8]}"
             report.region = subnet.region
 
             if not subnet.enable_dhcp:

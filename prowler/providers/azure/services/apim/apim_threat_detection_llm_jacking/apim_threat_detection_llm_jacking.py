@@ -97,8 +97,10 @@ class apim_threat_detection_llm_jacking(Check):
             # 4. If no threats were found after checking all principals, create a single PASS report
             if not found_potential_llm_jacking_attackers:
                 report = Check_Report_Azure(self.metadata(), resource={})
-                report.resource_name = "Azure API Management"
-                report.resource_id = "Azure API Management"
+                report.resource_name = subscription
+                report.resource_id = (
+                    f"/subscriptions/{apim_client.subscriptions[subscription]}"
+                )
                 report.subscription = subscription
                 report.status = "PASS"
                 report.status_extended = f"No potential LLM Jacking attacks detected across all monitored APIM instances in the last {threat_detection_minutes} minutes."
