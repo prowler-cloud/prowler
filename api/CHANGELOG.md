@@ -35,11 +35,8 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Attack Paths: Orphaned temporary Neo4j databases are now cleaned up on scan failure and provider deletion [(#10101)](https://github.com/prowler-cloud/prowler/pull/10101)
 - Attack Paths: scan no longer raises `DatabaseError` when provider is deleted mid-scan [(#10116)](https://github.com/prowler-cloud/prowler/pull/10116)
-<<<<<<< PROWLER-1155-tenant-compliance-summary-not-recalculated-after-provider-deletion
 - Tenant compliance summaries recalculated after provider deletion [(#10172)](https://github.com/prowler-cloud/prowler/pull/10172)
-=======
 - Security Hub export retries transient replica conflicts without failing integrations [(#10144)](https://github.com/prowler-cloud/prowler/pull/10144)
->>>>>>> master
 
 ### 🔐 Security
 
