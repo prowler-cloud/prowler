@@ -60,6 +60,38 @@ export const ORG_SETUP_PHASE = {
 export type OrgSetupPhase =
   (typeof ORG_SETUP_PHASE)[keyof typeof ORG_SETUP_PHASE];
 
+export const DISCOVERED_ACCOUNT_STATUS = {
+  ACTIVE: "ACTIVE",
+  SUSPENDED: "SUSPENDED",
+  PENDING_CLOSURE: "PENDING_CLOSURE",
+  CLOSED: "CLOSED",
+} as const;
+
+export type DiscoveredAccountStatus =
+  (typeof DISCOVERED_ACCOUNT_STATUS)[keyof typeof DISCOVERED_ACCOUNT_STATUS];
+
+export const DISCOVERED_ACCOUNT_JOINED_METHOD = {
+  INVITED: "INVITED",
+  CREATED: "CREATED",
+} as const;
+
+export type DiscoveredAccountJoinedMethod =
+  (typeof DISCOVERED_ACCOUNT_JOINED_METHOD)[keyof typeof DISCOVERED_ACCOUNT_JOINED_METHOD];
+
+export interface OrganizationPolicyType {
+  Type: string;
+  Status: string;
+}
+
+export const ORGANIZATION_TYPE = {
+  AWS: "aws",
+  AZURE: "azure",
+  GCP: "gcp",
+} as const;
+
+export type OrganizationType =
+  (typeof ORGANIZATION_TYPE)[keyof typeof ORGANIZATION_TYPE];
+
 // ─── Discovery Result Interfaces ──────────────────────────────────────────────
 
 export interface AccountRegistration {
@@ -77,8 +109,8 @@ export interface DiscoveredAccount {
   name: string;
   arn: string;
   email: string;
-  status: "ACTIVE" | "SUSPENDED" | "PENDING_CLOSURE" | "CLOSED";
-  joined_method: "INVITED" | "CREATED";
+  status: DiscoveredAccountStatus;
+  joined_method: DiscoveredAccountJoinedMethod;
   joined_timestamp: string;
   parent_id: string;
   registration?: AccountRegistration;
@@ -95,7 +127,7 @@ export interface DiscoveredRoot {
   id: string;
   arn: string;
   name: string;
-  policy_types: Array<{ Type: string; Status: string }>;
+  policy_types: OrganizationPolicyType[];
 }
 
 export interface DiscoveryResult {
@@ -108,7 +140,7 @@ export interface DiscoveryResult {
 
 export interface OrganizationAttributes {
   name: string;
-  org_type: "aws" | "azure" | "gcp";
+  org_type: OrganizationType;
   external_id: string;
   metadata: Record<string, unknown>;
   root_external_id: string | null;
