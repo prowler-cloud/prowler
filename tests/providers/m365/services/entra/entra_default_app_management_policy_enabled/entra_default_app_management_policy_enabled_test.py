@@ -49,8 +49,7 @@ class Test_entra_default_app_management_policy_enabled:
             assert result[0].location == "global"
             assert result[0].resource_name == "Default App Management Policy"
             assert (
-                result[0].resource
-                == entra_client.default_app_management_policy.dict()
+                result[0].resource == entra_client.default_app_management_policy.dict()
             )
 
     def test_policy_disabled(self):
@@ -95,8 +94,7 @@ class Test_entra_default_app_management_policy_enabled:
             assert result[0].location == "global"
             assert result[0].resource_name == "Default App Management Policy"
             assert (
-                result[0].resource
-                == entra_client.default_app_management_policy.dict()
+                result[0].resource == entra_client.default_app_management_policy.dict()
             )
 
     def test_policy_disabled_uses_tenant_domain_when_no_id(self):
