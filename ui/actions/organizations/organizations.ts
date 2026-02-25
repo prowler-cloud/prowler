@@ -31,7 +31,9 @@ function hasActionError(result: unknown): result is { error: unknown } {
   return Boolean(
     result &&
       typeof result === "object" &&
-      "error" in (result as Record<string, unknown>),
+      "error" in (result as Record<string, unknown>) &&
+      (result as Record<string, unknown>).error !== null &&
+      (result as Record<string, unknown>).error !== undefined,
   );
 }
 

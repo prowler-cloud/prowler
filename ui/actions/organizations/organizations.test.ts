@@ -110,4 +110,31 @@ describe("organizations actions", () => {
     expect(revalidatePathMock).toHaveBeenCalledTimes(1);
     expect(revalidatePathMock).toHaveBeenCalledWith("/providers");
   });
+
+  it("revalidates providers when response contains error set to null", async () => {
+    // Given
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: { id: "apply-2" } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    handleApiResponseMock.mockResolvedValueOnce({
+      data: { id: "apply-2" },
+      error: null,
+    });
+
+    // When
+    const result = await applyDiscovery(
+      "123e4567-e89b-12d3-a456-426614174000",
+      "223e4567-e89b-12d3-a456-426614174111",
+      [],
+      [],
+    );
+
+    // Then
+    expect(result).toEqual({ data: { id: "apply-2" }, error: null });
+    expect(revalidatePathMock).toHaveBeenCalledTimes(1);
+    expect(revalidatePathMock).toHaveBeenCalledWith("/providers");
+  });
 });

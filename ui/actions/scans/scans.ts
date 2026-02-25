@@ -7,6 +7,7 @@ import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
   type ComplianceReportType,
 } from "@/lib/compliance/compliance-report-types";
+import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import {
   appendSanitizedProviderTypeFilters,
   sanitizeProviderTypesCsv,
@@ -15,39 +16,6 @@ import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 const ORGANIZATION_SCAN_CONCURRENCY_LIMIT = 5;
-
-export async function runWithConcurrencyLimit<T, R>(
-  items: T[],
-  concurrencyLimit: number,
-  worker: (item: T, index: number) => Promise<R>,
-): Promise<R[]> {
-  if (items.length === 0) {
-    return [];
-  }
-
-  const normalizedConcurrency = Math.max(1, Math.floor(concurrencyLimit));
-  const results = new Array<R>(items.length);
-  let currentIndex = 0;
-
-  const runWorker = async () => {
-    while (currentIndex < items.length) {
-      const assignedIndex = currentIndex;
-      currentIndex += 1;
-      results[assignedIndex] = await worker(
-        items[assignedIndex],
-        assignedIndex,
-      );
-    }
-  };
-
-  const workers = Array.from(
-    { length: Math.min(normalizedConcurrency, items.length) },
-    () => runWorker(),
-  );
-
-  await Promise.all(workers);
-  return results;
-}
 export const getScans = async ({
   page = 1,
   query = "",
