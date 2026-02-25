@@ -7,29 +7,25 @@ from prowler.providers.m365.services.entra.entra_service import (
 
 
 class entra_all_apps_conditional_access_coverage(Check):
-    """Check which Conditional Access policies target all cloud apps.
+    """Check if at least one Conditional Access policy targets all cloud apps.
 
-    This check reports all Conditional Access policies that are configured
-    to target all cloud applications. Having a policy that applies to all apps
-    ensures comprehensive coverage and prevents gaps when new applications are
-    onboarded.
+    This check iterates over all Conditional Access policies and collects those
+    that target all cloud applications. A single finding is produced listing
+    every matching policy name.
 
-    - PASS: An enabled Conditional Access policy targets all cloud apps.
-    - FAIL (no policies): No Conditional Access policy targets all cloud apps.
-    - FAIL (report-only): A policy targets all cloud apps but is only in
-      report-only mode.
+    - PASS: At least one fully enabled policy targets all cloud apps.
+    - FAIL: No policy targets all cloud apps, or only report-only policies do.
     """
 
     def execute(self) -> list[CheckReportM365]:
-        """Execute the check to report all policies targeting all cloud apps.
-
-        Iterates over the Conditional Access Policies and generates a finding
-        for each policy that targets all cloud applications.
+        """Execute the check to verify all cloud apps coverage.
 
         Returns:
-            list[CheckReportM365]: A list containing the results of the check.
+            list[CheckReportM365]: A single-element list with the result.
         """
         findings = []
+        enabled_policies = []
+        reporting_only_policies = []
 
         for policy in entra_client.conditional_access_policies.values():
             if policy.state == ConditionalAccessPolicyState.DISABLED:
@@ -48,22 +44,32 @@ class entra_all_apps_conditional_access_coverage(Check):
             ):
                 continue
 
+            if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
+                reporting_only_policies.append(policy)
+            else:
+                enabled_policies.append(policy)
+
+        if enabled_policies:
+            policy_names = ", ".join(p.display_name for p in enabled_policies)
             report = CheckReportM365(
                 metadata=self.metadata(),
-                resource=policy,
-                resource_name=policy.display_name,
-                resource_id=policy.id,
+                resource={},
+                resource_name="Conditional Access Policies",
+                resource_id="conditionalAccessPolicies",
             )
-            if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
-                report.status = "FAIL"
-                report.status_extended = f"Conditional Access Policy {policy.display_name} targets all cloud apps but is only configured for reporting."
-            else:
-                report.status = "PASS"
-                report.status_extended = f"Conditional Access Policy {policy.display_name} targets all cloud apps."
-
-            findings.append(report)
-
-        if not findings:
+            report.status = "PASS"
+            report.status_extended = f"Conditional Access Policies targeting all cloud apps: {policy_names}."
+        elif reporting_only_policies:
+            policy_names = ", ".join(p.display_name for p in reporting_only_policies)
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Conditional Access Policies",
+                resource_id="conditionalAccessPolicies",
+            )
+            report.status = "FAIL"
+            report.status_extended = f"Conditional Access Policies targeting all cloud apps are only configured for reporting: {policy_names}."
+        else:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
@@ -72,6 +78,6 @@ class entra_all_apps_conditional_access_coverage(Check):
             )
             report.status = "FAIL"
             report.status_extended = "No Conditional Access Policy targets all cloud apps."
-            findings.append(report)
 
+        findings.append(report)
         return findings

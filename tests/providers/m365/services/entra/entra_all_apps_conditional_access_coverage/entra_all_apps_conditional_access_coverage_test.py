@@ -348,10 +348,13 @@ class Test_entra_all_apps_conditional_access_coverage:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            expected_status_extended = f"Conditional Access Policy {display_name} targets all cloud apps but is only configured for reporting."
-            assert result[0].status_extended == expected_status_extended
-            assert result[0].resource_name == display_name
-            assert result[0].resource_id == policy_id
+            assert (
+                result[0].status_extended
+                == f"Conditional Access Policies targeting all cloud apps are only configured for reporting: {display_name}."
+            )
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
     def test_policy_enabled_targeting_all_apps(self):
@@ -427,12 +430,13 @@ class Test_entra_all_apps_conditional_access_coverage:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            expected_status_extended = (
-                f"Conditional Access Policy {display_name} targets all cloud apps."
+            assert (
+                result[0].status_extended
+                == f"Conditional Access Policies targeting all cloud apps: {display_name}."
             )
-            assert result[0].status_extended == expected_status_extended
-            assert result[0].resource_name == display_name
-            assert result[0].resource_id == policy_id
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
     def test_policy_with_block_grant_control(self):
@@ -508,30 +512,30 @@ class Test_entra_all_apps_conditional_access_coverage:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            expected_status_extended = (
-                f"Conditional Access Policy {display_name} targets all cloud apps."
+            assert (
+                result[0].status_extended
+                == f"Conditional Access Policies targeting all cloud apps: {display_name}."
             )
-            assert result[0].status_extended == expected_status_extended
-            assert result[0].resource_name == display_name
-            assert result[0].resource_id == policy_id
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_multiple_policies_all_reported(self):
+    def test_multiple_policies_lists_all_enabled(self):
         """
-        Multiple policies where two target all apps:
+        Multiple policies:
          - First policy is disabled (skipped)
          - Second policy targets specific apps (skipped)
-         - Third policy is enabled and targets all apps (PASS)
-         - Fourth policy is report-only and targets all apps (FAIL)
+         - Third and fourth policies are enabled and target all apps
 
-         Expected: 2 findings, one PASS and one FAIL.
+         Expected: single PASS listing both enabled policy names.
         """
         disabled_policy_id = str(uuid4())
         specific_apps_policy_id = str(uuid4())
-        valid_policy_id = str(uuid4())
-        valid_display_name = "Valid All Apps Policy"
-        reporting_policy_id = str(uuid4())
-        reporting_display_name = "Reporting All Apps Policy"
+        policy_a_id = str(uuid4())
+        policy_a_name = "MFA All Apps"
+        policy_b_id = str(uuid4())
+        policy_b_name = "Block All Apps"
 
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
@@ -624,9 +628,9 @@ class Test_entra_all_apps_conditional_access_coverage:
                     ),
                     state=ConditionalAccessPolicyState.ENABLED,
                 ),
-                valid_policy_id: ConditionalAccessPolicy(
-                    id=valid_policy_id,
-                    display_name=valid_display_name,
+                policy_a_id: ConditionalAccessPolicy(
+                    id=policy_a_id,
+                    display_name=policy_a_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
                             included_applications=["All"],
@@ -660,9 +664,9 @@ class Test_entra_all_apps_conditional_access_coverage:
                     ),
                     state=ConditionalAccessPolicyState.ENABLED,
                 ),
-                reporting_policy_id: ConditionalAccessPolicy(
-                    id=reporting_policy_id,
-                    display_name=reporting_display_name,
+                policy_b_id: ConditionalAccessPolicy(
+                    id=policy_b_id,
+                    display_name=policy_b_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
                             included_applications=["All"],
@@ -679,7 +683,7 @@ class Test_entra_all_apps_conditional_access_coverage:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
                         authentication_strength=None,
                     ),
@@ -694,26 +698,18 @@ class Test_entra_all_apps_conditional_access_coverage:
                             interval=SignInFrequencyInterval.EVERY_TIME,
                         ),
                     ),
-                    state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
+                    state=ConditionalAccessPolicyState.ENABLED,
                 ),
             }
 
             check = entra_all_apps_conditional_access_coverage()
             result = check.execute()
 
-            assert len(result) == 2
-
-            pass_results = [r for r in result if r.status == "PASS"]
-            fail_results = [r for r in result if r.status == "FAIL"]
-
-            assert len(pass_results) == 1
-            assert pass_results[0].resource_name == valid_display_name
-            assert pass_results[0].resource_id == valid_policy_id
-            assert pass_results[0].status_extended == f"Conditional Access Policy {valid_display_name} targets all cloud apps."
-            assert pass_results[0].location == "global"
-
-            assert len(fail_results) == 1
-            assert fail_results[0].resource_name == reporting_display_name
-            assert fail_results[0].resource_id == reporting_policy_id
-            assert fail_results[0].status_extended == f"Conditional Access Policy {reporting_display_name} targets all cloud apps but is only configured for reporting."
-            assert fail_results[0].location == "global"
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert policy_a_name in result[0].status_extended
+            assert policy_b_name in result[0].status_extended
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
+            assert result[0].location == "global"
