@@ -63,6 +63,16 @@ export const getProviderHelpText = (provider: string) => {
         text: "Need help connecting your Alibaba Cloud account?",
         link: "https://goto.prowler.com/provider-alibabacloud",
       };
+    case "cloudflare":
+      return {
+        text: "Need help connecting your Cloudflare account?",
+        link: "https://goto.prowler.com/provider-cloudflare",
+      };
+    case "openstack":
+      return {
+        text: "Need help connecting your OpenStack cloud?",
+        link: "https://goto.prowler.com/provider-openstack",
+      };
     default:
       return {
         text: "How to setup a provider?",

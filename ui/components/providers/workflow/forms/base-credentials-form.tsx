@@ -17,6 +17,8 @@ import {
   AWSCredentials,
   AWSCredentialsRole,
   AzureCredentials,
+  CloudflareApiKeyCredentials,
+  CloudflareTokenCredentials,
   GCPDefaultCredentials,
   GCPServiceAccountKey,
   IacCredentials,
@@ -26,6 +28,7 @@ import {
   M365ClientSecretCredentials,
   MongoDBAtlasCredentials,
   OCICredentials,
+  OpenStackCredentials,
   ProviderType,
 } from "@/types";
 
@@ -36,6 +39,10 @@ import {
 } from "./select-credentials-type/alibabacloud/credentials-type";
 import { AWSStaticCredentialsForm } from "./select-credentials-type/aws/credentials-type";
 import { AWSRoleCredentialsForm } from "./select-credentials-type/aws/credentials-type/aws-role-credentials-form";
+import {
+  CloudflareApiKeyCredentialsForm,
+  CloudflareApiTokenCredentialsForm,
+} from "./select-credentials-type/cloudflare";
 import { GCPDefaultCredentialsForm } from "./select-credentials-type/gcp/credentials-type";
 import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credentials-type/gcp-service-account-key-form";
 import {
@@ -48,6 +55,7 @@ import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
 import { ImageCredentialsForm } from "./via-credentials/image-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { MongoDBAtlasCredentialsForm } from "./via-credentials/mongodbatlas-credentials-form";
+import { OpenStackCredentialsForm } from "./via-credentials/openstack-credentials-form";
 import { OracleCloudCredentialsForm } from "./via-credentials/oraclecloud-credentials-form";
 
 type BaseCredentialsFormProps = {
@@ -213,6 +221,27 @@ export const BaseCredentialsForm = ({
               }
             />
           )}
+        {providerType === "cloudflare" &&
+          searchParamsObj.get("via") === "api_token" && (
+            <CloudflareApiTokenCredentialsForm
+              control={
+                form.control as unknown as Control<CloudflareTokenCredentials>
+              }
+            />
+          )}
+        {providerType === "cloudflare" &&
+          searchParamsObj.get("via") === "api_key" && (
+            <CloudflareApiKeyCredentialsForm
+              control={
+                form.control as unknown as Control<CloudflareApiKeyCredentials>
+              }
+            />
+          )}
+        {providerType === "openstack" && (
+          <OpenStackCredentialsForm
+            control={form.control as unknown as Control<OpenStackCredentials>}
+          />
+        )}
 
         <div className="flex w-full justify-end gap-4">
           {showBackButton && requiresBackButton(searchParamsObj.get("via")) && (

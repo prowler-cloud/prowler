@@ -10,6 +10,8 @@ export const PROVIDER_TYPES = [
   "image",
   "oraclecloud",
   "alibabacloud",
+  "cloudflare",
+  "openstack",
 ] as const;
 
 export type ProviderType = (typeof PROVIDER_TYPES)[number];
@@ -26,6 +28,8 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   image: "Container Registry",
   oraclecloud: "Oracle Cloud Infrastructure",
   alibabacloud: "Alibaba Cloud",
+  cloudflare: "Cloudflare",
+  openstack: "OpenStack",
 };
 
 export function getProviderDisplayName(providerId: string): string {

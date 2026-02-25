@@ -115,6 +115,7 @@ class DockerHubAdapter(RegistryAdapter):
             return
         if not self.username or not self.password:
             return
+        logger.debug(f"Docker Hub login attempt for username: {self.username!r}")
         resp = self._request_with_retry(
             "POST",
             f"{_HUB_API}/v2/users/login",
@@ -122,9 +123,14 @@ class DockerHubAdapter(RegistryAdapter):
             context_label="Docker Hub",
         )
         if resp.status_code != 200:
+            body_preview = resp.text[:200] if resp.text else "(empty body)"
             raise ImageRegistryAuthError(
                 file=__file__,
-                message=f"Docker Hub login failed (HTTP {resp.status_code}). Check REGISTRY_USERNAME and REGISTRY_PASSWORD.",
+                message=(
+                    f"Docker Hub login failed (HTTP {resp.status_code}). "
+                    f"Check REGISTRY_USERNAME and REGISTRY_PASSWORD. "
+                    f"Response: {body_preview}"
+                ),
             )
         self._hub_jwt = resp.json().get("token")
         if not self._hub_jwt:

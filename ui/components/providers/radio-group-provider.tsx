@@ -12,6 +12,7 @@ import {
   AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
+  CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
   IacProviderBadge,
@@ -19,6 +20,7 @@ import {
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
+  OpenStackProviderBadge,
   OracleCloudProviderBadge,
 } from "../icons/providers-badge";
 import { FormMessage } from "../ui/form";
@@ -78,6 +80,16 @@ const PROVIDERS = [
     value: "alibabacloud",
     label: "Alibaba Cloud",
     badge: AlibabaCloudProviderBadge,
+  },
+  {
+    value: "cloudflare",
+    label: "Cloudflare",
+    badge: CloudflareProviderBadge,
+  },
+  {
+    value: "openstack",
+    label: "OpenStack",
+    badge: OpenStackProviderBadge,
   },
 ] as const;
 

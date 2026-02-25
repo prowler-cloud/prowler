@@ -2,13 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import tempfile
 from os import environ
 
+import requests
 from colorama import Fore, Style
 from colorama import init as colorama_init
 
 from prowler.config.config import (
     EXTERNAL_TOOL_PROVIDERS,
+    cloud_api_base_url,
     csv_file_suffix,
     get_available_compliance_frameworks,
     html_file_suffix,
@@ -110,6 +113,7 @@ from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_m365
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
+from prowler.lib.outputs.ocsf.ingestion import send_ocsf_to_api
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.lib.outputs.outputs import extract_findings_statistics, report
 from prowler.lib.outputs.slack.slack import Slack
@@ -477,6 +481,7 @@ def prowler():
             sys.exit(1)
 
     generated_outputs = {"regular": [], "compliance": []}
+    ocsf_output = None
 
     if args.output_formats:
         for mode in args.output_formats:
@@ -507,6 +512,7 @@ def prowler():
                     file_path=f"{filename}{json_ocsf_file_suffix}",
                 )
                 generated_outputs["regular"].append(json_output)
+                ocsf_output = json_output
                 json_output.batch_write_data_to_file()
             if mode == "html":
                 html_output = HTML(
@@ -516,6 +522,57 @@ def prowler():
                 generated_outputs["regular"].append(html_output)
                 html_output.batch_write_data_to_file(
                     provider=global_provider, stats=stats
+                )
+
+    if getattr(args, "export_ocsf", False):
+        if not ocsf_output or not getattr(ocsf_output, "file_path", None):
+            tmp_ocsf = tempfile.NamedTemporaryFile(
+                suffix=json_ocsf_file_suffix, delete=False
+            )
+            ocsf_output = OCSF(
+                findings=finding_outputs,
+                file_path=tmp_ocsf.name,
+            )
+            tmp_ocsf.close()
+            ocsf_output.batch_write_data_to_file()
+        print(
+            f"{Style.BRIGHT}\nExporting OCSF to Prowler Cloud, please wait...{Style.RESET_ALL}"
+        )
+        try:
+            response = send_ocsf_to_api(ocsf_output.file_path)
+        except ValueError:
+            logger.warning(
+                "OCSF export skipped: no API key configured. "
+                "Set the PROWLER_API_KEY environment variable to enable it. "
+                f"Scan results were saved to {ocsf_output.file_path}"
+            )
+        except requests.ConnectionError:
+            logger.warning(
+                "OCSF export skipped: could not reach the Prowler Cloud API at "
+                f"{cloud_api_base_url}. Check the URL and your network connection. "
+                f"Scan results were saved to {ocsf_output.file_path}"
+            )
+        except requests.HTTPError as http_err:
+            logger.warning(
+                f"OCSF export failed: the API returned HTTP {http_err.response.status_code}. "
+                "Verify your API key is valid and has the right permissions. "
+                f"Scan results were saved to {ocsf_output.file_path}"
+            )
+        except Exception as error:
+            logger.warning(
+                f"OCSF export failed unexpectedly: {error}. "
+                f"Scan results were saved to {ocsf_output.file_path}"
+            )
+        else:
+            job_id = response.get("data", {}).get("id") if response else None
+            if job_id:
+                print(
+                    f"{Style.BRIGHT}{Fore.GREEN}\nOCSF export accepted. Ingestion job: {job_id}{Style.RESET_ALL}"
+                )
+            else:
+                logger.warning(
+                    "OCSF export: unexpected API response (missing ingestion job ID). "
+                    f"Scan results were saved to {ocsf_output.file_path}"
                 )
 
     # Compliance Frameworks

@@ -20,7 +20,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/using-amazon-mq-securely.html#prefer-brokers-without-public-accessibility",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MQ/publicly-accessible.html#"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/MQ/publicly-accessible.html#"
   ],
   "Remediation": {
     "Code": {

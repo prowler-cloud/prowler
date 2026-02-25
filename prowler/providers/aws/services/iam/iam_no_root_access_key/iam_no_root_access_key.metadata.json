@@ -20,7 +20,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/root-account-access-keys-present.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/IAM/root-account-access-keys-present.html"
   ],
   "Remediation": {
     "Code": {

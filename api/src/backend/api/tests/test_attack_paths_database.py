@@ -9,6 +9,7 @@ remain lazy. These tests validate the database module behavior itself.
 import threading
 from unittest.mock import MagicMock, patch
 
+import neo4j
 import pytest
 
 
@@ -239,6 +240,146 @@ class TestCloseDriver:
 
         # Driver should still be cleared
         assert db_module._driver is None
+
+
+class TestExecuteReadQuery:
+    """Test read query execution helper."""
+
+    def test_execute_read_query_calls_read_session_and_returns_result(self):
+        import api.attack_paths.database as db_module
+
+        tx = MagicMock()
+        expected_graph = MagicMock()
+        run_result = MagicMock()
+        run_result.graph.return_value = expected_graph
+        tx.run.return_value = run_result
+
+        session = MagicMock()
+
+        def execute_read_side_effect(fn):
+            return fn(tx)
+
+        session.execute_read.side_effect = execute_read_side_effect
+
+        session_ctx = MagicMock()
+        session_ctx.__enter__.return_value = session
+        session_ctx.__exit__.return_value = False
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ) as mock_get_session:
+            result = db_module.execute_read_query(
+                "db-tenant-test-tenant-id",
+                "MATCH (n) RETURN n",
+                {"provider_uid": "123"},
+            )
+
+        mock_get_session.assert_called_once_with(
+            "db-tenant-test-tenant-id",
+            default_access_mode=neo4j.READ_ACCESS,
+        )
+        session.execute_read.assert_called_once()
+        tx.run.assert_called_once_with(
+            "MATCH (n) RETURN n",
+            {"provider_uid": "123"},
+            timeout=db_module.READ_QUERY_TIMEOUT_SECONDS,
+        )
+        run_result.graph.assert_called_once_with()
+        assert result is expected_graph
+
+    def test_execute_read_query_defaults_parameters_to_empty_dict(self):
+        import api.attack_paths.database as db_module
+
+        tx = MagicMock()
+        run_result = MagicMock()
+        run_result.graph.return_value = MagicMock()
+        tx.run.return_value = run_result
+
+        session = MagicMock()
+        session.execute_read.side_effect = lambda fn: fn(tx)
+
+        session_ctx = MagicMock()
+        session_ctx.__enter__.return_value = session
+        session_ctx.__exit__.return_value = False
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ):
+            db_module.execute_read_query(
+                "db-tenant-test-tenant-id",
+                "MATCH (n) RETURN n",
+            )
+
+        tx.run.assert_called_once_with(
+            "MATCH (n) RETURN n",
+            {},
+            timeout=db_module.READ_QUERY_TIMEOUT_SECONDS,
+        )
+        run_result.graph.assert_called_once_with()
+
+
+class TestGetSessionReadOnly:
+    """Test that get_session translates Neo4j read-mode errors."""
+
+    @pytest.fixture(autouse=True)
+    def reset_module_state(self):
+        import api.attack_paths.database as db_module
+
+        original_driver = db_module._driver
+        db_module._driver = None
+        yield
+        db_module._driver = original_driver
+
+    @pytest.mark.parametrize(
+        "neo4j_code",
+        [
+            "Neo.ClientError.Statement.AccessMode",
+            "Neo.ClientError.Procedure.ProcedureNotFound",
+        ],
+    )
+    def test_get_session_raises_write_query_not_allowed(self, neo4j_code):
+        """Read-mode Neo4j errors should raise `WriteQueryNotAllowedException`."""
+        import api.attack_paths.database as db_module
+
+        mock_session = MagicMock()
+        neo4j_error = neo4j.exceptions.Neo4jError._hydrate_neo4j(
+            code=neo4j_code,
+            message="Write operations are not allowed",
+        )
+        mock_session.run.side_effect = neo4j_error
+
+        mock_driver = MagicMock()
+        mock_driver.session.return_value = mock_session
+        db_module._driver = mock_driver
+
+        with pytest.raises(db_module.WriteQueryNotAllowedException):
+            with db_module.get_session(
+                default_access_mode=neo4j.READ_ACCESS
+            ) as session:
+                session.run("CREATE (n) RETURN n")
+
+    def test_get_session_raises_generic_exception_for_other_errors(self):
+        """Non-read-mode Neo4j errors should raise GraphDatabaseQueryException."""
+        import api.attack_paths.database as db_module
+
+        mock_session = MagicMock()
+        neo4j_error = neo4j.exceptions.Neo4jError._hydrate_neo4j(
+            code="Neo.ClientError.Statement.SyntaxError",
+            message="Invalid syntax",
+        )
+        mock_session.run.side_effect = neo4j_error
+
+        mock_driver = MagicMock()
+        mock_driver.session.return_value = mock_session
+        db_module._driver = mock_driver
+
+        with pytest.raises(db_module.GraphDatabaseQueryException):
+            with db_module.get_session(
+                default_access_mode=neo4j.READ_ACCESS
+            ) as session:
+                session.run("INVALID CYPHER")
 
 
 class TestThreadSafety:

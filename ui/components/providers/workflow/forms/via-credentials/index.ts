@@ -4,3 +4,4 @@ export * from "./iac-credentials-form";
 export * from "./image-credentials-form";
 export * from "./k8s-credentials-form";
 export * from "./mongodbatlas-credentials-form";
+export * from "./openstack-credentials-form";
