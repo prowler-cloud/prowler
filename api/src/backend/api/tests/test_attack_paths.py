@@ -341,29 +341,24 @@ def test_serialize_graph_as_text_relationship_with_properties():
     assert '-[STS_ASSUMEROLE_ALLOW (weight: 1, reason: "trust-policy")]->' in result
 
 
-def test_serialize_graph_as_text_filters_internal_properties():
-    graph = {
-        "nodes": [
-            {
-                "id": "n1",
-                "labels": ["AWSAccount"],
-                "properties": {
-                    "name": "prod",
-                    "provider_id": "should-be-filtered",
-                    "lastupdated": 1234567890,
-                },
-            },
-        ],
-        "relationships": [],
-        "total_nodes": 1,
-        "truncated": False,
+def test_serialize_properties_filters_internal_fields():
+    properties = {
+        "name": "prod",
+        # Cartography metadata
+        "lastupdated": 1234567890,
+        "firstseen": 1234567800,
+        "_module_name": "cartography:aws",
+        "_module_version": "0.98.0",
+        # Provider isolation
+        "_provider_id": "42",
+        "_provider_element_id": "42:abc123",
+        "provider_id": "42",
+        "provider_element_id": "42:abc123",
     }
 
-    result = views_helpers.serialize_graph_as_text(graph)
+    result = views_helpers._serialize_properties(properties)
 
-    assert "provider_id" not in result
-    assert "lastupdated" not in result
-    assert "name" in result
+    assert result == {"name": "prod"}
 
 
 def test_serialize_graph_as_text_node_without_properties():
