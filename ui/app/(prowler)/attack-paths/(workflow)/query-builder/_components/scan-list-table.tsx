@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import type { ProviderType } from "@/types";
-import type { AttackPathScan } from "@/types/attack-paths";
+import type { AttackPathScan, ScanState } from "@/types/attack-paths";
 import { SCAN_STATES } from "@/types/attack-paths";
 
 import { ScanStatusBadge } from "./scan-status-badge";
@@ -42,6 +42,11 @@ interface ScanListTableProps {
 const TABLE_COLUMN_COUNT = 6;
 const DEFAULT_PAGE_SIZE = 5;
 const PAGE_SIZE_OPTIONS = [2, 5, 10, 15];
+const WAITING_STATES: readonly ScanState[] = [
+  SCAN_STATES.SCHEDULED,
+  SCAN_STATES.AVAILABLE,
+  SCAN_STATES.EXECUTING,
+];
 
 const baseLinkClass =
   "relative block rounded border-0 bg-transparent px-3 py-1.5 text-button-primary outline-none transition-all duration-300 hover:bg-bg-neutral-tertiary hover:text-text-neutral-primary focus:shadow-none dark:hover:bg-bg-neutral-secondary dark:hover:text-text-neutral-primary";
@@ -77,20 +82,17 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   };
 
   const isSelectDisabled = (scan: AttackPathScan) => {
-    return (
-      scan.attributes.state !== SCAN_STATES.COMPLETED ||
-      selectedScanId === scan.id
-    );
+    return !scan.attributes.graph_data_ready || selectedScanId === scan.id;
   };
 
   const getSelectButtonLabel = (scan: AttackPathScan) => {
     if (selectedScanId === scan.id) {
       return "Selected";
     }
-    if (scan.attributes.state === SCAN_STATES.SCHEDULED) {
-      return "Scheduled";
+    if (scan.attributes.graph_data_ready) {
+      return "Select";
     }
-    if (scan.attributes.state === SCAN_STATES.EXECUTING) {
+    if (WAITING_STATES.includes(scan.attributes.state)) {
       return "Waiting...";
     }
     if (scan.attributes.state === SCAN_STATES.FAILED) {
@@ -184,6 +186,7 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
                       <ScanStatusBadge
                         status={scan.attributes.state}
                         progress={scan.attributes.progress}
+                        graphDataReady={scan.attributes.graph_data_ready}
                       />
                     </TableCell>
                     <TableCell>
@@ -342,8 +345,8 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
         )}
       </div>
       <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-6 text-xs">
-        Only Attack Paths scans with &quot;Completed&quot; status can be
-        selected. Scans in progress will update automatically.
+        Scans can be selected when data is available. A new scan does not
+        interrupt access to existing data.
       </p>
     </>
   );

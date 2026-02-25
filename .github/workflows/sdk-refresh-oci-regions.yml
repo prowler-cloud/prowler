@@ -1,0 +1,93 @@
+name: 'SDK: Refresh OCI Regions'
+
+on:
+  schedule:
+    - cron: '0 9 * * 1' # Every Monday at 09:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  refresh-oci-regions:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      pull-requests: write
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          ref: 'master'
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install oci
+
+      - name: Update OCI regions
+        env:
+          OCI_CLI_USER: ${{ secrets.E2E_OCI_USER_ID }}
+          OCI_CLI_FINGERPRINT: ${{ secrets.E2E_OCI_FINGERPRINT }}
+          OCI_CLI_TENANCY: ${{ secrets.E2E_OCI_TENANCY_ID }}
+          OCI_CLI_KEY_CONTENT: ${{ secrets.E2E_OCI_KEY_CONTENT }}
+          OCI_CLI_REGION: ${{ secrets.E2E_OCI_REGION }}
+        run: python util/update_oci_regions.py
+
+      - name: Create pull request
+        id: create-pr
+        uses: peter-evans/create-pull-request@98357b18bf14b5342f975ff684046ec3b2a07725 # v8.0.0
+        with:
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          author: 'prowler-bot <179230569+prowler-bot@users.noreply.github.com>'
+          committer: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+          commit-message: 'feat(oraclecloud): update commercial regions'
+          branch: 'oci-regions-update-${{ github.run_number }}'
+          title: 'feat(oraclecloud): Update commercial regions'
+          labels: |
+            status/waiting-for-revision
+            no-changelog
+          body: |
+            ### Description
+
+            Automated update of OCI commercial regions from the official Oracle Cloud Infrastructure Identity service.
+
+            **Trigger:** ${{ github.event_name == 'schedule' && 'Scheduled (weekly)' || github.event_name == 'workflow_dispatch' && 'Manual' || 'Workflow update' }}
+            **Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ### Changes
+
+            This PR updates the `OCI_COMMERCIAL_REGIONS` dictionary in `prowler/providers/oraclecloud/config.py` with the latest regions fetched from the OCI Identity API (`list_regions()`).
+
+            - Government regions (`OCI_GOVERNMENT_REGIONS`) are preserved unchanged
+            - Region display names are mapped from Oracle's official documentation
+
+            ### Checklist
+
+            - [x] This is an automated update from OCI official sources
+            - [x] Government regions (us-langley-1, us-luke-1) preserved
+            - [x] No manual review of region data required
+
+            ### License
+
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+
+      - name: PR creation result
+        run: |
+          if [[ "${{ steps.create-pr.outputs.pull-request-number }}" ]]; then
+            echo "✓ Pull request #${{ steps.create-pr.outputs.pull-request-number }} created successfully"
+            echo "URL: ${{ steps.create-pr.outputs.pull-request-url }}"
+          else
+            echo "✓ No changes detected - OCI regions are up to date"
+          fi

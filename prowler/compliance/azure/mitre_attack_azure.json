@@ -212,7 +212,7 @@
       "Description": "Adversaries may obtain and abuse credentials of existing accounts as a means of gaining Initial Access, Persistence, Privilege Escalation, or Defense Evasion. Compromised credentials may be used to bypass access controls placed on various resources on systems within the network and may even be used for persistent access to remote systems and externally available services, such as VPNs, Outlook Web Access, network devices, and remote desktop.[1] Compromised credentials may also grant an adversary increased privilege to specific systems or access to restricted areas of the network. Adversaries may choose not to use malware or tools in conjunction with the legitimate access those credentials provide to make it harder to detect their presence.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1078/",
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_global_admin_in_less_than_five_users",
         "entra_non_privileged_user_has_mfa",
         "entra_policy_default_users_cannot_create_security_groups",
@@ -489,7 +489,7 @@
       "Description": "Adversaries may manipulate accounts to maintain access to victim systems. Account manipulation may consist of any action that preserves adversary access to a compromised account, such as modifying credentials or permission groups. These actions could also include account activity designed to subvert security policies, such as performing iterative password updates to bypass password duration policies and preserve the life of compromised credentials.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1098/",
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_global_admin_in_less_than_five_users",
         "entra_non_privileged_user_has_mfa",
         "entra_policy_default_users_cannot_create_security_groups",
@@ -804,7 +804,7 @@
       "Description": "Adversaries may modify authentication mechanisms and processes to access user credentials or enable otherwise unwarranted access to accounts. The authentication process is handled by mechanisms, such as the Local Security Authentication Server (LSASS) process and the Security Accounts Manager (SAM) on Windows, pluggable authentication modules (PAM) on Unix-based systems, and authorization plugins on MacOS systems, responsible for gathering, storing, and validating credentials. By modifying an authentication process, an adversary may be able to authenticate to a service or system without using Valid Accounts.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1556/",
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_global_admin_in_less_than_five_users",
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
@@ -1279,7 +1279,7 @@
       "Description": "Adversaries may sniff network traffic to capture information about an environment, including authentication material passed over the network. Network sniffing refers to using the network interface on a system to monitor or capture information sent over a wired or wireless connection. An adversary may place a network interface into promiscuous mode to passively access data in transit over the network, or use span ports to capture a larger amount of data.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1040/",
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_global_admin_in_less_than_five_users",
         "entra_non_privileged_user_has_mfa",
         "entra_policy_default_users_cannot_create_security_groups",

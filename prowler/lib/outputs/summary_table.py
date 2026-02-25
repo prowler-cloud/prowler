@@ -51,6 +51,9 @@ def display_summary_table(
         elif provider.type == "m365":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
+        elif provider.type == "googleworkspace":
+            entity_type = "Domain"
+            audited_entities = provider.identity.domain
         elif provider.type == "mongodbatlas":
             entity_type = "Organization"
             audited_entities = provider.identity.organization_name
@@ -86,6 +89,16 @@ def display_summary_table(
         elif provider.type == "alibabacloud":
             entity_type = "Account"
             audited_entities = provider.identity.account_id
+        elif provider.type == "openstack":
+            entity_type = "Project"
+            audited_entities = (
+                provider.identity.project_name
+                if provider.identity.project_name
+                else provider.identity.project_id
+            )
+        elif provider.type == "image":
+            entity_type = "Image"
+            audited_entities = ", ".join(provider.images)
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):

@@ -18,7 +18,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock-overview.html",
     "https://aws.amazon.com/about-aws/whats-new/2018/11/s3-object-lock/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/object-lock.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/S3/object-lock.html",
     "https://docs.aws.amazon.com/de_de/cli/latest/reference/s3api/put-object-lock-configuration.html"
   ],
   "Remediation": {

@@ -17,7 +17,7 @@
   "Risk": "Unencrypted S3 writes from dev endpoints leave ETL outputs, temp data, and scripts readable at rest. A misconfigured bucket or stolen creds can expose sensitive content, harming **confidentiality** and triggering compliance issues.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/s3-encryption-enabled.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Glue/s3-encryption-enabled.html",
     "https://docs.aws.amazon.com/glue/latest/dg/encryption-security-configuration.html"
   ],
   "Remediation": {

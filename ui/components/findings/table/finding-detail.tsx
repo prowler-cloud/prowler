@@ -181,13 +181,13 @@ export const FindingDetail = ({
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             <InfoField label="Check ID" variant="simple">
-              <CodeSnippet value={attributes.check_id} />
+              <CodeSnippet value={attributes.check_id} className="max-w-full" />
             </InfoField>
             <InfoField label="Finding ID" variant="simple">
-              <CodeSnippet value={findingDetails.id} />
+              <CodeSnippet value={findingDetails.id} className="max-w-full" />
             </InfoField>
             <InfoField label="Finding UID" variant="simple">
-              <CodeSnippet value={attributes.uid} />
+              <CodeSnippet value={attributes.uid} className="max-w-full" />
             </InfoField>
             <InfoField label="First seen" variant="simple">
               <DateWithTime inline dateTime={attributes.first_seen_at || "-"} />

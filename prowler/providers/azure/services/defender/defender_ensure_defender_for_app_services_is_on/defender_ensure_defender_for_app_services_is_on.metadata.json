@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_app_services_is_on",
-  "CheckTitle": "Ensure That Microsoft Defender for App Services Is Set To 'On' ",
+  "CheckTitle": "Defender for App Services is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureDefenderPlan",
+  "ResourceType": "microsoft.security/pricings",
   "ResourceGroup": "security",
-  "Description": "Ensure That Microsoft Defender for App Services Is Set To 'On' ",
-  "Risk": "Turning on Microsoft Defender for App Service enables threat detection for App Service, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
+  "Description": "**Azure subscriptions** are evaluated for **Defender for App Service** coverage by inspecting the `AppServices` pricing configuration. The finding indicates whether the plan is set to `Standard`, which applies protection to App Service resources at the subscription scope.",
+  "Risk": "Without this coverage, malicious traffic and runtime anomalies may go unseen, enabling:\n- Confidentiality loss via data exfiltration\n- Integrity compromise through web shells or code tampering\n- Availability impact from takeover and resource abuse",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/tutorial-enable-app-service-plan",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-app-service.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-app-service.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-app-service#terraform"
+      "CLI": "az security pricing create -n AppServices --tier standard",
+      "NativeIaC": "```bicep\n// Enable Defender for App Services at subscription scope\ntargetScope = 'subscription'\n\nresource example_resource_name 'Microsoft.Security/pricings@2024-01-01' = {\n  name: 'AppServices'\n  properties: {\n    pricingTier: 'Standard' // Critical: sets the plan to Standard (ON) for App Services\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Microsoft Defender for Cloud\n2. Select Environment settings > your subscription\n3. On Defender plans, toggle App Service to On\n4. Click Save",
+      "Terraform": "```hcl\n# Enable Defender for App Services at subscription level\nresource \"azurerm_security_center_subscription_pricing\" \"example_resource_name\" {\n  tier          = \"Standard\"   # Critical: sets the plan to Standard (ON)\n  resource_type = \"AppServices\" # Applies the setting to App Services\n}\n```"
     },
     "Recommendation": {
-      "Text": "By default, Microsoft Defender for Cloud is not enabled for your App Service instances. Enabling the Defender security service for App Service instances allows for advanced security defense using threat detection capabilities provided by Microsoft Security Response Center.",
-      "Url": ""
+      "Text": "Enable **Defender for App Service** at subscription scope with tier `Standard`. Integrate alerts with SOC tooling, tune rules to reduce noise, and review findings regularly. Apply **defense in depth** and **least privilege**, and automate responses to contain threats quickly.",
+      "Url": "https://hub.prowler.com/check/defender_ensure_defender_for_app_services_is_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

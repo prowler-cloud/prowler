@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_databases_is_on",
-  "CheckTitle": "Ensure That Microsoft Defender for Databases Is Set To 'On' ",
+  "CheckTitle": "Defender for Databases is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureDefenderPlan",
+  "ResourceType": "microsoft.security/pricings",
   "ResourceGroup": "security",
-  "Description": "Ensure That Microsoft Defender for Databases Is Set To 'On' ",
-  "Risk": "Enabling Microsoft Defender for Azure SQL Databases allows your organization more granular control of the infrastructure running your database software",
+  "Description": "**Azure subscription** is evaluated for **Defender for Databases** coverage: `Standard` pricing must be enabled for `SqlServers`, `SqlServerVirtualMachines`, `OpenSourceRelationalDatabases`, and `CosmosDbs`.",
+  "Risk": "Without this coverage, database workloads lack **advanced threat detection**, **vulnerability assessment**, and **behavior analytics**.\n\nAttacks like credential brute force, SQL injection, privilege abuse, and data exfiltration can go **undetected**, threatening **confidentiality, integrity**, and **availability**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/tutorial-enable-databases-plan",
+    "https://support.icompaas.com/support/solutions/articles/62000229826-ensure-that-microsoft-defender-for-databases-is-set-to-on-"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "# Enable all Defender for Databases plans (must run each command separately)\naz security pricing create --name SqlServers --tier Standard\naz security pricing create --name SqlServerVirtualMachines --tier Standard\naz security pricing create --name OpenSourceRelationalDatabases --tier Standard\naz security pricing create --name CosmosDbs --tier Standard",
+      "NativeIaC": "```bicep\n// Enable Microsoft Defender for Databases plans at subscription scope\ntargetScope = 'subscription'\n\nresource sqlServers 'Microsoft.Security/pricings@2023-01-01' = {\n  name: 'SqlServers'\n  properties: {\n    pricingTier: 'Standard' // Critical: sets Defender for SQL servers to Standard (ON)\n  }\n}\n\nresource sqlServerVMs 'Microsoft.Security/pricings@2023-01-01' = {\n  name: 'SqlServerVirtualMachines'\n  properties: {\n    pricingTier: 'Standard' // Critical: sets Defender for SQL servers on machines to Standard (ON)\n  }\n}\n\nresource openSourceDBs 'Microsoft.Security/pricings@2023-01-01' = {\n  name: 'OpenSourceRelationalDatabases'\n  properties: {\n    pricingTier: 'Standard' // Critical: sets Defender for open-source databases to Standard (ON)\n  }\n}\n\nresource cosmosDbs 'Microsoft.Security/pricings@2023-01-01' = {\n  name: 'CosmosDbs'\n  properties: {\n    pricingTier: 'Standard' // Critical: sets Defender for Cosmos DB to Standard (ON)\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Microsoft Defender for Cloud\n2. Select Environment settings > choose your subscription\n3. Open Defender plans\n4. Set these plans to On (Standard):\n   - SQL servers\n   - SQL servers on machines\n   - Open-source relational databases\n   - Cosmos DB\n5. Click Save",
+      "Terraform": "```hcl\n# Enable Microsoft Defender for Databases plans\nresource \"azurerm_security_center_subscription_pricing\" \"sqlservers\" {\n  resource_type = \"SqlServers\"\n  tier          = \"Standard\" # Critical: enables Defender (Standard)\n}\n\nresource \"azurerm_security_center_subscription_pricing\" \"sql_vm\" {\n  resource_type = \"SqlServerVirtualMachines\"\n  tier          = \"Standard\" # Critical: enables Defender (Standard)\n}\n\nresource \"azurerm_security_center_subscription_pricing\" \"oss_db\" {\n  resource_type = \"OpenSourceRelationalDatabases\"\n  tier          = \"Standard\" # Critical: enables Defender (Standard)\n}\n\nresource \"azurerm_security_center_subscription_pricing\" \"cosmos\" {\n  resource_type = \"CosmosDbs\"\n  tier          = \"Standard\" # Critical: enables Defender (Standard)\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Microsoft Defender for Azure SQL Databases",
-      "Url": ""
+      "Text": "Enable **Defender for Databases** at the `Standard` tier for all supported database types across subscriptions. Integrate alerts with monitoring, automate response, and enforce **least privilege** and **network segmentation** for defense in depth. Use policy to maintain continuous coverage for new resources.",
+      "Url": "https://hub.prowler.com/check/defender_ensure_defender_for_databases_is_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
