@@ -723,7 +723,7 @@ paths:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
             text/plain:
               schema:
-                $ref: '#/components/schemas/AttackPathsQueryResult'
+                type: string
           description: ''
         '403':
           description: Read-only queries are enforced
@@ -769,7 +769,7 @@ paths:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
             text/plain:
               schema:
-                $ref: '#/components/schemas/AttackPathsQueryResult'
+                type: string
           description: ''
         '400':
           description: Bad request (e.g., Unknown Attack Paths query for the selected
