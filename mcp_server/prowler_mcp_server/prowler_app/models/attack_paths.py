@@ -3,7 +3,6 @@
 This module provides Pydantic models for representing Attack Paths data
 with two-tier complexity:
 - AttackPathScan: For list operations with essential fields
-- DetailedAttackPathsScan: Extends simplified with additional operational fields
 - AttackPathQuery: Query definition with parameters
 - AttackPathQueryResult: Graph result with nodes, relationships, and summary
 
@@ -13,9 +12,8 @@ for optimal LLM token usage.
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AttackPathScan(MinimalSerializerMixin, BaseModel):
