@@ -215,7 +215,6 @@ class TestGoogleWorkspaceProvider:
             # Verify print_boxes was called
             assert mock_print_boxes.called
 
-    # Error path tests following Azure/M365 pattern
     def test_setup_session_credentials_file_invalid_json(self):
         """Test ValueError when credentials file has invalid format"""
         with patch(
