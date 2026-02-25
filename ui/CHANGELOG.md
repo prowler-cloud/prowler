@@ -10,6 +10,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - PDF report available for the CSA CCM compliance framework [(#10088)](https://github.com/prowler-cloud/prowler/pull/10088)
 - Cloudflare provider support [(#9910)](https://github.com/prowler-cloud/prowler/pull/9910)
 - CSV and PDF download buttons in compliance views [(#10093)](https://github.com/prowler-cloud/prowler/pull/10093)
+- Attack Paths tools added to Lighthouse AI workflow allowed list [(#10175)](https://github.com/prowler-cloud/prowler/pull/10175)
 
 ### 🔄 Changed
 
