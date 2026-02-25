@@ -5,18 +5,13 @@ import { ChevronRightIcon } from "lucide-react";
 import { KeyboardEvent } from "react";
 
 import { Checkbox } from "@/components/shadcn/checkbox";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
 import { TreeNodeProps } from "@/types/tree";
 
 import { TreeItemLabel } from "./tree-item-label";
 import { TreeLeaf } from "./tree-leaf";
 import { TreeSpinner } from "./tree-spinner";
-import { TreeStatusIcon } from "./tree-status-icon";
+import { TreeStatusIndicator } from "./tree-status-indicator";
 import { getAllDescendantIds, getTreeNodePadding } from "./utils";
 
 /**
@@ -45,20 +40,10 @@ export function TreeNode({
   const isSelected = selectedIds.includes(item.id);
   const statusIcon =
     !item.isLoading && item.status ? (
-      item.status === "error" && item.errorMessage ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span>
-              <TreeStatusIcon status={item.status} />
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-xs">{item.errorMessage}</p>
-          </TooltipContent>
-        </Tooltip>
-      ) : (
-        <TreeStatusIcon status={item.status} />
-      )
+      <TreeStatusIndicator
+        status={item.status}
+        errorMessage={item.errorMessage}
+      />
     ) : null;
 
   // Calculate indeterminate state based on descendant selection
