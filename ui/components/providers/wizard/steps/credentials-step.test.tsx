@@ -39,9 +39,7 @@ vi.mock("../../workflow/forms/select-credentials-type/m365", () => ({
 }));
 
 vi.mock("../../workflow/forms/update-via-service-account-key-form", () => ({
-  UpdateViaServiceAccountForm: () => (
-    <div>update-via-service-account-form</div>
-  ),
+  UpdateViaServiceAccountForm: () => <div>update-via-service-account-form</div>,
 }));
 
 describe("CredentialsStep", () => {
