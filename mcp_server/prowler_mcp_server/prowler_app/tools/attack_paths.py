@@ -7,14 +7,13 @@ through cloud infrastructure relationships.
 
 from typing import Any, Literal
 
-from pydantic import Field
-
 from prowler_mcp_server.prowler_app.models.attack_paths import (
     AttackPathQuery,
     AttackPathQueryResult,
     AttackPathScansListResponse,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
+from pydantic import Field
 
 
 class AttackPathsTools(BaseTool):
@@ -168,8 +167,6 @@ class AttackPathsTools(BaseTool):
         Returns:
         - nodes: Cloud resources, findings, and virtual nodes in the attack path
         - relationships: Connections between nodes (CAN_ACCESS, STS_ASSUMEROLE_ALLOW, etc.)
-        - summary: Statistics (node counts by type, finding count, internet-exposed paths)
-        - has_results: Boolean indicating if the query found attack paths
 
         Node types you may see:
         - EC2Instance, S3Bucket, RDSInstance, LoadBalancer, etc. (cloud resources)

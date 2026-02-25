@@ -99,19 +99,23 @@ class AttackPathScansListResponse(BaseModel):
         Returns:
             AttackPathScansListResponse with simplified scans and pagination metadata
         """
-        pagination = response.get("meta", {}).get("pagination")
+        pagination = response.get("meta", {}).get("pagination", None)
 
-        # Transform each scan
-        scans = [
-            AttackPathScan.from_api_response(item) for item in response.get("data", [])
-        ]
+        if pagination is None:
+            raise ValueError("Missing pagination metadata in API response")
+        else:
+            # Transform each scan
+            scans = [
+                AttackPathScan.from_api_response(item)
+                for item in response.get("data", [])
+            ]
 
-        return cls(
-            scans=scans,
-            total_num_scans=pagination.get("count"),
-            total_num_pages=pagination.get("pages"),
-            current_page=pagination.get("page"),
-        )
+            return cls(
+                scans=scans,
+                total_num_scans=pagination.get("count"),
+                total_num_pages=pagination.get("pages"),
+                current_page=pagination.get("page"),
+            )
 
 
 class AttackPathQueryParameter(MinimalSerializerMixin, BaseModel):
