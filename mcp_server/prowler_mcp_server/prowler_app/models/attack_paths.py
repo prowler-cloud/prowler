@@ -248,7 +248,7 @@ class AttackPathsGraphNode(MinimalSerializerMixin, BaseModel):
             status_extended = None
 
         return cls(
-            resource_id=properties["id"],
+            resource_id=properties.get("id", ""),
             labels=labels,
             properties=properties,
             severity=severity,
