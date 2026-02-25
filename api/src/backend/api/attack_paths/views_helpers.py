@@ -2,16 +2,25 @@ import logging
 
 from typing import Any, Iterable
 
+import neo4j
 from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 
 from api.attack_paths import database as graph_database, AttackPathsQueryDefinition
+from api.attack_paths.queries.schema import (
+    CARTOGRAPHY_SCHEMA_METADATA,
+    GITHUB_SCHEMA_URL,
+    RAW_SCHEMA_URL,
+)
 from config.custom_logging import BackendLogger
 from tasks.jobs.attack_paths.config import INTERNAL_LABELS
 
 logger = logging.getLogger(BackendLogger.API)
 
 
-def normalize_run_payload(raw_data):
+# Predefined query helpers
+
+
+def normalize_query_payload(raw_data):
     if not isinstance(raw_data, dict):  # Let the serializer handle this
         return raw_data
 
@@ -31,7 +40,7 @@ def normalize_run_payload(raw_data):
     return raw_data
 
 
-def prepare_query_parameters(
+def prepare_parameters(
     definition: AttackPathsQueryDefinition,
     provided_parameters: dict[str, Any],
     provider_uid: str,
@@ -80,7 +89,7 @@ def prepare_query_parameters(
     return clean_parameters
 
 
-def execute_attack_paths_query(
+def execute_query(
     database_name: str,
     definition: AttackPathsQueryDefinition,
     parameters: dict[str, Any],
@@ -106,7 +115,103 @@ def execute_attack_paths_query(
         )
 
 
-def _serialize_graph(graph, provider_id: str):
+# Custom query helpers
+
+
+def normalize_custom_query_payload(raw_data):
+    if not isinstance(raw_data, dict):
+        return raw_data
+
+    if "data" in raw_data and isinstance(raw_data.get("data"), dict):
+        data_section = raw_data.get("data") or {}
+        attributes = data_section.get("attributes") or {}
+        return {"cypher": attributes.get("cypher")}
+
+    return raw_data
+
+
+def execute_custom_query(
+    database_name: str,
+    cypher: str,
+    provider_id: str,
+) -> dict[str, Any]:
+    try:
+        graph = graph_database.execute_read_query(
+            database=database_name,
+            cypher=cypher,
+        )
+        serialized = _serialize_graph(graph, provider_id)
+        return _truncate_graph(serialized)
+
+    except graph_database.WriteQueryNotAllowedException:
+        raise PermissionDenied(
+            "Attack Paths query execution failed: read-only queries are enforced"
+        )
+
+    except graph_database.GraphDatabaseQueryException as exc:
+        logger.error(f"Custom cypher query failed: {exc}")
+        raise APIException(
+            "Attack Paths query execution failed due to a database error"
+        )
+
+
+# Cartography schema helpers
+
+
+def get_cartography_schema(
+    database_name: str, provider_id: str
+) -> dict[str, str] | None:
+    try:
+        with graph_database.get_session(
+            database_name, default_access_mode=neo4j.READ_ACCESS
+        ) as session:
+            result = session.run(
+                CARTOGRAPHY_SCHEMA_METADATA,
+                {"provider_id": provider_id},
+            )
+            record = result.single()
+    except graph_database.GraphDatabaseQueryException as exc:
+        logger.error(f"Cartography schema query failed: {exc}")
+        raise APIException(
+            "Unable to retrieve cartography schema due to a database error"
+        )
+
+    if not record:
+        return None
+
+    module_name = record["module_name"]
+    version = record["module_version"]
+    provider = module_name.split(":")[1]
+
+    return {
+        "id": f"{provider}-{version}",
+        "provider": provider,
+        "cartography_version": version,
+        "schema_url": GITHUB_SCHEMA_URL.format(version=version, provider=provider),
+        "raw_schema_url": RAW_SCHEMA_URL.format(version=version, provider=provider),
+    }
+
+
+# Private helpers
+
+
+def _truncate_graph(graph: dict[str, Any]) -> dict[str, Any]:
+    if graph["total_nodes"] > graph_database.MAX_CUSTOM_QUERY_NODES:
+        graph["truncated"] = True
+
+        graph["nodes"] = graph["nodes"][: graph_database.MAX_CUSTOM_QUERY_NODES]
+        kept_node_ids = {node["id"] for node in graph["nodes"]}
+
+        graph["relationships"] = [
+            rel
+            for rel in graph["relationships"]
+            if rel["source"] in kept_node_ids and rel["target"] in kept_node_ids
+        ]
+
+    return graph
+
+
+def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
     nodes = []
     kept_node_ids = set()
     for node in graph.nodes:
@@ -146,6 +251,8 @@ def _serialize_graph(graph, provider_id: str):
     return {
         "nodes": nodes,
         "relationships": relationships,
+        "total_nodes": len(nodes),
+        "truncated": False,
     }
 
 

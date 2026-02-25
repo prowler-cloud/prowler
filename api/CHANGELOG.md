@@ -10,6 +10,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - OpenStack provider support [(#10003)](https://github.com/prowler-cloud/prowler/pull/10003)
 - PDF report for the CSA CCM compliance framework [(#10088)](https://github.com/prowler-cloud/prowler/pull/10088)
 - `image` provider support for container image scanning [(#10128)](https://github.com/prowler-cloud/prowler/pull/10128)
+- Attack Paths: Custom query and Cartography schema endpoints [(#10149)](https://github.com/prowler-cloud/prowler/pull/10149)
 
 ### 🔄 Changed
 
@@ -34,6 +35,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Attack Paths: Orphaned temporary Neo4j databases are now cleaned up on scan failure and provider deletion [(#10101)](https://github.com/prowler-cloud/prowler/pull/10101)
 - Attack Paths: scan no longer raises `DatabaseError` when provider is deleted mid-scan [(#10116)](https://github.com/prowler-cloud/prowler/pull/10116)
+- Security Hub export retries transient replica conflicts without failing integrations [(#10144)](https://github.com/prowler-cloud/prowler/pull/10144)
 
 ### 🔐 Security
 

@@ -174,16 +174,17 @@
         }
       ],
       "Checks": [
-        "teams_external_file_sharing_restricted",
+        "entra_app_enforced_restrictions",
+        "exchange_transport_config_smtp_auth_disabled",
+        "exchange_transport_rules_mail_forwarding_disabled",
+        "exchange_transport_rules_whitelist_disabled",
         "sharepoint_external_sharing_managed",
         "sharepoint_external_sharing_restricted",
         "sharepoint_guest_sharing_restricted",
         "sharepoint_modern_authentication_required",
         "sharepoint_onedrive_sync_restricted_unmanaged_devices",
         "teams_external_file_sharing_restricted",
-        "exchange_transport_config_smtp_auth_disabled",
-        "exchange_transport_rules_mail_forwarding_disabled",
-        "exchange_transport_rules_whitelist_disabled"
+        "teams_external_file_sharing_restricted"
       ]
     },
     {
@@ -612,11 +613,12 @@
       ],
       "Checks": [
         "defenderxdr_endpoint_privileged_user_exposed_credentials",
-        "entra_managed_device_required_for_authentication",
-        "entra_users_mfa_enabled",
-        "entra_managed_device_required_for_mfa_registration",
         "entra_admin_users_phishing_resistant_mfa_enabled",
-        "entra_users_mfa_capable"
+        "entra_app_enforced_restrictions",
+        "entra_managed_device_required_for_authentication",
+        "entra_managed_device_required_for_mfa_registration",
+        "entra_users_mfa_capable",
+        "entra_users_mfa_enabled"
       ]
     },
     {
@@ -665,9 +667,10 @@
         }
       ],
       "Checks": [
-        "sharepoint_external_sharing_restricted",
         "entra_admin_portals_access_restriction",
-        "entra_policy_guest_users_access_restrictions"
+        "entra_app_enforced_restrictions",
+        "entra_policy_guest_users_access_restrictions",
+        "sharepoint_external_sharing_restricted"
       ]
     },
     {
@@ -749,7 +752,8 @@
       "Checks": [
         "defender_antiphishing_policy_configured",
         "defender_safelinks_policy_enabled",
-        "entra_admin_users_phishing_resistant_mfa_enabled"
+        "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_app_enforced_restrictions"
       ]
     },
     {
