@@ -25,6 +25,15 @@ ALL_PASSWORD_RESTRICTIONS = [
         restriction_type="customPasswordAddition",
         state="enabled",
     ),
+    CredentialRestriction(
+        restriction_type="symmetricKeyAddition",
+        state="enabled",
+    ),
+    CredentialRestriction(
+        restriction_type="symmetricKeyLifetime",
+        state="enabled",
+        max_lifetime="P365D",
+    ),
 ]
 
 ALL_KEY_RESTRICTIONS = [
@@ -77,7 +86,7 @@ class Test_entra_default_app_management_policy_enabled:
             assert result[0].resource_name == "Default App Management Policy"
 
     def test_missing_password_restriction(self):
-        """Missing customPasswordAddition restriction -> FAIL."""
+        """Missing some password restrictions -> FAIL."""
         entra_client = mock.MagicMock()
 
         with (
@@ -122,6 +131,8 @@ class Test_entra_default_app_management_policy_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert "Block custom passwords" in result[0].status_extended
+            assert "Block symmetric key addition" in result[0].status_extended
+            assert "Restrict symmetric key lifetime" in result[0].status_extended
 
     def test_missing_key_restriction(self):
         """Missing asymmetricKeyLifetime restriction -> FAIL."""
@@ -195,6 +206,8 @@ class Test_entra_default_app_management_policy_enabled:
             assert "Block password addition" in result[0].status_extended
             assert "Restrict max password lifetime" in result[0].status_extended
             assert "Block custom passwords" in result[0].status_extended
+            assert "Block symmetric key addition" in result[0].status_extended
+            assert "Restrict symmetric key lifetime" in result[0].status_extended
             assert "Restrict max certificate lifetime" in result[0].status_extended
 
     def test_restriction_with_disabled_state(self):

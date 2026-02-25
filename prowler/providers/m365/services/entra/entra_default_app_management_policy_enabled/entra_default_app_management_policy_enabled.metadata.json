@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "Authorization Policy",
   "ResourceGroup": "IAM",
-  "Description": "This check verifies that the **default app management policy** in Microsoft Entra ID has the required **credential restrictions** configured for applications: **block password addition**, **restrict max password lifetime**, **block custom passwords**, and **restrict max certificate lifetime**.",
-  "Risk": "Without the required credential restrictions, applications and service principals can use **insecure credential configurations**, including **long-lived secrets**, **custom passwords**, or **unrestricted certificates**, increasing the risk of **credential compromise** and **unauthorized access**.",
+  "Description": "This check verifies that the **default app management policy** in Microsoft Entra ID has all required **credential restrictions** configured for applications: **block password addition**, **restrict max password lifetime**, **block custom passwords**, **block symmetric key addition**, **restrict symmetric key lifetime**, and **restrict max certificate lifetime**.",
+  "Risk": "Without the required credential restrictions, applications and service principals can use **insecure credential configurations**, including **long-lived secrets**, **custom passwords**, **symmetric keys**, or **unrestricted certificates**, increasing the risk of **credential compromise** and **unauthorized access**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/graph/api/resources/tenantappmanagementpolicy",
@@ -20,11 +20,11 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Navigate to the **Microsoft Entra admin center** (https://entra.microsoft.com/).\n2. Go to **Identity** > **Applications** > **App management policies**.\n3. Select the **Default app management policy**.\n4. Under **Password restrictions**, enable: **Block password addition**, **Restrict max password lifetime**, and **Block custom passwords**.\n5. Under **Certificate restrictions**, enable: **Restrict max certificate lifetime**.\n6. Save the changes.",
+      "Other": "1. Navigate to the **Microsoft Entra admin center** (https://entra.microsoft.com/).\n2. Go to **Identity** > **Applications** > **App management policies**.\n3. Select the **Default app management policy**.\n4. Under **Password restrictions**, enable: **Block password addition**, **Restrict max password lifetime**, and **Block custom passwords**.\n5. Enable **Block symmetric key addition** and **Restrict symmetric key lifetime**.\n6. Under **Certificate restrictions**, enable: **Restrict max certificate lifetime**.\n7. Save the changes.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure the **default app management policy** with all required credential restrictions: **block password addition**, **restrict max password lifetime**, **block custom passwords**, and **restrict max certificate lifetime**. These restrictions prevent applications from using insecure or long-lived credentials.",
+      "Text": "Configure the **default app management policy** with all 6 credential restrictions: **block password addition**, **restrict max password lifetime**, **block custom passwords**, **block symmetric key addition**, **restrict symmetric key lifetime**, and **restrict max certificate lifetime**.",
       "Url": "https://hub.prowler.com/check/entra_default_app_management_policy_enabled"
     }
   },
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "The default app management policy helps enforce secure credential practices across all applications in the tenant. Each restriction type can be individually configured and enabled."
+  "Notes": "The default app management policy helps enforce secure credential practices across all applications in the tenant. Each restriction type can be individually configured and enabled. This check does not cover the **Identifier URI restrictions** (Block custom identifier URIs and Block identifier URIs without unique tenant identifiers) as these are only available in the Microsoft Graph beta API."
 }

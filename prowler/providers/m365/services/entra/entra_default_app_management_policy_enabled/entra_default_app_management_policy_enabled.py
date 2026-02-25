@@ -10,13 +10,16 @@ class entra_default_app_management_policy_enabled(Check):
 
     This check verifies that the tenant-wide default app management policy enforces
     the required credential restrictions on applications: block password addition,
-    restrict max password lifetime, block custom passwords, and restrict max certificate lifetime.
+    restrict max password lifetime, block custom passwords, block symmetric key addition,
+    restrict symmetric key lifetime, and restrict max certificate lifetime.
     """
 
     REQUIRED_PASSWORD_RESTRICTIONS = {
         "passwordAddition": "Block password addition",
         "passwordLifetime": "Restrict max password lifetime",
         "customPasswordAddition": "Block custom passwords",
+        "symmetricKeyAddition": "Block symmetric key addition",
+        "symmetricKeyLifetime": "Restrict symmetric key lifetime",
     }
     REQUIRED_KEY_RESTRICTIONS = {
         "asymmetricKeyLifetime": "Restrict max certificate lifetime",
@@ -76,8 +79,9 @@ class entra_default_app_management_policy_enabled(Check):
                     report.status_extended = (
                         "Default app management policy has all required credential "
                         "restrictions configured: block password addition, restrict "
-                        "max password lifetime, block custom passwords, and restrict "
-                        "max certificate lifetime."
+                        "max password lifetime, block custom passwords, block "
+                        "symmetric key addition, restrict symmetric key lifetime, "
+                        "and restrict max certificate lifetime."
                     )
                 else:
                     report.status = "FAIL"
