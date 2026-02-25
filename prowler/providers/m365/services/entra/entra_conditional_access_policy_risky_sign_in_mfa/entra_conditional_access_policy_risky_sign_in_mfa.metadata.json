@@ -1,0 +1,40 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_risky_sign_in_mfa",
+  "CheckTitle": "Conditional Access Policy requires MFA for medium and high risk sign-ins",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
+  "Description": "A Conditional Access policy should require **multifactor authentication** for sign-ins classified as `medium` or `high` risk, targeting all users and all cloud applications.\n\nThe policy must also enforce **sign-in frequency** set to `everyTime` to require re-authentication on each risky sign-in attempt.",
+  "Risk": "Without a Conditional Access policy enforcing MFA on risky sign-ins, attackers who compromise credentials can authenticate without additional verification. This exposes the tenant to **unauthorized access**, **lateral movement**, and **data exfiltration** from accounts flagged as risky by Identity Protection.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-risk",
+    "https://learn.microsoft.com/en-us/entra/id-protection/howto-identity-protection-configure-risk-policies"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center (https://entra.microsoft.com).\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Select **New policy**.\n4. Under **Users**, select **All users**.\n5. Under **Cloud apps or actions**, select **All cloud apps**.\n6. Under **Conditions** > **Sign-in risk**, set to **Yes** and check **High** and **Medium**.\n7. Under **Grant**, select **Require multifactor authentication**.\n8. Under **Session** > **Sign-in frequency**, select **Every time**.\n9. Set **Enable policy** to **On** and click **Create**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure a Conditional Access policy to enforce MFA on risky sign-ins. Use Entra ID Identity Protection risk signals to target `medium` and `high` risk levels, and set sign-in frequency to **every time** to prevent session reuse after risk detection.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_risky_sign_in_mfa"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_identity_protection_sign_in_risk_enabled"
+  ],
+  "Notes": "Requires Entra ID P2 license. Legacy risk policies in Identity Protection retire October 2026 - must use Conditional Access policies."
+}

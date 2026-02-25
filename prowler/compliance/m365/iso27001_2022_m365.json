@@ -20,6 +20,7 @@
       "Checks": [
         "defender_antiphishing_policy_configured",
         "defender_antispam_policy_inbound_no_allowed_domains",
+        "entra_conditional_access_policy_risky_sign_in_mfa",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_identity_protection_user_risk_enabled"
       ]
@@ -120,6 +121,7 @@
         "defenderxdr_endpoint_privileged_user_exposed_credentials",
         "defender_identity_health_issues_no_open",
         "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_conditional_access_policy_risky_sign_in_mfa",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_identity_protection_user_risk_enabled"
       ]
@@ -240,6 +242,7 @@
         "entra_admin_users_sign_in_frequency_enabled",
         "entra_admin_users_mfa_enabled",
         "entra_admin_users_sign_in_frequency_enabled",
+        "entra_conditional_access_policy_risky_sign_in_mfa",
         "entra_legacy_authentication_blocked",
         "entra_managed_device_required_for_authentication",
         "entra_seamless_sso_disabled",
@@ -685,6 +688,7 @@
       "Checks": [
         "entra_admin_users_sign_in_frequency_enabled",
         "entra_admin_users_mfa_enabled",
+        "entra_conditional_access_policy_risky_sign_in_mfa",
         "entra_managed_device_required_for_authentication",
         "entra_seamless_sso_disabled",
         "entra_users_mfa_enabled",

@@ -406,6 +406,7 @@
       "Id": "1.2.5",
       "Description": "Enable Identity Protection sign-in risk policies ",
       "Checks": [
+        "entra_conditional_access_policy_risky_sign_in_mfa",
         "entra_identity_protection_sign_in_risk_enabled"
       ],
       "Attributes": [

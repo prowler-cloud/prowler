@@ -1492,6 +1492,7 @@
       "Id": "5.2.2.7",
       "Description": "Microsoft Entra ID Protection sign-in risk detects risks in real-time and offline. A risky sign-in is an indicator for a sign-in attempt that might not have been performed by the legitimate owner of a user account. Enable Identity Protection sign-in risk policies.",
       "Checks": [
+        "entra_conditional_access_policy_risky_sign_in_mfa",
         "entra_identity_protection_sign_in_risk_enabled"
       ],
       "Attributes": [
