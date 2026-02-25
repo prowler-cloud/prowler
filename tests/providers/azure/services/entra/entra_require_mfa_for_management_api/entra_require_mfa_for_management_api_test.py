@@ -8,7 +8,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-class Test_entra_conditional_access_policy_require_mfa_for_management_api:
+class Test_entra_require_mfa_for_management_api:
     def test_entra_no_subscriptions(self):
         entra_client = mock.MagicMock
 
@@ -18,18 +18,18 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
+                "prowler.providers.azure.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
-                entra_conditional_access_policy_require_mfa_for_management_api,
+            from prowler.providers.azure.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
+                entra_require_mfa_for_management_api,
             )
 
             entra_client.conditional_access_policy = {}
             entra_client.tenant_ids = TENANT_IDS
 
-            check = entra_conditional_access_policy_require_mfa_for_management_api()
+            check = entra_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 0
 
@@ -42,19 +42,19 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
+                "prowler.providers.azure.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
-                entra_conditional_access_policy_require_mfa_for_management_api,
+            from prowler.providers.azure.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
+                entra_require_mfa_for_management_api,
             )
 
             # No policies configured
             entra_client.conditional_access_policy = {DOMAIN: {}}
             entra_client.tenant_ids = TENANT_IDS
 
-            check = entra_conditional_access_policy_require_mfa_for_management_api()
+            check = entra_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -76,12 +76,12 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
+                "prowler.providers.azure.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
-                entra_conditional_access_policy_require_mfa_for_management_api,
+            from prowler.providers.azure.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
+                entra_require_mfa_for_management_api,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -99,7 +99,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             entra_client.conditional_access_policy = {DOMAIN: {policy_id: policy}}
             entra_client.tenant_ids = TENANT_IDS
 
-            check = entra_conditional_access_policy_require_mfa_for_management_api()
+            check = entra_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -122,12 +122,12 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
+                "prowler.providers.azure.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
-                entra_conditional_access_policy_require_mfa_for_management_api,
+            from prowler.providers.azure.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
+                entra_require_mfa_for_management_api,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -145,7 +145,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             entra_client.conditional_access_policy = {DOMAIN: {policy_id: policy}}
             entra_client.tenant_ids = TENANT_IDS
 
-            check = entra_conditional_access_policy_require_mfa_for_management_api()
+            check = entra_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -167,12 +167,12 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
+                "prowler.providers.azure.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
-                entra_conditional_access_policy_require_mfa_for_management_api,
+            from prowler.providers.azure.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
+                entra_require_mfa_for_management_api,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -190,7 +190,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             entra_client.conditional_access_policy = {DOMAIN: {policy_id: policy}}
             entra_client.tenant_ids = TENANT_IDS
 
-            check = entra_conditional_access_policy_require_mfa_for_management_api()
+            check = entra_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -213,12 +213,12 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
+                "prowler.providers.azure.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
-                entra_conditional_access_policy_require_mfa_for_management_api,
+            from prowler.providers.azure.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
+                entra_require_mfa_for_management_api,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -236,7 +236,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             entra_client.conditional_access_policy = {DOMAIN: {policy_id: policy}}
             entra_client.tenant_ids = TENANT_IDS
 
-            check = entra_conditional_access_policy_require_mfa_for_management_api()
+            check = entra_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -259,12 +259,12 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
                 return_value=set_mocked_azure_provider(),
             ),
             mock.patch(
-                "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
+                "prowler.providers.azure.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
-                entra_conditional_access_policy_require_mfa_for_management_api,
+            from prowler.providers.azure.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
+                entra_require_mfa_for_management_api,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -282,7 +282,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             entra_client.conditional_access_policy = {DOMAIN: {policy_id: policy}}
             entra_client.tenant_ids = TENANT_IDS
 
-            check = entra_conditional_access_policy_require_mfa_for_management_api()
+            check = entra_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"

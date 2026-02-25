@@ -1603,7 +1603,7 @@
       "Id": "11.3.2.a",
       "Description": "establish strong identification, authentication such as multi-factor authentication, and authorisation procedures for privileged accounts and system administration accounts;",
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
         "entra_user_with_vm_access_has_mfa"
@@ -1692,7 +1692,7 @@
       "Checks": [
         "entra_trusted_named_locations_exists",
         "entra_user_with_vm_access_has_mfa",
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_privileged_user_has_mfa"
       ],
       "Attributes": [
@@ -1762,7 +1762,7 @@
       "Id": "11.6.2.a",
       "Description": "ensure the strength of authentication is appropriate to the classification of the asset to be accessed;",
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
         "entra_user_with_vm_access_has_mfa"
@@ -1794,7 +1794,7 @@
       "Id": "11.7.2",
       "Description": "The relevant entities shall ensure that the strength of authentication is appropriate for the classification of the asset to be accessed.",
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
         "entra_user_with_vm_access_has_mfa"

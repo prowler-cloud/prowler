@@ -1,6 +1,6 @@
 {
   "Provider": "m365",
-  "CheckID": "entra_conditional_access_policy_require_mfa_for_management_api",
+  "CheckID": "entra_require_mfa_for_management_api",
   "CheckTitle": "Conditional Access Policy enforces MFA for Azure Management API access",
   "CheckType": [],
   "ServiceName": "entra",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Enforce **MFA** via Conditional Access for the Windows Azure Service Management API scoped to all users. Prefer **phishing-resistant** methods, apply **least privilege**, and monitor sign-ins for anomalous activity. Only exclude dedicated break-glass accounts.",
-      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_require_mfa_for_management_api"
+      "Url": "https://hub.prowler.com/check/entra_require_mfa_for_management_api"
     }
   },
   "Categories": [

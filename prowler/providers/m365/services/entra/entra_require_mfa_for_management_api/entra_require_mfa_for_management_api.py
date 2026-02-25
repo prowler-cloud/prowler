@@ -9,7 +9,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 AZURE_MANAGEMENT_API_APP_ID = "797f4846-ba00-4fd7-ba43-dac1f8f63013"
 
 
-class entra_conditional_access_policy_require_mfa_for_management_api(Check):
+class entra_require_mfa_for_management_api(Check):
     """Check if at least one enabled Conditional Access policy requires MFA for Azure Management API.
 
     This check verifies that at least one enabled Conditional Access policy
@@ -35,7 +35,9 @@ class entra_conditional_access_policy_require_mfa_for_management_api(Check):
             resource_id="conditionalAccessPolicies",
         )
         report.status = "FAIL"
-        report.status_extended = "No Conditional Access Policy requires MFA for Azure Management API."
+        report.status_extended = (
+            "No Conditional Access Policy requires MFA for Azure Management API."
+        )
 
         for policy in entra_client.conditional_access_policies.values():
             if policy.state == ConditionalAccessPolicyState.DISABLED:

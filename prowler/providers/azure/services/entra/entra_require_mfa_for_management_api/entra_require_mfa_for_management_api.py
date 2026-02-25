@@ -3,7 +3,7 @@ from prowler.providers.azure.config import WINDOWS_AZURE_SERVICE_MANAGEMENT_API
 from prowler.providers.azure.services.entra.entra_client import entra_client
 
 
-class entra_conditional_access_policy_require_mfa_for_management_api(Check):
+class entra_require_mfa_for_management_api(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 

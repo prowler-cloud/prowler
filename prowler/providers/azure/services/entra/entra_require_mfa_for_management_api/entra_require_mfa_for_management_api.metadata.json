@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "entra_conditional_access_policy_require_mfa_for_management_api",
+  "CheckID": "entra_require_mfa_for_management_api",
   "CheckTitle": "Tenant requires MFA for all users to access Windows Azure Service Management API",
   "CheckType": [],
   "ServiceName": "entra",
@@ -26,7 +26,7 @@
     },
     "Recommendation": {
       "Text": "Enforce **MFA** via Conditional Access for `Windows Azure Service Management API` scoped to `All users`, with only break-glass exclusions. Prefer **phishing-resistant** methods, apply **least privilege** and **separation of duties**, and monitor sign-ins. Also secure related admin apps and explicitly protect Azure DevOps as a distinct target.",
-      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_require_mfa_for_management_api"
+      "Url": "https://hub.prowler.com/check/entra_require_mfa_for_management_api"
     }
   },
   "Categories": [
