@@ -142,7 +142,7 @@
         "entra_privileged_user_has_mfa",
         "entra_non_privileged_user_has_mfa",
         "entra_security_defaults_enabled",
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_user_with_vm_access_has_mfa",
         "network_flow_log_captured_sent",
         "app_http_logs_enabled"
@@ -730,7 +730,7 @@
         "entra_security_defaults_enabled",
         "entra_privileged_user_has_mfa",
         "entra_non_privileged_user_has_mfa",
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_user_with_vm_access_has_mfa",
         "entra_trusted_named_locations_exists",
         "sqlserver_azuread_administrator_enabled",

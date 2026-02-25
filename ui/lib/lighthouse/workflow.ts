@@ -80,6 +80,10 @@ const ALLOWED_TOOLS = new Set([
   "prowler_app_list_resources",
   "prowler_app_get_resource",
   "prowler_app_get_resources_overview",
+  // Attack Paths
+  "prowler_app_list_attack_paths_queries",
+  "prowler_app_list_attack_paths_scans",
+  "prowler_app_run_attack_paths_query",
 ]);
 
 /**

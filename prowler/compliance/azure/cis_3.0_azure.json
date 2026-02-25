@@ -729,7 +729,7 @@
       "Id": "2.2.7",
       "Description": "Ensure Multi-factor Authentication is Required for Windows Azure Service Management API",
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api"
+        "entra_require_mfa_for_management_api"
       ],
       "Attributes": [
         {

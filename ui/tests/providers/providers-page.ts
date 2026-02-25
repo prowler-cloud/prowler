@@ -194,6 +194,9 @@ export interface AlibabaCloudProviderCredential {
 
 // Providers page
 export class ProvidersPage extends BasePage {
+  readonly wizardModal: Locator;
+  readonly wizardTitle: Locator;
+
   // Alias input
   readonly aliasInput: Locator;
 
@@ -288,11 +291,30 @@ export class ProvidersPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    // Button to add a new cloud provider
-    this.addProviderButton = page.getByRole("link", {
-      name: "Add Cloud Provider",
-      exact: true,
+    this.wizardModal = page
+      .getByRole("dialog")
+      .filter({
+        has: page.getByRole("heading", {
+          name: /Adding A Cloud Provider|Update Provider Credentials/i,
+        }),
+      })
+      .first();
+    this.wizardTitle = page.getByRole("heading", {
+      name: /Adding A Cloud Provider|Update Provider Credentials/i,
     });
+
+    // Button to add a new cloud provider
+    this.addProviderButton = page
+      .getByRole("button", {
+        name: "Add Cloud Provider",
+        exact: true,
+      })
+      .or(
+        page.getByRole("link", {
+          name: "Add Cloud Provider",
+          exact: true,
+        }),
+      );
 
     // Table displaying existing providers
     this.providersTable = page.getByRole("table");
@@ -507,6 +529,25 @@ export class ProvidersPage extends BasePage {
     await this.addProviderButton.click();
   }
 
+  async openProviderWizardModal(): Promise<void> {
+    await this.clickAddProvider();
+    await this.verifyWizardModalOpen();
+  }
+
+  async closeProviderWizardModal(): Promise<void> {
+    await this.page.keyboard.press("Escape");
+    await expect(this.wizardModal).not.toBeVisible();
+  }
+
+  async verifyWizardModalOpen(): Promise<void> {
+    await expect(this.wizardModal).toBeVisible();
+    await expect(this.wizardTitle).toBeVisible();
+  }
+
+  async advanceWizardStep(): Promise<void> {
+    await this.clickNext();
+  }
+
   private async selectProviderRadio(radio: Locator): Promise<void> {
     // Force click to handle overlay intercepts
     await radio.click({ force: true });
@@ -536,8 +577,71 @@ export class ProvidersPage extends BasePage {
     await this.selectProviderRadio(this.githubProviderRadio);
   }
 
+  async selectAWSSingleAccountMethod(): Promise<void> {
+    await this.page
+      .getByRole("button", {
+        name: "Add A Single AWS Cloud Account",
+        exact: true,
+      })
+      .click();
+  }
+
+  async selectAWSOrganizationsMethod(): Promise<void> {
+    await this.page
+      .getByRole("button", {
+        name: "Add Multiple Accounts With AWS Organizations",
+        exact: true,
+      })
+      .click();
+  }
+
+  async verifyOrganizationsAuthenticationStepLoaded(): Promise<void> {
+    await this.verifyWizardModalOpen();
+    await expect(
+      this.page.getByRole("heading", {
+        name: /Authentication Details/i,
+      }),
+    ).toBeVisible();
+  }
+
+  async verifyOrganizationsAccountSelectionStepLoaded(): Promise<void> {
+    await this.verifyWizardModalOpen();
+    await expect(
+      this.page.getByText(
+        /Confirm all accounts under this Organization you want to add to Prowler\./i,
+      ),
+    ).toBeVisible();
+  }
+
+  async verifyOrganizationsLaunchStepLoaded(): Promise<void> {
+    await this.verifyWizardModalOpen();
+    await expect(this.page.getByText(/Accounts Connected!/i)).toBeVisible();
+  }
+
+  async chooseOrganizationsScanSchedule(
+    option: "daily" | "single",
+  ): Promise<void> {
+    const trigger = this.page.getByRole("combobox");
+    await trigger.click();
+
+    const optionName =
+      option === "single"
+        ? "Run a single scan (no recurring schedule)"
+        : "Scan Daily (every 24 hours)";
+
+    await this.page.getByRole("option", { name: optionName }).click();
+  }
+
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
     // Fill the AWS provider details
+    const singleAccountButton = this.page.getByRole("button", {
+      name: "Add A Single AWS Cloud Account",
+      exact: true,
+    });
+
+    if (await singleAccountButton.isVisible().catch(() => false)) {
+      await singleAccountButton.click();
+    }
 
     await this.accountIdInput.fill(data.accountId);
 
@@ -599,116 +703,83 @@ export class ProvidersPage extends BasePage {
   }
 
   async clickNext(): Promise<void> {
-    // The wizard interface may use different labels for its primary action button on each step.
-    // This function determines which button to click depending on the current URL and page content.
+    await this.verifyWizardModalOpen();
 
-    // Get the current page URL
-    const url = this.page.url();
-
-    // If on the "connect-account" step, click the "Next" button
-    if (/\/providers\/connect-account/.test(url)) {
-      await this.nextButton.click();
+    const launchScanButton = this.page.getByRole("button", {
+      name: "Launch scan",
+      exact: true,
+    });
+    if (await launchScanButton.isVisible().catch(() => false)) {
+      await launchScanButton.click();
+      await this.handleLaunchScanCompletion();
       return;
     }
 
-    // If on the "add-credentials" step, check for "Save" and "Next" buttons
-    if (/\/providers\/add-credentials/.test(url)) {
-      // Some UI implementations use "Save" instead of "Next" for primary action
+    const actionNames = [
+      "Go to scans",
+      "Authenticate",
+      "Next",
+      "Save",
+      "Check connection",
+    ] as const;
 
-      if (await this.saveButton.count()) {
-        await this.saveButton.click();
-        return;
-      }
-      // If "Save" is not present, try clicking the "Next" button
-      if (await this.nextButton.count()) {
-        await this.nextButton.click();
-        return;
-      }
-    }
-
-    // If on the "test-connection" step, click the "Launch scan" button
-    if (/\/providers\/test-connection/.test(url)) {
-      const buttonByText = this.page
-        .locator("button")
-        .filter({ hasText: "Launch scan" });
-
-      await buttonByText.click();
-
-      // Wait for either success (redirect to scans) or error message to appear
-      const errorMessage = this.page
-        .locator(
-          "div.border-border-error, div.bg-red-100, p.text-text-error-primary, p.text-danger",
-        )
-        .first();
-
-      // Helper to check and throw error if visible
-      const checkAndThrowError = async (): Promise<void> => {
-        const isErrorVisible = await errorMessage
-          .isVisible()
-          .catch(() => false);
-
-        if (isErrorVisible) {
-          const errorText = await errorMessage.textContent();
-
-          throw new Error(
-            `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
-          );
-        }
-      };
-
-      try {
-        // Wait up to 15 seconds for either the error message or redirect
-        await Promise.race([
-          errorMessage.waitFor({ state: "visible", timeout: 15000 }),
-          this.page.waitForURL(/\/scans/, { timeout: 15000 }),
-        ]);
-
-        // If we're still on test-connection page, check for error
-        if (/\/providers\/test-connection/.test(this.page.url())) {
-          await checkAndThrowError();
-        }
-      } catch (error) {
-        await checkAndThrowError();
-        throw error;
-      }
-
-      return;
-    }
-
-    // Fallback logic: try finding any common primary action buttons in expected order
-    const candidates: Array<{ name: string | RegExp; exact?: boolean }> = [
-      { name: "Next", exact: true }, // Try the "Next" button (exact match to avoid Next.js dev tools)
-      { name: "Save", exact: true }, // Try the "Save" button
-      { name: "Launch scan" }, // Try the "Launch scan" button
-      { name: /Continue|Proceed/i }, // Try "Continue" or "Proceed" (case-insensitive)
-    ];
-
-    // Try each candidate name and click it if found
-    for (const candidate of candidates) {
-      // Exclude Next.js dev tools button by filtering out buttons with aria-haspopup attribute
-      const btn = this.page
-        .getByRole("button", {
-          name: candidate.name,
-          exact: candidate.exact,
-        })
-        .and(this.page.locator(":not([aria-haspopup])"));
-
-      if (await btn.count()) {
-        await btn.click();
+    for (const actionName of actionNames) {
+      const button = this.page.getByRole("button", {
+        name: actionName,
+        exact: true,
+      });
+      if (await button.isVisible().catch(() => false)) {
+        await button.click();
         return;
       }
     }
 
-    // If none of the expected action buttons are present, throw an error
     throw new Error(
-      "Could not find an actionable Next/Save/Launch scan button on this step",
+      "Could not find an actionable primary button in the provider wizard modal.",
     );
   }
 
-  async selectCredentialsType(type: AWSCredentialType): Promise<void> {
-    // Ensure we are on the add-credentials page where the selector exists
+  private async handleLaunchScanCompletion(): Promise<void> {
+    const errorMessage = this.page
+      .locator(
+        "div.border-border-error, div.bg-red-100, p.text-text-error-primary, p.text-danger",
+      )
+      .first();
+    const goToScansButton = this.page.getByRole("button", {
+      name: "Go to scans",
+      exact: true,
+    });
 
-    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+    try {
+      await Promise.race([
+        this.page.waitForURL(/\/scans/, { timeout: 30000 }),
+        goToScansButton.waitFor({ state: "visible", timeout: 30000 }),
+        errorMessage.waitFor({ state: "visible", timeout: 30000 }),
+      ]);
+    } catch {
+      // Continue and inspect visible state below.
+    }
+
+    const isErrorVisible = await errorMessage.isVisible().catch(() => false);
+    if (isErrorVisible) {
+      const errorText = await errorMessage.textContent();
+      throw new Error(
+        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+      );
+    }
+
+    const isGoToScansVisible = await goToScansButton
+      .isVisible()
+      .catch(() => false);
+    if (isGoToScansVisible) {
+      await goToScansButton.click();
+      await this.page.waitForURL(/\/scans/, { timeout: 30000 });
+    }
+  }
+
+  async selectCredentialsType(type: AWSCredentialType): Promise<void> {
+    await this.verifyWizardModalOpen();
+    await expect(this.roleCredentialsRadio).toBeVisible();
 
     if (type === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {
       await this.roleCredentialsRadio.click({ force: true });
@@ -720,9 +791,8 @@ export class ProvidersPage extends BasePage {
   }
 
   async selectM365CredentialsType(type: M365CredentialType): Promise<void> {
-    // Ensure we are on the add-credentials page where the selector exists
-
-    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+    await this.verifyWizardModalOpen();
+    await expect(this.m365StaticCredentialsRadio).toBeVisible();
 
     if (type === M365_CREDENTIAL_OPTIONS.M365_CREDENTIALS) {
       await this.m365StaticCredentialsRadio.click({ force: true });
@@ -734,9 +804,8 @@ export class ProvidersPage extends BasePage {
   }
 
   async selectGCPCredentialsType(type: GCPCredentialType): Promise<void> {
-    // Ensure we are on the add-credentials page where the selector exists
-
-    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+    await this.verifyWizardModalOpen();
+    await expect(this.gcpServiceAccountRadio).toBeVisible();
     if (type === GCP_CREDENTIAL_OPTIONS.GCP_SERVICE_ACCOUNT) {
       await this.gcpServiceAccountRadio.click({ force: true });
     } else {
@@ -745,9 +814,8 @@ export class ProvidersPage extends BasePage {
   }
 
   async selectGitHubCredentialsType(type: GitHubCredentialType): Promise<void> {
-    // Ensure we are on the add-credentials page where the selector exists
-
-    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+    await this.verifyWizardModalOpen();
+    await expect(this.githubPersonalAccessTokenRadio).toBeVisible();
 
     if (type === GITHUB_CREDENTIAL_OPTIONS.GITHUB_PERSONAL_ACCESS_TOKEN) {
       await this.githubPersonalAccessTokenRadio.click({ force: true });
@@ -960,9 +1028,8 @@ export class ProvidersPage extends BasePage {
   async selectAlibabaCloudCredentialsType(
     type: AlibabaCloudCredentialType,
   ): Promise<void> {
-    // Ensure we are on the add-credentials page where the selector exists
-
-    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+    await this.verifyWizardModalOpen();
+    await expect(this.alibabacloudStaticCredentialsRadio).toBeVisible();
 
     if (type === ALIBABACLOUD_CREDENTIAL_OPTIONS.ALIBABACLOUD_CREDENTIALS) {
       await this.alibabacloudStaticCredentialsRadio.click({ force: true });
@@ -1047,6 +1114,7 @@ export class ProvidersPage extends BasePage {
     // Verify the connect account page is loaded
 
     await this.verifyPageHasProwlerTitle();
+    await this.verifyWizardModalOpen();
     await expect(this.awsProviderRadio).toBeVisible();
     await expect(this.ociProviderRadio).toBeVisible();
     await expect(this.gcpProviderRadio).toBeVisible();
@@ -1061,6 +1129,7 @@ export class ProvidersPage extends BasePage {
     // Verify the credentials page is loaded
 
     await this.verifyPageHasProwlerTitle();
+    await this.verifyWizardModalOpen();
     await expect(this.roleCredentialsRadio).toBeVisible();
   }
 
@@ -1115,7 +1184,7 @@ export class ProvidersPage extends BasePage {
     // Verify the launch scan page is loaded
 
     await this.verifyPageHasProwlerTitle();
-    await expect(this.page).toHaveURL(/\/providers\/test-connection/);
+    await this.verifyWizardModalOpen();
 
     // Verify the Launch scan button is visible
     const launchScanButton = this.page
@@ -1202,12 +1271,24 @@ export class ProvidersPage extends BasePage {
   async verifyUpdateCredentialsPageLoaded(): Promise<void> {
     // Verify the update credentials page is loaded
     await this.verifyPageHasProwlerTitle();
-    await expect(this.page).toHaveURL(/\/providers\/update-credentials/);
+    await this.verifyWizardModalOpen();
+    await expect(
+      this.page.getByRole("button", { name: "Authenticate", exact: true }),
+    ).toBeVisible();
   }
 
   async verifyTestConnectionPageLoaded(): Promise<void> {
     // Verify the test connection page is loaded
     await this.verifyPageHasProwlerTitle();
-    await expect(this.page).toHaveURL(/\/providers\/test-connection/);
+    await this.verifyWizardModalOpen();
+    const testConnectionAction = this.page
+      .getByRole("button", { name: "Launch scan", exact: true })
+      .or(
+        this.page.getByRole("button", {
+          name: "Check connection",
+          exact: true,
+        }),
+      );
+    await expect(testConnectionAction).toBeVisible();
   }
 }

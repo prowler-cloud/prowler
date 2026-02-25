@@ -11,7 +11,7 @@ import { TreeNodeProps } from "@/types/tree";
 import { TreeItemLabel } from "./tree-item-label";
 import { TreeLeaf } from "./tree-leaf";
 import { TreeSpinner } from "./tree-spinner";
-import { TreeStatusIcon } from "./tree-status-icon";
+import { TreeStatusIndicator } from "./tree-status-indicator";
 import { getAllDescendantIds, getTreeNodePadding } from "./utils";
 
 /**
@@ -34,11 +34,17 @@ export function TreeNode({
   onExpandedChange,
   showCheckboxes,
   renderItem,
-  expandAll,
   enableSelectChildren,
 }: TreeNodeProps) {
-  const isExpanded = expandAll || expandedIds.includes(item.id);
+  const isExpanded = expandedIds.includes(item.id);
   const isSelected = selectedIds.includes(item.id);
+  const statusIcon =
+    !item.isLoading && item.status ? (
+      <TreeStatusIndicator
+        status={item.status}
+        errorMessage={item.errorMessage}
+      />
+    ) : null;
 
   // Calculate indeterminate state based on descendant selection
   const descendantIds = getAllDescendantIds(item);
@@ -91,7 +97,6 @@ export function TreeNode({
           "flex items-center gap-2 rounded-md px-2 py-1.5",
           "hover:bg-prowler-white/5 cursor-pointer",
           "focus-visible:ring-border-input-primary-press focus-visible:ring-2 focus-visible:outline-none",
-          isSelected && "bg-prowler-white/10",
           item.disabled && "cursor-not-allowed opacity-50",
           item.className,
         )}
@@ -125,9 +130,7 @@ export function TreeNode({
           )}
         </button>
 
-        {!item.isLoading && item.status && (
-          <TreeStatusIcon status={item.status} />
-        )}
+        {statusIcon}
 
         {showCheckboxes && (
           <Checkbox
@@ -170,7 +173,7 @@ export function TreeNode({
           >
             {item.children?.map((child) => (
               <li key={child.id}>
-                {child.children ? (
+                {child.children && child.children.length > 0 ? (
                   <TreeNode
                     item={child}
                     level={level + 1}
@@ -180,7 +183,6 @@ export function TreeNode({
                     onExpandedChange={onExpandedChange}
                     showCheckboxes={showCheckboxes}
                     renderItem={renderItem}
-                    expandAll={expandAll}
                     enableSelectChildren={enableSelectChildren}
                   />
                 ) : (

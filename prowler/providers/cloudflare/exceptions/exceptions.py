@@ -34,16 +34,38 @@ class CloudflareBaseException(ProwlerException):
             "message": "Cloudflare API call failed",
             "remediation": "Inspect the API response details and permissions for the failing request.",
         },
-        (9007, "CloudflareCredentialsConflictError"): {
-            "message": "Conflicting Cloudflare credentials provided",
-            "remediation": "Use either API Token or API Key + Email, not both. Unset CLOUDFLARE_API_TOKEN or unset both CLOUDFLARE_API_KEY and CLOUDFLARE_API_EMAIL.",
+        (9007, "CloudflareNoAccountsError"): {
+            "message": "No Cloudflare accounts found",
+            "remediation": "Verify your API token has the required permissions to list accounts.",
+        },
+        (9008, "CloudflareUserTokenRequiredError"): {
+            "message": "User-level API token required",
+            "remediation": "Create a User API Token under My Profile (not an Account-owned token), or use API Key + Email authentication.",
+        },
+        (9009, "CloudflareInvalidAPIKeyError"): {
+            "message": "Invalid API Key or Email",
+            "remediation": "Verify your API Key and Email are correct. The API Key can be found in your Cloudflare profile.",
+        },
+        (9010, "CloudflareInvalidAPITokenError"): {
+            "message": "Invalid API Token format",
+            "remediation": "Check that your API Token is correctly formatted. Tokens should be alphanumeric strings.",
+        },
+        (9011, "CloudflareRateLimitError"): {
+            "message": "Cloudflare API rate limit exceeded",
+            "remediation": "Wait before retrying. Consider reducing the frequency of API calls.",
         },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
         provider = "Cloudflare"
         error_info = self.CLOUDFLARE_ERROR_CODES.get((code, self.__class__.__name__))
-        if message:
+        if error_info is None:
+            error_info = {
+                "message": message or "Unknown Cloudflare error",
+                "remediation": "Check the Cloudflare API documentation for more details.",
+            }
+        elif message:
+            error_info = error_info.copy()
             error_info["message"] = message
         super().__init__(
             code=code,
@@ -117,10 +139,46 @@ class CloudflareAPIError(CloudflareBaseException):
         )
 
 
-class CloudflareCredentialsConflictError(CloudflareBaseException):
-    """Exception for conflicting Cloudflare credentials."""
+class CloudflareNoAccountsError(CloudflareBaseException):
+    """Exception for no Cloudflare accounts found."""
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             9007, file=file, original_exception=original_exception, message=message
+        )
+
+
+class CloudflareUserTokenRequiredError(CloudflareBaseException):
+    """Exception for missing user-level Cloudflare authentication."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9008, file=file, original_exception=original_exception, message=message
+        )
+
+
+class CloudflareInvalidAPIKeyError(CloudflareBaseException):
+    """Exception for invalid Cloudflare API Key or Email."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9009, file=file, original_exception=original_exception, message=message
+        )
+
+
+class CloudflareInvalidAPITokenError(CloudflareBaseException):
+    """Exception for invalid Cloudflare API Token format."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9010, file=file, original_exception=original_exception, message=message
+        )
+
+
+class CloudflareRateLimitError(CloudflareBaseException):
+    """Exception for Cloudflare API rate limit exceeded."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9011, file=file, original_exception=original_exception, message=message
         )
