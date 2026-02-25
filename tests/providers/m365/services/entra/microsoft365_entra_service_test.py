@@ -6,6 +6,7 @@ from prowler.providers.m365.models import M365IdentityInfo
 from prowler.providers.m365.services.entra.entra_service import (
     AdminConsentPolicy,
     AdminRoles,
+    ApplicationEnforcedRestrictions,
     ApplicationsConditions,
     AuthorizationPolicy,
     AuthPolicyRoles,
@@ -86,6 +87,9 @@ async def mock_entra_get_conditional_access_policies(_):
                     frequency=24,
                     type=SignInFrequencyType.HOURS,
                     interval=SignInFrequencyInterval.TIME_BASED,
+                ),
+                application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                    is_enabled=False
                 ),
             ),
             state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
@@ -237,6 +241,9 @@ class Test_Entra_Service:
                         frequency=24,
                         type=SignInFrequencyType.HOURS,
                         interval=SignInFrequencyInterval.TIME_BASED,
+                    ),
+                    application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                        is_enabled=False
                     ),
                 ),
                 state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
