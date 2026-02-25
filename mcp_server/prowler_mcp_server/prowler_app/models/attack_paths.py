@@ -314,7 +314,6 @@ class AttackPathQueryResult(MinimalSerializerMixin, BaseModel):
 
         Args:
             response: API response with nodes and relationships
-            status_code: HTTP status code from the response
 
         Returns:
             AttackPathQueryResult with parsed data and summary
