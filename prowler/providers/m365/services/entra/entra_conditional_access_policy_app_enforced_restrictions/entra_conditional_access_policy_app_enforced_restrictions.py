@@ -84,7 +84,10 @@ class entra_conditional_access_policy_app_enforced_restrictions(Check):
             ):
                 continue
 
-            if not policy.session_controls.application_enforced_restrictions.is_enabled:
+            if (
+                not policy.session_controls.application_enforced_restrictions
+                or not policy.session_controls.application_enforced_restrictions.is_enabled
+            ):
                 continue
 
             report = CheckReportM365(

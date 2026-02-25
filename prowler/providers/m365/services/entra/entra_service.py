@@ -746,7 +746,7 @@ class SignInFrequency(BaseModel):
 class ApplicationEnforcedRestrictions(BaseModel):
     """Model representing application enforced restrictions session control."""
 
-    is_enabled: bool
+    is_enabled: bool = False
 
 
 class SessionControls(BaseModel):
@@ -754,7 +754,7 @@ class SessionControls(BaseModel):
 
     persistent_browser: PersistentBrowser
     sign_in_frequency: SignInFrequency
-    application_enforced_restrictions: ApplicationEnforcedRestrictions
+    application_enforced_restrictions: Optional[ApplicationEnforcedRestrictions] = None
 
 
 class ConditionalAccessGrantControl(Enum):
