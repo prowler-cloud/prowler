@@ -292,45 +292,45 @@ export const addCredentialsFormSchema = (
                                   .string()
                                   .optional(),
                               }
-                            : {}),
-                          : providerType === "cloudflare"
-                            ? {
-                                [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]:
-                                  z.string().optional(),
-                                [ProviderCredentialFields.CLOUDFLARE_API_KEY]: z
-                                  .string()
-                                  .optional(),
-                                [ProviderCredentialFields.CLOUDFLARE_API_EMAIL]:
-                                  z
-                                    .string()
-                                    .superRefine((val, ctx) => {
-                                      if (val && val.trim() !== "") {
-                                        const emailRegex =
-                                          /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                                        if (!emailRegex.test(val)) {
-                                          ctx.addIssue({
-                                            code: z.ZodIssueCode.custom,
-                                            message:
-                                              "Please enter a valid email address",
-                                          });
-                                        }
-                                      }
-                                    })
-                                    .optional(),
-                              }
-                            : providerType === "openstack"
+                            : providerType === "cloudflare"
                               ? {
-                                  [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]:
+                                  [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]:
+                                    z.string().optional(),
+                                  [ProviderCredentialFields.CLOUDFLARE_API_KEY]:
+                                    z.string().optional(),
+                                  [ProviderCredentialFields.CLOUDFLARE_API_EMAIL]:
                                     z
                                       .string()
-                                      .min(
-                                        1,
-                                        "Clouds YAML content is required",
-                                      ),
-                                  [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]:
-                                    z.string().min(1, "Cloud name is required"),
+                                      .superRefine((val, ctx) => {
+                                        if (val && val.trim() !== "") {
+                                          const emailRegex =
+                                            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                                          if (!emailRegex.test(val)) {
+                                            ctx.addIssue({
+                                              code: z.ZodIssueCode.custom,
+                                              message:
+                                                "Please enter a valid email address",
+                                            });
+                                          }
+                                        }
+                                      })
+                                      .optional(),
                                 }
-                              : {}),
+                              : providerType === "openstack"
+                                ? {
+                                    [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]:
+                                      z
+                                        .string()
+                                        .min(
+                                          1,
+                                          "Clouds YAML content is required",
+                                        ),
+                                    [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]:
+                                      z
+                                        .string()
+                                        .min(1, "Cloud name is required"),
+                                  }
+                                : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {
@@ -402,6 +402,8 @@ export const addCredentialsFormSchema = (
             message: "Registry Username is required when providing a password",
             path: [ProviderCredentialFields.REGISTRY_USERNAME],
           });
+        }
+      }
       if (providerType === "cloudflare") {
         // For Cloudflare, validation depends on the 'via' parameter
         if (via === "api_token") {
