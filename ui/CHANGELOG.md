@@ -18,6 +18,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - CSA CCM detailed view and small fix related with `Top Failed Sections` width [(#10018)](https://github.com/prowler-cloud/prowler/pull/10018)
 - Attack Paths: Show scan data availability status with badges and tooltips, allow selecting scans for querying while a new scan is in progress [(#10089)](https://github.com/prowler-cloud/prowler/pull/10089)
 - Attack Paths: Catches not found and permissions (for read only queries) errors [(#10140)](https://github.com/prowler-cloud/prowler/pull/10140)
+- Provider connection flow was unified into a modal wizard with AWS Organizations bulk onboarding, safer secret retry handling, and more stable E2E coverage [(#10153)](https://github.com/prowler-cloud/prowler/pull/10153) [(#10154)](https://github.com/prowler-cloud/prowler/pull/10154) [(#10155)](https://github.com/prowler-cloud/prowler/pull/10155) [(#10156)](https://github.com/prowler-cloud/prowler/pull/10156) [(#10157)](https://github.com/prowler-cloud/prowler/pull/10157) [(#10158)](https://github.com/prowler-cloud/prowler/pull/10158)
 
 ### 🔐 Security
 
