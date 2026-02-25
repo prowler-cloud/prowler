@@ -3,8 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useForm, UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 
 import { addProvider } from "@/actions/providers/providers";
@@ -113,6 +113,38 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
       };
   }
 };
+
+function applyBackStep({
+  prevStep,
+  awsMethod,
+  form,
+  setPrevStep,
+  setAwsMethod,
+}: {
+  prevStep: number;
+  awsMethod: "single" | null;
+  form: Pick<UseFormReturn<FormValues>, "setValue">;
+  setPrevStep: Dispatch<SetStateAction<number>>;
+  setAwsMethod: Dispatch<SetStateAction<"single" | null>>;
+}) {
+  // If in UID form after choosing single, go back to method selector
+  if (prevStep === 2 && awsMethod === "single") {
+    setAwsMethod(null);
+    form.setValue("providerUid", "");
+    form.setValue("providerAlias", "");
+    return;
+  }
+
+  setPrevStep((prev) => prev - 1);
+  // Deselect the providerType if the user is going back to the first step
+  if (prevStep === 2) {
+    form.setValue("providerType", undefined as unknown as ProviderType);
+    setAwsMethod(null);
+  }
+  // Reset the providerUid and providerAlias fields when going back
+  form.setValue("providerUid", "");
+  form.setValue("providerAlias", "");
+}
 
 export const ConnectAccountForm = ({
   onSuccess,
@@ -226,23 +258,13 @@ export const ConnectAccountForm = ({
   };
 
   const handleBackStep = () => {
-    // If in UID form after choosing single, go back to method selector
-    if (prevStep === 2 && awsMethod === "single") {
-      setAwsMethod(null);
-      form.setValue("providerUid", "");
-      form.setValue("providerAlias", "");
-      return;
-    }
-
-    setPrevStep((prev) => prev - 1);
-    // Deselect the providerType if the user is going back to the first step
-    if (prevStep === 2) {
-      form.setValue("providerType", undefined as unknown as ProviderType);
-      setAwsMethod(null);
-    }
-    // Reset the providerUid and providerAlias fields when going back
-    form.setValue("providerUid", "");
-    form.setValue("providerAlias", "");
+    applyBackStep({
+      prevStep,
+      awsMethod,
+      form,
+      setPrevStep,
+      setAwsMethod,
+    });
   };
 
   useEffect(() => {
@@ -257,25 +279,15 @@ export const ConnectAccountForm = ({
 
   useEffect(() => {
     onBackHandlerChange?.(() => {
-      // If in UID form after choosing single, go back to method selector
-      if (prevStep === 2 && awsMethod === "single") {
-        setAwsMethod(null);
-        form.setValue("providerUid", "");
-        form.setValue("providerAlias", "");
-        return;
-      }
-
-      setPrevStep((prev) => prev - 1);
-      // Deselect the providerType if the user is going back to the first step
-      if (prevStep === 2) {
-        form.setValue("providerType", undefined as unknown as ProviderType);
-        setAwsMethod(null);
-      }
-      // Reset the providerUid and providerAlias fields when going back
-      form.setValue("providerUid", "");
-      form.setValue("providerAlias", "");
+      applyBackStep({
+        prevStep,
+        awsMethod,
+        form,
+        setPrevStep,
+        setAwsMethod,
+      });
     });
-  }, [onBackHandlerChange, prevStep, awsMethod, providerType, isLoading, form]);
+  }, [onBackHandlerChange, prevStep, awsMethod, form]);
 
   useEffect(() => {
     const canSubmit =
