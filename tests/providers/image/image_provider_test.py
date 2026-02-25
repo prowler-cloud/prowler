@@ -778,16 +778,17 @@ class TestTestRegistryConnection:
         assert result.is_connected is False
         assert "Failed to connect to registry" in result.error
 
-    @patch("subprocess.run")
-    def test_image_reference_still_uses_trivy(self, mock_subprocess):
-        """Test that a full image reference still uses trivy (not registry catalog)."""
-        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_image_reference_uses_registry_adapter(self, mock_factory):
+        """Test that a full image reference uses registry adapter to verify tag."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_tags.return_value = ["3.18", "latest"]
+        mock_factory.return_value = mock_adapter
 
         result = ImageProvider.test_connection(image="alpine:3.18")
 
         assert result.is_connected is True
-        assert mock_subprocess.call_count == 1
-        assert mock_subprocess.call_args.args[0][0] == "trivy"
+        mock_adapter.list_tags.assert_called_once()
 
 
 class TestTrivyAuthIntegration:
@@ -802,6 +803,13 @@ class TestTrivyAuthIntegration:
             registry_username="myuser",
             registry_password="mypass",
         )
+
+        list(provider.run_scan())
+
+        call_kwargs = mock_subprocess.call_args
+        env = call_kwargs.kwargs.get("env") or call_kwargs[1].get("env")
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
 
     def test_registry_url_ghcr(self):
         assert ImageProvider._is_registry_url("ghcr.io/org") is True
@@ -835,6 +843,16 @@ class TestCleanup:
 
         provider.cleanup()
         provider.cleanup()
+
+    def test_cleanup_removes_trivy_cache_dir(self):
+        """Test that cleanup removes the temporary Trivy cache directory."""
+        provider = _make_provider()
+        cache_dir = provider._trivy_cache_dir
+        assert os.path.isdir(cache_dir)
+
+        provider.cleanup()
+
+        assert not os.path.isdir(cache_dir)
 
 
 class TestImageProviderInputValidation:
@@ -905,6 +923,22 @@ class TestImageProviderInputValidation:
         """Test that an invalid image config scanner raises ImageInvalidConfigScannerError."""
         with pytest.raises(ImageInvalidConfigScannerError):
             _make_provider(image_config_scanners=["misconfig", "vuln"])
+
+    @patch("subprocess.run")
+    def test_trivy_command_includes_cache_dir(self, mock_subprocess):
+        """Test that Trivy command includes --cache-dir for cache isolation."""
+        provider = _make_provider()
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_empty_trivy_output(), stderr=""
+        )
+
+        for _ in provider._scan_single_image("alpine:3.18"):
+            pass
+
+        call_args = mock_subprocess.call_args[0][0]
+        assert "--cache-dir" in call_args
+        idx = call_args.index("--cache-dir")
+        assert call_args[idx + 1] == provider._trivy_cache_dir
 
     @patch("subprocess.run")
     def test_trivy_command_includes_image_config_scanners(self, mock_subprocess):

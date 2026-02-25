@@ -3,8 +3,10 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from typing import Generator
 
 from alive_progress import alive_bar
@@ -102,6 +104,7 @@ class ImageProvider(Provider):
         self._session = None
         self._identity = "prowler"
         self._listing_only = False
+        self._trivy_cache_dir = tempfile.mkdtemp(prefix="prowler-trivy-cache-")
 
         # Registry authentication (follows IaC pattern: explicit params, env vars internal)
         self.registry_username = registry_username or os.environ.get(
@@ -348,6 +351,8 @@ class ImageProvider(Provider):
 
     def cleanup(self) -> None:
         """Clean up any resources after scanning."""
+        if hasattr(self, "_trivy_cache_dir") and os.path.isdir(self._trivy_cache_dir):
+            shutil.rmtree(self._trivy_cache_dir, ignore_errors=True)
 
     def _process_finding(
         self,
@@ -548,6 +553,8 @@ class ImageProvider(Provider):
             trivy_command = [
                 "trivy",
                 "image",
+                "--cache-dir",
+                self._trivy_cache_dir,
                 "--format",
                 "json",
                 "--scanners",
@@ -966,31 +973,22 @@ class ImageProvider(Provider):
                     registry_token=registry_token,
                 )
 
-            # Image reference → test via trivy
-            # Build env with registry credentials
-            env = dict(os.environ)
-            if registry_username and registry_password:
-                env["TRIVY_USERNAME"] = registry_username
-                env["TRIVY_PASSWORD"] = registry_password
-            elif registry_token:
-                env["TRIVY_REGISTRY_TOKEN"] = registry_token
+            # Image reference → verify tag exists via registry API
+            registry_host = ImageProvider._extract_registry(image)
+            is_dockerhub = registry_host is None
 
-            # Test by running trivy with --skip-update to just test image access
-            process = subprocess.run(
-                [
-                    "trivy",
-                    "image",
-                    "--skip-db-update",
-                    "--download-db-only=false",
-                    image,
-                ],
-                capture_output=True,
-                text=True,
-                timeout=60,
-                env=env,
-            )
+            # Parse repository and tag from the image reference
+            ref = image.rsplit("@", 1)[0] if "@" in image else image
+            last_segment = ref.split("/")[-1]
+            if ":" in last_segment:
+                tag = last_segment.split(":")[-1]
+                base = ref[: -(len(tag) + 1)]
+            else:
+                tag = "latest"
+                base = ref
 
-            # Docker Hub official images use "library/" prefix
+            repository = base[len(registry_host) + 1 :] if registry_host else base
+
             if is_dockerhub and "/" not in repository:
                 repository = f"library/{repository}"
 
