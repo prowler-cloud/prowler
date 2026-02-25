@@ -1,0 +1,100 @@
+---
+title: 'Getting Started with Google Workspace'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx";
+
+<VersionBadge version="5.19.0" />
+
+Prowler for Google Workspace allows you to audit your organization's Google Workspace environment for security misconfigurations, including super administrator account hygiene, domain settings, and more.
+
+## Prerequisites
+
+Before running Prowler with the Google Workspace provider, ensure you have:
+
+1. A Google Workspace account with super administrator privileges
+2. A Google Cloud Platform (GCP) project to host the Service Account
+3. Authentication configured (see [Authentication](/user-guide/providers/googleworkspace/authentication)):
+   - A **Service Account JSON key** from a GCP project with Domain-Wide Delegation enabled
+
+## Quick Start
+
+### Step 1: Set Up Authentication
+
+Set your Service Account credentials file path and delegated user email as environment variables:
+
+```bash
+export GOOGLEWORKSPACE_CREDENTIALS_FILE="/path/to/service-account-key.json"
+export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
+```
+
+### Step 2: Run Prowler
+
+```bash
+prowler googleworkspace
+```
+
+Prowler will authenticate as the delegated user and run all available security checks against your Google Workspace organization.
+
+## Authentication
+
+Prowler uses a **Service Account with Domain-Wide Delegation** to authenticate to Google Workspace. This requires:
+
+- A Service Account created in a GCP project
+- The Admin SDK API enabled in that project
+- Domain-Wide Delegation configured in the Google Workspace Admin Console
+- A super admin user email to impersonate
+
+### Using Environment Variables (Recommended)
+
+```bash
+export GOOGLEWORKSPACE_CREDENTIALS_FILE="/path/to/service-account-key.json"
+export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
+prowler googleworkspace
+```
+
+Alternatively, pass the credentials content directly as a JSON string:
+
+```bash
+export GOOGLEWORKSPACE_CREDENTIALS_CONTENT='{"type": "service_account", ...}'
+export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
+prowler googleworkspace
+```
+
+<Note>
+The delegated user must be a super admin email in your Google Workspace organization. The service account credentials must be provided via environment variables (`GOOGLEWORKSPACE_CREDENTIALS_FILE` or `GOOGLEWORKSPACE_CREDENTIALS_CONTENT`).
+</Note>
+
+## Understanding the Output
+
+When Prowler runs successfully, it will display the credentials being used:
+
+```
+Using the Google Workspace credentials below:
+┌─────────────────────────────────────────────────────────┐
+│ Google Workspace Domain: yourdomain.com                 │
+│ Customer ID: C0xxxxxxx                                  │
+│ Delegated User: admin@yourdomain.com                    │
+│ Authentication Method: Service Account with Domain-Wide  │
+│ Delegation                                              │
+└─────────────────────────────────────────────────────────┘
+```
+
+Findings are reported per check. For example, the `directory_super_admin_count` check verifies the number of super administrators is within a recommended range (2–4):
+
+- **PASS** — 2 to 4 super administrators found
+- **FAIL** — 0 or 1 (single point of failure) or 5+ (excessive privilege exposure)
+
+Output files are saved in the configured output directory (default: `output/`) in CSV, JSON-OCSF, and HTML formats.
+
+## Configuration
+
+Prowler uses a configuration file to customize provider behavior. To use a custom configuration:
+
+```bash
+prowler googleworkspace --config-file /path/to/config.yaml
+```
+
+## Next Steps
+
+- [Authentication](/user-guide/providers/googleworkspace/authentication) — Detailed guide on setting up a Service Account and Domain-Wide Delegation

@@ -114,7 +114,7 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
       name="providerType"
       control={control}
       render={({ field }) => (
-        <div className="flex h-[calc(100vh-200px)] flex-col px-4">
+        <div className="flex flex-col px-4">
           <div className="relative z-10 shrink-0 pb-4">
             <SearchInput
               aria-label="Search providers"
@@ -125,19 +125,11 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
             />
           </div>
 
-          <div className="minimal-scrollbar relative flex-1 overflow-y-auto pr-3">
+          <div className="relative">
             <div
               role="listbox"
               aria-label="Select a provider"
               className="flex flex-col gap-3"
-              style={{
-                maskImage:
-                  "linear-gradient(to bottom, transparent, black 24px)",
-                WebkitMaskImage:
-                  "linear-gradient(to bottom, transparent, black 24px)",
-                paddingTop: "24px",
-                marginTop: "-24px",
-              }}
             >
               {filteredProviders.length > 0 ? (
                 filteredProviders.map((provider) => {
@@ -152,19 +144,26 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
                       aria-selected={isSelected}
                       onClick={() => field.onChange(provider.value)}
                       className={cn(
-                        "flex w-full cursor-pointer items-center gap-3 rounded-lg border p-4 text-left transition-all",
-                        "hover:border-button-primary",
-                        "focus-visible:border-button-primary focus-visible:ring-button-primary focus:outline-none focus-visible:ring-1",
+                        "flex min-h-[72px] w-full items-center gap-4 rounded-lg border px-3 py-2.5 text-left transition-colors",
+                        "focus-visible:border-primary focus-visible:outline-none",
                         isSelected
-                          ? "border-button-primary bg-bg-neutral-tertiary"
-                          : "border-border-neutral-secondary bg-bg-neutral-secondary",
+                          ? "border-primary bg-bg-neutral-tertiary"
+                          : "border-border-neutral-primary bg-bg-neutral-tertiary hover:border-primary",
                         isInvalid && "border-bg-fail",
                       )}
                     >
-                      <BadgeComponent size={26} />
-                      <span className="text-text-neutral-primary text-sm font-medium">
-                        {provider.label}
-                      </span>
+                      <div className="border-border-neutral-primary bg-bg-input-primary flex size-[18px] shrink-0 items-center justify-center rounded-full border shadow-xs">
+                        {isSelected && (
+                          <div className="bg-primary size-2.5 rounded-full" />
+                        )}
+                      </div>
+
+                      <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                        <BadgeComponent size={26} />
+                        <span className="text-foreground text-sm leading-6">
+                          {provider.label}
+                        </span>
+                      </div>
                     </button>
                   );
                 })

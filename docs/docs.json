@@ -229,6 +229,13 @@
                 ]
               },
               {
+                "group": "Google Workspace",
+                "pages": [
+                  "user-guide/providers/googleworkspace/getting-started-googleworkspace",
+                  "user-guide/providers/googleworkspace/authentication"
+                ]
+              },
+              {
                 "group": "GitHub",
                 "pages": [
                   "user-guide/providers/github/getting-started-github",

@@ -1013,7 +1013,7 @@
       "Id": "6.2.6",
       "Description": "Ensure that multifactor authentication is required for Windows Azure Service Management API",
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api"
+        "entra_require_mfa_for_management_api"
       ],
       "Attributes": [
         {
