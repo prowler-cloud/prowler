@@ -23,6 +23,7 @@ interface PollConnectionTaskOptions {
   sleep?: (ms: number) => Promise<void>;
   maxRetries?: number;
   delaysMs?: number[];
+  signal?: AbortSignal;
 }
 
 export interface PollConnectionTaskResult {
@@ -40,6 +41,41 @@ function getPollingDelay(attempt: number, delaysMs: number[]): number {
   }
   const delayIndex = Math.min(attempt, delaysMs.length - 1);
   return delaysMs[delayIndex] ?? delaysMs[delaysMs.length - 1];
+}
+
+function sleepWithAbort(
+  ms: number,
+  sleep: (ms: number) => Promise<void>,
+  signal?: AbortSignal,
+): Promise<void> {
+  if (!signal) {
+    return sleep(ms);
+  }
+
+  return new Promise((resolve) => {
+    if (signal.aborted) {
+      resolve();
+      return;
+    }
+
+    let settled = false;
+    const handleAbort = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      resolve();
+    };
+
+    signal.addEventListener("abort", handleAbort, { once: true });
+    void sleep(ms).finally(() => {
+      if (!settled) {
+        settled = true;
+        signal.removeEventListener("abort", handleAbort);
+        resolve();
+      }
+    });
+  });
 }
 
 function normalizeAccountProviderMapping(
@@ -189,6 +225,7 @@ export async function pollConnectionTask(
       new Promise((resolve) => setTimeout(resolve, ms)),
     maxRetries = 20,
     delaysMs = [...DEFAULT_POLL_DELAYS_MS],
+    signal,
   }: PollConnectionTaskOptions = {},
 ): Promise<PollConnectionTaskResult> {
   const inProgressStates = new Set([
@@ -206,7 +243,14 @@ export async function pollConnectionTask(
     });
 
   for (let attempt = 0; attempt < maxRetries; attempt += 1) {
+    if (signal?.aborted) {
+      return { success: false, error: "Connection test cancelled." };
+    }
+
     const taskResponse = await taskFetcher(taskId);
+    if (signal?.aborted) {
+      return { success: false, error: "Connection test cancelled." };
+    }
 
     if (isRecord(taskResponse) && typeof taskResponse.error === "string") {
       return { success: false, error: taskResponse.error };
@@ -248,7 +292,7 @@ export async function pollConnectionTask(
       return { success: false, error: "Unexpected task state." };
     }
 
-    await sleep(getPollingDelay(attempt, delaysMs));
+    await sleepWithAbort(getPollingDelay(attempt, delaysMs), sleep, signal);
   }
 
   return { success: false, error: "Connection test timed out." };

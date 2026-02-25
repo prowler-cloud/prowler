@@ -26,6 +26,7 @@ import {
   pollConnectionTask,
   runWithConcurrencyLimit,
 } from "../org-account-selection.utils";
+import { extractErrorMessage } from "./error-utils";
 
 interface SelectionState {
   hasSelectableDescendants: boolean;
@@ -156,19 +157,6 @@ function buildTreeWithConnectionState(
   });
 }
 
-function extractErrorMessage(response: unknown, fallback: string): string {
-  if (!response || typeof response !== "object") {
-    return fallback;
-  }
-
-  const responseRecord = response as {
-    error?: string;
-    errors?: Array<{ detail?: string }>;
-  };
-  const detailedError = responseRecord.errors?.[0]?.detail;
-  return detailedError || responseRecord.error || fallback;
-}
-
 function getSelectionKey(ids: string[]) {
   return [...ids].sort().join(",");
 }
@@ -216,6 +204,7 @@ export function useOrgAccountSelectionFlow({
     Map<string, string>
   >(new Map());
   const isMountedRef = useRef(true);
+  const connectionTestAbortControllerRef = useRef<AbortController | null>(null);
   const hasAppliedRef = useRef(false);
   const lastAppliedSelectionKeyRef = useRef<string>("");
   const startTestingActionRef = useRef<() => void>(() => {});
@@ -261,10 +250,16 @@ export function useOrgAccountSelectionFlow({
 
     return () => {
       isMountedRef.current = false;
+      connectionTestAbortControllerRef.current?.abort();
     };
   }, []);
 
   const testAllConnections = async (providerIds: string[]) => {
+    connectionTestAbortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    connectionTestAbortControllerRef.current = abortController;
+    const { signal } = abortController;
+
     setIsTesting(true);
 
     for (const id of providerIds) {
@@ -272,68 +267,76 @@ export function useOrgAccountSelectionFlow({
       setConnectionError(id, null);
     }
 
-    await runWithConcurrencyLimit(providerIds, 5, async (providerId) => {
-      if (!isMountedRef.current) {
-        return;
-      }
-
-      try {
-        const formData = new FormData();
-        formData.set("providerId", providerId);
-
-        const checkResult = await checkConnectionProvider(formData);
-        if (!isMountedRef.current) {
+    try {
+      await runWithConcurrencyLimit(providerIds, 5, async (providerId) => {
+        if (!isMountedRef.current || signal.aborted) {
           return;
         }
 
-        if (checkResult?.error || checkResult?.errors?.length) {
+        try {
+          const formData = new FormData();
+          formData.set("providerId", providerId);
+
+          const checkResult = await checkConnectionProvider(formData);
+          if (!isMountedRef.current || signal.aborted) {
+            return;
+          }
+
+          if (checkResult?.error || checkResult?.errors?.length) {
+            setConnectionResult(providerId, CONNECTION_TEST_STATUS.ERROR);
+            setConnectionError(
+              providerId,
+              extractErrorMessage(checkResult, "Connection test failed."),
+            );
+            return;
+          }
+
+          const taskId = checkResult?.data?.id;
+          if (!taskId) {
+            setConnectionResult(providerId, CONNECTION_TEST_STATUS.SUCCESS);
+            setConnectionError(providerId, null);
+            return;
+          }
+
+          const taskResult = await pollConnectionTask(taskId, { signal });
+          if (!isMountedRef.current || signal.aborted) {
+            return;
+          }
+          setConnectionResult(
+            providerId,
+            taskResult.success
+              ? CONNECTION_TEST_STATUS.SUCCESS
+              : CONNECTION_TEST_STATUS.ERROR,
+          );
+          setConnectionError(
+            providerId,
+            taskResult.success
+              ? null
+              : taskResult.error || "Connection failed for this account.",
+          );
+        } catch {
+          if (!isMountedRef.current || signal.aborted) {
+            return;
+          }
           setConnectionResult(providerId, CONNECTION_TEST_STATUS.ERROR);
           setConnectionError(
             providerId,
-            extractErrorMessage(checkResult, "Connection test failed."),
+            "Unexpected error during connection test.",
           );
-          return;
         }
-
-        const taskId = checkResult?.data?.id;
-        if (!taskId) {
-          setConnectionResult(providerId, CONNECTION_TEST_STATUS.SUCCESS);
-          setConnectionError(providerId, null);
-          return;
+      });
+    } finally {
+      if (connectionTestAbortControllerRef.current === abortController) {
+        connectionTestAbortControllerRef.current = null;
+        if (isMountedRef.current) {
+          setIsTesting(false);
         }
-
-        const taskResult = await pollConnectionTask(taskId);
-        if (!isMountedRef.current) {
-          return;
-        }
-        setConnectionResult(
-          providerId,
-          taskResult.success
-            ? CONNECTION_TEST_STATUS.SUCCESS
-            : CONNECTION_TEST_STATUS.ERROR,
-        );
-        setConnectionError(
-          providerId,
-          taskResult.success
-            ? null
-            : taskResult.error || "Connection failed for this account.",
-        );
-      } catch {
-        if (!isMountedRef.current) {
-          return;
-        }
-        setConnectionResult(providerId, CONNECTION_TEST_STATUS.ERROR);
-        setConnectionError(
-          providerId,
-          "Unexpected error during connection test.",
-        );
       }
-    });
+    }
 
-    if (!isMountedRef.current) {
+    if (!isMountedRef.current || signal.aborted) {
       return;
     }
-    setIsTesting(false);
 
     const latestResults = useOrgSetupStore.getState().connectionResults;
     const allPassed =
@@ -356,13 +359,18 @@ export function useOrgAccountSelectionFlow({
     setApplyError(null);
     setIsApplying(true);
 
-    const accounts = sanitizedSelectedAccountIds.map((id) => ({
+    const currentSelectedAccountIds = useOrgSetupStore
+      .getState()
+      .selectedAccountIds.filter((id) => selectableAccountIdSet.has(id));
+    const currentSelectionKey = getSelectionKey(currentSelectedAccountIds);
+
+    const accounts = currentSelectedAccountIds.map((id) => ({
       id,
       ...(accountAliases[id] ? { alias: accountAliases[id] } : {}),
     }));
     const ouIds = getOuIdsForSelectedAccounts(
       discoveryResult,
-      sanitizedSelectedAccountIds,
+      currentSelectedAccountIds,
     );
     const organizationalUnits = ouIds.map((id) => ({ id }));
 
@@ -390,7 +398,7 @@ export function useOrgAccountSelectionFlow({
 
     setCreatedProviderIds(providerIds);
     const mapping = await buildAccountToProviderMap({
-      selectedAccountIds: sanitizedSelectedAccountIds,
+      selectedAccountIds: currentSelectedAccountIds,
       providerIds,
       applyResult: result,
       resolveProviderUidById: async (providerId) => {
@@ -413,7 +421,7 @@ export function useOrgAccountSelectionFlow({
 
     setAccountToProviderMap(mapping);
     setIsApplying(false);
-    lastAppliedSelectionKeyRef.current = selectedAccountKey;
+    lastAppliedSelectionKeyRef.current = currentSelectionKey;
 
     await testAllConnections(providerIds);
   };

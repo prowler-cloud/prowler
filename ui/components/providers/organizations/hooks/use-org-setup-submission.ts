@@ -15,6 +15,8 @@ import { getSelectableAccountIds } from "@/actions/organizations/organizations.a
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { DISCOVERY_STATUS, DiscoveryResult } from "@/types/organizations";
 
+import { extractErrorMessage } from "./error-utils";
+
 const DISCOVERY_POLL_INTERVAL_MS = 3000;
 const DISCOVERY_MAX_RETRIES = 60;
 
@@ -100,7 +102,7 @@ export function useOrgSetupSubmission({
         }
       }
     } else {
-      setApiError(result.error ?? `Failed to create ${context}`);
+      setApiError(extractErrorMessage(result, `Failed to create ${context}`));
     }
   };
 

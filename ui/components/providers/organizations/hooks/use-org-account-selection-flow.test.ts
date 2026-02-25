@@ -281,4 +281,52 @@ describe("useOrgAccountSelectionFlow", () => {
       expect(latestFooterConfig?.onAction).toBeDefined();
     });
   });
+
+  it("uses latest selected accounts when applying discovery", async () => {
+    // Given
+    setupDiscoveryAndSelection([TEST_ACCOUNTS[0]]);
+    organizationsActionsMock.applyDiscovery.mockResolvedValue(
+      buildApplySuccessResult([TEST_ACCOUNTS[1]]),
+    );
+    providersActionsMock.checkConnectionProvider.mockResolvedValue({
+      data: {},
+    });
+    const onFooterChange = vi.fn();
+    let latestFooterConfig: {
+      onAction?: () => void;
+    } | null = null;
+    onFooterChange.mockImplementation((config) => {
+      latestFooterConfig = config;
+    });
+
+    renderHook(() =>
+      useOrgAccountSelectionFlow({
+        onBack: vi.fn(),
+        onNext: vi.fn(),
+        onSkip: vi.fn(),
+        onFooterChange,
+      }),
+    );
+
+    // When
+    act(() => {
+      useOrgSetupStore.getState().setSelectedAccountIds([TEST_ACCOUNTS[1]]);
+    });
+    await waitFor(() => {
+      expect(latestFooterConfig?.onAction).toBeDefined();
+    });
+    act(() => {
+      latestFooterConfig?.onAction?.();
+    });
+
+    // Then
+    await waitFor(() => {
+      expect(organizationsActionsMock.applyDiscovery).toHaveBeenCalledWith(
+        "org-1",
+        "discovery-1",
+        [{ id: TEST_ACCOUNTS[1] }],
+        [],
+      );
+    });
+  });
 });

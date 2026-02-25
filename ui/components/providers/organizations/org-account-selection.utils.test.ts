@@ -131,6 +131,32 @@ describe("pollConnectionTask", () => {
       error: "Role trust policy mismatch.",
     });
   });
+
+  it("stops polling when aborted", async () => {
+    // Given
+    const abortController = new AbortController();
+    const getTaskById = vi
+      .fn()
+      .mockResolvedValue({ data: { attributes: { state: "executing" } } });
+    const sleep = vi.fn(async () => {
+      abortController.abort();
+    });
+
+    // When
+    const result = await pollConnectionTask("task-1", {
+      getTaskById,
+      sleep,
+      signal: abortController.signal,
+      maxRetries: 5,
+    });
+
+    // Then
+    expect(getTaskById).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({
+      success: false,
+      error: "Connection test cancelled.",
+    });
+  });
 });
 
 describe("launch gating", () => {
