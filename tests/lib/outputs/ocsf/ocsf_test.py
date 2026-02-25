@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timezone
 from io import StringIO
 from typing import Optional
+from uuid import UUID
 
 import requests
 from freezegun import freeze_time
@@ -101,7 +102,10 @@ class TestOCSF:
             output_data.type_name
             == f"Detection Finding: {DetectionFindingTypeID.Create.name}"
         )
-        assert output_data.unmapped == {
+        unmapped = output_data.unmapped
+        scan_id = unmapped.pop("scan_id")
+        assert UUID(scan_id)  # Valid UUID
+        assert unmapped == {
             "related_url": findings[0].metadata.RelatedUrl,
             "categories": findings[0].metadata.Categories,
             "depends_on": findings[0].metadata.DependsOn,
@@ -260,7 +264,11 @@ class TestOCSF:
 
         mock_file.seek(0)
         content = mock_file.read()
-        assert json.loads(content) == expected_json_output
+        actual_output = json.loads(content)
+        # scan_id is non-deterministic (UUID7), validate and remove before comparison
+        actual_scan_id = actual_output[0]["unmapped"].pop("scan_id")
+        assert UUID(actual_scan_id)
+        assert actual_output == expected_json_output
 
     def test_batch_write_data_to_file_without_findings(self):
         assert not OCSF([])._file_descriptor
@@ -318,7 +326,10 @@ class TestOCSF:
         assert finding_ocsf.risk_details == finding_output.metadata.Risk
 
         # Unmapped Data
-        assert finding_ocsf.unmapped == {
+        unmapped = finding_ocsf.unmapped
+        scan_id = unmapped.pop("scan_id")
+        assert UUID(scan_id)  # Valid UUID
+        assert unmapped == {
             "related_url": finding_output.metadata.RelatedUrl,
             "categories": finding_output.metadata.Categories,
             "depends_on": finding_output.metadata.DependsOn,

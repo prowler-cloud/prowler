@@ -205,6 +205,8 @@ from api.utils import (
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
+    AttackPathsCartographySchemaSerializer,
+    AttackPathsCustomQueryRunRequestSerializer,
     AttackPathsQueryResultSerializer,
     AttackPathsQueryRunRequestSerializer,
     AttackPathsQuerySerializer,
@@ -2398,6 +2400,40 @@ class TaskViewSet(BaseRLSViewSet):
             ),
         },
     ),
+    run_custom_attack_paths_query=extend_schema(
+        tags=["Attack Paths"],
+        summary="Execute a custom Cypher query",
+        description="Execute a raw openCypher query against the Attack Paths graph. "
+        "Results are filtered to the scan's provider and truncated to a maximum node count.",
+        request=AttackPathsCustomQueryRunRequestSerializer,
+        responses={
+            200: OpenApiResponse(AttackPathsQueryResultSerializer),
+            403: OpenApiResponse(description="Read-only queries are enforced"),
+            404: OpenApiResponse(description="No results found for the given query"),
+            500: OpenApiResponse(
+                description="Query execution failed due to a database error"
+            ),
+        },
+    ),
+    cartography_schema=extend_schema(
+        tags=["Attack Paths"],
+        summary="Retrieve cartography schema metadata",
+        description="Return the cartography provider, version, and links to the schema documentation "
+        "for the cloud provider associated with this Attack Paths scan.",
+        request=None,
+        responses={
+            200: OpenApiResponse(AttackPathsCartographySchemaSerializer),
+            400: OpenApiResponse(
+                description="Attack Paths data is not yet available (graph_data_ready is false)"
+            ),
+            404: OpenApiResponse(
+                description="No cartography schema metadata found for this provider"
+            ),
+            500: OpenApiResponse(
+                description="Unable to retrieve cartography schema due to a database error"
+            ),
+        },
+    ),
 )
 class AttackPathsScanViewSet(BaseRLSViewSet):
     queryset = AttackPathsScan.objects.all()
@@ -2422,6 +2458,12 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "run_attack_paths_query":
             return AttackPathsQueryRunRequestSerializer
+
+        if self.action == "run_custom_attack_paths_query":
+            return AttackPathsCustomQueryRunRequestSerializer
+
+        if self.action == "cartography_schema":
+            return AttackPathsCartographySchemaSerializer
 
         return super().get_serializer_class()
 
@@ -2499,7 +2541,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
                 }
             )
 
-        payload = attack_paths_views_helpers.normalize_run_payload(request.data)
+        payload = attack_paths_views_helpers.normalize_query_payload(request.data)
         serializer = AttackPathsQueryRunRequestSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
 
@@ -2516,14 +2558,14 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             attack_paths_scan.provider.tenant_id
         )
         provider_id = str(attack_paths_scan.provider_id)
-        parameters = attack_paths_views_helpers.prepare_query_parameters(
+        parameters = attack_paths_views_helpers.prepare_parameters(
             query_definition,
             serializer.validated_data.get("parameters", {}),
             attack_paths_scan.provider.uid,
             provider_id,
         )
 
-        graph = attack_paths_views_helpers.execute_attack_paths_query(
+        graph = attack_paths_views_helpers.execute_query(
             database_name,
             query_definition,
             parameters,
@@ -2537,6 +2579,80 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
 
         response_serializer = AttackPathsQueryResultSerializer(graph)
         return Response(response_serializer.data, status=status_code)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="queries/custom",
+        url_name="queries-custom",
+    )
+    def run_custom_attack_paths_query(self, request, pk=None):
+        attack_paths_scan = self.get_object()
+
+        if not attack_paths_scan.graph_data_ready:
+            raise ValidationError(
+                {
+                    "detail": "Attack Paths data is not available for querying - a scan must complete at least once before queries can be run"
+                }
+            )
+
+        payload = attack_paths_views_helpers.normalize_custom_query_payload(
+            request.data
+        )
+        serializer = AttackPathsCustomQueryRunRequestSerializer(data=payload)
+        serializer.is_valid(raise_exception=True)
+
+        database_name = graph_database.get_database_name(
+            attack_paths_scan.provider.tenant_id
+        )
+        provider_id = str(attack_paths_scan.provider_id)
+
+        graph = attack_paths_views_helpers.execute_custom_query(
+            database_name,
+            serializer.validated_data["cypher"],
+            provider_id,
+        )
+        graph_database.clear_cache(database_name)
+
+        status_code = status.HTTP_200_OK
+        if not graph.get("nodes"):
+            status_code = status.HTTP_404_NOT_FOUND
+
+        response_serializer = AttackPathsQueryResultSerializer(graph)
+        return Response(response_serializer.data, status=status_code)
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="schema",
+        url_name="schema",
+    )
+    def cartography_schema(self, request, pk=None):
+        attack_paths_scan = self.get_object()
+
+        if not attack_paths_scan.graph_data_ready:
+            raise ValidationError(
+                {
+                    "detail": "Attack Paths data is not available for querying - a scan must complete at least once before the schema can be retrieved"
+                }
+            )
+
+        database_name = graph_database.get_database_name(
+            attack_paths_scan.provider.tenant_id
+        )
+        provider_id = str(attack_paths_scan.provider_id)
+
+        schema = attack_paths_views_helpers.get_cartography_schema(
+            database_name, provider_id
+        )
+        if not schema:
+            return Response(
+                {"detail": "No cartography schema metadata found for this provider"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = AttackPathsCartographySchemaSerializer(schema)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(

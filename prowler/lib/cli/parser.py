@@ -215,6 +215,14 @@ Detailed documentation at https://docs.prowler.com
             default=False,
             help="Set the output timestamp format as unix timestamps instead of iso format timestamps (default mode).",
         )
+        common_outputs_parser.add_argument(
+            "--export-ocsf",
+            action="store_true",
+            help=(
+                "Send OCSF output to Prowler Cloud ingestion endpoint. "
+                "Requires PROWLER_API_KEY environment variable."
+            ),
+        )
 
     def __init_logging_parser__(self):
         # Logging Options

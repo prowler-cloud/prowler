@@ -292,6 +292,7 @@ class Provider(RowLevelSecurityProtectedModel):
         ALIBABACLOUD = "alibabacloud", _("Alibaba Cloud")
         CLOUDFLARE = "cloudflare", _("Cloudflare")
         OPENSTACK = "openstack", _("OpenStack")
+        IMAGE = "image", _("Image")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -423,6 +424,15 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="OpenStack provider ID must be a valid project ID (UUID or project name).",
                 code="openstack-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_image_uid(value):
+        if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9._/:@-]{2,249}$", value):
+            raise ModelValidationError(
+                detail="Image provider ID must be a valid container image reference.",
+                code="image-uid",
                 pointer="/data/attributes/uid",
             )
 
