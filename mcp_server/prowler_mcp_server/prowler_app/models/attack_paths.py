@@ -11,7 +11,6 @@ All models inherit from MinimalSerializerMixin to exclude None/empty values
 for optimal LLM token usage.
 """
 
-from tkinter.constants import N
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
