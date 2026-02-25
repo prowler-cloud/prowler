@@ -1127,9 +1127,10 @@ class TestSecurityHubIntegrationUploads:
                 ]
 
                 with patch("tasks.jobs.integrations.REPLICA_MAX_ATTEMPTS", 2):
-                    result = upload_security_hub_integration(
-                        tenant_id, provider_id, scan_id
-                    )
+                    with patch("tasks.jobs.integrations.READ_REPLICA_ALIAS", "replica"):
+                        result = upload_security_hub_integration(
+                            tenant_id, provider_id, scan_id
+                        )
 
         assert result is True
         mock_sleep.assert_called_once()
@@ -1824,9 +1825,7 @@ class TestJiraIntegration:
             }
             findings.append(finding)
 
-        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.side_effect = (
-            findings
-        )
+        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.side_effect = findings
 
         # Call the function
         result = send_findings_to_jira(
@@ -1900,9 +1899,7 @@ class TestJiraIntegration:
             },
         }
 
-        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.return_value = (
-            finding
-        )
+        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.return_value = finding
 
         # Call the function
         result = send_findings_to_jira(
@@ -1965,9 +1962,7 @@ class TestJiraIntegration:
         finding.scan.provider.provider = "kubernetes"
         finding.check_metadata = {}  # Empty metadata
 
-        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.return_value = (
-            finding
-        )
+        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.return_value = finding
 
         # Call the function
         result = send_findings_to_jira(

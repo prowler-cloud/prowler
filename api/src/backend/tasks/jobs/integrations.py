@@ -387,12 +387,10 @@ def upload_security_hub_integration(
 
                                     # Send this batch to Security Hub
                                     try:
-                                        findings_sent = (
-                                            security_hub_client.batch_send_to_security_hub()
+                                        findings_sent = security_hub_client.batch_send_to_security_hub()
+                                        total_findings_sent[integration.id] += (
+                                            findings_sent
                                         )
-                                        total_findings_sent[
-                                            integration.id
-                                        ] += findings_sent
 
                                         if findings_sent > 0:
                                             logger.debug(
