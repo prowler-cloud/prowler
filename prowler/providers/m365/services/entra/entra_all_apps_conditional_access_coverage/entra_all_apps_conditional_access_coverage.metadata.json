@@ -10,8 +10,8 @@
   "ResourceType": "Conditional Access Policy",
   "ResourceGroup": "IAM",
   "Description": "At least one Conditional Access policy is configured to target **all cloud apps**. This ensures comprehensive security coverage and automatic protection for newly onboarded applications without requiring policy updates.",
-  "Risk": "Without a policy targeting all cloud apps, newly integrated applications may not be protected by Conditional Access. This creates security gaps where users could access sensitive resources without proper authentication controls.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps",
+  "Risk": "Without a policy targeting **all cloud apps**, newly integrated applications may not be protected by **Conditional Access**. This creates security gaps where users could access sensitive resources without proper authentication controls.",
+  "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps"
   ],
@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Create at least one Conditional Access policy that targets all cloud apps to ensure comprehensive protection. Use exclusions to handle applications requiring different access controls rather than creating narrow policies for each application.",
+      "Text": "Create at least one **Conditional Access** policy that targets **all cloud apps** to ensure comprehensive protection. Use **exclusions** to handle applications requiring different access controls rather than creating narrow policies for each application.",
       "Url": "https://hub.prowler.com/check/entra_all_apps_conditional_access_coverage"
     }
   },
@@ -32,9 +32,6 @@
     "e3"
   ],
   "DependsOn": [],
-  "RelatedTo": [
-    "entra_users_mfa_enabled",
-    "entra_legacy_authentication_blocked"
-  ],
+  "RelatedTo": [],
   "Notes": ""
 }
