@@ -70,7 +70,7 @@ from api.v1.serializer_utils.lighthouse import (
     OpenAICredentialsSerializer,
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
-from api.v1.serializer_utils.providers import ProviderSecretField
+from api.v1.serializer_utils.providers import ProviderSecretField, ScannerArgsMixin
 from prowler.lib.mutelist.mutelist import Mutelist
 
 # Base
@@ -938,7 +938,7 @@ class ProviderIncludeSerializer(RLSSerializer):
         }
 
 
-class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
+class ProviderCreateSerializer(ScannerArgsMixin, RLSSerializer, BaseWriteSerializer):
     class Meta:
         model = Provider
         fields = [
@@ -959,27 +959,8 @@ class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
             },
         }
 
-    ALLOWED_IAC_SCANNER_ARGS = {"branch"}
 
-    def validate_scanner_args(self, value):
-        if not value:
-            return {}
-        provider = self.initial_data.get("provider") or (
-            self.context.get("request") and self.context["request"].data.get("provider")
-        )
-        if provider != Provider.ProviderChoices.IAC.value:
-            return {}
-        unknown_keys = set(value.keys()) - self.ALLOWED_IAC_SCANNER_ARGS
-        if unknown_keys:
-            raise serializers.ValidationError(
-                f"Unknown scanner_args keys for IaC provider: {unknown_keys}"
-            )
-        if "branch" in value and not isinstance(value["branch"], str):
-            raise serializers.ValidationError("branch must be a string")
-        return value
-
-
-class ProviderUpdateSerializer(BaseWriteSerializer):
+class ProviderUpdateSerializer(ScannerArgsMixin, BaseWriteSerializer):
     """
     Serializer for updating the Provider model.
     Only allows "alias" and "scanner_args" fields to be updated.
@@ -996,23 +977,6 @@ class ProviderUpdateSerializer(BaseWriteSerializer):
                 "help_text": "Human readable name to identify the provider, e.g. 'Production AWS Account', 'Dev Environment'",
             }
         }
-
-    ALLOWED_IAC_SCANNER_ARGS = {"branch"}
-
-    def validate_scanner_args(self, value):
-        if not value:
-            return {}
-        provider = self.instance.provider if self.instance else None
-        if provider != Provider.ProviderChoices.IAC.value:
-            return {}
-        unknown_keys = set(value.keys()) - self.ALLOWED_IAC_SCANNER_ARGS
-        if unknown_keys:
-            raise serializers.ValidationError(
-                f"Unknown scanner_args keys for IaC provider: {unknown_keys}"
-            )
-        if "branch" in value and not isinstance(value["branch"], str):
-            raise serializers.ValidationError("branch must be a string")
-        return value
 
 
 # Scans

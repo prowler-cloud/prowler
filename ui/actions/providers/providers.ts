@@ -263,19 +263,27 @@ export const addCredentialsProvider = async (formData: FormData) => {
     });
 
     // After secret creation succeeds, update scanner_args with branch if specified
-    const branch = formData.get("branch") as string | null;
+    const branch = formData.get(ProviderCredentialFields.BRANCH) as
+      | string
+      | null;
     if (branch?.trim() && response.ok) {
-      await fetch(`${apiBaseUrl}/providers/${providerId}`, {
-        method: "PATCH",
-        headers: await getAuthHeaders({ contentType: true }),
-        body: JSON.stringify({
-          data: {
-            type: "providers",
-            id: providerId,
-            attributes: { scanner_args: { branch: branch.trim() } },
-          },
-        }),
-      });
+      const patchResponse = await fetch(
+        `${apiBaseUrl}/providers/${providerId}`,
+        {
+          method: "PATCH",
+          headers: await getAuthHeaders({ contentType: true }),
+          body: JSON.stringify({
+            data: {
+              type: "providers",
+              id: providerId,
+              attributes: { scanner_args: { branch: branch.trim() } },
+            },
+          }),
+        },
+      );
+      if (!patchResponse.ok) {
+        return handleApiResponse(patchResponse);
+      }
     }
 
     return handleApiResponse(response, "/providers");

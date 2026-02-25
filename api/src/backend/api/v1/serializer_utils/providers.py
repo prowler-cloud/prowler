@@ -1,6 +1,8 @@
 from drf_spectacular.utils import extend_schema_field
 from rest_framework_json_api import serializers
 
+from api.models import Provider
+
 
 @extend_schema_field(
     {
@@ -393,3 +395,33 @@ from rest_framework_json_api import serializers
 )
 class ProviderSecretField(serializers.JSONField):
     pass
+
+
+class ScannerArgsMixin:
+    """Mixin for validating scanner_args on provider serializers."""
+
+    ALLOWED_IAC_SCANNER_ARGS = {"branch"}
+
+    def _get_provider_type(self):
+        """Get provider type from instance (update) or initial_data (create)."""
+        if hasattr(self, "instance") and self.instance:
+            return self.instance.provider
+        return self.initial_data.get("provider") or (
+            self.context.get("request") and self.context["request"].data.get("provider")
+        )
+
+    def validate_scanner_args(self, value):
+        """Validate scanner_args based on provider type."""
+        if not value:
+            return {}
+        provider = self._get_provider_type()
+        if provider != Provider.ProviderChoices.IAC.value:
+            return {}
+        unknown_keys = set(value.keys()) - self.ALLOWED_IAC_SCANNER_ARGS
+        if unknown_keys:
+            raise serializers.ValidationError(
+                f"Unknown scanner_args keys for IaC provider: {unknown_keys}"
+            )
+        if "branch" in value and not isinstance(value["branch"], str):
+            raise serializers.ValidationError("branch must be a string")
+        return value

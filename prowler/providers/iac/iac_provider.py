@@ -371,6 +371,11 @@ class IacProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
+            if "temporary_directory" in locals():
+                try:
+                    shutil.rmtree(temporary_directory)
+                except Exception:
+                    pass
             sys.exit(1)
 
     def run(self) -> List[CheckReportIAC]:
