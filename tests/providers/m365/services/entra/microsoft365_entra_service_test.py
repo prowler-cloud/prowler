@@ -8,12 +8,14 @@ from prowler.providers.m365.services.entra.entra_service import (
     AdminRoles,
     ApplicationEnforcedRestrictions,
     ApplicationsConditions,
+    AppManagementRestrictions,
     AuthorizationPolicy,
     AuthPolicyRoles,
     ConditionalAccessGrantControl,
     ConditionalAccessPolicy,
     ConditionalAccessPolicyState,
     Conditions,
+    CredentialRestriction,
     DefaultAppManagementPolicy,
     DefaultUserRolePermissions,
     Entra,
@@ -165,6 +167,30 @@ async def mock_entra_get_default_app_management_policy(_):
         name="Default app management tenant policy",
         description="Default tenant policy that enforces app management restrictions.",
         is_enabled=True,
+        application_restrictions=AppManagementRestrictions(
+            password_credentials=[
+                CredentialRestriction(
+                    restriction_type="passwordAddition",
+                    state="enabled",
+                ),
+                CredentialRestriction(
+                    restriction_type="passwordLifetime",
+                    state="enabled",
+                    max_lifetime="P365D",
+                ),
+                CredentialRestriction(
+                    restriction_type="customPasswordAddition",
+                    state="enabled",
+                ),
+            ],
+            key_credentials=[
+                CredentialRestriction(
+                    restriction_type="asymmetricKeyLifetime",
+                    state="enabled",
+                    max_lifetime="P365D",
+                ),
+            ],
+        ),
     )
 
 
@@ -321,6 +347,29 @@ class Test_Entra_Service:
             == "Default tenant policy that enforces app management restrictions."
         )
         assert entra_client.default_app_management_policy.is_enabled is True
+        app_restrictions = (
+            entra_client.default_app_management_policy.application_restrictions
+        )
+        assert len(app_restrictions.password_credentials) == 3
+        assert (
+            app_restrictions.password_credentials[0].restriction_type
+            == "passwordAddition"
+        )
+        assert (
+            app_restrictions.password_credentials[1].restriction_type
+            == "passwordLifetime"
+        )
+        assert app_restrictions.password_credentials[1].max_lifetime == "P365D"
+        assert (
+            app_restrictions.password_credentials[2].restriction_type
+            == "customPasswordAddition"
+        )
+        assert len(app_restrictions.key_credentials) == 1
+        assert (
+            app_restrictions.key_credentials[0].restriction_type
+            == "asymmetricKeyLifetime"
+        )
+        assert app_restrictions.key_credentials[0].max_lifetime == "P365D"
 
     @patch(
         "prowler.providers.m365.services.entra.entra_service.Entra._get_users",

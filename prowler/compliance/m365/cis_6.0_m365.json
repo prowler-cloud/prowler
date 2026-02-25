@@ -937,9 +937,7 @@
     {
       "Id": "5.1.2.2",
       "Description": "App registration allows users to register custom-developed applications for use within the directory. Third-party integrated applications connection to services should be disabled unless there is a very clear value and robust security controls are in place.",
-      "Checks": [
-        "entra_default_app_management_policy_enabled"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",

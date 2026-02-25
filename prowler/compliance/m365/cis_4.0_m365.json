@@ -853,7 +853,6 @@
       "Id": "5.1.2.2",
       "Description": "App registration allows users to register custom-developed applications for use within the directory.",
       "Checks": [
-        "entra_default_app_management_policy_enabled",
         "entra_thirdparty_integrated_apps_not_allowed"
       ],
       "Attributes": [
