@@ -27,7 +27,8 @@ export function TestConnectionStep({
   onResetCredentials,
   onFooterChange,
 }: TestConnectionStepProps) {
-  const { providerId, providerType, mode } = useProviderWizardStore();
+  const { providerId, providerType, mode, setSecretId } =
+    useProviderWizardStore();
   const [providerData, setProviderData] =
     useState<TestConnectionProviderData | null>(null);
   const [isLoadingProvider, setIsLoadingProvider] = useState(true);
@@ -62,11 +63,15 @@ export function TestConnectionStep({
         setErrorMessage(
           response.errors[0]?.detail || "Failed to load provider.",
         );
+        setSecretId(null);
         setProviderData(null);
         setIsLoadingProvider(false);
         return;
       }
 
+      const resolvedSecretId =
+        response?.data?.relationships?.secret?.data?.id ?? null;
+      setSecretId(resolvedSecretId);
       setProviderData(response as TestConnectionProviderData);
       setIsLoadingProvider(false);
     }
@@ -76,7 +81,7 @@ export function TestConnectionStep({
     return () => {
       isMounted = false;
     };
-  }, [providerId, providerType]);
+  }, [providerId, providerType, setSecretId]);
 
   useEffect(() => {
     const canSubmit = !isLoadingProvider && !errorMessage && !!providerData;
