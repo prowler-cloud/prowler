@@ -226,6 +226,18 @@ class C5Germany_Requirement_Attribute(BaseModel):
     ComplementaryCriteria: str
 
 
+# CSA CCM v4 Requirement Attribute
+class CSA_CCM_Requirement_Attribute(BaseModel):
+    """CSA Cloud Controls Matrix (CCM) v4 Requirement Attribute"""
+
+    Section: str
+    CCMLite: str
+    IaaS: str
+    PaaS: str
+    SaaS: str
+    ScopeApplicability: list[dict]
+
+
 # Base Compliance Model
 # TODO: move this to compliance folder
 class Compliance_Requirement(BaseModel):
@@ -244,6 +256,7 @@ class Compliance_Requirement(BaseModel):
             Prowler_ThreatScore_Requirement_Attribute,
             CCC_Requirement_Attribute,
             C5Germany_Requirement_Attribute,
+            CSA_CCM_Requirement_Attribute,
             # Generic_Compliance_Requirement_Attribute must be the last one since it is the fallback for generic compliance framework
             Generic_Compliance_Requirement_Attribute,
         ]

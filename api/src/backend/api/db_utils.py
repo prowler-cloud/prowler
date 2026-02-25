@@ -12,7 +12,6 @@ from django.contrib.auth.models import BaseUserManager
 from django.db import (
     DEFAULT_DB_ALIAS,
     OperationalError,
-    connection,
     connections,
     models,
     transaction,
@@ -75,6 +74,7 @@ def rls_transaction(
     value: str,
     parameter: str = POSTGRES_TENANT_VAR,
     using: str | None = None,
+    retry_on_replica: bool = True,
 ):
     """
     Creates a new database transaction setting the given configuration value for Postgres RLS. It validates the
@@ -93,10 +93,11 @@ def rls_transaction(
 
     alias = db_alias
     is_replica = READ_REPLICA_ALIAS and alias == READ_REPLICA_ALIAS
-    max_attempts = REPLICA_MAX_ATTEMPTS if is_replica else 1
+    max_attempts = REPLICA_MAX_ATTEMPTS if is_replica and retry_on_replica else 1
 
     for attempt in range(1, max_attempts + 1):
         router_token = None
+        yielded_cursor = False
 
         # On final attempt, fallback to primary
         if attempt == max_attempts and is_replica:
@@ -119,9 +120,12 @@ def rls_transaction(
                     except ValueError:
                         raise ValidationError("Must be a valid UUID")
                     cursor.execute(SET_CONFIG_QUERY, [parameter, value])
+                    yielded_cursor = True
                     yield cursor
             return
         except OperationalError as e:
+            if yielded_cursor:
+                raise
             # If on primary or max attempts reached, raise
             if not is_replica or attempt == max_attempts:
                 raise
@@ -450,7 +454,7 @@ def create_index_on_partitions(
             all_partitions=True
         )
     """
-    with connection.cursor() as cursor:
+    with schema_editor.connection.cursor() as cursor:
         cursor.execute(
             """
             SELECT inhrelid::regclass::text
@@ -462,6 +466,7 @@ def create_index_on_partitions(
         partitions = [row[0] for row in cursor.fetchall()]
 
     where_sql = f" WHERE {where}" if where else ""
+    conn = schema_editor.connection
     for partition in partitions:
         if _should_create_index_on_partition(partition, all_partitions):
             idx_name = f"{partition.replace('.', '_')}_{index_name}"
@@ -470,7 +475,12 @@ def create_index_on_partitions(
                 f"ON {partition} USING {method} ({columns})"
                 f"{where_sql};"
             )
-            schema_editor.execute(sql)
+            old_autocommit = conn.connection.autocommit
+            conn.connection.autocommit = True
+            try:
+                schema_editor.execute(sql)
+            finally:
+                conn.connection.autocommit = old_autocommit
 
 
 def drop_index_on_partitions(
@@ -486,7 +496,8 @@ def drop_index_on_partitions(
         parent_table: The name of the root table (e.g. "findings").
         index_name: The same short name used when creating them.
     """
-    with connection.cursor() as cursor:
+    conn = schema_editor.connection
+    with conn.cursor() as cursor:
         cursor.execute(
             """
             SELECT inhrelid::regclass::text
@@ -500,7 +511,12 @@ def drop_index_on_partitions(
     for partition in partitions:
         idx_name = f"{partition.replace('.', '_')}_{index_name}"
         sql = f"DROP INDEX CONCURRENTLY IF EXISTS {idx_name};"
-        schema_editor.execute(sql)
+        old_autocommit = conn.connection.autocommit
+        conn.connection.autocommit = True
+        try:
+            schema_editor.execute(sql)
+        finally:
+            conn.connection.autocommit = old_autocommit
 
 
 def generate_api_key_prefix():

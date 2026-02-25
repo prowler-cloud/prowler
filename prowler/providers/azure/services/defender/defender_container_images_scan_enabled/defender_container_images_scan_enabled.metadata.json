@@ -1,30 +1,39 @@
 {
   "Provider": "azure",
   "CheckID": "defender_container_images_scan_enabled",
-  "CheckTitle": "Ensure Image Vulnerability Scanning using Azure Defender image scanning or a third party provider",
+  "CheckTitle": "Subscription has container image vulnerability scanning enabled",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Microsoft.Security",
+  "Severity": "high",
+  "ResourceType": "microsoft.security/pricings",
   "ResourceGroup": "security",
-  "Description": "Scan images being deployed to Azure (AKS) for vulnerabilities. Vulnerability scanning for images stored in Azure Container Registry is generally available in Azure Security Center. This capability is powered by Qualys, a leading provider of information security. When you push an image to Container Registry, Security Center automatically scans it, then checks for known vulnerabilities in packages or dependencies defined in the file. When the scan completes (after about 10 minutes), Security Center provides details and a security classification for each vulnerability detected, along with guidance on how to remediate issues and protect vulnerable attack surfaces.",
-  "Risk": "Vulnerabilities in software packages can be exploited by hackers or malicious users to obtain unauthorized access to local cloud resources. Azure Defender and other third party products allow images to be scanned for known vulnerabilities.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-check-health",
+  "Description": "**Azure subscriptions** have **container image vulnerability assessment** enabled for **Azure Container Registry** via Microsoft Defender for Cloud (`ContainerRegistriesVulnerabilityAssessments`). Images in registries are evaluated for known package vulnerabilities in their packages and dependencies.",
+  "Risk": "Without registry scanning, **known CVEs** in images can reach runtime, enabling **RCE**, privilege escalation, and lateral movement. This undermines data confidentiality and integrity and can reduce availability through cryptomining or service disruption.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/container-registry/scan-images-defender",
+    "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-check-health",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-container-registry/image-vulnerability-assessment",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AKS/enable-image-vulnerability-scanning.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az rest --method put --url https://management.azure.com/subscriptions/<SUBSCRIPTION_ID>/providers/Microsoft.Security/pricings/Containers?api-version=2023-01-01 --body '{\"properties\":{\"pricingTier\":\"Standard\",\"extensions\":[{\"name\":\"ContainerRegistriesVulnerabilityAssessments\",\"isEnabled\":true}]}}'",
+      "NativeIaC": "```bicep\n// Enable Defender for Containers image vulnerability scanning at subscription scope\ntargetScope = 'subscription'\n\nresource containersPricing 'Microsoft.Security/pricings@2023-01-01' = {\n  name: 'Containers'\n  properties: {\n    pricingTier: 'Standard'\n    extensions: [\n      {\n        name: 'ContainerRegistriesVulnerabilityAssessments' // CRITICAL: enables ACR image vulnerability scanning\n        isEnabled: true                                   // CRITICAL: turns the extension ON\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In Azure Portal, open Microsoft Defender for Cloud\n2. Go to Environment settings and select your subscription\n3. Open Settings (or Defender plans)\n4. Find Containers and set Plan to On/Standard\n5. Enable Container registries vulnerability assessments\n6. Click Save",
+      "Terraform": "```hcl\n# Enable Defender for Containers with container registry vulnerability scanning\nresource \"azurerm_security_center_subscription_pricing\" \"<example_resource_name>\" {\n  tier          = \"Standard\"\n  resource_type = \"Containers\"\n  \n  extension {\n    name = \"ContainerRegistriesVulnerabilityAssessments\"  # CRITICAL: enables ACR image vulnerability scanning\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
-      "Url": "https://learn.microsoft.com/en-us/azure/container-registry/scan-images-defender"
+      "Text": "Enable **Defender for Cloud** image assessment for registries and adopt **shift-left scanning**.\n- Block deployment of images with high-severity findings\n- Rebuild from patched base images regularly\n- Enforce **least privilege** on registry access\n- Use image signing and admission controls",
+      "Url": "https://hub.prowler.com/check/defender_container_images_scan_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities",
+    "container-security"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "When using an Azure container registry, you might occasionally encounter problems. For example, you might not be able to pull a container image because of an issue with Docker in your local environment. Or, a network issue might prevent you from connecting to the registry."

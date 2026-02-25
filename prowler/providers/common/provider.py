@@ -248,6 +248,12 @@ class Provider(ABC):
                         repositories=arguments.repository,
                         organizations=arguments.organization,
                     )
+                elif "googleworkspace" in provider_class_name.lower():
+                    provider_class(
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
                 elif "cloudflare" in provider_class_name.lower():
                     provider_class(
                         filter_zones=arguments.region,
@@ -274,6 +280,18 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
                     )
+                elif "image" in provider_class_name.lower():
+                    provider_class(
+                        images=arguments.images,
+                        image_list_file=arguments.image_list_file,
+                        scanners=arguments.scanners,
+                        image_config_scanners=arguments.image_config_scanners,
+                        trivy_severity=arguments.trivy_severity,
+                        ignore_unfixed=arguments.ignore_unfixed,
+                        timeout=arguments.timeout,
+                        config_path=arguments.config_file,
+                        fixer_config=fixer_config,
+                    )
                 elif "mongodbatlas" in provider_class_name.lower():
                     provider_class(
                         atlas_public_key=arguments.atlas_public_key,
@@ -293,6 +311,31 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                         use_instance_principal=arguments.use_instance_principal,
+                    )
+                elif "openstack" in provider_class_name.lower():
+                    provider_class(
+                        clouds_yaml_file=getattr(arguments, "clouds_yaml_file", None),
+                        clouds_yaml_content=getattr(
+                            arguments, "clouds_yaml_content", None
+                        ),
+                        clouds_yaml_cloud=getattr(arguments, "clouds_yaml_cloud", None),
+                        auth_url=getattr(arguments, "os_auth_url", None),
+                        identity_api_version=getattr(
+                            arguments, "os_identity_api_version", None
+                        ),
+                        username=getattr(arguments, "os_username", None),
+                        password=getattr(arguments, "os_password", None),
+                        project_id=getattr(arguments, "os_project_id", None),
+                        region_name=getattr(arguments, "os_region_name", None),
+                        user_domain_name=getattr(
+                            arguments, "os_user_domain_name", None
+                        ),
+                        project_domain_name=getattr(
+                            arguments, "os_project_domain_name", None
+                        ),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "alibabacloud" in provider_class_name.lower():
                     provider_class(

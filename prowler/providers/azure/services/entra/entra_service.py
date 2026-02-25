@@ -16,6 +16,8 @@ class Entra(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(GraphServiceClient, provider)
 
+        self.tenant_ids = provider.identity.tenant_ids
+
         created_loop = False
         try:
             loop = asyncio.get_running_loop()
@@ -89,17 +91,9 @@ class Entra(AzureService):
                         users_response = await client.users.with_url(next_link).get()
 
                 except Exception as error:
-                    if (
-                        error.__class__.__name__ == "ODataError"
-                        and error.__dict__.get("response_status_code", None) == 403
-                    ):
-                        logger.error(
-                            "You need 'UserAuthenticationMethod.Read.All' permission to access this information. It only can be granted through Service Principal authentication."
-                        )
-                    else:
-                        logger.error(
-                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -222,6 +216,7 @@ class Entra(AzureService):
                     group_settings[tenant].update(
                         {
                             group_setting.id: GroupSetting(
+                                id=group_setting.id,
                                 name=getattr(group_setting, "display_name", None),
                                 template_id=getattr(group_setting, "template_id", None),
                                 settings=[
@@ -442,6 +437,7 @@ class SettingValue(BaseModel):
 
 
 class GroupSetting(BaseModel):
+    id: str
     name: Optional[str] = None
     template_id: Optional[str] = None
     settings: List[SettingValue]

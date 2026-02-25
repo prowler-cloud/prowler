@@ -84,6 +84,7 @@ def mock_defender_get_settings(_):
         AZURE_SUBSCRIPTION_ID: {
             "MCAS": Setting(
                 resource_id="/subscriptions/resource_id",
+                resource_name="MCAS",
                 resource_type="Microsoft.Security/locations/settings",
                 kind="DataExportSettings",
                 enabled=True,

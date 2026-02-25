@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "postgresql_flexible_server_enforce_ssl_enabled",
-  "CheckTitle": "Ensure 'Enforce SSL connection' is set to 'ENABLED' for PostgreSQL Database Server",
+  "CheckTitle": "PostgreSQL Flexible Server enforces SSL connections",
   "CheckType": [],
   "ServiceName": "postgresql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "PostgreSQL",
+  "Severity": "high",
+  "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
   "ResourceGroup": "database",
-  "Description": "Enable SSL connection on PostgreSQL Servers.",
-  "Risk": "SSL connectivity helps to provide a new layer of security by connecting database server to client applications using Secure Sockets Layer (SSL). Enforcing SSL connections between database server and client applications helps protect against 'man in the middle' attacks by encrypting the data stream between the server and application.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/postgresql/single-server/concepts-ssl-connection-security",
+  "Description": "**Azure Database for PostgreSQL flexible servers** are evaluated for **encrypted in-transit connections**, specifically whether `require_secure_transport` is set to `ON` to force TLS for all client sessions.",
+  "Risk": "Without enforced **TLS**, clients may connect in plaintext or with weak settings, exposing credentials and data to **man-in-the-middle**, query tampering, and session hijacking. This undermines **confidentiality** and **integrity**, and can enable lateral movement if stolen creds are reused.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-security?source=recommendations",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/PostgreSQL/require-secure-transport-for-postgres-flexible-servers.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az postgres server update --resource-group <resourceGroupName> --name <serverName> --ssl-enforcement Enabled",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_10",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_10#terraform"
+      "CLI": "az postgres flexible-server parameter set --resource-group <RESOURCE_GROUP> --server-name <SERVER_NAME> --name require_secure_transport --value ON",
+      "NativeIaC": "```bicep\n// Enable SSL/TLS enforcement on an existing PostgreSQL Flexible Server\nresource server 'Microsoft.DBforPostgreSQL/flexibleServers@2023-12-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource requireSecureTransport 'Microsoft.DBforPostgreSQL/flexibleServers/configurations@2023-12-01' = {\n  name: '${server.name}/require_secure_transport'\n  properties: {\n    value: 'ON' // CRITICAL: Enforces SSL/TLS by turning require_secure_transport ON\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal\n2. Go to: Azure Database for PostgreSQL flexible server > your server\n3. Select Server parameters\n4. Search for require_secure_transport\n5. Set it to ON\n6. Click Save",
+      "Terraform": "```hcl\n# Enable SSL/TLS enforcement on a PostgreSQL Flexible Server\nresource \"azurerm_postgresql_flexible_server_configuration\" \"<example_resource_name>\" {\n  name      = \"require_secure_transport\"   # CRITICAL: Target the SSL enforcement parameter\n  server_id = \"<example_resource_id>\"      # ID of the target flexible server\n  value     = \"ON\"                          # CRITICAL: Enforce SSL/TLS\n}\n```"
     },
     "Recommendation": {
-      "Text": "From Azure Portal 1. Login to Azure Portal using https://portal.azure.com 2. Go to Azure Database for PostgreSQL server 3. For each database, click on Connection security 4. In SSL settings, click on ENABLED to enforce SSL connections 5. Click Save From Azure CLI Use the below command to enforce ssl connection for PostgreSQL Database. az postgres server update --resource-group <resourceGroupName> --name <serverName> --ssl-enforcement Enabled From PowerShell Update-AzPostgreSqlServer -ResourceGroupName <ResourceGroupName > -ServerName <ServerName> -SslEnforcement Enabled",
-      "Url": "https://learn.microsoft.com/en-us/azure/postgresql/single-server/concepts-ssl-connection-security"
+      "Text": "Enforce encryption in transit: set `require_secure_transport=ON`, prefer **TLS 1.3** (or at least `ssl_min_protocol_version=1.2`), and require clients to verify server identity. Disable mixed modes, rotate certificates, and restrict access via **private endpoints** to apply **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/postgresql_flexible_server_enforce_ssl_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "."

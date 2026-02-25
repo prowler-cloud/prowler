@@ -35,6 +35,16 @@ Create tests that generate both a passing (`PASS`) and a failing (`FAIL`) result
 3. Multi-Resource Evaluations:
 Design tests with multiple resources to verify check behavior and ensure the correct number of findings.
 
+## Test File Naming Conventions
+
+Test files follow the pattern `{service}_{check_name}_test.py` for checks and `{service}_service_test.py` for services.
+
+### Duplicate Names Across Providers
+
+When a test file name already exists in another provider, add your provider prefix to avoid conflicts. A GitHub Action will fail if duplicate names are detected.
+
+**Example:** If `kms_service_test.py` already exists in AWS, name your Oracle Cloud test `oraclecloud_kms_service_test.py`.
+
 ## Running Prowler Tests
 
 To execute the Prowler test suite, install the necessary dependencies listed in the `pyproject.toml` file.

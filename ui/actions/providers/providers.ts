@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { apiBaseUrl, getAuthHeaders, getFormValue, wait } from "@/lib";
 import { buildSecretConfig } from "@/lib/provider-credentials/build-crendentials";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { appendSanitizedProviderInFilters } from "@/lib/provider-filters";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { ProvidersApiResponse, ProviderType } from "@/types/providers";
 
@@ -15,6 +16,12 @@ export const getProviders = async ({
   sort = "",
   filters = {},
   pageSize = 10,
+}: {
+  page?: number;
+  query?: string;
+  sort?: string;
+  filters?: Record<string, string | string[] | undefined>;
+  pageSize?: number;
 }): Promise<ProvidersApiResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -27,12 +34,7 @@ export const getProviders = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  // Handle multiple filters
-  Object.entries(filters).forEach(([key, value]) => {
-    if (key !== "filter[search]") {
-      url.searchParams.append(key, String(value));
-    }
-  });
+  appendSanitizedProviderInFilters(url, filters);
 
   try {
     const response = await fetch(url.toString(), {
@@ -60,7 +62,7 @@ export const getAllProviders = async ({
 }: {
   query?: string;
   sort?: string;
-  filters?: Record<string, unknown>;
+  filters?: Record<string, string | string[] | undefined>;
 } = {}): Promise<ProvidersApiResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
   const pageSize = 100; // Use larger page size to minimize API calls
@@ -79,11 +81,7 @@ export const getAllProviders = async ({
       if (query) url.searchParams.append("filter[search]", query);
       if (sort) url.searchParams.append("sort", sort);
 
-      Object.entries(filters).forEach(([key, value]) => {
-        if (key !== "filter[search]") {
-          url.searchParams.append(key, String(value));
-        }
-      });
+      appendSanitizedProviderInFilters(url, filters);
 
       const response = await fetch(url.toString(), { headers });
       const data = (await handleApiResponse(response)) as

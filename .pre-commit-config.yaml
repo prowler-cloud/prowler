@@ -85,7 +85,6 @@ repos:
         args: ["--directory=./"]
         pass_filenames: false
 
-
   - repo: https://github.com/hadolint/hadolint
     rev: v2.13.0-beta
     hooks:

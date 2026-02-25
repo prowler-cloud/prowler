@@ -1,30 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "mysql_flexible_server_ssl_connection_enabled",
-  "CheckTitle": "Ensure 'Enforce SSL connection' is set to 'Enabled' for Standard MySQL Database Server",
+  "CheckTitle": "MySQL Flexible Server enforces SSL connections",
   "CheckType": [],
   "ServiceName": "mysql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Microsoft.DBforMySQL/flexibleServers",
+  "ResourceType": "microsoft.dbformysql/flexibleservers",
   "ResourceGroup": "database",
-  "Description": "Enable SSL connection on MYSQL Servers.",
-  "Risk": "SSL connectivity helps to provide a new layer of security by connecting database server to client applications using Secure Sockets Layer (SSL). Enforcing SSL connections between database server and client applications helps protect against 'man in the middle' attacks by encrypting the data stream between the server and application.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/mysql/single-server/concepts-ssl-connection-security",
+  "Description": "**Azure Database for MySQL Flexible Server** uses the `require_secure_transport` parameter to enforce **encrypted connections**. This evaluation determines whether the server is configured to require **TLS/SSL** for all client sessions.",
+  "Risk": "Without **TLS enforcement**, credentials and queries may traverse the network in cleartext, enabling **man-in-the-middle**, **credential theft**, tampering, and data exfiltration. This directly impacts **confidentiality** and **integrity** and can lead to compliance violations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/concepts-networking",
+    "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/how-to-troubleshoot-common-connection-issues",
+    "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/how-to-connect-tls-ssl"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.tenable.com/policies/[type]/AC_AZURE_0131",
-      "Terraform": ""
+      "CLI": "az mysql flexible-server parameter set --resource-group <RESOURCE_GROUP> --server-name <SERVER_NAME> --name require_secure_transport --value ON",
+      "NativeIaC": "```bicep\n// Enforce SSL/TLS by enabling require_secure_transport on MySQL Flexible Server\nresource reqSecureTransport 'Microsoft.DBforMySQL/flexibleServers/configurations@2023-12-30' = {\n  name: '<example_resource_name>/require_secure_transport'\n  properties: {\n    value: 'ON' // Critical: turns on SSL enforcement (require_secure_transport)\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal\n2. Go to: Azure Database for MySQL Flexible Server > <your server>\n3. Select Server parameters\n4. Find require_secure_transport and set it to ON\n5. Click Save\n6. Verify by refreshing Server parameters and confirming the value is ON",
+      "Terraform": "```hcl\n# Enforce SSL/TLS on MySQL Flexible Server\nresource \"azurerm_mysql_flexible_server_configuration\" \"secure\" {\n  name                = \"require_secure_transport\"\n  resource_group_name = \"<example_resource_group>\"\n  server_name         = \"<example_server_name>\"\n  value               = \"ON\" # Critical: enables SSL enforcement\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to Azure Database for MySQL servers 3. For each database, click on Connection security 4. In SSL settings, click on ENABLED to Enforce SSL connections",
-      "Url": "https://docs.microsoft.com/en-us/azure/mysql/single-server/how-to-configure-ssl"
+      "Text": "Set `require_secure_transport=ON` and permit only **TLS 1.2+**. Ensure clients validate certificates and use FQDNs. Combine with **private access** (Private Link or VNet), restrictive firewall rules, and **least privilege** to reduce exposure. *Avoid legacy TLS or plaintext connections.*",
+      "Url": "https://hub.prowler.com/check/mysql_flexible_server_ssl_connection_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

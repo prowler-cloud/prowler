@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "mysql_flexible_server_audit_log_connection_activated",
-  "CheckTitle": "Ensure server parameter 'audit_log_events' has 'CONNECTION' set for MySQL Database Server",
+  "CheckTitle": "MySQL flexible server has audit_log_events including CONNECTION",
   "CheckType": [],
   "ServiceName": "mysql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Microsoft.DBforMySQL/flexibleServers",
+  "ResourceType": "microsoft.dbformysql/flexibleservers",
   "ResourceGroup": "database",
-  "Description": "Set audit_log_enabled to include CONNECTION on MySQL Servers.",
-  "Risk": "Enabling CONNECTION helps MySQL Database to log items such as successful and failed connection attempts to the server. Log data can be used to identify, troubleshoot, and repair configuration errors and suboptimal performance.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/mysql/single-server/how-to-configure-audit-logs-portal",
+  "Description": "**Azure Database for MySQL Flexible Server** audit configuration includes the `CONNECTION` event in `audit_log_events`.",
+  "Risk": "Without **CONNECTION auditing**, login attempts are invisible, weakening detection of **brute-force**, **credential stuffing**, and anomalous access. This enables unnoticed account takeover and lateral movement, impacting **confidentiality** and **integrity**, and hinders **forensics** and timely response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-logging-threat-detection#lt-3-enable-logging-for-security-investigation",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/MySQL/configure-audit-log-events-for-mysql-flexible-servers.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.tenable.com/audits/items/CIS_Microsoft_Azure_Foundations_v2.0.0_L2.audit:06ec721d4c0ea9169db2b0c6876c5f38",
-      "Terraform": ""
+      "CLI": "az mysql flexible-server parameter set --resource-group <RESOURCE_GROUP> --server-name <SERVER_NAME> --name audit_log_events --value CONNECTION",
+      "NativeIaC": "```bicep\n// Set MySQL Flexible Server audit_log_events to include CONNECTION\nresource cfg 'Microsoft.DBforMySQL/flexibleServers/configurations@2021-05-01' = {\n  name: '<example_resource_name>/audit_log_events'\n  properties: {\n    value: 'CONNECTION' // Critical: ensures 'CONNECTION' is logged, making the check PASS\n  }\n}\n```",
+      "Other": "1. In the Azure Portal, go to Azure Database for MySQL flexible server\n2. Select your server, then go to Server parameters\n3. Search for audit_log_events\n4. Set its value to CONNECTION\n5. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_mysql_flexible_server_configuration\" \"<example_resource_name>\" {\n  name                = \"audit_log_events\"\n  resource_group_name = \"<example_resource_group>\"\n  server_name         = \"<example_server_name>\"\n  value               = \"CONNECTION\" # Critical: includes CONNECTION in audit logs to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu. 2. Select Azure Database for MySQL servers. 3. Select a database. 4. Under Settings, select Server parameters. 5. Update audit_log_enabled parameter to ON. 6. Update audit_log_events parameter to have at least CONNECTION checked. 7. Click Save. 8. Under Monitoring, select Diagnostic settings. 9. Select + Add diagnostic setting. 10. Provide a diagnostic setting name. 11. Under Categories, select MySQL Audit Logs. 12. Specify destination details. 13. Click Save.",
-      "Url": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-logging-threat-detection#lt-3-enable-logging-for-security-investigation"
+      "Text": "Include `CONNECTION` in `audit_log_events` to capture login activity. Centralize and retain **audit logs**, restrict access by **least privilege**, and protect logs from tampering. Monitor for anomalous sign-in patterns and alert. Pair with **defense-in-depth** controls (MFA, network allow-listing) to reduce exposure.",
+      "Url": "https://hub.prowler.com/check/mysql_flexible_server_audit_log_connection_activated"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "There are further costs incurred for storage of logs. For high traffic databases these logs will be significant. Determine your organization's needs before enabling."

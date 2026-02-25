@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_os_relational_databases_is_on",
-  "CheckTitle": "Ensure That Microsoft Defender for Open-Source Relational Databases Is Set To 'On' ",
+  "CheckTitle": "Defender for Open-Source Relational Databases is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureDefenderPlan",
+  "ResourceType": "microsoft.security/pricings",
   "ResourceGroup": "security",
-  "Description": "Ensure That Microsoft Defender for Open-Source Relational Databases Is Set To 'On' ",
-  "Risk": "Turning on Microsoft Defender for Open-source relational databases enables threat detection for Open-source relational databases, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
+  "Description": "**Microsoft Defender for Cloud** plan for **Open-Source Relational Databases** is evaluated for the `Standard` pricing tier at the subscription level.",
+  "Risk": "Absent the `Standard` plan, open-source databases lack **threat detection** and **behavior analytics**, reducing **confidentiality** and **integrity**. SQL injection, brute-force logins, and data exfiltration may go unnoticed, delaying response and enabling **lateral movement**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-databases-introduction",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-relational-database.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az security pricing create --name OpenSourceRelationalDatabases --tier Standard",
+      "NativeIaC": "```bicep\n// Deploy at subscription scope to set Defender pricing\ntargetScope = 'subscription'\n\nresource pricingOpenSource \"Microsoft.Security/pricings@2023-01-01\" = {\n  name: 'OpenSourceRelationalDatabases'\n  properties: {\n    pricingTier: 'Standard' // Critical: sets the plan to Standard (ON)\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Microsoft Defender for Cloud\n2. Select Environment settings > your subscription\n3. Open Defender plans\n4. Find \"Open-source relational databases\" and set it to Standard/On\n5. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_security_center_subscription_pricing\" \"example_resource_name\" {\n  resource_type = \"OpenSourceRelationalDatabases\"\n  tier          = \"Standard\" # Critical: enables Defender (Standard tier)\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enabling Microsoft Defender for Open-source relational databases allows for greater defense-in-depth, with threat detection provided by the Microsoft Security Response Center (MSRC).",
-      "Url": ""
+      "Text": "Enable the plan at the `Standard` tier across relevant subscriptions. Apply **defense in depth**: enforce **least privilege**, isolate databases on private networks, require strong authentication, and route alerts to centralized monitoring for rapid triage. *Review coverage regularly*.",
+      "Url": "https://hub.prowler.com/check/defender_ensure_defender_for_os_relational_databases_is_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

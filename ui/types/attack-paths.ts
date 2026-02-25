@@ -43,6 +43,7 @@ export type ProviderType = (typeof PROVIDER_TYPES)[keyof typeof PROVIDER_TYPES];
 export interface AttackPathScanAttributes {
   state: ScanState;
   progress: number;
+  graph_data_ready: boolean;
   provider_alias: string;
   provider_type: ProviderType;
   provider_uid: string;
@@ -90,11 +91,18 @@ export interface AttackPathQueryParameter {
   required?: boolean;
 }
 
+export interface AttackPathQueryAttribution {
+  text: string;
+  link: string;
+}
+
 export interface AttackPathQueryAttributes {
   name: string;
+  short_description: string;
   description: string;
   provider: string;
   parameters: AttackPathQueryParameter[];
+  attribution: AttackPathQueryAttribution | null;
 }
 
 export interface AttackPathQuery {

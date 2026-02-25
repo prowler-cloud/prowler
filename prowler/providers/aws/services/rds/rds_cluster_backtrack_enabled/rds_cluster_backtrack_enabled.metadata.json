@@ -18,7 +18,7 @@
     "https://docs.aws.amazon.com/config/latest/developerguide/aurora-mysql-backtracking-enabled.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-14",
     "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Managing.Backtrack.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/backtrack.html#"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/RDS/backtrack.html#"
   ],
   "Remediation": {
     "Code": {

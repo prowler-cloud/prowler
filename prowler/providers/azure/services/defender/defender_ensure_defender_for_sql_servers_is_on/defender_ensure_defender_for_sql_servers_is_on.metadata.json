@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_sql_servers_is_on",
-  "CheckTitle": "Ensure That Microsoft Defender for SQL Servers on Machines Is Set To 'On' ",
+  "CheckTitle": "Defender for SQL servers on machines is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureDefenderPlan",
+  "ResourceType": "microsoft.security/pricings",
   "ResourceGroup": "security",
-  "Description": "Ensure That Microsoft Defender for SQL Servers on Machines Is Set To 'On' ",
-  "Risk": "Turning on Microsoft Defender for SQL servers on machines enables threat detection for SQL servers on machines, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
+  "Description": "**Subscription pricing** for **Defender for SQL Server on Machines** is configured to the `Standard` plan, covering SQL Server instances running on virtual machines.",
+  "Risk": "Without **Defender for SQL Server on Machines**, attacks on SQL Server VMs can go **undetected**-including SQL injection, brute-force logons, and privilege abuse.\n\nThis risks data exfiltration (C), schema or record tampering (I), and outages or ransomware impact (A), while reducing visibility and delaying response.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-sql-introduction",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-sql-server-virtual-machines.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-sql-server-virtual-machines.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-sql-servers-on-machines#terraform"
+      "CLI": "az security pricing create -n SqlServerVirtualMachines --tier Standard",
+      "NativeIaC": "```bicep\n// Enable Microsoft Defender for SQL servers on machines at subscription scope\ntargetScope = 'subscription'\n\nresource pricing 'Microsoft.Security/pricings@2022-03-01' = {\n  name: 'SqlServerVirtualMachines'\n  properties: {\n    pricingTier: 'Standard' // Critical: sets Defender plan to Standard (ON) for SQL Server VMs\n  }\n}\n```",
+      "Other": "1. In the Azure Portal, go to Microsoft Defender for Cloud\n2. Click Environment settings and select the target subscription\n3. Open Defender plans (Plans)\n4. Find SQL servers on machines and set it to Standard (On)\n5. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_security_center_subscription_pricing\" \"<example_resource_name>\" {\n  resource_type = \"SqlServerVirtualMachines\" # Critical: target the SQL Server VMs Defender plan\n  tier          = \"Standard\"                 # Critical: enable Standard (ON)\n}\n```"
     },
     "Recommendation": {
-      "Text": "By default, Microsoft Defender for Cloud is disabled for the Microsoft SQL servers running on virtual machines. Defender for Cloud for SQL Server virtual machines continuously monitors your SQL database servers for threats such as SQL injection, brute-force attacks, and privilege abuse. The security service provides security alerts together with details of the suspicious activity and guidance on how to mitigate to the security threats.",
-      "Url": ""
+      "Text": "Enable the **Defender for SQL Server on Machines** plan at the `Standard` tier for subscriptions hosting SQL Server VMs.\n\nApply defense-in-depth: enforce least privilege and strong authentication, segment networks, keep SQL patched, enable auditing, and route alerts to a SIEM for rapid containment.",
+      "Url": "https://hub.prowler.com/check/defender_ensure_defender_for_sql_servers_is_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

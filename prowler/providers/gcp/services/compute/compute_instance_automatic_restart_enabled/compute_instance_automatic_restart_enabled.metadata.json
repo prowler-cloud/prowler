@@ -13,7 +13,6 @@
   "Risk": "VM instances without Automatic Restart enabled will not recover automatically from host maintenance events or unexpected failures, potentially leading to prolonged service downtime and requiring manual intervention to restore services.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-automatic-restart.html",
     "https://cloud.google.com/compute/docs/instances/setting-instance-scheduling-options"
   ],
   "Remediation": {

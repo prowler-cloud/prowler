@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_iot_hub_defender_is_on",
-  "CheckTitle": "Ensure That Microsoft Defender for IoT Hub Is Set To 'On'",
+  "CheckTitle": "Defender for IoT Hub is set to On",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "DefenderIoT",
+  "ResourceType": "microsoft.security/iotsecuritysolutions",
   "ResourceGroup": "security",
-  "Description": "Microsoft Defender for IoT acts as a central security hub for IoT devices within your organization.",
-  "Risk": "IoT devices are very rarely patched and can be potential attack vectors for enterprise networks. Updating their network configuration to use a central security hub allows for detection of these breaches.",
-  "RelatedUrl": "https://azure.microsoft.com/en-us/services/iot-defender/#overview",
+  "Description": "**Microsoft Defender for IoT security solution** exists in the subscription and reports status `Enabled` for monitored **IoT Hub** resources.",
+  "Risk": "Without **Defender for IoT**, device activity lacks telemetry and alerting, degrading CIA:\n- Compromised devices join botnets and exfiltrate data\n- Abused device identities alter cloud twins and commands\n- Lateral movement from IoT networks to Azure workloads\nThis blind spot increases dwell time and blast radius.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-iot/device-builders/quickstart-onboard-iot-hub",
+    "https://support.icompaas.com/support/solutions/articles/62000229850-ensure-that-microsoft-defender-for-iot-hub-is-set-to-on-"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "```bicep\n// Enable Defender for IoT by creating an IoT Security Solution\nresource iotDefender 'Microsoft.Security/iotSecuritySolutions@2019-08-01' = {\n  name: '<example_resource_name>'\n  location: '<LOCATION>'\n  properties: {\n    displayName: '<example_resource_name>'\n    iotHubs: ['<IOT_HUB_RESOURCE_ID>']  // CRITICAL: links the IoT Hub; creating this solution enables Defender for IoT\n    status: 'Enabled'                   // CRITICAL: ensures the solution is enabled\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to IoT hubs and open your hub\n2. Select Defender for IoT > Overview\n3. Click Secure your IoT solution and complete onboarding (select the hub if prompted)\n4. If you see a toggle, set Enable Microsoft Defender for IoT to On and Save\n5. Verify the IoT Security Solution shows as Enabled under Defender for IoT",
+      "Terraform": "```hcl\n# Enable Defender for IoT by creating an IoT Security Solution\nresource \"azurerm_iot_security_solution\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<LOCATION>\"\n  display_name        = \"<example_resource_name>\"\n  iothub_ids          = [\"<IOT_HUB_RESOURCE_ID>\"]  # CRITICAL: links the IoT Hub; creating this solution enables Defender\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Go to IoT Hub. 2. Select a IoT Hub to validate. 3. Select Overview in Defender for IoT. 4. Click on Secure your IoT solution, and complete the onboarding.",
-      "Url": "https://learn.microsoft.com/en-us/azure/defender-for-iot/device-builders/quickstart-onboard-iot-hub"
+      "Text": "Enable **Defender for IoT** on all IoT Hubs and keep it `Enabled`. Route security data to a central workspace and your SIEM. Apply **least privilege** to IoT identities, enforce **network segmentation** and private access, and use **defense in depth** with continuous monitoring, alert tuning, and periodic coverage reviews.",
+      "Url": "https://hub.prowler.com/check/defender_ensure_iot_hub_defender_is_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Enabling Microsoft Defender for IoT will incur additional charges dependent on the level of usage."

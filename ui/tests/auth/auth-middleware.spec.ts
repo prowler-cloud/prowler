@@ -1,6 +1,6 @@
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-import { TEST_CREDENTIALS } from "../helpers";
+import { getSessionWithoutCookies, TEST_CREDENTIALS } from "../helpers";
 import { ProvidersPage } from "../providers/providers-page";
 import { ScansPage } from "../scans/scans-page";
 import { SignInPage } from "../sign-in-base/sign-in-base-page";
@@ -40,24 +40,14 @@ test.describe("Middleware Error Handling", () => {
       await providersPage.goto();
       await providersPage.verifyPageLoaded();
 
-      const cookies = await context.cookies();
-      const sessionCookie = cookies.find((c) =>
-        c.name.includes("authjs.session-token"),
-      );
+      // Remove auth cookies to simulate a broken/expired session deterministically.
+      await context.clearCookies();
 
-      if (sessionCookie) {
-        await context.clearCookies();
-        await context.addCookies([
-          {
-            ...sessionCookie,
-            value: "invalid-session-token",
-          },
-        ]);
+      const expiredSession = await getSessionWithoutCookies(page);
+      expect(expiredSession).toBeNull();
 
-        await scansPage.goto();
-        // With invalid session, should redirect to sign-in
-        await signInPage.verifyOnSignInPage();
-      }
+      await scansPage.goto();
+      await signInPage.verifyOnSignInPage();
     },
   );
 
