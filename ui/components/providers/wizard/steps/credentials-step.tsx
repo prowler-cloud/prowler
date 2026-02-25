@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 
 import { getProviderFormType } from "@/lib/provider-helpers";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
-import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 import { ProviderType } from "@/types/providers";
 
 import {
@@ -39,7 +38,7 @@ export function CredentialsStep({
   onBack,
   onFooterChange,
 }: CredentialsStepProps) {
-  const { providerId, providerType, providerUid, via, secretId, mode, setVia } =
+  const { providerId, providerType, providerUid, via, secretId, setVia } =
     useProviderWizardStore();
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
@@ -50,8 +49,7 @@ export function CredentialsStep({
     providerType && providerId
       ? getProviderFormType(providerType, via || undefined)
       : null;
-  const shouldUseUpdateForms =
-    mode === PROVIDER_WIZARD_MODE.UPDATE && Boolean(secretId);
+  const shouldUseUpdateForms = Boolean(secretId);
 
   const handleBack = () => {
     if (via) {
