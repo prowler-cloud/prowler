@@ -50,7 +50,7 @@ class entra_require_mfa_for_management_api(Check):
                 AZURE_MANAGEMENT_API_APP_ID
                 not in policy.conditions.application_conditions.included_applications
                 and "All"
-      			not in policy.conditions.application_conditions.included_applications
+                not in policy.conditions.application_conditions.included_applications
             ):
                 continue
 
