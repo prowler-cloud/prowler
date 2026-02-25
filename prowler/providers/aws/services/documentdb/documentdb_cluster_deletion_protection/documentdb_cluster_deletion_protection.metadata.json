@@ -17,7 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.icompaas.com/support/solutions/articles/62000233689-ensure-documentdb-clusters-has-deletion-protection-enabled",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DocumentDB/deletion-protection.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/DocumentDB/deletion-protection.html",
     "https://docs.aws.amazon.com/documentdb/latest/developerguide/db-cluster-delete.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-5"
   ],

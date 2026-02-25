@@ -18,7 +18,7 @@
   "Risk": "Unencrypted Firehose data at rest can be read if storage or backups are accessed, harming **confidentiality** and **integrity**. Disk-level access, snapshots, or misconfigured destinations enable data exfiltration or tampering. Lacking KMS-backed controls also reduces key rotation, segregation of duties, and auditability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Firehose/delivery-stream-encrypted-with-kms-customer-master-keys.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Firehose/delivery-stream-encrypted-with-kms-customer-master-keys.html",
     "https://docs.aws.amazon.com/firehose/latest/dev/encryption.html",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/datafirehose-controls.html#datafirehose-1"

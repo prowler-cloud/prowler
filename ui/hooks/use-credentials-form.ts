@@ -21,6 +21,10 @@ type UseCredentialsFormProps = {
   providerUid?: string;
   onSubmit: (formData: FormData) => Promise<ApiResponse>;
   successNavigationUrl: string;
+  via?: string | null;
+  onSuccess?: () => void;
+  onBack?: () => void;
+  validationMode?: "onSubmit" | "onChange";
 };
 
 export const useCredentialsForm = ({
@@ -29,21 +33,25 @@ export const useCredentialsForm = ({
   providerUid,
   onSubmit,
   successNavigationUrl,
+  via: viaOverride,
+  onSuccess,
+  onBack,
+  validationMode = "onChange",
 }: UseCredentialsFormProps) => {
   const router = useRouter();
   const searchParamsObj = useSearchParams();
   const { data: session } = useSession();
-  const via = searchParamsObj.get("via");
+  const effectiveVia = viaOverride ?? searchParamsObj.get("via");
 
   // Select the appropriate schema based on provider type and via parameter
   const getFormSchema = () => {
-    if (providerType === "aws" && via === "role") {
+    if (providerType === "aws" && effectiveVia === "role") {
       return addCredentialsRoleFormSchema(providerType);
     }
-    if (providerType === "alibabacloud" && via === "role") {
+    if (providerType === "alibabacloud" && effectiveVia === "role") {
       return addCredentialsRoleFormSchema(providerType);
     }
-    if (providerType === "gcp" && via === "service-account") {
+    if (providerType === "gcp" && effectiveVia === "service-account") {
       return addCredentialsServiceAccountFormSchema(providerType);
     }
     // For GitHub, M365, and Cloudflare, we need to pass the via parameter to determine which fields are required
@@ -52,7 +60,7 @@ export const useCredentialsForm = ({
       providerType === "m365" ||
       providerType === "cloudflare"
     ) {
-      return addCredentialsFormSchema(providerType, via);
+      return addCredentialsFormSchema(providerType, effectiveVia);
     }
     return addCredentialsFormSchema(providerType);
   };
@@ -67,7 +75,7 @@ export const useCredentialsForm = ({
     };
 
     // AWS Role credentials
-    if (providerType === "aws" && via === "role") {
+    if (providerType === "aws" && effectiveVia === "role") {
       const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
       const defaultCredentialsType = isCloudEnv
         ? "aws-sdk-default"
@@ -86,7 +94,7 @@ export const useCredentialsForm = ({
     }
 
     // GCP Service Account
-    if (providerType === "gcp" && via === "service-account") {
+    if (providerType === "gcp" && effectiveVia === "service-account") {
       return {
         ...baseDefaults,
         [ProviderCredentialFields.SERVICE_ACCOUNT_KEY]: "",
@@ -110,7 +118,7 @@ export const useCredentialsForm = ({
         };
       case "m365":
         // M365 credentials based on via parameter
-        if (via === "app_client_secret") {
+        if (effectiveVia === "app_client_secret") {
           return {
             ...baseDefaults,
             [ProviderCredentialFields.CLIENT_ID]: "",
@@ -118,7 +126,7 @@ export const useCredentialsForm = ({
             [ProviderCredentialFields.TENANT_ID]: "",
           };
         }
-        if (via === "app_certificate") {
+        if (effectiveVia === "app_certificate") {
           return {
             ...baseDefaults,
             [ProviderCredentialFields.CLIENT_ID]: "",
@@ -145,19 +153,19 @@ export const useCredentialsForm = ({
         };
       case "github":
         // GitHub credentials based on via parameter
-        if (via === "personal_access_token") {
+        if (effectiveVia === "personal_access_token") {
           return {
             ...baseDefaults,
             [ProviderCredentialFields.PERSONAL_ACCESS_TOKEN]: "",
           };
         }
-        if (via === "oauth_app") {
+        if (effectiveVia === "oauth_app") {
           return {
             ...baseDefaults,
             [ProviderCredentialFields.OAUTH_APP_TOKEN]: "",
           };
         }
-        if (via === "github_app") {
+        if (effectiveVia === "github_app") {
           return {
             ...baseDefaults,
             [ProviderCredentialFields.GITHUB_APP_ID]: "",
@@ -182,7 +190,7 @@ export const useCredentialsForm = ({
           [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: "",
         };
       case "alibabacloud":
-        if (via === "role") {
+        if (effectiveVia === "role") {
           return {
             ...baseDefaults,
             [ProviderCredentialFields.ALIBABACLOUD_ROLE_ARN]: "",
@@ -198,13 +206,13 @@ export const useCredentialsForm = ({
         };
       case "cloudflare":
         // Cloudflare credentials based on via parameter
-        if (via === "api_token") {
+        if (effectiveVia === "api_token") {
           return {
             ...baseDefaults,
             [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]: "",
           };
         }
-        if (via === "api_key") {
+        if (effectiveVia === "api_key") {
           return {
             ...baseDefaults,
             [ProviderCredentialFields.CLOUDFLARE_API_KEY]: "",
@@ -228,7 +236,7 @@ export const useCredentialsForm = ({
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: defaultValues,
-    mode: "onSubmit",
+    mode: validationMode,
     reValidateMode: "onChange",
     criteriaMode: "all", // Show all errors for each field
   });
@@ -240,6 +248,11 @@ export const useCredentialsForm = ({
 
   // Handler for back button
   const handleBackStep = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+
     const currentParams = new URLSearchParams(window.location.search);
     currentParams.delete("via");
     router.push(`?${currentParams.toString()}`);
@@ -260,19 +273,25 @@ export const useCredentialsForm = ({
 
     const isSuccess = handleServerResponse(data);
     if (isSuccess) {
+      if (onSuccess) {
+        onSuccess();
+        return;
+      }
       router.push(successNavigationUrl);
     }
   };
 
-  const { isSubmitting, errors } = form.formState;
+  const { isSubmitting, isValid, errors } = form.formState;
 
   return {
     form,
     isLoading: isSubmitting,
+    isValid,
     errors,
     handleSubmit,
     handleBackStep,
     searchParamsObj,
+    effectiveVia,
     externalId: session?.tenantId || "",
   };
 };

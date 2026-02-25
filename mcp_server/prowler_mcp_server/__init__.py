@@ -5,7 +5,7 @@ This package provides MCP tools for accessing:
 - Prowler Hub: All security artifacts (detections, remediations and frameworks) supported by Prowler
 """
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __author__ = "Prowler Team"
 __email__ = "engineering@prowler.com"
 

@@ -1,0 +1,39 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_require_mfa_for_management_api",
+  "CheckTitle": "Conditional Access Policy enforces MFA for Azure Management API access",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
+  "Description": "This check verifies that at least one **enabled** Conditional Access policy requires **multifactor authentication** for the **Windows Azure Service Management API**, covering Azure Portal, CLI, PowerShell, and IaC tools.",
+  "Risk": "Without MFA on Azure management endpoints, compromised credentials allow **control-plane access**. Attackers can modify configurations, create or delete resources, extract secrets, and pivot laterally, compromising confidentiality, integrity, and availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-old-require-mfa-azure-mgmt",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In the Microsoft Entra admin center, go to Protection > Conditional Access > Policies.\n2. Click New policy.\n3. Under Users, select Include > All users.\n4. Under Target resources, select Include > Select resources > choose \"Windows Azure Service Management API\".\n5. Under Grant, select Grant access > check Require multifactor authentication > Select.\n6. Set Enable policy to On and click Create.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce **MFA** via Conditional Access for the Windows Azure Service Management API scoped to all users. Prefer **phishing-resistant** methods, apply **least privilege**, and monitor sign-ins for anomalous activity. Only exclude dedicated break-glass accounts.",
+      "Url": "https://hub.prowler.com/check/entra_require_mfa_for_management_api"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_emergency_access_exclusion"
+  ],
+  "Notes": "Conditional Access policies require Microsoft Entra ID P1 or P2 licenses. The Windows Azure Service Management API (appId: 797f4846-ba00-4fd7-ba43-dac1f8f63013) covers Azure Portal, Azure CLI, Azure PowerShell, Azure mobile app, and IaC tools."
+}

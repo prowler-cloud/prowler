@@ -19,7 +19,7 @@
   "Risk": "Without enforced **IMDSv2**, **SSRF** and local escape paths can access **IAM role credentials**, enabling unauthorized API calls.\n\nAttackers could:\n- Exfiltrate data with stolen tokens\n- Move laterally and modify resources, degrading confidentiality and integrity",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/require-imds-v2.html",
+    "https://trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/EC2/require-imds-v2.html",
     "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-3",
     "https://aws.plainenglish.io/dont-let-metadata-leak-why-imdsv2-is-a-must-and-how-to-migrate-a88e1e285394"

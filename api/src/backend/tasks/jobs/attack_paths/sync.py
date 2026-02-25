@@ -11,7 +11,11 @@ from typing import Any
 from celery.utils.log import get_task_logger
 
 from api.attack_paths import database as graph_database
-from tasks.jobs.attack_paths.config import BATCH_SIZE, PROVIDER_RESOURCE_LABEL
+from tasks.jobs.attack_paths.config import (
+    BATCH_SIZE,
+    DEPRECATED_PROVIDER_RESOURCE_LABEL,
+    PROVIDER_RESOURCE_LABEL,
+)
 from tasks.jobs.attack_paths.indexes import IndexType, create_indexes
 from tasks.jobs.attack_paths.queries import (
     NODE_FETCH_QUERY,
@@ -70,7 +74,7 @@ def sync_nodes(
     """
     Sync nodes from source to target database.
 
-    Adds `ProviderResource` label and `provider_id` property to all nodes.
+    Adds `_ProviderResource` label and `_provider_id` property to all nodes.
     """
     last_id = -1
     total_synced = 0
@@ -108,6 +112,7 @@ def sync_nodes(
             for labels, batch in grouped.items():
                 label_set = set(labels)
                 label_set.add(PROVIDER_RESOURCE_LABEL)
+                label_set.add(DEPRECATED_PROVIDER_RESOURCE_LABEL)
                 node_labels = ":".join(f"`{label}`" for label in sorted(label_set))
 
                 query = render_cypher_template(
@@ -137,7 +142,7 @@ def sync_relationships(
     """
     Sync relationships from source to target database.
 
-    Adds `provider_id` property to all relationships.
+    Adds `_provider_id` property to all relationships.
     """
     last_id = -1
     total_synced = 0
@@ -196,7 +201,9 @@ def sync_relationships(
 def _strip_internal_properties(props: dict[str, Any]) -> None:
     """Remove internal properties that shouldn't be copied during sync."""
     for key in [
-        "provider_element_id",
-        "provider_id",
+        "_provider_element_id",
+        "_provider_id",
+        "provider_element_id",  # Deprecated
+        "provider_id",  # Deprecated
     ]:
         props.pop(key, None)

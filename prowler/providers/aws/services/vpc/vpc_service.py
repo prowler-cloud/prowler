@@ -264,7 +264,10 @@ class VPC(AWSService):
             for page in describe_vpc_endpoint_services_paginator.paginate():
                 for endpoint in page["ServiceDetails"]:
                     try:
-                        if endpoint["Owner"] != "amazon":
+                        # Only collect endpoint services owned by the audited account.
+                        # The API returns ALL available services in the region,
+                        # including Amazon and third-party ones we can't inspect.
+                        if endpoint["Owner"] == self.audited_account:
                             arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:vpc-endpoint-service/{endpoint['ServiceId']}"
                             if not self.audit_resources or (
                                 is_resource_filtered(arn, self.audit_resources)
@@ -303,9 +306,13 @@ class VPC(AWSService):
                     ]:
                         service.allowed_principals.append(principal["Principal"])
                 except ClientError as error:
-                    if (
-                        error.response["Error"]["Code"]
-                        == "InvalidVpcEndpointServiceId.NotFound"
+                    # AccessDenied/UnauthorizedOperation can occur if a
+                    # non-owned service slips through or permissions change
+                    # between collection and this call.
+                    if error.response["Error"]["Code"] in (
+                        "InvalidVpcEndpointServiceId.NotFound",
+                        "AccessDenied",
+                        "UnauthorizedOperation",
                     ):
                         logger.warning(
                             f"{service.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
