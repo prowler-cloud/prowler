@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { getSessionWithoutCookies, TEST_CREDENTIALS } from "../helpers";
+import { getSession, TEST_CREDENTIALS } from "../helpers";
 import { ProvidersPage } from "../providers/providers-page";
 import { ScansPage } from "../scans/scans-page";
 import { SignInPage } from "../sign-in-base/sign-in-base-page";
@@ -40,13 +40,14 @@ test.describe("Middleware Error Handling", () => {
       await providersPage.goto();
       await providersPage.verifyPageLoaded();
 
-      // Remove auth cookies to simulate a broken/expired session deterministically.
+      // Remove auth cookies to simulate an expired session in the same browser context.
       await context.clearCookies();
 
-      const expiredSession = await getSessionWithoutCookies(page);
+      const expiredSession = await getSession(page);
       expect(expiredSession).toBeNull();
 
-      await scansPage.goto();
+      // Force a fresh server navigation so middleware/proxy is re-evaluated.
+      await scansPage.gotoFresh("/scans");
       await signInPage.verifyOnSignInPage();
     },
   );
