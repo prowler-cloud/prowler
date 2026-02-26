@@ -123,11 +123,11 @@ class TestOCSF:
             1619600000, tz=timezone.utc
         )
 
-    def test_scan_id_is_unique_per_provider(self):
+    def test_scan_id_is_unique_per_provider_and_account(self):
         findings = [
-            generate_finding_output(provider="aws"),
-            generate_finding_output(provider="azure"),
-            generate_finding_output(provider="aws"),
+            generate_finding_output(provider="aws", account_uid="111111111111"),
+            generate_finding_output(provider="aws", account_uid="222222222222"),
+            generate_finding_output(provider="aws", account_uid="111111111111"),
         ]
 
         ocsf = OCSF(findings)
