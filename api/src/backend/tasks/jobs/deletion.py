@@ -1,5 +1,9 @@
 from celery.utils.log import get_task_logger
 from django.db import DatabaseError
+from tasks.jobs.queries import (
+    COMPLIANCE_DELETE_EMPTY_TENANT_SUMMARY_SQL,
+    COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
+)
 
 from api.attack_paths import database as graph_database
 from api.db_router import MainRouter
@@ -8,6 +12,7 @@ from api.models import (
     AttackPathsScan,
     Finding,
     Provider,
+    ProviderComplianceScore,
     Resource,
     Scan,
     ScanSummary,
@@ -15,6 +20,28 @@ from api.models import (
 )
 
 logger = get_task_logger(__name__)
+
+
+def _recalculate_tenant_compliance_summary(tenant_id: str, compliance_ids: list[str]):
+    if not compliance_ids:
+        return
+
+    compliance_ids = sorted(set(compliance_ids))
+
+    with rls_transaction(tenant_id, using=MainRouter.default_db) as cursor:
+        # Serialize tenant-level summary updates to avoid concurrent recomputes
+        cursor.execute(
+            "SELECT pg_advisory_xact_lock(hashtext(%s))",
+            [tenant_id],
+        )
+        cursor.execute(
+            COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
+            [tenant_id, tenant_id, compliance_ids],
+        )
+        cursor.execute(
+            COMPLIANCE_DELETE_EMPTY_TENANT_SUMMARY_SQL,
+            [tenant_id, compliance_ids],
+        )
 
 
 def delete_provider(tenant_id: str, pk: str):
@@ -38,6 +65,12 @@ def delete_provider(tenant_id: str, pk: str):
         except Provider.DoesNotExist:
             logger.info(f"Provider `{pk}` already deleted, skipping")
             return {}
+
+        compliance_ids = list(
+            ProviderComplianceScore.objects.filter(provider=instance)
+            .values_list("compliance_id", flat=True)
+            .distinct()
+        )
 
         attack_paths_scan_ids = list(
             AttackPathsScan.all_objects.filter(provider=instance).values_list(
@@ -88,6 +121,15 @@ def delete_provider(tenant_id: str, pk: str):
         deletion_summary.update(provider_summary)
     except DatabaseError as db_error:
         logger.error(f"Error deleting Provider: {db_error}")
+        raise
+
+    try:
+        _recalculate_tenant_compliance_summary(tenant_id, compliance_ids)
+    except Exception as db_error:
+        logger.error(
+            "Error recalculating tenant compliance summary after provider delete: %s",
+            db_error,
+        )
         raise
 
     return deletion_summary

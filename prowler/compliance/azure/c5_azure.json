@@ -74,7 +74,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_policy_guest_invite_only_for_admin_roles",
         "iam_custom_role_has_permissions_to_administer_resource_locks",
         "iam_role_user_access_admin_restricted",
@@ -94,7 +94,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_policy_default_users_cannot_create_security_groups",
         "iam_custom_role_has_permissions_to_administer_resource_locks",
         "iam_role_user_access_admin_restricted",
@@ -286,7 +286,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_policy_default_users_cannot_create_security_groups",
         "entra_policy_guest_invite_only_for_admin_roles",
         "entra_policy_user_consent_for_verified_apps",
@@ -709,7 +709,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_policy_guest_users_access_restrictions",
         "entra_user_with_vm_access_has_mfa",
         "iam_custom_role_has_permissions_to_administer_resource_locks",
@@ -2122,7 +2122,7 @@
         "monitor_alert_delete_public_ip_address_rule",
         "aks_clusters_public_access_disabled",
         "app_function_access_keys_configured",
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_policy_guest_users_access_restrictions",
         "entra_user_with_vm_access_has_mfa",
         "iam_role_user_access_admin_restricted",
@@ -3497,7 +3497,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_user_with_vm_access_has_mfa",
         "iam_custom_role_has_permissions_to_administer_resource_locks",
         "iam_role_user_access_admin_restricted",
@@ -4522,7 +4522,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_policy_guest_invite_only_for_admin_roles",
         "entra_policy_guest_users_access_restrictions",
         "entra_user_with_vm_access_has_mfa",
@@ -4894,7 +4894,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_policy_guest_users_access_restrictions",
         "entra_user_with_vm_access_has_mfa",
         "iam_custom_role_has_permissions_to_administer_resource_locks",
@@ -4917,7 +4917,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_policy_guest_users_access_restrictions",
         "entra_user_with_vm_access_has_mfa",
         "iam_custom_role_has_permissions_to_administer_resource_locks",
@@ -5053,7 +5053,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_privileged_user_has_mfa",
         "entra_user_with_vm_access_has_mfa"
       ]
@@ -5298,7 +5298,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_privileged_user_has_mfa",
         "entra_user_with_vm_access_has_mfa",
         "iam_role_user_access_admin_restricted",
@@ -5346,7 +5346,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_policy_guest_users_access_restrictions",
         "entra_policy_user_consent_for_verified_apps",
         "entra_user_with_vm_access_has_mfa",
@@ -5429,7 +5429,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_user_with_vm_access_has_mfa"
       ]
     },
@@ -5518,7 +5518,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_non_privileged_user_has_mfa",
         "entra_user_with_vm_access_has_mfa"
       ]
@@ -5557,7 +5557,7 @@
         "app_function_not_publicly_accessible",
         "containerregistry_not_publicly_accessible",
         "containerregistry_uses_private_link",
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_policy_guest_users_access_restrictions",
         "entra_user_with_vm_access_has_mfa",
         "iam_role_user_access_admin_restricted",
@@ -5598,7 +5598,7 @@
         "app_function_not_publicly_accessible",
         "containerregistry_not_publicly_accessible",
         "containerregistry_uses_private_link",
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_policy_guest_users_access_restrictions",
         "entra_user_with_vm_access_has_mfa",
         "iam_role_user_access_admin_restricted",
@@ -9010,7 +9010,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
         "entra_user_with_vm_access_has_mfa"
@@ -9029,7 +9029,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_privileged_user_has_mfa"
       ]
     },
@@ -9240,7 +9240,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_policy_guest_invite_only_for_admin_roles",
         "entra_policy_guest_users_access_restrictions",
         "iam_custom_role_has_permissions_to_administer_resource_locks",

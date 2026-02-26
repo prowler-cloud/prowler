@@ -99,6 +99,7 @@
               },
               "user-guide/tutorials/prowler-app-rbac",
               "user-guide/tutorials/prowler-app-api-keys",
+              "user-guide/tutorials/prowler-app-findings-ingestion",
               {
                 "group": "Mutelist",
                 "expanded": true,
@@ -225,6 +226,13 @@
                   "user-guide/providers/microsoft365/getting-started-m365",
                   "user-guide/providers/microsoft365/authentication",
                   "user-guide/providers/microsoft365/use-of-powershell"
+                ]
+              },
+              {
+                "group": "Google Workspace",
+                "pages": [
+                  "user-guide/providers/googleworkspace/getting-started-googleworkspace",
+                  "user-guide/providers/googleworkspace/authentication"
                 ]
               },
               {

@@ -160,7 +160,7 @@
         "entra_policy_restricts_user_consent_for_apps",
         "entra_user_with_vm_access_has_mfa",
         "entra_security_defaults_enabled",
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_trusted_named_locations_exists",
         "sqlserver_azuread_administrator_enabled",
         "postgresql_flexible_server_entra_id_authentication_enabled",
