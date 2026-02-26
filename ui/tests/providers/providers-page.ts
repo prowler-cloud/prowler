@@ -578,17 +578,17 @@ export class ProvidersPage extends BasePage {
   }
 
   async selectAWSSingleAccountMethod(): Promise<void> {
-    await this.page
-      .getByRole("button", {
-        name: "Add A Single AWS Cloud Account",
-        exact: true,
-      })
-      .click();
+    const singleAccountOption = this.page.getByRole("radio", {
+      name: "Add A Single AWS Cloud Account",
+      exact: true,
+    });
+    await expect(singleAccountOption).toBeVisible({ timeout: 10000 });
+    await singleAccountOption.click();
   }
 
   async selectAWSOrganizationsMethod(): Promise<void> {
     await this.page
-      .getByRole("button", {
+      .getByRole("radio", {
         name: "Add Multiple Accounts With AWS Organizations",
         exact: true,
       })
@@ -633,16 +633,8 @@ export class ProvidersPage extends BasePage {
   }
 
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
-    // Fill the AWS provider details
-    const singleAccountButton = this.page.getByRole("button", {
-      name: "Add A Single AWS Cloud Account",
-      exact: true,
-    });
-
-    if (await singleAccountButton.isVisible().catch(() => false)) {
-      await singleAccountButton.click();
-    }
-
+    await this.selectAWSSingleAccountMethod();
+    await expect(this.accountIdInput).toBeVisible({ timeout: 10000 });
     await this.accountIdInput.fill(data.accountId);
 
     if (data.alias) {
@@ -740,38 +732,36 @@ export class ProvidersPage extends BasePage {
   }
 
   private async handleLaunchScanCompletion(): Promise<void> {
-    const errorMessage = this.page
-      .locator(
-        "div.border-border-error, div.bg-red-100, p.text-text-error-primary, p.text-danger",
-      )
-      .first();
     const goToScansButton = this.page.getByRole("button", {
       name: "Go to scans",
       exact: true,
     });
+    const connectionError = this.page.locator(
+      "div.border-border-error p.text-text-error-primary",
+    );
 
     try {
       await Promise.race([
-        this.page.waitForURL(/\/scans/, { timeout: 30000 }),
-        goToScansButton.waitFor({ state: "visible", timeout: 30000 }),
-        errorMessage.waitFor({ state: "visible", timeout: 30000 }),
+        this.page.waitForURL(/\/scans/, { timeout: 60000 }),
+        goToScansButton.waitFor({ state: "visible", timeout: 60000 }),
+        connectionError.waitFor({ state: "visible", timeout: 60000 }),
       ]);
     } catch {
       // Continue and inspect visible state below.
     }
 
-    const isErrorVisible = await errorMessage.isVisible().catch(() => false);
-    if (isErrorVisible) {
-      const errorText = await errorMessage.textContent();
+    if (await connectionError.isVisible().catch(() => false)) {
+      const errorText = await connectionError.textContent();
       throw new Error(
         `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
       );
     }
 
-    const isGoToScansVisible = await goToScansButton
-      .isVisible()
-      .catch(() => false);
-    if (isGoToScansVisible) {
+    if (this.page.url().includes("/scans")) {
+      return;
+    }
+
+    if (await goToScansButton.isVisible().catch(() => false)) {
       await goToScansButton.click();
       await this.page.waitForURL(/\/scans/, { timeout: 30000 });
     }

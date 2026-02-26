@@ -1,4 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
+import path from "path";
+
+process.loadEnvFile(path.resolve(__dirname, ".env.local"));
 
 export default defineConfig({
   testDir: "./tests",
