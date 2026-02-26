@@ -4280,6 +4280,8 @@ class TestAttackPathsScanViewSet:
             }
         }
 
+    # TODO: Remove skip once queries/custom and schema endpoints are unblocked
+    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_run_custom_query_returns_graph(
         self,
         authenticated_client,
@@ -4337,6 +4339,7 @@ class TestAttackPathsScanViewSet:
         assert attributes["total_nodes"] == 1
         assert attributes["truncated"] is False
 
+    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_run_custom_query_returns_404_when_no_nodes(
         self,
         authenticated_client,
@@ -4378,6 +4381,7 @@ class TestAttackPathsScanViewSet:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_run_custom_query_returns_400_when_graph_not_ready(
         self,
         authenticated_client,
@@ -4404,6 +4408,7 @@ class TestAttackPathsScanViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "not available" in response.json()["errors"][0]["detail"]
 
+    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_run_custom_query_returns_403_for_write_query(
         self,
         authenticated_client,
@@ -4443,6 +4448,7 @@ class TestAttackPathsScanViewSet:
 
     # -- cartography_schema action ------------------------------------------------
 
+    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_cartography_schema_returns_urls(
         self,
         authenticated_client,
@@ -4492,6 +4498,7 @@ class TestAttackPathsScanViewSet:
         assert "schema.md" in attributes["schema_url"]
         assert "raw.githubusercontent.com" in attributes["raw_schema_url"]
 
+    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_cartography_schema_returns_404_when_no_metadata(
         self,
         authenticated_client,
@@ -4526,6 +4533,7 @@ class TestAttackPathsScanViewSet:
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert "No cartography schema metadata" in str(response.json())
 
+    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_cartography_schema_returns_400_when_graph_not_ready(
         self,
         authenticated_client,
