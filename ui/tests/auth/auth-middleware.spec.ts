@@ -1,8 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-import { getSession, TEST_CREDENTIALS } from "../helpers";
+import { TEST_CREDENTIALS } from "../helpers";
 import { ProvidersPage } from "../providers/providers-page";
-import { ScansPage } from "../scans/scans-page";
 import { SignInPage } from "../sign-in-base/sign-in-base-page";
 import { SignUpPage } from "../sign-up/sign-up-page";
 
@@ -33,22 +32,39 @@ test.describe("Middleware Error Handling", () => {
     async ({ page, context }) => {
       const signInPage = new SignInPage(page);
       const providersPage = new ProvidersPage(page);
-      const scansPage = new ScansPage(page);
 
       await signInPage.loginAndVerify(TEST_CREDENTIALS.VALID);
 
       await providersPage.goto();
       await providersPage.verifyPageLoaded();
 
-      // Remove auth cookies to simulate an expired session in the same browser context.
+      // Remove auth cookies to simulate an expired session.
       await context.clearCookies();
+      const authCookies = (await context.cookies()).filter((cookie) =>
+        /(authjs|next-auth)/i.test(cookie.name),
+      );
 
-      const expiredSession = await getSession(page);
-      expect(expiredSession).toBeNull();
+      if (authCookies.length > 0) {
+        await context.addCookies(
+          authCookies.map((cookie) => ({
+            ...cookie,
+            value: "",
+            expires: 0,
+          })),
+        );
+      }
 
-      // Force a fresh server navigation so middleware/proxy is re-evaluated.
-      await scansPage.gotoFresh("/scans");
-      await signInPage.verifyOnSignInPage();
+      const remainingAuthCookies = (await context.cookies()).filter((cookie) =>
+        /(authjs|next-auth)/i.test(cookie.name),
+      );
+      expect(remainingAuthCookies).toHaveLength(0);
+
+      // Use a new page to avoid in-memory router/cache state from the previous navigation.
+      const freshPage = await context.newPage();
+      const freshSignInPage = new SignInPage(freshPage);
+      const cacheBuster = Date.now();
+      await freshPage.goto(`/scans?e2e_mw=${cacheBuster}`, { waitUntil: "commit" });
+      await freshSignInPage.verifyOnSignInPage();
     },
   );
 
