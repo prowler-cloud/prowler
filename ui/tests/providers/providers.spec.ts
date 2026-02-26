@@ -2,6 +2,8 @@ import { test } from "@playwright/test";
 import {
   ProvidersPage,
   AWSProviderData,
+  AWSOrganizationsProviderCredential,
+  AWSOrganizationsProviderData,
   AWSProviderCredential,
   AWS_CREDENTIAL_OPTIONS,
   AZUREProviderData,
@@ -36,10 +38,12 @@ test.describe("Add Provider", () => {
     let providersPage: ProvidersPage;
     let scansPage: ScansPage;
     // Test data from environment variables
-    const accountId = process.env.E2E_AWS_PROVIDER_ACCOUNT_ID;
-    const accessKey = process.env.E2E_AWS_PROVIDER_ACCESS_KEY;
-    const secretKey = process.env.E2E_AWS_PROVIDER_SECRET_KEY;
-    const roleArn = process.env.E2E_AWS_PROVIDER_ROLE_ARN;
+    const accountId = process.env.E2E_AWS_PROVIDER_ACCOUNT_ID ?? "";
+    const accessKey = process.env.E2E_AWS_PROVIDER_ACCESS_KEY ?? "";
+    const secretKey = process.env.E2E_AWS_PROVIDER_SECRET_KEY ?? "";
+    const roleArn = process.env.E2E_AWS_PROVIDER_ROLE_ARN ?? "";
+    const organizationId = process.env.E2E_AWS_ORGANIZATION_ID ?? "";
+    const organizationRoleArn = process.env.E2E_AWS_ORGANIZATION_ROLE_ARN ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
@@ -209,9 +213,8 @@ test.describe("Add Provider", () => {
         ],
       },
       async ({ page }) => {
-
         // Validate required environment variables
-        if (!accountId  || !roleArn) {
+        if (!accountId || !roleArn) {
           throw new Error(
             "E2E_AWS_PROVIDER_ACCOUNT_ID, and E2E_AWS_PROVIDER_ROLE_ARN environment variables are not set",
           );
@@ -271,6 +274,73 @@ test.describe("Add Provider", () => {
         await scansPage.verifyScheduledScanStatus(accountId);
       },
     );
+
+    test(
+      "should add multiple AWS accounts using AWS Organizations",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@aws",
+          "@serial",
+          "@PROVIDER-E2E-016",
+        ],
+      },
+      async ({ page }) => {
+        if (!organizationId || !organizationRoleArn) {
+          test.skip(
+            true,
+            "E2E_AWS_ORGANIZATION_ID and E2E_AWS_ORGANIZATION_ROLE_ARN environment variables are not set",
+          );
+          return;
+        }
+
+        const awsOrganizationId = organizationId;
+        const awsOrganizationRoleArn = organizationRoleArn;
+
+        await deleteProviderIfExists(providersPage, awsOrganizationId);
+
+        const awsOrganizationData: AWSOrganizationsProviderData = {
+          organizationId: awsOrganizationId,
+          organizationName: "Test E2E AWS Organization",
+        };
+        const organizationsCredentials: AWSOrganizationsProviderCredential = {
+          roleArn: awsOrganizationRoleArn,
+          stackSetDeployed: true,
+        };
+
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        await providersPage.selectAWSProvider();
+        await providersPage.selectAWSOrganizationsMethod();
+
+        await providersPage.fillAWSOrganizationsProviderDetails(
+          awsOrganizationData,
+        );
+        await providersPage.clickNext();
+
+        await providersPage.verifyOrganizationsAuthenticationStepLoaded();
+        await providersPage.fillAWSOrganizationsCredentials(
+          organizationsCredentials,
+        );
+        await providersPage.clickNext();
+
+        await providersPage.verifyOrganizationsAccountSelectionStepLoaded();
+        await providersPage.clickNext();
+
+        await providersPage.verifyOrganizationsLaunchStepLoaded();
+        await providersPage.chooseOrganizationsScanSchedule("single");
+        await providersPage.clickNext();
+
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
+      },
+    );
   });
 
   test.describe.serial("Add AZURE Provider", () => {
@@ -279,10 +349,10 @@ test.describe("Add Provider", () => {
     let scansPage: ScansPage;
 
     // Test data from environment variables
-    const subscriptionId = process.env.E2E_AZURE_SUBSCRIPTION_ID;
-    const clientId = process.env.E2E_AZURE_CLIENT_ID;
-    const clientSecret = process.env.E2E_AZURE_SECRET_ID;
-    const tenantId = process.env.E2E_AZURE_TENANT_ID;
+    const subscriptionId = process.env.E2E_AZURE_SUBSCRIPTION_ID ?? "";
+    const clientId = process.env.E2E_AZURE_CLIENT_ID ?? "";
+    const clientSecret = process.env.E2E_AZURE_SECRET_ID ?? "";
+    const tenantId = process.env.E2E_AZURE_TENANT_ID ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
@@ -363,9 +433,9 @@ test.describe("Add Provider", () => {
     let scansPage: ScansPage;
 
     // Test data from environment variables
-    const domainId = process.env.E2E_M365_DOMAIN_ID;
-    const clientId = process.env.E2E_M365_CLIENT_ID;
-    const tenantId = process.env.E2E_M365_TENANT_ID;
+    const domainId = process.env.E2E_M365_DOMAIN_ID ?? "";
+    const clientId = process.env.E2E_M365_CLIENT_ID ?? "";
+    const tenantId = process.env.E2E_M365_TENANT_ID ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
@@ -394,7 +464,7 @@ test.describe("Add Provider", () => {
       },
       async ({ page }) => {
         // Validate required environment variables
-        const clientSecret = process.env.E2E_M365_SECRET_ID;
+        const clientSecret = process.env.E2E_M365_SECRET_ID ?? "";
 
         if (!clientSecret) {
           throw new Error("E2E_M365_SECRET_ID environment variable is not set");
@@ -467,7 +537,8 @@ test.describe("Add Provider", () => {
       },
       async ({ page }) => {
         // Validate required environment variables
-        const certificateContent = process.env.E2E_M365_CERTIFICATE_CONTENT;
+        const certificateContent =
+          process.env.E2E_M365_CERTIFICATE_CONTENT ?? "";
 
         if (!certificateContent) {
           throw new Error(
@@ -536,8 +607,8 @@ test.describe("Add Provider", () => {
     let scansPage: ScansPage;
 
     // Test data from environment variables
-    const context = process.env.E2E_KUBERNETES_CONTEXT;
-    const kubeconfigPath = process.env.E2E_KUBERNETES_KUBECONFIG_PATH;
+    const context = process.env.E2E_KUBERNETES_CONTEXT ?? "";
+    const kubeconfigPath = process.env.E2E_KUBERNETES_KUBECONFIG_PATH ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
@@ -636,7 +707,7 @@ test.describe("Add Provider", () => {
     let scansPage: ScansPage;
 
     // Test data from environment variables
-    const projectId = process.env.E2E_GCP_PROJECT_ID;
+    const projectId = process.env.E2E_GCP_PROJECT_ID ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
@@ -663,7 +734,7 @@ test.describe("Add Provider", () => {
       async ({ page }) => {
         // Validate required environment variables
         const serviceAccountKeyB64 =
-          process.env.E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY;
+          process.env.E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY ?? "";
 
         // Verify service account key is base64 encoded
         if (!serviceAccountKeyB64) {
@@ -742,7 +813,7 @@ test.describe("Add Provider", () => {
     let scansPage: ScansPage;
 
     test.describe("Add GitHub provider with username", () => {
-      const username = process.env.E2E_GITHUB_USERNAME;
+      const username = process.env.E2E_GITHUB_USERNAME ?? "";
 
       // Setup before each test
       test.beforeEach(async ({ page }) => {
@@ -769,7 +840,7 @@ test.describe("Add Provider", () => {
         async ({ page }) => {
           // Validate required environment variables
           const personalAccessToken =
-            process.env.E2E_GITHUB_PERSONAL_ACCESS_TOKEN;
+            process.env.E2E_GITHUB_PERSONAL_ACCESS_TOKEN ?? "";
 
           // Verify username and personal access token are set in environment variables
           if (!personalAccessToken) {
@@ -845,10 +916,9 @@ test.describe("Add Provider", () => {
         },
         async ({ page }) => {
           // Validate required environment variables
-          const githubAppId =
-            process.env.E2E_GITHUB_APP_ID;
+          const githubAppId = process.env.E2E_GITHUB_APP_ID ?? "";
           const githubAppPrivateKeyB64 =
-            process.env.E2E_GITHUB_BASE64_APP_PRIVATE_KEY;
+            process.env.E2E_GITHUB_BASE64_APP_PRIVATE_KEY ?? "";
 
           // Verify github app id and private key are set in environment variables
           if (!githubAppId || !githubAppPrivateKeyB64) {
@@ -899,9 +969,7 @@ test.describe("Add Provider", () => {
           await providersPage.verifyGitHubAppPageLoaded();
 
           // Fill static github app credentials details
-          await providersPage.fillGitHubAppCredentials(
-            githubCredentials,
-          );
+          await providersPage.fillGitHubAppCredentials(githubCredentials);
           await providersPage.clickNext();
 
           // Launch scan
@@ -918,7 +986,7 @@ test.describe("Add Provider", () => {
       );
     });
     test.describe("Add GitHub provider with organization", () => {
-      const organization = process.env.E2E_GITHUB_ORGANIZATION;
+      const organization = process.env.E2E_GITHUB_ORGANIZATION ?? "";
 
       // Setup before each test
       test.beforeEach(async ({ page }) => {
@@ -944,7 +1012,7 @@ test.describe("Add Provider", () => {
         async ({ page }) => {
           // Validate required environment variables
           const organizationAccessToken =
-            process.env.E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN;
+            process.env.E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN ?? "";
 
           // Verify username and personal access token are set in environment variables
           if (!organizationAccessToken) {
@@ -1015,11 +1083,11 @@ test.describe("Add Provider", () => {
     let scansPage: ScansPage;
 
     // Test data from environment variables
-    const tenancyId = process.env.E2E_OCI_TENANCY_ID;
-    const userId = process.env.E2E_OCI_USER_ID;
-    const fingerprint = process.env.E2E_OCI_FINGERPRINT;
-    const keyContent = process.env.E2E_OCI_KEY_CONTENT;
-    const region = process.env.E2E_OCI_REGION;
+    const tenancyId = process.env.E2E_OCI_TENANCY_ID ?? "";
+    const userId = process.env.E2E_OCI_USER_ID ?? "";
+    const fingerprint = process.env.E2E_OCI_FINGERPRINT ?? "";
+    const keyContent = process.env.E2E_OCI_KEY_CONTENT ?? "";
+    const region = process.env.E2E_OCI_REGION ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
@@ -1105,10 +1173,11 @@ test.describe("Add Provider", () => {
     let scansPage: ScansPage;
 
     // Test data from environment variables
-    const accountId = process.env.E2E_ALIBABACLOUD_ACCOUNT_ID;
-    const accessKeyId = process.env.E2E_ALIBABACLOUD_ACCESS_KEY_ID;
-    const accessKeySecret = process.env.E2E_ALIBABACLOUD_ACCESS_KEY_SECRET;
-    const roleArn = process.env.E2E_ALIBABACLOUD_ROLE_ARN;
+    const accountId = process.env.E2E_ALIBABACLOUD_ACCOUNT_ID ?? "";
+    const accessKeyId = process.env.E2E_ALIBABACLOUD_ACCESS_KEY_ID ?? "";
+    const accessKeySecret =
+      process.env.E2E_ALIBABACLOUD_ACCESS_KEY_SECRET ?? "";
+    const roleArn = process.env.E2E_ALIBABACLOUD_ROLE_ARN ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
@@ -1182,7 +1251,9 @@ test.describe("Add Provider", () => {
         await providersPage.verifyAlibabaCloudStaticCredentialsPageLoaded();
 
         // Fill static credentials
-        await providersPage.fillAlibabaCloudStaticCredentials(staticCredentials);
+        await providersPage.fillAlibabaCloudStaticCredentials(
+          staticCredentials,
+        );
         await providersPage.clickNext();
 
         // Launch scan
@@ -1284,11 +1355,11 @@ test.describe("Update Provider Credentials", () => {
     let providersPage: ProvidersPage;
 
     // Test data from environment variables (same as add OCI provider test)
-    const tenancyId = process.env.E2E_OCI_TENANCY_ID;
-    const userId = process.env.E2E_OCI_USER_ID;
-    const fingerprint = process.env.E2E_OCI_FINGERPRINT;
-    const keyContent = process.env.E2E_OCI_KEY_CONTENT;
-    const region = process.env.E2E_OCI_REGION;
+    const tenancyId = process.env.E2E_OCI_TENANCY_ID ?? "";
+    const userId = process.env.E2E_OCI_USER_ID ?? "";
+    const fingerprint = process.env.E2E_OCI_FINGERPRINT ?? "";
+    const keyContent = process.env.E2E_OCI_KEY_CONTENT ?? "";
+    const region = process.env.E2E_OCI_REGION ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
@@ -1305,13 +1376,7 @@ test.describe("Update Provider Credentials", () => {
     test(
       "should update OCI provider credentials successfully",
       {
-        tag: [
-          "@e2e",
-          "@providers",
-          "@oci",
-          "@serial",
-          "@PROVIDER-E2E-013",
-        ],
+        tag: ["@e2e", "@providers", "@oci", "@serial", "@PROVIDER-E2E-013"],
       },
       async () => {
         // Prepare updated credentials

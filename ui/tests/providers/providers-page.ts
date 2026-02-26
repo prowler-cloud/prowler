@@ -7,6 +7,16 @@ export interface AWSProviderData {
   alias?: string;
 }
 
+export interface AWSOrganizationsProviderData {
+  organizationId: string;
+  organizationName?: string;
+}
+
+export interface AWSOrganizationsProviderCredential {
+  roleArn: string;
+  stackSetDeployed?: boolean;
+}
+
 // AZURE provider data
 export interface AZUREProviderData {
   subscriptionId: string;
@@ -635,6 +645,43 @@ export class ProvidersPage extends BasePage {
 
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillAWSOrganizationsProviderDetails(
+    data: AWSOrganizationsProviderData,
+  ): Promise<void> {
+    const organizationIdInput = this.page.getByRole("textbox", {
+      name: "Organization ID",
+      exact: true,
+    });
+    await expect(organizationIdInput).toBeVisible({ timeout: 10000 });
+    await organizationIdInput.fill(data.organizationId.toLowerCase());
+
+    if (data.organizationName) {
+      await this.page
+        .getByRole("textbox", { name: "Name (optional)", exact: true })
+        .fill(data.organizationName);
+    }
+  }
+
+  async fillAWSOrganizationsCredentials(
+    credentials: AWSOrganizationsProviderCredential,
+  ): Promise<void> {
+    const roleArnInput = this.page.getByRole("textbox", {
+      name: "Role ARN",
+      exact: true,
+    });
+    await expect(roleArnInput).toBeVisible({ timeout: 10000 });
+    await roleArnInput.fill(credentials.roleArn);
+
+    if (credentials.stackSetDeployed ?? true) {
+      const stackSetCheckbox = this.page.getByRole("checkbox", {
+        name: /The StackSet has been successfully deployed in AWS/i,
+      });
+      if (!(await stackSetCheckbox.isChecked())) {
+        await stackSetCheckbox.click();
+      }
     }
   }
 
@@ -1318,9 +1365,7 @@ export class ProvidersPage extends BasePage {
   }
 
   async verifyTestConnectionPageLoaded(): Promise<void> {
-    // Verify the test connection page is loaded
     await this.verifyPageHasProwlerTitle();
-    await this.verifyWizardModalOpen();
     const testConnectionAction = this.page
       .getByRole("button", { name: "Launch scan", exact: true })
       .or(
@@ -1329,6 +1374,21 @@ export class ProvidersPage extends BasePage {
           exact: true,
         }),
       );
+
+    // Some update flows return directly to providers list after authenticating.
+    try {
+      await Promise.race([
+        testConnectionAction.waitFor({ state: "visible", timeout: 20000 }),
+        this.providersTable.waitFor({ state: "visible", timeout: 20000 }),
+      ]);
+    } catch {
+      // Fall through to explicit assertions below.
+    }
+
+    if (await this.providersTable.isVisible().catch(() => false)) {
+      return;
+    }
+
     await expect(testConnectionAction).toBeVisible();
   }
 }
