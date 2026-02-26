@@ -61,6 +61,8 @@ critical:
     - ui/types/**
     - ui/config/**
     - ui/middleware.ts
+    - ui/tsconfig.json
+    - ui/playwright.config.ts
 
     # CI/CD changes
     - .github/workflows/**
@@ -312,10 +314,12 @@ modules:
       - ui/components/auth/**
       - ui/actions/auth/**
       - ui/app/(auth)/**
+      - ui/tests/auth/**
       - ui/tests/sign-in/**
       - ui/tests/sign-up/**
     tests: []
     e2e:
+      - ui/tests/auth/**
       - ui/tests/sign-in/**
       - ui/tests/sign-up/**
 
