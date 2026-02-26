@@ -238,9 +238,10 @@
       ],
       "Checks": [
         "defenderxdr_endpoint_privileged_user_exposed_credentials",
-        "entra_admin_users_sign_in_frequency_enabled",
         "entra_admin_users_mfa_enabled",
         "entra_admin_users_sign_in_frequency_enabled",
+        "entra_default_app_management_policy_enabled",
+        "entra_all_apps_conditional_access_coverage",
         "entra_legacy_authentication_blocked",
         "entra_managed_device_required_for_authentication",
         "entra_seamless_sso_disabled",
@@ -686,12 +687,13 @@
         }
       ],
       "Checks": [
-        "entra_admin_users_sign_in_frequency_enabled",
         "entra_admin_users_mfa_enabled",
+        "entra_admin_users_sign_in_frequency_enabled",
+        "entra_all_apps_conditional_access_coverage",
+        "entra_identity_protection_sign_in_risk_enabled",
         "entra_managed_device_required_for_authentication",
         "entra_seamless_sso_disabled",
-        "entra_users_mfa_enabled",
-        "entra_identity_protection_sign_in_risk_enabled"
+        "entra_users_mfa_enabled"
       ]
     },
     {

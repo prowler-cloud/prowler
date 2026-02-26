@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_default_app_management_policy_enabled",
+  "CheckTitle": "Default app management policy enforces credential restrictions on applications and service principals",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Authorization Policy",
+  "ResourceGroup": "IAM",
+  "Description": "This check verifies that the **default app management policy** in Microsoft Entra ID has the required **credential restrictions** configured for applications: **block password addition**, **restrict max password lifetime**, **block custom passwords**, and **restrict max certificate lifetime**.",
+  "Risk": "Without the required credential restrictions, applications and service principals can use **insecure credential configurations**, including **long-lived secrets**, **custom passwords**, or **unrestricted certificates**, increasing the risk of **credential compromise** and **unauthorized access**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/graph/api/resources/tenantappmanagementpolicy",
+    "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/app-management-policies-overview"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the **Microsoft Entra admin center** (https://entra.microsoft.com/).\n2. Go to **Identity** > **Applications** > **App management policies**.\n3. Select the **Default app management policy**.\n4. Under **Password restrictions**, enable: **Block password addition**, **Restrict max password lifetime**, and **Block custom passwords**.\n5. Under **Certificate restrictions**, enable: **Restrict max certificate lifetime**.\n6. Save the changes.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure the **default app management policy** with all required credential restrictions: **block password addition**, **restrict max password lifetime**, **block custom passwords**, and **restrict max certificate lifetime**. These restrictions prevent applications from using insecure or long-lived credentials.",
+      "Url": "https://hub.prowler.com/check/entra_default_app_management_policy_enabled"
+    }
+  },
+  "Categories": [
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check covers 4 of the 6 restrictions available in the default app management policy. The **Identifier URI restrictions** (Block custom identifier URIs and Block identifier URIs without unique tenant identifiers) are not covered because they are only available through the Microsoft Graph beta API, which is not recommended by Microsoft for production environments."
+}

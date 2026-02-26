@@ -12,7 +12,7 @@ from api.attack_paths.queries.schema import (
     RAW_SCHEMA_URL,
 )
 from config.custom_logging import BackendLogger
-from tasks.jobs.attack_paths.config import INTERNAL_LABELS
+from tasks.jobs.attack_paths.config import INTERNAL_LABELS, INTERNAL_PROPERTIES
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -125,7 +125,7 @@ def normalize_custom_query_payload(raw_data):
     if "data" in raw_data and isinstance(raw_data.get("data"), dict):
         data_section = raw_data.get("data") or {}
         attributes = data_section.get("attributes") or {}
-        return {"cypher": attributes.get("cypher")}
+        return {"query": attributes.get("query")}
 
     return raw_data
 
@@ -261,7 +261,11 @@ def _filter_labels(labels: Iterable[str]) -> list[str]:
 
 
 def _serialize_properties(properties: dict[str, Any]) -> dict[str, Any]:
-    """Convert Neo4j property values into JSON-serializable primitives."""
+    """Convert Neo4j property values into JSON-serializable primitives.
+
+    Filters out internal properties (Cartography metadata and provider
+    isolation fields) defined in INTERNAL_PROPERTIES.
+    """
 
     def _serialize_value(value: Any) -> Any:
         # Neo4j temporal and spatial values expose `to_native` returning Python primitives
@@ -276,4 +280,176 @@ def _serialize_properties(properties: dict[str, Any]) -> dict[str, Any]:
 
         return value
 
-    return {key: _serialize_value(val) for key, val in properties.items()}
+    return {
+        key: _serialize_value(val)
+        for key, val in properties.items()
+        if key not in INTERNAL_PROPERTIES
+    }
+
+
+# Text serialization
+
+
+def serialize_graph_as_text(graph: dict[str, Any]) -> str:
+    """
+    Convert a serialized graph dict into a compact text format for LLM consumption.
+
+    Follows the incident-encoding pattern (nodes with context + sequential edges)
+    which research shows is optimal for LLM path-reasoning tasks.
+
+    Example::
+
+        >>> serialize_graph_as_text({
+        ...     "nodes": [
+        ...         {"id": "n1", "labels": ["AWSAccount"], "properties": {"name": "prod"}},
+        ...         {"id": "n2", "labels": ["EC2Instance"], "properties": {}},
+        ...     ],
+        ...     "relationships": [
+        ...         {"id": "r1", "label": "RESOURCE", "source": "n1", "target": "n2", "properties": {}},
+        ...     ],
+        ...     "total_nodes": 2, "truncated": False,
+        ... })
+        ## Nodes (2)
+        - AWSAccount "n1" (name: "prod")
+        - EC2Instance "n2"
+
+        ## Relationships (1)
+        - AWSAccount "n1" -[RESOURCE]-> EC2Instance "n2"
+
+        ## Summary
+        - Total nodes: 2
+        - Truncated: false
+    """
+    nodes = graph.get("nodes", [])
+    relationships = graph.get("relationships", [])
+
+    node_lookup = {node["id"]: node for node in nodes}
+
+    lines = [f"## Nodes ({len(nodes)})"]
+    for node in nodes:
+        lines.append(f"- {_format_node_signature(node)}")
+
+    lines.append("")
+    lines.append(f"## Relationships ({len(relationships)})")
+    for rel in relationships:
+        lines.append(f"- {_format_relationship(rel, node_lookup)}")
+
+    lines.append("")
+    lines.append("## Summary")
+    lines.append(f"- Total nodes: {graph.get('total_nodes', len(nodes))}")
+    lines.append(f"- Truncated: {str(graph.get('truncated', False)).lower()}")
+
+    return "\n".join(lines)
+
+
+def _format_node_signature(node: dict[str, Any]) -> str:
+    """
+    Format a node as its reference followed by its properties.
+
+    Example::
+
+        >>> _format_node_signature({"id": "n1", "labels": ["AWSRole"], "properties": {"name": "admin"}})
+        'AWSRole "n1" (name: "admin")'
+        >>> _format_node_signature({"id": "n2", "labels": ["AWSAccount"], "properties": {}})
+        'AWSAccount "n2"'
+    """
+    reference = _format_node_reference(node)
+    properties = _format_properties(node.get("properties", {}))
+
+    if properties:
+        return f"{reference} {properties}"
+
+    return reference
+
+
+def _format_node_reference(node: dict[str, Any]) -> str:
+    """
+    Format a node as labels + quoted id (no properties).
+
+    Example::
+
+        >>> _format_node_reference({"id": "n1", "labels": ["EC2Instance", "NetworkExposed"]})
+        'EC2Instance, NetworkExposed "n1"'
+    """
+    labels = ", ".join(node.get("labels", []))
+    return f'{labels} "{node["id"]}"'
+
+
+def _format_relationship(rel: dict[str, Any], node_lookup: dict[str, dict]) -> str:
+    """
+    Format a relationship as source -[LABEL (props)]-> target.
+
+    Example::
+
+        >>> _format_relationship(
+        ...     {"id": "r1", "label": "STS_ASSUMEROLE_ALLOW", "source": "n1", "target": "n2",
+        ...      "properties": {"weight": 1}},
+        ...     {"n1": {"id": "n1", "labels": ["AWSRole"]},
+        ...      "n2": {"id": "n2", "labels": ["AWSRole"]}},
+        ... )
+        'AWSRole "n1" -[STS_ASSUMEROLE_ALLOW (weight: 1)]-> AWSRole "n2"'
+    """
+    source = _format_node_reference(node_lookup[rel["source"]])
+    target = _format_node_reference(node_lookup[rel["target"]])
+
+    props = _format_properties(rel.get("properties", {}))
+    label = f"{rel['label']} {props}" if props else rel["label"]
+
+    return f"{source} -[{label}]-> {target}"
+
+
+def _format_properties(properties: dict[str, Any]) -> str:
+    """
+    Format properties as a parenthesized key-value list.
+
+    Returns an empty string when no properties are present.
+
+    Example::
+
+        >>> _format_properties({"name": "prod", "account_id": "123456789012"})
+        '(name: "prod", account_id: "123456789012")'
+        >>> _format_properties({})
+        ''
+    """
+    if not properties:
+        return ""
+
+    parts = [f"{k}: {_format_value(v)}" for k, v in properties.items()]
+    return f"({', '.join(parts)})"
+
+
+def _format_value(value: Any) -> str:
+    """
+    Format a value using Cypher-style syntax (unquoted dict keys, lowercase bools).
+
+    Example::
+
+        >>> _format_value("prod")
+        '"prod"'
+        >>> _format_value(True)
+        'true'
+        >>> _format_value([80, 443])
+        '[80, 443]'
+        >>> _format_value({"env": "prod"})
+        '{env: "prod"}'
+        >>> _format_value(None)
+        'null'
+    """
+    if isinstance(value, str):
+        return f'"{value}"'
+
+    if isinstance(value, bool):
+        return str(value).lower()
+
+    if isinstance(value, (list, tuple)):
+        inner = ", ".join(_format_value(v) for v in value)
+        return f"[{inner}]"
+
+    if isinstance(value, dict):
+        inner = ", ".join(f"{k}: {_format_value(v)}" for k, v in value.items())
+        return f"{{{inner}}}"
+
+    if value is None:
+        return "null"
+
+    return str(value)
