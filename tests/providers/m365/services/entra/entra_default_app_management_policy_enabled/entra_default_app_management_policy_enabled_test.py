@@ -131,11 +131,8 @@ class Test_entra_default_app_management_policy_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert "Block custom passwords" in result[0].status_extended
-            assert "Block custom identifier URIs" in result[0].status_extended
-            assert (
-                "Block identifier URIs without unique tenant identifiers"
-                in result[0].status_extended
-            )
+            assert "Block symmetric key addition" in result[0].status_extended
+            assert "Restrict symmetric key lifetime" in result[0].status_extended
 
     def test_missing_key_restriction(self):
         """Missing asymmetricKeyLifetime restriction -> FAIL."""
@@ -209,11 +206,8 @@ class Test_entra_default_app_management_policy_enabled:
             assert "Block password addition" in result[0].status_extended
             assert "Restrict max password lifetime" in result[0].status_extended
             assert "Block custom passwords" in result[0].status_extended
-            assert "Block custom identifier URIs" in result[0].status_extended
-            assert (
-                "Block identifier URIs without unique tenant identifiers"
-                in result[0].status_extended
-            )
+            assert "Block symmetric key addition" in result[0].status_extended
+            assert "Restrict symmetric key lifetime" in result[0].status_extended
             assert "Restrict max certificate lifetime" in result[0].status_extended
 
     def test_restriction_with_disabled_state(self):
