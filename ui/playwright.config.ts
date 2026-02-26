@@ -1,7 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
+import fs from "fs";
 import path from "path";
 
-process.loadEnvFile(path.resolve(__dirname, ".env.local"));
+const localEnvPath = path.resolve(__dirname, ".env.local");
+if (fs.existsSync(localEnvPath)) {
+  process.loadEnvFile(localEnvPath);
+}
 
 export default defineConfig({
   testDir: "./tests",
