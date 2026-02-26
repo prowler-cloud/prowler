@@ -1,0 +1,31 @@
+{
+  "Provider": "github",
+  "CheckID": "organization_repository_deletion_limited",
+  "CheckTitle": "Ensure repository deletion is limited to trusted organization users.",
+  "CheckType": [],
+  "ServiceName": "organization",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "GitHubOrganization",
+  "ResourceGroup": "governance",
+  "Description": "Ensure repository deletion/transfer is restricted so only trusted organization users (owners) can delete or transfer repositories.",
+  "Risk": "If members can delete or transfer repositories, accidental or malicious deletions can cause irreversible data loss, service disruption, and increased blast radius from compromised accounts.",
+  "RelatedUrl": "https://docs.github.com/en/organizations/managing-organization-settings/setting-permissions-for-deleting-or-transferring-repositories",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to GitHub as an organization owner\n2. Go to Organization > Settings\n3. Under \"Access\", click \"Member privileges\"\n4. Disable \"Allow members to delete or transfer repositories\"\n5. Save changes",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable member repository deletion/transfer privileges so only organization owners can delete or transfer repositories.",
+      "Url": "https://docs.github.com/en/organizations/managing-organization-settings/setting-permissions-for-deleting-or-transferring-repositories"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
