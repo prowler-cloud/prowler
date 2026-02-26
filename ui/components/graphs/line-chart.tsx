@@ -222,6 +222,7 @@ export function LineChart({
             tickLine={false}
             axisLine={false}
             tickMargin={8}
+            padding={{ top: 20 }}
             tick={{
               fill: "var(--color-text-neutral-secondary)",
               fontSize: AXIS_FONT_SIZE,
