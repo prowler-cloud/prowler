@@ -29,7 +29,7 @@ test.describe("Middleware Error Handling", () => {
   test(
     "should maintain protection after session error",
     { tag: ["@e2e", "@auth", "@middleware", "@AUTH-MW-E2E-002"] },
-    async ({ page, context }) => {
+    async ({ page, context, browser }) => {
       const signInPage = new SignInPage(page);
       const providersPage = new ProvidersPage(page);
 
@@ -38,33 +38,37 @@ test.describe("Middleware Error Handling", () => {
       await providersPage.goto();
       await providersPage.verifyPageLoaded();
 
-      // Remove auth cookies to simulate an expired session.
-      await context.clearCookies();
-      const authCookies = (await context.cookies()).filter((cookie) =>
+      // Build an isolated context with an explicitly invalid auth token.
+      // This avoids races from active tabs rehydrating cookies in the original context.
+      const authenticatedState = await context.storageState();
+      const authCookies = authenticatedState.cookies.filter((cookie) =>
         /(authjs|next-auth)/i.test(cookie.name),
       );
+      expect(authCookies.length).toBeGreaterThan(0);
 
-      if (authCookies.length > 0) {
-        await context.addCookies(
-          authCookies.map((cookie) => ({
-            ...cookie,
-            value: "",
-            expires: 0,
-          })),
-        );
+      const invalidSessionContext = await browser.newContext({
+        storageState: {
+          origins: authenticatedState.origins,
+          cookies: authenticatedState.cookies.map((cookie) =>
+            /(authjs|next-auth)/i.test(cookie.name)
+              ? { ...cookie, value: "invalid.session.token" }
+              : cookie,
+          ),
+        },
+      });
+
+      try {
+        // Use a fresh page to force a full navigation through proxy in Next.js 16.
+        const freshPage = await invalidSessionContext.newPage();
+        const freshSignInPage = new SignInPage(freshPage);
+        const cacheBuster = Date.now();
+        await freshPage.goto(`/scans?e2e_mw=${cacheBuster}`, {
+          waitUntil: "commit",
+        });
+        await freshSignInPage.verifyRedirectWithCallback("/scans");
+      } finally {
+        await invalidSessionContext.close();
       }
-
-      const remainingAuthCookies = (await context.cookies()).filter((cookie) =>
-        /(authjs|next-auth)/i.test(cookie.name),
-      );
-      expect(remainingAuthCookies).toHaveLength(0);
-
-      // Use a new page to avoid in-memory router/cache state from the previous navigation.
-      const freshPage = await context.newPage();
-      const freshSignInPage = new SignInPage(freshPage);
-      const cacheBuster = Date.now();
-      await freshPage.goto(`/scans?e2e_mw=${cacheBuster}`, { waitUntil: "commit" });
-      await freshSignInPage.verifyOnSignInPage();
     },
   );
 
