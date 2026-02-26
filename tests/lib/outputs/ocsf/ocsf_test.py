@@ -123,6 +123,23 @@ class TestOCSF:
             1619600000, tz=timezone.utc
         )
 
+    def test_scan_id_is_unique_per_provider(self):
+        findings = [
+            generate_finding_output(provider="aws"),
+            generate_finding_output(provider="azure"),
+            generate_finding_output(provider="aws"),
+        ]
+
+        ocsf = OCSF(findings)
+
+        scan_ids = [finding.unmapped["scan_id"] for finding in ocsf.data]
+
+        assert UUID(scan_ids[0])
+        assert UUID(scan_ids[1])
+        assert UUID(scan_ids[2])
+        assert scan_ids[0] == scan_ids[2]
+        assert scan_ids[0] != scan_ids[1]
+
     def test_validate_ocsf(self):
         mock_file = StringIO()
         findings = [
