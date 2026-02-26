@@ -242,22 +242,181 @@ def test_serialize_graph_filters_by_provider_id(attack_paths_graph_stub_classes)
     assert result["relationships"][0]["id"] == "r1"
 
 
+# -- serialize_graph_as_text -------------------------------------------------------
+
+
+def test_serialize_graph_as_text_renders_nodes_and_relationships():
+    graph = {
+        "nodes": [
+            {
+                "id": "n1",
+                "labels": ["AWSAccount"],
+                "properties": {"account_id": "123456789012", "name": "prod"},
+            },
+            {
+                "id": "n2",
+                "labels": ["EC2Instance", "NetworkExposed"],
+                "properties": {"name": "web-server-1", "exposed_internet": True},
+            },
+        ],
+        "relationships": [
+            {
+                "id": "r1",
+                "label": "RESOURCE",
+                "source": "n1",
+                "target": "n2",
+                "properties": {},
+            },
+        ],
+        "total_nodes": 2,
+        "truncated": False,
+    }
+
+    result = views_helpers.serialize_graph_as_text(graph)
+
+    assert result.startswith("## Nodes (2)")
+    assert '- AWSAccount "n1" (account_id: "123456789012", name: "prod")' in result
+    assert (
+        '- EC2Instance, NetworkExposed "n2" (name: "web-server-1", exposed_internet: true)'
+        in result
+    )
+    assert "## Relationships (1)" in result
+    assert '- AWSAccount "n1" -[RESOURCE]-> EC2Instance, NetworkExposed "n2"' in result
+    assert "## Summary" in result
+    assert "- Total nodes: 2" in result
+    assert "- Truncated: false" in result
+
+
+def test_serialize_graph_as_text_empty_graph():
+    graph = {
+        "nodes": [],
+        "relationships": [],
+        "total_nodes": 0,
+        "truncated": False,
+    }
+
+    result = views_helpers.serialize_graph_as_text(graph)
+
+    assert "## Nodes (0)" in result
+    assert "## Relationships (0)" in result
+    assert "- Total nodes: 0" in result
+    assert "- Truncated: false" in result
+
+
+def test_serialize_graph_as_text_truncated_flag():
+    graph = {
+        "nodes": [{"id": "n1", "labels": ["Node"], "properties": {}}],
+        "relationships": [],
+        "total_nodes": 500,
+        "truncated": True,
+    }
+
+    result = views_helpers.serialize_graph_as_text(graph)
+
+    assert "- Total nodes: 500" in result
+    assert "- Truncated: true" in result
+
+
+def test_serialize_graph_as_text_relationship_with_properties():
+    graph = {
+        "nodes": [
+            {"id": "n1", "labels": ["AWSRole"], "properties": {"name": "role-a"}},
+            {"id": "n2", "labels": ["AWSRole"], "properties": {"name": "role-b"}},
+        ],
+        "relationships": [
+            {
+                "id": "r1",
+                "label": "STS_ASSUMEROLE_ALLOW",
+                "source": "n1",
+                "target": "n2",
+                "properties": {"weight": 1, "reason": "trust-policy"},
+            },
+        ],
+        "total_nodes": 2,
+        "truncated": False,
+    }
+
+    result = views_helpers.serialize_graph_as_text(graph)
+
+    assert '-[STS_ASSUMEROLE_ALLOW (weight: 1, reason: "trust-policy")]->' in result
+
+
+def test_serialize_properties_filters_internal_fields():
+    properties = {
+        "name": "prod",
+        # Cartography metadata
+        "lastupdated": 1234567890,
+        "firstseen": 1234567800,
+        "_module_name": "cartography:aws",
+        "_module_version": "0.98.0",
+        # Provider isolation
+        "_provider_id": "42",
+        "_provider_element_id": "42:abc123",
+        "provider_id": "42",
+        "provider_element_id": "42:abc123",
+    }
+
+    result = views_helpers._serialize_properties(properties)
+
+    assert result == {"name": "prod"}
+
+
+def test_serialize_graph_as_text_node_without_properties():
+    graph = {
+        "nodes": [{"id": "n1", "labels": ["AWSAccount"], "properties": {}}],
+        "relationships": [],
+        "total_nodes": 1,
+        "truncated": False,
+    }
+
+    result = views_helpers.serialize_graph_as_text(graph)
+
+    assert '- AWSAccount "n1"' in result
+    # No trailing parentheses when no properties
+    assert '- AWSAccount "n1" (' not in result
+
+
+def test_serialize_graph_as_text_complex_property_values():
+    graph = {
+        "nodes": [
+            {
+                "id": "n1",
+                "labels": ["SecurityGroup"],
+                "properties": {
+                    "ports": [80, 443],
+                    "tags": {"env": "prod"},
+                    "enabled": None,
+                },
+            },
+        ],
+        "relationships": [],
+        "total_nodes": 1,
+        "truncated": False,
+    }
+
+    result = views_helpers.serialize_graph_as_text(graph)
+
+    assert "ports: [80, 443]" in result
+    assert 'tags: {env: "prod"}' in result
+    assert "enabled: null" in result
+
+
 # -- normalize_custom_query_payload ------------------------------------------------
 
 
-def test_normalize_custom_query_payload_extracts_cypher():
+def test_normalize_custom_query_payload_extracts_query():
     payload = {
         "data": {
             "type": "attack-paths-custom-query-run-requests",
             "attributes": {
-                "cypher": "MATCH (n) RETURN n",
+                "query": "MATCH (n) RETURN n",
             },
         }
     }
 
     result = views_helpers.normalize_custom_query_payload(payload)
 
-    assert result == {"cypher": "MATCH (n) RETURN n"}
+    assert result == {"query": "MATCH (n) RETURN n"}
 
 
 def test_normalize_custom_query_payload_passthrough_for_non_dict():
@@ -266,11 +425,11 @@ def test_normalize_custom_query_payload_passthrough_for_non_dict():
 
 
 def test_normalize_custom_query_payload_passthrough_for_flat_dict():
-    payload = {"cypher": "MATCH (n) RETURN n"}
+    payload = {"query": "MATCH (n) RETURN n"}
 
     result = views_helpers.normalize_custom_query_payload(payload)
 
-    assert result == {"cypher": "MATCH (n) RETURN n"}
+    assert result == {"query": "MATCH (n) RETURN n"}
 
 
 # -- execute_custom_query ----------------------------------------------
