@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { getProviderHelpText } from "@/lib/external-urls";
+import { DOCS_URLS, getProviderHelpText } from "@/lib/external-urls";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import {
@@ -195,9 +195,9 @@ export function useProviderWizardController({
   };
 
   const isProviderFlow = wizardVariant === WIZARD_VARIANT.PROVIDER;
-  const docsLink = getProviderHelpText(
-    isProviderFlow ? (providerTypeHint ?? providerType ?? "") : "aws",
-  ).link;
+  const docsLink = isProviderFlow
+    ? getProviderHelpText(providerTypeHint ?? providerType ?? "").link
+    : DOCS_URLS.AWS_ORGANIZATIONS;
   const resolvedFooterConfig: WizardFooterConfig =
     isProviderFlow && currentStep === PROVIDER_WIZARD_STEP.LAUNCH
       ? {

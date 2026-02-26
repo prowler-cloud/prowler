@@ -95,6 +95,9 @@ describe("useProviderWizardController", () => {
     expect(result.current.wizardVariant).toBe("organizations");
     expect(result.current.isProviderFlow).toBe(false);
     expect(result.current.orgCurrentStep).toBe(ORG_WIZARD_STEP.SETUP);
+    expect(result.current.docsLink).toBe(
+      "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
+    );
 
     // When
     act(() => {
