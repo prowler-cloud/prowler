@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "The default app management policy helps enforce secure credential practices across all applications in the tenant. Each restriction type can be individually configured and enabled."
+  "Notes": "This check covers 4 of the 6 restrictions available in the default app management policy. The **Identifier URI restrictions** (Block custom identifier URIs and Block identifier URIs without unique tenant identifiers) are not covered because they are only available through the Microsoft Graph beta API, which is not recommended by Microsoft for production environments."
 }
