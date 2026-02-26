@@ -10,7 +10,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - OpenStack provider support [(#10003)](https://github.com/prowler-cloud/prowler/pull/10003)
 - PDF report for the CSA CCM compliance framework [(#10088)](https://github.com/prowler-cloud/prowler/pull/10088)
 - `image` provider support for container image scanning [(#10128)](https://github.com/prowler-cloud/prowler/pull/10128)
-- Attack Paths: Custom query and Cartography schema endpoints [(#10149)](https://github.com/prowler-cloud/prowler/pull/10149)
+- Attack Paths: Custom query and Cartography schema endpoints (temporarily blocked) [(#10149)](https://github.com/prowler-cloud/prowler/pull/10149)
 
 ### 🔄 Changed
 
