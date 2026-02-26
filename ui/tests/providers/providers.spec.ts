@@ -41,18 +41,11 @@ test.describe("Add Provider", () => {
     const secretKey = process.env.E2E_AWS_PROVIDER_SECRET_KEY;
     const roleArn = process.env.E2E_AWS_PROVIDER_ROLE_ARN;
 
-    // Validate required environment variables
-    if (!accountId) {
-      throw new Error(
-        "E2E_AWS_PROVIDER_ACCOUNT_ID environment variable is not set",
-      );
-    }
-
     // Setup before each test
     test.beforeEach(async ({ page }) => {
+      test.skip(!accountId, "E2E_AWS_PROVIDER_ACCOUNT_ID is not set");
       providersPage = new ProvidersPage(page);
-      // Clean up existing provider to ensure clean test state
-      await deleteProviderIfExists(providersPage, accountId);
+      await deleteProviderIfExists(providersPage, accountId!);
     });
 
     // Use admin authentication for provider management
@@ -291,18 +284,14 @@ test.describe("Add Provider", () => {
     const clientSecret = process.env.E2E_AZURE_SECRET_ID;
     const tenantId = process.env.E2E_AZURE_TENANT_ID;
 
-    // Validate required environment variables
-    if (!subscriptionId || !clientId || !clientSecret || !tenantId) {
-      throw new Error(
-        "E2E_AZURE_SUBSCRIPTION_ID, E2E_AZURE_CLIENT_ID, E2E_AZURE_SECRET_ID, and E2E_AZURE_TENANT_ID environment variables are not set",
-      );
-    }
-
     // Setup before each test
     test.beforeEach(async ({ page }) => {
+      test.skip(
+        !subscriptionId || !clientId || !clientSecret || !tenantId,
+        "Azure E2E env vars are not set",
+      );
       providersPage = new ProvidersPage(page);
-      // Clean up existing provider to ensure clean test state
-      await deleteProviderIfExists(providersPage, subscriptionId);
+      await deleteProviderIfExists(providersPage, subscriptionId!);
     });
 
     // Use admin authentication for provider management
@@ -378,18 +367,14 @@ test.describe("Add Provider", () => {
     const clientId = process.env.E2E_M365_CLIENT_ID;
     const tenantId = process.env.E2E_M365_TENANT_ID;
 
-    // Validate required environment variables
-    if (!domainId || !clientId || !tenantId) {
-      throw new Error(
-        "E2E_M365_DOMAIN_ID, E2E_M365_CLIENT_ID, and E2E_M365_TENANT_ID environment variables are not set",
-      );
-    }
-
     // Setup before each test
     test.beforeEach(async ({ page }) => {
+      test.skip(
+        !domainId || !clientId || !tenantId,
+        "M365 E2E env vars are not set",
+      );
       providersPage = new ProvidersPage(page);
-      // Clean up existing provider to ensure clean test state
-      await deleteProviderIfExists(providersPage, domainId);
+      await deleteProviderIfExists(providersPage, domainId!);
     });
 
     // Use admin authentication for provider management
@@ -554,19 +539,14 @@ test.describe("Add Provider", () => {
     const context = process.env.E2E_KUBERNETES_CONTEXT;
     const kubeconfigPath = process.env.E2E_KUBERNETES_KUBECONFIG_PATH;
 
-    // Validate required environment variables
-    if (!context || !kubeconfigPath) {
-      throw new Error(
-        "E2E_KUBERNETES_CONTEXT and E2E_KUBERNETES_KUBECONFIG_PATH environment variables are not set",
-      );
-    }
-
-
     // Setup before each test
     test.beforeEach(async ({ page }) => {
+      test.skip(
+        !context || !kubeconfigPath,
+        "Kubernetes E2E env vars are not set",
+      );
       providersPage = new ProvidersPage(page);
-      // Clean up existing provider to ensure clean test state
-      await deleteProviderIfExists(providersPage, context);
+      await deleteProviderIfExists(providersPage, context!);
     });
 
     // Use admin authentication for provider management
@@ -658,16 +638,11 @@ test.describe("Add Provider", () => {
     // Test data from environment variables
     const projectId = process.env.E2E_GCP_PROJECT_ID;
 
-    // Validate required environment variables
-    if (!projectId) {
-      throw new Error("E2E_GCP_PROJECT_ID environment variable is not set");
-    }
-
     // Setup before each test
     test.beforeEach(async ({ page }) => {
+      test.skip(!projectId, "E2E_GCP_PROJECT_ID is not set");
       providersPage = new ProvidersPage(page);
-      // Clean up existing provider to ensure clean test state
-      await deleteProviderIfExists(providersPage, projectId);
+      await deleteProviderIfExists(providersPage, projectId!);
     });
 
     // Use admin authentication for provider management
@@ -767,19 +742,13 @@ test.describe("Add Provider", () => {
     let scansPage: ScansPage;
 
     test.describe("Add GitHub provider with username", () => {
-      // Test data from environment variables
       const username = process.env.E2E_GITHUB_USERNAME;
-
-      // Validate required environment variables
-      if (!username) {
-        throw new Error("E2E_GITHUB_USERNAME environment variable is not set");
-      }
 
       // Setup before each test
       test.beforeEach(async ({ page }) => {
+        test.skip(!username, "E2E_GITHUB_USERNAME is not set");
         providersPage = new ProvidersPage(page);
-        // Clean up existing provider to ensure clean test state
-        await deleteProviderIfExists(providersPage, username);
+        await deleteProviderIfExists(providersPage, username!);
       });
 
       // Use admin authentication for provider management
@@ -949,21 +918,13 @@ test.describe("Add Provider", () => {
       );
     });
     test.describe("Add GitHub provider with organization", () => {
-      // Test data from environment variables
       const organization = process.env.E2E_GITHUB_ORGANIZATION;
-
-      // Validate required environment variables
-      if (!organization) {
-        throw new Error(
-          "E2E_GITHUB_ORGANIZATION environment variable is not set",
-        );
-      }
 
       // Setup before each test
       test.beforeEach(async ({ page }) => {
+        test.skip(!organization, "E2E_GITHUB_ORGANIZATION is not set");
         providersPage = new ProvidersPage(page);
-        // Clean up existing provider to ensure clean test state
-        await deleteProviderIfExists(providersPage, organization);
+        await deleteProviderIfExists(providersPage, organization!);
       });
 
       // Use admin authentication for provider management
@@ -1060,18 +1021,14 @@ test.describe("Add Provider", () => {
     const keyContent = process.env.E2E_OCI_KEY_CONTENT;
     const region = process.env.E2E_OCI_REGION;
 
-    // Validate required environment variables
-    if (!tenancyId || !userId || !fingerprint || !keyContent || !region) {
-      throw new Error(
-        "E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, and E2E_OCI_REGION environment variables are not set",
-      );
-    }
-
     // Setup before each test
     test.beforeEach(async ({ page }) => {
+      test.skip(
+        !tenancyId || !userId || !fingerprint || !keyContent || !region,
+        "OCI E2E env vars are not set",
+      );
       providersPage = new ProvidersPage(page);
-      // Clean up existing provider to ensure clean test state
-      await deleteProviderIfExists(providersPage, tenancyId);
+      await deleteProviderIfExists(providersPage, tenancyId!);
     });
 
     // Use admin authentication for provider management
@@ -1153,18 +1110,11 @@ test.describe("Add Provider", () => {
     const accessKeySecret = process.env.E2E_ALIBABACLOUD_ACCESS_KEY_SECRET;
     const roleArn = process.env.E2E_ALIBABACLOUD_ROLE_ARN;
 
-    // Validate required environment variable for beforeEach
-    if (!accountId) {
-      throw new Error(
-        "E2E_ALIBABACLOUD_ACCOUNT_ID environment variable is not set",
-      );
-    }
-
     // Setup before each test
     test.beforeEach(async ({ page }) => {
+      test.skip(!accountId, "E2E_ALIBABACLOUD_ACCOUNT_ID is not set");
       providersPage = new ProvidersPage(page);
-      // Clean up existing provider to ensure clean test state
-      await deleteProviderIfExists(providersPage, accountId);
+      await deleteProviderIfExists(providersPage, accountId!);
     });
 
     // Use admin authentication for provider management
@@ -1340,15 +1290,12 @@ test.describe("Update Provider Credentials", () => {
     const keyContent = process.env.E2E_OCI_KEY_CONTENT;
     const region = process.env.E2E_OCI_REGION;
 
-    // Validate required environment variables
-    if (!tenancyId || !userId || !fingerprint || !keyContent || !region) {
-      throw new Error(
-        "E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, and E2E_OCI_REGION environment variables are not set",
-      );
-    }
-
     // Setup before each test
     test.beforeEach(async ({ page }) => {
+      test.skip(
+        !tenancyId || !userId || !fingerprint || !keyContent || !region,
+        "OCI E2E env vars are not set",
+      );
       providersPage = new ProvidersPage(page);
     });
 
