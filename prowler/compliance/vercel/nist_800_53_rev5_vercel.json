@@ -1,0 +1,138 @@
+{
+  "Framework": "NIST-800-53-Revision-5",
+  "Name": "NIST SP 800-53 Revision 5 - Vercel",
+  "Version": "Revision-5",
+  "Provider": "vercel",
+  "Description": "NIST SP 800-53 Revision 5 mapping for Vercel provider checks. These mappings assess customer-side security controls on the Vercel platform.",
+  "Requirements": [
+    {
+      "Id": "ac_2",
+      "Name": "AC-2 Account Management",
+      "Description": "The organization manages information system accounts, including establishing, activating, modifying, reviewing, disabling, and removing accounts.",
+      "Attributes": [
+        {
+          "ItemId": "ac_2",
+          "Section": "AC - Access Control",
+          "Service": "team",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "team_member_no_stale_access",
+        "team_no_stale_invitations",
+        "authentication_token_not_expired",
+        "authentication_no_stale_tokens"
+      ]
+    },
+    {
+      "Id": "ac_3",
+      "Name": "AC-3 Access Enforcement",
+      "Description": "The information system enforces approved authorizations for logical access to information and system resources in accordance with applicable access control policies.",
+      "Attributes": [
+        {
+          "ItemId": "ac_3",
+          "Section": "AC - Access Control",
+          "Service": "project",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "project_deployment_protection_enabled",
+        "project_production_deployment_protection_enabled",
+        "deployment_preview_not_publicly_accessible",
+        "project_password_protection_enabled"
+      ]
+    },
+    {
+      "Id": "ac_6",
+      "Name": "AC-6 Least Privilege",
+      "Description": "The organization employs the principle of least privilege, allowing only authorized accesses for users which are necessary to accomplish assigned tasks.",
+      "Attributes": [
+        {
+          "ItemId": "ac_6",
+          "Section": "AC - Access Control",
+          "Service": "team",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "team_member_role_least_privilege",
+        "environment_no_overly_broad_target",
+        "environment_production_vars_not_in_preview"
+      ]
+    },
+    {
+      "Id": "ia_2",
+      "Name": "IA-2 Identification and Authentication",
+      "Description": "The information system uniquely identifies and authenticates organizational users.",
+      "Attributes": [
+        {
+          "ItemId": "ia_2",
+          "Section": "IA - Identification and Authentication",
+          "Service": "team",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "team_saml_sso_enabled",
+        "team_saml_sso_enforced",
+        "team_directory_sync_enabled"
+      ]
+    },
+    {
+      "Id": "sc_8",
+      "Name": "SC-8 Transmission Confidentiality and Integrity",
+      "Description": "The information system protects the confidentiality and integrity of transmitted information.",
+      "Attributes": [
+        {
+          "ItemId": "sc_8",
+          "Section": "SC - System and Communications Protection",
+          "Service": "domain",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "domain_ssl_certificate_valid",
+        "domain_verified",
+        "domain_dns_properly_configured",
+        "domain_no_wildcard_dns_exposure"
+      ]
+    },
+    {
+      "Id": "sc_12",
+      "Name": "SC-12 Cryptographic Key Establishment and Management",
+      "Description": "The organization establishes and manages cryptographic keys for required cryptography employed within the information system.",
+      "Attributes": [
+        {
+          "ItemId": "sc_12",
+          "Section": "SC - System and Communications Protection",
+          "Service": "project",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "environment_sensitive_vars_encrypted",
+        "environment_no_secrets_in_plain_type"
+      ]
+    },
+    {
+      "Id": "si_4",
+      "Name": "SI-4 Information System Monitoring",
+      "Description": "The organization monitors the information system to detect attacks and indicators of potential attacks.",
+      "Attributes": [
+        {
+          "ItemId": "si_4",
+          "Section": "SI - System and Information Integrity",
+          "Service": "security",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "security_waf_enabled",
+        "security_managed_rulesets_enabled",
+        "security_rate_limiting_configured",
+        "security_custom_rules_configured"
+      ]
+    }
+  ]
+}

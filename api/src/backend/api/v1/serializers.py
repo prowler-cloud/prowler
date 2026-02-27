@@ -1550,6 +1550,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = OpenStackCloudsYamlProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.IMAGE.value:
                 serializer = ImageProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.VERCEL.value:
+                serializer = VercelProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1746,6 +1748,13 @@ class ImageProviderSecret(serializers.Serializer):
                     "registry_username is required when registry_password is provided."
                 )
         return attrs
+
+
+class VercelProviderSecret(serializers.Serializer):
+    api_token = serializers.CharField()
+
+    class Meta:
+        resource_name = "provider-secrets"
 
 
 class AlibabaCloudProviderSecret(serializers.Serializer):
