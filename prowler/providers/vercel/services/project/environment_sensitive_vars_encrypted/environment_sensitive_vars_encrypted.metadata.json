@@ -1,0 +1,36 @@
+{
+  "Provider": "vercel",
+  "CheckID": "environment_sensitive_vars_encrypted",
+  "CheckTitle": "Ensure environment variables with sensitive names are encrypted or secret",
+  "CheckType": [],
+  "ServiceName": "environment",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "vercel:{team_id}:project/{project_id}",
+  "Severity": "critical",
+  "ResourceType": "VercelProject",
+  "ResourceGroup": "security",
+  "Description": "**Vercel project environment variables** are assessed for **encryption** by checking whether variables with sensitive-looking names (containing KEY, SECRET, TOKEN, PASSWORD, CREDENTIAL, API_KEY, PRIVATE, AUTH) are stored with type 'encrypted' or 'secret' rather than 'plain'.",
+  "Risk": "Environment variables stored as **plain text** can be read by anyone with project access and are visible in build logs and the Vercel dashboard.\n- **Confidentiality**: API keys, passwords, and tokens stored in plain text can be exposed to unauthorized personnel\n- **Integrity**: Leaked credentials may allow attackers to modify external services or data\n- **Availability**: Compromised credentials can lead to service disruption or account lockout",
+  "RelatedUrl": "https://vercel.com/docs/environment-variables",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to your Vercel project dashboard\n2. Go to Settings > Environment Variables\n3. Identify any sensitive variables stored as 'Plain' type\n4. Delete the plain-text variable\n5. Re-create it using the 'Sensitive' type, which stores the value encrypted and never exposes it in the dashboard or API responses",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Always use the **Sensitive** (secret) or **Encrypted** type for environment variables containing API keys, passwords, tokens, or other credentials.\n- Sensitive variables are write-only and cannot be read back through the dashboard or API\n- Rotate any credentials that were previously stored as plain text\n- Audit build logs for any accidental exposure of plain-text secrets",
+      "Url": ""
+    }
+  },
+  "Categories": [
+    "secrets"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "environment_no_secrets_in_plain_type"
+  ],
+  "Notes": "This check uses pattern matching on variable names to identify likely secrets. Variables with names containing KEY, SECRET, TOKEN, PASSWORD, CREDENTIAL, API_KEY, PRIVATE, or AUTH are considered sensitive."
+}
