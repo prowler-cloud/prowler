@@ -10,7 +10,7 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 Prowler Cloud enables you to onboard all AWS accounts in your Organization through a single guided wizard. Instead of connecting accounts one by one, you can discover every account in your AWS Organization, select the ones you want to monitor, test connectivity, and launch scans — all from the Prowler Cloud UI.
 
 <Note>
-This feature is **exclusively available in Prowler Cloud**. It is not available in the self-hosted Prowler App or the Prowler CLI. For CLI-based multi-account scanning, see [AWS Organizations in Prowler CLI](/user-guide/providers/aws/organizations).
+This feature is **exclusively available in Prowler Cloud**. For CLI-based multi-account scanning, see [AWS Organizations in Prowler CLI](/user-guide/providers/aws/organizations).
 </Note>
 
 ## Overview
@@ -22,12 +22,12 @@ This feature is **exclusively available in Prowler Cloud**. It is not available 
 | **Individual accounts** | A few AWS accounts | Connect each account one by one with its own IAM role. |
 | **AWS Organizations** | 10+ accounts, or any org-managed environment | Connect once to your management account, discover all member accounts automatically, and scan them in bulk. |
 
-### How the Flow Works
+### How it works
 
-Before using the Prowler wizard, you need to deploy **two IAM roles** in your AWS environment. The onboarding follows this sequence:
+Before using the AWS Organizations wizard, you need to deploy **two IAM roles** in your AWS environment. The onboarding follows this sequence:
 
 <Frame caption="Steps 1 and 2 are done once in AWS. Steps 3 and 4 are done in Prowler Cloud.">
-  <img src="/images/organizations/onboarding-flow.png" alt="Onboarding flow: 1. Create Management Account Role, 2. Deploy StackSet, 3. Run the Wizard, 4. Launch Scans" />
+  <img src="/images/organizations/onboarding-flow.svg" alt="Onboarding flow: 1. Create Management Account Role, 2. Deploy StackSet, 3. Run the Wizard, 4. Launch Scans" />
 </Frame>
 
 ## Key Concepts
@@ -46,15 +46,15 @@ Prowler requires **two separate IAM roles** deployed in different places, each w
 
 | Role | Where it lives | What it does | How to deploy it |
 |------|---------------|--------------|------------------|
-| **ProwlerScan** (management account) | Your management (root) account only | Discovers the Organization structure **and** scans the management account. Has additional `organizations:*` permissions. | **Manually** in the IAM Console ([Step 1](#step-1-create-the-management-account-role)). Cannot be deployed via StackSet. |
+| **ProwlerScan** (management account) | Your management (root) account only | Discovers the Organization structure **and** scans the management account. Has additional Organizations discovery permissions. | **Manually** in the IAM Console ([Step 1](#step-1-create-the-management-account-role)). Cannot be deployed via StackSet. |
 | **ProwlerScan** (member accounts) | Every member account | Scans the account for security findings. | Via **CloudFormation StackSet** ([Step 2](#step-2-deploy-the-cloudformation-stackset)). Automated across all accounts. |
 
-<Frame caption="Both roles share the same name (ProwlerScan). The management account role includes additional Organization discovery permissions.">
-  <img src="/images/organizations/two-roles-architecture.png" alt="Two Roles Architecture: ProwlerScan in management account (discovery + scanning) and ProwlerScan in member accounts (scanning only)" />
+<Frame caption="Both roles share the same name `ProwlerScan`. The management account role includes additional Organization discovery permissions.">
+  <img src="/images/organizations/two-roles-architecture.svg" alt="Two Roles Architecture: ProwlerScan in management account (discovery + scanning) and ProwlerScan in member accounts (scanning only)" />
 </Frame>
 
 <Note>
-**Same name, different permissions.** Both roles are named `ProwlerScan` — Prowler expects a consistent role name across all accounts. The management account role has the same scanning permissions as member accounts (`SecurityAudit` + `ViewOnlyAccess`), plus additional `organizations:*` permissions for Organization discovery.
+**Same name, different permissions.** Both roles are named `ProwlerScan` — Prowler expects a consistent role name across all accounts. The management account role has the same scanning permissions as member accounts, plus additional Organizations discovery permissions (see [Step 1](#step-1-create-the-management-account-role) for the full list).
 </Note>
 
 ### What is a CloudFormation StackSet?
@@ -70,15 +70,6 @@ You need an active [Prowler Cloud](https://cloud.prowler.com) account. Each AWS 
 ### AWS Organization Enabled
 
 Your AWS environment must have [AWS Organizations](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html) enabled. You will need access to the **management account** (or a delegated administrator account) to provide the Organization ID and IAM Role ARN.
-
-### Network Access
-
-If your AWS accounts use **private subnets**, ensure that outbound internet access is available through one of the following:
-
-- A **NAT Gateway** or **NAT Instance** in the VPC.
-- **VPC Endpoints** for the AWS services that Prowler needs to reach (STS, Organizations, and the services being scanned).
-
-Without outbound connectivity, Prowler Cloud will not be able to assume roles in your accounts or run scans.
 
 ## Step 1: Create the Management Account Role
 
@@ -164,6 +155,10 @@ Replace `<YOUR_EXTERNAL_ID>` with the External ID shown in the Prowler wizard.
 }
 ```
 
+<Tip>
+You can optionally restrict the `Resource` field to your specific Organization ARN (e.g., `arn:aws:organizations::123456789012:organization/o-abc123def4`) instead of `"*"` to minimize the blast radius.
+</Tip>
+
 6. Name the role **`ProwlerScan`** and click **Create role**. Take note of the **Role ARN** — you will need it in the Prowler wizard.
 
 The ARN follows this format: `arn:aws:iam::<account-id>:role/ProwlerScan`
@@ -198,7 +193,7 @@ Opens the CloudFormation Console with the Prowler scan role template and paramet
 
 1. Review the pre-filled parameters:
    - **Template URL**: Points to the official [Prowler scan role template](https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml) hosted on Prowler's public S3 bucket.
-   - **ExternalId parameter**: Pre-filled with your tenant's External ID.
+   - **ExternalId**: Pre-filled with your tenant's External ID when clicking the link from the Prowler Cloud wizard. If you open this link directly, you will need to enter the External ID manually.
 
    {/* TODO: screenshot of AWS Console Quick Create page showing pre-filled parameters */}
 
@@ -241,7 +236,7 @@ Deployment typically takes **2–5 minutes** for medium-sized organizations. Lar
 ### Key Considerations
 
 - **Service-managed permissions**: Always select **Service-managed permissions** when creating the StackSet. This lets AWS Organizations manage the deployment automatically across current and future member accounts.
-- **Least privilege**: The ProwlerScan role deployed by the StackSet uses `SecurityAudit` and `ViewOnlyAccess` — AWS managed policies that grant read-only access. These are the minimum permissions Prowler needs to assess your accounts without making any changes.
+- **Least privilege**: The ProwlerScan role deployed by the StackSet uses `SecurityAudit` and `ViewOnlyAccess` — AWS managed policies that grant read-only access — plus a small set of additional read-only permissions for services not covered by those policies. See the [CloudFormation template](https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml) for the full list. Prowler does not make any changes to your accounts.
 - **New accounts**: When you add new accounts to your AWS Organization, the StackSet automatically deploys the ProwlerScan role to them if you targeted the organization root or the relevant OU. Combined with Prowler's 6-hour automatic sync, new accounts are onboarded end-to-end without manual intervention.
 - **Management account**: Organizational StackSets **do not deploy to the management account itself**. If you want to scan the management account, you need to create the ProwlerScan role there separately using a regular CloudFormation Stack.
 
@@ -347,10 +342,8 @@ Only **ACTIVE** accounts can be selected for scanning:
 | **PENDING_CLOSURE** | No | Account is being closed. |
 | **CLOSED** | No | Account has been closed. |
 
-### Already Connected Accounts
-
 <Note>
-**Your existing data is safe.** If an AWS account is already connected to Prowler as an individual provider, it will appear in the tree with a checkmark (✓) indicator.
+**Your existing data is safe.** If an AWS account is already connected to Prowler as an individual provider, it will appear in the tree with a checkmark indicator.
 
 When you proceed:
 - The existing provider is **linked** to the organization — it is **not** duplicated.
@@ -493,7 +486,7 @@ For pricing details, see [Prowler Cloud Pricing](/getting-started/products/prowl
 
 - Verify the management account role exists and was created in [Step 1](#step-1-create-the-management-account-role)
 - Confirm the trust policy includes the correct External ID from the wizard
-- Check the role has all `organizations:*` permissions listed in [Step 1](#step-1-create-the-management-account-role)
+- Check the role has all Organizations discovery permissions listed in [Step 1](#step-1-create-the-management-account-role)
 - Double-check the Role ARN format and account ID for typos
 
 ### Authentication Timed Out
