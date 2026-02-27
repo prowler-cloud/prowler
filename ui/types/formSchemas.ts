@@ -140,6 +140,14 @@ export const addProviderFormSchema = z
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
       }),
+      z.object({
+        providerType: z.literal("vercel"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z
+          .string()
+          .trim()
+          .min(1, "Team ID is required"),
+      }),
     ]),
   );
 
@@ -306,7 +314,14 @@ export const addCredentialsFormSchema = (
                                   [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]:
                                     z.string().min(1, "Cloud name is required"),
                                 }
-                              : {}),
+                              : providerType === "vercel"
+                                ? {
+                                    [ProviderCredentialFields.VERCEL_API_TOKEN]:
+                                      z
+                                        .string()
+                                        .min(1, "API Token is required"),
+                                  }
+                                : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {
@@ -420,37 +435,17 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
           [ProviderCredentialFields.ROLE_SESSION_NAME]: z.string().optional(),
           [ProviderCredentialFields.CREDENTIALS_TYPE]: z.string().optional(),
         })
-        .superRefine((data, ctx) => {
-          if (
+        .refine(
+          (data) =>
             data[ProviderCredentialFields.CREDENTIALS_TYPE] !==
-            "access-secret-key"
-          ) {
-            return;
-          }
-
-          const hasAccessKey =
-            (data[ProviderCredentialFields.AWS_ACCESS_KEY_ID] || "").trim()
-              .length > 0;
-          const hasSecretAccessKey =
-            (data[ProviderCredentialFields.AWS_SECRET_ACCESS_KEY] || "").trim()
-              .length > 0;
-
-          if (!hasAccessKey) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "AWS Access Key ID is required.",
-              path: [ProviderCredentialFields.AWS_ACCESS_KEY_ID],
-            });
-          }
-
-          if (!hasSecretAccessKey) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "AWS Secret Access Key is required.",
-              path: [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY],
-            });
-          }
-        })
+              "access-secret-key" ||
+            (data[ProviderCredentialFields.AWS_ACCESS_KEY_ID] &&
+              data[ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]),
+          {
+            message: "AWS Access Key ID and Secret Access Key are required.",
+            path: [ProviderCredentialFields.AWS_ACCESS_KEY_ID],
+          },
+        )
     : providerType === "alibabacloud"
       ? z.object({
           [ProviderCredentialFields.PROVIDER_ID]: z.string(),

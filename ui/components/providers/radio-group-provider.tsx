@@ -21,6 +21,7 @@ import {
   MongoDBAtlasProviderBadge,
   OpenStackProviderBadge,
   OracleCloudProviderBadge,
+  VercelProviderBadge,
 } from "../icons/providers-badge";
 import { FormMessage } from "../ui/form";
 
@@ -84,6 +85,11 @@ const PROVIDERS = [
     value: "openstack",
     label: "OpenStack",
     badge: OpenStackProviderBadge,
+  },
+  {
+    value: "vercel",
+    label: "Vercel",
+    badge: VercelProviderBadge,
   },
 ] as const;
 

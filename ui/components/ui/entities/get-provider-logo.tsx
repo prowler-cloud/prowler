@@ -11,6 +11,7 @@ import {
   MongoDBAtlasProviderBadge,
   OpenStackProviderBadge,
   OracleCloudProviderBadge,
+  VercelProviderBadge,
 } from "@/components/icons/providers-badge";
 import { ProviderType } from "@/types";
 
@@ -40,6 +41,8 @@ export const getProviderLogo = (provider: ProviderType) => {
       return <CloudflareProviderBadge width={35} height={35} />;
     case "openstack":
       return <OpenStackProviderBadge width={35} height={35} />;
+    case "vercel":
+      return <VercelProviderBadge width={35} height={35} />;
     default:
       return null;
   }
@@ -71,6 +74,8 @@ export const getProviderName = (provider: ProviderType): string => {
       return "Cloudflare";
     case "openstack":
       return "OpenStack";
+    case "vercel":
+      return "Vercel";
     default:
       return "Unknown Provider";
   }

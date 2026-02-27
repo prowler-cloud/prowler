@@ -1,0 +1,38 @@
+{
+  "Provider": "vercel",
+  "CheckID": "team_saml_sso_enforced",
+  "CheckTitle": "Vercel team enforces SAML SSO for all members",
+  "CheckType": [],
+  "ServiceName": "team",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "vercel:{team_id}:team/{team_id}",
+  "Severity": "critical",
+  "ResourceType": "VercelTeam",
+  "ResourceGroup": "IAM",
+  "Description": "Checks whether the Vercel team enforces SAML SSO for all members. When enforced, all team members must authenticate through the configured identity provider, preventing the use of individual Vercel credentials.",
+  "Risk": "Without SAML SSO enforcement, team members can bypass centralized authentication and log in with individual credentials even when SAML is configured. This undermines identity governance, allows circumvention of MFA policies, and creates gaps in access auditing.",
+  "RelatedUrl": "https://vercel.com/docs/accounts/team-members-and-roles",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/saml"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to your Vercel team settings\n2. Go to the Security section\n3. Ensure SAML SSO is configured and linked\n4. Enable SSO enforcement to require all members to authenticate via the identity provider",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce SAML SSO for all team members to ensure authentication is managed exclusively through your identity provider. This prevents credential bypass, enforces MFA policies, and provides centralized access control and audit capabilities.",
+      "Url": "https://vercel.com/docs/security/saml"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "team_saml_sso_enabled"
+  ],
+  "Notes": ""
+}

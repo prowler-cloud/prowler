@@ -1,0 +1,37 @@
+{
+  "Provider": "vercel",
+  "CheckID": "environment_production_vars_not_in_preview",
+  "CheckTitle": "Ensure sensitive production environment variables do not target preview",
+  "CheckType": [],
+  "ServiceName": "environment",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "vercel:{team_id}:project/{project_id}",
+  "Severity": "medium",
+  "ResourceType": "VercelProject",
+  "ResourceGroup": "security",
+  "Description": "**Vercel project environment variables** are assessed for **environment separation** by checking whether sensitive variables (type 'secret' or 'encrypted') that target the 'production' environment also target 'preview', which could expose production credentials to untrusted preview builds.",
+  "Risk": "Preview deployments are often triggered by pull requests, including those from external contributors or forks. Sharing production secrets with preview environments can lead to credential theft.\n- **Confidentiality**: Production API keys and database credentials could be exfiltrated by malicious code in preview builds\n- **Integrity**: Stolen production credentials could be used to modify production data or services\n- **Availability**: Attackers with production credentials could disrupt live services",
+  "RelatedUrl": "https://vercel.com/docs/environment-variables",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to your Vercel project dashboard\n2. Go to Settings > Environment Variables\n3. Identify sensitive variables (type Secret or Encrypted) that target both Production and Preview\n4. Edit each variable to remove the Preview target\n5. If preview builds require credentials, create separate variables with limited-scope preview-only credentials",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Maintain strict **environment separation** between production and preview deployments.\n- Use dedicated, limited-scope credentials for preview environments\n- Never share production database credentials, API keys, or signing keys with preview builds\n- Enable Vercel's deployment protection features to further restrict access to preview deployments\n- Regularly audit which environment variables target multiple environments",
+      "Url": ""
+    }
+  },
+  "Categories": [
+    "secrets"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "environment_sensitive_vars_encrypted",
+    "environment_no_overly_broad_target"
+  ],
+  "Notes": "This check only inspects variables with type 'secret' or 'encrypted' since these are the ones most likely to contain actual credentials. Plain-text variables with sensitive names should be caught by the environment_sensitive_vars_encrypted check."
+}

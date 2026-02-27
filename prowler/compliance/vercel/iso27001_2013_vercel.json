@@ -1,0 +1,121 @@
+{
+  "Framework": "ISO27001",
+  "Name": "ISO/IEC 27001:2013 - Vercel",
+  "Version": "2013",
+  "Provider": "vercel",
+  "Description": "ISO/IEC 27001:2013 mapping for Vercel provider checks. Vercel holds ISO 27001:2013 certification; these mappings assess the customer-side of Vercel's shared responsibility model.",
+  "Requirements": [
+    {
+      "Id": "A.9.1",
+      "Name": "A.9.1 Business Requirements of Access Control",
+      "Description": "To limit access to information and information processing facilities.",
+      "Attributes": [
+        {
+          "ItemId": "A.9.1",
+          "Section": "A.9 Access Control",
+          "Service": "team",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "team_saml_sso_enabled",
+        "team_saml_sso_enforced",
+        "project_deployment_protection_enabled"
+      ]
+    },
+    {
+      "Id": "A.9.2",
+      "Name": "A.9.2 User Access Management",
+      "Description": "To ensure authorized user access and to prevent unauthorized access to systems and services.",
+      "Attributes": [
+        {
+          "ItemId": "A.9.2",
+          "Section": "A.9 Access Control",
+          "Service": "team",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "team_member_role_least_privilege",
+        "team_member_no_stale_access",
+        "team_no_stale_invitations",
+        "team_directory_sync_enabled"
+      ]
+    },
+    {
+      "Id": "A.9.4",
+      "Name": "A.9.4 System and Application Access Control",
+      "Description": "To prevent unauthorized access to systems and applications.",
+      "Attributes": [
+        {
+          "ItemId": "A.9.4",
+          "Section": "A.9 Access Control",
+          "Service": "authentication",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "authentication_token_not_expired",
+        "authentication_no_stale_tokens",
+        "project_password_protection_enabled"
+      ]
+    },
+    {
+      "Id": "A.10.1",
+      "Name": "A.10.1 Cryptographic Controls",
+      "Description": "To ensure proper and effective use of cryptography to protect the confidentiality, authenticity and/or integrity of information.",
+      "Attributes": [
+        {
+          "ItemId": "A.10.1",
+          "Section": "A.10 Cryptography",
+          "Service": "project",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "environment_sensitive_vars_encrypted",
+        "environment_no_secrets_in_plain_type",
+        "domain_ssl_certificate_valid"
+      ]
+    },
+    {
+      "Id": "A.13.1",
+      "Name": "A.13.1 Network Security Management",
+      "Description": "To ensure the protection of information in networks and its supporting information processing facilities.",
+      "Attributes": [
+        {
+          "ItemId": "A.13.1",
+          "Section": "A.13 Communications Security",
+          "Service": "security",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "security_waf_enabled",
+        "security_managed_rulesets_enabled",
+        "security_rate_limiting_configured",
+        "security_ip_blocking_rules_configured",
+        "domain_dns_properly_configured"
+      ]
+    },
+    {
+      "Id": "A.14.2",
+      "Name": "A.14.2 Security in Development and Support Processes",
+      "Description": "To ensure that information security is designed and implemented within the development lifecycle of information systems.",
+      "Attributes": [
+        {
+          "ItemId": "A.14.2",
+          "Section": "A.14 System Acquisition, Development and Maintenance",
+          "Service": "project",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "project_git_fork_protection_enabled",
+        "project_auto_expose_system_env_disabled",
+        "environment_production_vars_not_in_preview",
+        "deployment_production_uses_stable_target"
+      ]
+    }
+  ]
+}

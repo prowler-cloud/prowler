@@ -1,0 +1,115 @@
+---
+title: 'Vercel Authentication in Prowler'
+---
+
+Prowler for Vercel authenticates using a Vercel API Token (Bearer Token). Tokens can be scoped to a specific team or granted account-wide access.
+
+## Required Permissions
+
+Prowler requires read-only access to Vercel resources. The following API token scopes are needed:
+
+| Scope | Description |
+|-------|-------------|
+| `User:Read` | Read access to user profile and token metadata |
+| `Team:Read` | Read access to team settings, members, and SSO configuration |
+| `Project:Read` | Read access to project settings and environment variables |
+| `Deployment:Read` | Read access to deployment details and protection settings |
+| `Domain:Read` | Read access to domain configuration, DNS records, and SSL certificates |
+| `Firewall:Read` | Read access to WAF configuration and rules |
+
+<Warning>
+Ensure the API token has access to all resources to be scanned. If permissions are missing, some checks may fail or return incomplete results. Features gated by Vercel plan (such as managed WAF rulesets) are reported with a MANUAL status when inaccessible.
+</Warning>
+
+## API Token
+
+### Step 1: Create an API Token
+
+1. **Log into the Vercel Dashboard**
+   - Go to [https://vercel.com/account/tokens](https://vercel.com/account/tokens) and sign in
+
+2. **Create a New Token**
+   - Click "Create"
+   - Give the token a descriptive name (e.g., "Prowler Security Scanner")
+
+3. **Configure Token Scope**
+   - **Full Account:** Select "Full Account" to scan all teams and projects
+   - **Team-scoped:** Select a specific team to restrict the token to that team's resources
+
+4. **Set Expiration**
+   - Choose an appropriate expiration period
+   - Prowler checks for expired and stale tokens, so regular rotation is recommended
+
+5. **Copy the Token**
+   - Copy the token immediately after creation — Vercel only displays it once
+
+### Step 2: Store the Token Securely
+
+Store the API token as an environment variable:
+
+```bash
+export VERCEL_TOKEN="your-api-token-here"
+```
+
+For team-scoped scans, also set the team ID:
+
+```bash
+export VERCEL_TEAM="team_xxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+<Warning>
+Never commit API tokens to version control or share them in plain text. Use environment variables or a secrets manager.
+</Warning>
+
+### Step 3: Run Prowler
+
+```bash
+prowler vercel
+```
+
+Alternatively, pass credentials directly via CLI arguments:
+
+```bash
+prowler vercel --vercel-token "your-api-token-here" --vercel-team "your-team-id"
+```
+
+## Team-Scoped Tokens
+
+When a token is scoped to a specific team, all API requests must include the `teamId` parameter. Prowler handles this automatically when the team ID is provided via `VERCEL_TEAM` or `--vercel-team`.
+
+<Note>
+The Team ID can be found in the Vercel Dashboard under "Settings" → "General" for the selected team. It follows the format `team_xxxxxxxxxxxxxxxxxxxxxxxx`.
+</Note>
+
+## Best Practices
+
+### Security Recommendations
+
+- **Use team-scoped tokens** — Restrict access to the minimum required scope
+- **Use environment variables** — Never hardcode credentials in scripts or commands
+- **Rotate tokens regularly** — Create new tokens periodically and revoke old ones
+- **Set token expiration** — Avoid creating tokens without an expiration date
+- **Monitor token usage** — Review the "Last Used" column in the Vercel tokens dashboard for suspicious activity
+
+## Troubleshooting
+
+### "Vercel Credentials Not Found" Error
+
+This error occurs when no API token is provided. Ensure `VERCEL_TOKEN` is set or pass `--vercel-token` as a CLI argument.
+
+### "Insufficient Permissions for the Vercel API Token" (403)
+
+- Verify the API token is correct and has not expired
+- For team-scoped tokens, ensure `VERCEL_TEAM` or `--vercel-team` is set with the correct team ID
+- Check that the token has the [required permissions](#required-permissions)
+
+### "Invalid or Expired Vercel API Token" (401)
+
+- The token has been revoked or has expired
+- Generate a new token at [https://vercel.com/account/tokens](https://vercel.com/account/tokens)
+
+### "Team Not Found or Not Accessible" (404/403)
+
+- Verify the team ID or slug is correct
+- Ensure the API token has access to the specified team
+- Check that the team exists and has not been deleted
