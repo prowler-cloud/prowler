@@ -7,6 +7,16 @@ export interface AWSProviderData {
   alias?: string;
 }
 
+export interface AWSOrganizationsProviderData {
+  organizationId: string;
+  organizationName?: string;
+}
+
+export interface AWSOrganizationsProviderCredential {
+  roleArn: string;
+  stackSetDeployed?: boolean;
+}
+
 // AZURE provider data
 export interface AZUREProviderData {
   subscriptionId: string;
@@ -492,13 +502,9 @@ export class ProvidersPage extends BasePage {
     this.roleArnInput = page.getByRole("textbox", { name: "Role ARN" });
     this.externalIdInput = page.getByRole("textbox", { name: "External ID" });
 
-    // Inputs for static credentials
-    this.accessKeyIdInput = page.getByRole("textbox", {
-      name: "Access Key ID",
-    });
-    this.secretAccessKeyInput = page.getByRole("textbox", {
-      name: "Secret Access Key",
-    });
+    // Inputs for static credentials (type="password" fields have no textbox role)
+    this.accessKeyIdInput = page.getByLabel(/Access Key ID/i).first();
+    this.secretAccessKeyInput = page.getByLabel(/Secret Access Key/i).first();
 
     // Delete button in confirmation modal
     this.deleteProviderConfirmationButton = page.getByRole("button", {
@@ -578,17 +584,17 @@ export class ProvidersPage extends BasePage {
   }
 
   async selectAWSSingleAccountMethod(): Promise<void> {
-    await this.page
-      .getByRole("button", {
-        name: "Add A Single AWS Cloud Account",
-        exact: true,
-      })
-      .click();
+    const singleAccountOption = this.page.getByRole("radio", {
+      name: "Add A Single AWS Cloud Account",
+      exact: true,
+    });
+    await expect(singleAccountOption).toBeVisible({ timeout: 10000 });
+    await singleAccountOption.click();
   }
 
   async selectAWSOrganizationsMethod(): Promise<void> {
     await this.page
-      .getByRole("button", {
+      .getByRole("radio", {
         name: "Add Multiple Accounts With AWS Organizations",
         exact: true,
       })
@@ -633,20 +639,49 @@ export class ProvidersPage extends BasePage {
   }
 
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
-    // Fill the AWS provider details
-    const singleAccountButton = this.page.getByRole("button", {
-      name: "Add A Single AWS Cloud Account",
-      exact: true,
-    });
-
-    if (await singleAccountButton.isVisible().catch(() => false)) {
-      await singleAccountButton.click();
-    }
-
+    await this.selectAWSSingleAccountMethod();
+    await expect(this.accountIdInput).toBeVisible({ timeout: 10000 });
     await this.accountIdInput.fill(data.accountId);
 
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillAWSOrganizationsProviderDetails(
+    data: AWSOrganizationsProviderData,
+  ): Promise<void> {
+    const organizationIdInput = this.page.getByRole("textbox", {
+      name: "Organization ID",
+      exact: true,
+    });
+    await expect(organizationIdInput).toBeVisible({ timeout: 10000 });
+    await organizationIdInput.fill(data.organizationId.toLowerCase());
+
+    if (data.organizationName) {
+      await this.page
+        .getByRole("textbox", { name: "Name (optional)", exact: true })
+        .fill(data.organizationName);
+    }
+  }
+
+  async fillAWSOrganizationsCredentials(
+    credentials: AWSOrganizationsProviderCredential,
+  ): Promise<void> {
+    const roleArnInput = this.page.getByRole("textbox", {
+      name: "Role ARN",
+      exact: true,
+    });
+    await expect(roleArnInput).toBeVisible({ timeout: 10000 });
+    await roleArnInput.fill(credentials.roleArn);
+
+    if (credentials.stackSetDeployed ?? true) {
+      const stackSetCheckbox = this.page.getByRole("checkbox", {
+        name: /The StackSet has been successfully deployed in AWS/i,
+      });
+      if (!(await stackSetCheckbox.isChecked())) {
+        await stackSetCheckbox.click();
+      }
     }
   }
 
@@ -705,22 +740,13 @@ export class ProvidersPage extends BasePage {
   async clickNext(): Promise<void> {
     await this.verifyWizardModalOpen();
 
-    const launchScanButton = this.page.getByRole("button", {
-      name: "Launch scan",
-      exact: true,
-    });
-    if (await launchScanButton.isVisible().catch(() => false)) {
-      await launchScanButton.click();
-      await this.handleLaunchScanCompletion();
-      return;
-    }
-
     const actionNames = [
       "Go to scans",
       "Authenticate",
       "Next",
       "Save",
       "Check connection",
+      "Launch scan",
     ] as const;
 
     for (const actionName of actionNames) {
@@ -730,6 +756,9 @@ export class ProvidersPage extends BasePage {
       });
       if (await button.isVisible().catch(() => false)) {
         await button.click();
+        if (actionName === "Launch scan") {
+          await this.handleLaunchScanCompletion();
+        }
         return;
       }
     }
@@ -740,38 +769,36 @@ export class ProvidersPage extends BasePage {
   }
 
   private async handleLaunchScanCompletion(): Promise<void> {
-    const errorMessage = this.page
-      .locator(
-        "div.border-border-error, div.bg-red-100, p.text-text-error-primary, p.text-danger",
-      )
-      .first();
     const goToScansButton = this.page.getByRole("button", {
       name: "Go to scans",
       exact: true,
     });
+    const connectionError = this.page.locator(
+      "div.border-border-error p.text-text-error-primary",
+    );
 
     try {
       await Promise.race([
-        this.page.waitForURL(/\/scans/, { timeout: 30000 }),
-        goToScansButton.waitFor({ state: "visible", timeout: 30000 }),
-        errorMessage.waitFor({ state: "visible", timeout: 30000 }),
+        this.page.waitForURL(/\/scans/, { timeout: 20000 }),
+        goToScansButton.waitFor({ state: "visible", timeout: 20000 }),
+        connectionError.waitFor({ state: "visible", timeout: 20000 }),
       ]);
     } catch {
       // Continue and inspect visible state below.
     }
 
-    const isErrorVisible = await errorMessage.isVisible().catch(() => false);
-    if (isErrorVisible) {
-      const errorText = await errorMessage.textContent();
+    if (await connectionError.isVisible().catch(() => false)) {
+      const errorText = await connectionError.textContent();
       throw new Error(
         `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
       );
     }
 
-    const isGoToScansVisible = await goToScansButton
-      .isVisible()
-      .catch(() => false);
-    if (isGoToScansVisible) {
+    if (this.page.url().includes("/scans")) {
+      return;
+    }
+
+    if (await goToScansButton.isVisible().catch(() => false)) {
       await goToScansButton.click();
       await this.page.waitForURL(/\/scans/, { timeout: 30000 });
     }
@@ -827,19 +854,48 @@ export class ProvidersPage extends BasePage {
   }
 
   async fillRoleCredentials(credentials: AWSProviderCredential): Promise<void> {
-    // Fill the role credentials form
+    await expect(this.roleArnInput).toBeVisible({ timeout: 10000 });
+    const accessKeyInputInWizard = this.wizardModal.getByPlaceholder(
+      "Enter the AWS Access Key ID",
+    );
+    const secretKeyInputInWizard = this.wizardModal.getByPlaceholder(
+      "Enter the AWS Secret Access Key",
+    );
+    const accessKeyId =
+      credentials.accessKeyId || process.env.E2E_AWS_PROVIDER_ACCESS_KEY;
+    const secretAccessKey =
+      credentials.secretAccessKey || process.env.E2E_AWS_PROVIDER_SECRET_KEY;
 
-    if (credentials.accessKeyId) {
-      await this.accessKeyIdInput.fill(credentials.accessKeyId);
+    const shouldFillStaticKeys = Boolean(
+      accessKeyId || secretAccessKey,
+    );
+    if (shouldFillStaticKeys) {
+      const accessKeyIsVisible = await accessKeyInputInWizard
+        .isVisible()
+        .catch(() => false);
+
+      // In cloud env the default can be SDK mode, so expose Access/Secret explicitly.
+      if (!accessKeyIsVisible) {
+        await this.selectAuthenticationMethod(
+          AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
+        );
+      }
     }
-    if (credentials.secretAccessKey) {
-      await this.secretAccessKeyInput.fill(credentials.secretAccessKey);
+
+    if (accessKeyId) {
+      await expect(accessKeyInputInWizard).toBeVisible({ timeout: 10000 });
+      await accessKeyInputInWizard.fill(accessKeyId);
+      await expect(accessKeyInputInWizard).toHaveValue(accessKeyId);
+    }
+    if (secretAccessKey) {
+      await expect(secretKeyInputInWizard).toBeVisible({ timeout: 10000 });
+      await secretKeyInputInWizard.fill(secretAccessKey);
+      await expect(secretKeyInputInWizard).toHaveValue(secretAccessKey);
     }
     if (credentials.roleArn) {
       await this.roleArnInput.fill(credentials.roleArn);
     }
     if (credentials.externalId) {
-      // External ID may be prefilled and disabled; only fill if enabled
       if (await this.externalIdInput.isEnabled()) {
         await this.externalIdInput.fill(credentials.externalId);
       }
@@ -849,13 +905,26 @@ export class ProvidersPage extends BasePage {
   async fillStaticCredentials(
     credentials: AWSProviderCredential,
   ): Promise<void> {
-    // Fill the static credentials form
+    const accessKeyInputInWizard = this.wizardModal.getByPlaceholder(
+      "Enter the AWS Access Key ID",
+    );
+    const secretKeyInputInWizard = this.wizardModal.getByPlaceholder(
+      "Enter the AWS Secret Access Key",
+    );
+    const accessKeyId =
+      credentials.accessKeyId || process.env.E2E_AWS_PROVIDER_ACCESS_KEY;
+    const secretAccessKey =
+      credentials.secretAccessKey || process.env.E2E_AWS_PROVIDER_SECRET_KEY;
 
-    if (credentials.accessKeyId) {
-      await this.accessKeyIdInput.fill(credentials.accessKeyId);
+    if (accessKeyId) {
+      await expect(accessKeyInputInWizard).toBeVisible({ timeout: 10000 });
+      await accessKeyInputInWizard.fill(accessKeyId);
+      await expect(accessKeyInputInWizard).toHaveValue(accessKeyId);
     }
-    if (credentials.secretAccessKey) {
-      await this.secretAccessKeyInput.fill(credentials.secretAccessKey);
+    if (secretAccessKey) {
+      await expect(secretKeyInputInWizard).toBeVisible({ timeout: 10000 });
+      await secretKeyInputInWizard.fill(secretAccessKey);
+      await expect(secretKeyInputInWizard).toHaveValue(secretAccessKey);
     }
   }
 
@@ -1126,11 +1195,22 @@ export class ProvidersPage extends BasePage {
   }
 
   async verifyCredentialsPageLoaded(): Promise<void> {
-    // Verify the credentials page is loaded
-
     await this.verifyPageHasProwlerTitle();
     await this.verifyWizardModalOpen();
-    await expect(this.roleCredentialsRadio).toBeVisible();
+
+    const selectorRadio = this.wizardModal.getByRole("radio", {
+      name: /Connect assuming IAM Role/i,
+    });
+    const selectorHint = this.wizardModal.getByText(/Using IAM Role/i);
+    const roleArnInForm = this.wizardModal.getByRole("textbox", {
+      name: "Role ARN",
+    });
+
+    await Promise.race([
+      selectorRadio.waitFor({ state: "visible", timeout: 20000 }),
+      selectorHint.waitFor({ state: "visible", timeout: 20000 }),
+      roleArnInForm.waitFor({ state: "visible", timeout: 20000 }),
+    ]);
   }
 
   async verifyM365CredentialsPageLoaded(): Promise<void> {
@@ -1186,12 +1266,17 @@ export class ProvidersPage extends BasePage {
     await this.verifyPageHasProwlerTitle();
     await this.verifyWizardModalOpen();
 
-    // Verify the Launch scan button is visible
-    const launchScanButton = this.page
-      .locator("button")
-      .filter({ hasText: "Launch scan" });
+    // Some providers show "Check connection" before "Launch scan".
+    const launchAction = this.page
+      .getByRole("button", { name: "Launch scan", exact: true })
+      .or(
+        this.page.getByRole("button", {
+          name: "Check connection",
+          exact: true,
+        }),
+      );
 
-    await expect(launchScanButton).toBeVisible();
+    await expect(launchAction).toBeVisible();
   }
 
   async verifyLoadProviderPageAfterNewProvider(): Promise<void> {
@@ -1235,7 +1320,9 @@ export class ProvidersPage extends BasePage {
         .click({ force: true });
     } else if (method === AWS_CREDENTIAL_OPTIONS.AWS_SDK_DEFAULT) {
       await this.page
-        .getByRole("option", { name: "AWS SDK Default" })
+        .getByRole("option", {
+          name: /AWS SDK Default|Prowler Cloud will assume your IAM role/i,
+        })
         .click({ force: true });
     } else {
       throw new Error(`Invalid authentication method: ${method}`);
@@ -1278,9 +1365,7 @@ export class ProvidersPage extends BasePage {
   }
 
   async verifyTestConnectionPageLoaded(): Promise<void> {
-    // Verify the test connection page is loaded
     await this.verifyPageHasProwlerTitle();
-    await this.verifyWizardModalOpen();
     const testConnectionAction = this.page
       .getByRole("button", { name: "Launch scan", exact: true })
       .or(
@@ -1289,6 +1374,21 @@ export class ProvidersPage extends BasePage {
           exact: true,
         }),
       );
+
+    // Some update flows return directly to providers list after authenticating.
+    try {
+      await Promise.race([
+        testConnectionAction.waitFor({ state: "visible", timeout: 20000 }),
+        this.providersTable.waitFor({ state: "visible", timeout: 20000 }),
+      ]);
+    } catch {
+      // Fall through to explicit assertions below.
+    }
+
+    if (await this.providersTable.isVisible().catch(() => false)) {
+      return;
+    }
+
     await expect(testConnectionAction).toBeVisible();
   }
 }

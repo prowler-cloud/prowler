@@ -24,6 +24,19 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
+- Findings Severity Over Time chart on Overview not responding to provider and account filters, and chart clipping at Y-axis maximum values [(#10103)](https://github.com/prowler-cloud/prowler/pull/10103)
+
+### 🔐 Security
+
+- npm dependencies updated to resolve 11 Dependabot alerts (4 HIGH, 7 MEDIUM): fast-xml-parser, @modelcontextprotocol/sdk, tar, @isaacs/brace-expansion, hono, lodash, lodash-es [(#10052)](https://github.com/prowler-cloud/prowler/pull/10052)
+- npm transitive dependencies patched to resolve 9 Dependabot alerts (2 CRITICAL, 3 HIGH, 2 MEDIUM, 2 LOW): fast-xml-parser, rollup, minimatch, ajv, hono, qs [(#10187)](https://github.com/prowler-cloud/prowler/pull/10187)
+
+---
+
+## [1.18.3] (Prowler v5.18.3)
+
+### 🐞 Fixed
+
 - Dropdown selects in the "Send to Jira" modal and other dialogs not responding to clicks [(#10097)](https://github.com/prowler-cloud/prowler/pull/10097)
 - Update credentials for the Alibaba Cloud provider [(#10098)](https://github.com/prowler-cloud/prowler/pull/10098)
 

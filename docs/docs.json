@@ -118,6 +118,13 @@
                 ]
               },
               {
+                "group": "AWS Organizations",
+                "expanded": true,
+                "pages": [
+                  "user-guide/tutorials/prowler-cloud-aws-organizations"
+                ]
+              },
+              {
                 "group": "Lighthouse AI",
                 "pages": [
                   "user-guide/tutorials/prowler-app-lighthouse",

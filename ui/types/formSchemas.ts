@@ -420,17 +420,37 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
           [ProviderCredentialFields.ROLE_SESSION_NAME]: z.string().optional(),
           [ProviderCredentialFields.CREDENTIALS_TYPE]: z.string().optional(),
         })
-        .refine(
-          (data) =>
+        .superRefine((data, ctx) => {
+          if (
             data[ProviderCredentialFields.CREDENTIALS_TYPE] !==
-              "access-secret-key" ||
-            (data[ProviderCredentialFields.AWS_ACCESS_KEY_ID] &&
-              data[ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]),
-          {
-            message: "AWS Access Key ID and Secret Access Key are required.",
-            path: [ProviderCredentialFields.AWS_ACCESS_KEY_ID],
-          },
-        )
+            "access-secret-key"
+          ) {
+            return;
+          }
+
+          const hasAccessKey =
+            (data[ProviderCredentialFields.AWS_ACCESS_KEY_ID] || "").trim()
+              .length > 0;
+          const hasSecretAccessKey =
+            (data[ProviderCredentialFields.AWS_SECRET_ACCESS_KEY] || "").trim()
+              .length > 0;
+
+          if (!hasAccessKey) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "AWS Access Key ID is required.",
+              path: [ProviderCredentialFields.AWS_ACCESS_KEY_ID],
+            });
+          }
+
+          if (!hasSecretAccessKey) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "AWS Secret Access Key is required.",
+              path: [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY],
+            });
+          }
+        })
     : providerType === "alibabacloud"
       ? z.object({
           [ProviderCredentialFields.PROVIDER_ID]: z.string(),
