@@ -15,6 +15,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - CSA CCM detailed view and small fix related with `Top Failed Sections` width [(#10018)](https://github.com/prowler-cloud/prowler/pull/10018)
 - Attack Paths: Show scan data availability status with badges and tooltips, allow selecting scans for querying while a new scan is in progress [(#10089)](https://github.com/prowler-cloud/prowler/pull/10089)
 
+### 🐞 Fixed
+
+- Findings Severity Over Time chart on Overview not responding to provider and account filters, and chart clipping at Y-axis maximum values [(#10103)](https://github.com/prowler-cloud/prowler/pull/10103)
+
 ### 🔐 Security
 
 - npm dependencies updated to resolve 11 Dependabot alerts (4 HIGH, 7 MEDIUM): fast-xml-parser, @modelcontextprotocol/sdk, tar, @isaacs/brace-expansion, hono, lodash, lodash-es [(#10052)](https://github.com/prowler-cloud/prowler/pull/10052)
