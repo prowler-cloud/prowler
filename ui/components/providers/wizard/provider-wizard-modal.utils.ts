@@ -40,9 +40,7 @@ export function getProviderWizardDocsDestination(docsLink: string) {
       return parsed.hostname;
     }
 
-    return lastSegment
-      .replace(/^provider-/, "")
-      .replace(/^prowler-cloud-/, "");
+    return lastSegment.replace(/^provider-/, "").replace(/^prowler-cloud-/, "");
   } catch {
     return docsLink;
   }

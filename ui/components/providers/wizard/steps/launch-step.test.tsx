@@ -50,7 +50,11 @@ describe("LaunchStep", () => {
     scheduleDailyMock.mockResolvedValue({ data: { id: "scan-1" } });
 
     render(
-      <LaunchStep onBack={vi.fn()} onClose={onClose} onFooterChange={onFooterChange} />,
+      <LaunchStep
+        onBack={vi.fn()}
+        onClose={onClose}
+        onFooterChange={onFooterChange}
+      />,
     );
 
     await waitFor(() => {

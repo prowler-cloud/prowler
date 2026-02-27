@@ -4,8 +4,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { scanOnDemand, scheduleDaily } from "@/actions/scans";
-import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
-import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
 import {
   Select,
   SelectContent,
@@ -13,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn/select/select";
+import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
+import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
 import { ToastAction, useToast } from "@/components/ui";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { TREE_ITEM_STATUS } from "@/types/tree";
@@ -35,7 +35,11 @@ interface LaunchStepProps {
   onFooterChange: (config: WizardFooterConfig) => void;
 }
 
-export function LaunchStep({ onBack, onClose, onFooterChange }: LaunchStepProps) {
+export function LaunchStep({
+  onBack,
+  onClose,
+  onFooterChange,
+}: LaunchStepProps) {
   const { toast } = useToast();
   const { providerId } = useProviderWizardStore();
   const [isLaunching, setIsLaunching] = useState(false);
@@ -135,7 +139,9 @@ export function LaunchStep({ onBack, onClose, onFooterChange }: LaunchStepProps)
         <p className="text-text-neutral-secondary text-sm">Scan schedule</p>
         <Select
           value={scheduleOption}
-          onValueChange={(value) => setScheduleOption(value as ScanScheduleOption)}
+          onValueChange={(value) =>
+            setScheduleOption(value as ScanScheduleOption)
+          }
           disabled={isLaunching || !providerId}
         >
           <SelectTrigger className="w-full max-w-[376px]">

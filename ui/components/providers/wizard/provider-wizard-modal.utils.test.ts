@@ -4,8 +4,8 @@ import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 
 import {
-  getProviderWizardDocsDestination,
   getOrganizationsStepperOffset,
+  getProviderWizardDocsDestination,
   getProviderWizardModalTitle,
 } from "./provider-wizard-modal.utils";
 

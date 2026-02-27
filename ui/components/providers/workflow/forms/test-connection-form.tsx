@@ -207,9 +207,7 @@ export const TestConnectionForm = ({
         className="flex flex-col gap-4"
       >
         <div className="text-left">
-          <div className="mb-2 text-xl font-medium">
-            Check connection
-          </div>
+          <div className="mb-2 text-xl font-medium">Check connection</div>
           <p className="text-small text-default-500 py-2">
             {!isUpdated
               ? "After a successful connection, continue to the launch step to configure and start your scan."
