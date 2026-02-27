@@ -11,16 +11,6 @@ import {
 
 import { useProviderWizardController } from "./use-provider-wizard-controller";
 
-const { pushMock } = vi.hoisted(() => ({
-  pushMock: vi.fn(),
-}));
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: pushMock,
-  }),
-}));
-
 vi.mock("next-auth/react", () => ({
   useSession: () => ({
     data: null,
@@ -30,9 +20,9 @@ vi.mock("next-auth/react", () => ({
 
 describe("useProviderWizardController", () => {
   beforeEach(() => {
+    vi.useRealTimers();
     sessionStorage.clear();
     localStorage.clear();
-    pushMock.mockReset();
     useProviderWizardStore.getState().reset();
     useOrgSetupStore.getState().reset();
   });
@@ -131,7 +121,7 @@ describe("useProviderWizardController", () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 
-  it("closes and navigates when launch footer action is triggered", () => {
+  it("does not override launch footer config in the controller", () => {
     // Given
     const onOpenChange = vi.fn();
     const { result } = renderHook(() =>
@@ -146,15 +136,10 @@ describe("useProviderWizardController", () => {
       result.current.setCurrentStep(PROVIDER_WIZARD_STEP.LAUNCH);
     });
 
-    const { resolvedFooterConfig } = result.current;
-    act(() => {
-      resolvedFooterConfig.onAction?.();
-    });
-
     // Then
-    expect(pushMock).toHaveBeenCalledWith("/scans");
-    expect(onOpenChange).toHaveBeenCalledWith(false);
-    expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.CONNECT);
+    expect(result.current.resolvedFooterConfig.showAction).toBe(false);
+    expect(result.current.resolvedFooterConfig.showBack).toBe(false);
+    expect(onOpenChange).not.toHaveBeenCalled();
   });
 
   it("does not reset organizations step when org store updates while modal is open", () => {
