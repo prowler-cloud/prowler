@@ -2,7 +2,7 @@ import pytest
 from rest_framework.exceptions import ValidationError
 
 from api.v1.serializer_utils.integrations import S3ConfigSerializer
-from api.v1.serializers import ImageProviderSecret
+from api.v1.serializers import CloudflareTokenProviderSecret, ImageProviderSecret
 
 
 class TestS3ConfigSerializer:
@@ -133,3 +133,20 @@ class TestImageProviderSecret:
         serializer = ImageProviderSecret(data={"registry_password": "pass"})
         assert not serializer.is_valid()
         assert "non_field_errors" in serializer.errors
+
+
+class TestCloudflareProviderSecret:
+    """Test cases for Cloudflare provider credential formats."""
+
+    def test_valid_api_token(self):
+        serializer = CloudflareTokenProviderSecret(
+            data={"api_token": "Sn3lZJTBX6kkg7OdcBUAxOO963GEIyGQqnFTOFYY"}
+        )
+        assert serializer.is_valid(), serializer.errors
+
+    def test_invalid_api_token_with_api_key_format(self):
+        serializer = CloudflareTokenProviderSecret(
+            data={"api_token": "144c9defac04969c7bfad8efaa8ea194"}
+        )
+        assert not serializer.is_valid()
+        assert "api_token" in serializer.errors

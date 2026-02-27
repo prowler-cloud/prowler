@@ -1,5 +1,6 @@
 import base64
 import json
+import re
 from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
@@ -1703,6 +1704,15 @@ class OracleCloudProviderSecret(serializers.Serializer):
 
 class CloudflareTokenProviderSecret(serializers.Serializer):
     api_token = serializers.CharField()
+
+    def validate_api_token(self, value: str) -> str:
+        # Cloudflare Global API Key is 32 hex chars; reject it in token field.
+        if re.fullmatch(r"[a-fA-F0-9]{32}", (value or "").strip()):
+            raise serializers.ValidationError(
+                "This value matches Cloudflare API Key format. "
+                "Use 'api_key' and 'api_email' instead."
+            )
+        return value
 
     class Meta:
         resource_name = "provider-secrets"
