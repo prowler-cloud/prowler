@@ -23,21 +23,15 @@ Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detai
     ```bash
     VERSION=$(curl -s https://api.github.com/repos/prowler-cloud/prowler/releases/latest | jq -r .tag_name)
     curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/docker-compose.yml"
+    # Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
     curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/.env"
     docker compose up -d
     ```
 
-    <Note>
-      Environment variables can be customized in the `.env` file. Using default values in production environments is not recommended.
-    </Note>
+    <Callout icon="lock" iconType="regular" color="#e74c3c">
+      **JWT Key Security** — For a secure setup, the API auto-generates a unique key pair, `DJANGO_TOKEN_SIGNING_KEY` and `DJANGO_TOKEN_VERIFYING_KEY`, and stores it in `~/.config/prowler-api` (non-container) or the bound Docker volume in `_data/api` (container). Never commit or reuse static/default keys. To rotate keys, delete the stored key files and restart the API.
+    </Callout>
 
-    <Note>
-      For a secure setup, leave `DJANGO_TOKEN_SIGNING_KEY` and `DJANGO_TOKEN_VERIFYING_KEY` empty or remove them from `.env` before the first start. When absent, the API auto-generates a unique key pair and stores it in `~/.config/prowler-api` (non-container) or the bound Docker volume in `_data/api` (container). Never commit or reuse static/default keys. To rotate keys, delete the stored key files and restart the API.
-    </Note>
-
-    <Note>
-      A development mode is available using the [docker-compose-dev.yml](https://github.com/prowler-cloud/prowler/blob/master/docker-compose-dev.yml) file to run the application in development mode.
-    </Note>
   </Tab>
   <Tab title="GitHub">
     _Requirements_:
