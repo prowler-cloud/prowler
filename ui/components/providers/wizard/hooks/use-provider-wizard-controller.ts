@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { DOCS_URLS, getProviderHelpText } from "@/lib/external-urls";
 import { useOrgSetupStore } from "@/store/organizations/store";
@@ -64,6 +64,7 @@ export function useProviderWizardController({
   const initialVia = initialData?.via ?? null;
   const initialMode = initialData?.mode ?? null;
   const router = useRouter();
+  const hasHydratedForCurrentOpenRef = useRef(false);
   const [wizardVariant, setWizardVariant] = useState<WizardVariant>(
     WIZARD_VARIANT.PROVIDER,
   );
@@ -95,8 +96,14 @@ export function useProviderWizardController({
 
   useEffect(() => {
     if (!open) {
+      hasHydratedForCurrentOpenRef.current = false;
       return;
     }
+
+    if (hasHydratedForCurrentOpenRef.current) {
+      return;
+    }
+    hasHydratedForCurrentOpenRef.current = true;
 
     if (initialProviderId && initialProviderType && initialProviderUid) {
       setWizardVariant(WIZARD_VARIANT.PROVIDER);

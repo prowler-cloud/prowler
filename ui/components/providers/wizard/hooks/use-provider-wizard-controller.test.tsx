@@ -188,4 +188,69 @@ describe("useProviderWizardController", () => {
     expect(result.current.wizardVariant).toBe("organizations");
     expect(result.current.orgCurrentStep).toBe(ORG_WIZARD_STEP.VALIDATE);
   });
+
+  it("does not rehydrate wizard state when initial data changes while modal remains open", async () => {
+    // Given
+    const onOpenChange = vi.fn();
+    const { result, rerender } = renderHook(
+      ({
+        open,
+        initialData,
+      }: {
+        open: boolean;
+        initialData?: {
+          providerId: string;
+          providerType: "gcp";
+          providerUid: string;
+          providerAlias: string;
+          secretId: string | null;
+          mode: "add" | "update";
+        };
+      }) =>
+        useProviderWizardController({
+          open,
+          onOpenChange,
+          initialData,
+        }),
+      {
+        initialProps: {
+          open: true,
+          initialData: {
+            providerId: "provider-1",
+            providerType: "gcp",
+            providerUid: "project-123",
+            providerAlias: "gcp-main",
+            secretId: null,
+            mode: PROVIDER_WIZARD_MODE.ADD,
+          },
+        },
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.CREDENTIALS);
+    });
+
+    act(() => {
+      useProviderWizardStore.getState().setVia("service-account");
+      result.current.setCurrentStep(PROVIDER_WIZARD_STEP.TEST);
+    });
+
+    // When: provider data refreshes while modal is still open
+    rerender({
+      open: true,
+      initialData: {
+        providerId: "provider-1",
+        providerType: "gcp",
+        providerUid: "project-123",
+        providerAlias: "gcp-main",
+        secretId: "secret-1",
+        mode: PROVIDER_WIZARD_MODE.UPDATE,
+      },
+    });
+
+    // Then: keep user progress in the current flow
+    expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.TEST);
+    expect(useProviderWizardStore.getState().via).toBe("service-account");
+  });
 });
