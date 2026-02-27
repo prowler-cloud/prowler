@@ -58,7 +58,7 @@ export function ProviderWizardModal({
     initialData,
   });
   const scrollHintRefreshToken = `${wizardVariant}-${currentStep}-${orgCurrentStep}-${orgSetupPhase}`;
-  const { containerRef, showScrollHint, handleScroll } = useScrollHint({
+  const { containerRef, sentinelRef, showScrollHint } = useScrollHint({
     enabled: open,
     refreshToken: scrollHintRefreshToken,
   });
@@ -106,7 +106,6 @@ export function ProviderWizardModal({
           <div
             ref={containerRef}
             className="minimal-scrollbar h-full w-full overflow-y-scroll [scrollbar-gutter:stable] lg:ml-auto lg:max-w-[620px] xl:max-w-[700px]"
-            onScroll={handleScroll}
           >
             {isProviderFlow && currentStep === PROVIDER_WIZARD_STEP.CONNECT && (
               <ConnectStep
@@ -177,6 +176,9 @@ export function ProviderWizardModal({
                 onFooterChange={setFooterConfig}
               />
             )}
+
+            {/* Sentinel element for IntersectionObserver scroll detection */}
+            <div ref={sentinelRef} aria-hidden className="h-px shrink-0" />
           </div>
 
           {showScrollHint && (
