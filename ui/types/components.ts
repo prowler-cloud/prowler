@@ -355,6 +355,11 @@ export type OpenStackCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type VercelCredentials = {
+  [ProviderCredentialFields.VERCEL_API_TOKEN]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AWSCredentialsRole
@@ -369,7 +374,8 @@ export type CredentialsFormSchema =
   | AlibabaCloudCredentials
   | AlibabaCloudCredentialsRole
   | CloudflareCredentials
-  | OpenStackCredentials;
+  | OpenStackCredentials
+  | VercelCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;

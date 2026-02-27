@@ -226,6 +226,11 @@ export const useCredentialsForm = ({
           [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]: "",
           [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]: "",
         };
+      case "vercel":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.VERCEL_API_TOKEN]: "",
+        };
       default:
         return baseDefaults;
     }

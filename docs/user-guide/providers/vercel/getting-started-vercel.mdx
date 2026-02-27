@@ -1,0 +1,122 @@
+---
+title: 'Getting Started with Vercel'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx";
+
+<VersionBadge version="5.20.0" />
+
+Prowler for Vercel scans team and project configurations for security misconfigurations, including deployment protection, environment variable exposure, WAF settings, SSO enforcement, and more.
+
+## Prerequisites
+
+Before running Prowler with the Vercel provider, ensure the following requirements are met:
+
+1. A Vercel account with at least one project
+2. A Vercel API Token with read permissions (see [Authentication](/user-guide/providers/vercel/authentication))
+3. (Optional) A Vercel Team ID or slug to scope the scan to a specific team
+
+## Quick Start
+
+### Step 1: Set Up Authentication
+
+Store the Vercel API token as an environment variable:
+
+```bash
+export VERCEL_TOKEN="your-api-token-here"
+```
+
+To scope the scan to a specific team, set the team ID or slug:
+
+```bash
+export VERCEL_TEAM="team_xxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+### Step 2: Run Prowler
+
+Run a scan across all accessible Vercel resources:
+
+```bash
+prowler vercel
+```
+
+Prowler will automatically discover projects, domains, deployments, and team settings, then run security checks against them.
+
+## Authentication
+
+Prowler reads Vercel credentials from environment variables or CLI arguments. To set credentials before running Prowler:
+
+**Environment Variables:**
+```bash
+export VERCEL_TOKEN="your-api-token-here"
+export VERCEL_TEAM="your-team-id-or-slug"
+prowler vercel
+```
+
+**CLI Arguments:**
+```bash
+prowler vercel --vercel-token "your-api-token-here" --vercel-team "your-team-id-or-slug"
+```
+
+<Note>
+If both environment variables and CLI arguments are provided, CLI arguments take precedence.
+</Note>
+
+## Filtering Projects
+
+By default, Prowler scans all projects accessible with the provided credentials. To scan only specific projects, use the `--project` argument:
+
+```bash
+prowler vercel --project my-project-name
+```
+
+Multiple projects can be specified:
+
+```bash
+prowler vercel --project project-one project-two
+```
+
+## Scoping to a Team
+
+When using a team-scoped API token, the `--vercel-team` argument or `VERCEL_TEAM` environment variable must be set. Prowler uses this value to scope all API requests to the team context:
+
+```bash
+prowler vercel --vercel-team team_xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+<Warning>
+Team-scoped API tokens require the team ID to be provided. Without it, Vercel returns a 403 error because the token only has permissions within the team context.
+</Warning>
+
+## Supported Services
+
+Prowler checks the following Vercel services:
+
+| Service | Description | Example Checks |
+|---------|-------------|----------------|
+| **Authentication** | API token hygiene | Expired tokens, stale tokens |
+| **Deployment** | Deployment security settings | Preview access protection, stable production targets |
+| **Domain** | Domain and DNS configuration | SSL certificates, DNS verification, wildcard exposure |
+| **Project** | Project-level security settings | Deployment protection, environment variable encryption, fork protection |
+| **Security** | Web Application Firewall (WAF) | WAF enablement, managed rulesets, rate limiting, IP blocking |
+| **Team** | Team governance and access | SSO enforcement, directory sync, member role least privilege |
+
+## Configuration
+
+Prowler uses a configuration file to customize provider behavior. The Vercel configuration includes:
+
+```yaml
+vercel:
+  # Maximum number of retries for API requests (default is 2)
+  max_retries: 2
+```
+
+To use a custom configuration:
+
+```bash
+prowler vercel --config-file /path/to/config.yaml
+```
+
+## Next Steps
+
+- [Authentication](/user-guide/providers/vercel/authentication) - Detailed guide on creating API tokens and required permissions

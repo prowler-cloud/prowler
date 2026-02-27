@@ -4,8 +4,6 @@ import { IntegrationType } from "../types/integrations";
 export const DOCS_URLS = {
   FINDINGS_ANALYSIS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-app#step-8:-analyze-the-findings",
-  AWS_ORGANIZATIONS:
-    "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
 } as const;
 
 export const getProviderHelpText = (provider: string) => {
@@ -69,6 +67,11 @@ export const getProviderHelpText = (provider: string) => {
       return {
         text: "Need help connecting your OpenStack cloud?",
         link: "https://goto.prowler.com/provider-openstack",
+      };
+    case "vercel":
+      return {
+        text: "Need help connecting your Vercel team?",
+        link: "https://docs.prowler.com/user-guide/providers/vercel/getting-started-vercel",
       };
     default:
       return {

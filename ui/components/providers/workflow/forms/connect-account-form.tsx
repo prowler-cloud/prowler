@@ -106,6 +106,11 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
         label: "Project ID",
         placeholder: "e.g. a1b2c3d4-e5f6-7890-abcd-ef1234567890",
       };
+    case "vercel":
+      return {
+        label: "Team ID",
+        placeholder: "e.g. team_xxxxxxxxxxxxxxxxxxxxxxxx",
+      };
     default:
       return {
         label: "Provider UID",
@@ -123,27 +128,31 @@ function applyBackStep({
 }: {
   prevStep: number;
   awsMethod: "single" | null;
-  form: Pick<UseFormReturn<FormValues>, "setValue">;
+  form: Pick<UseFormReturn<FormValues>, "setValue" | "clearErrors">;
   setPrevStep: Dispatch<SetStateAction<number>>;
   setAwsMethod: Dispatch<SetStateAction<"single" | null>>;
 }) {
   // If in UID form after choosing single, go back to method selector
   if (prevStep === 2 && awsMethod === "single") {
     setAwsMethod(null);
-    form.setValue("providerUid", "");
-    form.setValue("providerAlias", "");
+    form.setValue("providerUid", "", { shouldValidate: false });
+    form.setValue("providerAlias", "", { shouldValidate: false });
     return;
   }
 
   setPrevStep((prev) => prev - 1);
   // Deselect the providerType if the user is going back to the first step
   if (prevStep === 2) {
-    form.setValue("providerType", undefined as unknown as ProviderType);
+    form.setValue("providerType", undefined as unknown as ProviderType, {
+      shouldValidate: false,
+    });
     setAwsMethod(null);
   }
   // Reset the providerUid and providerAlias fields when going back
-  form.setValue("providerUid", "");
-  form.setValue("providerAlias", "");
+  form.setValue("providerUid", "", { shouldValidate: false });
+  form.setValue("providerAlias", "", { shouldValidate: false });
+  // Clear all validation errors so the radio buttons don't show red borders
+  form.clearErrors();
 }
 
 export const ConnectAccountForm = ({
