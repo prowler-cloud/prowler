@@ -1327,7 +1327,8 @@
       "Id": "5.2.2.10",
       "Description": "Conditional Access (CA) can be configured to enforce access based on the device's compliance status or whether it is Entra hybrid joined. Collectively this allows CA to classify devices as managed or unmanaged, providing more granular control over authentication policies.When using `Require device to be marked as compliant`, the device must pass checks configured in **Compliance** policies defined within Intune (Endpoint Manager). Before these checks can be applied, the device must first be enrolled in Intune MDM.By selecting `Require Microsoft Entra hybrid joined device` this means the device must first be synchronized from an on-premises Active Directory to qualify for authentication.When configured to the recommended state below only one condition needs to be met for the user to authenticate from the device. This functions as an \"OR\" operator.The recommended state is:- `Require device to be marked as compliant`- `Require Microsoft Entra hybrid joined device`- `Require one of the selected controls`",
       "Checks": [
-        "entra_managed_device_required_for_authentication"
+        "entra_managed_device_required_for_authentication",
+        "entra_policy_requires_compliant_device_or_mfa"
       ],
       "Attributes": [
         {

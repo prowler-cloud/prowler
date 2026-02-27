@@ -1,0 +1,40 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_policy_requires_compliant_device_or_mfa",
+  "CheckTitle": "Conditional Access policy enforces compliant device, hybrid join, or MFA for all users",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
+  "Description": "A Conditional Access policy enforces that all users must authenticate with a **compliant device**, **Microsoft Entra hybrid joined device**, or **multifactor authentication** as alternative grant controls, covering browser and mobile/desktop client app types across all cloud applications.",
+  "Risk": "Without a policy requiring compliant devices or MFA, attackers who compromise credentials can access corporate resources from **unmanaged or untrusted devices**. This increases exposure to **unauthorized access**, **data exfiltration**, and **lateral movement** from endpoints lacking security controls.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-compliant-device",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-grant"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Select **New policy**.\n4. Under **Users**, select **All users**.\n5. Under **Target resources**, select **All cloud apps**.\n6. Under **Conditions** > **Client apps**, select **Browser** and **Mobile apps and desktop clients**.\n7. Under **Grant**, select **Grant access**, then check **Require multifactor authentication**, **Require device to be marked as compliant**, and **Require Microsoft Entra hybrid joined device**.\n8. Choose **Require one of the selected controls**.\n9. Set the policy to **Report-only** first, then enable after validation.\n10. Click **Create**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce a **Conditional Access** policy that requires a **compliant device**, **hybrid joined device**, or **MFA** as alternative grant controls for all users. This ensures access is only granted from trusted endpoints or with strong authentication, following a **zero trust** approach.",
+      "Url": "https://hub.prowler.com/check/entra_policy_requires_compliant_device_or_mfa"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_managed_device_required_for_authentication"
+  ],
+  "Notes": ""
+}
