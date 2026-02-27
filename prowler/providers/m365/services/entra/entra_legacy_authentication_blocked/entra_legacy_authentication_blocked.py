@@ -8,16 +8,20 @@ from prowler.providers.m365.services.entra.entra_service import (
 
 
 class entra_legacy_authentication_blocked(Check):
-    """Check if at least one Conditional Access policy blocks legacy authentication.
+    """Check if a Conditional Access policy blocks legacy authentication for all users and cloud apps.
 
-    This check ensures that at least one Conditional Access policy blocks legacy authentication.
+    This check verifies that an enabled Conditional Access policy exists that blocks
+    legacy authentication protocols (Exchange ActiveSync and other legacy clients)
+    targeting all users and all cloud applications.
+    - PASS: An enabled policy blocks legacy authentication for all users and cloud apps.
+    - FAIL: No enabled policy blocks legacy authentication, or the policy is in report-only mode.
     """
 
     def execute(self) -> list[CheckReportM365]:
-        """Execute the check to ensure that at least one Conditional Access policy blocks legacy authentication.
+        """Execute the legacy authentication blocking check.
 
         Returns:
-            list[CheckReportM365]: A list containing the results of the check.
+            A list of reports containing the result of the check.
         """
         findings = []
         report = CheckReportM365(
@@ -47,7 +51,8 @@ class entra_legacy_authentication_blocked(Check):
             if (
                 ClientAppType.EXCHANGE_ACTIVE_SYNC
                 not in policy.conditions.client_app_types
-                or ClientAppType.OTHER_CLIENTS not in policy.conditions.client_app_types
+                or ClientAppType.OTHER_CLIENTS
+                not in policy.conditions.client_app_types
             ):
                 continue
 
