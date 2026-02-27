@@ -25,6 +25,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔐 Security
 
 - npm dependencies updated to resolve 11 Dependabot alerts (4 HIGH, 7 MEDIUM): fast-xml-parser, @modelcontextprotocol/sdk, tar, @isaacs/brace-expansion, hono, lodash, lodash-es [(#10052)](https://github.com/prowler-cloud/prowler/pull/10052)
+- npm transitive dependencies patched to resolve 9 Dependabot alerts (2 CRITICAL, 3 HIGH, 2 MEDIUM, 2 LOW): fast-xml-parser, rollup, minimatch, ajv, hono, qs [(#10187)](https://github.com/prowler-cloud/prowler/pull/10187)
 
 ---
 
