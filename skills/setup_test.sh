@@ -201,40 +201,40 @@ test_symlink_not_created_without_flag() {
 }
 
 # =============================================================================
-# TESTS: AGENTS.md COPYING
+# TESTS: AGENTS.md LINKING
 # =============================================================================
 
-test_copy_claude_agents_md() {
+test_link_claude_agents_md() {
     run_setup --claude > /dev/null
-    assert_file_exists "$TEST_DIR/CLAUDE.md" "Root CLAUDE.md should exist" && \
-    assert_file_exists "$TEST_DIR/api/CLAUDE.md" "api/CLAUDE.md should exist" && \
-    assert_file_exists "$TEST_DIR/ui/CLAUDE.md" "ui/CLAUDE.md should exist"
+    assert_symlink_exists "$TEST_DIR/CLAUDE.md" "Root CLAUDE.md should be a symlink" && \
+    assert_symlink_exists "$TEST_DIR/api/CLAUDE.md" "api/CLAUDE.md should be a symlink" && \
+    assert_symlink_exists "$TEST_DIR/ui/CLAUDE.md" "ui/CLAUDE.md should be a symlink"
 }
 
-test_copy_gemini_agents_md() {
+test_link_gemini_agents_md() {
     run_setup --gemini > /dev/null
-    assert_file_exists "$TEST_DIR/GEMINI.md" "Root GEMINI.md should exist" && \
-    assert_file_exists "$TEST_DIR/api/GEMINI.md" "api/GEMINI.md should exist" && \
-    assert_file_exists "$TEST_DIR/ui/GEMINI.md" "ui/GEMINI.md should exist"
+    assert_symlink_exists "$TEST_DIR/GEMINI.md" "Root GEMINI.md should be a symlink" && \
+    assert_symlink_exists "$TEST_DIR/api/GEMINI.md" "api/GEMINI.md should be a symlink" && \
+    assert_symlink_exists "$TEST_DIR/ui/GEMINI.md" "ui/GEMINI.md should be a symlink"
 }
 
-test_copy_copilot_to_github() {
+test_link_copilot_to_github() {
     run_setup --copilot > /dev/null
-    assert_file_exists "$TEST_DIR/.github/copilot-instructions.md" "Copilot instructions should exist"
+    assert_symlink_exists "$TEST_DIR/.github/copilot-instructions.md" "Copilot instructions should be a symlink"
 }
 
-test_copy_codex_no_extra_files() {
+test_link_codex_no_extra_files() {
     run_setup --codex > /dev/null
     assert_file_not_exists "$TEST_DIR/CODEX.md" "CODEX.md should not be created"
 }
 
-test_copy_not_created_without_flag() {
+test_link_not_created_without_flag() {
     run_setup --codex > /dev/null
-    assert_file_not_exists "$TEST_DIR/CLAUDE.md" "CLAUDE.md should not exist" && \
-    assert_file_not_exists "$TEST_DIR/GEMINI.md" "GEMINI.md should not exist"
+    assert_symlink_not_exists "$TEST_DIR/CLAUDE.md" "CLAUDE.md should not exist" && \
+    assert_symlink_not_exists "$TEST_DIR/GEMINI.md" "GEMINI.md should not exist"
 }
 
-test_copy_content_matches_source() {
+test_link_content_matches_source() {
     run_setup --claude > /dev/null
     local source_content target_content
     source_content=$(cat "$TEST_DIR/AGENTS.md")
