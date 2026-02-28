@@ -46,10 +46,16 @@ prowler <provider> -M csv json-ocsf json-asff -o <custom_report_directory>
 ```
 
 <Note>
-Both flags can be used simultaneously to provide a custom directory and filename. `console prowler <provider> -M csv json-ocsf json-asff \ -F <custom_report_name> -o <custom_report_directory>`
+Both flags can be used simultaneously to provide a custom directory and filename:
+
+```console
+prowler <provider> -M csv json-ocsf json-asff \
+  -F <custom_report_name> -o <custom_report_directory>
+```
 
 </Note>
-## Output timestamp format
+
+## Output Timestamp Format
 
 By default, the timestamp format of the output files is ISO 8601. This can be changed with the flag `--unix-timestamp` generating the timestamp fields in pure unix timestamp format.
 
@@ -113,23 +119,79 @@ The CSV format follows a standardized structure across all providers. The follow
 
 #### CSV Headers Mapping
 
-The following table shows the mapping between the CSV headers and the the providers fields:
+The following tables show the mapping between the CSV headers and the provider-specific fields.
 
-| Open Source Consolidated| AWS| GCP| AZURE| KUBERNETES
-|----------|----------|----------|----------|----------
-| auth\_method| profile| principal| identity\_type : identity\_id| in-cluster/kube-config
-| provider| provider| provider| provider| provider
-| account\_uid| account\_id / account\_arn| project\_id| subscription\_id| cluster
-| account\_name| account\_name| project\_name| subscription\_name| context:context
-| account\_email| account\_email| N/A| N/A| N/A
-| account\_organization\_uid| account\_organizations\_arn| project\_organization\_id| tenant\_id| N/A
-| account\_organization\_name| account\_org| project\_organization\_display\_name| tenant\_domain| N/A
-| account\_tags| account\_tags| project\_labels| subscription\_tags| N/A
-| partition| partition| N/A| region\_config.name| N/A
-| region| region| location| location| namespace:namespace
-| resource\_name| resource\_id| resource\_name| resource\_name| resource\_name
-| resource\_uid| resource\_arn| resource\_id| resource\_id| resource\_id
-| finding\_uid| finding\_unique\_id| finding\_unique\_id| finding\_unique\_id| finding\_unique\_id
+##### Core Cloud Providers
+
+| Open Source Consolidated | AWS | GCP | Azure | Kubernetes |
+|--------------------------|-----|-----|-------|------------|
+| auth\_method | profile | principal | identity\_type : identity\_id | in-cluster/kube-config |
+| provider | provider | provider | provider | provider |
+| account\_uid | account\_id / account\_arn | project\_id | subscription\_id | cluster |
+| account\_name | account\_name | project\_name | subscription\_name | context:context |
+| account\_email | account\_email | N/A | N/A | N/A |
+| account\_organization\_uid | account\_organizations\_arn | project\_organization\_id | tenant\_id | N/A |
+| account\_organization\_name | account\_org | project\_organization\_display\_name | tenant\_domain | N/A |
+| account\_tags | account\_tags | project\_labels | subscription\_tags | N/A |
+| partition | partition | N/A | region\_config.name | N/A |
+| region | region | location | location | namespace:namespace |
+| resource\_name | resource\_id | resource\_name | resource\_name | resource\_name |
+| resource\_uid | resource\_arn | resource\_id | resource\_id | resource\_id |
+| finding\_uid | finding\_unique\_id | finding\_unique\_id | finding\_unique\_id | finding\_unique\_id |
+
+##### Additional Cloud Providers
+
+| Open Source Consolidated | Alibaba Cloud | Oracle Cloud | OpenStack |
+|--------------------------|---------------|--------------|-----------|
+| auth\_method | identity\_arn | profile | username |
+| provider | provider | provider | provider |
+| account\_uid | account\_id | tenancy\_id | project\_id |
+| account\_name | account\_name | tenancy\_name | project\_name |
+| account\_email | N/A | N/A | N/A |
+| account\_organization\_uid | N/A | N/A | N/A |
+| account\_organization\_name | N/A | N/A | N/A |
+| account\_tags | N/A | N/A | N/A |
+| partition | N/A | N/A | N/A |
+| region | region | region | region |
+| resource\_name | resource\_id | resource\_name | resource\_name |
+| resource\_uid | resource\_arn | resource\_id | resource\_id |
+| finding\_uid | finding\_unique\_id | finding\_unique\_id | finding\_unique\_id |
+
+##### SaaS & Identity Providers
+
+| Open Source Consolidated | Microsoft 365 | GitHub | Cloudflare | MongoDB Atlas |
+|--------------------------|---------------|--------|------------|---------------|
+| auth\_method | identity\_type : identity\_id | auth\_method | api\_token | api\_key |
+| provider | provider | provider | provider | provider |
+| account\_uid | tenant\_id | account\_id / app\_id | account\_id | organization\_id |
+| account\_name | tenant\_domain | account\_name / app\_name | account\_id | organization\_name |
+| account\_email | N/A | account\_email | N/A | N/A |
+| account\_organization\_uid | N/A | N/A | N/A | N/A |
+| account\_organization\_name | N/A | N/A | N/A | N/A |
+| account\_tags | N/A | N/A | N/A | N/A |
+| partition | N/A | N/A | N/A | N/A |
+| region | location | owner | zone\_name | location |
+| resource\_name | resource\_name | resource\_name | resource\_name | resource\_name |
+| resource\_uid | resource\_id | resource\_id | resource\_id | resource\_id |
+| finding\_uid | finding\_unique\_id | finding\_unique\_id | finding\_unique\_id | finding\_unique\_id |
+
+##### Specialized Providers
+
+| Open Source Consolidated | IaC | Image | LLM |
+|--------------------------|-----|-------|-----|
+| auth\_method | auth\_method | auth\_method | auth\_method |
+| provider | provider | provider | provider |
+| account\_uid | iac | image | llm |
+| account\_name | iac | image | llm |
+| account\_email | N/A | N/A | N/A |
+| account\_organization\_uid | N/A | N/A | N/A |
+| account\_organization\_name | N/A | N/A | N/A |
+| account\_tags | N/A | N/A | N/A |
+| partition | N/A | N/A | N/A |
+| region | global | container | model |
+| resource\_name | resource\_name | resource\_name | model |
+| resource\_uid | resource\_name | resource\_id | model |
+| finding\_uid | finding\_unique\_id | finding\_unique\_id | finding\_unique\_id |
 
 ### JSON-OCSF
 
@@ -285,6 +347,7 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
 Each finding is a `json` object within a list.
 
 </Note>
+
 ### JSON-ASFF (AWS Only)
 
 <Note>
@@ -368,73 +431,74 @@ Each finding is a `json` object within a list.
 The following image is an example of the HTML output:
 
 <img src="/images/cli/reporting/html-output.png" />
+
 ## V4 Deprecations
 
 Some deprecations have been made to unify formats and improve outputs.
 
 ### JSON
 
-Native JSON format has been deprecated in favor of JSON [OCSF](https://schema.ocsf.io/) `v1.1.0`.
+Native JSON format has been deprecated in favor of JSON [OCSF](https://schema.ocsf.io/) `v1.3.0`.
 
 The following is the mapping between the native JSON and the Detection Finding from the JSON-OCSF:
 
-| Native JSON Prowler v3| JSON-OCSF v.1.1.0
-|----------|----------
-| AssessmentStartTime| time\_dt
-| FindingUniqueId| finding\_info.uid
-| Provider| cloud.provider
-| CheckID| metadata.event\_code
-| CheckTitle| finding\_info.title
-| CheckType| finding\_info.types
-| ServiceName| resources.group.name
-| SubServiceName| _Not mapped yet_
-| Status| status\_code
-| StatusExtended| status\_detail
-| Severity| severity
-| ResourceType| resources.type
-| ResourceDetails| resources.data.details
-| Description| finding\_info.desc
-| Risk| risk\_details
-| RelatedUrl| unmapped.related\_url
-| Remediation.Recommendation.Text| remediation.desc
-| Remediation.Recommendation.Url| remediation.references
-| Remediation.Code.NativeIaC| remediation.references
-| Remediation.Code.Terraform| remediation.references
-| Remediation.Code.CLI| remediation.references
-| Remediation.Code.Other| remediation.references
-| Compliance| unmapped.compliance
-| Categories| unmapped.categories
-| DependsOn| unmapped.depends\_on
-| RelatedTo| unmapped.related\_to
-| AdditionalURLs| unmapped.additional\_urls
-| Notes| unmapped.notes
-| Profile| _Not mapped yet_
-| AccountId| cloud.account.uid
-| OrganizationsInfo.account\_name| cloud.account.name
-| OrganizationsInfo.account\_email| _Not mapped yet_
-| OrganizationsInfo.account\_arn| _Not mapped yet_
-| OrganizationsInfo.account\_org| cloud.org.name
-| OrganizationsInfo.account\_tags| cloud.account.labels
-| Region| resources.region
-| ResourceId| resources.name
-| ResourceArn| resources.uid
-| ResourceTags| resources.labels
+| Native JSON Prowler v3 | JSON-OCSF v1.3.0 |
+|------------------------|------------------|
+| AssessmentStartTime | time\_dt |
+| FindingUniqueId | finding\_info.uid |
+| Provider | cloud.provider |
+| CheckID | metadata.event\_code |
+| CheckTitle | finding\_info.title |
+| CheckType | finding\_info.types |
+| ServiceName | resources.group.name |
+| SubServiceName | _Not mapped yet_ |
+| Status | status\_code |
+| StatusExtended | status\_detail |
+| Severity | severity |
+| ResourceType | resources.type |
+| ResourceDetails | resources.data.details |
+| Description | finding\_info.desc |
+| Risk | risk\_details |
+| RelatedUrl | unmapped.related\_url |
+| Remediation.Recommendation.Text | remediation.desc |
+| Remediation.Recommendation.Url | remediation.references |
+| Remediation.Code.NativeIaC | remediation.references |
+| Remediation.Code.Terraform | remediation.references |
+| Remediation.Code.CLI | remediation.references |
+| Remediation.Code.Other | remediation.references |
+| Compliance | unmapped.compliance |
+| Categories | unmapped.categories |
+| DependsOn | unmapped.depends\_on |
+| RelatedTo | unmapped.related\_to |
+| AdditionalURLs | unmapped.additional\_urls |
+| Notes | unmapped.notes |
+| Profile | _Not mapped yet_ |
+| AccountId | cloud.account.uid |
+| OrganizationsInfo.account\_name | cloud.account.name |
+| OrganizationsInfo.account\_email | _Not mapped yet_ |
+| OrganizationsInfo.account\_arn | _Not mapped yet_ |
+| OrganizationsInfo.account\_org | cloud.org.name |
+| OrganizationsInfo.account\_tags | cloud.account.labels |
+| Region | resources.region |
+| ResourceId | resources.name |
+| ResourceArn | resources.uid |
+| ResourceTags | resources.labels |
 
 ### CSV Columns
 
 In Prowler v3 each provider had some specific columns, different from the rest. These are the cases that have changed in Prowler v4:
 
-| Provider| v3| v4
-|----------|----------|----------
-| AWS| PROFILE| AUTH\_METHOD
-| AWS| ACCOUNT\_ID| ACCOUNT\_UID
-| AWS| ACCOUNT\_ORGANIZATION\_ARN| ACCOUNT\_ORGANIZATION\_UID
-| AWS| ACCOUNT\_ORG| ACCOUNT\_ORGANIZATION\_NAME
-| AWS| FINDING\_UNIQUE\_ID| FINDING\_UID
-| AWS| ASSESSMENT\_START\_TIME| TIMESTAMP
-| AZURE| TENANT\_DOMAIN| ACCOUNT\_ORGANIZATION\_NAME
-| AZURE| SUBSCRIPTION| ACCOUNT\_UID
-| GCP| PROJECT\_ID| ACCOUNT\_UID
-| GCP| LOCATION| REGION
-| AWS / AZURE / GCP| RESOURCE\_ID| RESOURCE\_NAME
-| AWS / AZURE / GCP| RESOURCE\_ARN| RESOURCE\_UID
+| Provider | v3 | v4 |
+|----------|----|----|
+| AWS | PROFILE | AUTH\_METHOD |
+| AWS | ACCOUNT\_ID | ACCOUNT\_UID |
+| AWS | ACCOUNT\_ORGANIZATION\_ARN | ACCOUNT\_ORGANIZATION\_UID |
+| AWS | ACCOUNT\_ORG | ACCOUNT\_ORGANIZATION\_NAME |
+| AWS | FINDING\_UNIQUE\_ID | FINDING\_UID |
+| AWS | ASSESSMENT\_START\_TIME | TIMESTAMP |
+| Azure | TENANT\_DOMAIN | ACCOUNT\_ORGANIZATION\_NAME |
+| Azure | SUBSCRIPTION | ACCOUNT\_UID |
+| GCP | PROJECT\_ID | ACCOUNT\_UID |
+| GCP | LOCATION | REGION |
+| AWS / Azure / GCP | RESOURCE\_ID | RESOURCE\_NAME |
+| AWS / Azure / GCP | RESOURCE\_ARN | RESOURCE\_UID |
