@@ -229,12 +229,12 @@ class LlmProvider(Provider):
     def run(self) -> List[CheckReportLLM]:
         """Main method to run the LLM security scan"""
         try:
-            return self.run_scan()
+            return self.run_scan(streaming_callback=None)
         except Exception as error:
             logger.error(f"Error running LLM scan: {error}")
             return []
 
-    def run_scan(self, streaming_callback) -> List[CheckReportLLM]:
+    def run_scan(self, streaming_callback=None) -> List[CheckReportLLM]:
         """Run promptfoo red team scan and process its output."""
         report_path = None
         try:
