@@ -65,6 +65,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Standardize resource_id values across Azure checks to use actual Azure resource IDs and prevent duplicate resource entries [(#9994)](https://github.com/prowler-cloud/prowler/pull/9994)
 - VPC endpoint service collection filtering third-party services that caused AccessDenied errors on `DescribeVpcEndpointServicePermissions` [(#10152)](https://github.com/prowler-cloud/prowler/pull/10152)
 
+### 🐞 Fixed
+
+- LLM provider scan callback handling to avoid runtime errors when invoking `run()`
+- LLM provider `fixer_config` default isolation to prevent state leakage between instances
+
 ### 🔐 Security
 
 - Bumped `py-ocsf-models` to 0.8.1 and `cryptography` to 44.0.3 [(#10059)](https://github.com/prowler-cloud/prowler/pull/10059)
