@@ -82,13 +82,13 @@ jobs:
           else
             echo "has-sdk-tests=false" >> $GITHUB_OUTPUT
           fi
-          
+
           if [[ -n "${STEPS_IMPACT_OUTPUTS_API_TESTS}" ]]; then
             echo "has-api-tests=true" >> $GITHUB_OUTPUT
           else
             echo "has-api-tests=false" >> $GITHUB_OUTPUT
           fi
-          
+
           if [[ -n "${STEPS_IMPACT_OUTPUTS_UI_E2E}" ]]; then
             echo "has-ui-e2e=true" >> $GITHUB_OUTPUT
           else
@@ -103,23 +103,25 @@ jobs:
         run: |
           echo "## Test Impact Analysis" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [[ "${STEPS_IMPACT_OUTPUTS_RUN_ALL}" == "true" ]]; then
             echo "🚨 **Critical path changed - running ALL tests**" >> $GITHUB_STEP_SUMMARY
           else
             echo "### Affected Modules" >> $GITHUB_STEP_SUMMARY
             echo "\`${STEPS_IMPACT_OUTPUTS_MODULES}\`" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            
+
             echo "### Tests to Run" >> $GITHUB_STEP_SUMMARY
             echo "| Category | Paths |" >> $GITHUB_STEP_SUMMARY
             echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
-            echo "| SDK Tests | \`${{ steps.impact.outputs.sdk-tests || 'none' }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| API Tests | \`${{ steps.impact.outputs.api-tests || 'none' }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| UI E2E | \`${{ steps.impact.outputs.ui-e2e || 'none' }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| SDK Tests | \`${STEPS_IMPACT_OUTPUTS_SDK_TESTS:-none}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| API Tests | \`${STEPS_IMPACT_OUTPUTS_API_TESTS:-none}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| UI E2E | \`${STEPS_IMPACT_OUTPUTS_UI_E2E:-none}\` |" >> $GITHUB_STEP_SUMMARY
           fi
 
         env:
           STEPS_IMPACT_OUTPUTS_RUN_ALL: ${{ steps.impact.outputs.run-all }}
-
+          STEPS_IMPACT_OUTPUTS_SDK_TESTS: ${{ steps.impact.outputs.sdk-tests }}
+          STEPS_IMPACT_OUTPUTS_API_TESTS: ${{ steps.impact.outputs.api-tests }}
+          STEPS_IMPACT_OUTPUTS_UI_E2E: ${{ steps.impact.outputs.ui-e2e }}
           STEPS_IMPACT_OUTPUTS_MODULES: ${{ steps.impact.outputs.modules }}

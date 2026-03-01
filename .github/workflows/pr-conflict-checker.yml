@@ -1,6 +1,7 @@
 name: 'Tools: PR Conflict Checker'
 
 on:
+  # zizmor: ignore[dangerous-triggers] - intentional: needs write access for conflict labels/comments, checkout uses PR head SHA for read-only grep
   pull_request_target:
     types:
       - 'opened'
