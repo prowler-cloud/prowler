@@ -105,11 +105,14 @@ runs:
 
         echo "### 🔒 Container Security Scan" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Image:** \`${{ inputs.image-name }}:${{ inputs.image-tag }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**Image:** \`${INPUTS_IMAGE_NAME}:${INPUTS_IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "- 🔴 Critical: $CRITICAL" >> $GITHUB_STEP_SUMMARY
         echo "- 🟠 High: $HIGH" >> $GITHUB_STEP_SUMMARY
         echo "- **Total**: $TOTAL" >> $GITHUB_STEP_SUMMARY
+      env:
+        INPUTS_IMAGE_NAME: ${{ inputs.image-name }}
+        INPUTS_IMAGE_TAG: ${{ inputs.image-tag }}
 
     - name: Comment scan results on PR
       if: inputs.create-pr-comment == 'true' && github.event_name == 'pull_request'
@@ -159,6 +162,9 @@ runs:
       if: inputs.fail-on-critical == 'true' && steps.security-check.outputs.critical != '0'
       shell: bash
       run: |
-        echo "::error::Found ${{ steps.security-check.outputs.critical }} critical vulnerabilities"
+        echo "::error::Found ${STEPS_SECURITY_CHECK_OUTPUTS_CRITICAL} critical vulnerabilities"
         echo "::warning::Please update packages or use a different base image"
         exit 1
+
+      env:
+        STEPS_SECURITY_CHECK_OUTPUTS_CRITICAL: ${{ steps.security-check.outputs.critical }}

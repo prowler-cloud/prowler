@@ -76,17 +76,21 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
 
       - name: Show test scope
         run: |
           echo "## E2E Test Scope" >> $GITHUB_STEP_SUMMARY
-          if [[ "${{ env.RUN_ALL_TESTS }}" == "true" ]]; then
+          if [[ "${RUN_ALL_TESTS}" == "true" ]]; then
             echo "Running **ALL** E2E tests (critical path changed)" >> $GITHUB_STEP_SUMMARY
           else
-            echo "Running tests matching: \`${{ env.E2E_TEST_PATHS }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "Running tests matching: \`${E2E_TEST_PATHS}\`" >> $GITHUB_STEP_SUMMARY
           fi
           echo ""
-          echo "Affected modules: \`${{ needs.impact-analysis.outputs.modules }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> $GITHUB_STEP_SUMMARY
+        env:
+          NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES: ${{ needs.impact-analysis.outputs.modules }}
 
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1
@@ -195,14 +199,14 @@ jobs:
       - name: Run E2E tests
         working-directory: ./ui
         run: |
-          if [[ "${{ env.RUN_ALL_TESTS }}" == "true" ]]; then
+          if [[ "${RUN_ALL_TESTS}" == "true" ]]; then
             echo "Running ALL E2E tests..."
             pnpm run test:e2e
           else
-            echo "Running targeted E2E tests: ${{ env.E2E_TEST_PATHS }}"
+            echo "Running targeted E2E tests: ${E2E_TEST_PATHS}"
             # Convert glob patterns to playwright test paths
             # e.g., "ui/tests/providers/**" -> "tests/providers"
-            TEST_PATHS="${{ env.E2E_TEST_PATHS }}"
+            TEST_PATHS="${E2E_TEST_PATHS}"
             # Remove ui/ prefix and convert ** to empty (playwright handles recursion)
             TEST_PATHS=$(echo "$TEST_PATHS" | sed 's|ui/||g' | sed 's|\*\*||g' | tr ' ' '\n' | sort -u)
             # Drop auth setup helpers (not runnable test suites)
@@ -244,6 +248,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "No UI E2E tests needed for this change." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Affected modules: \`${{ needs.impact-analysis.outputs.modules }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "To run all tests, modify a file in a critical path (e.g., \`ui/lib/**\`)." >> $GITHUB_STEP_SUMMARY
+        env:
+          NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES: ${{ needs.impact-analysis.outputs.modules }}

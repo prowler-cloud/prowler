@@ -32,6 +32,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
 
       - name: Check for SDK changes
         id: check-changes
@@ -119,7 +121,7 @@ jobs:
               "wafv2": ["cognito", "elbv2"],
           }
 
-          changed_raw = """${{ steps.changed-aws.outputs.all_changed_files }}"""
+          changed_raw = """${STEPS_CHANGED_AWS_OUTPUTS_ALL_CHANGED_FILES}"""
           # all_changed_files is space-separated, not newline-separated
           # Strip leading "./" if present for consistent path handling
           changed_files = [Path(f.lstrip("./")) for f in changed_raw.split() if f]
@@ -174,20 +176,25 @@ jobs:
           else:
               print("AWS service test paths: none detected")
           PY
+        env:
+          STEPS_CHANGED_AWS_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-aws.outputs.all_changed_files }}
 
       - name: Run AWS tests
         if: steps.changed-aws.outputs.any_changed == 'true'
         run: |
-          echo "AWS run_all=${{ steps.aws-services.outputs.run_all }}"
-          echo "AWS service_paths='${{ steps.aws-services.outputs.service_paths }}'"
+          echo "AWS run_all=${STEPS_AWS_SERVICES_OUTPUTS_RUN_ALL}"
+          echo "AWS service_paths='${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}'"
 
-          if [ "${{ steps.aws-services.outputs.run_all }}" = "true" ]; then
+          if [ "${STEPS_AWS_SERVICES_OUTPUTS_RUN_ALL}" = "true" ]; then
             poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
-          elif [ -z "${{ steps.aws-services.outputs.service_paths }}" ]; then
+          elif [ -z "${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}" ]; then
             echo "No AWS service paths detected; skipping AWS tests."
           else
-            poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml ${{ steps.aws-services.outputs.service_paths }}
+            poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml ${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}
           fi
+        env:
+          STEPS_AWS_SERVICES_OUTPUTS_RUN_ALL: ${{ steps.aws-services.outputs.run_all }}
+          STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS: ${{ steps.aws-services.outputs.service_paths }}
 
       - name: Upload AWS coverage to Codecov
         if: steps.changed-aws.outputs.any_changed == 'true'

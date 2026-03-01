@@ -32,6 +32,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Get changed files
         id: changed-files
@@ -50,11 +51,11 @@ jobs:
         run: |
           missing_changelogs=""
 
-          if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" ]]; then
+          if [[ "${STEPS_CHANGED_FILES_OUTPUTS_ANY_CHANGED}" == "true" ]]; then
             # Check monitored folders
             for folder in $MONITORED_FOLDERS; do
               # Get files changed in this folder
-              changed_in_folder=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | grep "^${folder}/" || true)
+              changed_in_folder=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | grep "^${folder}/" || true)
 
               if [ -n "$changed_in_folder" ]; then
                 echo "Detected changes in ${folder}/"
@@ -69,11 +70,11 @@ jobs:
 
             # Check root-level dependency files (poetry.lock, pyproject.toml)
             # These are associated with the prowler folder changelog
-            root_deps_changed=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | grep -E "^(poetry\.lock|pyproject\.toml)$" || true)
+            root_deps_changed=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | grep -E "^(poetry\.lock|pyproject\.toml)$" || true)
             if [ -n "$root_deps_changed" ]; then
               echo "Detected changes in root dependency files: $root_deps_changed"
               # Check if prowler/CHANGELOG.md was already updated (might have been caught above)
-              prowler_changelog_updated=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | grep "^prowler/CHANGELOG.md$" || true)
+              prowler_changelog_updated=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | grep "^prowler/CHANGELOG.md$" || true)
               if [ -z "$prowler_changelog_updated" ]; then
                 # Only add if prowler wasn't already flagged
                 if ! echo "$missing_changelogs" | grep -q "prowler"; then
@@ -89,6 +90,9 @@ jobs:
             echo -e "${missing_changelogs}"
             echo "EOF"
           } >> $GITHUB_OUTPUT
+        env:
+          STEPS_CHANGED_FILES_OUTPUTS_ANY_CHANGED: ${{ steps.changed-files.outputs.any_changed }}
+          STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
 
       - name: Find existing changelog comment
         if: github.event.pull_request.head.repo.full_name == github.repository

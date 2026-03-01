@@ -49,6 +49,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
 
       - name: Get changed files
         id: changed-files
@@ -66,41 +68,47 @@ jobs:
         id: impact
         run: |
           echo "Changed files:"
-          echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n'
+          echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n'
           echo ""
-          python .github/scripts/test-impact.py ${{ steps.changed-files.outputs.all_changed_files }}
+          python .github/scripts/test-impact.py ${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}
+        env:
+          STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
 
       - name: Set convenience flags
         id: set-flags
         run: |
-          if [[ -n "${{ steps.impact.outputs.sdk-tests }}" ]]; then
+          if [[ -n "${STEPS_IMPACT_OUTPUTS_SDK_TESTS}" ]]; then
             echo "has-sdk-tests=true" >> $GITHUB_OUTPUT
           else
             echo "has-sdk-tests=false" >> $GITHUB_OUTPUT
           fi
           
-          if [[ -n "${{ steps.impact.outputs.api-tests }}" ]]; then
+          if [[ -n "${STEPS_IMPACT_OUTPUTS_API_TESTS}" ]]; then
             echo "has-api-tests=true" >> $GITHUB_OUTPUT
           else
             echo "has-api-tests=false" >> $GITHUB_OUTPUT
           fi
           
-          if [[ -n "${{ steps.impact.outputs.ui-e2e }}" ]]; then
+          if [[ -n "${STEPS_IMPACT_OUTPUTS_UI_E2E}" ]]; then
             echo "has-ui-e2e=true" >> $GITHUB_OUTPUT
           else
             echo "has-ui-e2e=false" >> $GITHUB_OUTPUT
           fi
+        env:
+          STEPS_IMPACT_OUTPUTS_SDK_TESTS: ${{ steps.impact.outputs.sdk-tests }}
+          STEPS_IMPACT_OUTPUTS_API_TESTS: ${{ steps.impact.outputs.api-tests }}
+          STEPS_IMPACT_OUTPUTS_UI_E2E: ${{ steps.impact.outputs.ui-e2e }}
 
       - name: Summary
         run: |
           echo "## Test Impact Analysis" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          if [[ "${{ steps.impact.outputs.run-all }}" == "true" ]]; then
+          if [[ "${STEPS_IMPACT_OUTPUTS_RUN_ALL}" == "true" ]]; then
             echo "🚨 **Critical path changed - running ALL tests**" >> $GITHUB_STEP_SUMMARY
           else
             echo "### Affected Modules" >> $GITHUB_STEP_SUMMARY
-            echo "\`${{ steps.impact.outputs.modules }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "\`${STEPS_IMPACT_OUTPUTS_MODULES}\`" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             
             echo "### Tests to Run" >> $GITHUB_STEP_SUMMARY
@@ -110,3 +118,8 @@ jobs:
             echo "| API Tests | \`${{ steps.impact.outputs.api-tests || 'none' }}\` |" >> $GITHUB_STEP_SUMMARY
             echo "| UI E2E | \`${{ steps.impact.outputs.ui-e2e || 'none' }}\` |" >> $GITHUB_STEP_SUMMARY
           fi
+
+        env:
+          STEPS_IMPACT_OUTPUTS_RUN_ALL: ${{ steps.impact.outputs.run-all }}
+
+          STEPS_IMPACT_OUTPUTS_MODULES: ${{ steps.impact.outputs.modules }}
