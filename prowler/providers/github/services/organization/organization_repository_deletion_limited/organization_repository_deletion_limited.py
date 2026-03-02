@@ -12,7 +12,7 @@ class organization_repository_deletion_limited(Check):
     def execute(self) -> List[CheckReportGithub]:
         findings = []
         for org in organization_client.organizations.values():
-            members_can_delete = getattr(org, "members_can_delete_repositories", None)
+            members_can_delete = org.members_can_delete_repositories
 
             if members_can_delete is None:
                 continue
