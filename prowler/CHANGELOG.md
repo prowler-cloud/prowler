@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [UNRELEASED] (Prowler vX.X.X)
+
+### 🚀 Added
+
+- `entra_conditional_access_policy_device_registration_mfa` check for M365 provider [(#10222)](https://github.com/prowler-cloud/prowler/pull/10222)
+
 ## [5.19.0] (Prowler v5.19.0)
 
 ### 🚀 Added

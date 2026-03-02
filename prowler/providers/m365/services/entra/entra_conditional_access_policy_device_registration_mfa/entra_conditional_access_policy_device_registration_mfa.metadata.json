@@ -1,0 +1,42 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_device_registration_mfa",
+  "CheckTitle": "Conditional Access policies enforce MFA for device registration and Intune enrollment",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
+  "Description": "Conditional Access policies requiring **multifactor authentication** for device registration and Intune enrollment prevent unauthorized users from registering rogue devices or enrolling into device management with stolen credentials.",
+  "Risk": "Without MFA for device registration, an attacker with stolen credentials could register rogue devices into the directory, gaining persistent access and bypassing compliance-based Conditional Access policies.\n\nWithout MFA for Intune enrollment, compromised credentials may be used to enroll unauthorized devices, enabling lateral movement and data exfiltration.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-device-registration",
+    "https://learn.microsoft.com/en-us/intune/intune-service/fundamentals/deployment-guide-enrollment",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-session#sign-in-frequency"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center (https://entra.microsoft.com).\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Create a policy for device registration:\n   - Under **Users**, include **All users**.\n   - Under **Target resources**, select **User actions** and check **Register or join devices**.\n   - Under **Grant**, select **Require multifactor authentication**.\n4. Create a policy for Intune enrollment:\n   - Under **Users**, include **All users**.\n   - Under **Target resources**, select **Cloud apps** and add **Microsoft Intune Enrollment**.\n   - Under **Grant**, select **Require multifactor authentication**.\n   - Under **Session**, enable **Sign-in frequency** and set to **Every time**.\n5. Set both policies to **Report-only** until validated, then enable them.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce MFA for both device registration and Intune enrollment through Conditional Access policies. Set sign-in frequency to **Every time** for Intune enrollment to prevent session reuse during device enrollment operations.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_device_registration_mfa"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_managed_device_required_for_mfa_registration",
+    "entra_intune_enrollment_sign_in_frequency_every_time"
+  ],
+  "Notes": "Requires Entra ID P1 or later license."
+}
