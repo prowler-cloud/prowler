@@ -5,6 +5,8 @@ import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
 
 import { PROVIDER_TYPES, ProviderType } from "./providers";
 
+const CLOUDFLARE_GLOBAL_API_KEY_REGEX = /^[a-fA-F0-9]{32}$/;
+
 export const addRoleFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   manage_users: z.boolean().default(false),
@@ -379,6 +381,15 @@ export const addCredentialsFormSchema = (
               message: "API Token is required",
               path: [ProviderCredentialFields.CLOUDFLARE_API_TOKEN],
             });
+          } else if (
+            CLOUDFLARE_GLOBAL_API_KEY_REGEX.test(apiToken.trim())
+          ) {
+            ctx.addIssue({
+              code: "custom",
+              message:
+                "This looks like an API Key. Use API Token credentials instead.",
+              path: [ProviderCredentialFields.CLOUDFLARE_API_TOKEN],
+            });
           }
         } else if (via === "api_key") {
           const apiKey = data[ProviderCredentialFields.CLOUDFLARE_API_KEY];
@@ -387,6 +398,15 @@ export const addCredentialsFormSchema = (
             ctx.addIssue({
               code: "custom",
               message: "API Key is required",
+              path: [ProviderCredentialFields.CLOUDFLARE_API_KEY],
+            });
+          } else if (
+            !CLOUDFLARE_GLOBAL_API_KEY_REGEX.test(apiKey.trim())
+          ) {
+            ctx.addIssue({
+              code: "custom",
+              message:
+                "API Key must be a 32-character hexadecimal Cloudflare Global API Key.",
               path: [ProviderCredentialFields.CLOUDFLARE_API_KEY],
             });
           }

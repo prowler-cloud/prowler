@@ -2,7 +2,11 @@ import pytest
 from rest_framework.exceptions import ValidationError
 
 from api.v1.serializer_utils.integrations import S3ConfigSerializer
-from api.v1.serializers import CloudflareTokenProviderSecret, ImageProviderSecret
+from api.v1.serializers import (
+    CloudflareApiKeyProviderSecret,
+    CloudflareTokenProviderSecret,
+    ImageProviderSecret,
+)
 
 
 class TestS3ConfigSerializer:
@@ -150,3 +154,22 @@ class TestCloudflareProviderSecret:
         )
         assert not serializer.is_valid()
         assert "api_token" in serializer.errors
+
+    def test_valid_api_key_and_email(self):
+        serializer = CloudflareApiKeyProviderSecret(
+            data={
+                "api_key": "144c9defac04969c7bfad8efaa8ea194",
+                "api_email": "user@example.com",
+            }
+        )
+        assert serializer.is_valid(), serializer.errors
+
+    def test_invalid_api_key_with_token_format(self):
+        serializer = CloudflareApiKeyProviderSecret(
+            data={
+                "api_key": "Sn3lZJTBX6kkg7OdcBUAxOO963GEIyGQqnFTOFYY",
+                "api_email": "user@example.com",
+            }
+        )
+        assert not serializer.is_valid()
+        assert "api_key" in serializer.errors

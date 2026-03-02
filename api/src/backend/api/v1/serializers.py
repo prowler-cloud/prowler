@@ -1722,6 +1722,14 @@ class CloudflareApiKeyProviderSecret(serializers.Serializer):
     api_key = serializers.CharField()
     api_email = serializers.EmailField()
 
+    def validate_api_key(self, value: str) -> str:
+        if not re.fullmatch(r"[a-fA-F0-9]{32}", (value or "").strip()):
+            raise serializers.ValidationError(
+                "Invalid Cloudflare API Key format. "
+                "Use a 32-character hexadecimal Global API Key."
+            )
+        return value
+
     class Meta:
         resource_name = "provider-secrets"
 

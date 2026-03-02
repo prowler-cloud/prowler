@@ -38,7 +38,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack Paths: scan no longer raises `DatabaseError` when provider is deleted mid-scan [(#10116)](https://github.com/prowler-cloud/prowler/pull/10116)
 - Tenant compliance summaries recalculated after provider deletion [(#10172)](https://github.com/prowler-cloud/prowler/pull/10172)
 - Security Hub export retries transient replica conflicts without failing integrations [(#10144)](https://github.com/prowler-cloud/prowler/pull/10144)
-- Cloudflare provider secrets now reject API key format in `api_token` credentials [(#10195)](https://github.com/prowler-cloud/prowler/pull/10195)
+- Cloudflare provider secrets now reject API key format in `api_token` and non-key values in `api_key` credentials [(#10195)](https://github.com/prowler-cloud/prowler/pull/10195)
 
 ### 🔐 Security
 

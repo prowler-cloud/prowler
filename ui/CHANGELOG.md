@@ -25,6 +25,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Findings Severity Over Time chart on Overview not responding to provider and account filters, and chart clipping at Y-axis maximum values [(#10103)](https://github.com/prowler-cloud/prowler/pull/10103)
+- Cloudflare credentials form now blocks API key values in `api_token` and token-like values in `api_key` [(#10195)](https://github.com/prowler-cloud/prowler/pull/10195)
 
 ### 🔐 Security
 
