@@ -1,6 +1,7 @@
 name: 'Tools: PR Labeler'
 
 on:
+  # zizmor: ignore[dangerous-triggers] - intentional: needs write access to apply labels, no PR code checkout
   pull_request_target:
     branches:
       - 'master'
