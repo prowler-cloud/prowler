@@ -633,14 +633,10 @@ class Entra(M365Service):
             while registration_response:
                 for detail in getattr(registration_response, "value", []) or []:
                     registration_details[detail.id] = {
-                        "is_mfa_capable": getattr(
-                            detail, "is_mfa_capable", False
-                        ),
+                        "is_mfa_capable": getattr(detail, "is_mfa_capable", False),
                         "authentication_methods": [
                             str(method)
-                            for method in getattr(
-                                detail, "methods_registered", []
-                            )
+                            for method in getattr(detail, "methods_registered", [])
                             or []
                         ],
                     }
