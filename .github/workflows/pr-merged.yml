@@ -1,6 +1,7 @@
 name: 'Tools: PR Merged'
 
 on:
+  # zizmor: ignore[dangerous-triggers] - intentional: needs read access to merged PR metadata, no PR code checkout
   pull_request_target:
     branches:
       - 'master'
@@ -26,7 +27,7 @@ jobs:
         id: vars
         run: |
           SHORT_SHA="${GITHUB_EVENT_PULL_REQUEST_MERGE_COMMIT_SHA}"
-          echo "SHORT_SHA=${SHORT_SHA::7}" >> $GITHUB_ENV
+          echo "short_sha=${SHORT_SHA::7}" >> $GITHUB_OUTPUT
         env:
           GITHUB_EVENT_PULL_REQUEST_MERGE_COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
 
@@ -39,7 +40,7 @@ jobs:
           client-payload: |
             {
               "PROWLER_COMMIT_SHA": "${{ github.event.pull_request.merge_commit_sha }}",
-              "PROWLER_COMMIT_SHORT_SHA": "${{ env.SHORT_SHA }}",
+              "PROWLER_COMMIT_SHORT_SHA": "${{ steps.vars.outputs.short_sha }}",
               "PROWLER_PR_NUMBER": "${{ github.event.pull_request.number }}",
               "PROWLER_PR_TITLE": ${{ toJson(github.event.pull_request.title) }},
               "PROWLER_PR_LABELS": ${{ toJson(github.event.pull_request.labels.*.name) }},

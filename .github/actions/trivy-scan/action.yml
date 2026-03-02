@@ -126,7 +126,7 @@ runs:
           const comment = require('./.github/scripts/trivy-pr-comment.js');
 
           // Unique identifier to find our comment
-          const marker = '<!-- trivy-scan-comment:${{ inputs.image-name }} -->';
+          const marker = `<!-- trivy-scan-comment:${process.env.IMAGE_NAME} -->`;
           const body = marker + '\n' + comment;
 
           // Find existing comment
