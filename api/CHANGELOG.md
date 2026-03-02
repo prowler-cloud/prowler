@@ -31,6 +31,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack Paths: Add private labels and properties in Attack Paths graphs for avoiding future overlapping with Cartography's ones [(#10124)](https://github.com/prowler-cloud/prowler/pull/10124)
 - Attack Paths: Query endpoint executes them in read only mode [(#10140)](https://github.com/prowler-cloud/prowler/pull/10140)
 - Attack Paths: `Accept` header query endpoints also accepts `text/plain`, supporting compact plain-text format for LLM consumption [(#10162)](https://github.com/prowler-cloud/prowler/pull/10162)
+- Bump Trivy from 0.69.1 to 0.69.2 [(#10210)](https://github.com/prowler-cloud/prowler/pull/10210)
 
 ### 🐞 Fixed
 
