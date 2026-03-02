@@ -5,6 +5,7 @@ import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 
 import {
   getOrganizationsStepperOffset,
+  getProviderWizardDocsDestination,
   getProviderWizardModalTitle,
 } from "./provider-wizard-modal.utils";
 
@@ -48,5 +49,23 @@ describe("getProviderWizardModalTitle", () => {
     const title = getProviderWizardModalTitle(PROVIDER_WIZARD_MODE.UPDATE);
 
     expect(title).toBe("Update Provider Credentials");
+  });
+});
+
+describe("getProviderWizardDocsDestination", () => {
+  it("returns a compact provider label for short provider docs links", () => {
+    const destination = getProviderWizardDocsDestination(
+      "https://goto.prowler.com/provider-aws",
+    );
+
+    expect(destination).toBe("aws");
+  });
+
+  it("returns a compact destination label for long docs links", () => {
+    const destination = getProviderWizardDocsDestination(
+      "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
+    );
+
+    expect(destination).toBe("aws-organizations");
   });
 });

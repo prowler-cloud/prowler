@@ -35,6 +35,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_require_mfa_for_management_api` check for M365 provider [(#10150)](https://github.com/prowler-cloud/prowler/pull/10150)
 - OpenStack provider multiple regions support [(#10135)](https://github.com/prowler-cloud/prowler/pull/10135)
 - `entra_default_app_management_policy_enabled` check for M365 provider [(#9898)](https://github.com/prowler-cloud/prowler/pull/9898)
+- OpenStack network service with 6 security checks [(#9970)](https://github.com/prowler-cloud/prowler/pull/9970)
+- Openstack block storage 7 new checks [(#10120)](https://github.com/prowler-cloud/prowler/pull/10120)
 
 ### 🔄 Changed
 
@@ -58,6 +60,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Azure Virtual Machines service metadata to new format [(#9629)](https://github.com/prowler-cloud/prowler/pull/9629)
 - Cloudflare provider credential validation with specific exceptions [(#9910)](https://github.com/prowler-cloud/prowler/pull/9910)
 - Enhance AWS IAM privilege escalation detection with patterns from pathfinding.cloud library [(#9922)](https://github.com/prowler-cloud/prowler/pull/9922)
+- Bump Trivy from 0.66.0 to 0.69.2 [(#10210)](https://github.com/prowler-cloud/prowler/pull/10210)
 
 ### 🐞 Fixed
 
@@ -69,6 +72,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🔐 Security
 
 - Bumped `py-ocsf-models` to 0.8.1 and `cryptography` to 44.0.3 [(#10059)](https://github.com/prowler-cloud/prowler/pull/10059)
+- Harden GitHub Actions workflows against expression injection, add `persist-credentials: false` to checkout steps, and configure dependabot cooldown [(#10200)](https://github.com/prowler-cloud/prowler/pull/10200)
 
 ---
 

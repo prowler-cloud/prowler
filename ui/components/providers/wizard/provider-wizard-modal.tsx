@@ -13,7 +13,10 @@ import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import { PROVIDER_WIZARD_STEP } from "@/types/provider-wizard";
 
 import { useProviderWizardController } from "./hooks/use-provider-wizard-controller";
-import { getOrganizationsStepperOffset } from "./provider-wizard-modal.utils";
+import {
+  getOrganizationsStepperOffset,
+  getProviderWizardDocsDestination,
+} from "./provider-wizard-modal.utils";
 import { ConnectStep } from "./steps/connect-step";
 import { CredentialsStep } from "./steps/credentials-step";
 import { WIZARD_FOOTER_ACTION_TYPE } from "./steps/footer-controls";
@@ -62,6 +65,7 @@ export function ProviderWizardModal({
     enabled: open,
     refreshToken: scrollHintRefreshToken,
   });
+  const docsDestination = getProviderWizardDocsDestination(docsLink);
 
   return (
     <Modal
@@ -80,7 +84,7 @@ export function ProviderWizardModal({
           <Button variant="link" size="link-sm" className="h-auto p-0" asChild>
             <a href={docsLink} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="size-3.5 shrink-0" />
-              <span>Prowler Docs</span>
+              <span>{`Prowler Docs (${docsDestination})`}</span>
             </a>
           </Button>
         </div>
@@ -136,7 +140,11 @@ export function ProviderWizardModal({
             )}
 
             {isProviderFlow && currentStep === PROVIDER_WIZARD_STEP.LAUNCH && (
-              <LaunchStep />
+              <LaunchStep
+                onBack={() => setCurrentStep(PROVIDER_WIZARD_STEP.TEST)}
+                onClose={handleClose}
+                onFooterChange={setFooterConfig}
+              />
             )}
 
             {!isProviderFlow && orgCurrentStep === ORG_WIZARD_STEP.SETUP && (

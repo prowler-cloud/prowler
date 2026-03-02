@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { useEffect } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
@@ -6,8 +7,9 @@ import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 
 import { TestConnectionStep } from "./test-connection-step";
 
-const { getProviderMock } = vi.hoisted(() => ({
+const { getProviderMock, loadingFromFormMock } = vi.hoisted(() => ({
   getProviderMock: vi.fn(),
+  loadingFromFormMock: { current: false },
 }));
 
 vi.mock("@/actions/providers", () => ({
@@ -15,7 +17,19 @@ vi.mock("@/actions/providers", () => ({
 }));
 
 vi.mock("../../workflow/forms/test-connection-form", () => ({
-  TestConnectionForm: () => <div data-testid="test-connection-form" />,
+  TestConnectionForm: ({
+    onLoadingChange,
+  }: {
+    onLoadingChange?: (isLoading: boolean) => void;
+  }) => {
+    useEffect(() => {
+      if (loadingFromFormMock.current) {
+        onLoadingChange?.(true);
+      }
+    }, [onLoadingChange]);
+
+    return <div data-testid="test-connection-form" />;
+  },
 }));
 
 describe("TestConnectionStep", () => {
@@ -23,6 +37,7 @@ describe("TestConnectionStep", () => {
     sessionStorage.clear();
     localStorage.clear();
     getProviderMock.mockReset();
+    loadingFromFormMock.current = false;
     useProviderWizardStore.getState().reset();
   });
 
@@ -63,5 +78,55 @@ describe("TestConnectionStep", () => {
       expect(screen.getByTestId("test-connection-form")).toBeInTheDocument();
     });
     expect(useProviderWizardStore.getState().secretId).toBe("secret-1");
+  });
+
+  it("updates footer action label to checking while connection test is in progress", async () => {
+    // Given
+    loadingFromFormMock.current = true;
+    useProviderWizardStore.setState({
+      providerId: "provider-1",
+      providerType: "gcp",
+      mode: PROVIDER_WIZARD_MODE.ADD,
+    });
+    getProviderMock.mockResolvedValue({
+      data: {
+        id: "provider-1",
+        attributes: {
+          uid: "project-123",
+          provider: "gcp",
+          alias: "Main",
+          connection: { connected: false, last_checked_at: null },
+          scanner_args: {},
+        },
+        relationships: {
+          secret: { data: { type: "provider-secrets", id: "secret-1" } },
+        },
+      },
+    });
+    const onFooterChange = vi.fn();
+
+    // When
+    render(
+      <TestConnectionStep
+        onSuccess={vi.fn()}
+        onResetCredentials={vi.fn()}
+        onFooterChange={onFooterChange}
+      />,
+    );
+
+    // Then
+    await waitFor(() => {
+      expect(onFooterChange).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      const footerConfigs = onFooterChange.mock.calls.map((call) => call[0]);
+      const hasCheckingState = footerConfigs.some(
+        (config) =>
+          config.actionLabel === "Checking connection..." &&
+          config.actionDisabled === true,
+      );
+      expect(hasCheckingState).toBe(true);
+    });
   });
 });
