@@ -13,7 +13,7 @@
   "Risk": "Enabled SMS or Voice authentication allows attackers to bypass MFA through **SIM-swapping** or **SS7 protocol interception**, gaining unauthorized access to accounts. These methods lack cryptographic binding to the device, making them significantly weaker than phishing-resistant alternatives.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-methods-manage",
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-phone-options",
     "https://pages.nist.gov/800-63-3/sp800-63b.html"
   ],
   "Remediation": {
@@ -32,10 +32,6 @@
     "identity-access"
   ],
   "DependsOn": [],
-  "RelatedTo": [
-    "entra_users_mfa_capable",
-    "entra_admin_users_mfa_enabled",
-    "entra_admin_users_phishing_resistant_mfa_enabled"
-  ],
-  "Notes": "This check evaluates authentication method configurations at the tenant policy level via the Microsoft Graph Authentication Methods Policy API. Both SMS and Voice methods are checked independently."
+  "RelatedTo": [],
+  "Notes": ""
 }
