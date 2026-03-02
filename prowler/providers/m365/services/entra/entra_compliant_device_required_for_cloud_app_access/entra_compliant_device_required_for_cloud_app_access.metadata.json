@@ -1,0 +1,35 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_compliant_device_required_for_cloud_app_access",
+  "CheckTitle": "Conditional Access policy requires MDM-compliant device for all cloud app access",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
+  "Description": "A Conditional Access policy enforces **MDM-compliant device** as a mandatory requirement for accessing all cloud applications. This ensures only devices enrolled in and compliant with Intune MDM policies can authenticate to cloud resources.",
+  "Risk": "Without mandatory device compliance, users can access cloud resources from **unmanaged or non-compliant devices** that may lack encryption, antivirus, or OS updates. This increases the risk of **data exfiltration** and **credential theft** from compromised endpoints.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-compliant-device",
+    "https://learn.microsoft.com/en-us/mem/intune/protect/conditional-access-intune-common-ways-use"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Select **New policy**.\n4. Under **Users**, select **All users** and configure break-glass account exclusions.\n5. Under **Target resources**, select **All cloud apps**.\n6. Under **Grant**, select **Grant access** and check **Require device to be marked as compliant**.\n7. Ensure the grant operator does not combine this with MFA as an OR alternative.\n8. Set the policy to **On** and click **Create**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce a Conditional Access policy requiring all devices to be **MDM-enrolled and compliant** before accessing cloud applications. Ensure Intune compliance policies are configured and assigned before enabling this policy. Exclude break-glass accounts to prevent lockout scenarios.",
+      "Url": "https://hub.prowler.com/check/entra_compliant_device_required_for_cloud_app_access"
+    }
+  },
+  "Categories": ["identity-access", "e3"],
+  "DependsOn": [],
+  "RelatedTo": ["entra_managed_device_required_for_authentication"],
+  "Notes": "Intune enrollment is automatically excluded from this policy to avoid a chicken-and-egg problem. Compliance policies must be created and assigned in Intune before enabling this Conditional Access policy."
+}
