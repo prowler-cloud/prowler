@@ -62,6 +62,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Cloudflare provider credential validation with specific exceptions [(#9910)](https://github.com/prowler-cloud/prowler/pull/9910)
 - Enhance AWS IAM privilege escalation detection with patterns from pathfinding.cloud library [(#9922)](https://github.com/prowler-cloud/prowler/pull/9922)
 - Bump Trivy from 0.66.0 to 0.69.2 [(#10210)](https://github.com/prowler-cloud/prowler/pull/10210)
+- Modify GitHub and M365 account UIDs [(#10226)](https://github.com/prowler-cloud/prowler/pull/10226)
 
 ### 🐞 Fixed
 
