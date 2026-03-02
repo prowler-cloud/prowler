@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 520" font-family="'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="108%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.08"/>
+    </filter>
+    <linearGradient id="mgmtHeader" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4285F4"/>
+      <stop offset="100%" stop-color="#5E97F6"/>
+    </linearGradient>
+    <linearGradient id="memberHeader" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00BFA5"/>
+      <stop offset="100%" stop-color="#1DE9B6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="550" y="36" text-anchor="middle" font-size="22" font-weight="700" fill="#4285F4">Two Roles Architecture</text>
+
+  <!-- ===== Management Account Card ===== -->
+  <rect x="30" y="60" width="440" height="380" rx="14" fill="#fff" stroke="#4285F4" stroke-width="2" filter="url(#shadow)"/>
+  <!-- Header bar -->
+  <rect x="30" y="60" width="440" height="44" rx="14" fill="url(#mgmtHeader)"/>
+  <rect x="30" y="90" width="440" height="14" fill="url(#mgmtHeader)"/>
+  <text x="250" y="88" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">Management Account</text>
+
+  <!-- Inner card -->
+  <rect x="50" y="118" width="400" height="300" rx="10" fill="#F0F4FF" stroke="#C5D6F7" stroke-width="1"/>
+
+  <text x="250" y="148" text-anchor="middle" font-size="15" font-weight="700" fill="#4285F4">Management Role</text>
+
+  <!-- Purpose -->
+  <text x="70" y="178" font-size="13" font-weight="700" fill="#1a1a2e">Purpose:</text>
+  <text x="70" y="196" font-size="12" fill="#5f6368">Discover Organization structure + scan management account</text>
+
+  <!-- Permissions -->
+  <text x="70" y="222" font-size="13" font-weight="700" fill="#1a1a2e">Permissions:</text>
+  <text x="82" y="240" font-size="11" fill="#5f6368">SecurityAudit  (AWS managed policy)</text>
+  <text x="82" y="256" font-size="11" fill="#5f6368">ViewOnlyAccess  (AWS managed policy)</text>
+  <text x="82" y="272" font-size="11" fill="#5f6368">Additional read-only  (inline policy)</text>
+  <text x="82" y="288" font-size="11" fill="#4285F4" font-weight="600">organizations:DescribeAccount</text>
+  <text x="82" y="304" font-size="11" fill="#4285F4" font-weight="600">organizations:DescribeOrganization</text>
+  <text x="82" y="320" font-size="11" fill="#4285F4" font-weight="600">organizations:ListAccounts</text>
+  <text x="82" y="336" font-size="11" fill="#4285F4" font-weight="600">organizations:ListAccountsForParent</text>
+  <text x="82" y="352" font-size="11" fill="#4285F4" font-weight="600">organizations:ListOrganizationalUnitsForParent</text>
+  <text x="82" y="368" font-size="11" fill="#4285F4" font-weight="600">organizations:ListRoots</text>
+  <text x="82" y="384" font-size="11" fill="#4285F4" font-weight="600">organizations:ListTagsForResource</text>
+
+  <!-- Deploy badge -->
+  <rect x="145" y="400" width="210" height="28" rx="14" fill="#FFF3E0" stroke="#F9AB00" stroke-width="1.5"/>
+  <text x="250" y="419" text-anchor="middle" font-size="12" font-weight="700" fill="#E65100">Deploy: MANUALLY in IAM Console</text>
+
+  <!-- ===== Prowler Cloud connector ===== -->
+  <rect x="490" y="195" width="120" height="36" rx="8" fill="#F5F5F5" stroke="#E0E0E0" stroke-width="1"/>
+  <text x="550" y="218" text-anchor="middle" font-size="12" font-weight="600" fill="#5f6368">Prowler Cloud</text>
+
+  <!-- Connector lines -->
+  <line x1="490" y1="213" x2="470" y2="213" stroke="#9aa0a6" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <line x1="610" y1="213" x2="630" y2="213" stroke="#9aa0a6" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+  <!-- ===== Member Accounts Card ===== -->
+  <rect x="630" y="60" width="440" height="380" rx="14" fill="#fff" stroke="#00BFA5" stroke-width="2" filter="url(#shadow)"/>
+  <!-- Header bar -->
+  <rect x="630" y="60" width="440" height="44" rx="14" fill="url(#memberHeader)"/>
+  <rect x="630" y="90" width="440" height="14" fill="url(#memberHeader)"/>
+  <text x="850" y="88" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">Member Accounts</text>
+
+  <!-- Inner card -->
+  <rect x="650" y="118" width="400" height="300" rx="10" fill="#E8F8F5" stroke="#B2DFDB" stroke-width="1"/>
+
+  <text x="850" y="148" text-anchor="middle" font-size="15" font-weight="700" fill="#00897B">ProwlerScan Role  (per account)</text>
+
+  <!-- Purpose -->
+  <text x="670" y="178" font-size="13" font-weight="700" fill="#1a1a2e">Purpose:</text>
+  <text x="670" y="196" font-size="12" fill="#5f6368">Security scanning of each account</text>
+
+  <!-- Permissions -->
+  <text x="670" y="222" font-size="13" font-weight="700" fill="#1a1a2e">Permissions:</text>
+  <text x="682" y="240" font-size="11" fill="#5f6368">SecurityAudit  (AWS managed policy)</text>
+  <text x="682" y="256" font-size="11" fill="#5f6368">ViewOnlyAccess  (AWS managed policy)</text>
+  <text x="682" y="272" font-size="11" fill="#5f6368">Additional read-only  (inline policy)</text>
+
+  <!-- Scope -->
+  <text x="670" y="302" font-size="13" font-weight="700" fill="#1a1a2e">Scope:</text>
+  <text x="682" y="320" font-size="12" fill="#5f6368">Read-only access across all AWS services</text>
+  <text x="682" y="338" font-size="12" fill="#5f6368">No write or modify permissions</text>
+
+  <!-- Deploy badge -->
+  <rect x="735" y="400" width="230" height="28" rx="14" fill="#E8F5E9" stroke="#66BB6A" stroke-width="1.5"/>
+  <text x="850" y="419" text-anchor="middle" font-size="12" font-weight="700" fill="#2E7D32">Deploy: via CloudFormation StackSet</text>
+
+  <!-- Footer labels -->
+  <text x="250" y="478" text-anchor="middle" font-size="14" font-weight="700" fill="#4285F4">Prowler discovers</text>
+  <text x="250" y="496" text-anchor="middle" font-size="12" fill="#5f6368">your org structure</text>
+  <text x="850" y="478" text-anchor="middle" font-size="14" font-weight="700" fill="#00BFA5">Prowler scans each</text>
+  <text x="850" y="496" text-anchor="middle" font-size="12" fill="#5f6368">account for findings</text>
+</svg>

@@ -1,8 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-import { getSessionWithoutCookies, TEST_CREDENTIALS } from "../helpers";
+import { TEST_CREDENTIALS } from "../helpers";
 import { ProvidersPage } from "../providers/providers-page";
-import { ScansPage } from "../scans/scans-page";
 import { SignInPage } from "../sign-in-base/sign-in-base-page";
 import { SignUpPage } from "../sign-up/sign-up-page";
 
@@ -30,24 +29,46 @@ test.describe("Middleware Error Handling", () => {
   test(
     "should maintain protection after session error",
     { tag: ["@e2e", "@auth", "@middleware", "@AUTH-MW-E2E-002"] },
-    async ({ page, context }) => {
+    async ({ page, context, browser }) => {
       const signInPage = new SignInPage(page);
       const providersPage = new ProvidersPage(page);
-      const scansPage = new ScansPage(page);
 
       await signInPage.loginAndVerify(TEST_CREDENTIALS.VALID);
 
       await providersPage.goto();
       await providersPage.verifyPageLoaded();
 
-      // Remove auth cookies to simulate a broken/expired session deterministically.
-      await context.clearCookies();
+      // Build an isolated context with an explicitly invalid auth token.
+      // This avoids races from active tabs rehydrating cookies in the original context.
+      const authenticatedState = await context.storageState();
+      const authCookies = authenticatedState.cookies.filter((cookie) =>
+        /(authjs|next-auth)/i.test(cookie.name),
+      );
+      expect(authCookies.length).toBeGreaterThan(0);
 
-      const expiredSession = await getSessionWithoutCookies(page);
-      expect(expiredSession).toBeNull();
+      const invalidSessionContext = await browser.newContext({
+        storageState: {
+          origins: authenticatedState.origins,
+          cookies: authenticatedState.cookies.map((cookie) =>
+            /(authjs|next-auth)/i.test(cookie.name)
+              ? { ...cookie, value: "invalid.session.token" }
+              : cookie,
+          ),
+        },
+      });
 
-      await scansPage.goto();
-      await signInPage.verifyOnSignInPage();
+      try {
+        // Use a fresh page to force a full navigation through proxy in Next.js 16.
+        const freshPage = await invalidSessionContext.newPage();
+        const freshSignInPage = new SignInPage(freshPage);
+        const cacheBuster = Date.now();
+        await freshPage.goto(`/scans?e2e_mw=${cacheBuster}`, {
+          waitUntil: "commit",
+        });
+        await freshSignInPage.verifyRedirectWithCallback("/scans");
+      } finally {
+        await invalidSessionContext.close();
+      }
     },
   );
 

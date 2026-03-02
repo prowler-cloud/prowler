@@ -40,11 +40,10 @@ export class InvitationsPage extends BasePage {
     // Form inputs
     this.emailInput = page.getByRole("textbox", { name: "Email" });
 
-    // Form select
-    this.roleSelect = page
-      .getByRole("combobox", { name: /Role|Select a role/i })
-      .or(page.getByRole("button", { name: /Role|Select a role/i }))
-      .first();
+    // Form select (Radix Select renders <button role="combobox"> with aria-label)
+    this.roleSelect = page.getByRole("combobox", {
+      name: /Select a role/i,
+    });
 
     // Form details
     this.reviewInvitationDetailsButton = page.getByRole("button", {
@@ -96,23 +95,15 @@ export class InvitationsPage extends BasePage {
   }
 
   async selectRole(role: string): Promise<void> {
-    // Select the role option
-
-    // Open the role dropdown
     await expect(this.roleSelect).toBeVisible({ timeout: 15000 });
     await this.roleSelect.click();
 
-    // Prefer ARIA role option inside listbox
     const option = this.page.getByRole("option", {
-      name: new RegExp(`^${role}$`, "i"),
+      name: new RegExp(role, "i"),
     });
+    await expect(option.first()).toBeVisible({ timeout: 10000 });
+    await option.first().click();
 
-    if (await option.count()) {
-      await option.first().click();
-    } else {
-      throw new Error(`Role option ${role} not found`);
-    }
-    // Ensure a role value was selected in the trigger
     await expect(this.roleSelect).not.toContainText(/Select a role/i);
   }
 

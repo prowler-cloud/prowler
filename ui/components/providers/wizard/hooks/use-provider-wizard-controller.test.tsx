@@ -11,16 +11,6 @@ import {
 
 import { useProviderWizardController } from "./use-provider-wizard-controller";
 
-const { pushMock } = vi.hoisted(() => ({
-  pushMock: vi.fn(),
-}));
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: pushMock,
-  }),
-}));
-
 vi.mock("next-auth/react", () => ({
   useSession: () => ({
     data: null,
@@ -30,9 +20,9 @@ vi.mock("next-auth/react", () => ({
 
 describe("useProviderWizardController", () => {
   beforeEach(() => {
+    vi.useRealTimers();
     sessionStorage.clear();
     localStorage.clear();
-    pushMock.mockReset();
     useProviderWizardStore.getState().reset();
     useOrgSetupStore.getState().reset();
   });
@@ -95,6 +85,9 @@ describe("useProviderWizardController", () => {
     expect(result.current.wizardVariant).toBe("organizations");
     expect(result.current.isProviderFlow).toBe(false);
     expect(result.current.orgCurrentStep).toBe(ORG_WIZARD_STEP.SETUP);
+    expect(result.current.docsLink).toBe(
+      "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
+    );
 
     // When
     act(() => {
@@ -128,7 +121,40 @@ describe("useProviderWizardController", () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 
-  it("closes and navigates when launch footer action is triggered", () => {
+  it("moves to launch step after a successful connection test in update mode", async () => {
+    // Given
+    const onOpenChange = vi.fn();
+    const { result } = renderHook(() =>
+      useProviderWizardController({
+        open: true,
+        onOpenChange,
+        initialData: {
+          providerId: "provider-1",
+          providerType: "aws",
+          providerUid: "111111111111",
+          providerAlias: "production",
+          secretId: "secret-1",
+          mode: PROVIDER_WIZARD_MODE.UPDATE,
+        },
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.CREDENTIALS);
+    });
+
+    // When
+    act(() => {
+      result.current.setCurrentStep(PROVIDER_WIZARD_STEP.TEST);
+      result.current.handleTestSuccess();
+    });
+
+    // Then
+    expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.LAUNCH);
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("does not override launch footer config in the controller", () => {
     // Given
     const onOpenChange = vi.fn();
     const { result } = renderHook(() =>
@@ -143,15 +169,10 @@ describe("useProviderWizardController", () => {
       result.current.setCurrentStep(PROVIDER_WIZARD_STEP.LAUNCH);
     });
 
-    const { resolvedFooterConfig } = result.current;
-    act(() => {
-      resolvedFooterConfig.onAction?.();
-    });
-
     // Then
-    expect(pushMock).toHaveBeenCalledWith("/scans");
-    expect(onOpenChange).toHaveBeenCalledWith(false);
-    expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.CONNECT);
+    expect(result.current.resolvedFooterConfig.showAction).toBe(false);
+    expect(result.current.resolvedFooterConfig.showBack).toBe(false);
+    expect(onOpenChange).not.toHaveBeenCalled();
   });
 
   it("does not reset organizations step when org store updates while modal is open", () => {
@@ -184,5 +205,70 @@ describe("useProviderWizardController", () => {
     // Then
     expect(result.current.wizardVariant).toBe("organizations");
     expect(result.current.orgCurrentStep).toBe(ORG_WIZARD_STEP.VALIDATE);
+  });
+
+  it("does not rehydrate wizard state when initial data changes while modal remains open", async () => {
+    // Given
+    const onOpenChange = vi.fn();
+    const { result, rerender } = renderHook(
+      ({
+        open,
+        initialData,
+      }: {
+        open: boolean;
+        initialData?: {
+          providerId: string;
+          providerType: "gcp";
+          providerUid: string;
+          providerAlias: string;
+          secretId: string | null;
+          mode: "add" | "update";
+        };
+      }) =>
+        useProviderWizardController({
+          open,
+          onOpenChange,
+          initialData,
+        }),
+      {
+        initialProps: {
+          open: true,
+          initialData: {
+            providerId: "provider-1",
+            providerType: "gcp",
+            providerUid: "project-123",
+            providerAlias: "gcp-main",
+            secretId: null,
+            mode: PROVIDER_WIZARD_MODE.ADD,
+          },
+        },
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.CREDENTIALS);
+    });
+
+    act(() => {
+      useProviderWizardStore.getState().setVia("service-account");
+      result.current.setCurrentStep(PROVIDER_WIZARD_STEP.TEST);
+    });
+
+    // When: provider data refreshes while modal is still open
+    rerender({
+      open: true,
+      initialData: {
+        providerId: "provider-1",
+        providerType: "gcp",
+        providerUid: "project-123",
+        providerAlias: "gcp-main",
+        secretId: "secret-1",
+        mode: PROVIDER_WIZARD_MODE.UPDATE,
+      },
+    });
+
+    // Then: keep user progress in the current flow
+    expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.TEST);
+    expect(useProviderWizardStore.getState().via).toBe("service-account");
   });
 });

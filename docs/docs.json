@@ -99,7 +99,7 @@
               },
               "user-guide/tutorials/prowler-app-rbac",
               "user-guide/tutorials/prowler-app-api-keys",
-              "user-guide/tutorials/prowler-app-findings-ingestion",
+              "user-guide/tutorials/prowler-app-import-findings",
               {
                 "group": "Mutelist",
                 "expanded": true,
@@ -115,6 +115,13 @@
                   "user-guide/tutorials/prowler-app-s3-integration",
                   "user-guide/tutorials/prowler-app-security-hub-integration",
                   "user-guide/tutorials/prowler-app-jira-integration"
+                ]
+              },
+              {
+                "group": "AWS Organizations",
+                "expanded": true,
+                "pages": [
+                  "user-guide/tutorials/prowler-cloud-aws-organizations"
                 ]
               },
               {

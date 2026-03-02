@@ -92,10 +92,9 @@ export function TestConnectionStep({
       backDisabled: isFormLoading,
       onBack: onResetCredentials,
       showAction: canSubmit,
-      actionLabel:
-        mode === PROVIDER_WIZARD_MODE.UPDATE
-          ? "Check connection"
-          : "Launch scan",
+      actionLabel: isFormLoading
+        ? "Checking connection..."
+        : "Check connection",
       actionDisabled: isFormLoading,
       actionType: WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
       actionFormId: formId,

@@ -43,7 +43,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres
+        image: postgres:17@sha256:2cd82735a36356842d5eb1ef80db3ae8f1154172f0f653db48fde079b2a0b7f7
         env:
           POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
           POSTGRES_PORT: ${{ env.POSTGRES_PORT }}
@@ -74,6 +74,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          # zizmor: ignore[artipacked]
+          persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
 
       - name: Check for API changes
         id: check-changes

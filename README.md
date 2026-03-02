@@ -148,21 +148,17 @@ Prowler App offers flexible installation methods tailored to various environment
 **Commands**
 
 ``` console
-curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/docker-compose.yml
-curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/.env
+VERSION=$(curl -s https://api.github.com/repos/prowler-cloud/prowler/releases/latest | jq -r .tag_name)
+curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/docker-compose.yml"
+# Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
+curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/.env"
 docker compose up -d
 ```
 
-> Containers are built for `linux/amd64`.
+> [!WARNING]
+> 🔒 For a secure setup, the API auto-generates a unique key pair, `DJANGO_TOKEN_SIGNING_KEY` and `DJANGO_TOKEN_VERIFYING_KEY`, and stores it in `~/.config/prowler-api` (non-container) or the bound Docker volume in `_data/api` (container). Never commit or reuse static/default keys. To rotate keys, delete the stored key files and restart the API.
 
-### Configuring Your Workstation for Prowler App
-
-If your workstation's architecture is incompatible, you can resolve this by:
-
-- **Setting the environment variable**: `DOCKER_DEFAULT_PLATFORM=linux/amd64`
-- **Using the following flag in your Docker command**: `--platform linux/amd64`
-
-> Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
+Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
 
 ### Common Issues with Docker Pull Installation
 

@@ -78,6 +78,7 @@ class Entra(M365Service):
                 self._get_groups(),
                 self._get_organization(),
                 self._get_users(),
+                self._get_default_app_management_policy(),
                 self._get_oauth_apps(),
                 self._get_directory_sync_settings(),
             )
@@ -89,8 +90,9 @@ class Entra(M365Service):
         self.groups = attributes[3]
         self.organizations = attributes[4]
         self.users = attributes[5]
-        self.oauth_apps: Optional[Dict[str, OAuthApp]] = attributes[6]
-        self.directory_sync_settings, self.directory_sync_error = attributes[7]
+        self.default_app_management_policy = attributes[6]
+        self.oauth_apps: Optional[Dict[str, OAuthApp]] = attributes[7]
+        self.directory_sync_settings, self.directory_sync_error = attributes[8]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -361,7 +363,13 @@ class Entra(M365Service):
         return conditional_access_policies
 
     async def _get_admin_consent_policy(self):
-        logger.info("Entra - Getting group settings...")
+        """
+        Retrieve the admin consent policy settings from Microsoft Entra.
+
+        Returns:
+            AdminConsentPolicy: The admin consent policy configuration or None if unavailable.
+        """
+        logger.info("Entra - Getting admin consent policy...")
         admin_consent_policy = None
         try:
             policy = await self.client.policies.admin_consent_request_policy.get()
@@ -376,6 +384,83 @@ class Entra(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return admin_consent_policy
+
+    async def _get_default_app_management_policy(self):
+        """
+        Retrieve the default app management policy settings from Microsoft Entra.
+
+        This policy enforces credential configurations on applications and service principals,
+        including restrictions on password credentials and key credentials.
+
+        Returns:
+            DefaultAppManagementPolicy: The default app management policy or None if unavailable.
+        """
+        logger.info("Entra - Getting default app management policy...")
+        default_app_management_policy = None
+        try:
+            policy = await self.client.policies.default_app_management_policy.get()
+            default_app_management_policy = DefaultAppManagementPolicy(
+                id=getattr(policy, "id", ""),
+                name=getattr(policy, "display_name", "Default app management policy"),
+                description=getattr(policy, "description", None),
+                is_enabled=getattr(policy, "is_enabled", False),
+                application_restrictions=self._parse_app_management_restrictions(
+                    getattr(policy, "application_restrictions", None)
+                ),
+                service_principal_restrictions=self._parse_app_management_restrictions(
+                    getattr(policy, "service_principal_restrictions", None)
+                ),
+            )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return default_app_management_policy
+
+    @staticmethod
+    def _parse_app_management_restrictions(restrictions):
+        """Parse credential restrictions from the Graph API response into AppManagementRestrictions."""
+        if not restrictions:
+            return AppManagementRestrictions()
+
+        password_credentials = []
+        for cred in getattr(restrictions, "password_credentials", []) or []:
+            restriction_type = getattr(cred, "restriction_type", None)
+            if restriction_type and hasattr(restriction_type, "value"):
+                restriction_type = restriction_type.value
+            state = getattr(cred, "state", None)
+            if state and hasattr(state, "value"):
+                state = state.value
+            max_lifetime = getattr(cred, "max_lifetime", None)
+            password_credentials.append(
+                CredentialRestriction(
+                    restriction_type=str(restriction_type) if restriction_type else "",
+                    state=str(state) if state else None,
+                    max_lifetime=str(max_lifetime) if max_lifetime else None,
+                )
+            )
+
+        key_credentials = []
+        for cred in getattr(restrictions, "key_credentials", []) or []:
+            restriction_type = getattr(cred, "restriction_type", None)
+            if restriction_type and hasattr(restriction_type, "value"):
+                restriction_type = restriction_type.value
+            state = getattr(cred, "state", None)
+            if state and hasattr(state, "value"):
+                state = state.value
+            max_lifetime = getattr(cred, "max_lifetime", None)
+            key_credentials.append(
+                CredentialRestriction(
+                    restriction_type=str(restriction_type) if restriction_type else "",
+                    state=str(state) if state else None,
+                    max_lifetime=str(max_lifetime) if max_lifetime else None,
+                )
+            )
+
+        return AppManagementRestrictions(
+            password_credentials=password_credentials,
+            key_credentials=key_credentials,
+        )
 
     async def _get_groups(self):
         logger.info("Entra - Getting groups...")
@@ -843,6 +928,32 @@ class AdminConsentPolicy(BaseModel):
     notify_reviewers: bool
     email_reminders_to_reviewers: bool
     duration_in_days: int
+
+
+class CredentialRestriction(BaseModel):
+    """Model representing a single credential restriction configuration."""
+
+    restriction_type: str
+    state: Optional[str] = None
+    max_lifetime: Optional[str] = None
+
+
+class AppManagementRestrictions(BaseModel):
+    """Model representing the credential restrictions for applications or service principals."""
+
+    password_credentials: List[CredentialRestriction] = []
+    key_credentials: List[CredentialRestriction] = []
+
+
+class DefaultAppManagementPolicy(BaseModel):
+    """Model representing the default app management policy for the tenant."""
+
+    id: str
+    name: str
+    description: Optional[str]
+    is_enabled: bool
+    application_restrictions: Optional[AppManagementRestrictions] = None
+    service_principal_restrictions: Optional[AppManagementRestrictions] = None
 
 
 class AdminRoles(Enum):
