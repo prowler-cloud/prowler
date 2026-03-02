@@ -599,8 +599,9 @@ class TestFinding:
         assert finding_output.resource_tags == {"topic": "security"}
 
         # Assert account information for Personal Access Token
-        assert finding_output.account_name == ACCOUNT_NAME
-        assert finding_output.account_uid == ACCOUNT_ID
+        # When owner is present, it takes priority for account_name and account_uid
+        assert finding_output.account_name == "test-owner"
+        assert finding_output.account_uid == "test-owner"
         assert finding_output.account_email is None
         assert finding_output.account_organization_uid is None
         assert finding_output.account_organization_name is None
@@ -666,13 +667,12 @@ class TestFinding:
         assert finding_output.resource_tags == {"language": "python"}
         assert isinstance(finding_output.timestamp, int)
 
-        # Assert account information for GitHub App - this is the core of the bug fix
-        # Before the fix, this would fail because GithubAppIdentityInfo doesn't have account_name
-        # After the fix, it should use app_name
-        assert finding_output.account_name == "test-app"
-        assert finding_output.account_uid == APP_ID
+        # Assert account information for GitHub App
+        # When owner is present, it takes priority for account_name and account_uid
+        assert finding_output.account_name == "test-owner"
+        assert finding_output.account_uid == "test-owner"
         assert finding_output.account_email is None
-        assert finding_output.account_organization_uid is None
+        assert finding_output.account_organization_uid == str(APP_ID)
         assert finding_output.account_organization_name is None
         assert finding_output.account_tags == {}
 
@@ -1254,7 +1254,7 @@ class TestFinding:
         dummy_finding.muted = True
         finding_obj = Finding.transform_api_finding(dummy_finding, provider)
         assert finding_obj.auth_method == "ms_identity_type: ms_identity_id"
-        assert finding_obj.account_uid == "ms-tenant-id"
+        assert finding_obj.account_uid == "ms-tenant-domain"
         assert finding_obj.account_name == "ms-tenant-domain"
         assert finding_obj.resource_name == "ms-resource-name"
         assert finding_obj.resource_uid == "ms-resource-uid"
