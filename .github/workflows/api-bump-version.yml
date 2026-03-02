@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
 
       - name: Get current API version
         id: get_api_version
@@ -79,12 +81,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
 
       - name: Calculate next API minor version
         run: |
-          MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
-          MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
-          CURRENT_API_VERSION="${{ needs.detect-release-type.outputs.current_api_version }}"
+          MAJOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION}
+          MINOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION}
+          CURRENT_API_VERSION="${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_CURRENT_API_VERSION}"
 
           # API version follows Prowler minor + 1
           # For Prowler 5.17.0 -> API 1.18.0
@@ -97,6 +101,10 @@ jobs:
           echo "Prowler release version: ${MAJOR_VERSION}.${MINOR_VERSION}.0"
           echo "Current API version: $CURRENT_API_VERSION"
           echo "Next API minor version (for master): $NEXT_API_VERSION"
+        env:
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION: ${{ needs.detect-release-type.outputs.major_version }}
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION: ${{ needs.detect-release-type.outputs.minor_version }}
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_CURRENT_API_VERSION: ${{ needs.detect-release-type.outputs.current_api_version }}
 
       - name: Bump API versions in files for master
         run: |
@@ -132,12 +140,13 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           ref: v${{ needs.detect-release-type.outputs.major_version }}.${{ needs.detect-release-type.outputs.minor_version }}
+          persist-credentials: false
 
       - name: Calculate first API patch version
         run: |
-          MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
-          MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
-          CURRENT_API_VERSION="${{ needs.detect-release-type.outputs.current_api_version }}"
+          MAJOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION}
+          MINOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION}
+          CURRENT_API_VERSION="${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_CURRENT_API_VERSION}"
           VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
 
           # API version follows Prowler minor + 1
@@ -151,6 +160,10 @@ jobs:
           echo "Prowler release version: ${MAJOR_VERSION}.${MINOR_VERSION}.0"
           echo "First API patch version (for ${VERSION_BRANCH}): $FIRST_API_PATCH_VERSION"
           echo "Version branch: $VERSION_BRANCH"
+        env:
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION: ${{ needs.detect-release-type.outputs.major_version }}
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION: ${{ needs.detect-release-type.outputs.minor_version }}
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_CURRENT_API_VERSION: ${{ needs.detect-release-type.outputs.current_api_version }}
 
       - name: Bump API versions in files for version branch
         run: |
@@ -193,13 +206,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
 
       - name: Calculate next API patch version
         run: |
-          MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
-          MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
-          PATCH_VERSION=${{ needs.detect-release-type.outputs.patch_version }}
-          CURRENT_API_VERSION="${{ needs.detect-release-type.outputs.current_api_version }}"
+          MAJOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION}
+          MINOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION}
+          PATCH_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_PATCH_VERSION}
+          CURRENT_API_VERSION="${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_CURRENT_API_VERSION}"
           VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
 
           # Extract current API patch to increment it
@@ -222,6 +237,11 @@ jobs:
             echo "::error::Invalid API version format: $CURRENT_API_VERSION"
             exit 1
           fi
+        env:
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION: ${{ needs.detect-release-type.outputs.major_version }}
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION: ${{ needs.detect-release-type.outputs.minor_version }}
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_PATCH_VERSION: ${{ needs.detect-release-type.outputs.patch_version }}
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_CURRENT_API_VERSION: ${{ needs.detect-release-type.outputs.current_api_version }}
 
       - name: Bump API versions in files for version branch
         run: |

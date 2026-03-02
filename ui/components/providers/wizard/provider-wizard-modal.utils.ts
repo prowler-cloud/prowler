@@ -27,3 +27,21 @@ export function getProviderWizardModalTitle(mode: ProviderWizardMode) {
 
   return "Adding A Cloud Provider";
 }
+
+export function getProviderWizardDocsDestination(docsLink: string) {
+  try {
+    const parsed = new URL(docsLink);
+    const pathSegments = parsed.pathname
+      .split("/")
+      .filter((segment) => segment.length > 0);
+    const lastSegment = pathSegments.at(-1);
+
+    if (!lastSegment) {
+      return parsed.hostname;
+    }
+
+    return lastSegment.replace(/^provider-/, "").replace(/^prowler-cloud-/, "");
+  } catch {
+    return docsLink;
+  }
+}

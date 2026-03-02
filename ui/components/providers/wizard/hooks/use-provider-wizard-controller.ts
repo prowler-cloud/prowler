@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { DOCS_URLS, getProviderHelpText } from "@/lib/external-urls";
 import { useOrgSetupStore } from "@/store/organizations/store";
@@ -63,7 +62,7 @@ export function useProviderWizardController({
   const initialSecretId = initialData?.secretId ?? null;
   const initialVia = initialData?.via ?? null;
   const initialMode = initialData?.mode ?? null;
-  const router = useRouter();
+  const hasHydratedForCurrentOpenRef = useRef(false);
   const [wizardVariant, setWizardVariant] = useState<WizardVariant>(
     WIZARD_VARIANT.PROVIDER,
   );
@@ -95,8 +94,14 @@ export function useProviderWizardController({
 
   useEffect(() => {
     if (!open) {
+      hasHydratedForCurrentOpenRef.current = false;
       return;
     }
+
+    if (hasHydratedForCurrentOpenRef.current) {
+      return;
+    }
+    hasHydratedForCurrentOpenRef.current = true;
 
     if (initialProviderId && initialProviderType && initialProviderUid) {
       setWizardVariant(WIZARD_VARIANT.PROVIDER);
@@ -198,25 +203,7 @@ export function useProviderWizardController({
   const docsLink = isProviderFlow
     ? getProviderHelpText(providerTypeHint ?? providerType ?? "").link
     : DOCS_URLS.AWS_ORGANIZATIONS;
-  const resolvedFooterConfig: WizardFooterConfig =
-    isProviderFlow && currentStep === PROVIDER_WIZARD_STEP.LAUNCH
-      ? {
-          showBack: true,
-          backLabel: "Back",
-          onBack: () => setCurrentStep(PROVIDER_WIZARD_STEP.TEST),
-          showSecondaryAction: false,
-          secondaryActionLabel: "",
-          secondaryActionVariant: "outline",
-          secondaryActionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
-          showAction: true,
-          actionLabel: "Go to scans",
-          actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
-          onAction: () => {
-            handleClose();
-            router.push("/scans");
-          },
-        }
-      : footerConfig;
+  const resolvedFooterConfig: WizardFooterConfig = footerConfig;
   const modalTitle = getProviderWizardModalTitle(mode);
 
   return {
