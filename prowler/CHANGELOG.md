@@ -64,7 +64,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS checks metadata URLs to replace deprecated Trend Micro CloudOne Conformity (EOL July 2026) with Vision One and remove docs.prowler.com references [(#10068)](https://github.com/prowler-cloud/prowler/pull/10068)
 - Standardize resource_id values across Azure checks to use actual Azure resource IDs and prevent duplicate resource entries [(#9994)](https://github.com/prowler-cloud/prowler/pull/9994)
 - VPC endpoint service collection filtering third-party services that caused AccessDenied errors on `DescribeVpcEndpointServicePermissions` [(#10152)](https://github.com/prowler-cloud/prowler/pull/10152)
-- `elbv2_insecure_ssl_ciphers` false positive on AWS post-quantum (PQ) TLS policies like `ELBSecurityPolicy-TLS13-1-2-PQ-2025-09` [(#10198)](https://github.com/prowler-cloud/prowler/issues/10198)
+- `elbv2_insecure_ssl_ciphers` false positive on AWS post-quantum (PQ) TLS policies like `ELBSecurityPolicy-TLS13-1-2-PQ-2025-09` [(#10219)](https://github.com/prowler-cloud/prowler/pull/10219)
 
 ### 🔐 Security
 
