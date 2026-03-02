@@ -7,14 +7,12 @@ on:
       - 'v5.*'
     paths:
       - '.github/**'
-      - '.zizmor.yml'
   pull_request:
     branches:
       - 'master'
       - 'v5.*'
     paths:
       - '.github/**'
-      - '.zizmor.yml'
   schedule:
     - cron: '30 06 * * *'
   workflow_dispatch:
@@ -44,4 +42,3 @@ jobs:
         uses: zizmorcore/zizmor-action@0dce2577a4760a2749d8cfb7a84b7d5585ebcb7d # v0.5.0
         with:
           token: ${{ github.token }}
-          config: .zizmor.yml
