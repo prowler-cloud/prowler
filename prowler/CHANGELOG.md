@@ -35,8 +35,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_require_mfa_for_management_api` check for M365 provider [(#10150)](https://github.com/prowler-cloud/prowler/pull/10150)
 - OpenStack provider multiple regions support [(#10135)](https://github.com/prowler-cloud/prowler/pull/10135)
 - `entra_default_app_management_policy_enabled` check for M365 provider [(#9898)](https://github.com/prowler-cloud/prowler/pull/9898)
-- OpenStack network service with 6 security checks [(#9970)](https://github.com/prowler-cloud/prowler/pull/9970)
-- Openstack block storage 7 new checks [(#10120)](https://github.com/prowler-cloud/prowler/pull/10120)
+- OpenStack networking service with 6 security checks [(#9970)](https://github.com/prowler-cloud/prowler/pull/9970)
+- OpenStack block storage service with 7 security checks [(#10120)](https://github.com/prowler-cloud/prowler/pull/10120)
 
 ### 🔄 Changed
 
