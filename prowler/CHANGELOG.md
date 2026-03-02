@@ -62,6 +62,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Cloudflare provider credential validation with specific exceptions [(#9910)](https://github.com/prowler-cloud/prowler/pull/9910)
 - Enhance AWS IAM privilege escalation detection with patterns from pathfinding.cloud library [(#9922)](https://github.com/prowler-cloud/prowler/pull/9922)
 - Bump Trivy from 0.66.0 to 0.69.2 [(#10210)](https://github.com/prowler-cloud/prowler/pull/10210)
+- Documentation for Alibaba Cloud, GCP, and Microsoft 365 provider CLI flags [(#10040)](https://github.com/prowler-cloud/prowler/pull/10040)
 
 ### 🐞 Fixed
 
@@ -69,11 +70,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Standardize resource_id values across Azure checks to use actual Azure resource IDs and prevent duplicate resource entries [(#9994)](https://github.com/prowler-cloud/prowler/pull/9994)
 - VPC endpoint service collection filtering third-party services that caused AccessDenied errors on `DescribeVpcEndpointServicePermissions` [(#10152)](https://github.com/prowler-cloud/prowler/pull/10152)
 - Handle serialization errors in OCSF output for non-serializable resource metadata [(#10129)](https://github.com/prowler-cloud/prowler/pull/10129)
-
-### 🐞 Fixed
-
-- Typo in `--security-hub` help text for AWS provider [(#10040)](https://github.com/prowler-cloud/prowler/pull/10040)
-- Help text and documentation for space-separated CLI flags in IaC provider [(#10040)](https://github.com/prowler-cloud/prowler/pull/10040)
+- Help text and typos in CLI flags [(#10040)](https://github.com/prowler-cloud/prowler/pull/10040)
 
 ### 🔐 Security
 
