@@ -84,28 +84,25 @@ class entra_emergency_access_exclusion(Check):
             users_excluded_from_all or groups_excluded_from_all
         )
 
-        for policy in enabled_policies:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource=policy,
-                resource_name=policy.display_name,
-                resource_id=policy.id,
-            )
+        report = CheckReportM365(
+            metadata=self.metadata(),
+            resource={},
+            resource_name="Conditional Access Policies",
+            resource_id="conditionalAccessPolicies",
+        )
 
-            if has_emergency_exclusion:
-                report.status = "PASS"
-                exclusion_details = []
-                if users_excluded_from_all:
-                    exclusion_details.append(f"{len(users_excluded_from_all)} user(s)")
-                if groups_excluded_from_all:
-                    exclusion_details.append(
-                        f"{len(groups_excluded_from_all)} group(s)"
-                    )
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' has {' and '.join(exclusion_details)} excluded as emergency access across all {total_policy_count} enabled policies."
-            else:
-                report.status = "FAIL"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' does not have any user or group excluded as emergency access from all enabled Conditional Access policies."
+        if has_emergency_exclusion:
+            report.status = "PASS"
+            exclusion_details = []
+            if users_excluded_from_all:
+                exclusion_details.append(f"{len(users_excluded_from_all)} user(s)")
+            if groups_excluded_from_all:
+                exclusion_details.append(f"{len(groups_excluded_from_all)} group(s)")
+            report.status_extended = f"{' and '.join(exclusion_details)} excluded as emergency access across all {total_policy_count} enabled Conditional Access policies."
+        else:
+            report.status = "FAIL"
+            report.status_extended = f"No user or group is excluded as emergency access from all {total_policy_count} enabled Conditional Access policies."
 
-            findings.append(report)
+        findings.append(report)
 
         return findings

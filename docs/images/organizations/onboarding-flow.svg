@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 420" font-family="'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="108%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="550" y="40" text-anchor="middle" font-size="22" font-weight="700" fill="#4285F4">Onboarding Flow</text>
+
+  <!-- Step 1 -->
+  <rect x="30" y="70" width="220" height="220" rx="12" fill="#fff" stroke="#4285F4" stroke-width="2.5" stroke-dasharray="8 4" filter="url(#shadow)"/>
+  <circle cx="140" cy="100" r="22" fill="#4285F4"/>
+  <text x="140" y="107" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">1</text>
+  <text x="140" y="145" text-anchor="middle" font-size="15" font-weight="700" fill="#1a1a2e">Create Management</text>
+  <text x="140" y="165" text-anchor="middle" font-size="15" font-weight="700" fill="#1a1a2e">Account Role</text>
+  <rect x="80" y="185" width="120" height="24" rx="12" fill="#E8F0FE"/>
+  <text x="140" y="201" text-anchor="middle" font-size="11" font-weight="600" fill="#4285F4">Manually in IAM</text>
+  <text x="140" y="232" text-anchor="middle" font-size="12" fill="#5f6368">Allows Prowler to</text>
+  <text x="140" y="248" text-anchor="middle" font-size="12" fill="#5f6368">discover your org</text>
+  <text x="140" y="264" text-anchor="middle" font-size="12" fill="#5f6368">structure</text>
+
+  <!-- Arrow 1→2 -->
+  <path d="M260 180 L290 180" stroke="#9aa0a6" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#9aa0a6"/>
+    </marker>
+  </defs>
+
+  <!-- Step 2 -->
+  <rect x="300" y="70" width="220" height="220" rx="12" fill="#fff" stroke="#7B61FF" stroke-width="2.5" filter="url(#shadow)"/>
+  <circle cx="410" cy="100" r="22" fill="#7B61FF"/>
+  <text x="410" y="107" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">2</text>
+  <text x="410" y="145" text-anchor="middle" font-size="15" font-weight="700" fill="#1a1a2e">Deploy StackSet</text>
+  <rect x="340" y="165" width="140" height="24" rx="12" fill="#F3F0FF"/>
+  <text x="410" y="181" text-anchor="middle" font-size="11" font-weight="600" fill="#7B61FF">In AWS Console</text>
+  <text x="410" y="212" text-anchor="middle" font-size="12" fill="#5f6368">Creates ProwlerScan</text>
+  <text x="410" y="228" text-anchor="middle" font-size="12" fill="#5f6368">role in every</text>
+  <text x="410" y="244" text-anchor="middle" font-size="12" fill="#5f6368">member account</text>
+
+  <!-- Arrow 2→3 -->
+  <path d="M530 180 L560 180" stroke="#9aa0a6" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+
+  <!-- Step 3 -->
+  <rect x="570" y="70" width="220" height="220" rx="12" fill="#fff" stroke="#00BFA5" stroke-width="2.5" filter="url(#shadow)"/>
+  <circle cx="680" cy="100" r="22" fill="#00BFA5"/>
+  <text x="680" y="107" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">3</text>
+  <text x="680" y="145" text-anchor="middle" font-size="15" font-weight="700" fill="#1a1a2e">Run the Wizard</text>
+  <rect x="615" y="165" width="130" height="24" rx="12" fill="#E0F7F4"/>
+  <text x="680" y="181" text-anchor="middle" font-size="11" font-weight="600" fill="#00BFA5">In Prowler Cloud</text>
+  <text x="680" y="212" text-anchor="middle" font-size="12" fill="#5f6368">Discovers accounts,</text>
+  <text x="680" y="228" text-anchor="middle" font-size="12" fill="#5f6368">tests connections</text>
+
+  <!-- Arrow 3→4 -->
+  <path d="M800 180 L830 180" stroke="#9aa0a6" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+
+  <!-- Step 4 -->
+  <rect x="840" y="70" width="220" height="220" rx="12" fill="#fff" stroke="#F9AB00" stroke-width="2.5" filter="url(#shadow)"/>
+  <circle cx="950" cy="100" r="22" fill="#F9AB00"/>
+  <text x="950" y="107" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">4</text>
+  <text x="950" y="145" text-anchor="middle" font-size="15" font-weight="700" fill="#1a1a2e">Launch Scans</text>
+  <rect x="898" y="165" width="104" height="24" rx="12" fill="#FEF7E0"/>
+  <text x="950" y="181" text-anchor="middle" font-size="11" font-weight="600" fill="#F9AB00">Automatic</text>
+  <text x="950" y="212" text-anchor="middle" font-size="12" fill="#5f6368">Scans run on all</text>
+  <text x="950" y="228" text-anchor="middle" font-size="12" fill="#5f6368">connected accounts</text>
+  <text x="950" y="244" text-anchor="middle" font-size="12" fill="#5f6368">on your schedule</text>
+
+  <!-- Footer -->
+  <text x="550" y="340" text-anchor="middle" font-size="13" fill="#9aa0a6">Steps 1 and 2 are done once in AWS  |  Steps 3 and 4 are done in Prowler Cloud</text>
+</svg>

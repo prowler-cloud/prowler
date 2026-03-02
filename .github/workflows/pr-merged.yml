@@ -25,8 +25,10 @@ jobs:
       - name: Calculate short commit SHA
         id: vars
         run: |
-          SHORT_SHA="${{ github.event.pull_request.merge_commit_sha }}"
+          SHORT_SHA="${GITHUB_EVENT_PULL_REQUEST_MERGE_COMMIT_SHA}"
           echo "SHORT_SHA=${SHORT_SHA::7}" >> $GITHUB_ENV
+        env:
+          GITHUB_EVENT_PULL_REQUEST_MERGE_COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
 
       - name: Trigger Cloud repository pull request
         uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1

@@ -99,7 +99,7 @@ class TestDockerHubListTags:
 class TestDockerHubLogin:
     @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_login_failure(self, mock_request):
-        resp = MagicMock(status_code=401)
+        resp = MagicMock(status_code=401, text="invalid credentials")
         mock_request.return_value = resp
         adapter = DockerHubAdapter("docker.io/myorg", username="bad", password="creds")
         with pytest.raises(ImageRegistryAuthError, match="login failed"):
@@ -109,6 +109,29 @@ class TestDockerHubLogin:
         adapter = DockerHubAdapter("docker.io/myorg")
         adapter._hub_login()  # Should not raise
         assert adapter._hub_jwt is None
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_login_401_includes_response_body(self, mock_request):
+        resp = MagicMock(
+            status_code=401, text='{"detail":"Incorrect authentication credentials"}'
+        )
+        mock_request.return_value = resp
+        adapter = DockerHubAdapter("docker.io/myorg", username="u", password="p")
+        with pytest.raises(
+            ImageRegistryAuthError, match="Incorrect authentication credentials"
+        ):
+            adapter._hub_login()
+
+    @patch("prowler.providers.image.lib.registry.base.time.sleep")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_login_500_retried_then_raises_network_error(
+        self, mock_request, mock_sleep
+    ):
+        mock_request.return_value = MagicMock(status_code=500)
+        adapter = DockerHubAdapter("docker.io/myorg", username="u", password="p")
+        with pytest.raises(ImageRegistryNetworkError, match="Server error"):
+            adapter._hub_login()
+        assert mock_request.call_count == 3
 
 
 class TestDockerHubRetry:
@@ -132,6 +155,63 @@ class TestDockerHubRetry:
         with pytest.raises(ImageRegistryNetworkError):
             adapter._request_with_retry("GET", "https://hub.docker.com")
         assert mock_request.call_count == 3
+
+    @patch("prowler.providers.image.lib.registry.base.time.sleep")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_retry_on_500(self, mock_request, mock_sleep):
+        resp_500 = MagicMock(status_code=500)
+        resp_200 = MagicMock(status_code=200)
+        mock_request.side_effect = [resp_500, resp_200]
+        adapter = DockerHubAdapter("docker.io/myorg")
+        result = adapter._request_with_retry("GET", "https://hub.docker.com")
+        assert result.status_code == 200
+        assert mock_request.call_count == 2
+        mock_sleep.assert_called_once()
+
+    @patch("prowler.providers.image.lib.registry.base.time.sleep")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_retry_exhausted_on_500_raises_network_error(
+        self, mock_request, mock_sleep
+    ):
+        mock_request.return_value = MagicMock(status_code=500)
+        adapter = DockerHubAdapter("docker.io/myorg")
+        with pytest.raises(
+            ImageRegistryNetworkError, match="Server error.*HTTP 500.*3 attempts"
+        ):
+            adapter._request_with_retry("GET", "https://hub.docker.com")
+        assert mock_request.call_count == 3
+
+    @patch("prowler.providers.image.lib.registry.base.time.sleep")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_4xx_not_retried(self, mock_request, mock_sleep):
+        mock_request.return_value = MagicMock(status_code=403)
+        adapter = DockerHubAdapter("docker.io/myorg")
+        result = adapter._request_with_retry("GET", "https://hub.docker.com")
+        assert result.status_code == 403
+        assert mock_request.call_count == 1
+        mock_sleep.assert_not_called()
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_request_sends_user_agent(self, mock_request):
+        mock_request.return_value = MagicMock(status_code=200)
+        adapter = DockerHubAdapter("docker.io/myorg")
+        adapter._request_with_retry("GET", "https://hub.docker.com")
+        _, kwargs = mock_request.call_args
+        from prowler.config.config import prowler_version
+
+        assert (
+            kwargs["headers"]["User-Agent"]
+            == f"Prowler/{prowler_version} (registry-adapter)"
+        )
+
+    @patch("prowler.providers.image.lib.registry.base.time.sleep")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_retry_500_includes_response_body(self, mock_request, mock_sleep):
+        resp_500 = MagicMock(status_code=500, text="<html>Cloudflare error</html>")
+        mock_request.return_value = resp_500
+        adapter = DockerHubAdapter("docker.io/myorg")
+        with pytest.raises(ImageRegistryNetworkError, match="Cloudflare error"):
+            adapter._request_with_retry("GET", "https://hub.docker.com")
 
 
 class TestDockerHubEmptyTokens:

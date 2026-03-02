@@ -31,6 +31,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
 
       - name: Check for UI changes
         id: check-changes
@@ -122,10 +124,12 @@ jobs:
         if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed != 'true' && steps.changed-source.outputs.all_changed_files != ''
         run: |
           echo "Running tests related to changed files:"
-          echo "${{ steps.changed-source.outputs.all_changed_files }}"
+          echo "${STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES}"
           # Convert space-separated to vitest related format (remove ui/ prefix for relative paths)
-          CHANGED_FILES=$(echo "${{ steps.changed-source.outputs.all_changed_files }}" | tr ' ' '\n' | sed 's|^ui/||' | tr '\n' ' ')
+          CHANGED_FILES=$(echo "${STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | sed 's|^ui/||' | tr '\n' ' ')
           pnpm exec vitest related $CHANGED_FILES --run
+        env:
+          STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-source.outputs.all_changed_files }}
 
       - name: Run unit tests (test files only changed)
         if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed != 'true' && steps.changed-source.outputs.all_changed_files == ''

@@ -29,6 +29,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Get changed files
         id: changed-files
@@ -45,7 +46,7 @@ jobs:
           HAS_CONFLICTS=false
 
           # Check each changed file for conflict markers
-          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+          for file in ${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}; do
             if [ -f "$file" ]; then
               echo "Checking file: $file"
 
@@ -70,6 +71,8 @@ jobs:
             echo "has_conflicts=false" >> $GITHUB_OUTPUT
             echo "No conflict markers found in changed files"
           fi
+        env:
+          STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
 
       - name: Manage conflict label
         env:

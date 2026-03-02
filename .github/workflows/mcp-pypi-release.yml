@@ -29,7 +29,7 @@ jobs:
       - name: Parse and validate version
         id: parse-version
         run: |
-          PROWLER_VERSION="${{ env.RELEASE_TAG }}"
+          PROWLER_VERSION="${RELEASE_TAG}"
           echo "version=${PROWLER_VERSION}" >> "${GITHUB_OUTPUT}"
 
           # Extract major version

@@ -62,6 +62,27 @@ INTERNAL_LABELS: list[str] = [
     *[config.deprecated_resource_label for config in PROVIDER_CONFIGS.values()],
 ]
 
+# Provider isolation properties
+PROVIDER_ISOLATION_PROPERTIES: list[str] = [
+    "_provider_id",
+    "_provider_element_id",
+    "provider_id",
+    "provider_element_id",
+]
+
+# Cartography bookkeeping metadata
+CARTOGRAPHY_METADATA_PROPERTIES: list[str] = [
+    "lastupdated",
+    "firstseen",
+    "_module_name",
+    "_module_version",
+]
+
+INTERNAL_PROPERTIES: list[str] = [
+    *PROVIDER_ISOLATION_PROPERTIES,
+    *CARTOGRAPHY_METADATA_PROPERTIES,
+]
+
 
 # Provider Config Accessors
 # -------------------------
