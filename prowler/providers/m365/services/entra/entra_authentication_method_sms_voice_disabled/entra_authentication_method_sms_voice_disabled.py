@@ -14,40 +14,48 @@ class entra_authentication_method_sms_voice_disabled(Check):
     authenticator.
 
     - PASS: Both SMS and Voice authentication methods are disabled.
-    - FAIL: SMS or Voice authentication methods are enabled.
+    - FAIL: SMS and/or Voice authentication methods are enabled.
     """
 
     def execute(self) -> List[CheckReportM365]:
         """Execute the SMS and Voice authentication method check.
 
-        Iterates over the authentication method configurations from the Entra client
-        and checks whether the SMS and Voice methods are disabled.
+        Evaluates the authentication method configurations from the Entra client
+        and checks whether both SMS and Voice methods are disabled.
 
         Returns:
-            A list of reports containing the result of the check.
+            A list with a single report containing the result of the check.
         """
         findings = []
-        authentication_method_configurations = (
-            entra_client.authentication_method_configurations
-        )
+        configs = entra_client.authentication_method_configurations
 
-        for method_id in ["sms", "voice"]:
-            config = authentication_method_configurations.get(method_id)
-            if config:
-                method_display = "SMS" if method_id == "sms" else "Voice"
-                report = CheckReportM365(
-                    metadata=self.metadata(),
-                    resource=config,
-                    resource_name=f"{method_display} Authentication Method",
-                    resource_id=entra_client.tenant_domain,
-                )
+        sms_config = configs.get("Sms")
+        voice_config = configs.get("Voice")
+
+        if sms_config or voice_config:
+            sms_enabled = sms_config and sms_config.state == "enabled"
+            voice_enabled = voice_config and voice_config.state == "enabled"
+
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource=sms_config or voice_config,
+                resource_name="SMS and Voice Authentication Methods",
+                resource_id=entra_client.tenant_domain,
+            )
+
+            if sms_enabled and voice_enabled:
+                report.status = "FAIL"
+                report.status_extended = "SMS and Voice authentication methods are enabled in the tenant."
+            elif sms_enabled:
+                report.status = "FAIL"
+                report.status_extended = "SMS authentication method is enabled in the tenant."
+            elif voice_enabled:
+                report.status = "FAIL"
+                report.status_extended = "Voice authentication method is enabled in the tenant."
+            else:
                 report.status = "PASS"
-                report.status_extended = f"{method_display} authentication method is disabled in the tenant."
+                report.status_extended = "SMS and Voice authentication methods are disabled in the tenant."
 
-                if config.state == "enabled":
-                    report.status = "FAIL"
-                    report.status_extended = f"{method_display} authentication method is enabled in the tenant."
-
-                findings.append(report)
+            findings.append(report)
 
         return findings

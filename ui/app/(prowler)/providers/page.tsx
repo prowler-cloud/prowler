@@ -104,7 +104,6 @@ const ProvidersTable = async ({
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12">
           <DataTable
-            key={`providers-${Date.now()}`}
             columns={ColumnProviders}
             data={enrichedProviders || []}
             metadata={providersData?.meta}
