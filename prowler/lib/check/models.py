@@ -721,6 +721,45 @@ class CheckReportGithub(Check_Report):
 
 
 @dataclass
+class CheckReportGoogleWorkspace(Check_Report):
+    """Contains the Google Workspace Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    customer_id: str
+    location: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        customer_id: str = None,
+        location: str = "global",
+    ) -> None:
+        """Initialize the Google Workspace Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            customer_id: The Google Workspace customer ID.
+            location: The location of the resource (default: "global").
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = (
+            resource_name
+            or getattr(resource, "email", "")
+            or getattr(resource, "name", "")
+        )
+        self.resource_id = resource_id or getattr(resource, "id", "")
+        self.customer_id = customer_id or getattr(resource, "customer_id", "")
+        self.location = location
+
+
+@dataclass
 class CheckReportCloudflare(Check_Report):
     """Contains the Cloudflare Check's finding information.
 

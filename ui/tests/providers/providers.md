@@ -891,3 +891,60 @@
 - Requires valid Alibaba Cloud account with RAM Role configured
 - RAM Role must have sufficient permissions for security scanning
 - Role ARN must be properly configured and assumable
+
+---
+
+## Test Case: `PROVIDER-E2E-016` - Add AWS Organization Using AWS Organizations Flow
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @aws
+
+**Description/Objective:** Validates the complete flow of adding AWS accounts through AWS Organizations, including organization setup, authentication, account selection, and scan scheduling.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_AWS_ORGANIZATION_ID, E2E_AWS_ORGANIZATION_ROLE_ARN
+- Remove any existing provider with the same Organization ID before starting the test
+- StackSet must be deployed in AWS Organizations and expose a valid IAM Role ARN for Prowler
+- This test must be run serially and never in parallel with other tests, as it requires the Organization ID not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select AWS provider type
+4. Select "Add Multiple Accounts With AWS Organizations"
+5. Fill organization details (organization ID and optional name)
+6. Continue to authentication details and provide role ARN
+7. Confirm StackSet deployment checkbox and authenticate
+8. Confirm organization account selection step and continue
+9. Verify organization launch step, choose single scan schedule, and launch
+10. Verify redirect to Scans page
+
+### Expected Result:
+
+- AWS Organizations flow completes successfully
+- Accounts are connected and launch step is displayed
+- Scan scheduling selection is applied
+- User is redirected to Scans page after launch
+
+### Key verification points:
+
+- Connect account page displays AWS option
+- Organizations method selector is available
+- Authentication details step loads
+- Account selection step loads
+- Accounts connected launch step appears
+- Successful redirect to Scans page after launching
+
+### Notes:
+
+- Organization ID must follow AWS format (e.g., o-abc123def4)
+- Role ARN must belong to the StackSet deployment for Organizations flow
+- Provider cleanup is executed before test run to avoid unique constraint conflicts

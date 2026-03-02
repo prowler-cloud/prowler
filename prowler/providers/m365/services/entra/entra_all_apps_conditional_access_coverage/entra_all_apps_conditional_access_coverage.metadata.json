@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_all_apps_conditional_access_coverage",
+  "CheckTitle": "Conditional Access policy ensures comprehensive coverage for all cloud apps",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
+  "Description": "At least one Conditional Access policy is configured to target **all cloud apps**. This ensures comprehensive security coverage and automatic protection for newly onboarded applications without requiring policy updates.",
+  "Risk": "Without a policy targeting **all cloud apps**, newly integrated applications may not be protected by **Conditional Access**. This creates security gaps where users could access sensitive resources without proper authentication controls.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Create a new policy by selecting **New policy**.\n4. Under **Target resources**, select **All cloud apps**.\n5. Configure appropriate exclusions for applications that require different policies.\n6. Set the desired access controls (e.g., require MFA, compliant device).\n7. Set the policy to **On** and click **Create**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create at least one **Conditional Access** policy that targets **all cloud apps** to ensure comprehensive protection. Use **exclusions** to handle applications requiring different access controls rather than creating narrow policies for each application.",
+      "Url": "https://hub.prowler.com/check/entra_all_apps_conditional_access_coverage"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

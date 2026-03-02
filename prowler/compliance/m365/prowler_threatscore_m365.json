@@ -823,6 +823,7 @@
       "Id": "1.3.9",
       "Description": "Ensure OneDrive sync is restricted for unmanaged devices",
       "Checks": [
+        "entra_app_enforced_restrictions",
         "sharepoint_onedrive_sync_restricted_unmanaged_devices"
       ],
       "Attributes": [
