@@ -424,9 +424,7 @@ class TestM365ArgumentsIntegration:
         assert args.region == "M365Global"
 
         # Test M365China
-        args = parser.parse_args(
-            ["m365", "--az-cli-auth", "--region", "M365China"]
-        )
+        args = parser.parse_args(["m365", "--az-cli-auth", "--region", "M365China"])
         assert args.region == "M365China"
 
         # Test M365USGovernment
