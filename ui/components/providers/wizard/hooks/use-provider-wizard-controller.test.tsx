@@ -121,6 +121,39 @@ describe("useProviderWizardController", () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 
+  it("moves to launch step after a successful connection test in update mode", async () => {
+    // Given
+    const onOpenChange = vi.fn();
+    const { result } = renderHook(() =>
+      useProviderWizardController({
+        open: true,
+        onOpenChange,
+        initialData: {
+          providerId: "provider-1",
+          providerType: "aws",
+          providerUid: "111111111111",
+          providerAlias: "production",
+          secretId: "secret-1",
+          mode: PROVIDER_WIZARD_MODE.UPDATE,
+        },
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.CREDENTIALS);
+    });
+
+    // When
+    act(() => {
+      result.current.setCurrentStep(PROVIDER_WIZARD_STEP.TEST);
+      result.current.handleTestSuccess();
+    });
+
+    // Then
+    expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.LAUNCH);
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
   it("does not override launch footer config in the controller", () => {
     // Given
     const onOpenChange = vi.fn();
