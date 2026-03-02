@@ -70,6 +70,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Standardize resource_id values across Azure checks to use actual Azure resource IDs and prevent duplicate resource entries [(#9994)](https://github.com/prowler-cloud/prowler/pull/9994)
 - VPC endpoint service collection filtering third-party services that caused AccessDenied errors on `DescribeVpcEndpointServicePermissions` [(#10152)](https://github.com/prowler-cloud/prowler/pull/10152)
 - Handle serialization errors in OCSF output for non-serializable resource metadata [(#10129)](https://github.com/prowler-cloud/prowler/pull/10129)
+- Respect `AWS_ENDPOINT_URL` environment variable for STS session creation [(#10228)](https://github.com/prowler-cloud/prowler/pull/10228)
 
 ### 🔐 Security
 
