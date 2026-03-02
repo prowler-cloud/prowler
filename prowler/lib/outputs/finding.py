@@ -368,10 +368,31 @@ class Finding(BaseModel):
 
             elif provider.type == "cloudflare":
                 output_data["auth_method"] = "api_token"
-                output_data["account_uid"] = check_output.account_id
-                output_data["account_name"] = check_output.account_id
+                account_id = check_output.account_id
+                if not account_id:
+                    audited_accounts = (
+                        get_nested_attribute(provider, "identity.audited_accounts")
+                        or []
+                    )
+                    if audited_accounts:
+                        account_id = audited_accounts[0]
+
+                account_name = account_id
+                if account_id:
+                    accounts = get_nested_attribute(provider, "identity.accounts") or []
+                    for account in accounts:
+                        if getattr(account, "id", None) == account_id and getattr(
+                            account, "name", None
+                        ):
+                            account_name = account.name
+                            break
+
+                output_data["account_uid"] = account_id or ""
+                output_data["account_name"] = account_name or account_id or ""
                 output_data["resource_name"] = check_output.resource_name
-                output_data["resource_uid"] = check_output.resource_id
+                output_data["resource_uid"] = (
+                    check_output.resource_id or check_output.resource_name
+                )
                 output_data["region"] = check_output.zone_name
 
             elif provider.type == "alibabacloud":
