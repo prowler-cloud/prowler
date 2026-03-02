@@ -1,30 +1,38 @@
 {
   "Provider": "azure",
   "CheckID": "containerregistry_uses_private_link",
-  "CheckTitle": "Ensure to use a private link for accessing the Azure Container Registry",
+  "CheckTitle": "Container Registry uses a private endpoint (Private Link)",
   "CheckType": [],
   "ServiceName": "containerregistry",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "ContainerRegistry",
+  "Severity": "high",
+  "ResourceType": "microsoft.containerregistry/registries",
   "ResourceGroup": "container",
-  "Description": "Ensure that a private link is used for accessing the Azure Container Registry to enhance security and restrict access to the registry over the public internet.",
-  "Risk": "Without using a private link, the Azure Container Registry may be exposed to the public internet, increasing the risk of unauthorized access and potential data breaches.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/private-link/private-link-overview",
+  "Description": "**Azure Container Registry** access via **Private Endpoints** (Azure Private Link). Registries with `private endpoint connections` use private IPs; others rely on the public endpoint.",
+  "Risk": "Publicly reachable registries expand attack surface for **credential stuffing**, token abuse, and scanning. A compromise enables unauthorized pull/push, causing image **data leakage** and **supply-chain tampering**. Public routing weakens network isolation, impacting the **confidentiality** and **integrity** of images and metadata.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/private-link/private-link-overview",
+    "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-vnet",
+    "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-private-link"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az network private-endpoint create  --connection-name <ConnectionName> --resource-group <ResourceGroupName> --name <Name> --private-connection-resource-id <RegistryId> --vnet-name <VnetName> --subnet <SubnetName> --group-ids registry",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az network private-endpoint create --resource-group <example_resource_name> --name <example_resource_name> --vnet-name <example_resource_name> --subnet <example_resource_name> --private-connection-resource-id <example_resource_id> --group-ids registry --connection-name <example_resource_name>",
+      "NativeIaC": "```bicep\n// Create a Private Endpoint to ACR\nresource privateEndpoint 'Microsoft.Network/privateEndpoints@2025-05-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    subnet: {\n      id: '<example_subnet_id>'\n    }\n    privateLinkServiceConnections: [\n      {\n        name: '<example_resource_name>'\n        properties: {\n          privateLinkServiceId: '<example_resource_id>' // Critical: ACR resource ID to connect\n          groupIds: ['registry']                        // Critical: Target the 'registry' subresource to enable Private Link\n        }\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Container registries > select your registry\n2. Navigate to Settings > Networking > Private endpoints tab\n3. Click + Private endpoint, enter a name, select your VNet and Subnet\n4. Set Resource type to Microsoft.ContainerRegistry/registries and Target subresource to registry\n5. Click Review + create, then Create",
+      "Terraform": "```hcl\nresource \"azurerm_private_endpoint\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<location>\"\n  resource_group_name = \"<example_resource_name>\"\n  subnet_id           = \"<example_subnet_id>\"\n\n  private_service_connection {\n    name                           = \"<example_resource_name>\"\n    private_connection_resource_id = \"<example_resource_id>\" # Critical: ACR resource ID\n    subresource_names              = [\"registry\"]            # Critical: Target 'registry' subresource to enable Private Link\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Create a private link for Azure Container Registry through the Azure Portal: 1. Navigate to your Container Registry. 2. In the settings, select 'Networking'. 3. Select 'Private access'. 4. Configure a private endpoint for the registry.",
-      "Url": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-private-link"
+      "Text": "Use **Private Link** with **private endpoints** and set `Public network access: Disabled`.\n- Restrict access to trusted VNets/subnets\n- Prefer private endpoints over service endpoints\n- Enforce **least privilege** on registry actions\n- Configure private DNS for the registry FQDN\n- Monitor access logs for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/containerregistry_uses_private_link"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This feature is only available for Premium SKU registries."

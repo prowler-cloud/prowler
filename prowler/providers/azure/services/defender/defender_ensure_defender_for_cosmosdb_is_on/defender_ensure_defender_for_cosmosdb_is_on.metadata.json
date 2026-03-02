@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_cosmosdb_is_on",
-  "CheckTitle": "Ensure That Microsoft Defender for Cosmos DB Is Set To 'On' ",
+  "CheckTitle": "Defender for Cosmos DB is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureDefenderPlan",
+  "ResourceType": "microsoft.security/pricings",
   "ResourceGroup": "security",
-  "Description": "Ensure That Microsoft Defender for Cosmos DB Is Set To 'On' ",
-  "Risk": "In scanning Cosmos DB requests within a subscription, requests are compared to a heuristic list of potential security threats. These threats could be a result of a security breach within your services, thus scanning for them could prevent a potential security threat from being introduced.",
+  "Description": "**Microsoft Defender for Azure Cosmos DB** is enabled at the subscription using the `Standard` pricing tier for the `CosmosDbs` plan, covering all Cosmos DB accounts",
+  "Risk": "Without this protection, Cosmos DB activity lacks advanced threat detection and telemetry. Attacks such as **SQL injection**, credential abuse, and **anomalous access patterns** may go unnoticed, enabling data exfiltration and unauthorized changes, degrading **confidentiality** and **integrity**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/th-th/Azure/defender-for-cloud/defender-for-databases-enable-cosmos-protections?tabs=azure-portal",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/CosmosDB/enable-advanced-threat-protection.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az security pricing create -n CosmosDbs --tier Standard",
+      "NativeIaC": "```bicep\n// Set Defender for Cosmos DB plan to Standard at subscription scope\ntargetScope = 'subscription'\n\nresource example_resource_name 'Microsoft.Security/pricings@2023-01-01' = {\n  name: 'CosmosDbs'\n  properties: {\n    pricingTier: 'Standard' // Critical: enables Defender for Cosmos DB (ON) at Standard tier\n  }\n}\n```",
+      "Other": "1. In Azure portal, go to Microsoft Defender for Cloud > Environment settings\n2. Select the target subscription\n3. Open Defender plans (Pricing)\n4. Find Azure Cosmos DB and set the plan to On (Standard)\n5. Click Save",
+      "Terraform": "```hcl\n# Enable Microsoft Defender for Cosmos DB at Standard tier\nresource \"azurerm_security_center_subscription_pricing\" \"example_resource_name\" {\n  resource_type = \"CosmosDbs\"  # Critical: target Cosmos DB plan\n  tier          = \"Standard\"    # Critical: sets plan to ON (Standard)\n}\n```"
     },
     "Recommendation": {
-      "Text": "By default, Microsoft Defender for Cloud is not enabled for your App Service instances. Enabling the Defender security service for App Service instances allows for advanced security defense using threat detection capabilities provided by Microsoft Security Response Center.",
-      "Url": "Enable Microsoft Defender for Cosmos DB"
+      "Text": "Enable the `Standard` plan for **Microsoft Defender for Azure Cosmos DB** at the subscription to ensure full coverage. Enforce **least privilege**, route alerts to your SIEM, and tune detections. Use policy to require the plan across environments and regularly review findings to strengthen **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/defender_ensure_defender_for_cosmosdb_is_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

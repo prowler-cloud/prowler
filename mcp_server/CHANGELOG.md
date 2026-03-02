@@ -2,6 +2,10 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
+## [0.4.0] (Prowler UNRELEASED)
+
+- Add new MCP Server tools for Prowler Attack Paths [(#10145)](https://github.com/prowler-cloud/prowler/pull/10145)
+
 ## [0.3.0] (Prowler v5.16.0)
 
 ### Added

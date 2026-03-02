@@ -1,4 +1,7 @@
 import os
+import re
+
+from typing_extensions import override
 
 from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
@@ -45,6 +48,28 @@ class M365PowerShell(PowerShellSession):
         super().__init__()
         self.tenant_identity = identity
         self.init_credential(credentials)
+
+    @override
+    def _process_error(self, error_result: str) -> None:
+        """
+        Process PowerShell errors with M365-specific handling.
+
+        Detects cmdlet not found errors which typically indicate missing licensing
+        (e.g., Microsoft Defender for Office 365) or insufficient permissions.
+
+        Args:
+            error_result (str): The error output from the PowerShell command.
+        """
+        if "is not recognized as a name of a cmdlet" in error_result:
+            cmdlet_match = re.search(r"'([^']+)'.*is not recognized", error_result)
+            cmdlet_name = cmdlet_match.group(1) if cmdlet_match else "Unknown"
+            logger.warning(
+                f"PowerShell cmdlet '{cmdlet_name}' is not available. "
+                f"This may indicate missing module, licensing (e.g., Microsoft Defender for Office 365) "
+                f"or insufficient permissions. Related checks will be skipped."
+            )
+        else:
+            super()._process_error(error_result)
 
     def clean_certificate_content(self, cert_content: str) -> str:
         """
@@ -823,6 +848,124 @@ class M365PowerShell(PowerShellSession):
             "Get-SharingPolicy | ConvertTo-Json -Depth 10", json_parse=True
         )
 
+    def get_safe_attachments_policy(self) -> dict:
+        """
+        Get Safe Attachments Policy.
+
+        Retrieves the Safe Attachments policy settings for Microsoft Defender for Office 365.
+
+        Returns:
+            dict: Safe Attachments policy settings in JSON format.
+
+        Example:
+            >>> get_safe_attachments_policy()
+            {
+                "Name": "Built-In Protection Policy",
+                "Identity": "Built-In Protection Policy",
+                "Enable": true,
+                "Action": "Block",
+                "QuarantineTag": "AdminOnlyAccessPolicy"
+            }
+        """
+        return self.execute(
+            "Get-SafeAttachmentPolicy | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
+    def get_safe_attachments_rule(self) -> dict:
+        """
+        Get Safe Attachments Rules.
+
+        Retrieves the Safe Attachments rules that define which users, groups,
+        and domains are targeted by Safe Attachments policies.
+
+        Returns:
+            dict: Safe Attachments rules in JSON format.
+
+        Example:
+            >>> get_safe_attachments_rule()
+            {
+                "Name": "Custom Safe Attachments Rule",
+                "SafeAttachmentPolicy": "Custom Policy",
+                "State": "Enabled",
+                "Priority": 0,
+                "SentTo": ["user@contoso.com"],
+                "SentToMemberOf": ["group@contoso.com"],
+                "RecipientDomainIs": ["contoso.com"]
+            }
+        """
+        return self.execute(
+            "Get-SafeAttachmentRule | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
+    def get_advanced_threat_protection_policy(self) -> dict:
+        """
+        Get Advanced Threat Protection Policy.
+
+        Retrieves the current Advanced Threat Protection policy settings,
+        including Safe Attachments for SharePoint, OneDrive, and Teams, and Safe Documents settings.
+
+        Returns:
+            dict: Advanced Threat Protection policy settings in JSON format.
+
+        Example:
+            >>> get_advanced_threat_protection_policy()
+            {
+                "Identity": "Default",
+                "EnableATPForSPOTeamsODB": true,
+                "EnableSafeDocs": true,
+                "AllowSafeDocsOpen": false
+            }
+        """
+        return self.execute(
+            "Get-AtpPolicyForO365 | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
+    def get_teams_protection_policy(self) -> dict:
+        """
+        Get Teams Protection Policy.
+
+        Retrieves the Teams protection policy settings including Zero-hour auto purge (ZAP) configuration.
+
+        Returns:
+            dict: Teams protection policy settings in JSON format.
+
+        Example:
+            >>> get_teams_protection_policy()
+            {
+                "Identity": "Teams Protection Policy",
+                "ZapEnabled": True
+            }
+        """
+        return self.execute(
+            "Get-TeamsProtectionPolicy | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
+    def get_shared_mailboxes(self) -> dict:
+        """
+        Get Exchange Online Shared Mailboxes.
+
+        Retrieves all shared mailboxes from Exchange Online with their external
+        directory object IDs for cross-referencing with Entra ID user accounts.
+
+        Returns:
+            dict: Shared mailbox information in JSON format.
+
+        Example:
+            >>> get_shared_mailboxes()
+            [
+                {
+                    "DisplayName": "Support Mailbox",
+                    "UserPrincipalName": "support@contoso.com",
+                    "ExternalDirectoryObjectId": "12345678-1234-1234-1234-123456789012",
+                    "Identity": "support@contoso.com"
+                }
+            ]
+        """
+        return self.execute(
+            "Get-EXOMailbox -RecipientTypeDetails SharedMailbox -ResultSize Unlimited | Select-Object DisplayName, UserPrincipalName, ExternalDirectoryObjectId, Identity | ConvertTo-Json -Depth 10",
+            json_parse=True,
+        )
+
     def get_user_account_status(self) -> dict:
         """
         Get User Account Status.
@@ -833,8 +976,59 @@ class M365PowerShell(PowerShellSession):
             dict: User account status settings in JSON format.
         """
         return self.execute(
-            "$dict=@{}; Get-User -ResultSize Unlimited | ForEach-Object { $dict[$_.Id] = @{ AccountDisabled = $_.AccountDisabled } }; $dict | ConvertTo-Json -Depth 10",
+            "$dict=@{}; Get-User -ResultSize Unlimited | ForEach-Object { $dict[$_.ExternalDirectoryObjectId] = @{ AccountDisabled = $_.AccountDisabled } }; $dict | ConvertTo-Json -Depth 10",
             json_parse=True,
+        )
+
+    def get_safe_links_policy(self) -> dict:
+        """
+        Get Safe Links Policy.
+
+        Retrieves the current Safe Links policy settings for Microsoft Defender for Office 365.
+
+        Returns:
+            dict: Safe Links policy settings in JSON format.
+
+        Example:
+            >>> get_safe_links_policy()
+            {
+                "Name": "Built-In Protection Policy",
+                "Identity": "Built-In Protection Policy",
+                "EnableSafeLinksForEmail": true,
+                "EnableSafeLinksForTeams": true,
+                "EnableSafeLinksForOffice": true,
+                "TrackClicks": true,
+                "AllowClickThrough": false,
+                "ScanUrls": true,
+                "EnableForInternalSenders": true,
+                "DeliverMessageAfterScan": true,
+                "DisableUrlRewrite": false
+            }
+        """
+        return self.execute(
+            "Get-SafeLinksPolicy | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
+    def get_safe_links_rule(self) -> dict:
+        """
+        Get Safe Links Rule.
+
+        Retrieves the current Safe Links rule settings for Microsoft Defender for Office 365.
+
+        Returns:
+            dict: Safe Links rule settings in JSON format.
+
+        Example:
+            >>> get_safe_links_rule()
+            {
+                "Name": "Safe Links Rule",
+                "State": "Enabled",
+                "Priority": 0,
+                "SafeLinksPolicy": "Policy Name"
+            }
+        """
+        return self.execute(
+            "Get-SafeLinksRule | ConvertTo-Json -Depth 10", json_parse=True
         )
 
 

@@ -1,30 +1,38 @@
 {
   "Provider": "azure",
   "CheckID": "defender_container_images_resolved_vulnerabilities",
-  "CheckTitle": "Container images used by containers should have vulnerabilities resolved",
+  "CheckTitle": "All Azure running container images in the subscription have no unresolved vulnerabilities",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "Microsoft.Security/assessments",
+  "Severity": "critical",
+  "ResourceType": "microsoft.security/assessmentssample",
   "ResourceGroup": "security",
-  "Description": "Container images used by containers should have vulnerabilities resolved. Azure Defender for Container Registries can help you identify and resolve vulnerabilities in your container images. It provides vulnerability scanning and prioritized security recommendations for your container images. You can use Azure Defender for Container Registries to scan your container images for vulnerabilities and get prioritized security recommendations to resolve them. You can also use Azure Defender for Container Registries to monitor your container registries for security threats and get prioritized security recommendations to resolve them. Azure Defender for Container Registries integrates with Azure Security Center to provide a unified view of security across your container registries and other Azure resources. Azure Defender for Container Registries is part of Azure Defender, which provides advanced threat protection for your hybrid workloads. Azure Defender uses advanced analytics and global threat intelligence to detect attacks that might otherwise go unnoticed.",
-  "Risk": "If vulnerabilities are not resolved, attackers can exploit them to gain unauthorized access to your containerized applications and data.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-check-health",
+  "Description": "**Running container images** are evaluated for unresolved **vulnerability findings** (`CVEs`) reported by Microsoft Defender for Cloud. The check reviews images currently in use across Kubernetes workloads and identifies where vulnerabilities remain unremediated.",
+  "Risk": "Unremediated `CVEs` in active images enable:\n- **RCE**, container escape, and node takeover affecting **integrity/availability**\n- **Data exfiltration** and secret theft compromising **confidentiality**\nAdversaries can use public exploits to pivot across clusters and pipelines, tamper images, and disrupt services.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/container-registry/scan-images-defender",
+    "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-check-health",
+    "https://learn.microsoft.com/en-MY/azure/defender-for-cloud/defender-for-containers-vulnerability-assessment-azure"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "kubectl set image deployment/<DEPLOYMENT_NAME> <CONTAINER_NAME>=<PATCHED_IMAGE:TAG> -n <NAMESPACE>",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In the Azure portal, go to Microsoft Defender for Cloud > Recommendations\n2. Open \"Azure running container images should have vulnerabilities resolved\"\n3. Under Affected resources, select a running workload and view its vulnerable image findings\n4. Rebuild the image with patched packages or a newer base image and push it to your registry\n5. Go to your AKS cluster > Workloads > Deployments, edit the deployment, and update the container image to the patched tag; Save\n6. Wait for pods to roll out and Defender to rescan; the recommendation should turn Healthy after the next scan",
+      "Terraform": "```hcl\nresource \"kubernetes_deployment\" \"<example_resource_name>\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  spec {\n    selector {\n      match_labels = { app = \"<example_resource_name>\" }\n    }\n    template {\n      metadata { labels = { app = \"<example_resource_name>\" } }\n      spec {\n        container {\n          name  = \"<example_resource_name>\"\n          image = \"<patched_image:tag>\" # Critical: use a patched image version to remove known vulnerabilities\n        }\n      }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
-      "Url": "https://learn.microsoft.com/en-us/azure/container-registry/scan-images-defender"
+      "Text": "Adopt **risk-based patching** and **least privilege**:\n- Rebuild from updated bases; pin versions, avoid `latest`\n- Sign images; enforce **admission control** to block high-severity CVEs\n- Drop root, restrict capabilities, isolate networks\n- Continuously scan in CI/CD and at runtime; retire vulnerable images",
+      "Url": "https://hub.prowler.com/check/defender_container_images_resolved_vulnerabilities"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities",
+    "container-security"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

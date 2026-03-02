@@ -1,30 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "cosmosdb_account_use_private_endpoints",
-  "CheckTitle": "Ensure That Private Endpoints Are Used Where Possible",
+  "CheckTitle": "Cosmos DB account uses private endpoint connections",
   "CheckType": [],
   "ServiceName": "cosmosdb",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "CosmosDB",
+  "Severity": "high",
+  "ResourceType": "microsoft.documentdb/databaseaccounts",
   "ResourceGroup": "database",
-  "Description": "Private endpoints limit network traffic to approved sources.",
-  "Risk": "For sensitive data, private endpoints allow granular control of which services can communicate with Cosmos DB and ensure that this network traffic is private. You set this up on a case by case basis for each service you wish to be connected.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-configure-private-endpoints",
+  "Description": "**Azure Cosmos DB accounts** are assessed for **private endpoint connections** that keep data-plane traffic on private IPs within authorized virtual networks.",
+  "Risk": "Without **private endpoints**, access may use public endpoints or broad IP rules, enabling:\n- interception and credential replay\n- unauthorized queries and data exfiltration\n- lateral movement via exposed paths\n\nThis degrades **confidentiality** and can impact **availability** under abusive traffic.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-private-endpoints?tabs=arm-bicep",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/CosmosDB/use-private-endpoints.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az network private-endpoint create --name <example_resource_name> --resource-group <example_resource_name> --vnet-name <example_resource_name> --subnet <example_resource_name> --private-connection-resource-id /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<example_resource_name>/providers/Microsoft.DocumentDB/databaseAccounts/<example_resource_name> --group-ids Sql --connection-name <example_resource_name>",
+      "NativeIaC": "```bicep\n// Create a Private Endpoint to a Cosmos DB account (adds a private endpoint connection)\nresource pe 'Microsoft.Network/privateEndpoints@2025-05-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    subnet: { id: '<example_subnet_id>' }\n    privateLinkServiceConnections: [\n      {\n        name: 'conn'\n        properties: {\n          privateLinkServiceId: '<example_cosmosdb_account_id>' // CRITICAL: attaches PE to the Cosmos DB account\n          groupIds: ['Sql'] // CRITICAL: targets Cosmos DB NoSQL subresource so the connection is created\n        }\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In Azure Portal, open your Cosmos DB account\n2. Go to Networking > Private access\n3. Click + Private endpoint\n4. Resource type: Microsoft.AzureCosmosDB/databaseAccounts; Resource: select your account; Target subresource: Sql\n5. Select your Virtual network and Subnet\n6. Click Review + create, then Create\n7. Verify the private endpoint connection appears under Networking > Private access",
+      "Terraform": "```hcl\n# Create a Private Endpoint to a Cosmos DB account (adds a private endpoint connection)\nresource \"azurerm_private_endpoint\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<location>\"\n  resource_group_name = \"<example_resource_name>\"\n  subnet_id           = \"<example_subnet_id>\"\n\n  private_service_connection {\n    name                           = \"<example_resource_name>\"\n    private_connection_resource_id = \"<example_cosmosdb_account_id>\" # CRITICAL: Cosmos DB account ID\n    subresource_names              = [\"Sql\"]                           # CRITICAL: targets Cosmos DB subresource to create the connection\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Open the portal menu. 2. Select the Azure Cosmos DB blade. 3. Select the Azure Cosmos DB account. 4. Select Networking. 5. Select Private access. 6. Click + Private Endpoint. 7. Provide a Name. 8. Click Next. 9. From the Resource type drop down, select Microsoft.AzureCosmosDB/databaseAccounts. 10. From the Resource drop down, select the Cosmos DB account. 11. Click Next. 12. Provide appropriate Virtual Network details. 13. Click Next. 14. Provide appropriate DNS details. 15. Click Next. 16. Optionally provide Tags. 17. Click Next : Review + create. 18. Click Create.",
-      "Url": "https://docs.microsoft.com/en-us/azure/private-link/tutorial-private-endpoint-cosmosdb-portal"
+      "Text": "Adopt **Azure Private Link** for Cosmos DB:\n- Create private endpoints for required subresources\n- Link a private DNS zone so clients resolve to private IPs\n- Set `PublicNetworkAccess=Disabled`; keep tight firewall rules\n- Allow only needed VNets/subnets; apply NSGs\n- Enforce least privilege and monitor access patterns",
+      "Url": "https://hub.prowler.com/check/cosmosdb_account_use_private_endpoints"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Only whitelisted services will have access to communicate with the Cosmos DB."

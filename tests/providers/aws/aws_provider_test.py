@@ -844,7 +844,13 @@ aws:
         aws_provider = AwsProvider()
         response = aws_provider.generate_regional_clients("ec2")
 
-        assert len(response.keys()) == 33
+        # Only commercial regions (not GovCloud/China) should have regional clients
+        commercial_regions = {
+            r
+            for r in aws_provider._enabled_regions
+            if not r.startswith("cn-") and not r.startswith("us-gov-")
+        }
+        assert set(response.keys()) == commercial_regions
 
     @mock_aws
     def test_generate_regional_clients_with_enabled_regions(self):

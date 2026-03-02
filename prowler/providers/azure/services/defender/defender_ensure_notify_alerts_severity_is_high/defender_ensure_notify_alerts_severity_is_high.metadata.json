@@ -1,30 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_notify_alerts_severity_is_high",
-  "CheckTitle": "Ensure that email notifications are configured for alerts with a minimum severity of 'High' or lower",
+  "CheckTitle": "Security contact has alert notifications enabled with minimum severity High or lower",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureEmailNotifications",
+  "ResourceType": "microsoft.resources/subscriptions",
   "ResourceGroup": "monitoring",
-  "Description": "Microsoft Defender for Cloud sends email notifications when alerts of a certain severity level or higher are triggered. By setting the minimum severity to 'High', 'Medium', or even 'Low', you ensure that alerts with equal or greater severity (e.g., High or Critical) are still delivered. Selecting a lower threshold like 'Low' results in more comprehensive alert coverage.",
-  "Risk": "If this setting is too restrictive (e.g., set to 'Critical' only), important security alerts with 'High' or 'Medium' severity might be missed. Ensuring that 'High' or a lower threshold is configured helps security teams stay informed about significant threats and respond in a timely manner.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/email-notifications-alerts#manage-notifications-on-email",
+  "Description": "**Microsoft Defender for Cloud** email notifications use a minimum alert severity of `High` or more inclusive (`Medium`/`Low`). The evaluation inspects security contacts to confirm a threshold is defined and not `Critical`.",
+  "Risk": "Setting the threshold to `Critical` or leaving it unset limits alerting, causing **delayed detection** of `High`/`Medium` threats. Attackers can persist, escalate privileges, and exfiltrate data, impacting **confidentiality**, **integrity**, and **availability** via ransomware or service disruption.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/configure-email-notifications",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/enable-high-severity-email-notifications.html",
+    "https://docs.microsoft.com/en-us/rest/api/securitycenter/securitycontacts/list"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/enable-high-severity-email-notifications.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/bc_azr_general_4#terraform"
+      "CLI": "az rest --method PUT --url \"https://management.azure.com/subscriptions/<SUBSCRIPTION_ID>/providers/Microsoft.Security/securityContacts/default?api-version=2023-12-01-preview\" --body '{\"properties\":{\"emails\":\"<EMAIL>\",\"isEnabled\":true,\"notificationsSources\":[{\"sourceType\":\"Alert\",\"minimalSeverity\":\"High\"}]}}'",
+      "NativeIaC": "```bicep\ntargetScope = 'subscription'\n\nresource contact 'Microsoft.Security/securityContacts@2023-12-01-preview' = {\n  name: '<example_resource_name>'\n  properties: {\n    emails: '<EMAIL>'\n    isEnabled: true\n    notificationsSources: [\n      {\n        sourceType: 'Alert'\n        minimalSeverity: 'High' // Critical line: sets minimum alert severity to High to pass the check\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Defender for Cloud > Environment settings > select your subscription\n2. Open Email notifications\n3. Turn on \"Send email notifications for alerts\"\n4. Set \"Minimum alert severity\" to High (or Medium/Low)\n5. Enter at least one email address\n6. Click Save",
+      "Terraform": "```hcl\nresource \"azapi_resource\" \"<example_resource_name>\" {\n  type      = \"Microsoft.Security/securityContacts@2023-12-01-preview\"\n  name      = \"<example_resource_name>\"\n  parent_id = \"/subscriptions/<SUBSCRIPTION_ID>\"\n\n  body = jsonencode({\n    properties = {\n      emails               = \"<EMAIL>\"\n      isEnabled            = true\n      notificationsSources = [\n        {\n          sourceType     = \"Alert\"\n          minimalSeverity = \"High\" # Critical line: sets minimum alert severity to High to pass the check\n        }\n      ]\n    }\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu. 2. Select Microsoft Defender for Cloud. 3. Click on Environment Settings. 4. Click on the appropriate Management Group, Subscription, or Workspace. 5. Click on Email notifications. 6. Under 'Notify about alerts with the following severity (or higher)', select at least 'High' (or optionally 'Medium' or 'Low' for broader coverage). 7. Click Save.",
-      "Url": "https://docs.microsoft.com/en-us/rest/api/securitycenter/securitycontacts/list"
+      "Text": "Configure the minimum alert notification severity to `High` (or `Medium`/`Low`) and send to accountable recipients and RBAC roles. Apply **defense in depth**: route alerts to SIEM, use redundant contacts, and periodically test delivery. Review thresholds regularly to balance noise while avoiding false negatives.",
+      "Url": "https://hub.prowler.com/check/defender_ensure_notify_alerts_severity_is_high"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

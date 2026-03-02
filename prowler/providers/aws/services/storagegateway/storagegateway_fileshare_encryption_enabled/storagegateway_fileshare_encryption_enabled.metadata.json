@@ -22,7 +22,7 @@
   "Risk": "Without **CMEK**, encryption relies on provider-managed keys, reducing control over who can decrypt and when. This weakens confidentiality by limiting key-policy enforcement, revocation, and auditable key use, increasing exposure from stolen S3 credentials or overly permissive roles.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/StorageGateway/file-shares-encrypted-with-cmk.html#",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement-staging/knowledge-base/aws/StorageGateway/file-shares-encrypted-with-cmk.html#",
     "https://docs.aws.amazon.com/filegateway/latest/files3/encrypt-objects-stored-by-file-gateway-in-amazon-s3.html"
   ],
   "Remediation": {

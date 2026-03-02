@@ -38,7 +38,7 @@ class _MutableTimestamp:
 
 timestamp = _MutableTimestamp(datetime.today())
 timestamp_utc = _MutableTimestamp(datetime.now(timezone.utc))
-prowler_version = "5.17.0"
+prowler_version = "5.19.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 square_logo_img = "https://raw.githubusercontent.com/prowler-cloud/prowler/dc7d2d5aeb92fdf12e8604f42ef6472cd3e8e889/docs/img/prowler-logo-black.png"
 aws_logo = "https://user-images.githubusercontent.com/38561120/235953920-3e3fba08-0795-41dc-b480-9bea57db9f2e.png"
@@ -53,15 +53,23 @@ class Provider(str, Enum):
     AWS = "aws"
     GCP = "gcp"
     AZURE = "azure"
+    CLOUDFLARE = "cloudflare"
     KUBERNETES = "kubernetes"
     M365 = "m365"
     GITHUB = "github"
+    GOOGLEWORKSPACE = "googleworkspace"
     IAC = "iac"
     NHN = "nhn"
     MONGODBATLAS = "mongodbatlas"
     ORACLECLOUD = "oraclecloud"
     ALIBABACLOUD = "alibabacloud"
+    OPENSTACK = "openstack"
+    IMAGE = "image"
 
+
+# Providers that delegate scanning to an external tool (e.g. Trivy, promptfoo)
+# and bypass standard check/service loading.
+EXTERNAL_TOOL_PROVIDERS = frozenset({"iac", "llm", "image", "github_actions"})
 
 # Compliance
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
@@ -73,7 +81,10 @@ def get_available_compliance_frameworks(provider=None):
     if provider:
         providers = [provider]
     for provider in providers:
-        with os.scandir(f"{actual_directory}/../compliance/{provider}") as files:
+        compliance_dir = f"{actual_directory}/../compliance/{provider}"
+        if not os.path.isdir(compliance_dir):
+            continue
+        with os.scandir(compliance_dir) as files:
             for file in files:
                 if file.is_file() and file.name.endswith(".json"):
                     available_compliance_frameworks.append(
@@ -109,6 +120,11 @@ default_redteam_config_file_path = (
 )
 encoding_format_utf_8 = "utf-8"
 available_output_formats = ["csv", "json-asff", "json-ocsf", "html"]
+
+# Prowler Cloud API settings
+cloud_api_base_url = os.getenv("PROWLER_CLOUD_API_BASE", "https://api.prowler.com")
+cloud_api_key = os.getenv("PROWLER_API_KEY", "")
+cloud_api_ingestion_path = "/api/v1/ingestions"
 
 
 def set_output_timestamp(

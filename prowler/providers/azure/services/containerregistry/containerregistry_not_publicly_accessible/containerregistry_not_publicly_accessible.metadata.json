@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "containerregistry_not_publicly_accessible",
-  "CheckTitle": "Restrict public network access to the Container Registry",
+  "CheckTitle": "Container Registry public network access is disabled",
   "CheckType": [],
   "ServiceName": "containerregistry",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "ContainerRegistry",
+  "ResourceType": "microsoft.containerregistry/registries",
   "ResourceGroup": "container",
-  "Description": "Ensure that public network access to the Azure Container Registry is restricted.",
-  "Risk": "Public accessibility exposes the Container Registry to potential attacks, unauthorized usage, and data breaches. Restricting access minimizes the surface area for attacks and ensures that only authorized networks can access the registry.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-access-selected-networks",
+  "Description": "**Azure Container Registry** configuration indicates whether the registry permits **unrestricted public access** based on the `Public network access` setting.",
+  "Risk": "**Internet-exposed ACR** expands attack paths impacting **CIA**:\n- Confidentiality: unauthorized image pulls leak code/secrets\n- Integrity: compromised creds allow tampered image pushes (supply-chain)\n- Availability: pull storms or scans exhaust quotas, causing outages and cost spikes",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ContainerRegistry/disable-public-access.html",
+    "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-access-selected-networks"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az acr update --name <registry-name> --default-action Deny",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az acr update --name <registry-name> --public-network-enabled false",
+      "NativeIaC": "```bicep\n// Azure Container Registry with public network access disabled\nresource <example_resource_name> 'Microsoft.ContainerRegistry/registries@2025-11-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  sku: {\n    name: 'Basic'\n  }\n  properties: {\n    publicNetworkAccess: 'Disabled' // Critical: disables the public endpoint to prevent unrestricted access\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to your Container Registry\n2. Select Settings > Networking\n3. On Public access, set Allow public network access to Disabled\n4. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_container_registry\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<location>\"\n  sku                 = \"Basic\"\n\n  public_network_access_enabled = false # Critical: disables public endpoint to block unrestricted access\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that the necessary virtual network configurations or IP rules are in place to allow access from required services once public access is restricted. Review the network access settings regularly to maintain a secure environment. To restrict public network access to your Azure Container Registry: 1. Navigate to your Container Registry in the Azure Portal. 2. Under 'Settings'->'Networking', configure the 'Public network access' settings to 'Disabled'. 3. Set up virtual network service endpoints or private endpoints as needed for secure access. 4. Review and adjust IP access rules as necessary.",
-      "Url": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-access-selected-networks"
+      "Text": "Set `Public network access` to `Disabled` and use **Private Link** for registry access.\n\nIf public reachability is required, allow only **selected IPs**, enforce **least privilege** and token rotation, and apply **defense in depth** (egress control, network segmentation, logging of push/pull events).",
+      "Url": "https://hub.prowler.com/check/containerregistry_not_publicly_accessible"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This feature is only available for Premium SKU registries."

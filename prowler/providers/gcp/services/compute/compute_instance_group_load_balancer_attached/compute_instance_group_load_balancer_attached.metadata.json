@@ -14,8 +14,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/compute/docs/instance-groups",
-    "https://cloud.google.com/load-balancing/docs/backend-service",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/mig-load-balancer-check.html"
+    "https://cloud.google.com/load-balancing/docs/backend-service"
   ],
   "Remediation": {
     "Code": {

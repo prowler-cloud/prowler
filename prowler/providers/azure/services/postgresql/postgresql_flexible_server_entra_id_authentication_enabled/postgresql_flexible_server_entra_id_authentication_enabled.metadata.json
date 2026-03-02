@@ -1,13 +1,13 @@
 {
   "Provider": "azure",
   "CheckID": "postgresql_flexible_server_entra_id_authentication_enabled",
-  "CheckTitle": "PostgreSQL Flexible Server enforces Microsoft Entra ID authentication with administrators",
+  "CheckTitle": "Microsoft Entra ID authentication is enabled for PostgreSQL Flexible Server",
   "CheckType": [],
   "ServiceName": "postgresql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "PostgreSQL",
+  "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
   "ResourceGroup": "database",
   "Description": "**PostgreSQL Flexible Servers** must set `authConfig.activeDirectoryAuth` to `Enabled` and keep at least one **Microsoft Entra administrator** assigned so database sessions inherit centrally governed identities instead of unmanaged PostgreSQL accounts.",
   "Risk": "Without Entra ID authentication, stolen local passwords bypass **MFA** and conditional access, enabling persistent database logins. Missing administrators leaves the feature unusable, blocking security teams from rotating duties and allowing unauthorized access or **privilege escalation**.",
@@ -18,8 +18,8 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "az postgres flexible-server update --resource-group <resourceGroupName> --name <serverName> --active-directory-auth Enabled\naz postgres flexible-server microsoft-entra-admin create --resource-group <resourceGroupName> --server-name <serverName> --object-id <objectId> --display-name <displayName>",
-      "NativeIaC": "",
+      "CLI": "az postgres flexible-server update --resource-group <resourceGroupName> --name <serverName> --active-directory-auth Enabled\naz postgres flexible-server ad-admin create --resource-group <resourceGroupName> --server-name <serverName> --object-id <objectId> --display-name <displayName> --type User",
+      "NativeIaC": "```bicep\n// Enable Microsoft Entra ID authentication on an existing PostgreSQL Flexible Server\nresource server 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' existing = {\n  name: '<example_resource_name>'\n}\n\n// Update server to enable Entra ID authentication\nresource serverUpdate 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' = {\n  name: server.name\n  location: server.location\n  properties: {\n    authConfig: {\n      activeDirectoryAuth: 'Enabled' // CRITICAL: Enables Entra ID authentication\n      tenantId: tenant().tenantId\n    }\n  }\n}\n\n// Add Entra ID administrator\nresource entraAdmin 'Microsoft.DBforPostgreSQL/flexibleServers/administrators@2023-12-01-preview' = {\n  parent: server\n  name: '<objectId>' // CRITICAL: Object ID of the Entra ID principal\n  properties: {\n    principalName: '<displayName>' // User principal name or group display name\n    principalType: 'User' // CRITICAL: Can be 'User', 'Group', or 'ServicePrincipal'\n    tenantId: tenant().tenantId\n  }\n  dependsOn: [\n    serverUpdate\n  ]\n}\n```",
       "Other": "1. In the Azure Portal, open Azure Database for PostgreSQL flexible server and select the target server.\n2. Under Security > Authentication, set Microsoft Entra ID authentication (or combined mode) to Enabled and save the change.\n3. Under Security > Microsoft Entra ID, add at least one administrator (user or group) linked to an Entra object ID and confirm the assignment.",
       "Terraform": "```hcl\ndata \"azurerm_client_config\" \"current\" {}\n\nresource \"azurerm_postgresql_flexible_server\" \"example\" {\n  name                = \"pg-flex\"\n  resource_group_name = azurerm_resource_group.example.name\n  location            = azurerm_resource_group.example.location\n  sku_name            = \"GP_Standard_D4s_v3\"\n  administrator_login = \"pgadmin\"\n  administrator_password = \"<complexPassword>\"\n  storage_mb          = 131072\n  version             = \"16\"\n\n  authentication {\n    active_directory_auth_enabled = true\n    tenant_id                     = data.azurerm_client_config.current.tenant_id\n  }\n}\n\nresource \"azurerm_postgresql_flexible_server_active_directory_administrator\" \"entra_admin\" {\n  server_id     = azurerm_postgresql_flexible_server.example.id\n  object_id     = var.entra_object_id\n  principal_name = var.entra_principal_name\n  principal_type = \"User\"\n  tenant_id     = data.azurerm_client_config.current.tenant_id\n}\n```"
     },

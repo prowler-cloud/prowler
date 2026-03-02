@@ -14,8 +14,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/compute/docs/instances/preemptible",
-    "https://cloud.google.com/compute/docs/instances/spot",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/disable-preemptibility.html"
+    "https://cloud.google.com/compute/docs/instances/spot"
   ],
   "Remediation": {
     "Code": {

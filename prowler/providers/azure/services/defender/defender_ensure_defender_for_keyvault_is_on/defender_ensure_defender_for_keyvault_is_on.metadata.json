@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_keyvault_is_on",
-  "CheckTitle": "Ensure That Microsoft Defender for KeyVault Is Set To 'On' ",
+  "CheckTitle": "Defender for Key Vaults is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureDefenderPlan",
+  "ResourceType": "microsoft.security/pricings",
   "ResourceGroup": "security",
-  "Description": "Ensure That Microsoft Defender for KeyVault Is Set To 'On' ",
-  "Risk": "By default, Microsoft Defender for Cloud is disabled for Azure key vaults. Defender for Cloud detects unusual and potentially harmful attempts to access or exploit your Azure Key Vault data. This layer of protection allows you to address threats without being a security expert, and without the need to use and manage third-party security monitoring tools or services.",
+  "Description": "**Azure subscriptions** are evaluated for the **Defender for Key Vaults** plan configured at the `Standard` tier. It identifies where Key Vault protection uses this tier versus where the Defender pricing for `KeyVaults` is not set accordingly.",
+  "Risk": "Without **Defender for Key Vaults**, anomalous access and mass secret retrievals can go undetected, enabling:\n- Secret exfiltration (confidentiality)\n- Key/secret tampering (integrity)\n- Destructive actions like purge/delete (availability)\n\nLack of signals delays response and facilitates lateral movement.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-key-vault.html",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-key-vault-introduction"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-key-vault.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-key-vault#terraform"
+      "CLI": "az security pricing update --name KeyVaults --tier Standard",
+      "NativeIaC": "```bicep\n// Enable Microsoft Defender for Key Vaults (Standard tier) at subscription scope\nresource example_pricing 'Microsoft.Security/pricings@2023-01-01' = {\n  name: 'KeyVaults'\n  properties: {\n    pricingTier: 'Standard' // Critical: sets the KeyVaults plan to Standard (ON)\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Microsoft Defender for Cloud\n2. Select Environment settings, then choose your subscription\n3. Open Defender plans\n4. Find Key Vaults and set the plan to On/Standard\n5. Save",
+      "Terraform": "```hcl\n# Enable Microsoft Defender for Key Vaults (Standard)\nresource \"azurerm_security_center_subscription_pricing\" \"example_resource_name\" {\n  resource_type = \"KeyVaults\"\n  tier          = \"Standard\" # Critical: sets the plan to Standard (ON)\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that Microsoft Defender for Cloud is enabled for Azure key vaults. Key Vault is the Azure cloud service that safeguards encryption keys and secrets like certificates, connection-based strings, and passwords.",
-      "Url": ""
+      "Text": "Enable **Defender for Key Vaults** at the `Standard` tier across all subscriptions. Integrate alerts with monitoring and tune noise. Apply **least privilege** with **RBAC**, enforce purge protection and logging, and use **defense in depth** (private access and network restrictions) to prevent abuse and accelerate detection.",
+      "Url": "https://hub.prowler.com/check/defender_ensure_defender_for_keyvault_is_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "secrets"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
