@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "OS::Cinder::Volume",
   "ResourceGroup": "storage",
-  "Description": "**OpenStack block storage volumes** are evaluated to verify that **multi-attach** is not enabled. Multi-attach allows a volume to be simultaneously attached to multiple compute instances. While useful for clustered applications, it increases the attack surface by allowing multiple instances to read and write to the same storage, potentially leading to data corruption or unauthorized access from compromised instances.",
+  "Description": "**OpenStack block storage volumes** are evaluated to verify that **multi-attach** is not enabled. Multi-attach allows a volume to be attached to multiple instances simultaneously, increasing the attack surface and potentially leading to data corruption or unauthorized access from compromised instances.",
   "Risk": "Multi-attach volumes can be accessed by multiple instances simultaneously, increasing the blast radius if any attached instance is compromised. Data corruption may occur if applications do not implement proper cluster-aware file systems. Unauthorized modifications from one instance can affect all other attached instances.",
   "RelatedUrl": "",
   "AdditionalURLs": [
