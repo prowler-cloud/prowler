@@ -70,6 +70,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - VPC endpoint service collection filtering third-party services that caused AccessDenied errors on `DescribeVpcEndpointServicePermissions` [(#10152)](https://github.com/prowler-cloud/prowler/pull/10152)
 - Handle serialization errors in OCSF output for non-serializable resource metadata [(#10129)](https://github.com/prowler-cloud/prowler/pull/10129)
 
+### 🐞 Fixed
+
+- Typo in `--security-hub` help text for AWS provider [(#10040)](https://github.com/prowler-cloud/prowler/pull/10040)
+- Help text and documentation for space-separated CLI flags in IaC provider [(#10040)](https://github.com/prowler-cloud/prowler/pull/10040)
+
 ### 🔐 Security
 
 - Bumped `py-ocsf-models` to 0.8.1 and `cryptography` to 44.0.3 [(#10059)](https://github.com/prowler-cloud/prowler/pull/10059)
