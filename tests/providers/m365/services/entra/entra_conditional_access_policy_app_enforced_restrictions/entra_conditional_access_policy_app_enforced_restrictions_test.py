@@ -19,7 +19,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
-class Test_entra_app_enforced_restrictions:
+class Test_entra_conditional_access_policy_app_enforced_restrictions:
     def test_entra_no_conditional_access_policies(self):
         """Test FAIL when no conditional access policies exist."""
         entra_client = mock.MagicMock
@@ -32,17 +32,17 @@ class Test_entra_app_enforced_restrictions:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions import (
-                entra_app_enforced_restrictions,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions import (
+                entra_conditional_access_policy_app_enforced_restrictions,
             )
 
             entra_client.conditional_access_policies = {}
 
-            check = entra_app_enforced_restrictions()
+            check = entra_conditional_access_policy_app_enforced_restrictions()
             result = check.execute()
 
             assert len(result) == 1
@@ -56,7 +56,9 @@ class Test_entra_app_enforced_restrictions:
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_app_enforced_restrictions_policy_disabled(self):
+    def test_entra_conditional_access_policy_app_enforced_restrictions_policy_disabled(
+        self,
+    ):
         """Test FAIL when policy with app enforced restrictions is disabled."""
         id = str(uuid4())
         display_name = "App Enforced Restrictions Policy"
@@ -70,12 +72,12 @@ class Test_entra_app_enforced_restrictions:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions import (
-                entra_app_enforced_restrictions,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions import (
+                entra_conditional_access_policy_app_enforced_restrictions,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -125,7 +127,7 @@ class Test_entra_app_enforced_restrictions:
                 )
             }
 
-            check = entra_app_enforced_restrictions()
+            check = entra_conditional_access_policy_app_enforced_restrictions()
             result = check.execute()
 
             assert len(result) == 1
@@ -139,7 +141,9 @@ class Test_entra_app_enforced_restrictions:
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_app_enforced_restrictions_enabled_for_reporting(self):
+    def test_entra_conditional_access_policy_app_enforced_restrictions_enabled_for_reporting(
+        self,
+    ):
         """Test FAIL when policy is enabled for reporting but not enforcing."""
         id = str(uuid4())
         display_name = "App Enforced Restrictions Reporting"
@@ -153,12 +157,12 @@ class Test_entra_app_enforced_restrictions:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions import (
-                entra_app_enforced_restrictions,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions import (
+                entra_conditional_access_policy_app_enforced_restrictions,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -208,7 +212,7 @@ class Test_entra_app_enforced_restrictions:
                 )
             }
 
-            check = entra_app_enforced_restrictions()
+            check = entra_conditional_access_policy_app_enforced_restrictions()
             result = check.execute()
 
             assert len(result) == 1
@@ -225,7 +229,9 @@ class Test_entra_app_enforced_restrictions:
             assert result[0].resource_id == id
             assert result[0].location == "global"
 
-    def test_entra_app_enforced_restrictions_not_enabled(self):
+    def test_entra_conditional_access_policy_app_enforced_restrictions_not_enabled(
+        self,
+    ):
         """Test FAIL when policy exists but app enforced restrictions is not enabled."""
         id = str(uuid4())
         display_name = "Policy Without App Restrictions"
@@ -239,12 +245,12 @@ class Test_entra_app_enforced_restrictions:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions import (
-                entra_app_enforced_restrictions,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions import (
+                entra_conditional_access_policy_app_enforced_restrictions,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -294,7 +300,7 @@ class Test_entra_app_enforced_restrictions:
                 )
             }
 
-            check = entra_app_enforced_restrictions()
+            check = entra_conditional_access_policy_app_enforced_restrictions()
             result = check.execute()
 
             assert len(result) == 1
@@ -308,7 +314,9 @@ class Test_entra_app_enforced_restrictions:
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_app_enforced_restrictions_missing_all_users(self):
+    def test_entra_conditional_access_policy_app_enforced_restrictions_missing_all_users(
+        self,
+    ):
         """Test FAIL when policy does not include all users."""
         id = str(uuid4())
         display_name = "Policy Missing All Users"
@@ -322,12 +330,12 @@ class Test_entra_app_enforced_restrictions:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions import (
-                entra_app_enforced_restrictions,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions import (
+                entra_conditional_access_policy_app_enforced_restrictions,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -377,7 +385,7 @@ class Test_entra_app_enforced_restrictions:
                 )
             }
 
-            check = entra_app_enforced_restrictions()
+            check = entra_conditional_access_policy_app_enforced_restrictions()
             result = check.execute()
 
             assert len(result) == 1
@@ -391,7 +399,9 @@ class Test_entra_app_enforced_restrictions:
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_app_enforced_restrictions_missing_all_client_apps(self):
+    def test_entra_conditional_access_policy_app_enforced_restrictions_missing_all_client_apps(
+        self,
+    ):
         """Test FAIL when policy does not include all client app types."""
         id = str(uuid4())
         display_name = "Policy Missing All Client Apps"
@@ -405,12 +415,12 @@ class Test_entra_app_enforced_restrictions:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions import (
-                entra_app_enforced_restrictions,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions import (
+                entra_conditional_access_policy_app_enforced_restrictions,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -460,7 +470,7 @@ class Test_entra_app_enforced_restrictions:
                 )
             }
 
-            check = entra_app_enforced_restrictions()
+            check = entra_conditional_access_policy_app_enforced_restrictions()
             result = check.execute()
 
             assert len(result) == 1
@@ -474,7 +484,9 @@ class Test_entra_app_enforced_restrictions:
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_app_enforced_restrictions_missing_required_apps(self):
+    def test_entra_conditional_access_policy_app_enforced_restrictions_missing_required_apps(
+        self,
+    ):
         """Test FAIL when policy does not include Office365 or the required individual apps."""
         id = str(uuid4())
         display_name = "Policy Missing Required Apps"
@@ -488,12 +500,12 @@ class Test_entra_app_enforced_restrictions:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions import (
-                entra_app_enforced_restrictions,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions import (
+                entra_conditional_access_policy_app_enforced_restrictions,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -543,7 +555,7 @@ class Test_entra_app_enforced_restrictions:
                 )
             }
 
-            check = entra_app_enforced_restrictions()
+            check = entra_conditional_access_policy_app_enforced_restrictions()
             result = check.execute()
 
             assert len(result) == 1
@@ -557,7 +569,9 @@ class Test_entra_app_enforced_restrictions:
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_app_enforced_restrictions_individual_apps_pass(self):
+    def test_entra_conditional_access_policy_app_enforced_restrictions_individual_apps_pass(
+        self,
+    ):
         """Test PASS when policy targets SharePoint and Exchange individually."""
         id = str(uuid4())
         display_name = "Individual Apps Policy"
@@ -571,12 +585,12 @@ class Test_entra_app_enforced_restrictions:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions import (
-                entra_app_enforced_restrictions,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions import (
+                entra_conditional_access_policy_app_enforced_restrictions,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -629,7 +643,7 @@ class Test_entra_app_enforced_restrictions:
                 )
             }
 
-            check = entra_app_enforced_restrictions()
+            check = entra_conditional_access_policy_app_enforced_restrictions()
             result = check.execute()
 
             assert len(result) == 1
@@ -646,7 +660,9 @@ class Test_entra_app_enforced_restrictions:
             assert result[0].resource_id == id
             assert result[0].location == "global"
 
-    def test_entra_app_enforced_restrictions_only_sharepoint_fail(self):
+    def test_entra_conditional_access_policy_app_enforced_restrictions_only_sharepoint_fail(
+        self,
+    ):
         """Test FAIL when policy targets only SharePoint but not Exchange."""
         id = str(uuid4())
         display_name = "Only SharePoint Policy"
@@ -660,12 +676,12 @@ class Test_entra_app_enforced_restrictions:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions import (
-                entra_app_enforced_restrictions,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions import (
+                entra_conditional_access_policy_app_enforced_restrictions,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -717,7 +733,7 @@ class Test_entra_app_enforced_restrictions:
                 )
             }
 
-            check = entra_app_enforced_restrictions()
+            check = entra_conditional_access_policy_app_enforced_restrictions()
             result = check.execute()
 
             assert len(result) == 1
@@ -731,7 +747,9 @@ class Test_entra_app_enforced_restrictions:
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_app_enforced_restrictions_browser_and_mobile_pass(self):
+    def test_entra_conditional_access_policy_app_enforced_restrictions_browser_and_mobile_pass(
+        self,
+    ):
         """Test PASS when policy uses browser + mobile apps instead of ALL."""
         id = str(uuid4())
         display_name = "Browser and Mobile Apps Policy"
@@ -745,12 +763,12 @@ class Test_entra_app_enforced_restrictions:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions import (
-                entra_app_enforced_restrictions,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions import (
+                entra_conditional_access_policy_app_enforced_restrictions,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -803,7 +821,7 @@ class Test_entra_app_enforced_restrictions:
                 )
             }
 
-            check = entra_app_enforced_restrictions()
+            check = entra_conditional_access_policy_app_enforced_restrictions()
             result = check.execute()
 
             assert len(result) == 1
@@ -820,7 +838,7 @@ class Test_entra_app_enforced_restrictions:
             assert result[0].resource_id == id
             assert result[0].location == "global"
 
-    def test_entra_app_enforced_restrictions_enabled(self):
+    def test_entra_conditional_access_policy_app_enforced_restrictions_enabled(self):
         """Test PASS when a compliant policy with app enforced restrictions is enabled."""
         id = str(uuid4())
         display_name = "App Enforced Restrictions Enabled"
@@ -834,12 +852,12 @@ class Test_entra_app_enforced_restrictions:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions import (
-                entra_app_enforced_restrictions,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions import (
+                entra_conditional_access_policy_app_enforced_restrictions,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -889,7 +907,7 @@ class Test_entra_app_enforced_restrictions:
                 )
             }
 
-            check = entra_app_enforced_restrictions()
+            check = entra_conditional_access_policy_app_enforced_restrictions()
             result = check.execute()
 
             assert len(result) == 1
@@ -906,7 +924,9 @@ class Test_entra_app_enforced_restrictions:
             assert result[0].resource_id == id
             assert result[0].location == "global"
 
-    def test_entra_app_enforced_restrictions_multiple_policies_one_compliant(self):
+    def test_entra_conditional_access_policy_app_enforced_restrictions_multiple_policies_one_compliant(
+        self,
+    ):
         """Test PASS when multiple policies exist and at least one is compliant."""
         id1 = str(uuid4())
         id2 = str(uuid4())
@@ -922,12 +942,12 @@ class Test_entra_app_enforced_restrictions:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_app_enforced_restrictions.entra_app_enforced_restrictions import (
-                entra_app_enforced_restrictions,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_app_enforced_restrictions.entra_conditional_access_policy_app_enforced_restrictions import (
+                entra_conditional_access_policy_app_enforced_restrictions,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -1018,7 +1038,7 @@ class Test_entra_app_enforced_restrictions:
                 ),
             }
 
-            check = entra_app_enforced_restrictions()
+            check = entra_conditional_access_policy_app_enforced_restrictions()
             result = check.execute()
 
             assert len(result) == 1

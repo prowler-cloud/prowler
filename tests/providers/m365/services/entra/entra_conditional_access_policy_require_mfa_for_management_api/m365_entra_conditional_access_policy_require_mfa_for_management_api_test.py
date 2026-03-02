@@ -18,10 +18,10 @@ from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 AZURE_MANAGEMENT_API_APP_ID = "797f4846-ba00-4fd7-ba43-dac1f8f63013"
 
-CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api"
+CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api"
 
 
-class Test_m365_entra_require_mfa_for_management_api:
+class Test_m365_entra_conditional_access_policy_require_mfa_for_management_api:
     def test_no_conditional_access_policies(self):
         """Test FAIL when there are no Conditional Access policies."""
         entra_client = mock.MagicMock
@@ -37,13 +37,13 @@ class Test_m365_entra_require_mfa_for_management_api:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
-                entra_require_mfa_for_management_api,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
+                entra_conditional_access_policy_require_mfa_for_management_api,
             )
 
             entra_client.conditional_access_policies = {}
 
-            check = entra_require_mfa_for_management_api()
+            check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -74,8 +74,8 @@ class Test_m365_entra_require_mfa_for_management_api:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
-                entra_require_mfa_for_management_api,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
+                entra_conditional_access_policy_require_mfa_for_management_api,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -122,7 +122,7 @@ class Test_m365_entra_require_mfa_for_management_api:
                 )
             }
 
-            check = entra_require_mfa_for_management_api()
+            check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -153,8 +153,8 @@ class Test_m365_entra_require_mfa_for_management_api:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
-                entra_require_mfa_for_management_api,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
+                entra_conditional_access_policy_require_mfa_for_management_api,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -201,7 +201,7 @@ class Test_m365_entra_require_mfa_for_management_api:
                 )
             }
 
-            check = entra_require_mfa_for_management_api()
+            check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -235,8 +235,8 @@ class Test_m365_entra_require_mfa_for_management_api:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
-                entra_require_mfa_for_management_api,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
+                entra_conditional_access_policy_require_mfa_for_management_api,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -279,7 +279,7 @@ class Test_m365_entra_require_mfa_for_management_api:
                 )
             }
 
-            check = entra_require_mfa_for_management_api()
+            check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -310,8 +310,8 @@ class Test_m365_entra_require_mfa_for_management_api:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
-                entra_require_mfa_for_management_api,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
+                entra_conditional_access_policy_require_mfa_for_management_api,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -358,7 +358,7 @@ class Test_m365_entra_require_mfa_for_management_api:
                 )
             }
 
-            check = entra_require_mfa_for_management_api()
+            check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -389,8 +389,8 @@ class Test_m365_entra_require_mfa_for_management_api:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
-                entra_require_mfa_for_management_api,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
+                entra_conditional_access_policy_require_mfa_for_management_api,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -439,7 +439,7 @@ class Test_m365_entra_require_mfa_for_management_api:
                 )
             }
 
-            check = entra_require_mfa_for_management_api()
+            check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -470,8 +470,8 @@ class Test_m365_entra_require_mfa_for_management_api:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
-                entra_require_mfa_for_management_api,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
+                entra_conditional_access_policy_require_mfa_for_management_api,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -518,7 +518,7 @@ class Test_m365_entra_require_mfa_for_management_api:
                 )
             }
 
-            check = entra_require_mfa_for_management_api()
+            check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -549,8 +549,8 @@ class Test_m365_entra_require_mfa_for_management_api:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
-                entra_require_mfa_for_management_api,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
+                entra_conditional_access_policy_require_mfa_for_management_api,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -597,7 +597,7 @@ class Test_m365_entra_require_mfa_for_management_api:
                 )
             }
 
-            check = entra_require_mfa_for_management_api()
+            check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -631,8 +631,8 @@ class Test_m365_entra_require_mfa_for_management_api:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_require_mfa_for_management_api.entra_require_mfa_for_management_api import (
-                entra_require_mfa_for_management_api,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api import (
+                entra_conditional_access_policy_require_mfa_for_management_api,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -679,7 +679,7 @@ class Test_m365_entra_require_mfa_for_management_api:
                 )
             }
 
-            check = entra_require_mfa_for_management_api()
+            check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"

@@ -1,6 +1,6 @@
 {
   "Provider": "m365",
-  "CheckID": "entra_app_enforced_restrictions",
+  "CheckID": "entra_conditional_access_policy_app_enforced_restrictions",
   "CheckTitle": "Conditional Access policy enforces application restrictions for unmanaged devices",
   "CheckType": [],
   "ServiceName": "entra",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Configure Conditional Access policies with **application enforced restrictions** to control access from unmanaged devices. Apply this to Office 365 applications (SharePoint, OneDrive, Exchange) to limit download, print, and sync operations.\n\nCombine with SharePoint access control settings for comprehensive protection.",
-      "Url": "https://hub.prowler.com/check/entra_app_enforced_restrictions"
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_app_enforced_restrictions"
     }
   },
   "Categories": [

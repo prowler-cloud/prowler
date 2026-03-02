@@ -9,7 +9,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 AZURE_MANAGEMENT_API_APP_ID = "797f4846-ba00-4fd7-ba43-dac1f8f63013"
 
 
-class entra_require_mfa_for_management_api(Check):
+class entra_conditional_access_policy_require_mfa_for_management_api(Check):
     """Check if at least one enabled Conditional Access policy requires MFA for Azure Management API.
 
     This check verifies that at least one enabled Conditional Access policy

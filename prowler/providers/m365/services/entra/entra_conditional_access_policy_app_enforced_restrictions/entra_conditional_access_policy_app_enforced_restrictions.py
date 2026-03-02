@@ -6,7 +6,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 
 
-class entra_app_enforced_restrictions(Check):
+class entra_conditional_access_policy_app_enforced_restrictions(Check):
     """Check if at least one Conditional Access policy enforces application restrictions.
 
     This check verifies that the tenant has at least one enabled Conditional Access policy
