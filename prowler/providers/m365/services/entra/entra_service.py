@@ -272,6 +272,13 @@ class Entra(M365Service):
                                 [],
                             )
                         ],
+                        authentication_flows=self._parse_authentication_flows(
+                            getattr(
+                                policy.conditions,
+                                "authentication_flows",
+                                None,
+                            )
+                        ),
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=(
@@ -416,6 +423,32 @@ class Entra(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return default_app_management_policy
+
+    @staticmethod
+    def _parse_authentication_flows(auth_flows) -> "AuthenticationFlows | None":
+        """Parse authentication flows conditions from the Graph API response.
+
+        Args:
+            auth_flows: The authentication flows object from the Graph API.
+
+        Returns:
+            AuthenticationFlows object or None if not present.
+        """
+        if not auth_flows:
+            return None
+
+        transfer_methods = []
+        raw_methods = getattr(auth_flows, "transfer_methods", None) or []
+        for method in raw_methods:
+            method_value = method.value if hasattr(method, "value") else str(method)
+            try:
+                transfer_methods.append(TransferMethod(method_value))
+            except ValueError:
+                logger.warning(
+                    f"Unknown authentication flow transfer method: {method_value}"
+                )
+
+        return AuthenticationFlows(transfer_methods=transfer_methods)
 
     @staticmethod
     def _parse_app_management_restrictions(restrictions):
@@ -798,12 +831,26 @@ class ClientAppType(Enum):
     OTHER_CLIENTS = "other"
 
 
+class TransferMethod(Enum):
+    """Transfer methods for authentication flows in Conditional Access policies."""
+
+    DEVICE_CODE_FLOW = "deviceCodeFlow"
+    AUTHENTICATION_TRANSFER = "authenticationTransfer"
+
+
+class AuthenticationFlows(BaseModel):
+    """Model representing authentication flows conditions in Conditional Access policies."""
+
+    transfer_methods: List[TransferMethod] = []
+
+
 class Conditions(BaseModel):
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
     client_app_types: Optional[List[ClientAppType]]
     user_risk_levels: List[RiskLevel] = []
     sign_in_risk_levels: List[RiskLevel] = []
+    authentication_flows: Optional[AuthenticationFlows] = None
 
 
 class PersistentBrowser(BaseModel):
