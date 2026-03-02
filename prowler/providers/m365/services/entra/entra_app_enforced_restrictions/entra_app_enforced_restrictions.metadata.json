@@ -1,0 +1,39 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_app_enforced_restrictions",
+  "CheckTitle": "Conditional Access policy enforces application restrictions for unmanaged devices",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
+  "Description": "Conditional Access policy with **application enforced restrictions** limits access to SharePoint, OneDrive, and Exchange content from unmanaged devices.\n\nThis control helps prevent data exfiltration by restricting download, print, and sync capabilities on devices that are not managed by the organization.",
+  "Risk": "Without application enforced restrictions, users accessing SharePoint, OneDrive, and Exchange from unmanaged devices can:\n\n- **Download** sensitive files to personal devices\n- **Print** confidential documents\n- **Sync** corporate data to uncontrolled locations\n\nThis increases the risk of data leakage and unauthorized access to sensitive information.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-policy-app-enforced-restriction",
+    "https://learn.microsoft.com/en-us/sharepoint/control-access-from-unmanaged-devices"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Click **New policy**.\n4. Under **Users**, select **All users**.\n5. Under **Target resources**, select **Office 365** from the cloud apps.\n6. Under **Conditions** > **Client apps**, select **All client apps**.\n7. Under **Session**, check **Use app enforced restrictions**.\n8. Set the policy to **On** and click **Create**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure Conditional Access policies with **application enforced restrictions** to control access from unmanaged devices. Apply this to Office 365 applications (SharePoint, OneDrive, Exchange) to limit download, print, and sync operations.\n\nCombine with SharePoint access control settings for comprehensive protection.",
+      "Url": "https://hub.prowler.com/check/entra_app_enforced_restrictions"
+    }
+  },
+  "Categories": [
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_managed_device_required_for_authentication"
+  ],
+  "Notes": "Application enforced restrictions only work with Exchange Online and SharePoint Online (including OneDrive)."
+}

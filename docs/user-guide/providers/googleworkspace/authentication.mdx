@@ -1,0 +1,156 @@
+---
+title: 'Google Workspace Authentication in Prowler'
+---
+
+Prowler for Google Workspace uses a **Service Account with Domain-Wide Delegation** to authenticate to the Google Workspace Admin SDK. This allows Prowler to read directory data on behalf of a super administrator without requiring an interactive login.
+
+## Required OAuth Scopes
+
+Prowler requests the following read-only OAuth 2.0 scopes from the Google Workspace Admin SDK:
+
+| Scope | Description |
+|-------|-------------|
+| `https://www.googleapis.com/auth/admin.directory.user.readonly` | Read access to user accounts and their admin status |
+| `https://www.googleapis.com/auth/admin.directory.domain.readonly` | Read access to domain information |
+| `https://www.googleapis.com/auth/admin.directory.customer.readonly` | Read access to customer information (Customer ID) |
+
+<Warning>
+The delegated user must be a **super administrator** in your Google Workspace organization. Using a non-admin account will result in permission errors when accessing the Admin SDK.
+</Warning>
+
+## Setup Steps
+
+### Step 1: Create a GCP Project (if needed)
+
+If you don't have a GCP project, create one at [https://console.cloud.google.com](https://console.cloud.google.com).
+
+The project is only used to host the Service Account — it does not need to have any Google Workspace data in it.
+
+### Step 2: Enable the Admin SDK API
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com)
+2. Select your project
+3. Navigate to **APIs & Services → Library**
+4. Search for **Admin SDK API**
+5. Click **Enable**
+
+### Step 3: Create a Service Account
+
+1. In the Google Cloud Console, navigate to **IAM & Admin → Service Accounts**
+2. Click **Create Service Account**
+3. Give it a descriptive name (e.g., `prowler-googleworkspace-reader`)
+4. Click **Create and Continue**
+5. Skip the optional role and user access steps — click **Done**
+
+<Note>
+The Service Account does not need any GCP IAM roles. Its access to Google Workspace is granted entirely through Domain-Wide Delegation in the next steps.
+</Note>
+
+### Step 4: Generate a JSON Key
+
+1. Click on the Service Account you just created
+2. Go to the **Keys** tab
+3. Click **Add Key → Create new key**
+4. Select **JSON** format
+5. Click **Create** — the key file will download automatically
+6. Store it securely (e.g., `~/.config/prowler/googleworkspace-sa.json`)
+
+<Warning>
+This JSON key grants access to your Google Workspace organization. Never commit it to version control, share it in plain text, or store it in an insecure location.
+</Warning>
+
+### Step 5: Configure Domain-Wide Delegation in Google Workspace
+
+1. Go to the [Google Workspace Admin Console](https://admin.google.com)
+2. Navigate to **Security → Access and data control → API controls**
+3. Click **Manage Domain Wide Delegation**
+4. Click **Add new**
+5. Enter the **Client ID** of the Service Account (found in the JSON key as `client_id`, or on the Service Account details page)
+6. In the **OAuth scopes** field, enter the following scopes as a comma-separated list:
+
+```
+https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.domain.readonly,https://www.googleapis.com/auth/admin.directory.customer.readonly
+```
+
+7. Click **Authorize**
+
+<Note>
+Domain-Wide Delegation must be configured by a Google Workspace **super administrator**. It may take a few minutes to propagate after saving.
+</Note>
+
+### Step 6: Store Credentials Securely
+
+Set your credentials as environment variables:
+
+```bash
+export GOOGLEWORKSPACE_CREDENTIALS_FILE="/path/to/googleworkspace-sa.json"
+export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
+```
+
+Alternatively, if you need to pass credentials as a string (e.g., in CI/CD pipelines):
+
+```bash
+export GOOGLEWORKSPACE_CREDENTIALS_CONTENT=$(cat /path/to/googleworkspace-sa.json)
+export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
+```
+
+## Credential Lookup Order
+
+Prowler resolves credentials in the following order:
+
+1. `GOOGLEWORKSPACE_CREDENTIALS_FILE` environment variable
+2. `GOOGLEWORKSPACE_CREDENTIALS_CONTENT` environment variable
+
+The delegated user must be provided via the `GOOGLEWORKSPACE_DELEGATED_USER` environment variable.
+
+## Best Practices
+
+- **Use environment variables** — Never hardcode credentials in scripts or commands
+- **Use a dedicated Service Account** — Create one specifically for Prowler, separate from other integrations
+- **Use read-only scopes** — Prowler only requires the three read-only scopes listed above
+- **Restrict key access** — Set file permissions to `600` on the JSON key file
+- **Rotate keys regularly** — Delete and regenerate the JSON key periodically
+- **Use a least-privilege super admin** — Consider using a dedicated super admin account for Prowler's delegated user rather than a personal admin account
+
+```bash
+# Secure the key file
+chmod 600 /path/to/googleworkspace-sa.json
+```
+
+## Troubleshooting
+
+### `GoogleWorkspaceMissingDelegatedUserError`
+
+The delegated user email was not provided. Set it via environment variable:
+
+```bash
+export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
+```
+
+### `GoogleWorkspaceNoCredentialsError`
+
+No credentials were found. Ensure either `GOOGLEWORKSPACE_CREDENTIALS_FILE` or `GOOGLEWORKSPACE_CREDENTIALS_CONTENT` is set.
+
+### `GoogleWorkspaceInvalidCredentialsError`
+
+The JSON key file is malformed or cannot be parsed. Verify the file was downloaded correctly and is valid JSON:
+
+```bash
+python3 -c "import json; json.load(open('/path/to/key.json'))" && echo "Valid JSON"
+```
+
+### `GoogleWorkspaceImpersonationError`
+
+The Service Account cannot impersonate the delegated user. This usually means Domain-Wide Delegation has not been configured, or the OAuth scopes are incorrect. Verify:
+
+- The Service Account Client ID is correctly entered in the Admin Console
+- All three required OAuth scopes are included
+- The delegated user is a super administrator
+
+### Permission Denied on Admin SDK calls
+
+If Prowler connects but returns empty results or permission errors for specific API calls:
+
+- Confirm Domain-Wide Delegation is fully propagated (wait a few minutes after setup)
+- Verify all three scopes are authorized in the Admin Console
+- Ensure the delegated user is an active super administrator

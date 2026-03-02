@@ -9,10 +9,12 @@ import { RadioGroupCloudflareViaCredentialsTypeForm } from "./radio-group-cloudf
 
 interface SelectViaCloudflareProps {
   initialVia?: string;
+  onViaChange?: (value: string) => void;
 }
 
 export const SelectViaCloudflare = ({
   initialVia,
+  onViaChange,
 }: SelectViaCloudflareProps) => {
   const router = useRouter();
   const form = useForm({
@@ -22,6 +24,11 @@ export const SelectViaCloudflare = ({
   });
 
   const handleSelectionChange = (value: string) => {
+    if (onViaChange) {
+      onViaChange(value);
+      return;
+    }
+
     const url = new URL(window.location.href);
     url.searchParams.set("via", value);
     router.push(url.toString());

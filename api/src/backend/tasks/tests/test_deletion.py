@@ -1,12 +1,11 @@
 from unittest.mock import call, patch
 
 import pytest
-
 from django.core.exceptions import ObjectDoesNotExist
+from tasks.jobs.deletion import delete_provider, delete_tenant
 
 from api.attack_paths import database as graph_database
-from api.models import Provider, Tenant
-from tasks.jobs.deletion import delete_provider, delete_tenant
+from api.models import Provider, Tenant, TenantComplianceSummary
 
 
 @pytest.mark.django_db
@@ -103,6 +102,53 @@ class TestDeleteProvider:
 
         assert result
         assert not Provider.all_objects.filter(pk=instance.id).exists()
+
+    def test_delete_provider_recalculates_tenant_compliance_summary(
+        self,
+        providers_fixture,
+        provider_compliance_scores_fixture,
+    ):
+        instance = providers_fixture[0]
+        tenant_id = instance.tenant_id
+
+        TenantComplianceSummary.objects.create(
+            tenant_id=tenant_id,
+            compliance_id="aws_cis_2.0",
+            requirements_passed=99,
+            requirements_failed=99,
+            requirements_manual=99,
+            total_requirements=99,
+        )
+        TenantComplianceSummary.objects.create(
+            tenant_id=tenant_id,
+            compliance_id="gdpr_aws",
+            requirements_passed=99,
+            requirements_failed=99,
+            requirements_manual=99,
+            total_requirements=99,
+        )
+
+        with (
+            patch(
+                "tasks.jobs.deletion.graph_database.get_database_name",
+                return_value="tenant-db",
+            ),
+            patch("tasks.jobs.deletion.graph_database.drop_subgraph"),
+        ):
+            delete_provider(str(tenant_id), instance.id)
+
+        updated_summary = TenantComplianceSummary.objects.get(
+            tenant_id=tenant_id,
+            compliance_id="aws_cis_2.0",
+        )
+        assert updated_summary.requirements_passed == 1
+        assert updated_summary.requirements_failed == 1
+        assert updated_summary.requirements_manual == 0
+        assert updated_summary.total_requirements == 2
+        assert not TenantComplianceSummary.objects.filter(
+            tenant_id=tenant_id,
+            compliance_id="gdpr_aws",
+        ).exists()
 
 
 @pytest.mark.django_db

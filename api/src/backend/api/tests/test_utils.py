@@ -24,6 +24,7 @@ from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.github.github_provider import GithubProvider
 from prowler.providers.iac.iac_provider import IacProvider
+from prowler.providers.image.image_provider import ImageProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.m365.m365_provider import M365Provider
 from prowler.providers.mongodbatlas.mongodbatlas_provider import MongodbatlasProvider
@@ -122,6 +123,7 @@ class TestReturnProwlerProvider:
             (Provider.ProviderChoices.ALIBABACLOUD.value, AlibabacloudProvider),
             (Provider.ProviderChoices.CLOUDFLARE.value, CloudflareProvider),
             (Provider.ProviderChoices.OPENSTACK.value, OpenstackProvider),
+            (Provider.ProviderChoices.IMAGE.value, ImageProvider),
         ],
     )
     def test_return_prowler_provider(self, provider_type, expected_provider):
@@ -187,6 +189,47 @@ class TestProwlerProviderConnectionTest:
         assert connection.is_connected is False
         assert isinstance(connection.error, Provider.secret.RelatedObjectDoesNotExist)
         assert str(connection.error) == "Provider has no secret."
+
+    @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_image_provider(
+        self, mock_return_prowler_provider
+    ):
+        """Test connection test for Image provider with credentials."""
+        provider = MagicMock()
+        provider.uid = "docker.io/myns/myimage:latest"
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret.secret = {
+            "registry_username": "user",
+            "registry_password": "pass",
+            "registry_token": "tok123",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            image="docker.io/myns/myimage:latest",
+            raise_on_exception=False,
+            registry_username="user",
+            registry_password="pass",
+            registry_token="tok123",
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_image_provider_no_creds(
+        self, mock_return_prowler_provider
+    ):
+        """Test connection test for Image provider without credentials."""
+        provider = MagicMock()
+        provider.uid = "alpine:3.18"
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret.secret = {}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            image="alpine:3.18",
+            raise_on_exception=False,
+        )
 
 
 class TestGetProwlerProviderKwargs:
@@ -333,6 +376,123 @@ class TestGetProwlerProviderKwargs:
         expected_result = {
             "scan_repository_url": provider_uid,
             "oauth_app_token": "test_token",
+        }
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_image_provider_registry_url(self):
+        """Test that Image provider with a registry URL gets 'registry' kwarg."""
+        provider_uid = "docker.io/myns"
+        secret_dict = {
+            "registry_username": "user",
+            "registry_password": "pass",
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {
+            "registry": provider_uid,
+            "registry_username": "user",
+            "registry_password": "pass",
+        }
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_image_provider_image_ref(self):
+        """Test that Image provider with a full image reference gets 'images' kwarg."""
+        provider_uid = "docker.io/myns/myimage:latest"
+        secret_dict = {
+            "registry_username": "user",
+            "registry_password": "pass",
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {
+            "images": [provider_uid],
+            "registry_username": "user",
+            "registry_password": "pass",
+        }
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_image_provider_dockerhub_image(self):
+        """Test that Image provider with a short DockerHub image gets 'images' kwarg."""
+        provider_uid = "alpine:3.18"
+        secret_dict = {}
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {"images": [provider_uid]}
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_image_provider_filters_falsy_secrets(self):
+        """Test that falsy secret values are filtered out for Image provider."""
+        provider_uid = "docker.io/myns/myimage:latest"
+        secret_dict = {
+            "registry_username": "",
+            "registry_password": "",
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {"images": [provider_uid]}
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_image_provider_ignores_mutelist(self):
+        """Test that Image provider does NOT receive mutelist_content.
+
+        Image provider uses Trivy's built-in mutelist logic, so it should not
+        receive mutelist_content even when a mutelist processor is configured.
+        """
+        provider_uid = "docker.io/myns/myimage:latest"
+        secret_dict = {
+            "registry_username": "user",
+            "registry_password": "pass",
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        mutelist_processor = MagicMock()
+        mutelist_processor.configuration = {"Mutelist": {"key": "value"}}
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider, mutelist_processor)
+
+        assert "mutelist_content" not in result
+        expected_result = {
+            "images": [provider_uid],
+            "registry_username": "user",
+            "registry_password": "pass",
         }
         assert result == expected_result
 

@@ -1,0 +1,545 @@
+---
+title: 'AWS Organizations in Prowler Cloud'
+description: 'Onboard all AWS accounts in your Organization through a single guided wizard'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.19.0" />
+
+Prowler Cloud enables you to onboard all AWS accounts in your Organization through a single guided wizard. Instead of connecting accounts one by one, you can discover every account in your AWS Organization, select the ones you want to monitor, test connectivity, and launch scans — all from the Prowler Cloud UI.
+
+<Note>
+This feature is **exclusively available in Prowler Cloud**. For CLI-based multi-account scanning, see [AWS Organizations in Prowler CLI](/user-guide/providers/aws/organizations).
+</Note>
+
+## Overview
+
+### Individual Accounts vs Organizations
+
+| Approach | Best for | How it works |
+|----------|----------|--------------|
+| **Individual accounts** | A few AWS accounts | Connect each account one by one with its own IAM role. |
+| **AWS Organizations** | 10+ accounts, or any org-managed environment | Connect once to your management account, discover all member accounts automatically, and scan them in bulk. |
+
+### How it works
+
+Before using the AWS Organizations wizard, you need to deploy **two IAM roles** in your AWS environment. The onboarding follows this sequence:
+
+<Frame>
+  <img src="/images/organizations/onboarding-flow.svg" alt="Onboarding flow: 1. Create Management Account Role, 2. Deploy StackSet, 3. Run the Wizard, 4. Launch Scans" />
+</Frame>
+
+## Key Concepts
+
+### What is an External ID?
+
+An **External ID** is a security token that Prowler generates unique to your tenant. When Prowler assumes the IAM role in your AWS account, it presents this External ID to prove its identity.
+
+This prevents the [confused deputy problem](https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html) — a scenario where an unauthorized party could trick AWS into granting access to your account. By requiring the External ID, only your specific Prowler tenant can assume the role.
+
+You don't need to create the External ID yourself — Prowler generates it automatically and displays it in the wizard for you to copy.
+
+### Two Roles Architecture
+
+Prowler requires **two separate IAM roles** deployed in different places, each with a distinct purpose:
+
+| Role | Where it lives | What it does | How to deploy it |
+|------|---------------|--------------|------------------|
+| **ProwlerScan** (management account) | Your management (root) account only | Discovers the Organization structure **and** scans the management account. Has additional Organizations discovery permissions. | **Manually** in the IAM Console ([Step 1](#step-1-create-the-management-account-role)). Cannot be deployed via StackSet. |
+| **ProwlerScan** (member accounts) | Every member account | Scans the account for security findings. | Via **CloudFormation StackSet** ([Step 2](#step-2-deploy-the-cloudformation-stackset)). Automated across all accounts. |
+
+<Frame caption="Both roles share the same name `ProwlerScan`. The management account role includes additional Organization discovery permissions.">
+  <img src="/images/organizations/two-roles-architecture.svg" alt="Two Roles Architecture: ProwlerScan in management account (discovery + scanning) and ProwlerScan in member accounts (scanning only)" />
+</Frame>
+
+<Note>
+**Same name, different permissions.** Both roles are named `ProwlerScan` — Prowler expects a consistent role name across all accounts. The management account role has the same scanning permissions as member accounts, plus additional Organizations discovery permissions (see [Step 1](#step-1-create-the-management-account-role) for the full list).
+</Note>
+
+### What is a CloudFormation StackSet?
+
+A [CloudFormation StackSet](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/what-is-cfnstacksets.html) lets you deploy the same CloudFormation template across multiple AWS accounts in a single operation. Prowler uses a StackSet to deploy the **ProwlerScan** IAM role into every member account of your organization, so you don't have to create the role manually in each account.
+
+## Prerequisites
+
+### Prowler Cloud Account
+
+You need an active [Prowler Cloud](https://cloud.prowler.com) account. Each AWS account you connect will count as a provider in your subscription. See [Billing Impact](#billing-impact) for details.
+
+### AWS Organization Enabled
+
+Your AWS environment must have [AWS Organizations](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html) enabled. You will need access to the **management account** (or a delegated administrator account) to provide the Organization ID and IAM Role ARN.
+
+## Step 1: Create the Management Account Role
+
+The first role you need to create is the **management account role**. This role allows Prowler to discover your Organization structure — listing accounts, OUs, and hierarchy.
+
+<Warning>
+**This role must be created manually.** Organizational CloudFormation StackSets do not deploy to the management account itself — this is an AWS limitation, not a Prowler one. StackSets with service-managed permissions only target member accounts. Similarly, the Prowler Quick Create link only deploys the role to member accounts.
+</Warning>
+
+<Note>
+**The role must be named `ProwlerScan`** — the same name as the role deployed to member accounts via StackSet. Prowler expects a consistent role name across all accounts in the Organization. If you use a different name, connection tests and scans will fail for the management account.
+</Note>
+
+### Create the IAM Role
+
+1. Sign in to the [AWS IAM Console](https://console.aws.amazon.com/iam/) in your **management account**.
+
+2. Go to **Roles > Create role** and select **Custom trust policy**.
+
+3. Paste the following trust policy. This allows Prowler Cloud to assume the role using your tenant's External ID (you will get this from the Prowler wizard in [Step 3](#step-3-start-the-organization-wizard)):
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::232136659152:root"
+      },
+      "Action": "sts:AssumeRole",
+      "Condition": {
+        "StringEquals": {
+          "sts:ExternalId": "<YOUR_EXTERNAL_ID>"
+        },
+        "StringLike": {
+          "aws:PrincipalArn": "arn:aws:iam::232136659152:role/prowler*"
+        }
+      }
+    }
+  ]
+}
+```
+
+Replace `<YOUR_EXTERNAL_ID>` with the External ID shown in the Prowler wizard.
+
+4. Attach the following AWS managed policies:
+   - **SecurityAudit**
+   - **ViewOnlyAccess**
+
+   This allows Prowler to also scan the management account for security findings, just like any other account.
+
+5. Create an additional inline policy with the following permissions. These are specific to the management account and allow Prowler to discover your Organization structure:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ProwlerOrganizationDiscovery",
+      "Effect": "Allow",
+      "Action": [
+        "organizations:DescribeAccount",
+        "organizations:DescribeOrganization",
+        "organizations:ListAccounts",
+        "organizations:ListAccountsForParent",
+        "organizations:ListOrganizationalUnitsForParent",
+        "organizations:ListRoots",
+        "organizations:ListTagsForResource"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ProwlerStackSetManagement",
+      "Effect": "Allow",
+      "Action": [
+        "organizations:RegisterDelegatedAdministrator",
+        "iam:CreateServiceLinkedRole"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+<Tip>
+You can optionally restrict the `Resource` field to your specific Organization ARN (e.g., `arn:aws:organizations::123456789012:organization/o-abc123def4`) instead of `"*"` to minimize the blast radius.
+</Tip>
+
+6. Name the role **`ProwlerScan`** and click **Create role**. Take note of the **Role ARN** — you will need it in the Prowler wizard.
+
+The ARN follows this format: `arn:aws:iam::<account-id>:role/ProwlerScan`
+
+<Warning>
+The role **must** be named `ProwlerScan`. Do not use a different name.
+</Warning>
+
+<Note>
+If you just created the role, it may take up to **60 seconds** for AWS to propagate it. If you get an error in the Prowler wizard, wait a moment and try again.
+</Note>
+
+## Step 2: Deploy the CloudFormation StackSet
+
+After creating the management account role, the next step is to deploy the **ProwlerScan** role to your member accounts using a CloudFormation StackSet. This is the recommended method for consistent, scalable deployment across your entire organization.
+
+The StackSet uses **service-managed permissions**, which means AWS Organizations handles the cross-account deployment automatically — you don't need to create execution roles manually in each account. The StackSet deploys the ProwlerScan IAM role in every target member account, enabling Prowler to assume that role for cross-account scanning.
+
+<Note>
+**Trusted access required:** CloudFormation StackSets must have trusted access enabled in your management account. Verify this in the AWS Console under **AWS Organizations > Settings > Trusted access for AWS CloudFormation StackSets**.
+</Note>
+
+### Option A: Using the Prowler Quick Create Link (Recommended)
+
+The Prowler wizard provides a one-click link that opens the AWS Console with everything pre-configured.
+
+<Tip>
+**[Open Quick Create in AWS Console →](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=Prowler)**
+
+Opens the CloudFormation Console with the Prowler scan role template and parameters pre-configured. You can also find this link in the Prowler wizard during [Step 4: Authentication](#step-4-authenticate-with-your-management-account).
+</Tip>
+
+1. Review the pre-filled parameters:
+   - **Template URL**: Points to the official [Prowler scan role template](https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml) hosted on Prowler's public S3 bucket.
+   - **ExternalId**: Pre-filled with your tenant's External ID when clicking the link from the Prowler Cloud wizard. If you open this link directly, you will need to enter the External ID manually.
+
+   {/* TODO: screenshot of AWS Console Quick Create page showing pre-filled parameters */}
+
+2. Under **Deployment targets**, select:
+   - **Deploy to organization** to deploy to all accounts, or
+   - **Deploy to organizational units (OUs)** and specify the OU IDs you want to cover.
+
+3. Review the settings and click **Create StackSet**. AWS will begin deploying the ProwlerScan role to every target account.
+
+### Option B: Manual StackSet Deployment
+
+If you prefer full control over the deployment:
+
+1. Open the [AWS CloudFormation Console](https://console.aws.amazon.com/cloudformation/) in your management account.
+2. Go to **StackSets > Create StackSet**.
+3. Choose **Service-managed permissions**.
+4. Use this template URL:
+   ```
+   https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml
+   ```
+5. Set the **ExternalId** parameter to the External ID shown in the Prowler wizard.
+6. Choose your deployment targets (entire organization or specific OUs).
+7. Select the AWS regions where you want the role deployed.
+8. Click **Create StackSet**.
+
+### Verify StackSet Deployment
+
+After deploying, verify that all stack instances completed successfully:
+
+1. In the CloudFormation Console, go to **StackSets** and select your Prowler StackSet.
+2. Click the **Stack instances** tab.
+3. Confirm that all instances show **Status: CURRENT** and **Stack status: CREATE_COMPLETE**.
+
+Deployment typically takes **2–5 minutes** for medium-sized organizations. Large organizations (500+ accounts) may take longer.
+
+<Note>
+**Prefer Terraform?** You can deploy the ProwlerScan role using Terraform instead. See the [StackSets deployment guide](/user-guide/providers/aws/organizations#deploying-prowler-iam-roles-across-aws-organizations) for the Terraform module.
+</Note>
+
+### Key Considerations
+
+- **Service-managed permissions**: Always select **Service-managed permissions** when creating the StackSet. This lets AWS Organizations manage the deployment automatically across current and future member accounts.
+- **Least privilege**: The ProwlerScan role deployed by the StackSet uses `SecurityAudit` and `ViewOnlyAccess` — AWS managed policies that grant read-only access — plus a small set of additional read-only permissions for services not covered by those policies. See the [CloudFormation template](https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml) for the full list. Prowler does not make any changes to your accounts.
+- **New accounts**: When you add new accounts to your AWS Organization, the StackSet automatically deploys the ProwlerScan role to them if you targeted the organization root or the relevant OU. Combined with Prowler's 6-hour automatic sync, new accounts are onboarded end-to-end without manual intervention.
+- **Management account**: Organizational StackSets **do not deploy to the management account itself**. If you want to scan the management account, you need to create the ProwlerScan role there separately using a regular CloudFormation Stack.
+
+## Step 3: Start the Organization Wizard
+
+Now that both roles are deployed — the management account role (Step 1) and the ProwlerScan role in member accounts (Step 2) — you can start the Prowler wizard.
+
+### Open the Wizard
+
+1. Navigate to **Cloud Providers** and click **Add Cloud Provider**.
+
+<Frame>
+  <img src="/images/organizations/cloud-providers-add.png" alt="Cloud Providers page showing the Add Cloud Provider button" />
+</Frame>
+
+2. Select **Amazon Web Services** as the provider.
+
+<Frame>
+  <img src="/images/organizations/select-aws-provider.png" alt="Provider selection modal with Amazon Web Services highlighted" />
+</Frame>
+
+3. Choose **Add Multiple Accounts With AWS Organizations**.
+
+<Frame>
+  <img src="/images/organizations/select-organizations-method.png" alt="Method selector showing Add Multiple Accounts With AWS Organizations option highlighted" />
+</Frame>
+
+### Enter Organization Details
+
+- **Organization ID**: Your AWS Organization identifier, found in the [AWS Organizations Console](https://console.aws.amazon.com/organizations/). It follows the format `o-` followed by 10–32 lowercase alphanumeric characters (e.g., `o-abc123def4`). You can find it in the left sidebar of the AWS Organizations console:
+
+<Frame>
+  <img src="/images/organizations/aws-console-org-id.png" alt="AWS Organizations Console showing the Organization ID in the left sidebar" />
+</Frame>
+- **Name** (optional): A display name for the organization. If left blank, Prowler uses the name stored in AWS.
+
+<Frame>
+  <img src="/images/organizations/organization-details-form.png" alt="Organization Details form with Organization ID and Name fields" />
+</Frame>
+
+Click **Next** to proceed to the authentication phase.
+
+## Step 4: Authenticate with Your Management Account
+
+### Copy the External ID
+
+The wizard displays a **Prowler External ID** — auto-generated and unique to your tenant. Click the copy icon to copy it. If you haven't already configured the trust policy on your management account role ([Step 1](#step-1-create-the-management-account-role)), do so now using this External ID.
+
+<Frame>
+  <img src="/images/organizations/authentication-details.png" alt="Authentication Details form showing External ID, Role ARN field, and StackSet confirmation checkbox" />
+</Frame>
+
+### Enter the Role ARN
+
+Paste the **Role ARN** of the management account role you created in [Step 1](#step-1-create-the-management-account-role) into the **Role ARN** field.
+
+The ARN follows this format:
+```
+arn:aws:iam::<account-id>:role/<role-name>
+```
+
+For example: `arn:aws:iam::123456789012:role/ProwlerScan`
+
+<Frame>
+  <img src="/images/organizations/role-arn-field.png" alt="Role ARN field in the Authentication Details form" />
+</Frame>
+
+### Confirm and Discover
+
+1. Check the box: **"The StackSet has been successfully deployed in AWS"**.
+2. Click **Authenticate**.
+
+Here's what happens behind the scenes:
+- Prowler creates the organization resource and stores your credentials securely.
+- An asynchronous discovery is triggered to query your AWS Organization structure.
+- You will see a **"Gathering AWS Accounts..."** spinner — this typically takes **30 seconds to 2 minutes** depending on your organization size.
+
+{/* TODO: screenshot of the Authentication Details form with the spinner */}
+
+## Step 5: Select Accounts to Scan
+
+### Understanding the Tree View
+
+Once discovery completes, the wizard displays a **hierarchical tree view** of your Organization:
+
+<Frame>
+  <img src="/images/organizations/tree-view-accounts.png" alt="Hierarchical tree view showing OUs and accounts with selection checkboxes" />
+</Frame>
+
+- The tree supports up to **5 levels of nesting** (Root > OUs > Sub-OUs > Accounts).
+- **Selecting an OU** automatically selects all accounts within it.
+- **Individual overrides**: deselect specific accounts even if the parent OU is selected.
+- The header shows **"X of Y accounts selected"** to track your selection.
+
+### Account Statuses
+
+Only **ACTIVE** accounts can be selected for scanning:
+
+| Status | Selectable? | Description |
+|--------|-------------|-------------|
+| **ACTIVE** | Yes | Account is active and operational. |
+| **SUSPENDED** | No | Account is suspended by AWS. |
+| **PENDING_CLOSURE** | No | Account is being closed. |
+| **CLOSED** | No | Account has been closed. |
+
+<Note>
+**Your existing data is safe.** If an AWS account is already connected to Prowler as an individual provider, it will appear in the tree with a checkmark indicator.
+
+When you proceed:
+- The existing provider is **linked** to the organization — it is **not** duplicated.
+- All your **historical scan data and findings are preserved** — nothing is overwritten.
+- There is **no additional billing** — the existing provider is reused.
+
+This is completely safe. You are simply associating the account with the organization for easier management.
+</Note>
+
+### Custom Aliases
+
+You can edit the display name for each account before connecting. This alias is only used in Prowler — it does not affect your AWS account name.
+
+### Blocked Accounts
+
+Some accounts may appear as **blocked** (grayed out, not selectable). This happens when:
+- The account is **already linked to a different organization** in Prowler (`linked_to_other_organization`).
+
+Hover over the blocked account to see the specific reason.
+
+{/* TODO: screenshot of the tree view with account selection, showing active, already-connected, and blocked accounts */}
+
+## Step 6: Test Connections
+
+### How Connection Testing Works
+
+Click **Test Connections** to verify that Prowler can assume the **ProwlerScan** role in each selected member account.
+
+<Frame>
+  <img src="/images/organizations/test-connections.png" alt="Connection testing in progress with spinners on each account" />
+</Frame>
+
+- Each account shows a real-time status indicator:
+  - **Spinner** — test in progress
+  - **Green checkmark (✓)** — connection successful
+  - **Red icon (✗)** — connection failed (hover to see the error)
+
+### All Tests Pass
+
+If every account connects successfully, you automatically advance to the next step.
+
+### Some Tests Fail
+
+An error banner appears: **"There was a problem connecting to some accounts."**
+
+You have two options:
+
+**a) Fix and retry:**
+1. Go to the AWS Console and verify the StackSet deployed to the failing accounts.
+2. Check that the External ID in the StackSet matches the one shown in Prowler.
+3. Return to Prowler and click **Test Connections** — only the **failed accounts are re-tested** (smart retry). Accounts that already passed are not tested again.
+
+<Frame>
+  <img src="/images/organizations/test-connections-button.png" alt="Test Connections button" />
+</Frame>
+
+**b) Skip and continue:**
+Click **Skip Connection Validation** to proceed with only the accounts that connected successfully. The failed accounts will not be scanned.
+
+<Frame>
+  <img src="/images/organizations/connection-failures-skip.png" alt="Connection test results showing failed accounts with error banner and Skip Connection Validation button" />
+</Frame>
+
+<Note>
+**Skip Connection Validation** is only available when at least one account connected successfully.
+</Note>
+
+### All Tests Fail
+
+If **no accounts** connected successfully, you cannot proceed:
+
+> *"No accounts connected successfully. Fix the connection errors and retry before launching scans."*
+
+You must fix the underlying connection issues before continuing. See [Updating Credentials](#updating-credentials) below.
+
+### Updating Credentials
+
+If connection tests fail, here's how to fix common issues:
+
+1. Open the [CloudFormation Console](https://console.aws.amazon.com/cloudformation/) and check that your StackSet instances show **CREATE_COMPLETE** for the failing accounts. If not, update the StackSet to include the missing OUs.
+2. Compare the **ExternalId** parameter in your StackSet with the External ID displayed in the Prowler wizard. They must match exactly.
+3. After fixing the issue in AWS, return to Prowler and click **Test Connections**. Only the previously failed accounts will be re-tested.
+
+## Step 7: Launch Scans
+
+### Choose Scan Schedule
+
+| Schedule Option | Description |
+|-----------------|-------------|
+| **Scan Daily (every 24 hours)** | Creates a recurring daily scan for all connected accounts (default). |
+| **Run a single scan (no recurring schedule)** | Launches a one-time scan. |
+
+### Launch
+
+Click **Launch scan**. A toast notification confirms: *"Scan Launched — Daily scan scheduled for X accounts"* with a link to the Scans page. You will be redirected to the **Providers** page.
+
+Scans are only launched for accounts that are accessible (passed connection testing) and were selected.
+
+<Frame>
+  <img src="/images/organizations/launch-scan.png" alt="Launch Scan step showing Accounts Connected confirmation, scan schedule selector, and Launch scan button" />
+</Frame>
+
+### What Happens Next
+
+- Scans appear in the **Scans** page as they start and complete.
+- Results populate the **Overview** and **Findings** pages.
+- Prowler runs an **automatic sync every 6 hours** to detect new accounts added to your Organization or accounts that have been removed. New accounts are onboarded automatically based on the parent OU configuration.
+
+{/* TODO: screenshot of the Launch Scan step */}
+
+## Billing Impact
+
+Each AWS account you connect through the Organizations wizard counts as one **provider** in your Prowler Cloud subscription.
+
+- **Already-connected accounts**: if an account was already linked as a provider, adding it to the organization does **not** incur additional billing. The existing provider is reused.
+- **Large organizations**: connecting a 500-account organization will result in up to 500 providers on your subscription. Review your plan limits before proceeding.
+- **Deleted providers**: if you later remove an account, the deleted provider no longer counts toward your subscription.
+
+For pricing details, see [Prowler Cloud Pricing](/getting-started/products/prowler-cloud-pricing).
+
+## Troubleshooting
+
+### Invalid AWS Organization ID
+
+*"Must be a valid AWS Organization ID"*
+
+- Verify the Organization ID format: `o-` followed by 10–32 lowercase alphanumeric characters (e.g., `o-abc123def4`)
+- Copy it directly from the [AWS Organizations Console](https://console.aws.amazon.com/organizations/) to avoid typos
+
+### Invalid IAM Role ARN
+
+*"Must be a valid IAM Role ARN"*
+
+- Verify the ARN format: `arn:aws:iam::<12-digit-account-id>:role/<role-name>`
+- Copy the ARN directly from the [IAM Console](https://console.aws.amazon.com/iam/) in your management account
+
+### Authentication Failed
+
+*"Authentication failed. Please verify the StackSet deployment and Role ARN"*
+
+- Verify the management account role exists and was created in [Step 1](#step-1-create-the-management-account-role)
+- Confirm the trust policy includes the correct External ID from the wizard
+- Check the role has all Organizations discovery permissions listed in [Step 1](#step-1-create-the-management-account-role)
+- Double-check the Role ARN format and account ID for typos
+
+### Authentication Timed Out
+
+*"Authentication timed out"*
+
+- Retry the authentication step — the second attempt often succeeds
+- Check for AWS API rate limiting on the Organizations service
+- For very large organizations (500+ accounts), allow extra time for discovery
+
+### Connection Test Fails for All Accounts
+
+No accounts pass the connection test.
+
+- Verify the CloudFormation StackSet was deployed — complete [Step 2](#step-2-deploy-the-cloudformation-stackset) and wait for stack instances to reach **CREATE_COMPLETE**
+- Check that the **ExternalId** parameter in the StackSet matches the External ID shown in the Prowler wizard
+- If your accounts use IP-based IAM policies, allow [Prowler Cloud public IPs](/user-guide/tutorials/prowler-cloud-public-ips)
+
+### Connection Test Fails for Some Accounts
+
+Some accounts show a red icon while others pass.
+
+- Expand the StackSet deployment to include the OUs containing the failing accounts
+- Suspended accounts cannot be scanned — deselect them and proceed
+- Ensure the [STS regional endpoint](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html) is enabled in the account's region
+- After fixing, click **Test Connections** — only the failed accounts will be re-tested
+
+### No Accounts Connected Successfully
+
+*"No accounts connected successfully. Fix the connection errors and retry before launching scans."*
+
+- Hover over the red icon on each account to see the specific error
+- Fix the underlying issues using the guidance above
+- Click **Test Connections** to retry
+
+### Failed to Apply Discovery
+
+*"Failed to apply discovery"*
+
+- Check the `blocked_reasons` field for any blocked accounts
+- Retry the operation
+- If the error persists, contact [Prowler Support](mailto:support@prowler.com)
+
+## What's Next
+
+<Columns cols={2}>
+  <Card title="Prowler Cloud" icon="cloud" href="/user-guide/tutorials/prowler-app">
+    Full guide to using Prowler Cloud features.
+  </Card>
+  <Card title="AWS Organizations (CLI)" icon="terminal" href="/user-guide/providers/aws/organizations">
+    CLI-based Organizations scanning and StackSet deployment with Terraform.
+  </Card>
+  <Card title="Bulk Provider Provisioning" icon="upload" href="/user-guide/tutorials/bulk-provider-provisioning">
+    Script-based bulk provisioning for advanced automation.
+  </Card>
+</Columns>
