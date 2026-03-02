@@ -89,7 +89,10 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
 
             assert len(result) == 1
             assert result[0].status == "MANUAL"
-            assert "No enabled Conditional Access policies found" in result[0].status_extended
+            assert (
+                "No enabled Conditional Access policies found"
+                in result[0].status_extended
+            )
             assert result[0].resource == {}
             assert result[0].resource_name == "Break Glass Accounts"
             assert result[0].resource_id == "breakGlassAccounts"
@@ -127,7 +130,10 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
 
             assert len(result) == 1
             assert result[0].status == "MANUAL"
-            assert "No enabled Conditional Access policies found" in result[0].status_extended
+            assert (
+                "No enabled Conditional Access policies found"
+                in result[0].status_extended
+            )
 
     def test_no_break_glass_accounts_identified(self):
         """Test MANUAL when no user is excluded from all CA policies."""
@@ -254,7 +260,10 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert "BreakGlass1" in result[0].status_extended
-            assert "does not have a FIDO2 security key registered" in result[0].status_extended
+            assert (
+                "does not have a FIDO2 security key registered"
+                in result[0].status_extended
+            )
 
     def test_break_glass_user_with_empty_authentication_methods(self):
         """Test FAIL when break glass account has no authentication methods."""
@@ -296,6 +305,10 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
+            assert (
+                "does not have a FIDO2 security key registered"
+                in result[0].status_extended
+            )
 
     def test_multiple_break_glass_users_mixed_results(self):
         """Test mixed results when one BG user has FIDO2 and another does not."""
