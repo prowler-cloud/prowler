@@ -4,6 +4,8 @@ import { IntegrationType } from "../types/integrations";
 export const DOCS_URLS = {
   FINDINGS_ANALYSIS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-app#step-8:-analyze-the-findings",
+  AWS_ORGANIZATIONS:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
 } as const;
 
 export const getProviderHelpText = (provider: string) => {

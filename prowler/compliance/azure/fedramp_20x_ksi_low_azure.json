@@ -89,7 +89,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_global_admin_in_less_than_five_users",
         "entra_non_privileged_user_has_mfa",
         "entra_policy_default_users_cannot_create_security_groups",

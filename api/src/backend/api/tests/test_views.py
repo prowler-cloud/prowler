@@ -30,6 +30,7 @@ from django.test import RequestFactory
 from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from api.attack_paths import (
@@ -3993,6 +3994,8 @@ class TestAttackPathsScanViewSet:
                     "properties": {},
                 }
             ],
+            "total_nodes": 1,
+            "truncated": False,
         }
 
         expected_db_name = f"db-tenant-{attack_paths_scan.provider.tenant_id}"
@@ -4006,11 +4009,11 @@ class TestAttackPathsScanViewSet:
                 return_value=expected_db_name,
             ) as mock_get_db_name,
             patch(
-                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                "api.v1.views.attack_paths_views_helpers.prepare_parameters",
                 return_value=prepared_parameters,
             ) as mock_prepare,
             patch(
-                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
+                "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value=graph_payload,
             ) as mock_execute,
             patch("api.v1.views.graph_database.clear_cache") as mock_clear_cache,
@@ -4045,6 +4048,74 @@ class TestAttackPathsScanViewSet:
         attributes = result["attributes"]
         assert attributes["nodes"] == graph_payload["nodes"]
         assert attributes["relationships"] == graph_payload["relationships"]
+
+    def test_run_attack_paths_query_returns_text_when_accept_text_plain(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+        query_definition = AttackPathsQueryDefinition(
+            id="aws-rds",
+            name="RDS inventory",
+            short_description="List account RDS assets.",
+            description="List account RDS assets",
+            provider=provider.provider,
+            cypher="MATCH (n) RETURN n",
+            parameters=[],
+        )
+        graph_payload = {
+            "nodes": [
+                {
+                    "id": "node-1",
+                    "labels": ["AWSAccount"],
+                    "properties": {"name": "root"},
+                }
+            ],
+            "relationships": [],
+            "total_nodes": 1,
+            "truncated": False,
+        }
+
+        with (
+            patch("api.v1.views.get_query_by_id", return_value=query_definition),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+            patch(
+                "api.v1.views.attack_paths_views_helpers.prepare_parameters",
+                return_value={"provider_uid": provider.uid},
+            ),
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_query",
+                return_value=graph_payload,
+            ),
+            patch("api.v1.views.graph_database.clear_cache"),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-run",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._run_payload("aws-rds"),
+                content_type=API_JSON_CONTENT_TYPE,
+                HTTP_ACCEPT="text/plain",
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response["Content-Type"] == "text/plain"
+        body = response.content.decode()
+        assert "## Nodes (1)" in body
+        assert "## Relationships (0)" in body
+        assert "## Summary" in body
 
     def test_run_attack_paths_query_blocks_when_graph_data_not_ready(
         self,
@@ -4099,14 +4170,16 @@ class TestAttackPathsScanViewSet:
         with (
             patch("api.v1.views.get_query_by_id", return_value=query_definition),
             patch(
-                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                "api.v1.views.attack_paths_views_helpers.prepare_parameters",
                 return_value={"provider_uid": provider.uid},
             ),
             patch(
-                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
+                "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value={
                     "nodes": [{"id": "n1", "labels": ["AWSAccount"], "properties": {}}],
                     "relationships": [],
+                    "total_nodes": 1,
+                    "truncated": False,
                 },
             ),
             patch("api.v1.views.graph_database.clear_cache"),
@@ -4152,14 +4225,16 @@ class TestAttackPathsScanViewSet:
         with (
             patch("api.v1.views.get_query_by_id", return_value=query_definition),
             patch(
-                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                "api.v1.views.attack_paths_views_helpers.prepare_parameters",
                 return_value={"provider_uid": provider.uid},
             ),
             patch(
-                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
+                "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value={
                     "nodes": [{"id": "n1", "labels": ["AWSAccount"], "properties": {}}],
                     "relationships": [],
+                    "total_nodes": 1,
+                    "truncated": False,
                 },
             ),
             patch("api.v1.views.graph_database.clear_cache"),
@@ -4230,12 +4305,17 @@ class TestAttackPathsScanViewSet:
         with (
             patch("api.v1.views.get_query_by_id", return_value=query_definition),
             patch(
-                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                "api.v1.views.attack_paths_views_helpers.prepare_parameters",
                 return_value={"provider_uid": provider.uid},
             ),
             patch(
-                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
-                return_value={"nodes": [], "relationships": []},
+                "api.v1.views.attack_paths_views_helpers.execute_query",
+                return_value={
+                    "nodes": [],
+                    "relationships": [],
+                    "total_nodes": 0,
+                    "truncated": False,
+                },
             ),
             patch("api.v1.views.graph_database.clear_cache"),
         ):
@@ -4256,6 +4336,349 @@ class TestAttackPathsScanViewSet:
             assert attributes.get("relationships") == []
         else:
             assert "errors" in payload
+
+    # -- run_custom_attack_paths_query action ------------------------------------
+
+    @staticmethod
+    def _custom_query_payload(query="MATCH (n) RETURN n"):
+        return {
+            "data": {
+                "type": "attack-paths-custom-query-run-requests",
+                "attributes": {"query": query},
+            }
+        }
+
+    # TODO: Remove skip once queries/custom and schema endpoints are unblocked
+    @pytest.mark.skip(reason="Endpoint temporarily blocked")
+    def test_run_custom_query_returns_graph(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+        graph_payload = {
+            "nodes": [
+                {
+                    "id": "node-1",
+                    "labels": ["AWSAccount"],
+                    "properties": {"name": "root"},
+                }
+            ],
+            "relationships": [],
+            "total_nodes": 1,
+            "truncated": False,
+        }
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                return_value=graph_payload,
+            ) as mock_execute,
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+            patch("api.v1.views.graph_database.clear_cache"),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_execute.assert_called_once_with(
+            "db-test",
+            "MATCH (n) RETURN n",
+            str(attack_paths_scan.provider_id),
+        )
+        attributes = response.json()["data"]["attributes"]
+        assert len(attributes["nodes"]) == 1
+        assert attributes["total_nodes"] == 1
+        assert attributes["truncated"] is False
+
+    @pytest.mark.skip(reason="Endpoint temporarily blocked")
+    def test_run_custom_query_returns_text_when_accept_text_plain(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+        graph_payload = {
+            "nodes": [
+                {
+                    "id": "node-1",
+                    "labels": ["AWSAccount"],
+                    "properties": {"name": "root"},
+                }
+            ],
+            "relationships": [],
+            "total_nodes": 1,
+            "truncated": False,
+        }
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                return_value=graph_payload,
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+            patch("api.v1.views.graph_database.clear_cache"),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+                HTTP_ACCEPT="text/plain",
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response["Content-Type"] == "text/plain"
+        body = response.content.decode()
+        assert "## Nodes (1)" in body
+        assert "## Relationships (0)" in body
+        assert "## Summary" in body
+
+    @pytest.mark.skip(reason="Endpoint temporarily blocked")
+    def test_run_custom_query_returns_404_when_no_nodes(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                return_value={
+                    "nodes": [],
+                    "relationships": [],
+                    "total_nodes": 0,
+                    "truncated": False,
+                },
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+            patch("api.v1.views.graph_database.clear_cache"),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.skip(reason="Endpoint temporarily blocked")
+    def test_run_custom_query_returns_400_when_graph_not_ready(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=False,
+        )
+
+        response = authenticated_client.post(
+            reverse(
+                "attack-paths-scans-queries-custom",
+                kwargs={"pk": attack_paths_scan.id},
+            ),
+            data=self._custom_query_payload(),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "not available" in response.json()["errors"][0]["detail"]
+
+    @pytest.mark.skip(reason="Endpoint temporarily blocked")
+    def test_run_custom_query_returns_403_for_write_query(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                side_effect=PermissionDenied(
+                    "Attack Paths query execution failed: read-only queries are enforced"
+                ),
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload("CREATE (n) RETURN n"),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    # -- cartography_schema action ------------------------------------------------
+
+    @pytest.mark.skip(reason="Endpoint temporarily blocked")
+    def test_cartography_schema_returns_urls(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        schema_data = {
+            "id": "aws-0.129.0",
+            "provider": "aws",
+            "cartography_version": "0.129.0",
+            "schema_url": "https://github.com/cartography-cncf/cartography/blob/0.129.0/docs/root/modules/aws/schema.md",
+            "raw_schema_url": "https://raw.githubusercontent.com/cartography-cncf/cartography/refs/tags/0.129.0/docs/root/modules/aws/schema.md",
+        }
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.get_cartography_schema",
+                return_value=schema_data,
+            ) as mock_get_schema,
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+        ):
+            response = authenticated_client.get(
+                reverse(
+                    "attack-paths-scans-schema",
+                    kwargs={"pk": attack_paths_scan.id},
+                )
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_get_schema.assert_called_once_with(
+            "db-test", str(attack_paths_scan.provider_id)
+        )
+        attributes = response.json()["data"]["attributes"]
+        assert attributes["provider"] == "aws"
+        assert attributes["cartography_version"] == "0.129.0"
+        assert "schema.md" in attributes["schema_url"]
+        assert "raw.githubusercontent.com" in attributes["raw_schema_url"]
+
+    @pytest.mark.skip(reason="Endpoint temporarily blocked")
+    def test_cartography_schema_returns_404_when_no_metadata(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.get_cartography_schema",
+                return_value=None,
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+        ):
+            response = authenticated_client.get(
+                reverse(
+                    "attack-paths-scans-schema",
+                    kwargs={"pk": attack_paths_scan.id},
+                )
+            )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert "No cartography schema metadata" in str(response.json())
+
+    @pytest.mark.skip(reason="Endpoint temporarily blocked")
+    def test_cartography_schema_returns_400_when_graph_not_ready(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=False,
+        )
+
+        response = authenticated_client.get(
+            reverse(
+                "attack-paths-scans-schema",
+                kwargs={"pk": attack_paths_scan.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
 @pytest.mark.django_db

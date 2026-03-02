@@ -1414,7 +1414,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_global_admin_in_less_than_five_users",
         "entra_privileged_user_has_mfa",
         "iam_role_user_access_admin_restricted",
@@ -5135,7 +5135,7 @@
       "Checks": [
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_security_defaults_enabled",
         "entra_user_with_vm_access_has_mfa"
       ]
@@ -5201,7 +5201,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
         "entra_security_defaults_enabled"
@@ -5266,7 +5266,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
         "entra_security_defaults_enabled"
@@ -5331,7 +5331,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
         "entra_user_with_vm_access_has_mfa"
@@ -5411,7 +5411,7 @@
         "keyvault_rbac_enabled",
         "keyvault_private_endpoints",
         "keyvault_access_only_through_private_endpoints",
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_global_admin_in_less_than_five_users",
         "entra_non_privileged_user_has_mfa",
         "entra_security_defaults_enabled",
@@ -5506,7 +5506,7 @@
         "aks_clusters_public_access_disabled",
         "app_function_not_publicly_accessible",
         "entra_global_admin_in_less_than_five_users",
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
         "entra_trusted_named_locations_exists",
@@ -5571,7 +5571,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_global_admin_in_less_than_five_users",
         "entra_non_privileged_user_has_mfa",
         "iam_role_user_access_admin_restricted",
@@ -5681,7 +5681,7 @@
         "network_ssh_internet_access_restricted",
         "network_udp_internet_access_restricted",
         "vm_jit_access_enabled",
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "entra_global_admin_in_less_than_five_users",
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
@@ -5845,7 +5845,7 @@
         "entra_global_admin_in_less_than_five_users",
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
-        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_require_mfa_for_management_api",
         "keyvault_rbac_enabled",
         "vm_jit_access_enabled",
         "vm_linux_enforce_ssh_authentication"

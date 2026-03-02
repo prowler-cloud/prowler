@@ -279,7 +279,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api"
+        "entra_require_mfa_for_management_api"
       ]
     },
     {
@@ -329,7 +329,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api"
+        "entra_require_mfa_for_management_api"
       ]
     },
     {
@@ -484,7 +484,7 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api"
+        "entra_require_mfa_for_management_api"
       ]
     },
     {

@@ -30,6 +30,7 @@ SERVICE_UNAVAILABLE_MAX_RETRIES = env.int(
 READ_QUERY_TIMEOUT_SECONDS = env.int(
     "ATTACK_PATHS_READ_QUERY_TIMEOUT_SECONDS", default=30
 )
+MAX_CUSTOM_QUERY_NODES = env.int("ATTACK_PATHS_MAX_CUSTOM_QUERY_NODES", default=250)
 READ_EXCEPTION_CODES = [
     "Neo.ClientError.Statement.AccessMode",
     "Neo.ClientError.Procedure.ProcedureNotFound",

@@ -14,6 +14,7 @@ from api.attack_paths import database as graph_database
 from tasks.jobs.attack_paths.config import (
     BATCH_SIZE,
     DEPRECATED_PROVIDER_RESOURCE_LABEL,
+    PROVIDER_ISOLATION_PROPERTIES,
     PROVIDER_RESOURCE_LABEL,
 )
 from tasks.jobs.attack_paths.indexes import IndexType, create_indexes
@@ -199,11 +200,6 @@ def sync_relationships(
 
 
 def _strip_internal_properties(props: dict[str, Any]) -> None:
-    """Remove internal properties that shouldn't be copied during sync."""
-    for key in [
-        "_provider_element_id",
-        "_provider_id",
-        "provider_element_id",  # Deprecated
-        "provider_id",  # Deprecated
-    ]:
+    """Remove provider isolation properties before the += spread in sync templates."""
+    for key in PROVIDER_ISOLATION_PROPERTIES:
         props.pop(key, None)
