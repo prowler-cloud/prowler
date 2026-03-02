@@ -1,7 +1,7 @@
 {
   "Provider": "github",
   "CheckID": "organization_repository_deletion_limited",
-  "CheckTitle": "Ensure repository deletion is limited to trusted organization users.",
+  "CheckTitle": "Ensure repository deletion is limited to trusted organization users",
   "CheckType": [],
   "ServiceName": "organization",
   "SubServiceName": "",
