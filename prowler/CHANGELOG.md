@@ -36,8 +36,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_default_app_management_policy_enabled` check for M365 provider [(#9898)](https://github.com/prowler-cloud/prowler/pull/9898)
 - OpenStack networking service with 6 security checks [(#9970)](https://github.com/prowler-cloud/prowler/pull/9970)
 - OpenStack block storage service with 7 security checks [(#10120)](https://github.com/prowler-cloud/prowler/pull/10120)
-- OpenStack compute 7 new checks [(#9944)](https://github.com/prowler-cloud/prowler/pull/9944)
-- OpenStack image 6 new checks [(#10096)](https://github.com/prowler-cloud/prowler/pull/10096)
+- OpenStack compute service with 7 security checks [(#9944)](https://github.com/prowler-cloud/prowler/pull/9944)
+- OpenStack image service with 6 security checks [(#10096)](https://github.com/prowler-cloud/prowler/pull/10096)
 
 ### 🔄 Changed
 
