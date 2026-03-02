@@ -11,7 +11,7 @@
   "ResourceGroup": "governance",
   "Description": "Ensure repository deletion/transfer is restricted so only trusted organization users (owners) can delete or transfer repositories.",
   "Risk": "If members can delete or transfer repositories, accidental or malicious deletions can cause irreversible data loss, service disruption, and increased blast radius from compromised accounts.",
-  "RelatedUrl": "https://docs.github.com/en/organizations/managing-organization-settings/setting-permissions-for-deleting-or-transferring-repositories",
+  "RelatedUrl": "",
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -24,8 +24,13 @@
       "Url": "https://docs.github.com/en/organizations/managing-organization-settings/setting-permissions-for-deleting-or-transferring-repositories"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/organizations/managing-organization-settings/setting-permissions-for-deleting-or-transferring-repositories"
+  ]
 }
