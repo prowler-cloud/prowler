@@ -1,4 +1,4 @@
-"""Tests for image_encryption_enabled check."""
+"""Tests for image_hw_mem_encryption_enabled check."""
 
 from unittest import mock
 
@@ -10,7 +10,7 @@ from tests.providers.openstack.openstack_fixtures import (
 )
 
 
-class Test_image_encryption_enabled:
+class Test_image_hw_mem_encryption_enabled:
     def test_no_images(self):
         """Test when no images exist."""
         image_client = mock.MagicMock()
@@ -22,20 +22,20 @@ class Test_image_encryption_enabled:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled.image_client",
+                "prowler.providers.openstack.services.image.image_hw_mem_encryption_enabled.image_hw_mem_encryption_enabled.image_client",
                 new=image_client,
             ),
         ):
-            from prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled import (
-                image_encryption_enabled,
+            from prowler.providers.openstack.services.image.image_hw_mem_encryption_enabled.image_hw_mem_encryption_enabled import (
+                image_hw_mem_encryption_enabled,
             )
 
-            check = image_encryption_enabled()
+            check = image_hw_mem_encryption_enabled()
             result = check.execute()
 
             assert len(result) == 0
 
-    def test_image_encryption_enabled(self):
+    def test_image_hw_mem_encryption_enabled(self):
         """Test PASS when hw_mem_encryption is True."""
         image_client = mock.MagicMock()
         image_client.images = [
@@ -65,15 +65,15 @@ class Test_image_encryption_enabled:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled.image_client",
+                "prowler.providers.openstack.services.image.image_hw_mem_encryption_enabled.image_hw_mem_encryption_enabled.image_client",
                 new=image_client,
             ),
         ):
-            from prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled import (
-                image_encryption_enabled,
+            from prowler.providers.openstack.services.image.image_hw_mem_encryption_enabled.image_hw_mem_encryption_enabled import (
+                image_hw_mem_encryption_enabled,
             )
 
-            check = image_encryption_enabled()
+            check = image_hw_mem_encryption_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -116,15 +116,15 @@ class Test_image_encryption_enabled:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled.image_client",
+                "prowler.providers.openstack.services.image.image_hw_mem_encryption_enabled.image_hw_mem_encryption_enabled.image_client",
                 new=image_client,
             ),
         ):
-            from prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled import (
-                image_encryption_enabled,
+            from prowler.providers.openstack.services.image.image_hw_mem_encryption_enabled.image_hw_mem_encryption_enabled import (
+                image_hw_mem_encryption_enabled,
             )
 
-            check = image_encryption_enabled()
+            check = image_hw_mem_encryption_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -164,15 +164,15 @@ class Test_image_encryption_enabled:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled.image_client",
+                "prowler.providers.openstack.services.image.image_hw_mem_encryption_enabled.image_hw_mem_encryption_enabled.image_client",
                 new=image_client,
             ),
         ):
-            from prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled import (
-                image_encryption_enabled,
+            from prowler.providers.openstack.services.image.image_hw_mem_encryption_enabled.image_hw_mem_encryption_enabled import (
+                image_hw_mem_encryption_enabled,
             )
 
-            check = image_encryption_enabled()
+            check = image_hw_mem_encryption_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -214,15 +214,15 @@ class Test_image_encryption_enabled:
                 return_value=set_mocked_openstack_provider(),
             ),
             mock.patch(
-                "prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled.image_client",
+                "prowler.providers.openstack.services.image.image_hw_mem_encryption_enabled.image_hw_mem_encryption_enabled.image_client",
                 new=image_client,
             ),
         ):
-            from prowler.providers.openstack.services.image.image_encryption_enabled.image_encryption_enabled import (
-                image_encryption_enabled,
+            from prowler.providers.openstack.services.image.image_hw_mem_encryption_enabled.image_hw_mem_encryption_enabled import (
+                image_hw_mem_encryption_enabled,
             )
 
-            check = image_encryption_enabled()
+            check = image_hw_mem_encryption_enabled()
             result = check.execute()
 
             assert len(result) == 3

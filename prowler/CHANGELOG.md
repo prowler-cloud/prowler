@@ -22,11 +22,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CSA CCM 4.0 for the Oracle Cloud provider [(#10057)](https://github.com/prowler-cloud/prowler/pull/10057)
 - OCI regions updater script and CI workflow [(#10020)](https://github.com/prowler-cloud/prowler/pull/10020)
 - `image` provider for container image scanning with Trivy integration [(#9984)](https://github.com/prowler-cloud/prowler/pull/9984)
-- OpenStack compute 7 new checks [(#9944)](https://github.com/prowler-cloud/prowler/pull/9944)
 - CSA CCM 4.0 for the Alibaba Cloud provider [(#10061)](https://github.com/prowler-cloud/prowler/pull/10061)
 - ECS Exec (ECS-006) privilege escalation detection via `ecs:ExecuteCommand` + `ecs:DescribeTasks` [(#10066)](https://github.com/prowler-cloud/prowler/pull/10066)
-- OpenStack network service with 6 security checks [(#9970)](https://github.com/prowler-cloud/prowler/pull/9970)
-- OpenStack image service with 6 security checks [(#10096)](https://github.com/prowler-cloud/prowler/pull/10096)
+- OpenStack networking service with 7 security checks [(#9970)](https://github.com/prowler-cloud/prowler/pull/9970)
 - `--export-ocsf` CLI flag to upload OCSF scan results to Prowler Cloud [(#10095)](https://github.com/prowler-cloud/prowler/pull/10095)
 - `scan_id` field in OCSF `unmapped` output for ingestion correlation [(#10095)](https://github.com/prowler-cloud/prowler/pull/10095)
 - `defenderxdr_endpoint_privileged_user_exposed_credentials` check for M365 provider [(#10084)](https://github.com/prowler-cloud/prowler/pull/10084)
@@ -34,11 +32,13 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_seamless_sso_disabled` check for m365 provider [(#10086)](https://github.com/prowler-cloud/prowler/pull/10086)
 - Registry scan mode for `image` provider: enumerate and scan all images from OCI standard, Docker Hub, and ECR [(#9985)](https://github.com/prowler-cloud/prowler/pull/9985)
 - Add file descriptor limits (`ulimits`) to Docker Compose worker services to prevent `Too many open files` errors [(#10107)](https://github.com/prowler-cloud/prowler/pull/10107)
-- Openstack block storage 7 new checks [(#10120)](https://github.com/prowler-cloud/prowler/pull/10120)
 - SecNumCloud compliance framework for the AWS provider [(#10117)](https://github.com/prowler-cloud/prowler/pull/10117)
 - CIS 6.0 for the AWS provider [(#10127)](https://github.com/prowler-cloud/prowler/pull/10127)
 - `entra_require_mfa_for_management_api` check for m365 provider [(#10150)](https://github.com/prowler-cloud/prowler/pull/10150)
 - OpenStack provider multiple regions support [(#10135)](https://github.com/prowler-cloud/prowler/pull/10135)
+- Openstack block storage 7 new checks [(#10120)](https://github.com/prowler-cloud/prowler/pull/10120)
+- OpenStack compute 7 new checks [(#9944)](https://github.com/prowler-cloud/prowler/pull/9944)
+- OpenStack image 6 new checks [(#10096)](https://github.com/prowler-cloud/prowler/pull/10096)
 
 ### 🔄 Changed
 

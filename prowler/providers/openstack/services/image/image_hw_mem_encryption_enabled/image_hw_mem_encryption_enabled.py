@@ -6,11 +6,11 @@ from prowler.lib.check.models import Check, CheckReportOpenStack
 from prowler.providers.openstack.services.image.image_client import image_client
 
 
-class image_encryption_enabled(Check):
+class image_hw_mem_encryption_enabled(Check):
     """Ensure images have hardware memory encryption enabled."""
 
     def execute(self) -> List[CheckReportOpenStack]:
-        """Execute image_encryption_enabled check.
+        """Execute image_hw_mem_encryption_enabled check.
 
         Iterates over all images and verifies that the hw_mem_encryption
         property is set to True, enabling AMD SEV guest memory encryption.

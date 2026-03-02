@@ -1,6 +1,6 @@
 {
   "Provider": "openstack",
-  "CheckID": "image_encryption_enabled",
+  "CheckID": "image_hw_mem_encryption_enabled",
   "CheckTitle": "Images have hardware memory encryption enabled",
   "CheckType": [],
   "ServiceName": "image",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Enable hardware memory encryption on images processing sensitive data. Ensure compute hosts support AMD SEV or equivalent technology. Create dedicated SEV-enabled flavors and host aggregates. Test workload compatibility with memory encryption before production deployment.",
-      "Url": "https://hub.prowler.com/check/image_encryption_enabled"
+      "Url": "https://hub.prowler.com/check/image_hw_mem_encryption_enabled"
     }
   },
   "Categories": [
