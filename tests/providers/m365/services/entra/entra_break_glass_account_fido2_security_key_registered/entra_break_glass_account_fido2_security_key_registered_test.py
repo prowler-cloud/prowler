@@ -17,7 +17,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
-CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_break_glass_users_fido2_security_key_registered.entra_break_glass_users_fido2_security_key_registered"
+CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_break_glass_account_fido2_security_key_registered.entra_break_glass_account_fido2_security_key_registered"
 
 
 def _make_policy(policy_id, excluded_users=None, excluded_groups=None, state=None):
@@ -61,7 +61,7 @@ def _make_policy(policy_id, excluded_users=None, excluded_groups=None, state=Non
     )
 
 
-class Test_entra_break_glass_users_fido2_security_key_registered:
+class Test_entra_break_glass_account_fido2_security_key_registered:
     def test_no_conditional_access_policies(self):
         """Test MANUAL when there are no Conditional Access policies."""
         entra_client = mock.MagicMock
@@ -78,13 +78,13 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_break_glass_users_fido2_security_key_registered.entra_break_glass_users_fido2_security_key_registered import (
-                entra_break_glass_users_fido2_security_key_registered,
+            from prowler.providers.m365.services.entra.entra_break_glass_account_fido2_security_key_registered.entra_break_glass_account_fido2_security_key_registered import (
+                entra_break_glass_account_fido2_security_key_registered,
             )
 
             entra_client.conditional_access_policies = {}
 
-            check = entra_break_glass_users_fido2_security_key_registered()
+            check = entra_break_glass_account_fido2_security_key_registered()
             result = check.execute()
 
             assert len(result) == 1
@@ -115,8 +115,8 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_break_glass_users_fido2_security_key_registered.entra_break_glass_users_fido2_security_key_registered import (
-                entra_break_glass_users_fido2_security_key_registered,
+            from prowler.providers.m365.services.entra.entra_break_glass_account_fido2_security_key_registered.entra_break_glass_account_fido2_security_key_registered import (
+                entra_break_glass_account_fido2_security_key_registered,
             )
 
             entra_client.conditional_access_policies = {
@@ -125,7 +125,7 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 ),
             }
 
-            check = entra_break_glass_users_fido2_security_key_registered()
+            check = entra_break_glass_account_fido2_security_key_registered()
             result = check.execute()
 
             assert len(result) == 1
@@ -153,8 +153,8 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_break_glass_users_fido2_security_key_registered.entra_break_glass_users_fido2_security_key_registered import (
-                entra_break_glass_users_fido2_security_key_registered,
+            from prowler.providers.m365.services.entra.entra_break_glass_account_fido2_security_key_registered.entra_break_glass_account_fido2_security_key_registered import (
+                entra_break_glass_account_fido2_security_key_registered,
             )
 
             # User-1 excluded from policy 1, user-2 from policy 2 -- no one excluded from all
@@ -163,7 +163,7 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 policy_id_2: _make_policy(policy_id_2, excluded_users=["user-2"]),
             }
 
-            check = entra_break_glass_users_fido2_security_key_registered()
+            check = entra_break_glass_account_fido2_security_key_registered()
             result = check.execute()
 
             assert len(result) == 1
@@ -189,8 +189,8 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_break_glass_users_fido2_security_key_registered.entra_break_glass_users_fido2_security_key_registered import (
-                entra_break_glass_users_fido2_security_key_registered,
+            from prowler.providers.m365.services.entra.entra_break_glass_account_fido2_security_key_registered.entra_break_glass_account_fido2_security_key_registered import (
+                entra_break_glass_account_fido2_security_key_registered,
             )
 
             entra_client.conditional_access_policies = {
@@ -210,7 +210,7 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 ),
             }
 
-            check = entra_break_glass_users_fido2_security_key_registered()
+            check = entra_break_glass_account_fido2_security_key_registered()
             result = check.execute()
 
             assert len(result) == 1
@@ -239,8 +239,8 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_break_glass_users_fido2_security_key_registered.entra_break_glass_users_fido2_security_key_registered import (
-                entra_break_glass_users_fido2_security_key_registered,
+            from prowler.providers.m365.services.entra.entra_break_glass_account_fido2_security_key_registered.entra_break_glass_account_fido2_security_key_registered import (
+                entra_break_glass_account_fido2_security_key_registered,
             )
 
             entra_client.conditional_access_policies = {
@@ -257,7 +257,7 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 ),
             }
 
-            check = entra_break_glass_users_fido2_security_key_registered()
+            check = entra_break_glass_account_fido2_security_key_registered()
             result = check.execute()
 
             assert len(result) == 1
@@ -286,8 +286,8 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_break_glass_users_fido2_security_key_registered.entra_break_glass_users_fido2_security_key_registered import (
-                entra_break_glass_users_fido2_security_key_registered,
+            from prowler.providers.m365.services.entra.entra_break_glass_account_fido2_security_key_registered.entra_break_glass_account_fido2_security_key_registered import (
+                entra_break_glass_account_fido2_security_key_registered,
             )
 
             entra_client.conditional_access_policies = {
@@ -303,7 +303,7 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 ),
             }
 
-            check = entra_break_glass_users_fido2_security_key_registered()
+            check = entra_break_glass_account_fido2_security_key_registered()
             result = check.execute()
 
             assert len(result) == 1
@@ -332,8 +332,8 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_break_glass_users_fido2_security_key_registered.entra_break_glass_users_fido2_security_key_registered import (
-                entra_break_glass_users_fido2_security_key_registered,
+            from prowler.providers.m365.services.entra.entra_break_glass_account_fido2_security_key_registered.entra_break_glass_account_fido2_security_key_registered import (
+                entra_break_glass_account_fido2_security_key_registered,
             )
 
             entra_client.conditional_access_policies = {
@@ -350,7 +350,7 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 ),
             }
 
-            check = entra_break_glass_users_fido2_security_key_registered()
+            check = entra_break_glass_account_fido2_security_key_registered()
             result = check.execute()
 
             assert len(result) == 1
@@ -379,8 +379,8 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_break_glass_users_fido2_security_key_registered.entra_break_glass_users_fido2_security_key_registered import (
-                entra_break_glass_users_fido2_security_key_registered,
+            from prowler.providers.m365.services.entra.entra_break_glass_account_fido2_security_key_registered.entra_break_glass_account_fido2_security_key_registered import (
+                entra_break_glass_account_fido2_security_key_registered,
             )
 
             entra_client.conditional_access_policies = {
@@ -407,7 +407,7 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 ),
             }
 
-            check = entra_break_glass_users_fido2_security_key_registered()
+            check = entra_break_glass_account_fido2_security_key_registered()
             result = check.execute()
 
             assert len(result) == 2
@@ -433,8 +433,8 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_break_glass_users_fido2_security_key_registered.entra_break_glass_users_fido2_security_key_registered import (
-                entra_break_glass_users_fido2_security_key_registered,
+            from prowler.providers.m365.services.entra.entra_break_glass_account_fido2_security_key_registered.entra_break_glass_account_fido2_security_key_registered import (
+                entra_break_glass_account_fido2_security_key_registered,
             )
 
             entra_client.conditional_access_policies = {
@@ -444,7 +444,7 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
             # User not present in the users dict
             entra_client.users = {}
 
-            check = entra_break_glass_users_fido2_security_key_registered()
+            check = entra_break_glass_account_fido2_security_key_registered()
             result = check.execute()
 
             assert len(result) == 0
@@ -468,8 +468,8 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_break_glass_users_fido2_security_key_registered.entra_break_glass_users_fido2_security_key_registered import (
-                entra_break_glass_users_fido2_security_key_registered,
+            from prowler.providers.m365.services.entra.entra_break_glass_account_fido2_security_key_registered.entra_break_glass_account_fido2_security_key_registered import (
+                entra_break_glass_account_fido2_security_key_registered,
             )
 
             # User excluded from the enabled policy but not the disabled one
@@ -493,7 +493,7 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 ),
             }
 
-            check = entra_break_glass_users_fido2_security_key_registered()
+            check = entra_break_glass_account_fido2_security_key_registered()
             result = check.execute()
 
             # Only 1 enabled policy and user is excluded from it → break glass user identified

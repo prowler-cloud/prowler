@@ -28,7 +28,7 @@
       "Description": "Ensure multifactor authentication is enabled for all users in administrative roles",
       "Checks": [
         "entra_admin_users_mfa_enabled",
-        "entra_break_glass_users_fido2_security_key_registered"
+        "entra_break_glass_account_fido2_security_key_registered"
       ],
       "Attributes": [
         {
@@ -83,7 +83,7 @@
       "Description": "Ensure 'Phishing-resistant MFA strength' is required for Administrators",
       "Checks": [
         "entra_admin_users_phishing_resistant_mfa_enabled",
-        "entra_break_glass_users_fido2_security_key_registered"
+        "entra_break_glass_account_fido2_security_key_registered"
       ],
       "Attributes": [
         {

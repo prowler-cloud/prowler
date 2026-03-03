@@ -7,7 +7,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 
 
-class entra_break_glass_users_fido2_security_key_registered(Check):
+class entra_break_glass_account_fido2_security_key_registered(Check):
     """Ensure that break glass accounts have FIDO2 security keys registered.
 
     This check identifies break glass (emergency access) accounts by finding users

@@ -1,6 +1,6 @@
 {
   "Provider": "m365",
-  "CheckID": "entra_break_glass_users_fido2_security_key_registered",
+  "CheckID": "entra_break_glass_account_fido2_security_key_registered",
   "CheckTitle": "Break glass account has a FIDO2 security key registered for phishing-resistant authentication",
   "CheckType": [],
   "ServiceName": "entra",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Register at least one **FIDO2 security key** for each break glass account. Store the physical keys in a secure, offline location such as a safe. Use phishing-resistant authentication to protect emergency access accounts from credential-based attacks.",
-      "Url": "https://hub.prowler.com/check/entra_break_glass_users_fido2_security_key_registered"
+      "Url": "https://hub.prowler.com/check/entra_break_glass_account_fido2_security_key_registered"
     }
   },
   "Categories": [
