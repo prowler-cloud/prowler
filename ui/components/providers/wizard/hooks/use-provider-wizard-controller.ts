@@ -173,11 +173,6 @@ export function useProviderWizardController({
   };
 
   const handleTestSuccess = () => {
-    if (mode === PROVIDER_WIZARD_MODE.UPDATE) {
-      handleClose();
-      return;
-    }
-
     setCurrentStep(PROVIDER_WIZARD_STEP.LAUNCH);
   };
 

@@ -251,15 +251,22 @@ class Finding(BaseModel):
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
 
+                owner = getattr(check_output, "owner", None)
+
                 if isinstance(provider.identity, GithubIdentityInfo):
                     # GithubIdentityInfo (Personal Access Token, OAuth)
-                    output_data["account_name"] = provider.identity.account_name
-                    output_data["account_uid"] = provider.identity.account_id
+                    output_data["account_name"] = (
+                        owner or provider.identity.account_name
+                    )
+                    output_data["account_uid"] = owner or provider.identity.account_name
                     output_data["account_email"] = provider.identity.account_email
                 elif isinstance(provider.identity, GithubAppIdentityInfo):
                     # GithubAppIdentityInfo (GitHub App)
-                    output_data["account_name"] = provider.identity.app_name
-                    output_data["account_uid"] = provider.identity.app_id
+                    output_data["account_name"] = owner or provider.identity.app_name
+                    output_data["account_uid"] = owner or provider.identity.app_name
+                    output_data["account_organization_uid"] = str(
+                        provider.identity.app_id
+                    )
                     output_data["installations"] = provider.identity.installations
 
                 output_data["region"] = check_output.owner
@@ -269,10 +276,13 @@ class Finding(BaseModel):
                     f"{provider.identity.identity_type}: {provider.identity.identity_id}"
                 )
                 output_data["account_uid"] = get_nested_attribute(
-                    provider, "identity.tenant_id"
+                    provider, "identity.tenant_domain"
                 )
                 output_data["account_name"] = get_nested_attribute(
                     provider, "identity.tenant_domain"
+                )
+                output_data["account_organization_uid"] = get_nested_attribute(
+                    provider, "identity.tenant_id"
                 )
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
