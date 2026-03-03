@@ -33,12 +33,12 @@ def test_validate_arguments_mutual_exclusion():
     assert msg == ""
 
 
-def test_validate_arguments_export_ocsf_requires_provider_uid():
-    # --export-ocsf without provider_uid should fail
+def test_validate_arguments_push_to_cloud_requires_provider_uid():
+    # --push-to-cloud without provider_uid should fail
     args = Args(
         scan_path=".",
         scan_repository_url=None,
-        export_ocsf=True,
+        push_to_cloud=True,
         provider_uid=None,
     )
     valid, msg = iac_arguments.validate_arguments(args)
@@ -46,12 +46,12 @@ def test_validate_arguments_export_ocsf_requires_provider_uid():
     assert "--provider-uid is required" in msg
 
 
-def test_validate_arguments_export_ocsf_with_provider_uid_passes():
-    # --export-ocsf with valid provider_uid should pass
+def test_validate_arguments_push_to_cloud_with_provider_uid_passes():
+    # --push-to-cloud with valid provider_uid should pass
     args = Args(
         scan_path=".",
         scan_repository_url=None,
-        export_ocsf=True,
+        push_to_cloud=True,
         provider_uid="https://github.com/user/repo.git",
     )
     valid, msg = iac_arguments.validate_arguments(args)
@@ -59,19 +59,19 @@ def test_validate_arguments_export_ocsf_with_provider_uid_passes():
     assert msg == ""
 
 
-def test_validate_arguments_no_export_ocsf_without_provider_uid_passes():
-    # No --export-ocsf, no provider_uid — should pass
+def test_validate_arguments_no_push_to_cloud_without_provider_uid_passes():
+    # No --push-to-cloud, no provider_uid — should pass
     args = Args(
         scan_path=".",
         scan_repository_url=None,
-        export_ocsf=False,
+        push_to_cloud=False,
         provider_uid=None,
     )
     valid, msg = iac_arguments.validate_arguments(args)
     assert valid
     assert msg == ""
 
-    # No export_ocsf attr at all — should pass
+    # No push_to_cloud attr at all — should pass
     args = Args(scan_path=".", scan_repository_url=None)
     valid, msg = iac_arguments.validate_arguments(args)
     assert valid
