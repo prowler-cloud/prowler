@@ -36,7 +36,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CIS 6.0 for the AWS provider [(#10127)](https://github.com/prowler-cloud/prowler/pull/10127)
 - `entra_require_mfa_for_management_api` check for m365 provider [(#10150)](https://github.com/prowler-cloud/prowler/pull/10150)
 - OpenStack provider multiple regions support [(#10135)](https://github.com/prowler-cloud/prowler/pull/10135)
-- `entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps` check for m365 provider [(#10197)](https://github.com/prowler-cloud/prowler/pull/10197)
+- `entra_conditional_access_policy_mdm_enrolled_compliant_device_required` check for m365 provider [(#10197)](https://github.com/prowler-cloud/prowler/pull/10197)
 
 ### 🔄 Changed
 
