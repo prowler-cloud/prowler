@@ -1,4 +1,5 @@
 import logging
+import re
 
 from typing import Any, Iterable
 
@@ -117,6 +118,28 @@ def execute_query(
 
 # Custom query helpers
 
+# Patterns that indicate SSRF or dangerous procedure calls
+# Defense-in-depth layer - the primary control is `neo4j.READ_ACCESS`
+_BLOCKED_PATTERNS = [
+    re.compile(r"\bLOAD\s+CSV\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.load\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.import\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.export\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.cypher\.run\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.systemdb\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.config\b", re.IGNORECASE),
+]
+
+
+def validate_custom_query(cypher: str) -> None:
+    """Reject queries containing known SSRF or dangerous procedure patterns.
+
+    Raises ValidationError if a blocked pattern is found.
+    """
+    for pattern in _BLOCKED_PATTERNS:
+        if pattern.search(cypher):
+            raise ValidationError({"query": "Query contains a blocked operation"})
+
 
 def normalize_custom_query_payload(raw_data):
     if not isinstance(raw_data, dict):
@@ -135,6 +158,8 @@ def execute_custom_query(
     cypher: str,
     provider_id: str,
 ) -> dict[str, Any]:
+    validate_custom_query(cypher)
+
     try:
         graph = graph_database.execute_read_query(
             database=database_name,
@@ -225,6 +250,12 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
                 "labels": _filter_labels(node.labels),
                 "properties": _serialize_properties(node._properties),
             },
+        )
+
+    filtered_count = len(graph.nodes) - len(nodes)
+    if filtered_count > 0:
+        logger.debug(
+            f"Filtered {filtered_count} nodes without matching provider_id={provider_id}"
         )
 
     relationships = []
