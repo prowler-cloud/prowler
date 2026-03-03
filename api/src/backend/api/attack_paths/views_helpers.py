@@ -110,7 +110,7 @@ def execute_query(
         )
 
     except graph_database.GraphDatabaseQueryException as exc:
-        logger.error("Query failed for Attack Paths query `%s`: %s", definition.id, exc)
+        logger.error(f"Query failed for Attack Paths query `{definition.id}`: {exc}")
         raise APIException(
             "Attack Paths query execution failed due to a database error"
         )
@@ -184,7 +184,7 @@ def execute_custom_query(
         )
 
     except graph_database.GraphDatabaseQueryException as exc:
-        logger.error("Custom cypher query failed: %s", exc)
+        logger.error(f"Custom cypher query failed: {exc}")
         raise APIException(
             "Attack Paths query execution failed due to a database error"
         )
@@ -206,7 +206,7 @@ def get_cartography_schema(
             )
             record = result.single()
     except graph_database.GraphDatabaseQueryException as exc:
-        logger.error("Cartography schema query failed: %s", exc)
+        logger.error(f"Cartography schema query failed: {exc}")
         raise APIException(
             "Unable to retrieve cartography schema due to a database error"
         )
@@ -265,9 +265,7 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
     filtered_count = len(graph.nodes) - len(nodes)
     if filtered_count > 0:
         logger.debug(
-            "Filtered %d nodes without matching provider_id=%s",
-            filtered_count,
-            provider_id,
+            f"Filtered {filtered_count} nodes without matching provider_id={provider_id}"
         )
 
     relationships = []
