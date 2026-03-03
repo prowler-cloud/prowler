@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Conditional Access Policy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "Conditional Access policies can require that only **approved client apps** or apps with **app protection policies** are used on iOS and Android devices. This ensures corporate data on mobile platforms is accessed only through managed or protected applications.",
   "Risk": "Without requiring approved or protected client apps on mobile platforms, users can access corporate data through **unmanaged applications** that lack security controls. This increases the risk of **data leakage**, unauthorized data sharing, and exposure of sensitive information on personal or compromised mobile devices.",
