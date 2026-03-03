@@ -4855,10 +4855,9 @@ class TestAttackPathsScanViewSet:
                     content_type=API_JSON_CONTENT_TYPE,
                 )
                 if i < 10:
-                    assert response.status_code in (
-                        status.HTTP_200_OK,
-                        status.HTTP_404_NOT_FOUND,
-                    ), f"Request {i + 1} should succeed, got {response.status_code}"
+                    assert (
+                        response.status_code == status.HTTP_200_OK
+                    ), f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
                 else:
                     assert (
                         response.status_code == status.HTTP_429_TOO_MANY_REQUESTS

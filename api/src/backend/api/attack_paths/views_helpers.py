@@ -110,7 +110,7 @@ def execute_query(
         )
 
     except graph_database.GraphDatabaseQueryException as exc:
-        logger.error(f"Query failed for Attack Paths query `{definition.id}`: {exc}")
+        logger.error("Query failed for Attack Paths query `%s`: %s", definition.id, exc)
         raise APIException(
             "Attack Paths query execution failed due to a database error"
         )
@@ -118,8 +118,8 @@ def execute_query(
 
 # Custom query helpers
 
-# Patterns that indicate SSRF or dangerous procedure calls
-# Defense-in-depth layer - the primary control is `neo4j.READ_ACCESS`
+# Patterns that indicate SSRF or dangerous procedure calls.
+# Defense-in-depth layer - the primary control is `neo4j.READ_ACCESS`.
 _BLOCKED_PATTERNS = [
     re.compile(r"\bLOAD\s+CSV\b", re.IGNORECASE),
     re.compile(r"\bapoc\.load\b", re.IGNORECASE),
@@ -128,16 +128,26 @@ _BLOCKED_PATTERNS = [
     re.compile(r"\bapoc\.cypher\.run\b", re.IGNORECASE),
     re.compile(r"\bapoc\.systemdb\b", re.IGNORECASE),
     re.compile(r"\bapoc\.config\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.periodic\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.do\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.trigger\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.custom\b", re.IGNORECASE),
 ]
+
+# Strip string literals so patterns inside quotes don't cause false positives.
+# Handles escaped quotes (\' and \") inside strings.
+_STRING_LITERALS = re.compile(r"'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"")
 
 
 def validate_custom_query(cypher: str) -> None:
     """Reject queries containing known SSRF or dangerous procedure patterns.
 
     Raises ValidationError if a blocked pattern is found.
+    String literals are stripped before matching to avoid false positives.
     """
+    stripped = _STRING_LITERALS.sub("", cypher)
     for pattern in _BLOCKED_PATTERNS:
-        if pattern.search(cypher):
+        if pattern.search(stripped):
             raise ValidationError({"query": "Query contains a blocked operation"})
 
 
@@ -174,7 +184,7 @@ def execute_custom_query(
         )
 
     except graph_database.GraphDatabaseQueryException as exc:
-        logger.error(f"Custom cypher query failed: {exc}")
+        logger.error("Custom cypher query failed: %s", exc)
         raise APIException(
             "Attack Paths query execution failed due to a database error"
         )
@@ -196,7 +206,7 @@ def get_cartography_schema(
             )
             record = result.single()
     except graph_database.GraphDatabaseQueryException as exc:
-        logger.error(f"Cartography schema query failed: {exc}")
+        logger.error("Cartography schema query failed: %s", exc)
         raise APIException(
             "Unable to retrieve cartography schema due to a database error"
         )
@@ -255,7 +265,9 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
     filtered_count = len(graph.nodes) - len(nodes)
     if filtered_count > 0:
         logger.debug(
-            f"Filtered {filtered_count} nodes without matching provider_id={provider_id}"
+            "Filtered %d nodes without matching provider_id=%s",
+            filtered_count,
+            provider_id,
         )
 
     relationships = []

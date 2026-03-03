@@ -52,7 +52,7 @@ from api.v1.views import (
 
 
 # This helper view is used to block any endpoints that should not be available
-# For using it, add a new entry in the `urlpatterns` list, for example (old but real one):
+# To use it, add a new entry in the `urlpatterns` list, for example (old but real one):
 #     path(
 #         "attack-paths-scans/<uuid:pk>/queries/custom",
 #         _blocked_endpoint,

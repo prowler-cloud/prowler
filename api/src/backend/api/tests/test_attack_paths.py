@@ -516,6 +516,10 @@ def test_execute_custom_query_wraps_graph_errors():
         "CALL apoc.cypher.run('CREATE (n)', {}) YIELD value RETURN value",
         "CALL apoc.systemdb.graph() YIELD nodes RETURN nodes",
         "CALL apoc.config.list() YIELD key, value RETURN key, value",
+        "CALL apoc.periodic.iterate('MATCH (n) RETURN n', 'DELETE n', {batchSize: 100})",
+        "CALL apoc.do.when(true, 'CREATE (n) RETURN n', '', {}) YIELD value RETURN value",
+        "CALL apoc.trigger.add('t', 'RETURN 1', {phase: 'before'})",
+        "CALL apoc.custom.asProcedure('myProc', 'RETURN 1')",
     ],
     ids=[
         "LOAD_CSV",
@@ -527,6 +531,10 @@ def test_execute_custom_query_wraps_graph_errors():
         "apoc.cypher.run",
         "apoc.systemdb.graph",
         "apoc.config.list",
+        "apoc.periodic.iterate",
+        "apoc.do.when",
+        "apoc.trigger.add",
+        "apoc.custom.asProcedure",
     ],
 )
 def test_validate_custom_query_rejects_blocked_patterns(cypher):
@@ -543,12 +551,16 @@ def test_validate_custom_query_rejects_blocked_patterns(cypher):
         "MATCH (a)-[r]->(b) RETURN a, r, b",
         "MATCH (n) WHERE n.name CONTAINS 'load' RETURN n",
         "CALL apoc.create.vNode(['Label'], {}) YIELD node RETURN node",
+        "MATCH (n) WHERE n.name = 'apoc.load.json' RETURN n",
+        'MATCH (n) WHERE n.description = "LOAD CSV is cool" RETURN n',
     ],
     ids=[
         "simple_match",
         "traversal",
         "contains_load_substring",
         "apoc_virtual_node",
+        "apoc_load_inside_single_quotes",
+        "load_csv_inside_double_quotes",
     ],
 )
 def test_validate_custom_query_allows_clean_queries(cypher):
