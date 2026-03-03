@@ -74,7 +74,7 @@ def init_parser(self):
         "--provider-uid",
         dest="provider_uid",
         default=None,
-        help="Unique identifier for the IAC provider. Used as cloud.account.uid in OCSF output. Required when using --export-ocsf.",
+        help="Unique identifier for the IAC provider. Required when using --export-ocsf.",
     )
 
 
