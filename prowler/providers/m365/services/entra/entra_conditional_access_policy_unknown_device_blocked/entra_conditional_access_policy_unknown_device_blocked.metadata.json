@@ -1,0 +1,39 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_unknown_device_blocked",
+  "CheckTitle": "Conditional Access policy blocks access from unknown or unsupported device platforms",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
+  "Description": "Conditional Access policy that includes **all device platforms** and excludes the five known platforms (`android`, `iOS`, `windows`, `macOS`, `linux`) with a **block** grant control prevents sign-ins from unrecognized or unsupported devices.",
+  "Risk": "Without blocking unknown device platforms, attackers can sign in from **unmanaged or spoofed devices** that bypass compliance and security controls.\n\nThis increases the risk of **unauthorized access** and makes it harder to enforce device-based security policies.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-condition-device-platforms",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-policy-unknown-unsupported-device"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Click **New policy**.\n4. Under **Users**, select **All users**.\n5. Under **Target resources**, select **All cloud apps**.\n6. Under **Conditions** > **Device platforms**, set **Include** to **Any device** and **Exclude** the five known platforms: Android, iOS, Windows, macOS, Linux.\n7. Under **Grant**, select **Block access**.\n8. Set the policy to **On** and click **Create**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a Conditional Access policy that blocks access from unknown device platforms. Include all platforms and exclude the five known ones (`android`, `iOS`, `windows`, `macOS`, `linux`). Pair this with **device compliance** policies for defense in depth, since platform detection relies on user agent strings.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_unknown_device_blocked"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_managed_device_required_for_authentication"
+  ],
+  "Notes": "Device platform detection relies on user agent strings, which can be spoofed. This policy should be paired with device compliance policies for stronger security."
+}

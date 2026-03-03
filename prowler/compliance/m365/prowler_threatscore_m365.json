@@ -99,6 +99,7 @@
       "Id": "1.1.6",
       "Description": "Ensure a managed device is required for authentication",
       "Checks": [
+        "entra_conditional_access_policy_unknown_device_blocked",
         "entra_managed_device_required_for_authentication"
       ],
       "Attributes": [
@@ -117,6 +118,7 @@
       "Id": "1.1.7",
       "Description": "Ensure a managed device is required for MFA registration",
       "Checks": [
+        "entra_conditional_access_policy_unknown_device_blocked",
         "entra_managed_device_required_for_mfa_registration"
       ],
       "Attributes": [

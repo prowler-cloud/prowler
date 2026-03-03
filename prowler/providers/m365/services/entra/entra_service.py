@@ -261,6 +261,28 @@ class Entra(M365Service):
                                 [],
                             )
                         ],
+                        platform_conditions=(
+                            PlatformConditions(
+                                included_platforms=[
+                                    platform
+                                    for platform in getattr(
+                                        policy.conditions.platforms,
+                                        "include_platforms",
+                                        [],
+                                    )
+                                ],
+                                excluded_platforms=[
+                                    platform
+                                    for platform in getattr(
+                                        policy.conditions.platforms,
+                                        "exclude_platforms",
+                                        [],
+                                    )
+                                ],
+                            )
+                            if getattr(policy.conditions, "platforms", None)
+                            else None
+                        ),
                         user_risk_levels=[
                             RiskLevel(risk_level)
                             for risk_level in getattr(
@@ -838,10 +860,18 @@ class ClientAppType(Enum):
     OTHER_CLIENTS = "other"
 
 
+class PlatformConditions(BaseModel):
+    """Model representing device platform conditions for Conditional Access policies."""
+
+    included_platforms: List[str] = []
+    excluded_platforms: List[str] = []
+
+
 class Conditions(BaseModel):
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
     client_app_types: Optional[List[ClientAppType]]
+    platform_conditions: Optional[PlatformConditions] = None
     user_risk_levels: List[RiskLevel] = []
     sign_in_risk_levels: List[RiskLevel] = []
 
