@@ -689,6 +689,7 @@ class TestFinding:
         provider.type = "iac"
         provider.scan_repository_url = "https://github.com/user/repo"
         provider.auth_method = "No auth"
+        provider.provider_uid = None
 
         # Mock check result
         check_output = MagicMock()
