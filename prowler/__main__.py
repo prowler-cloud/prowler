@@ -546,27 +546,34 @@ def prowler():
         try:
             response = send_ocsf_to_api(ocsf_output.file_path)
         except ValueError:
-            logger.warning(
-                "OCSF export skipped: no API key configured. "
+            print(
+                f"{Style.BRIGHT}{Fore.YELLOW}\nOCSF export skipped: no API key configured. "
                 "Set the PROWLER_API_KEY environment variable to enable it. "
-                f"Scan results were saved to {ocsf_output.file_path}"
+                f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
             )
         except requests.ConnectionError:
-            logger.warning(
-                "OCSF export skipped: could not reach the Prowler Cloud API at "
+            print(
+                f"{Style.BRIGHT}{Fore.RED}\nOCSF export failed: could not reach the Prowler Cloud API at "
                 f"{cloud_api_base_url}. Check the URL and your network connection. "
-                f"Scan results were saved to {ocsf_output.file_path}"
+                f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
             )
         except requests.HTTPError as http_err:
-            logger.warning(
-                f"OCSF export failed: the API returned HTTP {http_err.response.status_code}. "
-                "Verify your API key is valid and has the right permissions. "
-                f"Scan results were saved to {ocsf_output.file_path}"
-            )
+            if http_err.response.status_code == 402:
+                print(
+                    f"{Style.BRIGHT}{Fore.RED}\nOCSF export failed: "
+                    "this feature is only available with a Prowler Cloud subscription. "
+                    f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
+                )
+            else:
+                print(
+                    f"{Style.BRIGHT}{Fore.RED}\nOCSF export failed: the API returned HTTP {http_err.response.status_code}. "
+                    "Verify your API key is valid and has the right permissions. "
+                    f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
+                )
         except Exception as error:
-            logger.warning(
-                f"OCSF export failed unexpectedly: {error}. "
-                f"Scan results were saved to {ocsf_output.file_path}"
+            print(
+                f"{Style.BRIGHT}{Fore.RED}\nOCSF export failed unexpectedly: {error}. "
+                f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
             )
         else:
             job_id = response.get("data", {}).get("id") if response else None
