@@ -1,6 +1,6 @@
 {
   "Provider": "m365",
-  "CheckID": "entra_approved_client_app_required_for_mobile",
+  "CheckID": "entra_conditional_access_policy_approved_client_app_required_for_mobile",
   "CheckTitle": "Conditional Access policy enforces approved client apps or app protection for mobile devices",
   "CheckType": [],
   "ServiceName": "entra",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Enforce Conditional Access policies requiring app protection policies or approved client apps on iOS and Android devices. Prefer **app protection policies** over approved client apps, as the approved client app grant control is retiring June 30, 2026. Regularly review policies to ensure mobile access is restricted to managed applications.",
-      "Url": "https://hub.prowler.com/check/entra_approved_client_app_required_for_mobile"
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_approved_client_app_required_for_mobile"
     }
   },
   "Categories": [

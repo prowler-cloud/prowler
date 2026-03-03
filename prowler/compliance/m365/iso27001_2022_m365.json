@@ -616,7 +616,7 @@
         "defenderxdr_endpoint_privileged_user_exposed_credentials",
         "entra_admin_users_phishing_resistant_mfa_enabled",
         "entra_app_enforced_restrictions",
-        "entra_approved_client_app_required_for_mobile",
+        "entra_conditional_access_policy_approved_client_app_required_for_mobile",
         "entra_managed_device_required_for_authentication",
         "entra_managed_device_required_for_mfa_registration",
         "entra_users_mfa_capable",
@@ -671,7 +671,7 @@
       "Checks": [
         "entra_admin_portals_access_restriction",
         "entra_app_enforced_restrictions",
-        "entra_approved_client_app_required_for_mobile",
+        "entra_conditional_access_policy_approved_client_app_required_for_mobile",
         "entra_policy_guest_users_access_restrictions",
         "sharepoint_external_sharing_restricted"
       ]
@@ -692,7 +692,7 @@
         "entra_admin_users_mfa_enabled",
         "entra_admin_users_sign_in_frequency_enabled",
         "entra_all_apps_conditional_access_coverage",
-        "entra_approved_client_app_required_for_mobile",
+        "entra_conditional_access_policy_approved_client_app_required_for_mobile",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_managed_device_required_for_authentication",
         "entra_seamless_sso_disabled",

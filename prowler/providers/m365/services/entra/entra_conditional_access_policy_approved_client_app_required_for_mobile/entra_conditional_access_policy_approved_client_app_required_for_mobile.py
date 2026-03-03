@@ -7,7 +7,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 
 
-class entra_approved_client_app_required_for_mobile(Check):
+class entra_conditional_access_policy_approved_client_app_required_for_mobile(Check):
     """Check if a Conditional Access policy requires approved client apps or app protection for mobile devices.
 
     This check ensures that at least one enabled Conditional Access policy
