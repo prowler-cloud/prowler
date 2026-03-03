@@ -774,20 +774,20 @@ OAuthAppInfo
         logger.info("Entra - Getting authentication method configurations...")
         authentication_method_configurations = {}
         try:
-            policy = (
-                await self.client.policies.authentication_methods_policy.get()
-            )
-            for config in getattr(
-                policy, "authentication_method_configurations", []
-            ) or []:
+            policy = await self.client.policies.authentication_methods_policy.get()
+            for config in (
+                getattr(policy, "authentication_method_configurations", []) or []
+            ):
                 method_id = getattr(config, "id", "")
                 if method_id:
                     authentication_method_configurations[method_id] = (
                         AuthenticationMethodConfiguration(
                             id=method_id,
-                            state=getattr(config, "state", None).value
-                            if getattr(config, "state", None)
-                            else "disabled",
+                            state=(
+                                getattr(config, "state", None).value
+                                if getattr(config, "state", None)
+                                else "disabled"
+                            ),
                         )
                     )
         except Exception as error:

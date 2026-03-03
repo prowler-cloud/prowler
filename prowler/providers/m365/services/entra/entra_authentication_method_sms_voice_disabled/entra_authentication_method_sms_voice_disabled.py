@@ -45,16 +45,24 @@ class entra_authentication_method_sms_voice_disabled(Check):
 
             if sms_enabled and voice_enabled:
                 report.status = "FAIL"
-                report.status_extended = "SMS and Voice authentication methods are enabled in the tenant."
+                report.status_extended = (
+                    "SMS and Voice authentication methods are enabled in the tenant."
+                )
             elif sms_enabled:
                 report.status = "FAIL"
-                report.status_extended = "SMS authentication method is enabled in the tenant."
+                report.status_extended = (
+                    "SMS authentication method is enabled in the tenant."
+                )
             elif voice_enabled:
                 report.status = "FAIL"
-                report.status_extended = "Voice authentication method is enabled in the tenant."
+                report.status_extended = (
+                    "Voice authentication method is enabled in the tenant."
+                )
             else:
                 report.status = "PASS"
-                report.status_extended = "SMS and Voice authentication methods are disabled in the tenant."
+                report.status_extended = (
+                    "SMS and Voice authentication methods are disabled in the tenant."
+                )
 
             findings.append(report)
 
