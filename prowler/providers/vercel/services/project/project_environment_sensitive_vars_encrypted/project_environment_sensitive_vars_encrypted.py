@@ -15,7 +15,7 @@ SENSITIVE_PATTERNS = {
 }
 
 
-class environment_sensitive_vars_encrypted(Check):
+class project_environment_sensitive_vars_encrypted(Check):
     """Check if environment variables with sensitive-looking names use encrypted or secret types.
 
     This class verifies that any environment variable whose name contains common

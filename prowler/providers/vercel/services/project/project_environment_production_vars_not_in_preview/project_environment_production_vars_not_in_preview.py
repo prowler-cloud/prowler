@@ -6,7 +6,7 @@ from prowler.providers.vercel.services.project.project_client import project_cli
 SENSITIVE_TYPES = {"secret", "encrypted"}
 
 
-class environment_production_vars_not_in_preview(Check):
+class project_environment_production_vars_not_in_preview(Check):
     """Check that sensitive production environment variables do not also target preview.
 
     This class verifies that environment variables using "secret" or "encrypted"

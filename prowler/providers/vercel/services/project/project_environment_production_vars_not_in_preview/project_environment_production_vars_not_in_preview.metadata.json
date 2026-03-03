@@ -1,18 +1,20 @@
 {
   "Provider": "vercel",
-  "CheckID": "environment_production_vars_not_in_preview",
+  "CheckID": "project_environment_production_vars_not_in_preview",
   "CheckTitle": "Ensure sensitive production environment variables do not target preview",
   "CheckType": [],
-  "ServiceName": "environment",
+  "ServiceName": "project",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:project/{project_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "VercelProject",
   "ResourceGroup": "security",
   "Description": "**Vercel project environment variables** are assessed for **environment separation** by checking whether sensitive variables (type 'secret' or 'encrypted') that target the 'production' environment also target 'preview', which could expose production credentials to untrusted preview builds.",
   "Risk": "Preview deployments are often triggered by pull requests, including those from external contributors or forks. Sharing production secrets with preview environments can lead to credential theft.\n- **Confidentiality**: Production API keys and database credentials could be exfiltrated by malicious code in preview builds\n- **Integrity**: Stolen production credentials could be used to modify production data or services\n- **Availability**: Attackers with production credentials could disrupt live services",
-  "RelatedUrl": "https://vercel.com/docs/environment-variables",
-  "AdditionalURLs": [],
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/environment-variables"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -30,8 +32,8 @@
   ],
   "DependsOn": [],
   "RelatedTo": [
-    "environment_sensitive_vars_encrypted",
-    "environment_no_overly_broad_target"
+    "project_environment_sensitive_vars_encrypted",
+    "project_environment_no_overly_broad_target"
   ],
-  "Notes": "This check only inspects variables with type 'secret' or 'encrypted' since these are the ones most likely to contain actual credentials. Plain-text variables with sensitive names should be caught by the environment_sensitive_vars_encrypted check."
+  "Notes": "This check only inspects variables with type 'secret' or 'encrypted' since these are the ones most likely to contain actual credentials. Plain-text variables with sensitive names should be caught by the project_environment_sensitive_vars_encrypted check."
 }

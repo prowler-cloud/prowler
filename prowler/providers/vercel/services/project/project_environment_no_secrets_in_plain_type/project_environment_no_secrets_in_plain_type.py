@@ -13,7 +13,7 @@ SECRET_SUFFIXES = (
 )
 
 
-class environment_no_secrets_in_plain_type(Check):
+class project_environment_no_secrets_in_plain_type(Check):
     """Check that no environment variables with secret-like name suffixes are stored as plain text.
 
     This class verifies that environment variables whose names end with common

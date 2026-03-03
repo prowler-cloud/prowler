@@ -1,18 +1,20 @@
 {
   "Provider": "vercel",
-  "CheckID": "environment_no_overly_broad_target",
+  "CheckID": "project_environment_no_overly_broad_target",
   "CheckTitle": "Ensure no environment variables target all three environments",
   "CheckType": [],
-  "ServiceName": "environment",
+  "ServiceName": "project",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:project/{project_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "VercelProject",
   "ResourceGroup": "security",
   "Description": "**Vercel project environment variables** are assessed for **overly broad targeting** by checking whether any variable targets all three environments (production, preview, development) simultaneously, which violates the principle of least privilege.",
   "Risk": "Environment variables that target all environments share the same values across production, preview, and development contexts, increasing the blast radius if credentials are compromised.\n- **Confidentiality**: Production secrets are exposed to development and preview environments where security controls may be weaker\n- **Integrity**: Shared credentials make it harder to isolate environments and track the source of unauthorized changes\n- **Availability**: A credential leak in any one environment compromises all three",
-  "RelatedUrl": "https://vercel.com/docs/environment-variables",
-  "AdditionalURLs": [],
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/environment-variables"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -30,7 +32,7 @@
   ],
   "DependsOn": [],
   "RelatedTo": [
-    "environment_production_vars_not_in_preview"
+    "project_environment_production_vars_not_in_preview"
   ],
   "Notes": "This check flags any variable targeting all three environments regardless of its type. Even non-sensitive configuration shared across all environments may indicate a lack of environment-specific configuration management."
 }

@@ -6,7 +6,7 @@ from prowler.providers.vercel.services.project.project_client import project_cli
 ALL_ENVIRONMENTS = {"production", "preview", "development"}
 
 
-class environment_no_overly_broad_target(Check):
+class project_environment_no_overly_broad_target(Check):
     """Check that no environment variables target all three environments simultaneously.
 
     This class verifies that environment variables are not configured to target

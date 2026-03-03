@@ -12,7 +12,7 @@ from tests.providers.vercel.vercel_fixtures import (
 )
 
 
-class Test_environment_sensitive_vars_encrypted:
+class Test_project_environment_sensitive_vars_encrypted:
     def test_no_projects(self):
         project_client = mock.MagicMock
         project_client.projects = {}
@@ -23,15 +23,15 @@ class Test_environment_sensitive_vars_encrypted:
                 return_value=set_mocked_vercel_provider(),
             ),
             mock.patch(
-                "prowler.providers.vercel.services.project.environment_sensitive_vars_encrypted.environment_sensitive_vars_encrypted.project_client",
+                "prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted.project_client",
                 new=project_client,
             ),
         ):
-            from prowler.providers.vercel.services.project.environment_sensitive_vars_encrypted.environment_sensitive_vars_encrypted import (
-                environment_sensitive_vars_encrypted,
+            from prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted import (
+                project_environment_sensitive_vars_encrypted,
             )
 
-            check = environment_sensitive_vars_encrypted()
+            check = project_environment_sensitive_vars_encrypted()
             result = check.execute()
             assert len(result) == 0
 
@@ -59,15 +59,15 @@ class Test_environment_sensitive_vars_encrypted:
                 return_value=set_mocked_vercel_provider(),
             ),
             mock.patch(
-                "prowler.providers.vercel.services.project.environment_sensitive_vars_encrypted.environment_sensitive_vars_encrypted.project_client",
+                "prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted.project_client",
                 new=project_client,
             ),
         ):
-            from prowler.providers.vercel.services.project.environment_sensitive_vars_encrypted.environment_sensitive_vars_encrypted import (
-                environment_sensitive_vars_encrypted,
+            from prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted import (
+                project_environment_sensitive_vars_encrypted,
             )
 
-            check = environment_sensitive_vars_encrypted()
+            check = project_environment_sensitive_vars_encrypted()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == PROJECT_ID
@@ -99,15 +99,15 @@ class Test_environment_sensitive_vars_encrypted:
                 return_value=set_mocked_vercel_provider(),
             ),
             mock.patch(
-                "prowler.providers.vercel.services.project.environment_sensitive_vars_encrypted.environment_sensitive_vars_encrypted.project_client",
+                "prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted.project_client",
                 new=project_client,
             ),
         ):
-            from prowler.providers.vercel.services.project.environment_sensitive_vars_encrypted.environment_sensitive_vars_encrypted import (
-                environment_sensitive_vars_encrypted,
+            from prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted import (
+                project_environment_sensitive_vars_encrypted,
             )
 
-            check = environment_sensitive_vars_encrypted()
+            check = project_environment_sensitive_vars_encrypted()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -138,15 +138,15 @@ class Test_environment_sensitive_vars_encrypted:
                 return_value=set_mocked_vercel_provider(),
             ),
             mock.patch(
-                "prowler.providers.vercel.services.project.environment_sensitive_vars_encrypted.environment_sensitive_vars_encrypted.project_client",
+                "prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted.project_client",
                 new=project_client,
             ),
         ):
-            from prowler.providers.vercel.services.project.environment_sensitive_vars_encrypted.environment_sensitive_vars_encrypted import (
-                environment_sensitive_vars_encrypted,
+            from prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted import (
+                project_environment_sensitive_vars_encrypted,
             )
 
-            check = environment_sensitive_vars_encrypted()
+            check = project_environment_sensitive_vars_encrypted()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"

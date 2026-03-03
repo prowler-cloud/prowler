@@ -1,18 +1,20 @@
 {
   "Provider": "vercel",
-  "CheckID": "environment_sensitive_vars_encrypted",
+  "CheckID": "project_environment_sensitive_vars_encrypted",
   "CheckTitle": "Ensure environment variables with sensitive names are encrypted or secret",
   "CheckType": [],
-  "ServiceName": "environment",
+  "ServiceName": "project",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:project/{project_id}",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "VercelProject",
   "ResourceGroup": "security",
   "Description": "**Vercel project environment variables** are assessed for **encryption** by checking whether variables with sensitive-looking names (containing KEY, SECRET, TOKEN, PASSWORD, CREDENTIAL, API_KEY, PRIVATE, AUTH) are stored with type 'encrypted' or 'secret' rather than 'plain'.",
   "Risk": "Environment variables stored as **plain text** can be read by anyone with project access and are visible in build logs and the Vercel dashboard.\n- **Confidentiality**: API keys, passwords, and tokens stored in plain text can be exposed to unauthorized personnel\n- **Integrity**: Leaked credentials may allow attackers to modify external services or data\n- **Availability**: Compromised credentials can lead to service disruption or account lockout",
-  "RelatedUrl": "https://vercel.com/docs/environment-variables",
-  "AdditionalURLs": [],
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/environment-variables"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -30,7 +32,7 @@
   ],
   "DependsOn": [],
   "RelatedTo": [
-    "environment_no_secrets_in_plain_type"
+    "project_environment_no_secrets_in_plain_type"
   ],
   "Notes": "This check uses pattern matching on variable names to identify likely secrets. Variables with names containing KEY, SECRET, TOKEN, PASSWORD, CREDENTIAL, API_KEY, PRIVATE, or AUTH are considered sensitive."
 }
