@@ -427,6 +427,7 @@ class TestOCSF:
             muted=True,
             region=AWS_REGION_EU_WEST_1,
             provider="kubernetes",
+            provider_uid="test-k8s-context",
         )
 
         finding_ocsf = OCSF([finding_output])
@@ -436,6 +437,7 @@ class TestOCSF:
         assert finding_ocsf.resources[0].namespace == finding_output.region.replace(
             "namespace: ", ""
         )
+        assert finding_ocsf.unmapped["provider_uid"] == "test-k8s-context"
 
     def test_finding_output_cloud_fail_low_not_muted(self):
         finding_output = generate_finding_output(

@@ -178,7 +178,7 @@ class OCSF(Output):
                         "notes": finding.metadata.Notes,
                         "compliance": finding.compliance,
                         "scan_id": str(scan_id),
-                        "provider_uid": finding.account_uid,
+                        "provider_uid": finding.provider_uid or finding.account_uid,
                     },
                 )
                 if finding.provider != "kubernetes":
