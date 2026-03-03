@@ -181,21 +181,28 @@ See more details here: https://cloud.prowler.com/scans
 
 **Missing API key:**
 ```
-WARNING: Push to cloud skipped: no API key configured. Set the PROWLER_CLOUD_API_KEY
+Push to Prowler Cloud skipped: no API key configured. Set the PROWLER_CLOUD_API_KEY
 environment variable to enable it. Scan results were saved to
 /tmp/scan-output/prowler-output-123456789012-20260217131755.ocsf.json
 ```
 
 **API unreachable:**
 ```
-WARNING: Push to cloud failed: could not reach the Prowler Cloud API at
+Push to Prowler Cloud failed: could not reach the Prowler Cloud API at
 https://api.prowler.com. Check the URL and your network connection. Scan results
 were saved to /tmp/scan-output/prowler-output-123456789012-20260217131755.ocsf.json
 ```
 
+**No subscription:**
+```
+Push to Prowler Cloud failed: this feature is only available with a Prowler Cloud
+subscription. Scan results were saved to
+/tmp/scan-output/prowler-output-123456789012-20260217131755.ocsf.json
+```
+
 **Invalid API key:**
 ```
-WARNING: Push to cloud failed: the API returned HTTP 401. Verify your API key is
+Push to Prowler Cloud failed: the API returned HTTP 401. Verify your API key is
 valid and has the right permissions. Scan results were saved to
 /tmp/scan-output/prowler-output-123456789012-20260217131755.ocsf.json
 ```
@@ -393,6 +400,23 @@ For pricing details, see [Prowler Cloud Pricing](https://prowler.com/pricing).
 
 ## Troubleshooting
 
+### "Push to Prowler Cloud skipped: no API key configured"
+
+- Set the `PROWLER_CLOUD_API_KEY` environment variable before running the scan
+- Verify the variable is exported and not empty
+
+### "Push to Prowler Cloud failed: could not reach the Prowler Cloud API"
+
+- Verify network connectivity to `api.prowler.com`
+- Check firewall rules allow outbound HTTPS traffic
+- Confirm the API endpoint is not blocked by proxy settings
+- If using a custom base URL via `PROWLER_CLOUD_API_BASE_URL`, verify it is correct
+
+### "Push to Prowler Cloud failed: this feature is only available with a Prowler Cloud subscription"
+
+- The API returned HTTP 402, meaning your tenant does not have an active subscription
+- Visit [Prowler Cloud Pricing](https://prowler.com/pricing) to review available plans
+
 ### HTTP 401 Unauthorized
 
 - Verify the API key is valid and not revoked
@@ -409,9 +433,3 @@ For pricing details, see [Prowler Cloud Pricing](https://prowler.com/pricing).
 - Check the `/api/v1/ingestions/{id}/errors` endpoint for details
 - Verify the OCSF file format is valid
 - Ensure the file contains Detection Finding records
-
-### CLI reports "could not reach the Prowler Cloud API"
-
-- Verify network connectivity to `api.prowler.com`
-- Check firewall rules allow outbound HTTPS traffic
-- Confirm the API endpoint is not blocked by proxy settings
