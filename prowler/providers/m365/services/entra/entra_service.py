@@ -35,6 +35,7 @@ class Entra(M365Service):
         users (dict): Dictionary of users.
         user_accounts_status (dict): Dictionary of user account statuses.
         oauth_apps (dict): Dictionary of OAuth applications from Defender XDR.
+        authentication_method_configurations (dict): Dictionary of authentication method configurations.
     """
 
     def __init__(self, provider: M365Provider):
@@ -81,6 +82,7 @@ class Entra(M365Service):
                 self._get_default_app_management_policy(),
                 self._get_oauth_apps(),
                 self._get_directory_sync_settings(),
+                self._get_authentication_method_configurations(),
             )
         )
 
@@ -93,6 +95,9 @@ class Entra(M365Service):
         self.default_app_management_policy = attributes[6]
         self.oauth_apps: Optional[Dict[str, OAuthApp]] = attributes[7]
         self.directory_sync_settings, self.directory_sync_error = attributes[8]
+        self.authentication_method_configurations: Dict[
+            str, AuthenticationMethodConfiguration
+        ] = attributes[9]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -756,6 +761,41 @@ OAuthAppInfo
 
         return oauth_apps
 
+    async def _get_authentication_method_configurations(self):
+        """Retrieve authentication method configurations from Microsoft Entra.
+
+        Fetches the authentication methods policy and extracts the configuration
+        state for each authentication method (e.g., SMS, Voice, FIDO2, etc.).
+
+        Returns:
+            Dict[str, AuthenticationMethodConfiguration]: Dictionary of authentication
+                method configurations keyed by method ID (e.g., 'sms', 'voice').
+        """
+        logger.info("Entra - Getting authentication method configurations...")
+        authentication_method_configurations = {}
+        try:
+            policy = await self.client.policies.authentication_methods_policy.get()
+            for config in (
+                getattr(policy, "authentication_method_configurations", []) or []
+            ):
+                method_id = getattr(config, "id", "")
+                if method_id:
+                    authentication_method_configurations[method_id] = (
+                        AuthenticationMethodConfiguration(
+                            id=method_id,
+                            state=(
+                                getattr(config, "state", None).value
+                                if getattr(config, "state", None)
+                                else "disabled"
+                            ),
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return authentication_method_configurations
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -914,6 +954,21 @@ class DirectorySyncSettings(BaseModel):
     id: str
     password_sync_enabled: bool = False
     seamless_sso_enabled: bool = False
+
+
+class AuthenticationMethodConfiguration(BaseModel):
+    """Authentication method configuration from the authentication methods policy.
+
+    Represents the state of a specific authentication method (e.g., SMS, Voice,
+    FIDO2) within the tenant's authentication methods policy.
+
+    Attributes:
+        id: The authentication method identifier (e.g., 'sms', 'voice').
+        state: The state of the authentication method ('enabled' or 'disabled').
+    """
+
+    id: str
+    state: str = "disabled"
 
 
 class Group(BaseModel):

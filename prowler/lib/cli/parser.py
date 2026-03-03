@@ -221,7 +221,8 @@ Detailed documentation at https://docs.prowler.com
             action="store_true",
             help=(
                 "Send OCSF output to Prowler Cloud ingestion endpoint. "
-                "Requires PROWLER_API_KEY environment variable."
+                "Requires PROWLER_API_KEY environment variable. "
+                "For the IaC provider, --provider-uid is also required."
             ),
         )
 

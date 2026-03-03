@@ -21,7 +21,7 @@ class DNS(CloudflareService):
             # Get zones directly from API to avoid circular dependency with zone_client
             zones = self._get_zones()
 
-            for zone_id, zone_name in zones.items():
+            for zone_id, (zone_name, account_id) in zones.items():
                 seen_record_ids: set[str] = set()
                 try:
                     for record in self.client.dns.records.list(zone_id=zone_id):
@@ -36,6 +36,7 @@ class DNS(CloudflareService):
                                 id=record_id,
                                 zone_id=zone_id,
                                 zone_name=zone_name,
+                                account_id=account_id,
                                 name=getattr(record, "name", None),
                                 type=getattr(record, "type", None),
                                 content=getattr(record, "content", ""),
@@ -52,11 +53,11 @@ class DNS(CloudflareService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _get_zones(self) -> dict[str, str]:
+    def _get_zones(self) -> dict[str, tuple[str, str]]:
         """Get zones directly from Cloudflare API.
 
         Returns:
-            Dictionary mapping zone_id to zone_name.
+            Dictionary mapping zone_id to (zone_name, account_id).
         """
         zones = {}
         audited_accounts = self.provider.identity.audited_accounts
@@ -88,7 +89,7 @@ class DNS(CloudflareService):
                 ):
                     continue
 
-                zones[zone_id] = zone_name
+                zones[zone_id] = (zone_name, account_id or "")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -103,6 +104,7 @@ class CloudflareDNSRecord(BaseModel):
     id: str
     zone_id: str
     zone_name: str
+    account_id: str = ""
     name: Optional[str] = None
     type: Optional[str] = None
     content: str = ""
