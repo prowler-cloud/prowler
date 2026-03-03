@@ -272,6 +272,22 @@ class Entra(M365Service):
                                 [],
                             )
                         ],
+                        insider_risk_levels=(
+                            InsiderRiskLevel(
+                                getattr(
+                                    policy.conditions,
+                                    "insider_risk_levels",
+                                    None,
+                                ).value
+                            )
+                            if getattr(
+                                policy.conditions,
+                                "insider_risk_levels",
+                                None,
+                            )
+                            is not None
+                            else None
+                        ),
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=(
@@ -798,12 +814,24 @@ class ClientAppType(Enum):
     OTHER_CLIENTS = "other"
 
 
+class InsiderRiskLevel(Enum):
+    """Insider risk levels for Conditional Access policies.
+
+    Reference: https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccessconditionset#conditionalaccessinsiderrisklevels-values
+    """
+
+    MINOR = "minor"
+    MODERATE = "moderate"
+    ELEVATED = "elevated"
+
+
 class Conditions(BaseModel):
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
     client_app_types: Optional[List[ClientAppType]]
     user_risk_levels: List[RiskLevel] = []
     sign_in_risk_levels: List[RiskLevel] = []
+    insider_risk_levels: Optional[InsiderRiskLevel] = None
 
 
 class PersistentBrowser(BaseModel):
