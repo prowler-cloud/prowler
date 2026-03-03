@@ -431,6 +431,9 @@ class Finding(BaseModel):
                 f"{output_data['region']}-{output_data['resource_name']}"
             )
 
+            if provider.type == "iac" and output_data.get("resource_line_range"):
+                output_data["uid"] += f"-{output_data['resource_line_range']}"
+
             if not output_data["resource_uid"]:
                 logger.error(
                     f"Check {check_output.check_metadata.CheckID} has no resource_uid."

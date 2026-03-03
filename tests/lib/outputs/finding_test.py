@@ -721,6 +721,10 @@ class TestFinding:
         assert finding_output.resource_name == "aws_s3_bucket.example"
         assert finding_output.resource_uid == "aws_s3_bucket.example"
         assert finding_output.region == "main"  # Branch name, not line range
+        assert (
+            finding_output.uid
+            == "prowler-iac-service_check_id-iac-main-aws_s3_bucket.example-1:5"
+        )
         assert finding_output.status == Status.PASS
         assert finding_output.status_extended == "mock_status_extended"
         assert finding_output.muted is False
@@ -734,6 +738,34 @@ class TestFinding:
         assert finding_output.metadata.ServiceName == "service"
         assert finding_output.metadata.SubServiceName == ""
         assert finding_output.metadata.ResourceIdTemplate == ""
+
+    def test_generate_output_iac_empty_line_range(self):
+        provider = MagicMock()
+        provider.type = "iac"
+        provider.scan_repository_url = "https://github.com/user/repo"
+        provider.auth_method = "No auth"
+
+        check_output = MagicMock()
+        check_output.file_path = "/path/to/iac/main.tf"
+        check_output.resource_name = "main.tf"
+        check_output.resource_path = "/path/to/iac/main.tf"
+        check_output.resource_line_range = ""
+        check_output.region = "main"
+        check_output.resource = {"resource": "main.tf", "value": {}}
+        check_output.resource_details = ""
+        check_output.status = Status.PASS
+        check_output.status_extended = "No issues found"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="iac")
+        check_output.compliance = {}
+
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert isinstance(finding_output, Finding)
+        assert finding_output.uid == "prowler-iac-service_check_id-iac-main-main.tf"
 
     def assert_keys_lowercase(self, d):
         for k, v in d.items():
