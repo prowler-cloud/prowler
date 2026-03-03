@@ -1536,8 +1536,7 @@
       "Id": "5.2.2.9",
       "Description": "Conditional Access (CA) can be configured to enforce access based on the device's compliance status or whether it is Entra hybrid joined. Ensure a managed device is required for authentication.",
       "Checks": [
-        "entra_managed_device_required_for_authentication",
-        "entra_policy_requires_compliant_device_or_mfa"
+        "entra_managed_device_required_for_authentication"
       ],
       "Attributes": [
         {

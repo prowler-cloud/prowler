@@ -244,7 +244,6 @@
         "entra_all_apps_conditional_access_coverage",
         "entra_legacy_authentication_blocked",
         "entra_managed_device_required_for_authentication",
-        "entra_policy_requires_compliant_device_or_mfa",
         "entra_seamless_sso_disabled",
         "entra_users_mfa_enabled",
         "exchange_organization_modern_authentication_enabled",
@@ -619,7 +618,6 @@
         "entra_app_enforced_restrictions",
         "entra_managed_device_required_for_authentication",
         "entra_managed_device_required_for_mfa_registration",
-        "entra_policy_requires_compliant_device_or_mfa",
         "entra_users_mfa_capable",
         "entra_users_mfa_enabled"
       ]
@@ -694,7 +692,6 @@
         "entra_all_apps_conditional_access_coverage",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_managed_device_required_for_authentication",
-        "entra_policy_requires_compliant_device_or_mfa",
         "entra_seamless_sso_disabled",
         "entra_users_mfa_enabled"
       ]

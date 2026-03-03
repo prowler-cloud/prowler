@@ -4,7 +4,6 @@ from uuid import uuid4
 from prowler.providers.m365.services.entra.entra_service import (
     ApplicationEnforcedRestrictions,
     ApplicationsConditions,
-    ClientAppType,
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
     Conditions,
@@ -18,7 +17,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
-CHECK_MODULE = "prowler.providers.m365.services.entra.entra_policy_requires_compliant_device_or_mfa.entra_policy_requires_compliant_device_or_mfa"
+CHECK_MODULE = "prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy"
 
 DEFAULT_SESSION_CONTROLS = SessionControls(
     persistent_browser=PersistentBrowser(is_enabled=False, mode="always"),
@@ -61,21 +60,20 @@ ALL_APP_CONDITIONS = ApplicationsConditions(
     included_user_actions=[],
 )
 
-COMPLIANT_GRANT_CONTROLS = GrantControls(
+COMPLIANT_ONLY_GRANT_CONTROLS = GrantControls(
     built_in_controls=[
-        ConditionalAccessGrantControl.MFA,
         ConditionalAccessGrantControl.COMPLIANT_DEVICE,
-        ConditionalAccessGrantControl.DOMAIN_JOINED_DEVICE,
     ],
     operator=GrantControlOperator.OR,
 )
 
 
-class Test_entra_policy_requires_compliant_device_or_mfa:
+class Test_entra_conditional_access_policy:
     def test_entra_no_conditional_access_policies(self):
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -86,19 +84,20 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_policy_requires_compliant_device_or_mfa.entra_policy_requires_compliant_device_or_mfa import (
-                entra_policy_requires_compliant_device_or_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
+                entra_conditional_access_policy,
             )
 
             entra_client.conditional_access_policies = {}
 
-            check = entra_policy_requires_compliant_device_or_mfa()
+            check = entra_conditional_access_policy()
             result = check.execute()
+
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy requires compliant device, hybrid join, or MFA as alternative grant controls for all users."
+                == "No Conditional Access Policy requires a compliant device to access all cloud apps for all users."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"
@@ -121,8 +120,8 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_policy_requires_compliant_device_or_mfa.entra_policy_requires_compliant_device_or_mfa import (
-                entra_policy_requires_compliant_device_or_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
+                entra_conditional_access_policy,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -135,28 +134,23 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
                     conditions=Conditions(
                         application_conditions=ALL_APP_CONDITIONS,
                         user_conditions=ALL_USER_CONDITIONS,
-                        client_app_types=[
-                            ClientAppType.BROWSER,
-                            ClientAppType.MOBILE_APPS_AND_DESKTOP_CLIENTS,
-                        ],
+                        client_app_types=[],
                     ),
-                    grant_controls=COMPLIANT_GRANT_CONTROLS,
+                    grant_controls=COMPLIANT_ONLY_GRANT_CONTROLS,
                     session_controls=DEFAULT_SESSION_CONTROLS,
                     state=ConditionalAccessPolicyState.DISABLED,
                 )
             }
 
-            check = entra_policy_requires_compliant_device_or_mfa()
+            check = entra_conditional_access_policy()
             result = check.execute()
+
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy requires compliant device, hybrid join, or MFA as alternative grant controls for all users."
+                == "No Conditional Access Policy requires a compliant device to access all cloud apps for all users."
             )
-            assert result[0].resource == {}
-            assert result[0].resource_name == "Conditional Access Policies"
-            assert result[0].resource_id == "conditionalAccessPolicies"
 
     def test_entra_policy_not_targeting_all_users(self):
         policy_id = str(uuid4())
@@ -174,8 +168,8 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_policy_requires_compliant_device_or_mfa.entra_policy_requires_compliant_device_or_mfa import (
-                entra_policy_requires_compliant_device_or_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
+                entra_conditional_access_policy,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -188,24 +182,22 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
                     conditions=Conditions(
                         application_conditions=ALL_APP_CONDITIONS,
                         user_conditions=EMPTY_USER_CONDITIONS,
-                        client_app_types=[
-                            ClientAppType.BROWSER,
-                            ClientAppType.MOBILE_APPS_AND_DESKTOP_CLIENTS,
-                        ],
+                        client_app_types=[],
                     ),
-                    grant_controls=COMPLIANT_GRANT_CONTROLS,
+                    grant_controls=COMPLIANT_ONLY_GRANT_CONTROLS,
                     session_controls=DEFAULT_SESSION_CONTROLS,
                     state=ConditionalAccessPolicyState.ENABLED,
                 )
             }
 
-            check = entra_policy_requires_compliant_device_or_mfa()
+            check = entra_conditional_access_policy()
             result = check.execute()
+
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy requires compliant device, hybrid join, or MFA as alternative grant controls for all users."
+                == "No Conditional Access Policy requires a compliant device to access all cloud apps for all users."
             )
 
     def test_entra_policy_not_targeting_all_apps(self):
@@ -224,8 +216,8 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_policy_requires_compliant_device_or_mfa.entra_policy_requires_compliant_device_or_mfa import (
-                entra_policy_requires_compliant_device_or_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
+                entra_conditional_access_policy,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -238,27 +230,25 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
                     conditions=Conditions(
                         application_conditions=EMPTY_APP_CONDITIONS,
                         user_conditions=ALL_USER_CONDITIONS,
-                        client_app_types=[
-                            ClientAppType.BROWSER,
-                            ClientAppType.MOBILE_APPS_AND_DESKTOP_CLIENTS,
-                        ],
+                        client_app_types=[],
                     ),
-                    grant_controls=COMPLIANT_GRANT_CONTROLS,
+                    grant_controls=COMPLIANT_ONLY_GRANT_CONTROLS,
                     session_controls=DEFAULT_SESSION_CONTROLS,
                     state=ConditionalAccessPolicyState.ENABLED,
                 )
             }
 
-            check = entra_policy_requires_compliant_device_or_mfa()
+            check = entra_conditional_access_policy()
             result = check.execute()
+
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy requires compliant device, hybrid join, or MFA as alternative grant controls for all users."
+                == "No Conditional Access Policy requires a compliant device to access all cloud apps for all users."
             )
 
-    def test_entra_policy_missing_client_app_types(self):
+    def test_entra_policy_missing_compliant_device_control(self):
         policy_id = str(uuid4())
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
@@ -274,8 +264,8 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_policy_requires_compliant_device_or_mfa.entra_policy_requires_compliant_device_or_mfa import (
-                entra_policy_requires_compliant_device_or_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
+                entra_conditional_access_policy,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -284,61 +274,11 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
             entra_client.conditional_access_policies = {
                 policy_id: ConditionalAccessPolicy(
                     id=policy_id,
-                    display_name="Missing Client App Types",
+                    display_name="Missing Compliant Device",
                     conditions=Conditions(
                         application_conditions=ALL_APP_CONDITIONS,
                         user_conditions=ALL_USER_CONDITIONS,
-                        client_app_types=[ClientAppType.BROWSER],
-                    ),
-                    grant_controls=COMPLIANT_GRANT_CONTROLS,
-                    session_controls=DEFAULT_SESSION_CONTROLS,
-                    state=ConditionalAccessPolicyState.ENABLED,
-                )
-            }
-
-            check = entra_policy_requires_compliant_device_or_mfa()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == "No Conditional Access Policy requires compliant device, hybrid join, or MFA as alternative grant controls for all users."
-            )
-
-    def test_entra_policy_missing_grant_controls(self):
-        policy_id = str(uuid4())
-        entra_client = mock.MagicMock
-        entra_client.audited_tenant = "audited_tenant"
-        entra_client.audited_domain = DOMAIN
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_m365_provider(),
-            ),
-            mock.patch(
-                f"{CHECK_MODULE}.entra_client",
-                new=entra_client,
-            ),
-        ):
-            from prowler.providers.m365.services.entra.entra_policy_requires_compliant_device_or_mfa.entra_policy_requires_compliant_device_or_mfa import (
-                entra_policy_requires_compliant_device_or_mfa,
-            )
-            from prowler.providers.m365.services.entra.entra_service import (
-                ConditionalAccessPolicy,
-            )
-
-            entra_client.conditional_access_policies = {
-                policy_id: ConditionalAccessPolicy(
-                    id=policy_id,
-                    display_name="Missing Grant Controls",
-                    conditions=Conditions(
-                        application_conditions=ALL_APP_CONDITIONS,
-                        user_conditions=ALL_USER_CONDITIONS,
-                        client_app_types=[
-                            ClientAppType.BROWSER,
-                            ClientAppType.MOBILE_APPS_AND_DESKTOP_CLIENTS,
-                        ],
+                        client_app_types=[],
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=[ConditionalAccessGrantControl.MFA],
@@ -349,16 +289,17 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
                 )
             }
 
-            check = entra_policy_requires_compliant_device_or_mfa()
+            check = entra_conditional_access_policy()
             result = check.execute()
+
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy requires compliant device, hybrid join, or MFA as alternative grant controls for all users."
+                == "No Conditional Access Policy requires a compliant device to access all cloud apps for all users."
             )
 
-    def test_entra_policy_and_operator(self):
+    def test_entra_policy_or_operator_makes_compliant_optional(self):
         policy_id = str(uuid4())
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
@@ -374,8 +315,8 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_policy_requires_compliant_device_or_mfa.entra_policy_requires_compliant_device_or_mfa import (
-                entra_policy_requires_compliant_device_or_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
+                entra_conditional_access_policy,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -384,35 +325,32 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
             entra_client.conditional_access_policies = {
                 policy_id: ConditionalAccessPolicy(
                     id=policy_id,
-                    display_name="AND Operator Policy",
+                    display_name="Compliant Optional by OR",
                     conditions=Conditions(
                         application_conditions=ALL_APP_CONDITIONS,
                         user_conditions=ALL_USER_CONDITIONS,
-                        client_app_types=[
-                            ClientAppType.BROWSER,
-                            ClientAppType.MOBILE_APPS_AND_DESKTOP_CLIENTS,
-                        ],
+                        client_app_types=[],
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=[
-                            ConditionalAccessGrantControl.MFA,
                             ConditionalAccessGrantControl.COMPLIANT_DEVICE,
-                            ConditionalAccessGrantControl.DOMAIN_JOINED_DEVICE,
+                            ConditionalAccessGrantControl.MFA,
                         ],
-                        operator=GrantControlOperator.AND,
+                        operator=GrantControlOperator.OR,
                     ),
                     session_controls=DEFAULT_SESSION_CONTROLS,
                     state=ConditionalAccessPolicyState.ENABLED,
                 )
             }
 
-            check = entra_policy_requires_compliant_device_or_mfa()
+            check = entra_conditional_access_policy()
             result = check.execute()
+
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy requires compliant device, hybrid join, or MFA as alternative grant controls for all users."
+                == "No Conditional Access Policy requires a compliant device to access all cloud apps for all users."
             )
 
     def test_entra_policy_enabled_for_reporting(self):
@@ -432,8 +370,8 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_policy_requires_compliant_device_or_mfa.entra_policy_requires_compliant_device_or_mfa import (
-                entra_policy_requires_compliant_device_or_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
+                entra_conditional_access_policy,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -446,24 +384,22 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
                     conditions=Conditions(
                         application_conditions=ALL_APP_CONDITIONS,
                         user_conditions=ALL_USER_CONDITIONS,
-                        client_app_types=[
-                            ClientAppType.BROWSER,
-                            ClientAppType.MOBILE_APPS_AND_DESKTOP_CLIENTS,
-                        ],
+                        client_app_types=[],
                     ),
-                    grant_controls=COMPLIANT_GRANT_CONTROLS,
+                    grant_controls=COMPLIANT_ONLY_GRANT_CONTROLS,
                     session_controls=DEFAULT_SESSION_CONTROLS,
                     state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
                 )
             }
 
-            check = entra_policy_requires_compliant_device_or_mfa()
+            check = entra_conditional_access_policy()
             result = check.execute()
+
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' reports the requirement of compliant device, hybrid join, or MFA for all users but does not enforce it."
+                == f"Conditional Access Policy '{display_name}' requires a compliant device for all users and all cloud apps but is configured in report-only mode."
             )
             assert (
                 result[0].resource
@@ -473,9 +409,9 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
             assert result[0].resource_id == policy_id
             assert result[0].location == "global"
 
-    def test_entra_policy_enabled_pass(self):
+    def test_entra_policy_enabled_pass_with_compliant_only(self):
         policy_id = str(uuid4())
-        display_name = "Compliant Policy"
+        display_name = "Compliant Device Mandatory"
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
@@ -490,8 +426,8 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_policy_requires_compliant_device_or_mfa.entra_policy_requires_compliant_device_or_mfa import (
-                entra_policy_requires_compliant_device_or_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
+                entra_conditional_access_policy,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -504,79 +440,84 @@ class Test_entra_policy_requires_compliant_device_or_mfa:
                     conditions=Conditions(
                         application_conditions=ALL_APP_CONDITIONS,
                         user_conditions=ALL_USER_CONDITIONS,
-                        client_app_types=[
-                            ClientAppType.BROWSER,
-                            ClientAppType.MOBILE_APPS_AND_DESKTOP_CLIENTS,
+                        client_app_types=[],
+                    ),
+                    grant_controls=COMPLIANT_ONLY_GRANT_CONTROLS,
+                    session_controls=DEFAULT_SESSION_CONTROLS,
+                    state=ConditionalAccessPolicyState.ENABLED,
+                )
+            }
+
+            check = entra_conditional_access_policy()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Conditional Access Policy '{display_name}' requires a compliant device to access all cloud apps for all users."
+            )
+            assert (
+                result[0].resource
+                == entra_client.conditional_access_policies[policy_id].dict()
+            )
+            assert result[0].resource_name == display_name
+            assert result[0].resource_id == policy_id
+            assert result[0].location == "global"
+
+    def test_entra_policy_enabled_pass_with_and_controls(self):
+        policy_id = str(uuid4())
+        display_name = "Compliant and MFA Mandatory"
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
+                entra_conditional_access_policy,
+            )
+            from prowler.providers.m365.services.entra.entra_service import (
+                ConditionalAccessPolicy,
+            )
+
+            entra_client.conditional_access_policies = {
+                policy_id: ConditionalAccessPolicy(
+                    id=policy_id,
+                    display_name=display_name,
+                    conditions=Conditions(
+                        application_conditions=ALL_APP_CONDITIONS,
+                        user_conditions=ALL_USER_CONDITIONS,
+                        client_app_types=[],
+                    ),
+                    grant_controls=GrantControls(
+                        built_in_controls=[
+                            ConditionalAccessGrantControl.COMPLIANT_DEVICE,
+                            ConditionalAccessGrantControl.MFA,
                         ],
+                        operator=GrantControlOperator.AND,
                     ),
-                    grant_controls=COMPLIANT_GRANT_CONTROLS,
                     session_controls=DEFAULT_SESSION_CONTROLS,
                     state=ConditionalAccessPolicyState.ENABLED,
                 )
             }
 
-            check = entra_policy_requires_compliant_device_or_mfa()
+            check = entra_conditional_access_policy()
             result = check.execute()
+
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' requires compliant device, hybrid join, or MFA for all users."
-            )
-            assert (
-                result[0].resource
-                == entra_client.conditional_access_policies[policy_id].dict()
-            )
-            assert result[0].resource_name == display_name
-            assert result[0].resource_id == policy_id
-            assert result[0].location == "global"
-
-    def test_entra_policy_enabled_with_client_app_type_all(self):
-        policy_id = str(uuid4())
-        display_name = "All Client Apps Policy"
-        entra_client = mock.MagicMock
-        entra_client.audited_tenant = "audited_tenant"
-        entra_client.audited_domain = DOMAIN
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_m365_provider(),
-            ),
-            mock.patch(
-                f"{CHECK_MODULE}.entra_client",
-                new=entra_client,
-            ),
-        ):
-            from prowler.providers.m365.services.entra.entra_policy_requires_compliant_device_or_mfa.entra_policy_requires_compliant_device_or_mfa import (
-                entra_policy_requires_compliant_device_or_mfa,
-            )
-            from prowler.providers.m365.services.entra.entra_service import (
-                ConditionalAccessPolicy,
-            )
-
-            entra_client.conditional_access_policies = {
-                policy_id: ConditionalAccessPolicy(
-                    id=policy_id,
-                    display_name=display_name,
-                    conditions=Conditions(
-                        application_conditions=ALL_APP_CONDITIONS,
-                        user_conditions=ALL_USER_CONDITIONS,
-                        client_app_types=[ClientAppType.ALL],
-                    ),
-                    grant_controls=COMPLIANT_GRANT_CONTROLS,
-                    session_controls=DEFAULT_SESSION_CONTROLS,
-                    state=ConditionalAccessPolicyState.ENABLED,
-                )
-            }
-
-            check = entra_policy_requires_compliant_device_or_mfa()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' requires compliant device, hybrid join, or MFA for all users."
+                == f"Conditional Access Policy '{display_name}' requires a compliant device to access all cloud apps for all users."
             )
             assert result[0].resource_name == display_name
             assert result[0].resource_id == policy_id

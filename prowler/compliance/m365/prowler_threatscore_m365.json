@@ -99,8 +99,7 @@
       "Id": "1.1.6",
       "Description": "Ensure a managed device is required for authentication",
       "Checks": [
-        "entra_managed_device_required_for_authentication",
-        "entra_policy_requires_compliant_device_or_mfa"
+        "entra_managed_device_required_for_authentication"
       ],
       "Attributes": [
         {
