@@ -118,8 +118,8 @@ def execute_query(
 
 # Custom query helpers
 
-# Patterns that indicate SSRF or dangerous procedure calls.
-# Defense-in-depth layer - the primary control is `neo4j.READ_ACCESS`.
+# Patterns that indicate SSRF or dangerous procedure calls
+# Defense-in-depth layer - the primary control is `neo4j.READ_ACCESS`
 _BLOCKED_PATTERNS = [
     re.compile(r"\bLOAD\s+CSV\b", re.IGNORECASE),
     re.compile(r"\bapoc\.load\b", re.IGNORECASE),
@@ -134,8 +134,8 @@ _BLOCKED_PATTERNS = [
     re.compile(r"\bapoc\.custom\b", re.IGNORECASE),
 ]
 
-# Strip string literals so patterns inside quotes don't cause false positives.
-# Handles escaped quotes (\' and \") inside strings.
+# Strip string literals so patterns inside quotes don't cause false positives
+# Handles escaped quotes (\' and \") inside strings
 _STRING_LITERALS = re.compile(r"'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"")
 
 
