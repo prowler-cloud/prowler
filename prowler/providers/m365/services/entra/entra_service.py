@@ -272,6 +272,13 @@ class Entra(M365Service):
                                 [],
                             )
                         ],
+                        insider_risk_levels=self._parse_insider_risk_levels(
+                            getattr(
+                                policy.conditions,
+                                "insider_risk_levels",
+                                None,
+                            )
+                        ),
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=(
@@ -416,6 +423,31 @@ class Entra(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return default_app_management_policy
+
+    @staticmethod
+    def _parse_insider_risk_levels(raw_value):
+        """Parse insider risk levels from a Graph API flag enum value.
+
+        The insiderRiskLevels field in the Graph API is a flag enum
+        (conditionalAccessInsiderRiskLevels). The msgraph SDK may
+        represent it as an IntFlag, string enum, or raw string
+        depending on the version. This method normalizes it into a
+        list of InsiderRiskLevel enum values.
+
+        Args:
+            raw_value: The raw insider risk levels value from the SDK.
+
+        Returns:
+            A list of InsiderRiskLevel enum values present in the raw value.
+        """
+        if raw_value is None:
+            return []
+        raw_str = str(raw_value).lower()
+        return [
+            InsiderRiskLevel(level)
+            for level in ["minor", "moderate", "elevated"]
+            if level in raw_str
+        ]
 
     @staticmethod
     def _parse_app_management_restrictions(restrictions):
@@ -798,12 +830,24 @@ class ClientAppType(Enum):
     OTHER_CLIENTS = "other"
 
 
+class InsiderRiskLevel(Enum):
+    """Insider risk levels for Conditional Access policies.
+
+    Reference: https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccessconditionset
+    """
+
+    MINOR = "minor"
+    MODERATE = "moderate"
+    ELEVATED = "elevated"
+
+
 class Conditions(BaseModel):
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
     client_app_types: Optional[List[ClientAppType]]
     user_risk_levels: List[RiskLevel] = []
     sign_in_risk_levels: List[RiskLevel] = []
+    insider_risk_levels: List[InsiderRiskLevel] = []
 
 
 class PersistentBrowser(BaseModel):
