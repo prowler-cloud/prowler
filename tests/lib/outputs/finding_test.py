@@ -744,6 +744,7 @@ class TestFinding:
     def test_generate_output_iac_empty_line_range(self):
         provider = MagicMock()
         provider.type = "iac"
+        provider.provider_uid = None
         provider.scan_repository_url = "https://github.com/user/repo"
         provider.auth_method = "No auth"
 
