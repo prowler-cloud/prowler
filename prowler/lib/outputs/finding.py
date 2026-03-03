@@ -390,9 +390,7 @@ class Finding(BaseModel):
                 output_data["account_uid"] = account_id or ""
                 output_data["account_name"] = account_name or account_id or ""
                 output_data["resource_name"] = check_output.resource_name
-                output_data["resource_uid"] = (
-                    check_output.resource_id or check_output.resource_name
-                )
+                output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.zone_name
 
             elif provider.type == "alibabacloud":
