@@ -122,7 +122,7 @@ jobs:
               "wafv2": ["cognito", "elbv2"],
           }
 
-          changed_raw = """${STEPS_CHANGED_AWS_OUTPUTS_ALL_CHANGED_FILES}"""
+          changed_raw = os.environ.get("STEPS_CHANGED_AWS_OUTPUTS_ALL_CHANGED_FILES", "")
           # all_changed_files is space-separated, not newline-separated
           # Strip leading "./" if present for consistent path handling
           changed_files = [Path(f.lstrip("./")) for f in changed_raw.split() if f]
