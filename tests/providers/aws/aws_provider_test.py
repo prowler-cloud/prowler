@@ -1522,6 +1522,19 @@ aws:
         )
 
     @mock_aws
+    def test_create_sts_session_custom_endpoint_url(self):
+        custom_endpoint = "http://localhost:4566"
+        current_session = session.Session()
+        aws_region = AWS_REGION_US_EAST_1
+        with mock.patch.dict(os.environ, {"AWS_ENDPOINT_URL": custom_endpoint}):
+            sts_session = AwsProvider.create_sts_session(current_session, aws_region)
+
+        assert sts_session._service_model.service_name == "sts"
+        assert sts_session._client_config.region_name == aws_region
+        assert sts_session._endpoint._endpoint_prefix == "sts"
+        assert sts_session._endpoint.host == custom_endpoint
+
+    @mock_aws
     def test_create_sts_session_eusc(self):
         current_session = session.Session()
         aws_region = AWS_REGION_EUSC_DE_EAST_1

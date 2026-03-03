@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.19.0] (Prowler UNRELEASED)
+## [1.19.0] (Prowler v5.19.0)
 
 ### 🚀 Added
 
@@ -33,7 +33,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [1.18.3] (Prowler UNRELEASED)
+## [1.18.3] (Prowler v5.18.3)
 
 ### 🐞 Fixed
 

@@ -34,6 +34,7 @@ class Finding(BaseModel):
     auth_method: str
     timestamp: Union[int, datetime]
     account_uid: str
+    provider_uid: Optional[str] = None
     account_name: Optional[str] = None
     account_email: Optional[str] = None
     account_organization_uid: Optional[str] = None
@@ -244,6 +245,7 @@ class Finding(BaseModel):
                 output_data["account_uid"] = get_nested_attribute(
                     provider, "identity.cluster"
                 )
+                output_data["provider_uid"] = provider.identity.context
                 output_data["region"] = f"namespace: {check_output.namespace}"
 
             elif provider.type == "github":
@@ -251,15 +253,22 @@ class Finding(BaseModel):
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
 
+                owner = getattr(check_output, "owner", None)
+
                 if isinstance(provider.identity, GithubIdentityInfo):
                     # GithubIdentityInfo (Personal Access Token, OAuth)
-                    output_data["account_name"] = provider.identity.account_name
-                    output_data["account_uid"] = provider.identity.account_id
+                    output_data["account_name"] = (
+                        owner or provider.identity.account_name
+                    )
+                    output_data["account_uid"] = owner or provider.identity.account_name
                     output_data["account_email"] = provider.identity.account_email
                 elif isinstance(provider.identity, GithubAppIdentityInfo):
                     # GithubAppIdentityInfo (GitHub App)
-                    output_data["account_name"] = provider.identity.app_name
-                    output_data["account_uid"] = provider.identity.app_id
+                    output_data["account_name"] = owner or provider.identity.app_name
+                    output_data["account_uid"] = owner or provider.identity.app_name
+                    output_data["account_organization_uid"] = str(
+                        provider.identity.app_id
+                    )
                     output_data["installations"] = provider.identity.installations
 
                 output_data["region"] = check_output.owner
@@ -269,10 +278,13 @@ class Finding(BaseModel):
                     f"{provider.identity.identity_type}: {provider.identity.identity_id}"
                 )
                 output_data["account_uid"] = get_nested_attribute(
-                    provider, "identity.tenant_id"
+                    provider, "identity.tenant_domain"
                 )
                 output_data["account_name"] = get_nested_attribute(
                     provider, "identity.tenant_domain"
+                )
+                output_data["account_organization_uid"] = get_nested_attribute(
+                    provider, "identity.tenant_id"
                 )
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
@@ -321,8 +333,9 @@ class Finding(BaseModel):
 
             elif provider.type == "iac":
                 output_data["auth_method"] = provider.auth_method
-                output_data["account_uid"] = "iac"
-                output_data["account_name"] = "iac"
+                provider_uid = getattr(provider, "provider_uid", None)
+                output_data["account_uid"] = provider_uid if provider_uid else "iac"
+                output_data["account_name"] = provider_uid if provider_uid else "iac"
                 output_data["resource_name"] = getattr(
                     check_output, "resource_name", ""
                 )
@@ -358,8 +371,27 @@ class Finding(BaseModel):
 
             elif provider.type == "cloudflare":
                 output_data["auth_method"] = "api_token"
-                output_data["account_uid"] = check_output.account_id
-                output_data["account_name"] = check_output.account_id
+                account_id = check_output.account_id
+                if not account_id:
+                    audited_accounts = (
+                        get_nested_attribute(provider, "identity.audited_accounts")
+                        or []
+                    )
+                    if audited_accounts:
+                        account_id = audited_accounts[0]
+
+                account_name = account_id
+                if account_id:
+                    accounts = get_nested_attribute(provider, "identity.accounts") or []
+                    for account in accounts:
+                        if getattr(account, "id", None) == account_id and getattr(
+                            account, "name", None
+                        ):
+                            account_name = account.name
+                            break
+
+                output_data["account_uid"] = account_id or ""
+                output_data["account_name"] = account_name or account_id or ""
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.zone_name
