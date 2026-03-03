@@ -17,7 +17,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
-CHECK_MODULE = "prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy"
+CHECK_MODULE = "prowler.providers.m365.services.entra.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps"
 
 DEFAULT_SESSION_CONTROLS = SessionControls(
     persistent_browser=PersistentBrowser(is_enabled=False, mode="always"),
@@ -68,7 +68,7 @@ COMPLIANT_ONLY_GRANT_CONTROLS = GrantControls(
 )
 
 
-class Test_entra_conditional_access_policy:
+class Test_entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps:
     def test_entra_no_conditional_access_policies(self):
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
@@ -84,13 +84,15 @@ class Test_entra_conditional_access_policy:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
-                entra_conditional_access_policy,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps import (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps,
             )
 
             entra_client.conditional_access_policies = {}
 
-            check = entra_conditional_access_policy()
+            check = (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -120,8 +122,8 @@ class Test_entra_conditional_access_policy:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
-                entra_conditional_access_policy,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps import (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -142,7 +144,9 @@ class Test_entra_conditional_access_policy:
                 )
             }
 
-            check = entra_conditional_access_policy()
+            check = (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -168,8 +172,8 @@ class Test_entra_conditional_access_policy:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
-                entra_conditional_access_policy,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps import (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -190,7 +194,9 @@ class Test_entra_conditional_access_policy:
                 )
             }
 
-            check = entra_conditional_access_policy()
+            check = (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -216,8 +222,8 @@ class Test_entra_conditional_access_policy:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
-                entra_conditional_access_policy,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps import (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -238,7 +244,9 @@ class Test_entra_conditional_access_policy:
                 )
             }
 
-            check = entra_conditional_access_policy()
+            check = (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -264,8 +272,8 @@ class Test_entra_conditional_access_policy:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
-                entra_conditional_access_policy,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps import (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -289,7 +297,9 @@ class Test_entra_conditional_access_policy:
                 )
             }
 
-            check = entra_conditional_access_policy()
+            check = (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -315,8 +325,8 @@ class Test_entra_conditional_access_policy:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
-                entra_conditional_access_policy,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps import (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -343,7 +353,9 @@ class Test_entra_conditional_access_policy:
                 )
             }
 
-            check = entra_conditional_access_policy()
+            check = (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -370,8 +382,8 @@ class Test_entra_conditional_access_policy:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
-                entra_conditional_access_policy,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps import (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -392,7 +404,9 @@ class Test_entra_conditional_access_policy:
                 )
             }
 
-            check = entra_conditional_access_policy()
+            check = (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -426,8 +440,8 @@ class Test_entra_conditional_access_policy:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
-                entra_conditional_access_policy,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps import (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -448,7 +462,9 @@ class Test_entra_conditional_access_policy:
                 )
             }
 
-            check = entra_conditional_access_policy()
+            check = (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -482,8 +498,8 @@ class Test_entra_conditional_access_policy:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy.entra_conditional_access_policy import (
-                entra_conditional_access_policy,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps.entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps import (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -510,7 +526,9 @@ class Test_entra_conditional_access_policy:
                 )
             }
 
-            check = entra_conditional_access_policy()
+            check = (
+                entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps()
+            )
             result = check.execute()
 
             assert len(result) == 1

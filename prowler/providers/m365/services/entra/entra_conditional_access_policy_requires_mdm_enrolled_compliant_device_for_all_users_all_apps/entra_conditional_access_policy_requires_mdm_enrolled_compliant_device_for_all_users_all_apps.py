@@ -9,7 +9,9 @@ from prowler.providers.m365.services.entra.entra_service import (
 REQUIRED_GRANT_CONTROL = ConditionalAccessGrantControl.COMPLIANT_DEVICE
 
 
-class entra_conditional_access_policy(Check):
+class entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps(
+    Check
+):
     """Check that all users need a compliant (MDM-enrolled) device for all cloud apps."""
 
     def execute(self) -> list[CheckReportM365]:

@@ -1,6 +1,6 @@
 {
   "Provider": "m365",
-  "CheckID": "entra_conditional_access_policy",
+  "CheckID": "entra_conditional_access_policy_requires_mdm_enrolled_compliant_device_for_all_users_all_apps",
   "CheckTitle": "Conditional Access policy requires MDM-enrolled compliant device for all users and all cloud apps",
   "CheckType": [],
   "ServiceName": "entra",
