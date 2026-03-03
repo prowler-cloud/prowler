@@ -35,6 +35,7 @@ class Entra(M365Service):
         users (dict): Dictionary of users.
         user_accounts_status (dict): Dictionary of user account statuses.
         oauth_apps (dict): Dictionary of OAuth applications from Defender XDR.
+        authentication_method_configurations (dict): Dictionary of authentication method configurations.
     """
 
     def __init__(self, provider: M365Provider):
@@ -81,6 +82,7 @@ class Entra(M365Service):
                 self._get_default_app_management_policy(),
                 self._get_oauth_apps(),
                 self._get_directory_sync_settings(),
+                self._get_authentication_method_configurations(),
             )
         )
 
@@ -93,6 +95,9 @@ class Entra(M365Service):
         self.default_app_management_policy = attributes[6]
         self.oauth_apps: Optional[Dict[str, OAuthApp]] = attributes[7]
         self.directory_sync_settings, self.directory_sync_error = attributes[8]
+        self.authentication_method_configurations: Dict[
+            str, AuthenticationMethodConfiguration
+        ] = attributes[9]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -585,6 +590,7 @@ class Entra(M365Service):
 
             while users_response:
                 for user in getattr(users_response, "value", []) or []:
+                    reg_info = registration_details.get(user.id, {})
                     users[user.id] = User(
                         id=user.id,
                         name=user.display_name,
@@ -592,10 +598,13 @@ class Entra(M365Service):
                             True if (user.on_premises_sync_enabled) else False
                         ),
                         directory_roles_ids=user_roles_map.get(user.id, []),
-                        is_mfa_capable=(registration_details.get(user.id, False)),
+                        is_mfa_capable=reg_info.get("is_mfa_capable", False),
                         account_enabled=not self.user_accounts_status.get(
                             user.id, {}
                         ).get("AccountDisabled", False),
+                        authentication_methods=reg_info.get(
+                            "authentication_methods", []
+                        ),
                     )
 
                 next_link = getattr(users_response, "odata_next_link", None)
@@ -609,6 +618,16 @@ class Entra(M365Service):
         return users
 
     async def _get_user_registration_details(self):
+        """Retrieve user authentication method registration details.
+
+        Fetches registration details from the Microsoft Graph API, including
+        MFA capability and the specific authentication methods each user has registered.
+
+        Returns:
+            dict: A dictionary mapping user IDs to their registration details,
+                where each value is a dict with 'is_mfa_capable' (bool) and
+                'authentication_methods' (list of str).
+        """
         registration_details = {}
         try:
             registration_builder = (
@@ -618,9 +637,14 @@ class Entra(M365Service):
 
             while registration_response:
                 for detail in getattr(registration_response, "value", []) or []:
-                    registration_details.update(
-                        {detail.id: getattr(detail, "is_mfa_capable", False)}
-                    )
+                    registration_details[detail.id] = {
+                        "is_mfa_capable": getattr(detail, "is_mfa_capable", False),
+                        "authentication_methods": [
+                            str(method)
+                            for method in getattr(detail, "methods_registered", [])
+                            or []
+                        ],
+                    }
 
                 next_link = getattr(registration_response, "odata_next_link", None)
                 if not next_link:
@@ -755,6 +779,41 @@ OAuthAppInfo
             return None
 
         return oauth_apps
+
+    async def _get_authentication_method_configurations(self):
+        """Retrieve authentication method configurations from Microsoft Entra.
+
+        Fetches the authentication methods policy and extracts the configuration
+        state for each authentication method (e.g., SMS, Voice, FIDO2, etc.).
+
+        Returns:
+            Dict[str, AuthenticationMethodConfiguration]: Dictionary of authentication
+                method configurations keyed by method ID (e.g., 'sms', 'voice').
+        """
+        logger.info("Entra - Getting authentication method configurations...")
+        authentication_method_configurations = {}
+        try:
+            policy = await self.client.policies.authentication_methods_policy.get()
+            for config in (
+                getattr(policy, "authentication_method_configurations", []) or []
+            ):
+                method_id = getattr(config, "id", "")
+                if method_id:
+                    authentication_method_configurations[method_id] = (
+                        AuthenticationMethodConfiguration(
+                            id=method_id,
+                            state=(
+                                getattr(config, "state", None).value
+                                if getattr(config, "state", None)
+                                else "disabled"
+                            ),
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return authentication_method_configurations
 
 
 class ConditionalAccessPolicyState(Enum):
@@ -916,6 +975,21 @@ class DirectorySyncSettings(BaseModel):
     seamless_sso_enabled: bool = False
 
 
+class AuthenticationMethodConfiguration(BaseModel):
+    """Authentication method configuration from the authentication methods policy.
+
+    Represents the state of a specific authentication method (e.g., SMS, Voice,
+    FIDO2) within the tenant's authentication methods policy.
+
+    Attributes:
+        id: The authentication method identifier (e.g., 'sms', 'voice').
+        state: The state of the authentication method ('enabled' or 'disabled').
+    """
+
+    id: str
+    state: str = "disabled"
+
+
 class Group(BaseModel):
     id: str
     name: str
@@ -975,12 +1049,26 @@ class AdminRoles(Enum):
 
 
 class User(BaseModel):
+    """Model representing a Microsoft Entra ID user.
+
+    Attributes:
+        id: The user's unique identifier.
+        name: The user's display name.
+        on_premises_sync_enabled: Whether the user is synced from on-premises directory.
+        directory_roles_ids: List of directory role template IDs assigned to the user.
+        is_mfa_capable: Whether the user has registered a strong authentication method for MFA.
+        account_enabled: Whether the user account is enabled.
+        authentication_methods: List of authentication method types registered by the user
+            (e.g., 'fido2SecurityKey', 'microsoftAuthenticatorPush', 'mobilePhone').
+    """
+
     id: str
     name: str
     on_premises_sync_enabled: bool
     directory_roles_ids: List[str] = []
     is_mfa_capable: bool = False
     account_enabled: bool = True
+    authentication_methods: List[str] = []
 
 
 class InvitationsFrom(Enum):

@@ -514,6 +514,7 @@ class TestFinding:
         assert finding_output.resource_tags == {}
         assert finding_output.partition is None
         assert finding_output.account_uid == "test_cluster"
+        assert finding_output.provider_uid == "In-Cluster"
         assert finding_output.account_name == "context: In-Cluster"
         assert finding_output.account_email is None
         assert finding_output.account_organization_uid is None
@@ -689,6 +690,7 @@ class TestFinding:
         provider.type = "iac"
         provider.scan_repository_url = "https://github.com/user/repo"
         provider.auth_method = "No auth"
+        provider.provider_uid = None
 
         # Mock check result
         check_output = MagicMock()

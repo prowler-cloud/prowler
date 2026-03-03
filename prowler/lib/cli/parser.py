@@ -217,11 +217,13 @@ Detailed documentation at https://docs.prowler.com
             help="Set the output timestamp format as unix timestamps instead of iso format timestamps (default mode).",
         )
         common_outputs_parser.add_argument(
-            "--export-ocsf",
+            "--push-to-cloud",
             action="store_true",
             help=(
-                "Send OCSF output to Prowler Cloud ingestion endpoint. "
-                "Requires PROWLER_API_KEY environment variable."
+                "Send findings in OCSF format to Prowler Cloud. "
+                "Requires PROWLER_CLOUD_API_KEY environment variable. "
+                "For the IaC provider, --provider-uid is also required. "
+                "More details here: https://goto.prowler.com/import-findings"
             ),
         )
 
