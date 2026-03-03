@@ -604,3 +604,11 @@ cloudflare:
   # Maximum number of retries for API requests (default is 2)
   # Set to 0 to disable retries
   max_retries: 3
+
+# Vercel Configuration
+vercel:
+  # vercel.deployment_production_uses_stable_target
+  # Branches considered stable for production deployments
+  stable_branches:
+    - "main"
+    - "master"
