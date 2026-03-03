@@ -222,7 +222,7 @@ Detailed documentation at https://docs.prowler.com
             help=(
                 "Send OCSF output to Prowler Cloud ingestion endpoint. "
                 "Requires PROWLER_API_KEY environment variable. "
-                "For the IAC provider, --provider-uid is also required."
+                "For the IaC provider, --provider-uid is also required."
             ),
         )
 
