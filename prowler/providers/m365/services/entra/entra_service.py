@@ -590,6 +590,7 @@ class Entra(M365Service):
 
             while users_response:
                 for user in getattr(users_response, "value", []) or []:
+                    reg_info = registration_details.get(user.id, {})
                     users[user.id] = User(
                         id=user.id,
                         name=user.display_name,
@@ -597,10 +598,13 @@ class Entra(M365Service):
                             True if (user.on_premises_sync_enabled) else False
                         ),
                         directory_roles_ids=user_roles_map.get(user.id, []),
-                        is_mfa_capable=(registration_details.get(user.id, False)),
+                        is_mfa_capable=reg_info.get("is_mfa_capable", False),
                         account_enabled=not self.user_accounts_status.get(
                             user.id, {}
                         ).get("AccountDisabled", False),
+                        authentication_methods=reg_info.get(
+                            "authentication_methods", []
+                        ),
                     )
 
                 next_link = getattr(users_response, "odata_next_link", None)
@@ -614,6 +618,16 @@ class Entra(M365Service):
         return users
 
     async def _get_user_registration_details(self):
+        """Retrieve user authentication method registration details.
+
+        Fetches registration details from the Microsoft Graph API, including
+        MFA capability and the specific authentication methods each user has registered.
+
+        Returns:
+            dict: A dictionary mapping user IDs to their registration details,
+                where each value is a dict with 'is_mfa_capable' (bool) and
+                'authentication_methods' (list of str).
+        """
         registration_details = {}
         try:
             registration_builder = (
@@ -623,9 +637,14 @@ class Entra(M365Service):
 
             while registration_response:
                 for detail in getattr(registration_response, "value", []) or []:
-                    registration_details.update(
-                        {detail.id: getattr(detail, "is_mfa_capable", False)}
-                    )
+                    registration_details[detail.id] = {
+                        "is_mfa_capable": getattr(detail, "is_mfa_capable", False),
+                        "authentication_methods": [
+                            str(method)
+                            for method in getattr(detail, "methods_registered", [])
+                            or []
+                        ],
+                    }
 
                 next_link = getattr(registration_response, "odata_next_link", None)
                 if not next_link:
@@ -1030,12 +1049,26 @@ class AdminRoles(Enum):
 
 
 class User(BaseModel):
+    """Model representing a Microsoft Entra ID user.
+
+    Attributes:
+        id: The user's unique identifier.
+        name: The user's display name.
+        on_premises_sync_enabled: Whether the user is synced from on-premises directory.
+        directory_roles_ids: List of directory role template IDs assigned to the user.
+        is_mfa_capable: Whether the user has registered a strong authentication method for MFA.
+        account_enabled: Whether the user account is enabled.
+        authentication_methods: List of authentication method types registered by the user
+            (e.g., 'fido2SecurityKey', 'microsoftAuthenticatorPush', 'mobilePhone').
+    """
+
     id: str
     name: str
     on_premises_sync_enabled: bool
     directory_roles_ids: List[str] = []
     is_mfa_capable: bool = False
     account_enabled: bool = True
+    authentication_methods: List[str] = []
 
 
 class InvitationsFrom(Enum):
