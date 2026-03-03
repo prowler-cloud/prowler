@@ -529,7 +529,7 @@ def prowler():
                     provider=global_provider, stats=stats
                 )
 
-    if getattr(args, "export_ocsf", False):
+    if getattr(args, "push_to_cloud", False):
         if not ocsf_output or not getattr(ocsf_output, "file_path", None):
             tmp_ocsf = tempfile.NamedTemporaryFile(
                 suffix=json_ocsf_file_suffix, delete=False
@@ -541,49 +541,50 @@ def prowler():
             tmp_ocsf.close()
             ocsf_output.batch_write_data_to_file()
         print(
-            f"{Style.BRIGHT}\nExporting OCSF to Prowler Cloud, please wait...{Style.RESET_ALL}"
+            f"{Style.BRIGHT}\nPushing findings to Prowler Cloud, please wait...{Style.RESET_ALL}"
         )
         try:
             response = send_ocsf_to_api(ocsf_output.file_path)
         except ValueError:
             print(
-                f"{Style.BRIGHT}{Fore.YELLOW}\nOCSF export skipped: no API key configured. "
-                "Set the PROWLER_API_KEY environment variable to enable it. "
+                f"{Style.BRIGHT}{Fore.YELLOW}\nPush to Prowler Cloud skipped: no API key configured. "
+                "Set the PROWLER_CLOUD_API_KEY environment variable to enable it. "
                 f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
             )
         except requests.ConnectionError:
             print(
-                f"{Style.BRIGHT}{Fore.RED}\nOCSF export failed: could not reach the Prowler Cloud API at "
+                f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: could not reach the Prowler Cloud API at "
                 f"{cloud_api_base_url}. Check the URL and your network connection. "
                 f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
             )
         except requests.HTTPError as http_err:
             if http_err.response.status_code == 402:
                 print(
-                    f"{Style.BRIGHT}{Fore.RED}\nOCSF export failed: "
+                    f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: "
                     "this feature is only available with a Prowler Cloud subscription. "
                     f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
                 )
             else:
                 print(
-                    f"{Style.BRIGHT}{Fore.RED}\nOCSF export failed: the API returned HTTP {http_err.response.status_code}. "
+                    f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: the API returned HTTP {http_err.response.status_code}. "
                     "Verify your API key is valid and has the right permissions. "
                     f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
                 )
         except Exception as error:
             print(
-                f"{Style.BRIGHT}{Fore.RED}\nOCSF export failed unexpectedly: {error}. "
+                f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed unexpectedly: {error}. "
                 f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
             )
         else:
             job_id = response.get("data", {}).get("id") if response else None
             if job_id:
                 print(
-                    f"{Style.BRIGHT}{Fore.GREEN}\nOCSF export accepted. Ingestion job: {job_id}{Style.RESET_ALL}"
+                    f"{Style.BRIGHT}{Fore.GREEN}\nFindings successfully pushed to Prowler Cloud. Ingestion job: {job_id}"
+                    f"\nSee more details here: https://cloud.prowler.com/scans{Style.RESET_ALL}"
                 )
             else:
                 logger.warning(
-                    "OCSF export: unexpected API response (missing ingestion job ID). "
+                    "Push to Prowler Cloud: unexpected API response (missing ingestion job ID). "
                     f"Scan results were saved to {ocsf_output.file_path}"
                 )
 
