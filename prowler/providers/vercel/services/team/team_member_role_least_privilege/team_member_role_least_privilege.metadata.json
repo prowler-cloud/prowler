@@ -1,0 +1,36 @@
+{
+  "Provider": "vercel",
+  "CheckID": "team_member_role_least_privilege",
+  "CheckTitle": "Vercel team follows least privilege with no more than 20% owner roles",
+  "CheckType": [],
+  "ServiceName": "team",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "VercelTeam",
+  "ResourceGroup": "IAM",
+  "Description": "Checks whether the proportion of team members with the OWNER role does not exceed 20% of total active members. An excessive number of owners increases the attack surface and risk of accidental or malicious configuration changes.",
+  "Risk": "Having too many team owners increases the blast radius of compromised accounts and the risk of unauthorized changes to billing, security settings, and team membership. Each owner has full administrative privileges over the team.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/accounts/team-members-and-roles"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to your Vercel team settings\n2. Go to the Members section\n3. Review all members with the OWNER role\n4. Downgrade unnecessary owners to MEMBER, DEVELOPER, or VIEWER roles\n5. Ensure only essential personnel retain the OWNER role",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Limit the number of team owners to the minimum required for administration. Assign the least privileged role necessary for each member's responsibilities. Use MEMBER, DEVELOPER, or VIEWER roles for non-administrative team members.",
+      "Url": "https://vercel.com/docs/accounts/team-members-and-roles"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

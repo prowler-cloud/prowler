@@ -1,0 +1,38 @@
+{
+  "Provider": "vercel",
+  "CheckID": "authentication_token_not_expired",
+  "CheckTitle": "Ensure API tokens have not expired",
+  "CheckType": [],
+  "ServiceName": "authentication",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "VercelAuthToken",
+  "ResourceGroup": "IAM",
+  "Description": "Checks whether Vercel API tokens have not expired. Expired tokens indicate poor token lifecycle management and may suggest that integrations or automation relying on these tokens are failing silently. Tokens without an expiration date are considered valid.",
+  "Risk": "Expired tokens indicate that token lifecycle management is not being followed. While expired tokens cannot be used for authentication, their presence suggests that token rotation practices are not in place. Integrations or CI/CD pipelines relying on expired tokens will fail, potentially causing service disruptions.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/rest-api#authentication"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Vercel dashboard\n2. Navigate to Account Settings > Tokens\n3. Identify any expired tokens\n4. Delete expired tokens that are no longer needed\n5. Create new tokens with appropriate expiration dates to replace expired ones\n6. Update any integrations or CI/CD pipelines that used the expired tokens",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove expired tokens and create new ones with appropriate expiration dates. Implement a token rotation schedule to ensure tokens are refreshed before they expire. Update all integrations and automation that depend on the replaced tokens.",
+      "Url": "https://vercel.com/docs/rest-api#authentication"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "authentication_no_stale_tokens"
+  ],
+  "Notes": "Tokens without an expiration date (expires_at is None) are treated as valid since they have no defined expiry."
+}
