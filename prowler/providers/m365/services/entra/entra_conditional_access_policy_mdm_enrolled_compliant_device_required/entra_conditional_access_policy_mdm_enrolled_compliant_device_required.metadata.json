@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Conditional Access Policy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "A Conditional Access policy requires all users to access all cloud applications only from devices marked as compliant (which implies MDM-enrolled and policy-compliant state).",
   "Risk": "If compliant device enforcement is missing, compromised credentials can be used from unmanaged endpoints, increasing exposure to unauthorized access and data exfiltration.",
