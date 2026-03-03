@@ -1004,7 +1004,7 @@ class User(BaseModel):
         is_mfa_capable: Whether the user has registered a strong authentication method for MFA.
         account_enabled: Whether the user account is enabled.
         authentication_methods: List of authentication method types registered by the user
-            (e.g., 'fido2', 'microsoftAuthenticatorPush', 'mobilePhone').
+            (e.g., 'fido2SecurityKey', 'microsoftAuthenticatorPush', 'mobilePhone').
     """
 
     id: str

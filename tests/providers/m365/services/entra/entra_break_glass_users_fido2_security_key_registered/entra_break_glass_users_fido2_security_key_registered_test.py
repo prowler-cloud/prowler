@@ -203,7 +203,7 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                     id=bg_user_id,
                     name="BreakGlass1",
                     on_premises_sync_enabled=False,
-                    authentication_methods=["fido2", "microsoftAuthenticatorPush"],
+                    authentication_methods=["fido2SecurityKey", "microsoftAuthenticatorPush"],
                 ),
             }
 
@@ -310,6 +310,58 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                 in result[0].status_extended
             )
 
+    def test_break_glass_user_with_passkey_device_bound(self):
+        """Test MANUAL when break glass account has passKeyDeviceBound but not fido2SecurityKey."""
+        policy_id_1 = str(uuid4())
+        policy_id_2 = str(uuid4())
+        bg_user_id = str(uuid4())
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_break_glass_users_fido2_security_key_registered.entra_break_glass_users_fido2_security_key_registered import (
+                entra_break_glass_users_fido2_security_key_registered,
+            )
+
+            entra_client.conditional_access_policies = {
+                policy_id_1: _make_policy(policy_id_1, excluded_users=[bg_user_id]),
+                policy_id_2: _make_policy(policy_id_2, excluded_users=[bg_user_id]),
+            }
+
+            entra_client.users = {
+                bg_user_id: User(
+                    id=bg_user_id,
+                    name="BreakGlass1",
+                    on_premises_sync_enabled=False,
+                    authentication_methods=["passKeyDeviceBound"],
+                ),
+            }
+
+            check = entra_break_glass_users_fido2_security_key_registered()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "BreakGlass1" in result[0].status_extended
+            assert (
+                "device-bound passkey registered"
+                in result[0].status_extended
+            )
+            assert (
+                "cannot be confirmed"
+                in result[0].status_extended
+            )
+
     def test_multiple_break_glass_users_mixed_results(self):
         """Test mixed results when one BG user has FIDO2 and another does not."""
         policy_id_1 = str(uuid4())
@@ -348,7 +400,7 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                     id=bg_user_id_1,
                     name="BreakGlass1",
                     on_premises_sync_enabled=False,
-                    authentication_methods=["fido2"],
+                    authentication_methods=["fido2SecurityKey"],
                 ),
                 bg_user_id_2: User(
                     id=bg_user_id_2,
@@ -440,7 +492,7 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                     id=bg_user_id,
                     name="BreakGlass1",
                     on_premises_sync_enabled=False,
-                    authentication_methods=["fido2"],
+                    authentication_methods=["fido2SecurityKey"],
                 ),
             }
 

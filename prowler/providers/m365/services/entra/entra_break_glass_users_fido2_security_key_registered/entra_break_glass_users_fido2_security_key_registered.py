@@ -14,9 +14,10 @@ class entra_break_glass_users_fido2_security_key_registered(Check):
     excluded from all enabled Conditional Access policies, then verifies each has
     at least one FIDO2 security key registered as an authentication method.
 
-    - PASS: The break glass account has at least one FIDO2 security key registered.
+    - PASS: The break glass account has a FIDO2 security key (fido2SecurityKey) registered.
+    - MANUAL: The account has a device-bound passkey but it cannot be confirmed as FIDO2,
+              or no break glass accounts could be identified.
     - FAIL: The break glass account does not have a FIDO2 security key registered.
-    - MANUAL: No break glass accounts could be identified (no users excluded from all CA policies).
     """
 
     def execute(self) -> list[CheckReportM365]:
@@ -84,11 +85,16 @@ class entra_break_glass_users_fido2_security_key_registered(Check):
                 resource_id=user.id,
             )
 
-            has_fido2 = "fido2" in user.authentication_methods
+            auth_methods = set(user.authentication_methods)
+            has_fido2 = "fido2SecurityKey" in auth_methods
+            has_passkey_device_bound = "passKeyDeviceBound" in auth_methods
 
             if has_fido2:
                 report.status = "PASS"
                 report.status_extended = f"Break glass account {user.name} has a FIDO2 security key registered."
+            elif has_passkey_device_bound:
+                report.status = "MANUAL"
+                report.status_extended = f"Break glass account {user.name} has a device-bound passkey registered, but it cannot be confirmed whether it is a FIDO2 security key."
             else:
                 report.status = "FAIL"
                 report.status_extended = f"Break glass account {user.name} does not have a FIDO2 security key registered."
