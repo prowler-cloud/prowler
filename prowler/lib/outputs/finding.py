@@ -34,6 +34,7 @@ class Finding(BaseModel):
     auth_method: str
     timestamp: Union[int, datetime]
     account_uid: str
+    provider_uid: Optional[str] = None
     account_name: Optional[str] = None
     account_email: Optional[str] = None
     account_organization_uid: Optional[str] = None
@@ -244,6 +245,7 @@ class Finding(BaseModel):
                 output_data["account_uid"] = get_nested_attribute(
                     provider, "identity.cluster"
                 )
+                output_data["provider_uid"] = provider.identity.context
                 output_data["region"] = f"namespace: {check_output.namespace}"
 
             elif provider.type == "github":

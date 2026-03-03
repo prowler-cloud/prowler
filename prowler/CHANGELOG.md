@@ -40,6 +40,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - OpenStack compute service with 7 security checks [(#9944)](https://github.com/prowler-cloud/prowler/pull/9944)
 - OpenStack image service with 6 security checks [(#10096)](https://github.com/prowler-cloud/prowler/pull/10096)
 - IaC `--provider-uid` flag to specify the provider UID for the IaC provider [(#10233)](https://github.com/prowler-cloud/prowler/pull/10233)
+- `provider_uid` field in OCSF `unmapped` output for provider identification [(#10231)](https://github.com/prowler-cloud/prowler/pull/10231)
 
 ### 🔄 Changed
 
