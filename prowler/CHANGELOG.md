@@ -38,6 +38,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - OpenStack block storage service with 7 security checks [(#10120)](https://github.com/prowler-cloud/prowler/pull/10120)
 - OpenStack compute service with 7 security checks [(#9944)](https://github.com/prowler-cloud/prowler/pull/9944)
 - OpenStack image service with 6 security checks [(#10096)](https://github.com/prowler-cloud/prowler/pull/10096)
+- `entra_conditional_access_policy_block_elevated_insider_risk` check for M365 provider [(#10234)](https://github.com/prowler-cloud/prowler/pull/10234)
 
 ### 🔄 Changed
 
