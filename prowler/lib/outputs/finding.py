@@ -331,8 +331,9 @@ class Finding(BaseModel):
 
             elif provider.type == "iac":
                 output_data["auth_method"] = provider.auth_method
-                output_data["account_uid"] = "iac"
-                output_data["account_name"] = "iac"
+                provider_uid = getattr(provider, "provider_uid", None)
+                output_data["account_uid"] = provider_uid if provider_uid else "iac"
+                output_data["account_name"] = provider_uid if provider_uid else "iac"
                 output_data["resource_name"] = getattr(
                     check_output, "resource_name", ""
                 )
