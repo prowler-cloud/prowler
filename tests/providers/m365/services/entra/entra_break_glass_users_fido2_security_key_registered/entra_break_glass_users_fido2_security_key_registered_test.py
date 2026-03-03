@@ -203,7 +203,10 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
                     id=bg_user_id,
                     name="BreakGlass1",
                     on_premises_sync_enabled=False,
-                    authentication_methods=["fido2SecurityKey", "microsoftAuthenticatorPush"],
+                    authentication_methods=[
+                        "fido2SecurityKey",
+                        "microsoftAuthenticatorPush",
+                    ],
                 ),
             }
 
@@ -353,14 +356,8 @@ class Test_entra_break_glass_users_fido2_security_key_registered:
             assert len(result) == 1
             assert result[0].status == "MANUAL"
             assert "BreakGlass1" in result[0].status_extended
-            assert (
-                "device-bound passkey registered"
-                in result[0].status_extended
-            )
-            assert (
-                "cannot be confirmed"
-                in result[0].status_extended
-            )
+            assert "device-bound passkey registered" in result[0].status_extended
+            assert "cannot be confirmed" in result[0].status_extended
 
     def test_multiple_break_glass_users_mixed_results(self):
         """Test mixed results when one BG user has FIDO2 and another does not."""

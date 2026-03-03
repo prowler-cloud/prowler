@@ -487,7 +487,9 @@ class Test_Entra_Service:
         registration_details_response = SimpleNamespace(
             value=[
                 SimpleNamespace(
-                    id="user-1", is_mfa_capable=True, methods_registered=["fido2SecurityKey"]
+                    id="user-1",
+                    is_mfa_capable=True,
+                    methods_registered=["fido2SecurityKey"],
                 ),
                 SimpleNamespace(
                     id="user-6",
@@ -538,7 +540,10 @@ class Test_Entra_Service:
                 SimpleNamespace(
                     id="user-1",
                     is_mfa_capable=True,
-                    methods_registered=["fido2SecurityKey", "microsoftAuthenticatorPush"],
+                    methods_registered=[
+                        "fido2SecurityKey",
+                        "microsoftAuthenticatorPush",
+                    ],
                 ),
             ],
             odata_next_link="next-link",
@@ -575,7 +580,10 @@ class Test_Entra_Service:
         assert registration_details == {
             "user-1": {
                 "is_mfa_capable": True,
-                "authentication_methods": ["fido2SecurityKey", "microsoftAuthenticatorPush"],
+                "authentication_methods": [
+                    "fido2SecurityKey",
+                    "microsoftAuthenticatorPush",
+                ],
             },
             "user-2": {
                 "is_mfa_capable": False,
