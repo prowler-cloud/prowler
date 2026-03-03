@@ -1,16 +1,31 @@
 from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.entra.entra_client import entra_client
 from prowler.providers.m365.services.entra.entra_service import (
+    AdminRoles,
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
     GrantControlOperator,
 )
 
-REQUIRED_GRANT_CONTROL = ConditionalAccessGrantControl.COMPLIANT_DEVICE
+REQUIRED_GRANT_CONTROLS = {
+    ConditionalAccessGrantControl.MFA,
+    ConditionalAccessGrantControl.COMPLIANT_DEVICE,
+    ConditionalAccessGrantControl.DOMAIN_JOINED_DEVICE,
+}
+ADMIN_ROLE_IDS = {role.value for role in AdminRoles}
 
 
-class entra_conditional_access_policy_mdm_enrolled_compliant_device_required(Check):
-    """Check that all users need a compliant (MDM-enrolled) device for all cloud apps."""
+class entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required(
+    Check
+):
+    """Check that CA enforces compliant or hybrid joined device or MFA for admins/all users."""
+
+    def _targets_admins_or_all_users(self, policy) -> bool:
+        if "All" in policy.conditions.user_conditions.included_users:
+            return True
+
+        included_roles = set(policy.conditions.user_conditions.included_roles)
+        return bool(ADMIN_ROLE_IDS.intersection(included_roles))
 
     def execute(self) -> list[CheckReportM365]:
         findings = []
@@ -22,13 +37,13 @@ class entra_conditional_access_policy_mdm_enrolled_compliant_device_required(Che
             resource_id="conditionalAccessPolicies",
         )
         report.status = "FAIL"
-        report.status_extended = "No Conditional Access Policy requires a compliant device to access all cloud apps for all users."
+        report.status_extended = "No Conditional Access Policy requires compliant device, hybrid joined device, or MFA for admin roles or all users across all cloud apps."
 
         for policy in entra_client.conditional_access_policies.values():
             if policy.state == ConditionalAccessPolicyState.DISABLED:
                 continue
 
-            if "All" not in policy.conditions.user_conditions.included_users:
+            if not self._targets_admins_or_all_users(policy):
                 continue
 
             if (
@@ -38,14 +53,10 @@ class entra_conditional_access_policy_mdm_enrolled_compliant_device_required(Che
                 continue
 
             policy_grant_controls = set(policy.grant_controls.built_in_controls)
-            if REQUIRED_GRANT_CONTROL not in policy_grant_controls:
+            if not REQUIRED_GRANT_CONTROLS.issubset(policy_grant_controls):
                 continue
 
-            # If operator is OR and there are additional controls, compliant device is optional.
-            if (
-                policy.grant_controls.operator == GrantControlOperator.OR
-                and len(policy_grant_controls) > 1
-            ):
+            if policy.grant_controls.operator != GrantControlOperator.OR:
                 continue
 
             report = CheckReportM365(
@@ -57,10 +68,10 @@ class entra_conditional_access_policy_mdm_enrolled_compliant_device_required(Che
 
             if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
                 report.status = "FAIL"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' requires a compliant device for all users and all cloud apps but is configured in report-only mode."
+                report.status_extended = f"Conditional Access Policy '{policy.display_name}' reports compliant device, hybrid joined device, or MFA for admin roles or all users but does not enforce it."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' requires a compliant device to access all cloud apps for all users."
+                report.status_extended = f"Conditional Access Policy '{policy.display_name}' enforces compliant device, hybrid joined device, or MFA for admin roles or all users across all cloud apps."
                 break
 
         findings.append(report)
