@@ -5,14 +5,16 @@
   "CheckType": [],
   "ServiceName": "team",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:team/{team_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "VercelTeam",
   "ResourceGroup": "IAM",
   "Description": "Checks whether the proportion of team members with the OWNER role does not exceed 20% of total active members. An excessive number of owners increases the attack surface and risk of accidental or malicious configuration changes.",
   "Risk": "Having too many team owners increases the blast radius of compromised accounts and the risk of unauthorized changes to billing, security settings, and team membership. Each owner has full administrative privileges over the team.",
-  "RelatedUrl": "https://vercel.com/docs/accounts/team-members-and-roles",
-  "AdditionalURLs": [],
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/accounts/team-members-and-roles"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

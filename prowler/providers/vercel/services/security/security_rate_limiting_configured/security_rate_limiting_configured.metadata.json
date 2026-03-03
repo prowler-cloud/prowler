@@ -5,14 +5,16 @@
   "CheckType": [],
   "ServiceName": "security",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:security/{resource_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "VercelFirewallConfig",
   "ResourceGroup": "security",
   "Description": "Checks whether Vercel projects have at least one rate limiting rule configured. Rate limiting protects applications from abuse, brute-force attacks, and DDoS attempts by restricting the number of requests from a single source within a given time window.",
   "Risk": "Without rate limiting, the application is vulnerable to brute-force attacks on authentication endpoints, API abuse, resource exhaustion, and denial-of-service attacks. Attackers can overwhelm the application with excessive requests, degrading performance for legitimate users or exploiting endpoints without throttling.",
-  "RelatedUrl": "https://vercel.com/docs/security/vercel-firewall",
-  "AdditionalURLs": [],
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/vercel-firewall"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

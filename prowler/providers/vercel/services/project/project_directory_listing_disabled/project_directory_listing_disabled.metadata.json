@@ -5,14 +5,16 @@
   "CheckType": [],
   "ServiceName": "project",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:project/{project_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "VercelProject",
   "ResourceGroup": "security",
   "Description": "Vercel's directory listing feature, when enabled, allows visitors to browse the file structure of a deployment when no index file is present in a directory. This can expose source files, configuration files, and other assets that should not be publicly accessible.",
   "Risk": "Enabled directory listing allows attackers to enumerate the file structure of the deployment, potentially discovering backup files, configuration files, source maps, or other sensitive assets. This information disclosure can be leveraged to identify attack vectors or access files that were not intended to be public.",
-  "RelatedUrl": "https://vercel.com/docs/projects/project-configuration",
-  "AdditionalURLs": [],
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/projects/project-configuration"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

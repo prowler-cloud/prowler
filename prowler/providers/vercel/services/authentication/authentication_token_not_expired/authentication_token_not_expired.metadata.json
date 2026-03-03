@@ -5,14 +5,16 @@
   "CheckType": [],
   "ServiceName": "authentication",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:authentication/{resource_id}",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "VercelAuthToken",
   "ResourceGroup": "IAM",
   "Description": "Checks whether Vercel API tokens have not expired. Expired tokens indicate poor token lifecycle management and may suggest that integrations or automation relying on these tokens are failing silently. Tokens without an expiration date are considered valid.",
   "Risk": "Expired tokens indicate that token lifecycle management is not being followed. While expired tokens cannot be used for authentication, their presence suggests that token rotation practices are not in place. Integrations or CI/CD pipelines relying on expired tokens will fail, potentially causing service disruptions.",
-  "RelatedUrl": "https://vercel.com/docs/rest-api#authentication",
-  "AdditionalURLs": [],
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/rest-api#authentication"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

@@ -5,14 +5,16 @@
   "CheckType": [],
   "ServiceName": "security",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:security/{resource_id}",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "VercelFirewallConfig",
   "ResourceGroup": "security",
   "Description": "Checks whether the Vercel Web Application Firewall (WAF) is enabled for each project. The WAF provides protection against common web attacks including SQL injection, cross-site scripting (XSS), and other OWASP Top 10 threats.",
   "Risk": "Without the Web Application Firewall enabled, the application is directly exposed to common web attacks including SQL injection, cross-site scripting, request smuggling, and other exploits. Attackers can exploit these vulnerabilities to steal data, deface the application, or gain unauthorized access.",
-  "RelatedUrl": "https://vercel.com/docs/security/vercel-firewall",
-  "AdditionalURLs": [],
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/vercel-firewall"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

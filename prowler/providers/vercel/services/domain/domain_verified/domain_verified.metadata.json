@@ -5,14 +5,16 @@
   "CheckType": [],
   "ServiceName": "domain",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:domain/{resource_id}",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "VercelDomain",
   "ResourceGroup": "network",
   "Description": "Checks whether Vercel domains have passed ownership verification. Unverified domains may not serve traffic correctly and could indicate a pending or incomplete domain setup. Domain verification confirms that the domain owner has authorized Vercel to manage the domain.",
   "Risk": "Unverified domains may fail to resolve or serve content, causing downtime for users. An unverified domain could also indicate a stale or orphaned configuration, or a domain that was added but never properly transferred, creating potential for domain takeover if the ownership verification is left incomplete.",
-  "RelatedUrl": "https://vercel.com/docs/projects/domains",
-  "AdditionalURLs": [],
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/projects/domains"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

@@ -5,14 +5,16 @@
   "CheckType": [],
   "ServiceName": "security",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:security/{resource_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "VercelFirewallConfig",
   "ResourceGroup": "security",
   "Description": "Checks whether Vercel projects have at least one custom firewall rule configured. Custom rules allow fine-grained control over traffic based on request attributes such as path, headers, user agent, and geographic location, providing application-specific protection beyond managed rulesets.",
   "Risk": "Without custom firewall rules, the application lacks application-specific traffic filtering. Generic managed rulesets may not cover all threat vectors unique to the application. Custom rules are needed to block known attack patterns, restrict access to sensitive paths, and enforce application-level security policies.",
-  "RelatedUrl": "https://vercel.com/docs/security/vercel-firewall/custom-rules",
-  "AdditionalURLs": [],
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/vercel-firewall/custom-rules"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

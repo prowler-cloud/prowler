@@ -5,14 +5,16 @@
   "CheckType": [],
   "ServiceName": "project",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:project/{project_id}",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "VercelProject",
   "ResourceGroup": "security",
   "Description": "Vercel Deployment Protection for production restricts access to the live production deployment by requiring Vercel Authentication or other access controls. When enabled, visitors must authenticate before accessing the production URL, adding a layer of defense for internal applications, staging environments promoted to production, or projects that should not be publicly accessible.",
   "Risk": "Without production deployment protection, the live production deployment is fully accessible to anyone on the internet. For internal tools, admin panels, or pre-launch applications this means unauthorized users can interact with production systems, potentially exploiting vulnerabilities, accessing sensitive data, or abusing application functionality.",
-  "RelatedUrl": "https://vercel.com/docs/security/deployment-protection",
-  "AdditionalURLs": [],
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/deployment-protection"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
