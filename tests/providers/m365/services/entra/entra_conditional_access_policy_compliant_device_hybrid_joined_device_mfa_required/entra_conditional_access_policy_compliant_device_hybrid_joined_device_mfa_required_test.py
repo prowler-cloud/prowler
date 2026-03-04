@@ -334,7 +334,7 @@ class Test_entra_conditional_access_policy_compliant_device_hybrid_joined_device
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' reports compliant device, hybrid joined device, or MFA for admin roles or all users but does not enforce it."
+                == f"Conditional Access Policy {display_name} reports compliant device, hybrid joined device, or MFA for admin roles or all users but does not enforce it."
             )
 
     def test_entra_policy_enabled_pass_for_all_users(self):
@@ -381,7 +381,7 @@ class Test_entra_conditional_access_policy_compliant_device_hybrid_joined_device
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' enforces compliant device, hybrid joined device, or MFA for admin roles or all users across all cloud apps."
+                == f"Conditional Access Policy {display_name} enforces compliant device, hybrid joined device, or MFA for admin roles or all users across all cloud apps."
             )
 
     def test_entra_policy_enabled_pass_for_admin_roles(self):

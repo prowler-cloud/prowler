@@ -68,10 +68,10 @@ class entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_
 
             if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
                 report.status = "FAIL"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' reports compliant device, hybrid joined device, or MFA for admin roles or all users but does not enforce it."
+                report.status_extended = f"Conditional Access Policy {policy.display_name} reports compliant device, hybrid joined device, or MFA for admin roles or all users but does not enforce it."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' enforces compliant device, hybrid joined device, or MFA for admin roles or all users across all cloud apps."
+                report.status_extended = f"Conditional Access Policy {policy.display_name} enforces compliant device, hybrid joined device, or MFA for admin roles or all users across all cloud apps."
                 break
 
         findings.append(report)
