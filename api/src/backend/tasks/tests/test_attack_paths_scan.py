@@ -3,9 +3,11 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, call, patch
 
 import pytest
+from cartography.intel import aws as cartography_aws
 from tasks.jobs.attack_paths import findings as findings_module
 from tasks.jobs.attack_paths import internet as internet_module
 from tasks.jobs.attack_paths import sync as sync_module
+from tasks.jobs.attack_paths.cartography_overrides_aws_sync_order import AWS_SYNC_ORDER
 from tasks.jobs.attack_paths.config import (
     get_deprecated_provider_resource_label,
 )
@@ -1494,3 +1496,36 @@ class TestAttackPathsDbUtilsGraphDataReady:
         ap_scan_b.refresh_from_db()
         assert ap_scan_a.graph_data_ready is False
         assert ap_scan_b.graph_data_ready is True
+
+
+class TestAWSSyncOrder:
+    """Validate AWS_SYNC_ORDER covers all cartography resources and enforces SG ordering."""
+
+    def test_security_group_before_dependents(self):
+        """ec2:security_group must sync before resources that link to SGs via OPTIONAL MATCH."""
+        sg_dependents = [
+            "ec2:load_balancer",
+            "ec2:load_balancer_v2",
+            "ec2:network_interface",
+        ]
+        sg_idx = AWS_SYNC_ORDER.index("ec2:security_group")
+        for dep in sg_dependents:
+            assert (
+                AWS_SYNC_ORDER.index(dep) > sg_idx
+            ), f"{dep} must come after ec2:security_group in AWS_SYNC_ORDER"
+
+    def test_sync_order_covers_all_resource_functions(self):
+        """Every key in cartography RESOURCE_FUNCTIONS must appear in AWS_SYNC_ORDER."""
+        missing = set(cartography_aws.RESOURCE_FUNCTIONS.keys()) - set(AWS_SYNC_ORDER)
+        assert missing == set(), (
+            f"AWS_SYNC_ORDER is missing cartography resources: {missing}. "
+            "Add them to AWS_SYNC_ORDER in aws.py."
+        )
+
+    def test_sync_order_has_no_stale_entries(self):
+        """Every key in AWS_SYNC_ORDER must exist in cartography RESOURCE_FUNCTIONS."""
+        stale = set(AWS_SYNC_ORDER) - set(cartography_aws.RESOURCE_FUNCTIONS.keys())
+        assert stale == set(), (
+            f"AWS_SYNC_ORDER has entries not in cartography: {stale}. "
+            "Remove them or update the cartography version."
+        )

@@ -1,0 +1,31 @@
+{
+  "statements": [
+    {
+      "query": "MATCH (n:LoadBalancer) WHERE n.exposed_internet IS NOT NULL WITH n LIMIT $LIMIT_SIZE REMOVE n.exposed_internet, n.exposed_internet_type",
+      "iterative": true,
+      "iterationsize": 1000
+    },
+    {
+      "query": "MATCH (n:LoadBalancerV2) WHERE n.exposed_internet IS NOT NULL WITH n LIMIT $LIMIT_SIZE REMOVE n.exposed_internet, n.exposed_internet_type",
+      "iterative": true,
+      "iterationsize": 1000
+    },
+    {
+      "query": "MATCH (cidr:IpRange{range:'0.0.0.0/0'})-->(perm:IpPermissionInbound)-->(sg:EC2SecurityGroup)<-[:MEMBER_OF_EC2_SECURITY_GROUP]-(elbv2:LoadBalancerV2{scheme: 'internet-facing'})-->(listener:ELBV2Listener)\nWHERE listener.port>=perm.fromport AND listener.port<=perm.toport\nSET elbv2.exposed_internet = true",
+      "iterative": false
+    },
+    {
+      "query": "MATCH (cidr:IpRange{range:'0.0.0.0/0'})-->(perm:IpPermissionInbound)-->(sg:EC2SecurityGroup)<-[:SOURCE_SECURITY_GROUP]-(elb:LoadBalancer{scheme: 'internet-facing'})-->(listener:ELBListener)\nWHERE listener.port>=perm.fromport AND listener.port<=perm.toport\nSET elb.exposed_internet = true",
+      "iterative": false
+    },
+    {
+      "query": "MATCH (elb:LoadBalancer{exposed_internet: true})-[:EXPOSE]->(e:EC2Instance)\nWITH e\nWHERE (e.exposed_internet_type IS NULL) OR (NOT 'elb' IN e.exposed_internet_type)\nSET e.exposed_internet = true, e.exposed_internet_type = coalesce(e.exposed_internet_type, []) + 'elb'",
+      "iterative": false
+    },
+    {
+      "query": "MATCH (elbv2:LoadBalancerV2{exposed_internet: true})-[:EXPOSE]->(e:EC2Instance)\nWITH e\nWHERE (e.exposed_internet_type IS NULL) OR (NOT 'elbv2' IN e.exposed_internet_type)\nSET e.exposed_internet = true, e.exposed_internet_type = coalesce(e.exposed_internet_type, []) + 'elbv2'",
+      "iterative": false
+    }
+  ],
+  "name": "ELB/ELBv2 asset internet exposure (cartography em-dash fix)"
+}

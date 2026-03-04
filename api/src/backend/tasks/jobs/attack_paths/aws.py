@@ -7,7 +7,10 @@ import aioboto3
 import boto3
 import neo4j
 
+from pathlib import Path
+
 from cartography.config import Config as CartographyConfig
+from cartography.graph.job import GraphJob
 from cartography.intel import aws as cartography_aws
 from celery.utils.log import get_task_logger
 
@@ -17,6 +20,7 @@ from api.models import (
 )
 from prowler.providers.common.provider import Provider as ProwlerSDKProvider
 from tasks.jobs.attack_paths import db_utils, utils
+from tasks.jobs.attack_paths.cartography_overrides_aws_sync_order import AWS_SYNC_ORDER
 
 logger = get_task_logger(__name__)
 
@@ -47,7 +51,11 @@ def start_aws_ingestion(
 
     boto3_session = get_boto3_session(prowler_api_provider, prowler_sdk_provider)
     regions: list[str] = list(prowler_sdk_provider._enabled_regions)
-    requested_syncs = list(cartography_aws.RESOURCE_FUNCTIONS.keys())
+    # requested_syncs = list(cartography_aws.RESOURCE_FUNCTIONS.keys())
+    # TODO: Uncomment the line above and remove the block below when Cartography fixes the RESOURCE_FUNCTIONS ordering
+    requested_syncs = [
+        s for s in AWS_SYNC_ORDER if s in cartography_aws.RESOURCE_FUNCTIONS
+    ]
 
     sync_args = cartography_aws._build_aws_sync_kwargs(
         neo4j_session,
@@ -144,6 +152,22 @@ def start_aws_ingestion(
     cartography_aws._perform_aws_analysis(
         requested_syncs, neo4j_session, common_job_parameters
     )
+
+    # TODO: Remove when Cartography fixes em dashes in `aws_ec2_asset_exposure.json`
+    # Statements 5 and 6 use U+2014 (em dash) instead of U+002D (hyphen) in Cypher
+    # arrows, so `exposed_internet` is never set on ELB/ELBv2 nodes
+    logger.info(
+        f"Running ELB asset exposure fix for AWS account {prowler_api_provider.uid}"
+    )
+    elb_fix_path = (
+        Path(__file__).parent / "cartography_overrides_aws_ec2_asset_exposure.json"
+    )
+    GraphJob.run_from_json_file(
+        elb_fix_path,
+        neo4j_session,
+        common_job_parameters,
+    )
+
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 94)
 
     return failed_syncs
