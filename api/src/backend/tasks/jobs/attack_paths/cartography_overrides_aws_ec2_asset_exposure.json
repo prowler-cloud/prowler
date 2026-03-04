@@ -11,11 +11,11 @@
       "iterationsize": 1000
     },
     {
-      "query": "MATCH (cidr:IpRange{range:'0.0.0.0/0'})-->(perm:IpPermissionInbound)-->(sg:EC2SecurityGroup)<-[:MEMBER_OF_EC2_SECURITY_GROUP]-(elbv2:LoadBalancerV2{scheme: 'internet-facing'})-->(listener:ELBV2Listener)\nWHERE listener.port>=perm.fromport AND listener.port<=perm.toport\nSET elbv2.exposed_internet = true",
+      "query": "MATCH (cidr:IpRange{range:'0.0.0.0/0'})-->(perm:IpPermissionInbound)-->(sg:EC2SecurityGroup)<-[:MEMBER_OF_EC2_SECURITY_GROUP]-(elbv2:LoadBalancerV2{scheme: 'internet-facing'})-->(listener:ELBV2Listener)\nWHERE perm.protocol = '-1' OR (listener.port>=perm.fromport AND listener.port<=perm.toport)\nSET elbv2.exposed_internet = true",
       "iterative": false
     },
     {
-      "query": "MATCH (cidr:IpRange{range:'0.0.0.0/0'})-->(perm:IpPermissionInbound)-->(sg:EC2SecurityGroup)<-[:SOURCE_SECURITY_GROUP]-(elb:LoadBalancer{scheme: 'internet-facing'})-->(listener:ELBListener)\nWHERE listener.port>=perm.fromport AND listener.port<=perm.toport\nSET elb.exposed_internet = true",
+      "query": "MATCH (cidr:IpRange{range:'0.0.0.0/0'})-->(perm:IpPermissionInbound)-->(sg:EC2SecurityGroup)<-[:SOURCE_SECURITY_GROUP]-(elb:LoadBalancer{scheme: 'internet-facing'})-->(listener:ELBListener)\nWHERE perm.protocol = '-1' OR (listener.port>=perm.fromport AND listener.port<=perm.toport)\nSET elb.exposed_internet = true",
       "iterative": false
     },
     {
