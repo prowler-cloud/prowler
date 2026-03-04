@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesWorkerNode",
+  "ResourceGroup": "container",
   "Description": "This check ensures that the kubelet service file on each Node is owned by root. Proper file ownership is critical for the security and integrity of the kubelet service configuration.",
   "Risk": "Incorrect ownership settings can lead to unauthorized modifications, potentially compromising the security and functionality of the kubelet service.",
   "RelatedUrl": "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/kubelet-integration/",

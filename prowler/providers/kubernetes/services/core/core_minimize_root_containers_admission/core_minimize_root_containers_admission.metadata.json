@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes Pods** are assessed for containers configured to run as the **root user**. The evaluation identifies containers whose security context sets `runAsUser: 0`.",
   "Risk": "Containers running as **root (UID 0)** enable **privilege escalation** and **container breakout**. Attackers can modify workloads (**integrity**), read sensitive data on mounted volumes (**confidentiality**), and disrupt nodes or services via kernel/daemon abuse (**availability**).",
   "RelatedUrl": "",
@@ -15,7 +16,6 @@
     "https://github.com/SumoLogic/sumologic-kubernetes-collection/issues/1229",
     "https://kubernetes.io/docs/tutorials/security/cluster-level-pss/",
     "https://sdk.operatorframework.io/docs/best-practices/pod-security-standards/",
-    "https://bobcares.com/blog/container-has-runasnonroot-image-non-numeric-user/",
     "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
     "https://kyverno.io/policies/pod-security/restricted/require-run-as-nonroot/require-run-as-nonroot/",
     "https://support.icompaas.com/support/solutions/articles/62000234712-minimize-the-admission-of-root-containers"

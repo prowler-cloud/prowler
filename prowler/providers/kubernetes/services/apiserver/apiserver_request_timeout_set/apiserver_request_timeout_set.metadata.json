@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
+  "ResourceGroup": "container",
   "Description": "This check verifies that the Kubernetes API server is configured with an appropriate global request timeout. Setting a suitable --request-timeout value ensures the API server can handle requests efficiently without exhausting resources, especially in cases of slower connections or high-volume data requests.",
   "Risk": "An inadequately set request timeout may lead to inefficient handling of API requests, either by timing out too quickly on slow connections or by allowing requests to consume excessive resources, leading to potential Denial-of-Service attacks.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",

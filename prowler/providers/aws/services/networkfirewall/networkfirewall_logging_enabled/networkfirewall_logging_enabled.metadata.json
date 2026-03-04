@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsNetworkFirewallFirewall",
+  "ResourceGroup": "network",
   "Description": "**AWS Network Firewall** has stateful engine logging configured with at least one log type (`FLOW`, `ALERT`, or `TLS`) and an active log destination",
   "Risk": "Absent Network Firewall logs reduce **visibility** and **forensics**. Malicious flows, C2 traffic, and data exfiltration can go **undetected**, impacting:\n- Confidentiality (leakage)\n- Integrity (unauthorized traffic allowed)\n- Availability (DDoS patterns unnoticed)",
   "RelatedUrl": "",

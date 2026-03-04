@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes Pods** configured with `hostPID: true` are identified, indicating the container shares the node's **host PID namespace**.",
   "Risk": "Sharing the **host PID namespace** erodes isolation: containers can list host processes and read `/proc` metadata, enabling **credential exposure**, **privilege escalation**, and **lateral movement**. Limited process interaction can also threaten **integrity** and **availability**.",
   "RelatedUrl": "",

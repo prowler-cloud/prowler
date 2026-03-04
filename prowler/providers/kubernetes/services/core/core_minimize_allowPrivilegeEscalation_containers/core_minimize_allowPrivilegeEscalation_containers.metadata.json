@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes pods** are evaluated for containers that enable `allowPrivilegeEscalation`. The finding highlights pods where any container permits processes to gain extra privileges; pods whose containers set `allowPrivilegeEscalation: false` are noted as not allowing escalation.",
   "Risk": "Allowing privilege escalation lets processes acquire elevated rights, undermining container isolation. Attackers can abuse setuid paths and capabilities to tamper with workloads (**integrity**), read sensitive data (**confidentiality**), pivot within the cluster, or disrupt services (**availability**).",
   "RelatedUrl": "",

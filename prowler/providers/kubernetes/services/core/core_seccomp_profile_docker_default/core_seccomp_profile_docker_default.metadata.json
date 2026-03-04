@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes Pods** and their containers specify the runtime default seccomp profile using `seccompProfile.type: RuntimeDefault` in the security context.\n\nThe evaluation looks for this setting at the Pod level or per container.",
   "Risk": "Without **seccomp RuntimeDefault**, containers may run unconfined and invoke risky syscalls, expanding the kernel attack surface.\n- Container escape, privilege escalation (integrity)\n- Data access or exfiltration (confidentiality)\n- Node or workload disruption (availability)",
   "RelatedUrl": "",

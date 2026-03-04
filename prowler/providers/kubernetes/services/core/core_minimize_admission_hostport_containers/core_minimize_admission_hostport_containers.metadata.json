@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes Pods** are inspected for any container declaring `ports[].hostPort`. The finding highlights workloads that bind container ports directly to the node's network stack via **HostPorts**.",
   "Risk": "Using **HostPorts** exposes Pods on node IPs outside centralized Service/Ingress controls. Attackers can directly probe and access workloads (**confidentiality/integrity**). Port conflicts or saturation on nodes can disrupt traffic (**availability**). Network segmentation and some policies may be less effective.",
   "RelatedUrl": "",
@@ -17,8 +18,7 @@
     "https://developer.squareup.com/blog/kubernetes-pod-security-policies/",
     "https://github.com/chipzoller/kyverno-pss",
     "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
-    "https://www.armosec.io/glossary/pod-security-standards/",
-    "https://praneethreddybilakanti.medium.com/kubernetes-security-8af03eb1d11d"
+    "https://www.armosec.io/glossary/pod-security-standards/"
   ],
   "Remediation": {
     "Code": {

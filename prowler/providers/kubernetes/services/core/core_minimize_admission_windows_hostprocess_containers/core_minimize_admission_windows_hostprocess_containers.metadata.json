@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "Pods are evaluated for Windows settings where `securityContext.windowsOptions.hostProcess` is set to `true`, indicating they can run **Windows HostProcess containers**.",
   "Risk": "Enabling **HostProcess** grants containers direct access to the Windows node, eroding isolation. Attackers can read node data, tamper with services, capture credentials, and pivot across the cluster, impacting **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
@@ -15,7 +16,6 @@
     "https://kyverno.io/policies/pod-security/baseline/disallow-host-process/disallow-host-process/",
     "https://github.com/kubernetes/enhancements/issues/2579",
     "https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/",
-    "https://hub.armosec.io/docs/c-0202",
     "https://learn.microsoft.com/en-us/azure/aks/cis-kubernetes"
   ],
   "Remediation": {

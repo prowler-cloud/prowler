@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
   "Severity": "high",
   "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
   "Description": "Enable **Transparent Data Encryption (TDE)** on every RDS instance. RDS Database TDE helps protect against the threat of malicious activity by performing real-time encryption and decryption of the database, associated backups, and log files at rest.\n\nNo changes to the application are required.",
   "Risk": "**Data at rest** that is not encrypted is vulnerable to unauthorized access if the underlying storage media or backups are compromised.\n\nTDE protects against physical theft and unauthorized access to storage systems.",
   "RelatedUrl": "",

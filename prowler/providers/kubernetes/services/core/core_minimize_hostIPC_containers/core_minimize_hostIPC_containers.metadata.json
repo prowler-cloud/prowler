@@ -8,14 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes pods** are evaluated for use of the host's IPC namespace via the `hostIPC` setting. Workloads declaring `hostIPC: true` share node IPC resources (shared memory, semaphores, message queues) instead of isolated container IPC.",
   "Risk": "Sharing the host IPC namespace erodes isolation, exposing host shared memory and semaphores. A compromised pod could snoop or tamper with IPC objects, leading to data disclosure, integrity violations, privilege escalation, and lateral movement across workloads.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://medium.com/@benson.philemon/pod-security-standards-restricted-profile-the-fort-knox-of-kubernetes-security-essential-c2ba15dd5250",
     "https://blog.techiescamp.com/kubernetes-pod-security-standards/",
     "https://support.icompaas.com/support/solutions/articles/62000234627-minimize-the-admission-of-containers-wishing-to-share-the-host-ipc-namespace",
-    "https://k8s-security.geek-kb.com/docs/best_practices/cluster_setup_and_hardening/pod_security/container_escape_mitigation/",
     "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
     "https://avd.aquasec.com/compliance/kubernetes/rke-cis-1.24/rke-cis-1.24-policies/5.2/"
   ],

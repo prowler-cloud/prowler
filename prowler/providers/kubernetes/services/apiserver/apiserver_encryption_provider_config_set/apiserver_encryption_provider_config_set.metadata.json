@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
+  "ResourceGroup": "container",
   "Description": "This check ensures that the Kubernetes API server is configured with the --encryption-provider-config argument to encrypt sensitive data at rest in the etcd key-value store. Encrypting data at rest prevents potential unauthorized disclosures and ensures that the sensitive data is secure.",
   "Risk": "Without proper configuration of the encryption provider, sensitive data stored in etcd might not be encrypted, posing a risk of data breaches.",
   "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/",

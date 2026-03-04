@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "Pods configured with `hostNetwork: true` are identified, meaning they share the node's network namespace and use the host's IP stack, interfaces, and ports.",
   "Risk": "Using the **host network namespace** exposes node-local interfaces and traffic to the pod. A compromise can enable packet capture and request spoofing (**C/I**), access to node services (e.g., kubelet), and port binding conflicts, causing outages (**A**) and enabling **lateral movement** across the cluster.",
   "RelatedUrl": "",

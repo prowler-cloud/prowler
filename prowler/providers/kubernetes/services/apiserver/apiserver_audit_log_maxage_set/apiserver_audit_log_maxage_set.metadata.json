@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
+  "ResourceGroup": "container",
   "Description": "This check ensures that the Kubernetes API server is configured with an appropriate audit log retention period. Setting --audit-log-maxage to 30 or as per business requirements helps in maintaining logs for sufficient time to investigate past events.",
   "Risk": "Without an adequate log retention period, there may be insufficient audit history to investigate and analyze past events or security incidents.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
+  "ResourceGroup": "container",
   "Description": "This check ensures that the Kubernetes API server is configured with the --client-ca-file argument, specifying the CA file for client authentication. This setting enables the API server to authenticate clients using certificates signed by the CA and is crucial for secure communication.",
   "Risk": "If the client CA file is not set, the API server may not properly authenticate clients, potentially leading to unauthorized access.",
   "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",

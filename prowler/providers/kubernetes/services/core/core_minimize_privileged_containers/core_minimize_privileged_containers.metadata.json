@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Pods** are evaluated for containers configured with `securityContext.privileged: true`, indicating execution in **privileged mode**.",
   "Risk": "**Privileged containers** can control the host and bypass isolation, enabling:\n- Secret theft (confidentiality)\n- Workload/node tampering (integrity)\n- Service disruption (availability)\nCompromise of one pod can drive lateral movement across the cluster.",
   "RelatedUrl": "",

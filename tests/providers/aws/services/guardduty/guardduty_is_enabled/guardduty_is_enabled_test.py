@@ -55,7 +55,7 @@ class Test_guardduty_is_enabled:
             patch(
                 "prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled.guardduty_client",
                 new=GuardDuty(aws_provider),
-            ),
+            ) as mock_guardduty_client,
         ):
             from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled import (
                 guardduty_is_enabled,
@@ -63,7 +63,8 @@ class Test_guardduty_is_enabled:
 
             check = guardduty_is_enabled()
             results = check.execute()
-            assert len(results) == 32
+            # One result per detector (one detector per region)
+            assert len(results) == len(mock_guardduty_client.detectors)
             for result in results:
                 if result.region == AWS_REGION_EU_WEST_1:
                     assert result.status == "PASS"
@@ -108,7 +109,8 @@ class Test_guardduty_is_enabled:
 
             check = guardduty_is_enabled()
             results = check.execute()
-            assert len(results) == 32
+            # One result per detector (one detector per region)
+            assert len(results) == len(mock_guardduty_client.detectors)
             for result in results:
                 if result.region == AWS_REGION_EU_WEST_1:
                     assert result.status == "FAIL"
@@ -153,7 +155,8 @@ class Test_guardduty_is_enabled:
 
             check = guardduty_is_enabled()
             results = check.execute()
-            assert len(results) == 32
+            # One result per detector (one detector per region)
+            assert len(results) == len(mock_guardduty_client.detectors)
             for result in results:
                 if result.region == AWS_REGION_EU_WEST_1:
                     assert result.status == "FAIL"
@@ -196,7 +199,8 @@ class Test_guardduty_is_enabled:
 
             check = guardduty_is_enabled()
             results = check.execute()
-            assert len(results) == 32
+            # One result per detector (one detector per region)
+            assert len(results) == len(mock_guardduty_client.detectors)
             for result in results:
                 if result.region == AWS_REGION_EU_WEST_1:
                     assert result.status == "FAIL"

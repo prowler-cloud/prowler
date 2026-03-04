@@ -46,10 +46,12 @@ function SelectValue({
 function SelectTrigger({
   className,
   size = "default",
+  iconSize = "default",
   children,
   ...props
 }: ComponentProps<typeof SelectPrimitive.Trigger> & {
   size?: "sm" | "default";
+  iconSize?: "sm" | "default";
 }) {
   return (
     <SelectPrimitive.Trigger
@@ -64,7 +66,10 @@ function SelectTrigger({
       {children}
       <SelectPrimitive.Icon asChild>
         <ChevronDownIcon
-          className="text-bg-button-secondary size-6"
+          className={cn(
+            "text-bg-button-secondary",
+            iconSize === "sm" ? "size-4" : "size-6",
+          )}
           aria-hidden="true"
         />
       </SelectPrimitive.Icon>

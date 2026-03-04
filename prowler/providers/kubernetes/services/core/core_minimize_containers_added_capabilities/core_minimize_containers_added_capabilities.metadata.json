@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "Kubernetes Pods and containers are evaluated for **added Linux capabilities** via `capabilities.add` in their security context; presence of added entries indicates elevated privileges beyond defaults.",
   "Risk": "Extra capabilities expand the container's kernel-level permissions, enabling actions like raw socket use, file ownership changes, and mount operations. Compromise could enable node access, lateral movement, or tampering with workloads, impacting **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",

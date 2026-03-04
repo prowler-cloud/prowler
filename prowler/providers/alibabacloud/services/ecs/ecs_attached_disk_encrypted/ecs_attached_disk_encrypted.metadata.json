@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "acs:ecs:region:account-id:disk/{disk-id}",
   "Severity": "high",
   "ResourceType": "AlibabaCloudECSDisk",
+  "ResourceGroup": "storage",
   "Description": "**ECS cloud disk encryption** protects your data at rest. The cloud disk data encryption feature automatically encrypts data when data is transferred from ECS instances to disks, and decrypts data when read from disks.\n\nEnsure that disks are encrypted when they are created with the creation of VM instances.",
   "Risk": "**Unencrypted disks** attached to ECS instances pose a security risk as they may contain sensitive data that could be accessed if the disk is compromised or accessed by unauthorized parties.\n\nData at rest without encryption is vulnerable to **unauthorized access** if storage media is lost, stolen, or improperly decommissioned.",
   "RelatedUrl": "",

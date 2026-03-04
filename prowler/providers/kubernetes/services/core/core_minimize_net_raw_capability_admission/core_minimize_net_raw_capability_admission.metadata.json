@@ -8,12 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes pods** where any container's security context adds the `NET_RAW` Linux capability are identified.\n\nThe inspection evaluates container `securityContext.capabilities.add` entries to detect explicit requests for `NET_RAW`.",
   "Risk": "Granting **NET_RAW** enables raw sockets for packet crafting and sniffing, undermining **confidentiality** and **integrity**. Attackers can run ARP/DNS spoofing, pivot or scan inside the cluster, bypass service isolation, exfiltrate data, and impact **availability** through network abuse.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.icompaas.com/support/solutions/articles/62000234711-minimize-the-admission-of-containers-with-the-net-raw-capability",
-    "https://medium.com/@benson.philemon/pod-security-standards-baseline-profile-essential-knowledge-for-cks-exam-1bcfeef94959",
     "https://dev.to/castai/kubernetes-security-10-best-practices-from-the-industry-and-community-1bp6?comments_sort=latest",
     "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-capabilities-for-a-container",
     "https://istio.io/latest/docs/setup/additional-setup/pod-security-admission/",
