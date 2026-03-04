@@ -27,6 +27,7 @@ interface WizardInputFieldProps<T extends FieldValues> {
   autoCapitalize?: InputHTMLAttributes<HTMLInputElement>["autoCapitalize"];
   autoCorrect?: InputHTMLAttributes<HTMLInputElement>["autoCorrect"];
   spellCheck?: boolean;
+  requiredIndicator?: boolean;
 }
 
 export const WizardInputField = <T extends FieldValues>({
@@ -48,6 +49,7 @@ export const WizardInputField = <T extends FieldValues>({
   autoCapitalize,
   autoCorrect,
   spellCheck,
+  requiredIndicator,
 }: WizardInputFieldProps<T>) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
@@ -74,6 +76,7 @@ export const WizardInputField = <T extends FieldValues>({
       : "password"
     : type;
   const inputIsRequired = password || confirmPassword ? true : isRequired;
+  const showRequiredIndicator = requiredIndicator ?? inputIsRequired;
 
   const toggleVisibility = () => {
     if (password || type === "password") {
@@ -97,11 +100,16 @@ export const WizardInputField = <T extends FieldValues>({
             <label
               htmlFor={name}
               className={cn(
-                "text-sm font-medium",
-                labelPlacement === "outside" ? "" : "sr-only",
+                "text-text-neutral-tertiary text-xs",
+                labelPlacement === "outside"
+                  ? "font-medium"
+                  : "font-light tracking-tight",
               )}
             >
               {inputLabel}
+              {showRequiredIndicator && (
+                <span className="text-text-error-primary">*</span>
+              )}
             </label>
             <FormControl>
               <div className="relative">

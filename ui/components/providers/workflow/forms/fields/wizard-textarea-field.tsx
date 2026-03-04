@@ -20,6 +20,7 @@ interface WizardTextareaFieldProps<T extends FieldValues> {
   fullWidth?: boolean;
   disableAutosize?: boolean;
   description?: React.ReactNode;
+  requiredIndicator?: boolean;
 }
 
 export const WizardTextareaField = <T extends FieldValues>({
@@ -37,11 +38,13 @@ export const WizardTextareaField = <T extends FieldValues>({
   fullWidth = true,
   disableAutosize = false,
   description,
+  requiredIndicator,
 }: WizardTextareaFieldProps<T>) => {
   void variant;
   void size;
   void fullWidth;
   void disableAutosize;
+  const showRequiredIndicator = requiredIndicator ?? isRequired;
 
   return (
     <FormField
@@ -55,11 +58,16 @@ export const WizardTextareaField = <T extends FieldValues>({
             <label
               htmlFor={name}
               className={cn(
-                "text-sm font-medium",
-                labelPlacement === "outside" ? "" : "sr-only",
+                "text-text-neutral-tertiary text-xs",
+                labelPlacement === "outside"
+                  ? "font-medium"
+                  : "font-light tracking-tight",
               )}
             >
               {label}
+              {showRequiredIndicator && (
+                <span className="text-text-error-primary">*</span>
+              )}
             </label>
             <FormControl>
               <textarea
