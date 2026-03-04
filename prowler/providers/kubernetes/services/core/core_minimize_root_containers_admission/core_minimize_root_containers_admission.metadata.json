@@ -13,9 +13,7 @@
   "Risk": "Containers running as **root (UID 0)** enable **privilege escalation** and **container breakout**. Attackers can modify workloads (**integrity**), read sensitive data on mounted volumes (**confidentiality**), and disrupt nodes or services via kernel/daemon abuse (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://github.com/SumoLogic/sumologic-kubernetes-collection/issues/1229",
     "https://kubernetes.io/docs/tutorials/security/cluster-level-pss/",
-    "https://sdk.operatorframework.io/docs/best-practices/pod-security-standards/",
     "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
     "https://kyverno.io/policies/pod-security/restricted/require-run-as-nonroot/require-run-as-nonroot/",
     "https://support.icompaas.com/support/solutions/articles/62000234712-minimize-the-admission-of-root-containers"

@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "Pod",
   "ResourceGroup": "container",
-  "Description": "Pods are inspected for container **Linux capabilities**. A finding occurs when any container sets capabilities in `add` or does not fully `drop` them (e.g., missing `ALL`), indicating capabilities are assigned instead of removed.",
+  "Description": "**Kubernetes Pods** are inspected for container **Linux capabilities**. A finding occurs when any container sets capabilities in `add` or does not fully `drop` them (e.g., missing `ALL`), indicating capabilities are assigned instead of removed.",
   "Risk": "Retained or added **Linux capabilities** enable privilege escalation and container escape.\n- Confidentiality: packet capture and secret access\n- Integrity: filesystem mounts or process tampering\n- Availability: killing services or altering networking",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -13,12 +13,7 @@
   "Risk": "Using **HostPorts** exposes Pods on node IPs outside centralized Service/Ingress controls. Attackers can directly probe and access workloads (**confidentiality/integrity**). Port conflicts or saturation on nodes can disrupt traffic (**availability**). Network segmentation and some policies may be less effective.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://artifacthub.io/packages/kyverno/kyverno-policies/disallow-host-ports",
-    "https://kyverno.io/policies/pod-security/baseline/disallow-host-ports/disallow-host-ports/",
-    "https://developer.squareup.com/blog/kubernetes-pod-security-policies/",
-    "https://github.com/chipzoller/kyverno-pss",
-    "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
-    "https://www.armosec.io/glossary/pod-security-standards/"
+    "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
   ],
   "Remediation": {
     "Code": {
