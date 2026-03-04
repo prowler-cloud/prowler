@@ -178,6 +178,9 @@ def execute_custom_query(
         serialized = _serialize_graph(graph, provider_id)
         return _truncate_graph(serialized)
 
+    except graph_database.ClientStatementException as exc:
+        raise ValidationError({"query": exc.message})
+
     except graph_database.WriteQueryNotAllowedException:
         raise PermissionDenied(
             "Attack Paths query execution failed: read-only queries are enforced"
