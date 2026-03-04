@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.19.0] (Prowler UNRELEASED)
+## [1.19.0] (Prowler v5.19.0)
 
 ### 🚀 Added
 
@@ -10,6 +10,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 - PDF report available for the CSA CCM compliance framework [(#10088)](https://github.com/prowler-cloud/prowler/pull/10088)
 - Cloudflare provider support [(#9910)](https://github.com/prowler-cloud/prowler/pull/9910)
 - CSV and PDF download buttons in compliance views [(#10093)](https://github.com/prowler-cloud/prowler/pull/10093)
+- Add SecNumCloud compliance framework [(#10117)](https://github.com/prowler-cloud/prowler/pull/10117)
+- Attack Paths tools added to Lighthouse AI workflow allowed list [(#10175)](https://github.com/prowler-cloud/prowler/pull/10175)
 
 ### 🔄 Changed
 
@@ -18,14 +20,20 @@ All notable changes to the **Prowler UI** are documented in this file.
 - CSA CCM detailed view and small fix related with `Top Failed Sections` width [(#10018)](https://github.com/prowler-cloud/prowler/pull/10018)
 - Attack Paths: Show scan data availability status with badges and tooltips, allow selecting scans for querying while a new scan is in progress [(#10089)](https://github.com/prowler-cloud/prowler/pull/10089)
 - Attack Paths: Catches not found and permissions (for read only queries) errors [(#10140)](https://github.com/prowler-cloud/prowler/pull/10140)
+- Provider connection flow was unified into a modal wizard with AWS Organizations bulk onboarding, safer secret retry handling, and more stable E2E coverage [(#10153)](https://github.com/prowler-cloud/prowler/pull/10153) [(#10154)](https://github.com/prowler-cloud/prowler/pull/10154) [(#10155)](https://github.com/prowler-cloud/prowler/pull/10155) [(#10156)](https://github.com/prowler-cloud/prowler/pull/10156) [(#10157)](https://github.com/prowler-cloud/prowler/pull/10157) [(#10158)](https://github.com/prowler-cloud/prowler/pull/10158)
+
+### 🐞 Fixed
+
+- Findings Severity Over Time chart on Overview not responding to provider and account filters, and chart clipping at Y-axis maximum values [(#10103)](https://github.com/prowler-cloud/prowler/pull/10103)
 
 ### 🔐 Security
 
 - npm dependencies updated to resolve 11 Dependabot alerts (4 HIGH, 7 MEDIUM): fast-xml-parser, @modelcontextprotocol/sdk, tar, @isaacs/brace-expansion, hono, lodash, lodash-es [(#10052)](https://github.com/prowler-cloud/prowler/pull/10052)
+- npm transitive dependencies patched to resolve 9 Dependabot alerts (2 CRITICAL, 3 HIGH, 2 MEDIUM, 2 LOW): fast-xml-parser, rollup, minimatch, ajv, hono, qs [(#10187)](https://github.com/prowler-cloud/prowler/pull/10187)
 
 ---
 
-## [1.18.3] (Prowler UNRELEASED)
+## [1.18.3] (Prowler v5.18.3)
 
 ### 🐞 Fixed
 

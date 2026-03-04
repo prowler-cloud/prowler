@@ -113,6 +113,8 @@ class TestOCSF:
             "additional_urls": findings[0].metadata.AdditionalURLs,
             "notes": findings[0].metadata.Notes,
             "compliance": findings[0].compliance,
+            "provider_uid": findings[0].account_uid,
+            "provider": findings[0].provider,
         }
 
         # Test with int timestamp (UNIX timestamp)
@@ -122,6 +124,23 @@ class TestOCSF:
         assert output_data.time_dt == datetime.fromtimestamp(
             1619600000, tz=timezone.utc
         )
+
+    def test_scan_id_is_unique_per_provider_and_account(self):
+        findings = [
+            generate_finding_output(provider="aws", account_uid="111111111111"),
+            generate_finding_output(provider="aws", account_uid="222222222222"),
+            generate_finding_output(provider="aws", account_uid="111111111111"),
+        ]
+
+        ocsf = OCSF(findings)
+
+        scan_ids = [finding.unmapped["scan_id"] for finding in ocsf.data]
+
+        assert UUID(scan_ids[0])
+        assert UUID(scan_ids[1])
+        assert UUID(scan_ids[2])
+        assert scan_ids[0] == scan_ids[2]
+        assert scan_ids[0] != scan_ids[1]
 
     def test_validate_ocsf(self):
         mock_file = StringIO()
@@ -202,6 +221,8 @@ class TestOCSF:
                     ],
                     "notes": "test-notes",
                     "compliance": {"test-compliance": "test-compliance"},
+                    "provider_uid": "123456789012",
+                    "provider": "aws",
                 },
                 "activity_name": "Create",
                 "activity_id": 1,
@@ -337,6 +358,8 @@ class TestOCSF:
             "additional_urls": finding_output.metadata.AdditionalURLs,
             "notes": finding_output.metadata.Notes,
             "compliance": finding_output.compliance,
+            "provider_uid": finding_output.account_uid,
+            "provider": finding_output.provider,
         }
 
         # ResourceDetails
@@ -407,6 +430,7 @@ class TestOCSF:
             muted=True,
             region=AWS_REGION_EU_WEST_1,
             provider="kubernetes",
+            provider_uid="test-k8s-context",
         )
 
         finding_ocsf = OCSF([finding_output])
@@ -416,6 +440,8 @@ class TestOCSF:
         assert finding_ocsf.resources[0].namespace == finding_output.region.replace(
             "namespace: ", ""
         )
+        assert finding_ocsf.unmapped["provider_uid"] == "test-k8s-context"
+        assert finding_ocsf.unmapped["provider"] == "kubernetes"
 
     def test_finding_output_cloud_fail_low_not_muted(self):
         finding_output = generate_finding_output(

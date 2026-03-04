@@ -1,11 +1,7 @@
 from unittest import mock
 from uuid import uuid4
 
-from tests.providers.azure.azure_fixtures import (
-    DOMAIN,
-    TENANT_IDS,
-    set_mocked_azure_provider,
-)
+from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provider
 
 
 class Test_entra_conditional_access_policy_require_mfa_for_management_api:
@@ -27,7 +23,6 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             )
 
             entra_client.conditional_access_policy = {}
-            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
@@ -50,17 +45,15 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
                 entra_conditional_access_policy_require_mfa_for_management_api,
             )
 
-            # No policies configured
             entra_client.conditional_access_policy = {DOMAIN: {}}
-            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].subscription == f"Tenant: {DOMAIN}"
-            assert result[0].resource_name == DOMAIN
-            assert result[0].resource_id == TENANT_IDS[0]
+            assert result[0].resource_name == "Conditional Access Policy"
+            assert result[0].resource_id == "Conditional Access Policy"
             assert (
                 result[0].status_extended
                 == "Conditional Access Policy does not require MFA for management API."
@@ -97,16 +90,14 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             )
 
             entra_client.conditional_access_policy = {DOMAIN: {policy_id: policy}}
-            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].subscription == f"Tenant: {DOMAIN}"
-            # When policy exists but doesn't meet requirements, resource defaults to tenant
-            assert result[0].resource_name == DOMAIN
-            assert result[0].resource_id == TENANT_IDS[0]
+            assert result[0].resource_name == "Conditional Access Policy"
+            assert result[0].resource_id == "Conditional Access Policy"
             assert (
                 result[0].status_extended
                 == "Conditional Access Policy does not require MFA for management API."
@@ -143,7 +134,6 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             )
 
             entra_client.conditional_access_policy = {DOMAIN: {policy_id: policy}}
-            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
@@ -188,16 +178,14 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             )
 
             entra_client.conditional_access_policy = {DOMAIN: {policy_id: policy}}
-            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].subscription == f"Tenant: {DOMAIN}"
-            # When policy is disabled, resource defaults to tenant
-            assert result[0].resource_name == DOMAIN
-            assert result[0].resource_id == TENANT_IDS[0]
+            assert result[0].resource_name == "Conditional Access Policy"
+            assert result[0].resource_id == "Conditional Access Policy"
             assert (
                 result[0].status_extended
                 == "Conditional Access Policy does not require MFA for management API."
@@ -234,16 +222,14 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             )
 
             entra_client.conditional_access_policy = {DOMAIN: {policy_id: policy}}
-            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].subscription == f"Tenant: {DOMAIN}"
-            # When policy doesn't target management API, resource defaults to tenant
-            assert result[0].resource_name == DOMAIN
-            assert result[0].resource_id == TENANT_IDS[0]
+            assert result[0].resource_name == "Conditional Access Policy"
+            assert result[0].resource_id == "Conditional Access Policy"
             assert (
                 result[0].status_extended
                 == "Conditional Access Policy does not require MFA for management API."
@@ -280,16 +266,14 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             )
 
             entra_client.conditional_access_policy = {DOMAIN: {policy_id: policy}}
-            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].subscription == f"Tenant: {DOMAIN}"
-            # When policy doesn't include all users, resource defaults to tenant
-            assert result[0].resource_name == DOMAIN
-            assert result[0].resource_id == TENANT_IDS[0]
+            assert result[0].resource_name == "Conditional Access Policy"
+            assert result[0].resource_id == "Conditional Access Policy"
             assert (
                 result[0].status_extended
                 == "Conditional Access Policy does not require MFA for management API."

@@ -1,63 +1,67 @@
 "use client";
 
-import { UIEvent, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface UseScrollHintOptions {
   enabled?: boolean;
   refreshToken?: string | number;
 }
 
-const SCROLL_THRESHOLD_PX = 4;
-
-function shouldShowScrollHint(element: HTMLDivElement) {
-  const hasOverflow =
-    element.scrollHeight - element.clientHeight > SCROLL_THRESHOLD_PX;
-  const isAtBottom =
-    element.scrollTop + element.clientHeight >=
-    element.scrollHeight - SCROLL_THRESHOLD_PX;
-
-  return hasOverflow && !isAtBottom;
-}
-
+/**
+ * Detects whether a scrollable container has overflow using an
+ * IntersectionObserver on a sentinel element placed at the end of the content.
+ *
+ * Uses callback refs (stored in state) so the observer is set up only after
+ * the DOM elements actually mount — critical for Radix Dialog portals where
+ * useRef would be null when the first useEffect fires.
+ *
+ * When the sentinel is NOT visible inside the container → content overflows
+ * and the user hasn't scrolled to the bottom → show hint.
+ */
 export function useScrollHint({
   enabled = true,
   refreshToken,
 }: UseScrollHintOptions = {}) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+  const [sentinelEl, setSentinelEl] = useState<HTMLDivElement | null>(null);
   const [showScrollHint, setShowScrollHint] = useState(false);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !containerEl || !sentinelEl) {
       setShowScrollHint(false);
       return;
     }
 
-    const element = containerRef.current;
-    if (!element) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShowScrollHint(!entry.isIntersecting);
+      },
+      {
+        root: containerEl,
+        // Small margin so the hint hides slightly before the absolute bottom
+        rootMargin: "0px 0px 4px 0px",
+        threshold: 0,
+      },
+    );
 
-    const recalculate = () => {
-      const el = containerRef.current;
-      if (!el) return;
-      setShowScrollHint(shouldShowScrollHint(el));
-    };
+    observer.observe(sentinelEl);
 
-    const observer = new ResizeObserver(recalculate);
-    observer.observe(element);
+    return () => observer.disconnect();
+  }, [enabled, refreshToken, containerEl, sentinelEl]);
 
-    recalculate();
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [enabled, refreshToken]);
-
-  const handleScroll = (event: UIEvent<HTMLDivElement>) => {
-    setShowScrollHint(shouldShowScrollHint(event.currentTarget));
-  };
+  // Stable callback refs — setState setters never change identity
+  const containerRef = useCallback(
+    (node: HTMLDivElement | null) => setContainerEl(node),
+    [],
+  );
+  const sentinelRef = useCallback(
+    (node: HTMLDivElement | null) => setSentinelEl(node),
+    [],
+  );
 
   return {
     containerRef,
+    sentinelRef,
     showScrollHint,
-    handleScroll,
   };
 }

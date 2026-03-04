@@ -818,11 +818,11 @@ class CheckReportCloudflare(Check_Report):
 
     @property
     def account_id(self) -> str:
-        """Account ID derived from zone's account."""
+        """Account ID derived from resource's account object or flat account_id."""
         zone_account = getattr(self._zone, "account", None)
         if zone_account:
             return getattr(zone_account, "id", "")
-        return ""
+        return getattr(self._zone, "account_id", "")
 
     @property
     def region(self) -> str:

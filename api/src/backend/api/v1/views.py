@@ -3,6 +3,7 @@ import glob
 import json
 import logging
 import os
+
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -10,6 +11,7 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from urllib.parse import urljoin
 
 import sentry_sdk
+
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -97,6 +99,7 @@ from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
+from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
@@ -2402,7 +2405,7 @@ class TaskViewSet(BaseRLSViewSet):
     ),
     run_custom_attack_paths_query=extend_schema(
         tags=["Attack Paths"],
-        summary="Execute a custom Cypher query",
+        summary="Execute a custom openCypher query",
         description="Execute a raw openCypher query against the Attack Paths graph. "
         "Results are filtered to the scan's provider and truncated to a maximum node count.",
         request=AttackPathsCustomQueryRunRequestSerializer,
@@ -2525,11 +2528,13 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         serializer = AttackPathsQuerySerializer(queries, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(parameters=[OpenApiParameter("format", exclude=True)])
     @action(
         detail=True,
         methods=["post"],
         url_path="queries/run",
         url_name="queries-run",
+        renderer_classes=[APIJSONRenderer, PlainTextRenderer],
     )
     def run_attack_paths_query(self, request, pk=None):
         attack_paths_scan = self.get_object()
@@ -2577,14 +2582,20 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         if not graph.get("nodes"):
             status_code = status.HTTP_404_NOT_FOUND
 
+        if isinstance(request.accepted_renderer, PlainTextRenderer):
+            text = attack_paths_views_helpers.serialize_graph_as_text(graph)
+            return Response(text, status=status_code, content_type="text/plain")
+
         response_serializer = AttackPathsQueryResultSerializer(graph)
         return Response(response_serializer.data, status=status_code)
 
+    @extend_schema(parameters=[OpenApiParameter("format", exclude=True)])
     @action(
         detail=True,
         methods=["post"],
         url_path="queries/custom",
         url_name="queries-custom",
+        renderer_classes=[APIJSONRenderer, PlainTextRenderer],
     )
     def run_custom_attack_paths_query(self, request, pk=None):
         attack_paths_scan = self.get_object()
@@ -2609,7 +2620,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
 
         graph = attack_paths_views_helpers.execute_custom_query(
             database_name,
-            serializer.validated_data["cypher"],
+            serializer.validated_data["query"],
             provider_id,
         )
         graph_database.clear_cache(database_name)
@@ -2617,6 +2628,10 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         status_code = status.HTTP_200_OK
         if not graph.get("nodes"):
             status_code = status.HTTP_404_NOT_FOUND
+
+        if isinstance(request.accepted_renderer, PlainTextRenderer):
+            text = attack_paths_views_helpers.serialize_graph_as_text(graph)
+            return Response(text, status=status_code, content_type="text/plain")
 
         response_serializer = AttackPathsQueryResultSerializer(graph)
         return Response(response_serializer.data, status=status_code)
