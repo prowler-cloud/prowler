@@ -339,6 +339,7 @@ export function OrgSetupForm({
               labelPlacement="outside"
               placeholder="e.g. arn:aws:iam::123456789012:role/ProwlerOrgRole"
               isRequired={false}
+              requiredIndicator
             />
 
             <p className="text-text-neutral-tertiary text-sm">
@@ -362,9 +363,10 @@ export function OrgSetupForm({
                     />
                     <label
                       htmlFor="stackSetDeployed"
-                      className="text-text-neutral-primary text-sm leading-7 font-normal"
+                      className="text-text-neutral-tertiary text-xs leading-5 font-normal"
                     >
                       The StackSet has been successfully deployed in AWS
+                      <span className="text-text-error-primary">*</span>
                     </label>
                   </>
                 )}
