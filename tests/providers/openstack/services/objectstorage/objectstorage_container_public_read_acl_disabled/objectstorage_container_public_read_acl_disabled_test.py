@@ -137,6 +137,51 @@ class Test_objectstorage_container_public_read_acl_disabled:
             assert result[0].region == OPENSTACK_REGION
             assert result[0].project_id == OPENSTACK_PROJECT_ID
 
+    def test_container_domain_restricted_referrer_not_flagged(self):
+        """Test container with domain-restricted referrer ACL is not flagged (PASS)."""
+        objectstorage_client = mock.MagicMock()
+        objectstorage_client.containers = [
+            ObjectStorageContainer(
+                id="container-3",
+                name="domain-restricted",
+                region=OPENSTACK_REGION,
+                project_id=OPENSTACK_PROJECT_ID,
+                object_count=5,
+                bytes_used=512,
+                read_ACL=".r:*.example.com,.rlistings",
+                write_ACL="",
+                versioning_enabled=False,
+                versions_location="",
+                sync_to="",
+                sync_key="",
+                metadata={},
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.objectstorage.objectstorage_container_public_read_acl_disabled.objectstorage_container_public_read_acl_disabled.objectstorage_client",
+                new=objectstorage_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.objectstorage.objectstorage_container_public_read_acl_disabled.objectstorage_container_public_read_acl_disabled import (
+                objectstorage_container_public_read_acl_disabled,
+            )
+
+            check = objectstorage_container_public_read_acl_disabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == "Container domain-restricted does not have public read ACL."
+            )
+
     def test_multiple_containers_mixed(self):
         """Test multiple containers with mixed ACLs."""
         objectstorage_client = mock.MagicMock()

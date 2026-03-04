@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "OS::Swift::Container",
-  "ResourceGroup": "objectstorage",
+  "ResourceGroup": "storage",
   "Description": "**OpenStack Swift containers** are evaluated to verify that **write access** is restricted. The `*:*` write ACL allows any authenticated user from any project to create, modify, or delete objects. The `*` write ACL similarly grants unrestricted write access. Both configurations violate the principle of least privilege.",
   "Risk": "Containers with unrestricted write ACLs allow any authenticated OpenStack user to upload, overwrite, or delete objects. This enables data tampering, malware injection, ransomware attacks (encrypting objects), and resource abuse (cryptomining payloads). Compromised credentials from any project can be used to modify data.",
   "RelatedUrl": "",

@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "OS::Swift::Container",
-  "ResourceGroup": "objectstorage",
+  "ResourceGroup": "storage",
   "Description": "**OpenStack Swift containers** are evaluated to verify that the **read ACL** does not use `*:*` (global sharing). The `*:*` ACL grants read access to all authenticated users from any project in the OpenStack deployment, violating project isolation and the principle of least privilege.",
   "Risk": "Containers with `*:*` read ACL are accessible to every authenticated user in the OpenStack deployment, regardless of their project. This breaks multi-tenant isolation, exposing data to users in other projects. Compromised credentials from any project can access the container's contents.",
   "RelatedUrl": "",

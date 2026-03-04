@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "OS::Swift::Container",
-  "ResourceGroup": "objectstorage",
+  "ResourceGroup": "storage",
   "Description": "**OpenStack Swift containers** are evaluated to verify that **anonymous read access** is not granted. The `.r:*` ACL allows any unauthenticated user on the internet to read objects in the container. This is a critical exposure that can lead to data leaks, especially when containers hold sensitive information such as backups, logs, or application data.",
   "Risk": "Containers with `.r:*` in the read ACL are publicly accessible without authentication. Attackers can enumerate and download all objects, leading to data breaches, credential exposure, and compliance violations. Public containers are frequently targeted by automated scanners.",
   "RelatedUrl": "",

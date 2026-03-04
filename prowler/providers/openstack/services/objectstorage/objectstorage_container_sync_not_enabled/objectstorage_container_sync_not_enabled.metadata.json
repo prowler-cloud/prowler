@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "OS::Swift::Container",
-  "ResourceGroup": "objectstorage",
+  "ResourceGroup": "storage",
   "Description": "**OpenStack Swift containers** are evaluated to verify that **container sync** is not configured. Container sync replicates objects to another Swift cluster, potentially outside the organization's control. Unauthorized sync configurations can be used for data exfiltration to external clusters.",
   "Risk": "Container sync replicates all objects to a remote Swift cluster. If misconfigured or set up by an attacker, sensitive data is continuously exfiltrated to an external location. The sync operates automatically and silently, making it difficult to detect ongoing data theft.",
   "RelatedUrl": "",

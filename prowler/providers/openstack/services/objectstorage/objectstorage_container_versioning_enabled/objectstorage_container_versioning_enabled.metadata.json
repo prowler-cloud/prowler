@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "OS::Swift::Container",
-  "ResourceGroup": "objectstorage",
+  "ResourceGroup": "storage",
   "Description": "**OpenStack Swift containers** are evaluated to verify that **object versioning** is enabled. Versioning preserves previous versions of objects when they are overwritten or deleted, enabling recovery from accidental modifications, ransomware attacks, and data corruption.",
   "Risk": "Without versioning, overwritten or deleted objects cannot be recovered. Accidental deletions, ransomware encrypting objects, or malicious modifications result in permanent data loss. Versioning provides a safety net for forensic investigation and disaster recovery.",
   "RelatedUrl": "",

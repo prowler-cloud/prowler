@@ -14,8 +14,8 @@ class objectstorage_container_write_acl_restricted(Check):
 
         for container in objectstorage_client.containers:
             report = CheckReportOpenStack(metadata=self.metadata(), resource=container)
-            write_acl = container.write_ACL.strip()
-            if "*:*" in write_acl or write_acl == "*":
+            acl_entries = [entry.strip() for entry in container.write_ACL.split(",")]
+            if "*:*" in acl_entries or "*" in acl_entries:
                 report.status = "FAIL"
                 report.status_extended = f"Container {container.name} has unrestricted write ACL allowing all authenticated users to write."
             else:

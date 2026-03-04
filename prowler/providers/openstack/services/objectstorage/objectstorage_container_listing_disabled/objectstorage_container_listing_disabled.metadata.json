@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "OS::Swift::Container",
-  "ResourceGroup": "objectstorage",
+  "ResourceGroup": "storage",
   "Description": "**OpenStack Swift containers** are evaluated to verify that **public container listings** are disabled. The `.rlistings` ACL allows users with read access to list all objects within the container. When combined with `.r:*`, this enables unauthenticated users to enumerate all objects, facilitating targeted data exfiltration.",
   "Risk": "Containers with `.rlistings` enabled allow attackers to enumerate all object names, sizes, and modification dates. This metadata exposure aids targeted attacks, reveals application structure, and can expose sensitive file names. Combined with public read access, it enables complete data exfiltration.",
   "RelatedUrl": "",

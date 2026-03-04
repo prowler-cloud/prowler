@@ -45,7 +45,9 @@ class objectstorage_container_metadata_sensitive_data(Check):
                         [
                             f"{secret['type']} in metadata key '{original_metadata_keys[secret['line_number'] - 2]}'"
                             for secret in detect_secrets_output
-                            if secret["line_number"] - 2 < len(original_metadata_keys)
+                            if 0
+                            <= secret["line_number"] - 2
+                            < len(original_metadata_keys)
                         ]
                     )
                     report.status = "FAIL"

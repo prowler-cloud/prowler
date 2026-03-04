@@ -14,7 +14,8 @@ class objectstorage_container_public_read_acl_disabled(Check):
 
         for container in objectstorage_client.containers:
             report = CheckReportOpenStack(metadata=self.metadata(), resource=container)
-            if ".r:*" in container.read_ACL:
+            acl_entries = [entry.strip() for entry in container.read_ACL.split(",")]
+            if ".r:*" in acl_entries:
                 report.status = "FAIL"
                 report.status_extended = f"Container {container.name} has public read ACL (.r:*) allowing anonymous access."
             else:
