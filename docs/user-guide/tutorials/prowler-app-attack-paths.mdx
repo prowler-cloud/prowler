@@ -3,11 +3,11 @@ title: "Attack Paths"
 description: "Identify privilege escalation chains and security misconfigurations across cloud environments using graph-based analysis."
 ---
 
-import { VersionBadge } from "/snippets/version-badge.mdx";
+import { VersionBadge } from "/snippets/version-badge.mdx"
 
 <VersionBadge version="5.17.0" />
 
-Attack Paths analyzes relationships between cloud resources, permissions, and security findings to identify privilege escalation chains and misconfigurations that could be exploited by threat actors.
+Attack Paths analyzes relationships between cloud resources, permissions, and security findings to detect how privileges can be escalated and how misconfigurations can be exploited by threat actors.
 
 By mapping these relationships as a graph, Attack Paths reveals risks that individual security checks cannot detect on their own — such as an IAM role that can escalate its own permissions, or a chain of policies that grants unintended access to sensitive resources.
 
@@ -18,7 +18,7 @@ By mapping these relationships as a graph, Attack Paths reveals risks that indiv
 
 ## Prerequisites
 
-Before using Attack Paths, ensure the following:
+The following prerequisites are required for Attack Paths:
 
 - **An AWS provider is configured** with valid credentials in Prowler App. For setup instructions, see [Getting Started with AWS](/user-guide/providers/aws/getting-started-aws).
 - **At least one scan has completed** on the configured AWS provider. Attack Paths scans run automatically alongside regular security scans — no separate configuration is required.
@@ -41,7 +41,7 @@ To open Attack Paths, click **Attack Paths** in the left navigation menu.
 <img
   src="/images/prowler-app/attack-paths/navigation.png"
   alt="Attack Paths navigation menu entry"
-  width="300"
+  width="700"
 />
 
 The main interface is divided into two areas:
@@ -59,7 +59,7 @@ The scans table displays all Attack Paths scans with the following columns:
 - **Progress:** Completion percentage for in-progress scans
 - **Duration:** Total scan time
 
-To select a scan for analysis, click "Select" on any row with a **Completed** status.
+To select a scan for analysis, click **Select** on any row with a **Completed** status.
 
 <img
   src="/images/prowler-app/attack-paths/scan-list-table.png"
@@ -107,7 +107,7 @@ If a query requires no parameters, the form displays a message confirming that t
 
 ## Executing a Query
 
-To run the selected query against the scan data, click "Execute Query." The button displays a loading state while the query processes.
+To run the selected query against the scan data, click **Execute Query**. The button displays a loading state while the query processes.
 
 If the query returns no results, an informational message appears. Common reasons include:
 
@@ -149,7 +149,7 @@ A **legend** at the bottom of the graph lists all node types and edge types pres
 Click any node in the graph to filter the view and display only paths that pass through that node. When a filter is active:
 
 - An information banner shows which node is selected
-- Click "Back to Full View" to restore the complete graph
+- Click **Back to Full View** to restore the complete graph
 
 <img
   src="/images/prowler-app/attack-paths/graph-filtered.png"
