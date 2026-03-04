@@ -1,6 +1,6 @@
 {
   "Provider": "m365",
-  "CheckID": "entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required",
+  "CheckID": "entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required",
   "CheckTitle": "Conditional Access requires compliant device OR hybrid joined device OR MFA for admins or all users",
   "CheckType": [],
   "ServiceName": "entra",

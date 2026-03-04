@@ -15,7 +15,7 @@ REQUIRED_GRANT_CONTROLS = {
 ADMIN_ROLE_IDS = {role.value for role in AdminRoles}
 
 
-class entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required(
+class entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required(
     Check
 ):
     """Check that CA enforces compliant or hybrid joined device or MFA for admins/all users."""

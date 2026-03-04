@@ -18,7 +18,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
-CHECK_MODULE = "prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required"
+CHECK_MODULE = "prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required"
 
 DEFAULT_SESSION_CONTROLS = SessionControls(
     persistent_browser=PersistentBrowser(is_enabled=False, mode="always"),
@@ -80,7 +80,7 @@ REQUIRED_GRANT_CONTROLS = GrantControls(
 )
 
 
-class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required:
+class Test_entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required:
     def test_entra_no_conditional_access_policies(self):
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
@@ -93,13 +93,13 @@ class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_dev
             ),
             mock.patch(f"{CHECK_MODULE}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required import (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required import (
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required,
             )
 
             entra_client.conditional_access_policies = {}
             result = (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required()
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required()
             ).execute()
 
             assert len(result) == 1
@@ -122,8 +122,8 @@ class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_dev
             ),
             mock.patch(f"{CHECK_MODULE}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required import (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required import (
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -145,7 +145,7 @@ class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_dev
             }
 
             result = (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required()
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required()
             ).execute()
 
             assert len(result) == 1
@@ -164,8 +164,8 @@ class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_dev
             ),
             mock.patch(f"{CHECK_MODULE}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required import (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required import (
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -187,7 +187,7 @@ class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_dev
             }
 
             result = (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required()
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required()
             ).execute()
 
             assert len(result) == 1
@@ -206,8 +206,8 @@ class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_dev
             ),
             mock.patch(f"{CHECK_MODULE}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required import (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required import (
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -235,7 +235,7 @@ class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_dev
             }
 
             result = (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required()
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required()
             ).execute()
 
             assert len(result) == 1
@@ -254,8 +254,8 @@ class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_dev
             ),
             mock.patch(f"{CHECK_MODULE}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required import (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required import (
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -284,7 +284,7 @@ class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_dev
             }
 
             result = (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required()
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required()
             ).execute()
 
             assert len(result) == 1
@@ -304,8 +304,8 @@ class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_dev
             ),
             mock.patch(f"{CHECK_MODULE}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required import (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required import (
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -327,7 +327,7 @@ class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_dev
             }
 
             result = (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required()
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required()
             ).execute()
 
             assert len(result) == 1
@@ -351,8 +351,8 @@ class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_dev
             ),
             mock.patch(f"{CHECK_MODULE}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required import (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required import (
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -374,7 +374,7 @@ class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_dev
             }
 
             result = (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required()
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required()
             ).execute()
 
             assert len(result) == 1
@@ -398,8 +398,8 @@ class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_dev
             ),
             mock.patch(f"{CHECK_MODULE}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required.entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required import (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required.entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required import (
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -421,7 +421,7 @@ class Test_entra_conditional_access_policy_compliant_device_or_hybrid_joined_dev
             }
 
             result = (
-                entra_conditional_access_policy_compliant_device_or_hybrid_joined_device_or_mfa_required()
+                entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required()
             ).execute()
 
             assert len(result) == 1
