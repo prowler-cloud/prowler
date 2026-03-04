@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "ConfigMap",
+  "ResourceGroup": "container",
   "Description": "**Kubelet HTTPS** configuration is assessed for use of **strong TLS cipher suites**. The presence of `tlsCipherSuites` is checked and its values are validated against an approved, modern allowlist (e.g., ECDHE with GCM/CHACHA20).",
   "Risk": "Weak or unspecified ciphers enable downgrade and cryptographic attacks on kubelet traffic. Adversaries could read logs/exec streams, hijack sessions, or tamper with requests, undermining **confidentiality** and **integrity** and facilitating lateral movement across nodes.",
   "RelatedUrl": "",

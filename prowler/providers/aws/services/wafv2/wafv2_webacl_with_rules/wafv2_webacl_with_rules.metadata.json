@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsWafv2WebAcl",
+  "ResourceGroup": "security",
   "Description": "**AWS WAFv2 web ACLs** are evaluated for the presence of at least one configured **rule** or **rule group** that defines how HTTP(S) requests are inspected and acted upon.",
   "Risk": "Without rules, traffic is governed only by the web ACL `DefaultAction`, often allowing requests without inspection. This increases risks to **confidentiality** (data exfiltration via injection), **integrity** (XSS/parameter tampering), and **availability** (layer-7 DDoS, bot abuse).",
   "RelatedUrl": "",

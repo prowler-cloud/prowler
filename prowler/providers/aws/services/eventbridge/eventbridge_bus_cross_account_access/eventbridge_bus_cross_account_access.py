@@ -8,6 +8,9 @@ from prowler.providers.aws.services.iam.lib.policy import is_policy_public
 class eventbridge_bus_cross_account_access(Check):
     def execute(self):
         findings = []
+        trusted_account_ids = eventbridge_client.audit_config.get(
+            "trusted_account_ids", []
+        )
         for bus in eventbridge_client.buses.values():
             if bus.policy is None:
                 continue
@@ -20,6 +23,7 @@ class eventbridge_bus_cross_account_access(Check):
                 bus.policy,
                 eventbridge_client.audited_account,
                 is_cross_account_allowed=False,
+                trusted_account_ids=trusted_account_ids,
             ):
                 report.status = "FAIL"
                 report.status_extended = (

@@ -104,6 +104,7 @@ class Test_dynamodb_table_cross_account_access:
     def test_no_tables(self):
         dynamodb_client = mock.MagicMock
         dynamodb_client.tables = {}
+        dynamodb_client.audit_config = {}
         with (
             mock.patch(
                 "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",

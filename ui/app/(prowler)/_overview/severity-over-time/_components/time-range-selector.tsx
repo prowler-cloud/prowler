@@ -32,7 +32,7 @@ export const TimeRangeSelector = ({
   isLoading = false,
 }: TimeRangeSelectorProps) => {
   return (
-    <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary inline-flex items-center gap-2 rounded-full border">
+    <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary inline-flex items-center rounded-full border">
       {Object.entries(TIME_RANGE_OPTIONS).map(([key, range]) => (
         <button
           key={key}

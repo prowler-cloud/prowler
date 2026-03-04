@@ -844,7 +844,13 @@ aws:
         aws_provider = AwsProvider()
         response = aws_provider.generate_regional_clients("ec2")
 
-        assert len(response.keys()) == 33
+        # Only commercial regions (not GovCloud/China) should have regional clients
+        commercial_regions = {
+            r
+            for r in aws_provider._enabled_regions
+            if not r.startswith("cn-") and not r.startswith("us-gov-")
+        }
+        assert set(response.keys()) == commercial_regions
 
     @mock_aws
     def test_generate_regional_clients_with_enabled_regions(self):
@@ -1514,6 +1520,19 @@ aws:
         assert (
             sts_session._endpoint.host == f"https://sts.{aws_region}.amazonaws.com.cn"
         )
+
+    @mock_aws
+    def test_create_sts_session_custom_endpoint_url(self):
+        custom_endpoint = "http://localhost:4566"
+        current_session = session.Session()
+        aws_region = AWS_REGION_US_EAST_1
+        with mock.patch.dict(os.environ, {"AWS_ENDPOINT_URL": custom_endpoint}):
+            sts_session = AwsProvider.create_sts_session(current_session, aws_region)
+
+        assert sts_session._service_model.service_name == "sts"
+        assert sts_session._client_config.region_name == aws_region
+        assert sts_session._endpoint._endpoint_prefix == "sts"
+        assert sts_session._endpoint.host == custom_endpoint
 
     @mock_aws
     def test_create_sts_session_eusc(self):

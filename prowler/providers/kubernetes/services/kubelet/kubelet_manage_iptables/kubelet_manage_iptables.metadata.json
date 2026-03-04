@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "ConfigMap",
+  "ResourceGroup": "container",
   "Description": "**Kubelet** configured with `makeIPTablesUtilChains` manages **iptables utility chains**, keeping node firewall primitives aligned with dynamic pod networking. The setting is expected to be present and enabled in kubelet configuration.",
   "Risk": "Without kubelet-managed iptables chains, nodes can drift to inconsistent firewall states, enabling:\n- Traffic drops and service outages (availability)\n- Unintended inter-pod exposure (confidentiality)\n- Conflicting rules altering expected flows (integrity)",
   "RelatedUrl": "",

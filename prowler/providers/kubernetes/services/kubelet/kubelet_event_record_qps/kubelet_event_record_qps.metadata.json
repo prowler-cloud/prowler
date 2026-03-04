@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "ConfigMap",
+  "ResourceGroup": "container",
   "Description": "**Kubelet** configuration defines **event rate limiting** via `eventRecordQPS`. The setting is evaluated for presence and a positive value, where `0` means unlimited event generation.",
   "Risk": "Uncapped or mis-tuned event rates can overwhelm the API and etcd, reducing **availability**, or suppress key signals, harming the **integrity** of telemetry. Noisy pods or abuse can flood events; too-low caps drop diagnostics, hindering detection and response.",
   "RelatedUrl": "",

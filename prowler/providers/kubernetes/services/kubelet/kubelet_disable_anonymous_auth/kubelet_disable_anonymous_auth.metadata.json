@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "ConfigMap",
+  "ResourceGroup": "container",
   "Description": "**Kubelet** configuration for its HTTPS endpoint is evaluated to ensure **anonymous authentication** is disabled, requiring authenticated requests (`authentication.anonymous.enabled=false`).",
   "Risk": "Allowing anonymous access to the kubelet exposes node and pod data and can permit privileged actions, impacting CIA: disclosure via logs/metrics (C), unauthorized container operations or exec (I), and pod or node disruption (A). This can enable lateral movement and broader cluster compromise.",
   "RelatedUrl": "",

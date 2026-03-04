@@ -1,11 +1,17 @@
 import { Chip } from "@heroui/chip";
 import { Divider } from "@heroui/divider";
-import { Select, SelectItem } from "@heroui/select";
 import { Switch } from "@heroui/switch";
 import { useEffect, useState } from "react";
 import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 
 import { CredentialsRoleHelper } from "@/components/providers/workflow";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcn/select/select";
 import { CustomInput } from "@/components/ui/custom";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { AWSCredentialsRole } from "@/types";
@@ -77,47 +83,47 @@ export const AWSRoleCredentialsForm = ({
         Specify which AWS credentials to use
       </span>
 
-      <Select
-        name={ProviderCredentialFields.CREDENTIALS_TYPE}
-        label="Authentication Method"
-        placeholder="Select credentials type"
-        selectedKeys={[credentialsType || defaultCredentialsType]}
-        className="mb-4"
-        variant="bordered"
-        onSelectionChange={(keys) =>
-          setValue(
-            ProviderCredentialFields.CREDENTIALS_TYPE,
-            Array.from(keys)[0] as "aws-sdk-default" | "access-secret-key",
-          )
-        }
-      >
-        <SelectItem
-          key="aws-sdk-default"
-          textValue={
-            isCloudEnv
-              ? "Prowler Cloud will assume your IAM role"
-              : "AWS SDK Default"
-          }
+      <div className="mb-4 flex flex-col gap-1.5">
+        <Select
+          value={credentialsType || defaultCredentialsType}
+          onValueChange={(value) => {
+            setValue(
+              ProviderCredentialFields.CREDENTIALS_TYPE,
+              value as "aws-sdk-default" | "access-secret-key",
+            );
+          }}
         >
-          <div className="flex w-full items-center justify-between">
-            <span>
-              {isCloudEnv
-                ? "Prowler Cloud will assume your IAM role"
-                : "AWS SDK Default"}
-            </span>
-            {isCloudEnv && (
-              <Chip size="sm" variant="flat" color="success" className="ml-2">
-                Recommended
-              </Chip>
-            )}
-          </div>
-        </SelectItem>
-        <SelectItem key="access-secret-key" textValue="Access & Secret Key">
-          <div className="flex w-full items-center justify-between">
-            <span>Access & Secret Key</span>
-          </div>
-        </SelectItem>
-      </Select>
+          <SelectTrigger>
+            <SelectValue placeholder="Select credentials type" />
+          </SelectTrigger>
+          <SelectContent className="z-[60]">
+            <SelectItem value="aws-sdk-default">
+              <div className="flex w-full items-center justify-between">
+                <span>
+                  {isCloudEnv
+                    ? "Prowler Cloud will assume your IAM role"
+                    : "AWS SDK Default"}
+                </span>
+                {isCloudEnv && (
+                  <Chip
+                    size="sm"
+                    variant="flat"
+                    color="success"
+                    className="ml-2"
+                  >
+                    Recommended
+                  </Chip>
+                )}
+              </div>
+            </SelectItem>
+            <SelectItem value="access-secret-key">
+              <div className="flex w-full items-center justify-between">
+                <span>Access & Secret Key</span>
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {credentialsType === "access-secret-key" && (
         <>

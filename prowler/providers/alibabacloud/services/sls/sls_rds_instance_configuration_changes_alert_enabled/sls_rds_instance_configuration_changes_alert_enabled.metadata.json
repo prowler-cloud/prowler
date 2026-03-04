@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceGroup": "monitoring",
   "Description": "It is recommended that a **metric filter and alarm** be established for **RDS Instance** configuration changes.",
   "Risk": "Monitoring changes to **RDS Instance configuration** may reduce time to detect and correct **misconfigurations** done on database servers.\n\nThis helps prevent security gaps in database deployments.",
   "RelatedUrl": "",

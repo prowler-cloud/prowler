@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
   "Severity": "high",
   "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceGroup": "container",
   "Description": "In Kubernetes, authorizers interact by granting a permission if any authorizer grants the permission. The legacy authorizer in Kubernetes Engine grants broad, statically defined permissions.\n\nTo ensure that **RBAC** limits permissions correctly, you must disable the legacy authorizer. RBAC has significant security advantages, helps ensure that users only have access to specific cluster resources within their own namespace, and is now stable in Kubernetes.",
   "Risk": "In Kubernetes, **RBAC** is used to grant permissions to resources at the cluster and namespace level. RBAC allows you to define roles with rules containing a set of permissions.\n\nWithout RBAC, legacy authorization mechanisms like **ABAC** grant **overly broad permissions**, increasing the risk of unauthorized access and privilege escalation.",
   "RelatedUrl": "",

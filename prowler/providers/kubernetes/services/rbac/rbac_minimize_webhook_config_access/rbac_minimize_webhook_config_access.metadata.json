@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "WebhookConfiguration",
+  "ResourceGroup": "container",
   "Description": "This check ensures that access to webhook configuration objects (validatingwebhookconfigurations and mutatingwebhookconfigurations) is restricted. Unauthorized access or modification of these objects can lead to privilege escalation or disruption of cluster operations.",
   "Risk": "Inadequately restricted access to webhook configurations can result in unauthorized control over webhooks, potentially allowing privilege escalation or interference with cluster functionality.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#control-admission-webhooks",

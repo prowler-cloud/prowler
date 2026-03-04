@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Exchange Online Domain",
+  "ResourceGroup": "collaboration",
   "Description": "This check ensures that DomainKeys Identified Mail (DKIM) is enabled for all Exchange Online domains. DKIM is a crucial authentication method that, along with SPF and DMARC, helps prevent attackers from sending spoofed emails that appear to originate from your domain. By adding a digital signature to outbound emails, DKIM allows receiving email systems to verify the legitimacy of incoming messages.",
   "Risk": "If DKIM is not enabled, attackers may send spoofed emails that appear to originate from your domain, potentially leading to phishing attacks and damage to your domain's reputation.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/use-dkim-to-validate-outbound-email?view=o365-worldwide",

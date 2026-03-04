@@ -8,12 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "ConfigMap",
+  "ResourceGroup": "container",
   "Description": "**Kubelet** is evaluated for X.509 client certificate authentication by checking if its config sets `authentication.x509.clientCAFile` to validate clients on the HTTPS endpoint.",
   "Risk": "Without a **client CA**, the kubelet cannot verify client certificates, weakening authentication. With network access, attackers could impersonate trusted clients to read pod logs/stats or perform node/pod actions, impacting confidentiality, integrity, and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/#kubelet-authorization",
-    "https://hatchjs.com/kubelet-failed-to-load-kubelet-config-file/",
     "https://discuss.kubernetes.io/t/kubelet-service-fail-to-start/26728",
     "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/"
   ],

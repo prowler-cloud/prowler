@@ -1,6 +1,5 @@
 "use client";
 
-import { Select, SelectItem } from "@heroui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ShieldIcon, UserIcon } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
@@ -9,6 +8,13 @@ import * as z from "zod";
 
 import { updateUser, updateUserRole } from "@/actions/users/users";
 import { Card } from "@/components/shadcn";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcn/select/select";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
 import { Form, FormButtons } from "@/components/ui/form";
@@ -168,29 +174,22 @@ export const EditForm = ({
           />
         </div>
 
-        <div>
+        <div className="flex flex-col gap-1.5">
           <Controller
             name="role"
             control={form.control}
             render={({ field }) => (
-              <Select
-                {...field}
-                label="Role"
-                labelPlacement="outside"
-                placeholder="Select a role"
-                classNames={{
-                  selectorIcon: "right-2",
-                }}
-                variant="bordered"
-                selectedKeys={[field.value || ""]}
-                onSelectionChange={(selected) => {
-                  const selectedKey = Array.from(selected).pop();
-                  field.onChange(selectedKey || "");
-                }}
-              >
-                {roles.map((role: { id: string; name: string }) => (
-                  <SelectItem key={role.id}>{role.name}</SelectItem>
-                ))}
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((role: { id: string; name: string }) => (
+                    <SelectItem key={role.id} value={role.id}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             )}
           />

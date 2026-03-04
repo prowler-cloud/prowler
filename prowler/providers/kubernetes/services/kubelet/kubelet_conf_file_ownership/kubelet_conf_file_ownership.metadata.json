@@ -8,13 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Node",
+  "ResourceGroup": "container",
   "Description": "**Node kubeconfig** at `/etc/kubernetes/kubelet.conf` is evaluated for file ownership `root:root`. The check focuses on who owns the file that defines the kubelet's API client settings and certificates.",
   "Risk": "Non-root ownership lets local users alter kubelet API credentials and endpoints, enabling **node impersonation**, unauthorized control of Pods, and **data exfiltration** via the kubelet. This threatens **integrity** (config tampering), **confidentiality** (secrets access), and **availability** (pod eviction or node disruption).",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/kubelet-integration/",
     "https://stackarmor.com/securing-kubernetes-for-compliance-with-fedramp-fisma-or-cmmc-requirements/",
-    "https://blog.palark.com/kubernetes-security-with-kube-bench-and-kube-hunter/",
     "https://learn.microsoft.com/en-us/azure/aks/cis-kubernetes",
     "https://www.bordergate.co.uk/kubernetes-penetration-testing/",
     "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/"

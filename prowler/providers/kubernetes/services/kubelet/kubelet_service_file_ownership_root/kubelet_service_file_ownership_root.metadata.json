@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Node",
+  "ResourceGroup": "container",
   "Description": "**Kubelet service configuration** on each node is expected to be owned by **root**. This assessment inspects the systemd drop-in at `/etc/systemd/system/kubelet.service.d/kubeadm.conf` and expects ownership `root:root`, ensuring only privileged users can modify kubelet startup settings.",
   "Risk": "Non-root ownership enables unauthorized changes to kubelet startup flags, degrading configuration **integrity** and service **availability**. Attackers could disable auth, expose ports, weaken TLS, or load rogue configs-leading to node compromise, credential theft (**confidentiality**), lateral movement, and cluster disruption.",
   "RelatedUrl": "",

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
+  "ResourceGroup": "container",
   "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers running as the root user. Running containers as root increases the risk of container breakout and should be restricted.",
   "Risk": "Allowing containers to run as root can lead to elevated risk of security breaches and container breakout.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",

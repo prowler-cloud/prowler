@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
   "Severity": "critical",
   "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
   "Description": "Database Server should accept connections only from trusted **Network(s)/IP(s)** and restrict access from the world.\n\nTo minimize attack surface on a Database server Instance, only trusted/known and required IPs should be whitelisted. Authorized network should not have IPs/networks configured to `0.0.0.0` or `/0` which would allow access from anywhere in the world.",
   "Risk": "Allowing **public access** (`0.0.0.0/0`) to the database significantly increases the risk of **brute-force attacks**, **unauthorized access**, and **data exfiltration**.\n\nDatabases exposed to the internet are prime targets for attackers.",
   "RelatedUrl": "",

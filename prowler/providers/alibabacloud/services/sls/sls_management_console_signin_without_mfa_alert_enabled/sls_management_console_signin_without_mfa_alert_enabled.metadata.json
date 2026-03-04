@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceGroup": "monitoring",
   "Description": "Real-time monitoring of API calls can be achieved by directing **ActionTrail Logs** to Log Service and establishing corresponding query and alarms.\n\nIt is recommended that a query and alarm be established for console logins that are not protected by **multi-factor authentication (MFA)**.",
   "Risk": "Monitoring for **single-factor console logins** will increase visibility into accounts that are not protected by MFA.\n\nThis helps identify potential security gaps in authentication enforcement.",
   "RelatedUrl": "",
