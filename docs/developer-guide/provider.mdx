@@ -3425,7 +3425,7 @@ The following fields in the OCSF output are critical for successful ingestion:
 
 ### Implementation Reference
 
-These fields are set in the OCSF output generation. See the [OCSF output implementation](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/outputs/ocsf/ocsf.py#L181-L182) for reference.
+These fields are set in the OCSF output generation. See the [OCSF output implementation](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/outputs/ocsf/ocsf.py) for reference.
 
 ### Validation Checklist
 
@@ -3435,6 +3435,10 @@ Before releasing a new provider with `--push-to-cloud` support:
 - [ ] Confirm `provider` field contains the correct provider name
 - [ ] Ensure all `finding_info.uid` values are unique across findings
 - [ ] Validate that `resources.uid` is populated for every finding
+
+<Tip>
+  Use `python scripts/validate_ocsf_output.py output/*.ocsf.json` to automate these checks.
+</Tip>
 
 ## Checklist for New Providers
 
