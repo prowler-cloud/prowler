@@ -6,7 +6,7 @@
   "ServiceName": "objectstorage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "critical",
   "ResourceType": "OS::Swift::Container",
   "ResourceGroup": "storage",
   "Description": "**OpenStack Swift container metadata** is evaluated to detect **sensitive data** such as passwords, API keys, secrets, and private keys. Container metadata is accessible to any user with read access to the container. Storing secrets in metadata exposes them to unauthorized access and credential theft.",
@@ -29,7 +29,8 @@
     }
   },
   "Categories": [
-    "secrets"
+    "secrets",
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [],

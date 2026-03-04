@@ -14,9 +14,13 @@ class objectstorage_container_listing_disabled(Check):
 
         for container in objectstorage_client.containers:
             report = CheckReportOpenStack(metadata=self.metadata(), resource=container)
-            if ".rlistings" in container.read_ACL:
+            acl_entries = [entry.strip() for entry in container.read_ACL.split(",")]
+            if ".rlistings" in acl_entries:
                 report.status = "FAIL"
-                report.status_extended = f"Container {container.name} has public listing enabled (.rlistings) allowing object enumeration."
+                report.status_extended = f"Container {container.name} has public listing enabled (.rlistings) allowing anonymous object enumeration."
+            elif "*:*" in acl_entries or "*" in acl_entries:
+                report.status = "FAIL"
+                report.status_extended = f"Container {container.name} has listing enabled via global read ACL (*:*) allowing all authenticated users to list objects."
             else:
                 report.status = "PASS"
                 report.status_extended = (

@@ -25,12 +25,14 @@ class objectstorage_container_metadata_sensitive_data(Check):
             )
 
             if container.metadata:
+                # Build metadata dict and parallel list of keys
                 dump_metadata = {}
                 original_metadata_keys = []
                 for key, value in container.metadata.items():
                     dump_metadata[key] = value
                     original_metadata_keys.append(key)
 
+                # Convert metadata dict to JSON string for detect-secrets scanning
                 metadata_json = json.dumps(dump_metadata, indent=2)
                 detect_secrets_output = detect_secrets_scan(
                     data=metadata_json,
@@ -41,6 +43,8 @@ class objectstorage_container_metadata_sensitive_data(Check):
                 )
 
                 if detect_secrets_output:
+                    # Map line numbers back to metadata keys using the parallel list
+                    # Line numbering: line 1 = "{", line 2 = first key-value, etc.
                     secrets_string = ", ".join(
                         [
                             f"{secret['type']} in metadata key '{original_metadata_keys[secret['line_number'] - 2]}'"

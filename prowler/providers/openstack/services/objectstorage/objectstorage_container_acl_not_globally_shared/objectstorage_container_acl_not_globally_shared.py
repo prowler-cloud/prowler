@@ -14,7 +14,8 @@ class objectstorage_container_acl_not_globally_shared(Check):
 
         for container in objectstorage_client.containers:
             report = CheckReportOpenStack(metadata=self.metadata(), resource=container)
-            if "*:*" in container.read_ACL:
+            acl_entries = [entry.strip() for entry in container.read_ACL.split(",")]
+            if "*:*" in acl_entries or "*" in acl_entries:
                 report.status = "FAIL"
                 report.status_extended = f"Container {container.name} has globally shared read ACL (*:*) allowing all authenticated users from any project."
             else:
