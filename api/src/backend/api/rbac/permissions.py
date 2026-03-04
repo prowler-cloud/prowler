@@ -36,7 +36,7 @@ class HasPermissions(BasePermission):
             return False
 
         for perm in required_permissions:
-            if not getattr(user_roles[0], perm.value, False):
+            if not any(getattr(role, perm.value, False) for role in user_roles):
                 return False
 
         return True
