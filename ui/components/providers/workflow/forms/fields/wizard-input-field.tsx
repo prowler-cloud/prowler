@@ -1,7 +1,7 @@
 "use client";
 
 import { Icon } from "@iconify/react";
-import { useState } from "react";
+import { InputHTMLAttributes, useState } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
 import { Input } from "@/components/shadcn/input/input";
@@ -23,6 +23,10 @@ interface WizardInputFieldProps<T extends FieldValues> {
   isReadOnly?: boolean;
   isRequired?: boolean;
   isDisabled?: boolean;
+  normalizeValue?: (value: string) => string;
+  autoCapitalize?: InputHTMLAttributes<HTMLInputElement>["autoCapitalize"];
+  autoCorrect?: InputHTMLAttributes<HTMLInputElement>["autoCorrect"];
+  spellCheck?: boolean;
 }
 
 export const WizardInputField = <T extends FieldValues>({
@@ -40,6 +44,10 @@ export const WizardInputField = <T extends FieldValues>({
   isReadOnly = false,
   isRequired = true,
   isDisabled = false,
+  normalizeValue,
+  autoCapitalize,
+  autoCorrect,
+  spellCheck,
 }: WizardInputFieldProps<T>) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
@@ -105,8 +113,21 @@ export const WizardInputField = <T extends FieldValues>({
                   required={inputIsRequired}
                   disabled={isDisabled}
                   readOnly={isReadOnly}
+                  autoCapitalize={autoCapitalize}
+                  autoCorrect={autoCorrect}
+                  spellCheck={spellCheck}
                   className={cn(isMaskedInput && "pr-10")}
-                  {...field}
+                  name={field.name}
+                  onBlur={field.onBlur}
+                  ref={field.ref}
+                  onChange={(event) => {
+                    if (!normalizeValue) {
+                      field.onChange(event);
+                      return;
+                    }
+                    const normalizedValue = normalizeValue(event.target.value);
+                    field.onChange(normalizedValue);
+                  }}
                   value={value}
                 />
                 {isMaskedInput && (
