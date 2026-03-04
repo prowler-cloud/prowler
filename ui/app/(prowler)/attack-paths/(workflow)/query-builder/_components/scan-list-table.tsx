@@ -82,7 +82,11 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   };
 
   const isSelectDisabled = (scan: AttackPathScan) => {
-    return !scan.attributes.graph_data_ready || selectedScanId === scan.id;
+    return (
+      !scan.attributes.graph_data_ready ||
+      scan.attributes.state === SCAN_STATES.FAILED ||
+      selectedScanId === scan.id
+    );
   };
 
   const getSelectButtonLabel = (scan: AttackPathScan) => {
@@ -133,7 +137,7 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
               <TableHead>Status</TableHead>
               <TableHead>Progress</TableHead>
               <TableHead>Duration</TableHead>
-              <TableHead className="text-right">Action</TableHead>
+              <TableHead className="text-right"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -344,10 +348,6 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
           </div>
         )}
       </div>
-      <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-6 text-xs">
-        Scans can be selected when data is available. A new scan does not
-        interrupt access to existing data.
-      </p>
     </>
   );
 };
