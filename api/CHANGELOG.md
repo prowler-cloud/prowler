@@ -6,7 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🐞 Fixed
 
-- Attack Paths: Fix `exposed_internet` never set on ELB/ELBv2 nodes due to cartography sync ordering and em-dash typo in analysis Cypher [(#10250)](https://github.com/prowler-cloud/prowler/pull/10250)
+- Attack Paths: Fix `exposed_internet` never set on ELB/ELBv2 nodes due to cartography sync ordering and em-dash typo in analysis Cypher [(#10251)](https://github.com/prowler-cloud/prowler/pull/10251)
 
 ## [1.20.0] (Prowler v5.19.0)
 
