@@ -23,6 +23,9 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.github.github_provider import GithubProvider
+from prowler.providers.googleworkspace.googleworkspace_provider import (
+    GoogleworkspaceProvider,
+)
 from prowler.providers.iac.iac_provider import IacProvider
 from prowler.providers.image.image_provider import ImageProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
@@ -113,6 +116,7 @@ class TestReturnProwlerProvider:
         [
             (Provider.ProviderChoices.AWS.value, AwsProvider),
             (Provider.ProviderChoices.GCP.value, GcpProvider),
+            (Provider.ProviderChoices.GOOGLEWORKSPACE.value, GoogleworkspaceProvider),
             (Provider.ProviderChoices.AZURE.value, AzureProvider),
             (Provider.ProviderChoices.KUBERNETES.value, KubernetesProvider),
             (Provider.ProviderChoices.M365.value, M365Provider),
@@ -247,6 +251,10 @@ class TestGetProwlerProviderKwargs:
             (
                 Provider.ProviderChoices.GCP.value,
                 {"project_ids": ["provider_uid"]},
+            ),
+            (
+                Provider.ProviderChoices.GOOGLEWORKSPACE.value,
+                {},
             ),
             (
                 Provider.ProviderChoices.KUBERNETES.value,

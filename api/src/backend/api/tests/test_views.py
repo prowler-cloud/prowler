@@ -1190,6 +1190,11 @@ class TestProviderViewSet:
                     "uid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                     "alias": "OpenStack Project",
                 },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C01234abc",
+                    "alias": "Google Workspace Customer",
+                },
             ]
         ),
     )
@@ -1632,6 +1637,56 @@ class TestProviderViewSet:
                         "alias": "test",
                     },
                     "min_length",
+                    "uid",
+                ),
+                # Google Workspace UID validation - missing 'C' prefix
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "01234abc",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - too short (only 8 chars)
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "C1234abc",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - too long (10 chars)
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "C01234abcd",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - invalid characters (uppercase)
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "C01234ABC",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - invalid characters (special chars)
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "C0123-abc",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
                     "uid",
                 ),
             ]

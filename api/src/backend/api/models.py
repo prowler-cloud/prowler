@@ -283,6 +283,7 @@ class Provider(RowLevelSecurityProtectedModel):
         AWS = "aws", _("AWS")
         AZURE = "azure", _("Azure")
         GCP = "gcp", _("GCP")
+        GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
         KUBERNETES = "kubernetes", _("Kubernetes")
         M365 = "m365", _("M365")
         GITHUB = "github", _("GitHub")
@@ -339,6 +340,15 @@ class Provider(RowLevelSecurityProtectedModel):
                 "and contain only lowercase letters, numbers, and hyphens. "
                 "Legacy App Engine project IDs with a domain prefix (e.g., example.com:my-project) are also accepted.",
                 code="gcp-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_googleworkspace_uid(value):
+        if not re.match(r"^C[0-9a-z]{8}$", value):
+            raise ModelValidationError(
+                detail="Google Workspace Customer ID must start with 'C' followed by 8 alphanumeric characters (e.g., C01234abc).",
+                code="googleworkspace-uid",
                 pointer="/data/attributes/uid",
             )
 
