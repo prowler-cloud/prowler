@@ -95,10 +95,19 @@ class entra_emergency_access_exclusion(Check):
             report.status = "PASS"
             exclusion_details = []
             if users_excluded_from_all:
-                exclusion_details.append(f"{len(users_excluded_from_all)} user(s)")
+                user_names = []
+                for user_id in users_excluded_from_all:
+                    user = entra_client.users.get(user_id)
+                    user_names.append(user.name if user else user_id)
+                exclusion_details.append(f"user(s): {', '.join(user_names)}")
             if groups_excluded_from_all:
-                exclusion_details.append(f"{len(groups_excluded_from_all)} group(s)")
-            report.status_extended = f"{' and '.join(exclusion_details)} excluded as emergency access across all {total_policy_count} enabled Conditional Access policies."
+                group_names = []
+                groups_by_id = {g.id: g for g in entra_client.groups}
+                for group_id in groups_excluded_from_all:
+                    group = groups_by_id.get(group_id)
+                    group_names.append(group.name if group else group_id)
+                exclusion_details.append(f"group(s): {', '.join(group_names)}")
+            report.status_extended = f"Emergency access {' and '.join(exclusion_details)} excluded from all {total_policy_count} enabled Conditional Access policies."
         else:
             report.status = "FAIL"
             report.status_extended = f"No user or group is excluded as emergency access from all {total_policy_count} enabled Conditional Access policies."

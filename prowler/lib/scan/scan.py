@@ -302,7 +302,12 @@ class Scan:
 
                     for report in iac_reports:
                         # Generate unique UID for the finding
-                        finding_uid = f"{report.check_metadata.CheckID}-{report.resource_name}-{report.resource_line_range}"
+                        finding_uid = (
+                            f"prowler-iac-{report.check_metadata.CheckID}-iac-"
+                            f"{report.region}-{report.resource_name}"
+                        )
+                        if report.resource_line_range:
+                            finding_uid += f"-{report.resource_line_range}"
 
                         # Convert status string to Status enum
                         status_enum = (
