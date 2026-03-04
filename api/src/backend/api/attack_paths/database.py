@@ -108,7 +108,9 @@ def get_session(
 
     except neo4j.exceptions.Neo4jError as exc:
         if (
-            default_access_mode == neo4j.READ_ACCESS and exc.code and exc.code in READ_EXCEPTION_CODES
+            default_access_mode == neo4j.READ_ACCESS
+            and exc.code
+            and exc.code in READ_EXCEPTION_CODES
         ):
             message = "Read query not allowed"
             code = READ_EXCEPTION_CODES[0]
