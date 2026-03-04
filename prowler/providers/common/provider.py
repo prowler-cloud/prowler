@@ -149,11 +149,7 @@ class Provider(ABC):
             provider_class_path = (
                 f"{providers_path}.{arguments.provider}.{arguments.provider}_provider"
             )
-            # Special handling for certain providers
-            if arguments.provider == "github_actions":
-                provider_class_name = "GithubActionsProvider"
-            else:
-                provider_class_name = f"{arguments.provider.capitalize()}Provider"
+            provider_class_name = f"{arguments.provider.capitalize()}Provider"
             provider_class = getattr(
                 import_module(provider_class_path), provider_class_name
             )
@@ -241,18 +237,6 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                elif "githubactions" in provider_class_name.lower():
-                    provider_class(
-                        workflow_path=getattr(arguments, "workflow_path", "."),
-                        repository_url=getattr(arguments, "repository_url", None),
-                        exclude_workflows=getattr(arguments, "exclude_workflows", []),
-                        config_path=getattr(arguments, "config_file", None),
-                        fixer_config=fixer_config,
-                        personal_access_token=getattr(
-                            arguments, "personal_access_token", None
-                        ),
-                        oauth_app_token=getattr(arguments, "oauth_app_token", None),
-                    )
                 elif "github" in provider_class_name.lower():
                     provider_class(
                         personal_access_token=arguments.personal_access_token,
@@ -263,6 +247,12 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         repositories=arguments.repository,
                         organizations=arguments.organization,
+                        github_actions_enabled=not getattr(
+                            arguments, "no_github_actions", False
+                        ),
+                        exclude_workflows=getattr(
+                            arguments, "exclude_workflows", []
+                        ),
                     )
                 elif "googleworkspace" in provider_class_name.lower():
                     provider_class(

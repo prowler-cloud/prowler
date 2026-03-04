@@ -114,6 +114,9 @@ class GithubProvider(Provider):
         mutelist_content: dict = None,
         repositories: list = None,
         organizations: list = None,
+        # GitHub Actions scanning
+        github_actions_enabled: bool = True,
+        exclude_workflows: list = None,
     ):
         """
         GitHub Provider constructor
@@ -188,7 +191,19 @@ class GithubProvider(Provider):
             self._mutelist = GithubMutelist(
                 mutelist_path=mutelist_path,
             )
+        # GitHub Actions scanning configuration
+        self._github_actions_enabled = github_actions_enabled
+        self._exclude_workflows = exclude_workflows or []
+
         Provider.set_global_provider(self)
+
+    @property
+    def github_actions_enabled(self) -> bool:
+        return self._github_actions_enabled
+
+    @property
+    def exclude_workflows(self) -> list:
+        return self._exclude_workflows
 
     @property
     def auth_method(self):

@@ -128,7 +128,6 @@ from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
-from prowler.providers.github_actions.models import GithubActionsOutputOptions
 from prowler.providers.googleworkspace.models import GoogleWorkspaceOutputOptions
 from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.image.exceptions.exceptions import ImageBaseException
@@ -189,8 +188,8 @@ def prowler():
     if compliance_framework:
         args.output_formats.extend(compliance_framework)
     # If no input compliance framework, set all, unless a specific service or check is input
-    # Skip for IAC, GitHub Actions, and LLM providers that don't use compliance frameworks
-    elif default_execution and provider not in ["iac", "github_actions", "llm"]:
+    # Skip for IAC and LLM providers that don't use compliance frameworks
+    elif default_execution and provider not in ["iac", "llm"]:
         args.output_formats.extend(get_available_compliance_frameworks(provider))
 
     # Set Logger configuration
@@ -371,8 +370,6 @@ def prowler():
         )
     elif provider == "iac":
         output_options = IACOutputOptions(args, bulk_checks_metadata)
-    elif provider == "github_actions":
-        output_options = GithubActionsOutputOptions(args, bulk_checks_metadata)
     elif provider == "image":
         output_options = ImageOutputOptions(args, bulk_checks_metadata)
     elif provider == "llm":
@@ -408,7 +405,7 @@ def prowler():
 
             findings = global_provider.run_scan(streaming_callback=streaming_callback)
         else:
-            # Original behavior for IAC, GitHub Actions, and Image
+            # Original behavior for IAC and Image
             try:
                 findings = global_provider.run()
             except ImageBaseException as error:
