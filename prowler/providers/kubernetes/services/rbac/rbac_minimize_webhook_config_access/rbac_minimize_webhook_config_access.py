@@ -18,19 +18,16 @@ class rbac_minimize_webhook_config_access(Check):
         subjects_bound_roles = {}
         for crb in rbac_client.cluster_role_bindings.values():
             for subject in crb.subjects:
+                # CIS benchmarks scope these checks to human identities only
                 if subject.kind in ["User", "Group"]:
                     key = (subject.kind, subject.name, subject.namespace)
                     if key not in subjects_bound_roles:
                         subjects_bound_roles[key] = (subject, set())
                     subjects_bound_roles[key][1].add(crb.roleRef.name)
 
-        for (_kind, _name, _ns), (subject, role_names) in subjects_bound_roles.items():
+        for _, (subject, role_names) in subjects_bound_roles.items():
             report = Check_Report_Kubernetes(metadata=self.metadata(), resource=subject)
-            report.resource_id = (
-                f"{subject.kind}/{subject.name}"
-                if not subject.namespace
-                else f"{subject.kind}/{subject.namespace}/{subject.name}"
-            )
+            report.resource_id = f"{subject.kind}/{subject.name}"
             report.status = "PASS"
             report.status_extended = f"User or group '{subject.name}' does not have access to create, update, or delete webhook configurations."
             for cr in rbac_client.cluster_roles.values():
