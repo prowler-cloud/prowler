@@ -1475,7 +1475,9 @@ class AwsProvider(Provider):
             sts_client = create_sts_session(session, 'us-west-2')
         """
         try:
-            if aws_region.startswith("cn-"):
+            if os.environ.get("AWS_ENDPOINT_URL"):
+                sts_endpoint_url = os.environ["AWS_ENDPOINT_URL"]
+            elif aws_region.startswith("cn-"):
                 sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.com.cn"
             elif aws_region.startswith("eusc-"):
                 sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.eu"

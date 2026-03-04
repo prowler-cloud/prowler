@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:identity:user",
   "Severity": "medium",
   "ResourceType": "OciIamUser",
+  "ResourceGroup": "IAM",
   "Description": "Auth tokens should be rotated within 90 days.",
   "Risk": "Not meeting this IAM requirement increases security risk.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm",

@@ -8,16 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** restricts TLS to **strong cipher suites** by configuring `--tls-cipher-suites` to only modern values such as `TLS_AES_128_GCM_SHA256`, `TLS_AES_256_GCM_SHA384`, and `TLS_CHACHA20_POLY1305_SHA256`",
   "Risk": "Permitting weak or mixed cipher suites enables TLS downgrades and cryptanalytic attacks, undermining **confidentiality** and **integrity** of API traffic.\n\nAttackers could intercept or alter requests, steal tokens, and pivot to compromise the control plane.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://shantanudeyanik.medium.com/configure-kubernetes-with-strong-cipher-suites-0053ca0accba",
-    "https://habr.com/ru/companies/slurm/articles/712736/",
-    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
-    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options",
-    "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-api-server-only-makes-use-of-strong-cryptographic-ciphers/",
-    "https://stackoverflow.com/questions/62983207/kubernetes-change-cipher-for-certificates"
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options"
   ],
   "Remediation": {
     "Code": {

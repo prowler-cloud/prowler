@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:compute:instance",
   "Severity": "high",
   "ResourceType": "OciComputeInstance",
+  "ResourceGroup": "compute",
   "Description": "In-transit encryption protects data as it moves between the compute instance and block volumes. This is implemented through the Oracle Cloud Agent management plugin which enables encryption for block volume attachments.",
   "Risk": "Without in-transit encryption, data moving between compute instances and block volumes could be intercepted or tampered with during transmission.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Block/Concepts/blockvolumeencryption.htm",

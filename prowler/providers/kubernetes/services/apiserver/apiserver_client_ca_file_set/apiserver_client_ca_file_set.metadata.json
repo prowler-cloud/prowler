@@ -8,15 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** uses a configured **client CA** (`--client-ca-file`) to validate x509 client certificates presented for API authentication",
   "Risk": "**Absent a client CA**, the API server cannot validate x509 client identities, disabling mutual TLS.\n\nThis weakens authentication and can enable unauthorized reads or writes to cluster resources, impacting **confidentiality** and **integrity**, especially if other methods (e.g., anonymous or weak tokens) are misconfigured.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://kubernetes.io/docs/setup/best-practices/certificates/",
-    "https://stackoverflow.com/questions/59940927/k3s-create-user-with-client-certificate",
     "https://cjyabraham.gitlab.io/docs/reference/command-line-tools-reference/kube-apiserver/",
     "https://blog.codefarm.me/2019/02/01/access-kubernetes-api-with-client-certificates/",
-    "https://medium.com/@mrJTY/kubernetes-tls-4de567964cd5",
     "https://kubernetes.io/docs/setup/best-practices/certificates/#certificate-paths"
   ],
   "Remediation": {

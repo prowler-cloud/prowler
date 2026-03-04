@@ -8,17 +8,15 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** audit logging retention is governed by `--audit-log-maxage`. This evaluates whether the configured value (e.g., `30` days) is set consistently across API server containers to retain audit events for a sufficient period.",
   "Risk": "**Short audit retention** limits visibility into historical API actions. Credential abuse, privilege escalation, or cluster tampering may evade detection, and investigations lack evidence for timeline reconstruction-degrading data **integrity** and confidentiality through undetected unauthorized changes and exfiltration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://rke.docs.rancher.com/config-options/audit-log",
-    "https://paper.bobylive.com/Security/CIS/CIS_Kubernetes_Benchmark_v1_1_0.pdf",
     "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
     "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
-    "https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/",
-    "https://docs.k3s.io/security/hardening-guide",
-    "https://docs.rke2.io/security/cis_self_assessment124"
+    "https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/"
   ],
   "Remediation": {
     "Code": {

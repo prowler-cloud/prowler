@@ -8,13 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** uses `--audit-log-maxsize` to cap audit log files. The check expects `100 MB` or a policy-approved value, indicating rotation occurs when a log reaches that size.",
   "Risk": "Absent a proper cap, audit logs can grow unchecked, exhausting disk and degrading API server **availability**. Oversized or unbounded logs impede **forensics** and may overwrite recent events during rotation, undermining **integrity** and accountability of audit evidence.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://github.com/sherwinwangs/kubernetes-cis-audit",
     "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
-    "https://habr.com/ru/companies/slurm/articles/711868/",
     "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
     "https://docs.rke2.io/security/cis_self_assessment124",
     "https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/"

@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "**AWS Directory Service** directories are associated with **Amazon SNS topics** to send status change notifications (e.g., `Active`  `Impaired`).\n\nThe evaluation looks for directories that have SNS event topics configured for monitoring alerts.",
   "Risk": "Missing directory notifications reduces visibility into health changes, causing delayed response to `Impaired` states. This threatens availability of authentication, Kerberos/LDAP lookups, and domain joins; increases MTTR; and can enable silent replication or trust failures that impact integrity across dependent workloads.",
   "RelatedUrl": "",

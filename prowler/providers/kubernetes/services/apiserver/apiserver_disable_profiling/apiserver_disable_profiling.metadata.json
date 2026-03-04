@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** runtime profiling is controlled by the `--profiling` flag. The evaluation inspects API server container arguments to confirm `--profiling=false` and that profiling endpoints (such as `/debug/pprof`) are not enabled.",
   "Risk": "With profiling enabled, `/debug/pprof` exposes stack traces, heap data, and request details that can leak secrets and topology, degrading **confidentiality**. Heavy profiling queries can exhaust CPU and memory, threatening **availability**. Insight into code paths and timings can aid exploitation, affecting **integrity** of the control plane.",
   "RelatedUrl": "",

@@ -8,16 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** anonymous authentication configuration, identified by `--anonymous-auth=true`. With this setting, unauthenticated requests are mapped to `system:anonymous` and processed by the server.",
   "Risk": "**Anonymous API access** exposes cluster details for **reconnaissance** and enumeration, eroding confidentiality.\n\nIf **RBAC** is misconfigured, unauthenticated users may read sensitive data or trigger actions, impacting integrity. Floods of anonymous requests can also reduce **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.hacktricks.wiki/en/pentesting-cloud/kubernetes-security/pentesting-kubernetes-services/index.html",
-    "https://github.com/clastix/kamaji/discussions/862",
-    "https://kubernetes.io/docs/admin/authentication/#anonymous-requests",
     "https://docs.kics.io/develop/queries/kubernetes-queries/1de5cc51-f376-4638-a940-20f2e85ae238/",
-    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
-    "https://errorism.dev/issues/kubernetes-kubeadm-node-fails-to-join-if-masters-kube-apiserver-has---anonymous-authfalse-and-basic-auth"
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
   ],
   "Remediation": {
     "Code": {

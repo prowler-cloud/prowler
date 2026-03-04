@@ -8,15 +8,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server audit logging** uses `--audit-log-maxbackup` to set how many rotated audit log files are kept. This evaluates whether that value is explicitly configured as `10` or an approved organizational setting across API server containers.",
   "Risk": "Insufficient **audit log retention** reduces **accountability** and hampers **forensics**. Limited backups cause older events to be overwritten, letting attackers hide activity until rotation. This undermines the **confidentiality**, **integrity**, and **availability** of evidence needed for incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
     "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
-    "https://stackoverflow.com/questions/60371587/unable-to-start-kube-apiserver-service",
-    "https://docs.kics.io/2.0.0/queries/kubernetes-queries/768aab52-2504-4a2f-a3e3-329d5a679848/",
-    "https://openai.com/index/scaling-kubernetes-to-2500-nodes/"
+    "https://docs.kics.io/2.0.0/queries/kubernetes-queries/768aab52-2504-4a2f-a3e3-329d5a679848/"
   ],
   "Remediation": {
     "Code": {

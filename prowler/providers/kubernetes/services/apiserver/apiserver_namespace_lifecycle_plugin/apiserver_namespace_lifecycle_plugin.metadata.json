@@ -1,25 +1,19 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_namespace_lifecycle_plugin",
-  "CheckTitle": "Kubernetes API server pod has NamespaceLifecycle admission control plugin enabled",
+  "CheckTitle": "API server pod has NamespaceLifecycle admission control plugin enabled",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** has the `NamespaceLifecycle` admission controller active and not disabled, enforcing namespace lifecycle rules by rejecting objects targeting **non-existent** or **terminating** namespaces and protecting system namespaces from deletion.",
   "Risk": "Without `NamespaceLifecycle`, resources can be created in namespaces being removed or that never existed, causing inconsistent state and controller errors.\n\nThis degrades **integrity** and **availability**, leaving orphaned objects, delaying cleanup, and potentially preserving access via leftover service accounts or policies.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.sysdig.com/learn-cloud-native/kubernetes-admission-controllers",
-    "https://stackoverflow.com/questions/67362350/how-do-i-find-and-call-the-kube-apiserver-in-k3s-k3d-with-calico-and-without",
-    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
-    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#namespacelifecycle",
-    "https://be-reliable-engineer.medium.com/k8s-admission-controller-4796b66435ad",
-    "https://blog.codegrape.com/advantages-of-governance-within-kubernetes/",
-    "https://notes.kodekloud.com/docs/Certified-Kubernetes-Application-Developer-CKAD/Security/Solution-Admission-Controllers",
-    "https://blog.nashtechglobal.com/admission-controller-in-kubernetes/"
+    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#namespacelifecycle"
   ],
   "Remediation": {
     "Code": {

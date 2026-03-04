@@ -14,6 +14,7 @@
   "ResourceIdTemplate": "acs:sas::account-id:notice-config/{project}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudSecurityCenterNoticeConfig",
+  "ResourceGroup": "security",
   "Description": "Enable all **risk item notifications** in Vulnerability, Baseline Risks, Alerts, and AccessKey Leak event detection categories.\n\nThis ensures that relevant security operators receive notifications as soon as security events occur.",
   "Risk": "Without **notifications enabled** for high-risk items, security operators may not be aware of critical security events in a timely manner, potentially leading to **delayed response** and **increased security exposure**.",
   "RelatedUrl": "",

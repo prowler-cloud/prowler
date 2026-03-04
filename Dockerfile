@@ -6,7 +6,7 @@ LABEL org.opencontainers.image.source="https://github.com/prowler-cloud/prowler"
 ARG POWERSHELL_VERSION=7.5.0
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 
-ARG TRIVY_VERSION=0.66.0
+ARG TRIVY_VERSION=0.69.2
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 # hadolint ignore=DL3008

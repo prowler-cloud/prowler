@@ -8,17 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** authorization is evaluated via the `--authorization-mode` setting to detect any use of `AlwaysAllow`. The focus is whether policy-driven authorizers are configured instead of an allow-all mode.",
   "Risk": "`AlwaysAllow` permits all API requests, eroding **confidentiality** (secrets readable), **integrity** (privilege escalation, role changes, config edits), and **availability** (object deletion, cluster disruption). Enables rapid cluster takeover and data exfiltration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://goteleport.com/blog/kubernetes-api-access-security/",
-    "https://notes.kodekloud.com/docs/Certified-Kubernetes-Security-Specialist-CKS/Cluster-Setup-and-Hardening/Authorization",
-    "https://habr.com/ru/companies/slurm/articles/712736/",
-    "https://github.com/kubernetes/kubernetes/issues/124021",
     "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
-    "https://kubernetes.io/docs/reference/access-authn-authz/authorization/#using-flags-for-your-authorization-module",
-    "https://yuminlee2.medium.com/kubernetes-authorization-part1-authorization-modes-overview-18538759e2d5"
+    "https://kubernetes.io/docs/reference/access-authn-authz/authorization/#using-flags-for-your-authorization-module"
   ],
   "Remediation": {
     "Code": {

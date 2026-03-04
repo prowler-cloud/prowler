@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
   "Description": "Ensure that Conditional Access policy blocks legacy authentication in Microsoft Entra ID to enforce modern authentication methods and protect against credential-stuffing and brute-force attacks.",
   "Risk": "Legacy authentication protocols do not support MFA, making them vulnerable to credential-stuffing and brute-force attacks. Attackers commonly exploit these protocols to bypass security controls and gain unauthorized access.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-block-legacy-authentication",

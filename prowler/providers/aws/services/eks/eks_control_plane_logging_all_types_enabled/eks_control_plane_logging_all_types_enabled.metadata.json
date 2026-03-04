@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEksCluster",
+  "ResourceGroup": "container",
   "Description": "**Amazon EKS clusters** are evaluated for **control plane logging** coverage of required types: `api`, `audit`, `authenticator`, `controllerManager`, `scheduler`.\n\nThe finding identifies clusters where any of these log types are not configured.",
   "Risk": "Gaps in **control plane logging** reduce visibility across the cluster.\n- Confidentiality: undetected API access, RBAC abuse, token misuse\n- Integrity: untraceable config changes and policy edits\n- Availability: scheduler/controller issues lack evidence, delaying recovery and masking attacker persistence",
   "RelatedUrl": "",

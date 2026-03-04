@@ -8,16 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** has the **NodeRestriction** admission controller enabled via `--enable-admission-plugins`.\n\nThis setting confines kubelets to modify only their own `Node` object and bound `Pod` objects.",
   "Risk": "Without **NodeRestriction**, a compromised or misconfigured kubelet could alter other nodes or pods, change critical labels/taints, or delete node objects.\n\nThis enables lateral movement and workload hijacking, impacting **integrity** and **availability** of the cluster.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://stackoverflow.com/questions/67172030/how-do-i-configure-noderestriction-plug-in-on-kubelet",
-    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers",
-    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
     "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction",
     "https://blog.codefarm.me/2021/12/15/kubernetes-admission-controllers/",
-    "https://notes.kodekloud.com/docs/Certified-Kubernetes-Application-Developer-CKAD/Security/Solution-Admission-Controllers",
     "https://cjyabraham.gitlab.io/docs/reference/access-authn-authz/admission-controllers/"
   ],
   "Remediation": {

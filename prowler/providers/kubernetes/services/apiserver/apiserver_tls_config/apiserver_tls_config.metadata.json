@@ -8,11 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** configuration is checked for explicit TLS settings via `--tls-cert-file` and `--tls-private-key-file`. The presence of both flags indicates HTTPS is configured with a specified certificate and private key for client connections.",
   "Risk": "Improper or unmanaged TLS on the API endpoint can cause untrusted certs and verification bypass, enabling MITM to capture admin credentials or tokens and modify requests. This compromises **confidentiality** and **integrity**, and unexpected certificate expiry can affect **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://kubernetes.io/docs/setup/best-practices/certificates/",
     "https://kubernetes.io/docs/setup/best-practices/certificates/#certificate-paths"
   ],
   "Remediation": {

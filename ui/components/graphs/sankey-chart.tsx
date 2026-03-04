@@ -7,7 +7,6 @@ import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
 
 import { PROVIDER_ICONS } from "@/components/icons/providers-badge";
 import { initializeChartColors } from "@/lib/charts/colors";
-import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 import { PROVIDER_DISPLAY_NAMES } from "@/types/providers";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
@@ -463,9 +462,6 @@ export function SankeyChart({
     const severityFilter = SEVERITY_FILTER_MAP[nodeName];
     if (severityFilter) {
       const params = new URLSearchParams(searchParams.toString());
-
-      mapProviderFiltersForFindings(params);
-
       params.set("filter[severity__in]", severityFilter);
       params.set("filter[status__in]", "FAIL");
       params.set("filter[muted]", "false");
@@ -480,12 +476,10 @@ export function SankeyChart({
     if (severityFilter) {
       const params = new URLSearchParams(searchParams.toString());
 
-      mapProviderFiltersForFindings(params);
-
       // Always set provider_type filter based on the clicked link's source (provider)
       // This ensures clicking "AWS → High" filters by AWS even when no global filter is set
-      const hasProviderIdFilter = searchParams.has("filter[provider_id__in]");
-      if (providerType && !hasProviderIdFilter) {
+      const hasProviderFilter = searchParams.has("filter[provider_id__in]");
+      if (providerType && !hasProviderFilter) {
         params.set("filter[provider_type__in]", providerType);
       }
 

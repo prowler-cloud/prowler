@@ -8,17 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** configuration is reviewed for use of **static token file authentication** by inspecting API server containers for the `--token-auth-file` argument",
   "Risk": "Using **static bearer tokens** undermines CIA:\n- Confidentiality: leaked tokens grant API access\n- Integrity: long-lived tokens enable unauthorized changes\n- Availability: access can't be revoked quickly\nTokens are clear-text and lack **revocation/rotation**, enabling persistent access if exposed.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://notes.kodekloud.com/docs/CKA-Certification-Course-Certified-Kubernetes-Administrator/Security/Authentication",
-    "https://goteleport.com/blog/kubernetes-api-access-security/",
-    "https://kubernetes.io/docs/reference/access-authn-authz/authentication/#static-token-file",
-    "https://stackoverflow.com/questions/43072514/kubernetes-how-to-enable-api-server-bearer-token-auth",
-    "https://kubernetes.io/docs/reference/access-authn-authz/authentication/",
-    "https://www.golinuxcloud.com/kubernetes-authentication-authorization/",
-    "https://k8s-security.geek-kb.com/docs/fundamentals/authentication/authentication_methods/"
+    "https://kubernetes.io/docs/reference/access-authn-authz/authentication/#static-token-file"
   ],
   "Remediation": {
     "Code": {

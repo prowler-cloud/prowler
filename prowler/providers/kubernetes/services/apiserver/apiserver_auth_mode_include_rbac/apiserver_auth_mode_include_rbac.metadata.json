@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** authorization configuration includes the **RBAC authorizer** in the enabled modes, i.e., `RBAC` appears in the authorizer chain.",
   "Risk": "Absence of **RBAC** removes fine-grained, role-scoped control. Identities may gain broad or unintended access, enabling:\n- Secret disclosure (confidentiality)\n- Unauthorized changes to workloads/policies (integrity)\n- Destructive API calls causing outages (availability)",
   "RelatedUrl": "",

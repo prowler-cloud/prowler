@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesControllerManager",
+  "ResourceGroup": "container",
   "Description": "Activate garbage collector on pod termination, as appropriate. Garbage collection is crucial for maintaining resource availability and performance. The default threshold for garbage collection is 12,500 terminated pods, which may be too high for some systems. Adjusting this threshold based on system resources and performance tests is recommended.",
   "Risk": "A high threshold for garbage collection can lead to degraded performance and resource exhaustion. In extreme cases, it might cause system crashes or prolonged unavailability.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-garbage-collection",

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Active teams & groups",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure that only organizationally managed and approved public groups exist to prevent unauthorized access to sensitive group resources like SharePoint, Teams, or other shared assets.",
   "Risk": "Unmanaged public groups can allow unauthorized access to organizational resources, posing a risk of data leakage or misuse through easily guessable SharePoint URLs or self-adding to groups via the Azure portal.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/admin/create-groups/manage-groups?view=o365-worldwide",

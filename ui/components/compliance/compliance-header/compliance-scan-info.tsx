@@ -27,6 +27,7 @@ export const ComplianceScanInfo = ({ scan }: ComplianceScanInfoProps) => {
           entityAlias={scan.providerInfo.alias}
           entityId={scan.providerInfo.uid}
           showCopyAction={false}
+          maxWidth="w-[80px]"
         />
       </div>
       <Divider orientation="vertical" className="h-8" />

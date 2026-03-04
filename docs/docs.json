@@ -99,6 +99,7 @@
               },
               "user-guide/tutorials/prowler-app-rbac",
               "user-guide/tutorials/prowler-app-api-keys",
+              "user-guide/tutorials/prowler-app-import-findings",
               {
                 "group": "Mutelist",
                 "expanded": true,
@@ -117,12 +118,20 @@
                 ]
               },
               {
+                "group": "AWS Organizations",
+                "expanded": true,
+                "pages": [
+                  "user-guide/tutorials/prowler-cloud-aws-organizations"
+                ]
+              },
+              {
                 "group": "Lighthouse AI",
                 "pages": [
                   "user-guide/tutorials/prowler-app-lighthouse",
                   "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
                 ]
               },
+              "user-guide/tutorials/prowler-app-attack-paths",
               "user-guide/tutorials/prowler-cloud-public-ips",
               {
                 "group": "Tutorials",
@@ -228,6 +237,13 @@
                 ]
               },
               {
+                "group": "Google Workspace",
+                "pages": [
+                  "user-guide/providers/googleworkspace/getting-started-googleworkspace",
+                  "user-guide/providers/googleworkspace/authentication"
+                ]
+              },
+              {
                 "group": "GitHub",
                 "pages": [
                   "user-guide/providers/github/getting-started-github",
@@ -249,6 +265,19 @@
                 ]
               },
               {
+                "group": "Cloudflare",
+                "pages": [
+                  "user-guide/providers/cloudflare/getting-started-cloudflare",
+                  "user-guide/providers/cloudflare/authentication"
+                ]
+              },
+              {
+                "group": "Image",
+                "pages": [
+                  "user-guide/providers/image/getting-started-image"
+                ]
+              },
+              {
                 "group": "LLM",
                 "pages": [
                   "user-guide/providers/llm/getting-started-llm"
@@ -259,6 +288,13 @@
                 "pages": [
                   "user-guide/providers/oci/getting-started-oci",
                   "user-guide/providers/oci/authentication"
+                ]
+              },
+              {
+                "group": "OpenStack",
+                "pages": [
+                  "user-guide/providers/openstack/getting-started-openstack",
+                  "user-guide/providers/openstack/authentication"
                 ]
               }
             ]
@@ -284,8 +320,9 @@
               "developer-guide/outputs",
               "developer-guide/integrations",
               "developer-guide/security-compliance-framework",
-              "developer-guide/lighthouse",
-              "developer-guide/mcp-server"
+              "developer-guide/lighthouse-architecture",
+              "developer-guide/mcp-server",
+              "developer-guide/ai-skills"
             ]
           },
           {
@@ -294,6 +331,7 @@
               "developer-guide/aws-details",
               "developer-guide/azure-details",
               "developer-guide/gcp-details",
+              "developer-guide/alibabacloud-details",
               "developer-guide/kubernetes-details",
               "developer-guide/m365-details",
               "developer-guide/github-details",
@@ -322,14 +360,28 @@
       },
       {
         "tab": "Security",
-        "pages": [
-          "security"
+        "groups": [
+          {
+            "group": "Security & Compliance",
+            "pages": [
+              "security/index",
+              "security/software-security"
+            ]
+          },
+          {
+            "group": "Prowler Cloud",
+            "pages": [
+              "security/encryption",
+              "security/data-regions",
+              "security/networking"
+            ]
+          }
         ]
       },
       {
-        "tab": "Contact Us",
+        "tab": "Support",
         "pages": [
-          "contact"
+          "support"
         ]
       },
       {
@@ -450,6 +502,10 @@
     {
       "source": "/projects/prowler-open-source/en/latest/tutorials/:slug*",
       "destination": "/user-guide/tutorials/:slug*"
+    },
+    {
+      "source": "/contact",
+      "destination": "/support"
     }
   ]
 }

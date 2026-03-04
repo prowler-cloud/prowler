@@ -1,18 +1,18 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_request_timeout_set",
-  "CheckTitle": "Kubernetes API server pod has --request-timeout configured",
+  "CheckTitle": "API server pod has --request-timeout configured",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** has a global request timeout configured via `--request-timeout`.\n\nThe presence of that flag on API server containers is assessed.",
   "Risk": "Without a defined, appropriate timeout, requests can linger and tie up handlers, reducing **availability**. Attackers can perform slowloris-style holds or heavy reads to cause **resource exhaustion** and backlog growth. Overly short timeouts can cut valid calls, disrupting controllers and clients.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
     "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options"
   ],
   "Remediation": {

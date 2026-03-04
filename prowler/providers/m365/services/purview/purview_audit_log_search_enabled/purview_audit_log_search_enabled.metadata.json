@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Purview Settings",
+  "ResourceGroup": "governance",
   "Description": "Ensure Purview audit log search is enabled.",
   "Risk": "Disabling Microsoft 365 audit log search can hinder the ability to track and monitor user and admin activities, making it harder to detect suspicious behavior, security incidents, or compliance violations. This can result in undetected breaches and inability to respond to incidents effectively.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/purview/audit-search?tabs=microsoft-purview-portal",

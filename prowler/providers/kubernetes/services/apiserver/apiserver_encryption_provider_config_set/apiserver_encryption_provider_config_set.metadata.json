@@ -8,11 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** pods include `--encryption-provider-config`, supplying an EncryptionConfiguration to apply **encryption at rest** to selected API resources stored in etcd.",
   "Risk": "Absent an encryption provider, **Secrets and credentials** are stored in plaintext in etcd and backups. Access to etcd, control plane disks, or snapshots can expose keys and tokens, enabling unauthorized API calls and lateral movement, compromising **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/",
     "https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/#determining-whether-encryption-at-rest-is-already-enabled"
   ],
   "Remediation": {

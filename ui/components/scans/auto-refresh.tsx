@@ -5,9 +5,11 @@ import { useEffect } from "react";
 
 interface AutoRefreshProps {
   hasExecutingScan: boolean;
+  /** Optional callback for client-side refresh (used when data is managed in local state) */
+  onRefresh?: () => void | Promise<void>;
 }
 
-export function AutoRefresh({ hasExecutingScan }: AutoRefreshProps) {
+export function AutoRefresh({ hasExecutingScan, onRefresh }: AutoRefreshProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -19,11 +21,17 @@ export function AutoRefresh({ hasExecutingScan }: AutoRefreshProps) {
     if (scanId) return;
 
     const interval = setInterval(() => {
-      router.refresh();
+      if (onRefresh) {
+        // Use custom refresh callback for client-side state management
+        onRefresh();
+      } else {
+        // Default: trigger server-side refresh
+        router.refresh();
+      }
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [hasExecutingScan, router, searchParams]);
+  }, [hasExecutingScan, router, searchParams, onRefresh]);
 
   return null;
 }

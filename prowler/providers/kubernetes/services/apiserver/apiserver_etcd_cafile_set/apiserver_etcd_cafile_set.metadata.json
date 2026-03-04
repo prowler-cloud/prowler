@@ -1,19 +1,19 @@
 {
   "Provider": "kubernetes",
   "CheckID": "apiserver_etcd_cafile_set",
-  "CheckTitle": "Kubernetes API server pod has the --etcd-cafile argument set",
+  "CheckTitle": "API server pod has the --etcd-cafile argument set",
   "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** uses an **etcd CA file** via `--etcd-cafile` to verify etcd's TLS certificate.\n\nThis evaluates whether API server containers specify that CA file, anchoring TLS trust for etcd connections.",
   "Risk": "Without a validated **etcd CA**, the API server may accept rogue or intercepted endpoints, undermining:\n- **Confidentiality**: exposure of cluster data in transit\n- **Integrity**: tampering with Kubernetes state in etcd\n- **Availability**: control plane disruption via malicious etcd responses",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#limiting-access-of-etcd-clusters",
-    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/"
+    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#limiting-access-of-etcd-clusters"
   ],
   "Remediation": {
     "Code": {

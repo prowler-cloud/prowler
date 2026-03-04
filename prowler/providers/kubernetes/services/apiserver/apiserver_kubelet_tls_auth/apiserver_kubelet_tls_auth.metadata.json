@@ -8,11 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** is configured to use **TLS client certificates** when communicating with kubelets via `--kubelet-client-certificate` and `--kubelet-client-key`.",
   "Risk": "Without **mTLS to kubelets**, apiserver requests may be **anonymous or weakly authenticated**. Adversaries can abuse kubelet endpoints to:\n- Read logs and files (C)\n- Exec into pods (I)\n- Evict or disrupt pods (A)\nEnables lateral movement and workload tampering.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://kubernetes.io/docs/setup/best-practices/certificates/",
     "https://kubernetes.io/docs/setup/best-practices/certificates/#configure-certificates-manually"
   ],
   "Remediation": {

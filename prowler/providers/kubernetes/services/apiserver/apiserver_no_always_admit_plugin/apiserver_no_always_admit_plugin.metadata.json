@@ -8,17 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** configuration is inspected for the `AlwaysAdmit` admission plugin in `--enable-admission-plugins`.\n\nIf `AlwaysAdmit` is configured, the server accepts all admission requests without running other admission controllers.",
   "Risk": "With **AlwaysAdmit**, admission policies don't run after authN/Z, weakening CIA:\n- Bypass of controls enables privileged or unsafe workloads (confidentiality, integrity)\n- Quotas/limits can be ignored, causing resource exhaustion (availability)\n- Misconfigurations persist, enabling escalation and lateral movement",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://kodekloud.com/community/t/kubernetes-admission-plugins/479194",
-    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwaysadmit",
-    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
-    "https://faun.pub/kubernetes-admission-controller-2913a5b3d0c1",
-    "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-alwaysadmit-is-not-set/",
-    "https://github.com/kubernetes/kubernetes/issues/66979",
-    "https://stackoverflow.com/questions/51489955/how-to-obtain-the-enable-admission-controller-list-in-kubernetes"
+    "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwaysadmit"
   ],
   "Remediation": {
     "Code": {

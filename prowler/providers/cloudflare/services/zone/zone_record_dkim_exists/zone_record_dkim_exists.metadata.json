@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_record_dkim_exists",
+  "CheckTitle": "DKIM record exists with valid public key",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **DKIM (DomainKeys Identified Mail)** records by checking if TXT records exist at `*._domainkey` subdomains containing a **cryptographically valid public key** in the `p=` parameter used to **verify email signatures**.",
+  "Risk": "Without **DKIM** or with a revoked/empty public key, email recipients cannot verify that messages were sent by authorized servers.\n- **Confidentiality**: attackers can forge emails appearing to come from your domain\n- **Integrity**: no cryptographic proof that email content hasn't been modified in transit\n- **Reputation**: DMARC policies relying on DKIM will fail, affecting email deliverability\n- **Revoked keys**: A DKIM record with `p=` empty (e.g., `p=;`) indicates a revoked key that cannot authenticate emails",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/dns/manage-dns-records/how-to/email-records/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Generate DKIM keys using your email provider or mail server\n2. Log in to the Cloudflare dashboard and select your account and domain\n3. Go to DNS > Records\n4. Click Add record\n5. Select TXT as the record type\n6. Enter selector._domainkey for the Name field (e.g., google._domainkey)\n7. Enter the DKIM public key record provided by your email service (must include p= with actual key)\n8. Click Save",
+      "Terraform": "```hcl\n# Create DKIM record for email authentication\nresource \"cloudflare_record\" \"dkim\" {\n  zone_id = \"<ZONE_ID>\"\n  name    = \"google._domainkey\"  # Selector varies by email provider\n  type    = \"TXT\"\n  content = \"v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4...\" # Must contain valid public key\n  ttl     = 3600\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure **DKIM records** with valid public keys from your email provider.\n- Each email service requires its own DKIM selector (e.g., google._domainkey for Google Workspace)\n- The `p=` parameter must contain the actual public key, not be empty\n- An empty `p=` value indicates a revoked key and will fail this check\n- DKIM works alongside SPF and DMARC for comprehensive email authentication\n- Rotate DKIM keys periodically for enhanced security\n- Use 2048-bit keys for stronger cryptographic protection",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_record_dkim_exists"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "DKIM records are TXT records at *._domainkey subdomains starting with 'v=DKIM1'. This check uses cryptographic validation to verify that the p= parameter contains a real DER-encoded public key, not just non-empty Base64. Revoked keys, invalid Base64, or malformed keys will fail this check."
+}

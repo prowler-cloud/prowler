@@ -8,13 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes API server** is configured with a **kubelet certificate authority** via `--kubelet-certificate-authority` so it can validate kubelet serving certificates during APIkubelet TLS connections.",
   "Risk": "Without a trusted kubelet CA, the API server can't verify kubelet identities, weakening TLS and enabling **man-in-the-middle** on control planenode traffic. Attackers could read logs/exec streams (**Confidentiality**), tamper with responses or commands (**Integrity**), and disrupt node management (**Availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://jamesdefabia.github.io/docs/admin/kube-apiserver/",
-    "https://kubernetes.io/docs/setup/best-practices/certificates/",
-    "https://stackoverflow.com/questions/63994701/how-do-i-properly-set-kubelet-certificate-authority-apiserver-parameter",
     "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
     "https://kubernetes.io/docs/setup/best-practices/certificates/#configure-certificates-manually",
     "https://docs.kics.io/latest/queries/kubernetes-queries/ec18a0d3-0069-4a58-a7fb-fbfe0b4bbbe0/"

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "security",
   "Description": "**Amazon Macie** status is assessed per region with **S3** presence to determine if sensitive data discovery is operational. The outcome reflects whether Macie is active or in a `PAUSED`/not enabled state for the account and region.",
   "Risk": "Without active Macie, sensitive data in **S3** can remain unclassified and exposed. Misconfigured access and public buckets may go undetected, enabling data exfiltration and secret leakage. This degrades confidentiality and widens breach blast radius by reducing visibility into where sensitive data resides.",
   "RelatedUrl": "",
