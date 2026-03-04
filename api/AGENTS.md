@@ -4,6 +4,7 @@
 > - [`prowler-api`](../skills/prowler-api/SKILL.md) - Models, Serializers, Views, RLS patterns
 > - [`prowler-test-api`](../skills/prowler-test-api/SKILL.md) - Testing patterns (pytest-django)
 > - [`prowler-attack-paths-query`](../skills/prowler-attack-paths-query/SKILL.md) - Attack Paths openCypher queries
+> - [`django-migration-psql`](../skills/django-migration-psql/SKILL.md) - Migration best practices for PostgreSQL
 > - [`django-drf`](../skills/django-drf/SKILL.md) - Generic DRF patterns
 > - [`jsonapi`](../skills/jsonapi/SKILL.md) - Strict JSON:API v1.1 spec compliance
 > - [`pytest`](../skills/pytest/SKILL.md) - Generic pytest patterns
@@ -16,6 +17,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
 | Adding DRF pagination or permissions | `django-drf` |
+| Adding indexes or constraints to database tables | `django-migration-psql` |
 | Adding privilege escalation detection queries | `prowler-attack-paths-query` |
 | Committing changes | `prowler-commit` |
 | Create PR that requires changelog entry | `prowler-changelog` |
@@ -23,6 +25,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Creating Attack Paths queries | `prowler-attack-paths-query` |
 | Creating ViewSets, serializers, or filters in api/ | `django-drf` |
 | Creating a git commit | `prowler-commit` |
+| Creating or reviewing Django migrations | `django-migration-psql` |
 | Creating/modifying models, views, serializers | `prowler-api` |
 | Fixing bug | `tdd` |
 | Implementing JSON:API endpoints | `django-drf` |
@@ -32,6 +35,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Refactoring code | `tdd` |
 | Review changelog format and conventions | `prowler-changelog` |
 | Reviewing JSON:API compliance | `jsonapi` |
+| Running makemigrations or pgmakemigrations | `django-migration-psql` |
 | Testing RLS tenant isolation | `prowler-test-api` |
 | Update CHANGELOG.md in any component | `prowler-changelog` |
 | Updating existing Attack Paths queries | `prowler-attack-paths-query` |
