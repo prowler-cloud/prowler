@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.20.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Update Kubernetes API server checks metadata to new format [(#9674)](https://github.com/prowler-cloud/prowler/pull/9674)
+
+---
+
 ## [5.19.0] (Prowler v5.19.0)
 
 ### 🚀 Added
@@ -191,7 +199,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Shield service metadata to new format [(#9427)](https://github.com/prowler-cloud/prowler/pull/9427)
 - Update AWS Secrets Manager service metadata to new format [(#9408)](https://github.com/prowler-cloud/prowler/pull/9408)
 - Improve SageMaker service tag retrieval with parallel execution [(#9609)](https://github.com/prowler-cloud/prowler/pull/9609)
-- Update Kubernetes API Server service metadata to new format [(#9674)](https://github.com/prowler-cloud/prowler/pull/9674)
 - Update AWS Redshift service metadata to new format [(#9385)](https://github.com/prowler-cloud/prowler/pull/9385)
 - Update AWS Storage Gateway service metadata to new format [(#9433)](https://github.com/prowler-cloud/prowler/pull/9433)
 - Update AWS Well-Architected service metadata to new format [(#9482)](https://github.com/prowler-cloud/prowler/pull/9482)
