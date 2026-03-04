@@ -3,11 +3,11 @@
 
 from typing import Any
 
+from pathlib import Path
+
 import aioboto3
 import boto3
 import neo4j
-
-from pathlib import Path
 
 from cartography.config import Config as CartographyConfig
 from cartography.graph.job import GraphJob

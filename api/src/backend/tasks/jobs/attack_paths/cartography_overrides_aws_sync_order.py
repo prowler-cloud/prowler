@@ -1,5 +1,4 @@
-# TODO: Remove this file when Cartography fixes the RESOURCE_FUNCTIONS ordering.
-# https://github.com/cartography-cncf/cartography/issues/XXXX
+# TODO: Remove this file when Cartography fixes the RESOURCE_FUNCTIONS ordering
 #
 # Explicit sync order for cartography AWS resource functions.
 # Based on cartography_aws.RESOURCE_FUNCTIONS (v0.129.0) with one change:
