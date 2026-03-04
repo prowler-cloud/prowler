@@ -1,7 +1,7 @@
 {
   "Provider": "github",
   "CheckID": "organization_repository_deletion_limited",
-  "CheckTitle": "Ensure repository deletion is limited to trusted organization users",
+  "CheckTitle": "Organization repository deletion and transfer is restricted to owners",
   "CheckType": [],
   "ServiceName": "organization",
   "SubServiceName": "",
@@ -21,7 +21,7 @@
     },
     "Recommendation": {
       "Text": "Disable member repository deletion/transfer privileges so only organization owners can delete or transfer repositories.",
-      "Url": "https://docs.github.com/en/organizations/managing-organization-settings/setting-permissions-for-deleting-or-transferring-repositories"
+      "Url": "https://hub.prowler.com/check/organization_repository_deletion_limited"
     }
   },
   "Categories": [

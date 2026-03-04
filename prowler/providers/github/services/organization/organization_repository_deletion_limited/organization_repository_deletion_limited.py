@@ -21,14 +21,10 @@ class organization_repository_deletion_limited(Check):
 
             if members_can_delete is False:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Organization {org.name} restricts repository deletion/transfer to trusted users."
-                )
+                report.status_extended = f"Organization {org.name} restricts repository deletion/transfer to trusted users."
             else:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Organization {org.name} allows members to delete/transfer repositories."
-                )
+                report.status_extended = f"Organization {org.name} allows members to delete/transfer repositories."
 
             findings.append(report)
 

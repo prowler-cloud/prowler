@@ -238,8 +238,8 @@ class Provider(ABC):
                         fixer_config=fixer_config,
                     )
                 elif "github" in provider_class_name.lower():
-                    orgs=[]
-                    repos=[]
+                    orgs = []
+                    repos = []
 
                     if getattr(arguments, "organization", None):
                         orgs.extend(arguments.organization)
@@ -250,8 +250,8 @@ class Provider(ABC):
                     if getattr(arguments, "repositories", None):
                         repos.extend(arguments.repositories)
 
-                    orgs=list(dict.fromkeys(orgs))
-                    repos=list(dict.fromkeys(repos))
+                    orgs = list(dict.fromkeys(orgs))
+                    repos = list(dict.fromkeys(repos))
 
                     provider_class(
                         personal_access_token=arguments.personal_access_token,
