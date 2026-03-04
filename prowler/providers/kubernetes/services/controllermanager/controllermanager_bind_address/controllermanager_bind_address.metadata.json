@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes controller manager** uses the **loopback bind address** `127.0.0.1` via `--bind-address` or `--address`, keeping its health, metrics, and debug endpoints reachable only from the host",
   "Risk": "Listening on a non-loopback address exposes **health**, **metrics**, and **debug** endpoints to the network, enabling control-plane **reconnaissance** and leakage of internal state. Heavy scraping or profiling can drive resource exhaustion, reducing control-plane **availability** and stability.",
   "RelatedUrl": "",

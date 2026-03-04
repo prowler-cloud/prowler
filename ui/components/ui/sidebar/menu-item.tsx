@@ -20,6 +20,7 @@ interface MenuItemProps {
   target?: string;
   tooltip?: string;
   isOpen: boolean;
+  highlight?: boolean;
 }
 
 export const MenuItem = ({
@@ -30,9 +31,13 @@ export const MenuItem = ({
   target,
   tooltip,
   isOpen,
+  highlight,
 }: MenuItemProps) => {
   const pathname = usePathname();
-  const isActive = active !== undefined ? active : pathname.startsWith(href);
+  // Extract only the pathname from href (without query parameters) for comparison
+  const hrefPathname = href.split("?")[0];
+  const isActive =
+    active !== undefined ? active : pathname.startsWith(hrefPathname);
 
   // Show tooltip always for Prowler Hub, or when sidebar is collapsed
   const showTooltip = label === "Prowler Hub" ? !!tooltip : !isOpen;
@@ -52,7 +57,16 @@ export const MenuItem = ({
               <span className={cn(isOpen ? "mr-4" : "")}>
                 <Icon size={18} />
               </span>
-              {isOpen && <p className="max-w-[200px] truncate">{label}</p>}
+              {isOpen && (
+                <p className="flex max-w-[200px] items-center truncate">
+                  <span>{label}</span>
+                  {highlight && (
+                    <span className="ml-2 rounded-sm bg-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                      NEW
+                    </span>
+                  )}
+                </p>
+              )}
             </div>
           </Link>
         </Button>

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:ram::account-id:user/{user-name}/accesskey/{access-key-id}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudRAMAccessKey",
+  "ResourceGroup": "IAM",
   "Description": "An **access key** consists of an access key ID and a secret, which are used to sign programmatic requests that you make to Alibaba Cloud.\n\nRAM users need their own access keys to make programmatic calls from SDKs, CLIs, or direct API calls. It is recommended that all access keys be **regularly rotated**.",
   "Risk": "Access keys might be compromised by leaving them in code, configuration files, on-premise and cloud storages, and then stolen by attackers.\n\n**Rotating access keys** reduces the window of opportunity for a compromised access key to be used.",
   "RelatedUrl": "",

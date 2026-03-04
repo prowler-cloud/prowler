@@ -1,29 +1,34 @@
 {
   "Provider": "gcp",
   "CheckID": "apikeys_key_exists",
-  "CheckTitle": "Ensure API Keys Only Exist for Active Services",
+  "CheckTitle": "Project has no active API keys",
   "CheckType": [],
   "ServiceName": "apikeys",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "API Key",
-  "Description": "API Keys should only be used for services in cases where other authentication methods are unavailable. Unused keys with their permissions in tact may still exist within a project. Keys are insecure because they can be viewed publicly, such as from within a browser, or they can be accessed on a device where the key resides. It is recommended to use standard authentication flow instead.",
-  "Risk": "Security risks involved in using API-Keys appear below: API keys are simple encrypted strings, API keys do not identify the user or the application making the API request, API keys are typically accessible to clients, making it easy to discover and steal an API key.",
+  "ResourceType": "apikeys.googleapis.com/Key",
+  "Description": "Google Cloud projects are evaluated for **active API keys**. The finding indicates whether any keys exist and are enabled in the project, regardless of restrictions or usage.",
+  "Risk": "Active API keys are **bearer tokens** often exposed in clients and lack **user identity**. Compromise enables unauthorized API calls causing data exposure (C), unauthorized changes (I), quota/service exhaustion (A), and **billing abuse**. Keys can be harvested from code, logs, or intercepted requests.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/docs/authentication/api-keys"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud alpha services api-keys delete",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. In the Google Cloud Console, go to APIs & Services > Credentials\n2. In the API keys section, for each key with state Active, click its row > Delete > Confirm\n3. Repeat until no API keys remain in the project\n4. Refresh the page to verify the API keys list is empty",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "To avoid the security risk in using API keys, it is recommended to use standard authentication flow instead.",
-      "Url": "https://cloud.google.com/docs/authentication/api-keys"
+      "Text": "Prefer **service accounts** with short-lived credentials or **OAuth 2.0**, enforcing **least privilege**. *If keys are necessary*, restrict by API and application, store them in a secrets manager, rotate and revoke promptly, monitor with alerts as **defense in depth**, and remove unused keys.",
+      "Url": "https://hub.prowler.com/check/apikeys_key_exists"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "secrets"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

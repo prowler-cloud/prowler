@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:events:rule",
   "Severity": "medium",
   "ResourceType": "OciEventRule",
+  "ResourceGroup": "messaging",
   "Description": "Ensure a notification is configured for Oracle Cloud Guard problems detected",
   "Risk": "Without Cloud Guard, security threats may not be detected and remediated.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/cloud-guard/home.htm",

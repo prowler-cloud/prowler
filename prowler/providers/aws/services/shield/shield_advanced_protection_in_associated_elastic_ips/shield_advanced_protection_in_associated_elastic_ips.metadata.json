@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Eip",
+  "ResourceGroup": "network",
   "Description": "**Elastic IP addresses** are assessed for **AWS Shield Advanced** coverage by verifying they are listed as protected resources.",
   "Risk": "Without **Shield Advanced**, internet-facing EIPs are more susceptible to **DDoS**, threatening **availability** and driving **cost** spikes.\n\nVolumetric or protocol floods can saturate bandwidth or exhaust connection state, disrupting services behind the EIP and slowing incident response.",
   "RelatedUrl": "",

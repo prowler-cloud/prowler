@@ -8,11 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes Controller Manager** uses `--root-ca-file` to reference a certificate bundle so pods get a `ca.crt` for validating the API server's TLS certificate.",
   "Risk": "Without a configured root CA, pods cannot reliably verify the API server, enabling on-path spoofing. This exposes API traffic and service account tokens, allowing session hijack, data exfiltration, and malicious config changes-compromising confidentiality and integrity, and potentially disrupting availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://kubernetes.io/docs/setup/best-practices/certificates/",
     "https://kubernetes.io/docs/setup/best-practices/certificates/#certificate-paths"
   ],
   "Remediation": {

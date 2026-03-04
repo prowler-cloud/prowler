@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesKubelet",
+  "ResourceGroup": "container",
   "Description": "This check ensures that each Kubelet is configured with a TLS certificate and private key for secure connections. These settings are crucial for preventing man-in-the-middle attacks and ensuring secure communication between the apiserver and kubelets.",
   "Risk": "Not setting the kubelet's TLS certificate and private key can expose the node to security vulnerabilities and interception of sensitive data.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/",

@@ -8,12 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes controller manager** configuration includes the `RotateKubeletServerCertificate=true` feature gate for automatic rotation of **kubelet server certificates**",
   "Risk": "Without **certificate rotation**, kubelet HTTPS endpoints can use expired or long-lived certs, triggering TLS failures and operational gaps. Teams may bypass verification, enabling **MitM** and tampering. This harms **availability** and **integrity**, and extends exposure if a private key is compromised.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://kubernetes.io/docs/tasks/tls/certificate-rotation/#understanding-the-certificate-rotation-configuration",
-    "https://kubernetes.io/docs/tasks/tls/certificate-rotation/"
+    "https://kubernetes.io/docs/tasks/tls/certificate-rotation/#understanding-the-certificate-rotation-configuration"
   ],
   "Remediation": {
     "Code": {

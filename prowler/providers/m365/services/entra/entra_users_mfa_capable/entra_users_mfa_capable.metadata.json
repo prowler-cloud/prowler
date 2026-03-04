@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
   "Description": "Ensure all users are being registered and enabled for multifactor authentication.",
   "Risk": "Users who are not MFA capable are more vulnerable to account compromise, as they may rely solely on single-factor authentication (typically a password), which can be easily phished or cracked.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mfa-howitworks",

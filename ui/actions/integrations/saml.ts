@@ -210,7 +210,7 @@ export const initiateSamlAuth = async (email: string) => {
         errorData.errors?.[0]?.detail ||
         "An error occurred during SAML authentication.",
     };
-  } catch (error) {
+  } catch (_error) {
     return {
       success: false,
       error: "Failed to connect to authentication service.",

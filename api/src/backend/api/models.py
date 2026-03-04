@@ -12,13 +12,15 @@ from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
-from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.indexes import GinIndex, OpClass
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Q
+from django.db.models.functions import Upper
+from django.utils import timezone as django_timezone
 from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
@@ -288,6 +290,9 @@ class Provider(RowLevelSecurityProtectedModel):
         IAC = "iac", _("IaC")
         ORACLECLOUD = "oraclecloud", _("Oracle Cloud Infrastructure")
         ALIBABACLOUD = "alibabacloud", _("Alibaba Cloud")
+        CLOUDFLARE = "cloudflare", _("Cloudflare")
+        OPENSTACK = "openstack", _("OpenStack")
+        IMAGE = "image", _("Image")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -326,10 +331,13 @@ class Provider(RowLevelSecurityProtectedModel):
 
     @staticmethod
     def validate_gcp_uid(value):
-        if not re.match(r"^[a-z][a-z0-9-]{5,29}$", value):
+        # Standard format: 6-30 chars, starts with letter, lowercase + digits + hyphens
+        # Legacy App Engine format: domain.com:project-id
+        if not re.match(r"^([a-z][a-z0-9.-]*:)?[a-z][a-z0-9-]{5,29}$", value):
             raise ModelValidationError(
-                detail="GCP provider ID must be 6 to 30 characters, start with a letter, and contain only lowercase "
-                "letters, numbers, and hyphens.",
+                detail="GCP provider ID must be a valid project ID: 6 to 30 characters, start with a letter, "
+                "and contain only lowercase letters, numbers, and hyphens. "
+                "Legacy App Engine project IDs with a domain prefix (e.g., example.com:my-project) are also accepted.",
                 code="gcp-uid",
                 pointer="/data/attributes/uid",
             )
@@ -398,6 +406,33 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="Alibaba Cloud account ID must be exactly 16 digits.",
                 code="alibabacloud-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_cloudflare_uid(value):
+        if not re.match(r"^[a-f0-9]{32}$", value):
+            raise ModelValidationError(
+                detail="Cloudflare Account ID must be a 32-character hexadecimal string.",
+                code="cloudflare-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_openstack_uid(value):
+        if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,254}$", value):
+            raise ModelValidationError(
+                detail="OpenStack provider ID must be a valid project ID (UUID or project name).",
+                code="openstack-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_image_uid(value):
+        if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9._/:@-]{2,249}$", value):
+            raise ModelValidationError(
+                detail="Image provider ID must be a valid container image reference.",
+                code="image-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -626,6 +661,85 @@ class Scan(RowLevelSecurityProtectedModel):
         resource_name = "scans"
 
 
+class AttackPathsScan(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
+    progress = models.IntegerField(default=0)
+    graph_data_ready = models.BooleanField(default=False)
+
+    # Timing
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    duration = models.IntegerField(
+        null=True, blank=True, help_text="Duration in seconds"
+    )
+
+    # Relationship to the provider and optional prowler Scan and celery Task
+    provider = models.ForeignKey(
+        "Provider",
+        on_delete=models.CASCADE,
+        related_name="attack_paths_scans",
+        related_query_name="attack_paths_scan",
+    )
+    scan = models.ForeignKey(
+        "Scan",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="attack_paths_scans",
+        related_query_name="attack_paths_scan",
+    )
+    task = models.ForeignKey(
+        "Task",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="attack_paths_scans",
+        related_query_name="attack_paths_scan",
+    )
+
+    # Cartography specific metadata
+    update_tag = models.BigIntegerField(
+        null=True, blank=True, help_text="Cartography update tag (epoch)"
+    )
+    ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "attack_paths_scans"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "provider_id", "-inserted_at"],
+                name="aps_prov_ins_desc_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "state", "-inserted_at"],
+                name="aps_state_ins_desc_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="aps_scan_lookup_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-scans"
+
+
 class ResourceTag(RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -645,10 +759,6 @@ class ResourceTag(RowLevelSecurityProtectedModel):
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "resource_tags"
-
-        indexes = [
-            GinIndex(fields=["text_search"], name="gin_resource_tags_search_idx"),
-        ]
 
         constraints = [
             models.UniqueConstraint(
@@ -704,6 +814,12 @@ class Resource(RowLevelSecurityProtectedModel):
     metadata = models.TextField(blank=True, null=True)
     details = models.TextField(blank=True, null=True)
     partition = models.TextField(blank=True, null=True)
+    groups = ArrayField(
+        models.CharField(max_length=100),
+        blank=True,
+        null=True,
+        help_text="Groups for categorization (e.g., compute, storage, IAM)",
+    )
 
     failed_findings_count = models.IntegerField(default=0)
 
@@ -751,6 +867,15 @@ class Resource(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "service", "region", "type"],
                 name="resource_tenant_metadata_idx",
+            ),
+            # icontains compiles to UPPER(field) LIKE, so index the same expression
+            GinIndex(
+                OpClass(Upper("uid"), name="gin_trgm_ops"),
+                name="res_uid_trgm_idx",
+            ),
+            GinIndex(
+                OpClass(Upper("name"), name="gin_trgm_ops"),
+                name="res_name_trgm_idx",
             ),
             GinIndex(fields=["text_search"], name="gin_resources_search_idx"),
             models.Index(fields=["tenant_id", "id"], name="resources_tenant_id_idx"),
@@ -890,6 +1015,11 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
         null=True,
         help_text="Categories from check metadata for efficient filtering",
     )
+    resource_groups = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Resource group from check metadata for efficient filtering",
+    )
 
     # Relationships
     scan = models.ForeignKey(to=Scan, related_name="findings", on_delete=models.CASCADE)
@@ -932,23 +1062,23 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
 
         indexes = [
             models.Index(fields=["tenant_id", "id"], name="findings_tenant_and_id_idx"),
-            GinIndex(fields=["text_search"], name="gin_findings_search_idx"),
             models.Index(fields=["tenant_id", "scan_id"], name="find_tenant_scan_idx"),
             models.Index(
                 fields=["tenant_id", "scan_id", "id"], name="find_tenant_scan_id_idx"
             ),
             models.Index(
-                fields=["tenant_id", "id"],
-                condition=Q(delta="new"),
-                name="find_delta_new_idx",
+                condition=models.Q(status=StatusChoices.FAIL, delta="new"),
+                fields=["tenant_id", "scan_id"],
+                name="find_tenant_scan_fail_new_idx",
             ),
             models.Index(
                 fields=["tenant_id", "uid", "-inserted_at"],
                 name="find_tenant_uid_inserted_idx",
             ),
-            GinIndex(fields=["resource_services"], name="gin_find_service_idx"),
-            GinIndex(fields=["resource_regions"], name="gin_find_region_idx"),
-            GinIndex(fields=["resource_types"], name="gin_find_rtype_idx"),
+            models.Index(
+                fields=["tenant_id", "check_id", "inserted_at"],
+                name="find_tenant_check_ins_idx",
+            ),
             models.Index(
                 fields=["tenant_id", "scan_id", "check_id"],
                 name="find_tenant_scan_check_idx",
@@ -1016,10 +1146,6 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
         #   - id
 
         indexes = [
-            models.Index(
-                fields=["tenant_id", "finding_id"],
-                name="rfm_tenant_finding_idx",
-            ),
             models.Index(
                 fields=["tenant_id", "resource_id"],
                 name="rfm_tenant_resource_idx",
@@ -1336,14 +1462,6 @@ class ComplianceOverview(RowLevelSecurityProtectedModel):
                 statements=["SELECT", "INSERT", "DELETE"],
             ),
         ]
-        indexes = [
-            models.Index(fields=["compliance_id"], name="comp_ov_cp_id_idx"),
-            models.Index(fields=["requirements_failed"], name="comp_ov_req_fail_idx"),
-            models.Index(
-                fields=["compliance_id", "requirements_failed"],
-                name="comp_ov_cp_id_req_fail_idx",
-            ),
-        ]
 
     class JSONAPIMeta:
         resource_name = "compliance-overviews"
@@ -1510,10 +1628,6 @@ class ScanSummary(RowLevelSecurityProtectedModel):
                 name="scan_summaries_tenant_scan_idx",
             ),
             models.Index(
-                fields=["tenant_id", "scan_id", "service"],
-                name="ss_tenant_scan_service_idx",
-            ),
-            models.Index(
                 fields=["tenant_id", "scan_id", "severity"],
                 name="ss_tenant_scan_severity_idx",
             ),
@@ -1580,6 +1694,89 @@ class DailySeveritySummary(RowLevelSecurityProtectedModel):
                 name="dss_tenant_provider_idx",
             ),
         ]
+
+
+class FindingGroupDailySummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated daily finding counts per check_id per provider.
+    Used by finding-groups endpoint for efficient queries over date ranges.
+
+    Instead of aggregating millions of findings on-the-fly, we pre-compute
+    daily summaries and re-aggregate them when querying date ranges.
+    This reduces query complexity from O(findings) to O(days × checks × providers).
+    """
+
+    objects = ActiveProviderManager()
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(default=django_timezone.now, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    check_id = models.CharField(max_length=255, db_index=True)
+
+    # Provider FK for filtering by specific provider
+    provider = models.ForeignKey(
+        "Provider",
+        on_delete=models.CASCADE,
+        related_name="finding_group_summaries",
+    )
+
+    # Check metadata (denormalized for performance)
+    check_title = models.CharField(max_length=500, blank=True, null=True)
+    check_description = models.TextField(blank=True, null=True)
+
+    # Severity stored as integer for MAX aggregation (5=critical, 4=high, etc.)
+    severity_order = models.SmallIntegerField(default=1)
+
+    # Finding counts
+    pass_count = models.IntegerField(default=0)
+    fail_count = models.IntegerField(default=0)
+    muted_count = models.IntegerField(default=0)
+
+    # Delta counts
+    new_count = models.IntegerField(default=0)
+    changed_count = models.IntegerField(default=0)
+
+    # Resource counts
+    resources_fail = models.IntegerField(default=0)
+    resources_total = models.IntegerField(default=0)
+
+    # Timing
+    first_seen_at = models.DateTimeField(null=True, blank=True)
+    last_seen_at = models.DateTimeField(null=True, blank=True)
+    failing_since = models.DateTimeField(null=True, blank=True)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "finding_group_daily_summaries"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "provider", "check_id", "inserted_at"),
+                name="unique_finding_group_daily_summary",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "inserted_at"],
+                name="fgds_tenant_inserted_at_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "check_id", "inserted_at"],
+                name="fgds_tenant_chk_ins_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "provider", "inserted_at"],
+                name="fgds_tenant_prov_ins_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "finding-group-daily-summaries"
 
 
 class Integration(RowLevelSecurityProtectedModel):
@@ -1927,7 +2124,7 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
 
 class ResourceScanSummary(RowLevelSecurityProtectedModel):
     scan_id = models.UUIDField(default=uuid7, db_index=True)
-    resource_id = models.UUIDField(default=uuid4, db_index=True)
+    resource_id = models.UUIDField(default=uuid4)
     service = models.CharField(max_length=100)
     region = models.CharField(max_length=100)
     resource_type = models.CharField(max_length=100)
@@ -2030,6 +2227,67 @@ class ScanCategorySummary(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "scan-category-summaries"
+
+
+class ScanGroupSummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated resource group metrics per scan by severity.
+
+    Stores one row per (resource_group, severity) combination per scan for efficient
+    overview queries. Resource groups come from check_metadata.Group.
+
+    Count relationships (each is a subset of the previous):
+        - total_findings >= failed_findings >= new_failed_findings
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="resource_group_summaries",
+        related_query_name="resource_group_summary",
+    )
+
+    resource_group = models.CharField(max_length=50)
+    severity = SeverityEnumField(choices=SeverityChoices)
+
+    total_findings = models.IntegerField(
+        default=0, help_text="Non-muted findings (PASS + FAIL)"
+    )
+    failed_findings = models.IntegerField(
+        default=0, help_text="Non-muted FAIL findings (subset of total_findings)"
+    )
+    new_failed_findings = models.IntegerField(
+        default=0,
+        help_text="Non-muted FAIL with delta='new' (subset of failed_findings)",
+    )
+    resources_count = models.IntegerField(
+        default=0, help_text="Count of distinct resource_uid values"
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "scan_resource_group_summaries"
+
+        indexes = [
+            models.Index(fields=["tenant_id", "scan"], name="srgs_tenant_scan_idx"),
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "scan_id", "resource_group", "severity"),
+                name="unique_resource_group_severity_per_scan",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "scan-resource-group-summaries"
 
 
 class LighthouseConfiguration(RowLevelSecurityProtectedModel):
@@ -2605,3 +2863,92 @@ class AttackSurfaceOverview(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "attack-surface-overviews"
+
+
+class ProviderComplianceScore(RowLevelSecurityProtectedModel):
+    """
+    Compliance requirement status from latest completed scan per provider.
+
+    Used for efficient compliance watchlist queries with FAIL-dominant aggregation
+    across multiple providers. Updated via atomic upsert after each scan completion.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="compliance_scores",
+        related_query_name="compliance_score",
+    )
+
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="compliance_scores",
+        related_query_name="compliance_score",
+    )
+
+    compliance_id = models.TextField()
+    requirement_id = models.TextField()
+    requirement_status = StatusEnumField(choices=StatusChoices)
+
+    scan_completed_at = models.DateTimeField()
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "provider_compliance_scores"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "provider_id", "compliance_id", "requirement_id"),
+                name="unique_provider_compliance_req",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "provider_id", "compliance_id"],
+                name="pcs_tenant_prov_comp_idx",
+            ),
+        ]
+
+
+class TenantComplianceSummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated compliance counts per tenant with FAIL-dominant logic applied.
+
+    One row per (tenant, compliance_id). Used for fast watchlist queries when
+    no provider filter is applied. Recalculated after each scan by aggregating
+    across all providers with FAIL-dominant logic at requirement level.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
+    compliance_id = models.TextField()
+
+    requirements_passed = models.IntegerField(default=0)
+    requirements_failed = models.IntegerField(default=0)
+    requirements_manual = models.IntegerField(default=0)
+    total_requirements = models.IntegerField(default=0)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "tenant_compliance_summaries"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "compliance_id"),
+                name="unique_tenant_compliance_summary",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]

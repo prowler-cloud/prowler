@@ -8,16 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes Controller Manager** is evaluated for the `--profiling` argument. `--profiling=false` disables runtime profiling; absence or a different value means profiling is enabled.",
   "Risk": "With profiling enabled, debug endpoints expose **runtime internals** (stacks, memory, file paths), weakening confidentiality. Abusing profiling can raise CPU/memory use and degrade **availability**. Detailed insights accelerate reconnaissance and can aid escalation when combined with RBAC gaps.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://hub.armosec.io/docs/c-0145",
-    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options",
-    "https://docs.kics.io/1.7.2/queries/kubernetes-queries/2f491173-6375-4a84-b28e-a4e2b9a58a69/",
-    "https://www.nbtechsupport.co.in/2024/05/kodekloud-kubernetes-security-cks-lab.html",
-    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/",
-    "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-profiling-argument-is-set-to-false/"
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options"
   ],
   "Remediation": {
     "Code": {

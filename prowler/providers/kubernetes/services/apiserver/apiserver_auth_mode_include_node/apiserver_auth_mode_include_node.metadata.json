@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
+  "ResourceGroup": "container",
   "Description": "This check ensures that the Kubernetes API server is configured to include 'Node' in its --authorization-mode argument. This mode restricts kubelets to only read objects associated with their nodes, enhancing security.",
   "Risk": "If the Node authorization mode is not included, kubelets may have broader access than necessary, which can pose a security risk.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/node/",

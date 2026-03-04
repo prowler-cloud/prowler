@@ -8,16 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
-  "Description": "**kube-controller-manager** terminated Pod garbage collection threshold is evaluated. The finding highlights use of the default `--terminated-pod-gc-threshold=12500` instead of a value tuned to cluster size and workload churn. The threshold controls when terminated Pods are automatically removed.",
+  "ResourceGroup": "container",
+  "Description": "**Kubernetes controller manager** terminated Pod garbage collection threshold is evaluated. The finding highlights use of the default `--terminated-pod-gc-threshold=12500` instead of a value tuned to cluster size and workload churn. The threshold controls when terminated Pods are automatically removed.",
   "Risk": "Retaining too many terminated Pods strains **API server**, **etcd**, and controller memory, reducing control-plane **availability**. Effects include slow list/watch operations, lagging schedulers, timeouts, and, in worst cases, controller crashes or admin-plane DoS.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://github.com/kubernetes/kubernetes/issues/25831",
-    "https://docs.kics.io/1.7.2/queries/kubernetes-queries/49113af4-29ca-458e-b8d4-724c01a4a24f/",
     "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-garbage-collection",
-    "https://issuetracker.google.com/issues/172663707?pli=1",
-    "https://stackoverflow.com/questions/75374590/why-kubernetes-keeps-pods-in-error-completed-status-preemptible-nodes-gke",
-    "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/kubernetes-policies/kubernetes-policy-index/ensure-that-the-terminated-pod-gc-threshold-argument-is-set-as-appropriate",
     "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/"
   ],
   "Remediation": {

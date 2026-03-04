@@ -5,8 +5,8 @@ import { useState } from "react";
 
 import { deleteSamlConfig } from "@/actions/integrations";
 import { Button } from "@/components/shadcn";
+import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
-import { CustomAlertModal } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 
 import { Card, CardContent, CardHeader } from "../../shadcn";
@@ -53,8 +53,8 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
   return (
     <>
       {/* Configure SAML Modal */}
-      <CustomAlertModal
-        isOpen={isSamlModalOpen}
+      <Modal
+        open={isSamlModalOpen}
         onOpenChange={setIsSamlModalOpen}
         title="Configure SAML SSO"
       >
@@ -62,11 +62,11 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
           setIsOpen={setIsSamlModalOpen}
           samlConfig={samlConfig}
         />
-      </CustomAlertModal>
+      </Modal>
 
       {/* Delete Confirmation Modal */}
-      <CustomAlertModal
-        isOpen={isDeleteModalOpen}
+      <Modal
+        open={isDeleteModalOpen}
         onOpenChange={setIsDeleteModalOpen}
         title="Remove SAML Configuration"
         size="md"
@@ -98,7 +98,7 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
             </Button>
           </div>
         </div>
-      </CustomAlertModal>
+      </Modal>
 
       <Card variant="base" padding="lg">
         <CardHeader>
