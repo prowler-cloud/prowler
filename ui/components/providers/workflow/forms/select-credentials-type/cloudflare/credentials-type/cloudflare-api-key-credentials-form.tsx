@@ -2,7 +2,7 @@
 
 import { Control } from "react-hook-form";
 
-import { CustomInput } from "@/components/ui/custom";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { CloudflareApiKeyCredentials } from "@/types";
 
@@ -22,7 +22,7 @@ export const CloudflareApiKeyCredentialsForm = ({
           associated with your Cloudflare account.
         </div>
       </div>
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.CLOUDFLARE_API_EMAIL}
         type="text"
@@ -32,7 +32,7 @@ export const CloudflareApiKeyCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.CLOUDFLARE_API_KEY}
         type="password"

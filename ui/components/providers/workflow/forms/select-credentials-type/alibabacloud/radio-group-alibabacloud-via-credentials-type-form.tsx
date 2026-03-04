@@ -1,9 +1,8 @@
 "use client";
 
-import { RadioGroup } from "@heroui/radio";
 import { Control, Controller, FieldValues, Path } from "react-hook-form";
 
-import { CustomRadio } from "@/components/ui/custom";
+import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
 import { FormMessage } from "@/components/ui/form";
 
 type RadioGroupAlibabaCloudViaCredentialsFormProps<T extends FieldValues> = {
@@ -25,47 +24,49 @@ export const RadioGroupAlibabaCloudViaCredentialsTypeForm = <
     <Controller
       name={"alibabacloudCredentialsType" as Path<T>}
       control={control}
-      render={({ field }) => (
-        <>
-          <RadioGroup
-            className="flex flex-wrap"
-            isInvalid={isInvalid}
-            {...field}
-            value={field.value || ""}
-            onValueChange={(value) => {
-              field.onChange(value);
-              if (onChange) {
-                onChange(value);
-              }
-            }}
-          >
+      render={({ field }) => {
+        const currentValue = String(field.value ?? "");
+
+        return (
+          <>
             <div className="flex flex-col gap-4">
               <span className="text-default-500 text-sm">Using RAM Role</span>
-              <CustomRadio description="Connect assuming RAM Role" value="role">
-                <div className="flex items-center">
-                  <span className="ml-2">Connect assuming RAM Role</span>
-                </div>
-              </CustomRadio>
+              <WizardRadioCard
+                name={field.name}
+                value="role"
+                checked={currentValue === "role"}
+                isInvalid={isInvalid}
+                onChange={(value) => {
+                  field.onChange(value);
+                  onChange?.(value);
+                }}
+              >
+                Connect assuming RAM Role
+              </WizardRadioCard>
               <span className="text-default-500 text-sm">
                 Using Credentials
               </span>
-              <CustomRadio
-                description="Connect via Access Keys"
+              <WizardRadioCard
+                name={field.name}
                 value="credentials"
+                checked={currentValue === "credentials"}
+                isInvalid={isInvalid}
+                onChange={(value) => {
+                  field.onChange(value);
+                  onChange?.(value);
+                }}
               >
-                <div className="flex items-center">
-                  <span className="ml-2">Connect via Access Keys</span>
-                </div>
-              </CustomRadio>
+                Connect via Access Keys
+              </WizardRadioCard>
             </div>
-          </RadioGroup>
-          {errorMessage && (
-            <FormMessage className="text-text-error">
-              {errorMessage}
-            </FormMessage>
-          )}
-        </>
-      )}
+            {errorMessage && (
+              <FormMessage className="text-text-error">
+                {errorMessage}
+              </FormMessage>
+            )}
+          </>
+        );
+      }}
     />
   );
 };

@@ -1,10 +1,8 @@
 "use client";
 
-import { RadioGroup } from "@heroui/radio";
-import React from "react";
 import { Control, Controller } from "react-hook-form";
 
-import { CustomRadio } from "@/components/ui/custom";
+import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
 import { FormMessage } from "@/components/ui/form";
 
 type RadioGroupM365ViaCredentialsFormProps = {
@@ -26,40 +24,35 @@ export const RadioGroupM365ViaCredentialsTypeForm = ({
       control={control}
       render={({ field }) => (
         <>
-          <RadioGroup
-            className="flex flex-wrap"
-            isInvalid={isInvalid}
-            {...field}
-            value={field.value || ""}
-            onValueChange={(value) => {
-              field.onChange(value);
-              if (onChange) {
-                onChange(value);
-              }
-            }}
-          >
-            <div className="flex flex-col gap-4">
-              <span className="text-default-500 text-sm">
-                Select Authentication Method
-              </span>
-              <CustomRadio
-                description="Connect using Application Client Secret"
-                value="app_client_secret"
-              >
-                <div className="flex items-center">
-                  <span className="ml-2">App Client Secret Credentials</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio
-                description="Connect using Application Certificate"
-                value="app_certificate"
-              >
-                <div className="flex items-center">
-                  <span className="ml-2">App Certificate Credentials</span>
-                </div>
-              </CustomRadio>
-            </div>
-          </RadioGroup>
+          <div className="flex flex-col gap-4">
+            <span className="text-default-500 text-sm">
+              Select Authentication Method
+            </span>
+            <WizardRadioCard
+              name={field.name}
+              value="app_client_secret"
+              checked={(field.value || "") === "app_client_secret"}
+              isInvalid={isInvalid}
+              onChange={(value) => {
+                field.onChange(value);
+                onChange?.(value);
+              }}
+            >
+              App Client Secret Credentials
+            </WizardRadioCard>
+            <WizardRadioCard
+              name={field.name}
+              value="app_certificate"
+              checked={(field.value || "") === "app_certificate"}
+              isInvalid={isInvalid}
+              onChange={(value) => {
+                field.onChange(value);
+                onChange?.(value);
+              }}
+            >
+              App Certificate Credentials
+            </WizardRadioCard>
+          </div>
           {errorMessage && (
             <FormMessage className="text-text-error">
               {errorMessage}

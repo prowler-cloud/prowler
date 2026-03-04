@@ -1,10 +1,8 @@
 "use client";
 
-import { RadioGroup } from "@heroui/radio";
-import React from "react";
 import { Control, Controller } from "react-hook-form";
 
-import { CustomRadio } from "@/components/ui/custom";
+import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
 import { FormMessage } from "@/components/ui/form";
 
 type RadioGroupAWSViaCredentialsFormProps = {
@@ -26,45 +24,38 @@ export const RadioGroupGCPViaCredentialsTypeForm = ({
       control={control}
       render={({ field }) => (
         <>
-          <RadioGroup
-            className="flex flex-wrap"
-            isInvalid={isInvalid}
-            {...field}
-            value={field.value || ""}
-            onValueChange={(value) => {
-              field.onChange(value);
-              if (onChange) {
-                onChange(value);
-              }
-            }}
-          >
-            <div className="flex flex-col gap-4">
-              <span className="text-default-500 text-sm">
-                Using Service Account
-              </span>
-              <CustomRadio
-                description="Connect using Service Account"
-                value="service-account"
-              >
-                <div className="flex items-center">
-                  <span className="ml-2">Connect via Service Account Key</span>
-                </div>
-              </CustomRadio>
-              <span className="text-default-500 text-sm">
-                Using Application Default Credentials
-              </span>
-              <CustomRadio
-                description="Connect via Credentials"
-                value="credentials"
-              >
-                <div className="flex items-center">
-                  <span className="ml-2">
-                    Connect via Application Default Credentials
-                  </span>
-                </div>
-              </CustomRadio>
-            </div>
-          </RadioGroup>
+          <div className="flex flex-col gap-4">
+            <span className="text-default-500 text-sm">
+              Using Service Account
+            </span>
+            <WizardRadioCard
+              name={field.name}
+              value="service-account"
+              checked={(field.value || "") === "service-account"}
+              isInvalid={isInvalid}
+              onChange={(value) => {
+                field.onChange(value);
+                onChange?.(value);
+              }}
+            >
+              Connect via Service Account Key
+            </WizardRadioCard>
+            <span className="text-default-500 text-sm">
+              Using Application Default Credentials
+            </span>
+            <WizardRadioCard
+              name={field.name}
+              value="credentials"
+              checked={(field.value || "") === "credentials"}
+              isInvalid={isInvalid}
+              onChange={(value) => {
+                field.onChange(value);
+                onChange?.(value);
+              }}
+            >
+              Connect via Application Default Credentials
+            </WizardRadioCard>
+          </div>
           {errorMessage && (
             <FormMessage className="text-text-error">
               {errorMessage}
