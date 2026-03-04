@@ -9,16 +9,11 @@
   "Severity": "high",
   "ResourceType": "Node",
   "ResourceGroup": "container",
-  "Description": "**Kubelet service configuration** on each node is expected to be owned by **root**. This assessment inspects the systemd drop-in at `/etc/systemd/system/kubelet.service.d/kubeadm.conf` and expects ownership `root:root`, ensuring only privileged users can modify kubelet startup settings.",
+  "Description": "**Kubernetes Kubelet service configuration** on each node is expected to be owned by **root**. This assessment inspects the systemd drop-in at `/etc/systemd/system/kubelet.service.d/kubeadm.conf` and expects ownership `root:root`, ensuring only privileged users can modify kubelet startup settings.",
   "Risk": "Non-root ownership enables unauthorized changes to kubelet startup flags, degrading configuration **integrity** and service **availability**. Attackers could disable auth, expose ports, weaken TLS, or load rogue configs-leading to node compromise, credential theft (**confidentiality**), lateral movement, and cluster disruption.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/kubelet-integration/",
-    "https://docs.k0sproject.io/v1.22.4+k0s.2/cis_benchmark/",
-    "https://schoenwald.aero/posts/2025-03-12_cis-benchmark-for-kubernetes/",
-    "https://vltraheaven.io/img/CIS_Kubernetes_Benchmark_v1.6.0.pdf",
-    "https://learn.microsoft.com/en-us/azure/aks/cis-kubernetes",
-    "https://docs.cloud.google.com/kubernetes-engine/distributed-cloud/bare-metal/docs/concepts/cis-benchmarks",
     "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-config/"
   ],
   "Remediation": {

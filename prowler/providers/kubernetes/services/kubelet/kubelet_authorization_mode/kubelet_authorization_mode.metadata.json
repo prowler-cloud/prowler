@@ -9,14 +9,12 @@
   "Severity": "high",
   "ResourceType": "ConfigMap",
   "ResourceGroup": "container",
-  "Description": "**Kubelet** authorization configuration is inspected to confirm the mode is not `AlwaysAllow`.\n\n*If authorization settings are absent, the effective mode requires manual verification.*",
+  "Description": "**Kubernetes Kubelet** authorization configuration is inspected to confirm the mode is not `AlwaysAllow`.\n\n*If authorization settings are absent, the effective mode requires manual verification.*",
   "Risk": "With `AlwaysAllow`, any authenticated user (or anonymous if enabled) can call **kubelet APIs**. This enables reading logs and stats, running `exec`, or disrupting pods, leading to takeover, data exfiltration, and node abuse, degrading **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://kubernetes.io/zh/docs/reference/command-line-tools-reference/kubelet/",
     "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
     "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/",
-    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/#kubelet-authorization",
     "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/"
   ],
   "Remediation": {

@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "Node",
   "ResourceGroup": "container",
-  "Description": "**Kubelet kubeconfig** at `/etc/kubernetes/kubelet.conf` must have **owner-only** permissions (`0600` or stricter). The check evaluates the file mode to ensure it is not more permissive than `0600`.",
+  "Description": "**Kubernetes Kubelet kubeconfig** at `/etc/kubernetes/kubelet.conf` must have **owner-only** permissions (`0600` or stricter). The check evaluates the file mode to ensure it is not more permissive than `0600`.",
   "Risk": "**Overly permissive `kubelet.conf`** exposes kubelet credentials, allowing local users or malware to act as the node.\n- Integrity: modify workloads or node state\n- Confidentiality: access secrets/metadata\n- Availability: disrupt scheduling or drain nodes",
   "RelatedUrl": "",
   "AdditionalURLs": [

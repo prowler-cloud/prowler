@@ -9,13 +9,11 @@
   "Severity": "high",
   "ResourceType": "Node",
   "ResourceGroup": "container",
-  "Description": "**Kubelet service file** on worker nodes is assessed for restrictive permissions of `600` or tighter. The evaluation reviews the kubelet systemd drop-in configuration to confirm only the owner has read/write access and no broader permissions are granted.",
+  "Description": "**Kubernetes Kubelet service file** on worker nodes is assessed for restrictive permissions of `600` or tighter. The evaluation reviews the kubelet systemd drop-in configuration to confirm only the owner has read/write access and no broader permissions are granted.",
   "Risk": "Excess permissions let local users alter kubelet startup options, undermining **integrity** and **availability**. Attackers could enable insecure ports, weaken auth/TLS, or inject flags, leading to node compromise, pod tampering, and **lateral movement** that threatens cluster **confidentiality**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://paper.bobylive.com/Security/CIS/CIS-Kubernetes-Benchmark-V1_23--PDF.pdf",
     "https://support.icompaas.com/support/solutions/articles/62000234693-ensure-that-the-kubelet-service-file-permissions-are-set-to-600-or-more-restrictive",
-    "https://www.cnblogs.com/lldhsds/p/18246352",
     "https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/#44-joining-your-nodes",
     "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-config/"
   ],

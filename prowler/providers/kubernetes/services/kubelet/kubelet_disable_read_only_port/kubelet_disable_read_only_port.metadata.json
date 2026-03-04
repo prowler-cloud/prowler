@@ -9,12 +9,11 @@
   "Severity": "medium",
   "ResourceType": "ConfigMap",
   "ResourceGroup": "container",
-  "Description": "**Kubelet** configuration is inspected for the `readOnlyPort` setting and whether it is set to `0` to disable the unauthenticated HTTP endpoint.",
+  "Description": "**Kubernetes Kubelet** configuration is inspected for the `readOnlyPort` setting and whether it is set to `0` to disable the unauthenticated HTTP endpoint.",
   "Risk": "An open **kubelet read-only port** allows unauthenticated queries to node and pod metadata and metrics, causing **information disclosure**. Attackers can map workloads, discover endpoints, and prepare **lateral movement**, undermining **confidentiality** and enabling targeted exploitation of weak configurations.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
-    "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options"
+    "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/"
   ],
   "Remediation": {
     "Code": {

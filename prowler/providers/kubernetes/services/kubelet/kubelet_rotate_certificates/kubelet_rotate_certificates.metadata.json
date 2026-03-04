@@ -9,17 +9,12 @@
   "Severity": "high",
   "ResourceType": "ConfigMap",
   "ResourceGroup": "container",
-  "Description": "**Kubelet** configuration is inspected for client TLS credential rotation. The finding determines whether `rotateCertificates` is enabled so kubelets automatically renew the client certificates they use to authenticate to the API server.",
+  "Description": "**Kubernetes Kubelet** configuration is inspected for client TLS credential rotation. The finding determines whether `rotateCertificates` is enabled so kubelets automatically renew the client certificates they use to authenticate to the API server.",
   "Risk": "Without rotation, kubelet client certs can expire, breaking authentication to the API server and making nodes NotReady, disrupting scheduling and operations (**availability**). Long-lived certs also widen exposure if keys leak, risking unauthorized access (**integrity**, **confidentiality**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/",
-    "https://suraj.io/post/add-new-k8s-node-cert-rotate/",
-    "https://github.com/SUSE/kucero",
-    "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/",
-    "https://docs.datadoghq.com/security/default_rules/vc8-r6d-eye/",
-    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/#certificate-rotation",
-    "https://www.outofmemory.info/tanzu/vsphere-with-tanzu/cluster-lifecycle-management/tkgs-certificate-rotation/"
+    "https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/"
   ],
   "Remediation": {
     "Code": {

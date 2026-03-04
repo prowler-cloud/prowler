@@ -9,12 +9,11 @@
   "Severity": "high",
   "ResourceType": "ConfigMap",
   "ResourceGroup": "container",
-  "Description": "**Kubelet** configuration includes a TLS serving certificate and private key defined by `tlsCertFile` and `tlsPrivateKeyFile` to secure its HTTPS endpoint.",
+  "Description": "**Kubernetes Kubelet** configuration includes a TLS serving certificate and private key defined by `tlsCertFile` and `tlsPrivateKeyFile` to secure its HTTPS endpoint.",
   "Risk": "Without a verifiable TLS serving cert/key, kubelet traffic may fall back to self-signed or skipped verification, enabling **MITM** and endpoint **spoofing**. Attackers could read logs or pod data, run **exec/attach**, and alter node interactions, compromising **confidentiality** and **integrity**, and risking **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/",
-    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/#client-and-serving-certificates"
+    "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/"
   ],
   "Remediation": {
     "Code": {

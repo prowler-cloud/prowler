@@ -9,15 +9,10 @@
   "Severity": "medium",
   "ResourceType": "ConfigMap",
   "ResourceGroup": "container",
-  "Description": "**Kubelet** streaming sessions use a **non-zero idle timeout** via `streamingConnectionIdleTimeout` for `exec`, `logs`, and `port-forward` connections.\n\nAssesses whether this setting exists and is not `0`.",
+  "Description": "**Kubernetes Kubelet** streaming sessions use a **non-zero idle timeout** via `streamingConnectionIdleTimeout` for `exec`, `logs`, and `port-forward` connections.\n\nAssesses whether this setting exists and is not `0`.",
   "Risk": "With `0` (no timeout), idle `exec/logs/port-forward` streams can persist, consuming sockets, file descriptors, and memory. This enables resource exhaustion and **DoS**, degrading node **availability** and potentially disrupting workload operations and administrative access.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options",
-    "https://www.tenable.com/audits/items/CIS_Google_Kubernetes_Engine_GKE_v1.7.0_L1_Node.audit:ffa1a649283ad2518361d1ac9094fa62",
-    "https://docs.datadoghq.com/security/default_rules/rii-wmd-3qm/",
-    "https://docs.truewatch.com/scheck/0425-k8s-idle-timeout/",
-    "https://orca.security/resources/blog/kubernetes-nodes-kubelet-streaming-connection-idle-timeout-is-set-0/",
     "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/"
   ],
   "Remediation": {

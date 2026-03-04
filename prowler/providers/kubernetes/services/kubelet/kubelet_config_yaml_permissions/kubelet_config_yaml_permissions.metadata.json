@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "Node",
   "ResourceGroup": "container",
-  "Description": "**Kubelet configuration file** (`/var/lib/kubelet/config.yaml`) is evaluated for **restrictive file permissions**. When kubelet uses `--config`, the file is expected to be owner-only readable/writable (`600`) or more restrictive.",
+  "Description": "**Kubernetes Kubelet configuration file** (`/var/lib/kubelet/config.yaml`) is evaluated for **restrictive file permissions**. When kubelet uses `--config`, the file is expected to be owner-only readable/writable (`600`) or more restrictive.",
   "Risk": "Overly permissive kubelet config permissions allow unauthorized reads or edits. Attackers could extract credentials, adjust auth settings, or change node behavior, leading to data exposure (C), configuration tampering (I), and potential service disruption (A).",
   "RelatedUrl": "",
   "AdditionalURLs": [
