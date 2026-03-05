@@ -6,7 +6,7 @@
   "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
+  "Severity": "high",
   "ResourceType": "ClusterRoleBinding",
   "ResourceGroup": "container",
   "Description": "User or group RBAC assignments that grant privileges to `create`, `update`, or `delete` `validatingwebhookconfigurations` and `mutatingwebhookconfigurations` are identified.\n\nFocus is on permissions that allow modifying **admission webhook** configuration objects.",

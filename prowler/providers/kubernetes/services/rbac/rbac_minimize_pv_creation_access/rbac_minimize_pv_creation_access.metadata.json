@@ -14,9 +14,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.radsecurity.ai/blog/what-is-kubernetes-rbac",
-    "https://kubernetes.io/docs/concepts/security/rbac-good-practices/",
-    "https://www.bogotobogo.com/DevOps/Docker/Docker_Kubernetes_PersistentVolumes_PersistentVolumeClaims.php",
-    "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#persistent-volume-creation"
+    "https://kubernetes.io/docs/concepts/security/rbac-good-practices/"
   ],
   "Remediation": {
     "Code": {

@@ -6,7 +6,7 @@
   "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
+  "Severity": "high",
   "ResourceType": "ClusterRoleBinding",
   "ResourceGroup": "security",
   "Description": "**RBAC assignments** that grant `update` or `patch` on the `certificatesigningrequests/approval` subresource to **users or groups** via cluster-wide roles and bindings.\n\nThis highlights principals allowed to approve CSRs based on permissions defined in referenced ClusterRoles.",

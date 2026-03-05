@@ -13,13 +13,8 @@
   "Risk": "Overly broad pod-creation rights allow adversaries to run **malicious pods**, mount service account tokens, or request privileged configs, enabling lateral movement. This endangers **confidentiality** (secrets), **integrity** (unauthorized changes), and **availability** (resource abuse, disruption).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://atmosly.com/blog/kubernetes-rbac-complete-authorization-guide-with-examples-2025",
     "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
-    "https://kubegrade.com/kubernetes-access-control/",
-    "https://www.paloaltonetworks.com/cyberpedia/kubernetes-security",
-    "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole",
-    "https://www.ewere.tech/blog/rbac-in-kubernetes-role-based-approach-to-regulating-access-4304a6/",
-    "https://www.linkedin.com/pulse/day2460-rbac-service-accounts-master-kubernetes-least-chikkela-twnpe"
+    "https://kubegrade.com/kubernetes-access-control/"
   ],
   "Remediation": {
     "Code": {
