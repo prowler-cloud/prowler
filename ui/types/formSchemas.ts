@@ -80,53 +80,63 @@ export const addProviderFormSchema = z
       z.object({
         providerType: z.literal("aws"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(12, "Provider ID is required"),
       }),
       z.object({
         providerType: z.literal("azure"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
         awsCredentialsType: z.string().optional(),
       }),
       z.object({
         providerType: z.literal("m365"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
       }),
       z.object({
         providerType: z.literal("gcp"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
         awsCredentialsType: z.string().optional(),
       }),
       z.object({
         providerType: z.literal("kubernetes"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
         awsCredentialsType: z.string().optional(),
       }),
       z.object({
         providerType: z.literal("github"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
       }),
       z.object({
         providerType: z.literal("iac"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
       }),
       z.object({
         providerType: z.literal("oraclecloud"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
       }),
       z.object({
         providerType: z.literal("mongodbatlas"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
       }),
       z.object({
         providerType: z.literal("alibabacloud"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
+      }),
+      z.object({
+        providerType: z.literal("cloudflare"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
+      z.object({
+        providerType: z.literal("openstack"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
       }),
@@ -259,7 +269,44 @@ export const addCredentialsFormSchema = (
                                   .string()
                                   .min(1, "Access Key Secret is required"),
                             }
-                          : {}),
+                          : providerType === "cloudflare"
+                            ? {
+                                [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]:
+                                  z.string().optional(),
+                                [ProviderCredentialFields.CLOUDFLARE_API_KEY]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.CLOUDFLARE_API_EMAIL]:
+                                  z
+                                    .string()
+                                    .superRefine((val, ctx) => {
+                                      if (val && val.trim() !== "") {
+                                        const emailRegex =
+                                          /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                                        if (!emailRegex.test(val)) {
+                                          ctx.addIssue({
+                                            code: z.ZodIssueCode.custom,
+                                            message:
+                                              "Please enter a valid email address",
+                                          });
+                                        }
+                                      }
+                                    })
+                                    .optional(),
+                              }
+                            : providerType === "openstack"
+                              ? {
+                                  [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]:
+                                    z
+                                      .string()
+                                      .min(
+                                        1,
+                                        "Clouds YAML content is required",
+                                      ),
+                                  [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]:
+                                    z.string().min(1, "Cloud name is required"),
+                                }
+                              : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {
@@ -321,6 +368,37 @@ export const addCredentialsFormSchema = (
           }
         }
       }
+
+      if (providerType === "cloudflare") {
+        // For Cloudflare, validation depends on the 'via' parameter
+        if (via === "api_token") {
+          const apiToken = data[ProviderCredentialFields.CLOUDFLARE_API_TOKEN];
+          if (!apiToken || apiToken.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "API Token is required",
+              path: [ProviderCredentialFields.CLOUDFLARE_API_TOKEN],
+            });
+          }
+        } else if (via === "api_key") {
+          const apiKey = data[ProviderCredentialFields.CLOUDFLARE_API_KEY];
+          const apiEmail = data[ProviderCredentialFields.CLOUDFLARE_API_EMAIL];
+          if (!apiKey || apiKey.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "API Key is required",
+              path: [ProviderCredentialFields.CLOUDFLARE_API_KEY],
+            });
+          }
+          if (!apiEmail || apiEmail.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "Email is required",
+              path: [ProviderCredentialFields.CLOUDFLARE_API_EMAIL],
+            });
+          }
+        }
+      }
     });
 
 export const addCredentialsRoleFormSchema = (providerType: string) =>
@@ -342,17 +420,37 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
           [ProviderCredentialFields.ROLE_SESSION_NAME]: z.string().optional(),
           [ProviderCredentialFields.CREDENTIALS_TYPE]: z.string().optional(),
         })
-        .refine(
-          (data) =>
+        .superRefine((data, ctx) => {
+          if (
             data[ProviderCredentialFields.CREDENTIALS_TYPE] !==
-              "access-secret-key" ||
-            (data[ProviderCredentialFields.AWS_ACCESS_KEY_ID] &&
-              data[ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]),
-          {
-            message: "AWS Access Key ID and Secret Access Key are required.",
-            path: [ProviderCredentialFields.AWS_ACCESS_KEY_ID],
-          },
-        )
+            "access-secret-key"
+          ) {
+            return;
+          }
+
+          const hasAccessKey =
+            (data[ProviderCredentialFields.AWS_ACCESS_KEY_ID] || "").trim()
+              .length > 0;
+          const hasSecretAccessKey =
+            (data[ProviderCredentialFields.AWS_SECRET_ACCESS_KEY] || "").trim()
+              .length > 0;
+
+          if (!hasAccessKey) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "AWS Access Key ID is required.",
+              path: [ProviderCredentialFields.AWS_ACCESS_KEY_ID],
+            });
+          }
+
+          if (!hasSecretAccessKey) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "AWS Secret Access Key is required.",
+              path: [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY],
+            });
+          }
+        })
     : providerType === "alibabacloud"
       ? z.object({
           [ProviderCredentialFields.PROVIDER_ID]: z.string(),

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "OciIdentityPolicy",
+  "ResourceGroup": "IAM",
   "Description": "To apply least-privilege security principle, create service-level administrators in corresponding groups and assign specific users to each service-level administrative group in a tenancy. This limits administrative access to specific services.",
   "Risk": "Without service-level administrators, there is a risk of excessive permissions being granted, violating the principle of least privilege.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/Concepts/policygetstarted.htm",

@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "analytics",
   "Description": "**AWS Glue ML transforms** are evaluated for **encryption at rest** of transform user data using **KMS keys**. The finding highlights transforms where encryption is not configured.",
   "Risk": "Without encryption, **confidentiality** is weakened: transform artifacts, mappings, and sample datasets may be readable via storage access, backups, or cross-account exposure. This can lead to data disclosure and aid **lateral movement** by revealing schemas and data relationships.",
   "RelatedUrl": "",

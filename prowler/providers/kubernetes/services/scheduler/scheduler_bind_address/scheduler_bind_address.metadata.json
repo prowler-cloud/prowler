@@ -8,14 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Kubernetes scheduler** is configured with `--bind-address=127.0.0.1` so its health and metrics endpoints listen only on localhost.\n\nThe evaluation inspects scheduler pod commands for this bind address.",
   "Risk": "Exposing scheduler endpoints on non-loopback addresses can:\n- leak cluster state and scheduling metrics (**confidentiality**)\n- aid recon that enables privilege escalation (**integrity**)\n- allow health endpoint abuse for DoS (**availability**)",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.datadoghq.com/security/default_rules/35s-cvw-j67/",
-    "https://github.com/kubernetes-sigs/kubespray/issues/4111",
-    "https://groups.google.com/g/prometheus-users/c/_aI-HySJ-xM",
-    "https://kodekloud.com/community/t/so-im-working-on-the-multiple-schedulers-exercise-i-had-actually-completed-th/18651",
     "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/"
   ],
   "Remediation": {

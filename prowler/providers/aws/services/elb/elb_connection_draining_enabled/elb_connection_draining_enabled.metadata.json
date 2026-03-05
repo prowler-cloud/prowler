@@ -11,12 +11,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbLoadBalancer",
+  "ResourceGroup": "network",
   "Description": "**Classic Load Balancer** has **connection draining** enabled, so deregistering or unhealthy instances stop receiving new requests while existing connections are allowed to complete within the configured drain window.",
   "Risk": "Without **connection draining**, instance removals or health failures can terminate in-flight requests, leading to partial transactions, broken sessions, and inconsistent application state. This reduces **availability** and can impact **data integrity** during deployments, scaling, or failover events.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://aws.amazon.com/blogs/aws/elb-connection-draining-remove-instances-from-service-with-care/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/elb-connection-draining-enabled.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/ELB/elb-connection-draining-enabled.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-7",
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/config-conn-drain.html"
   ],

@@ -1,42 +1,47 @@
-import { Chip } from "@heroui/chip";
-import React from "react";
+import { cn } from "@/lib/utils";
 
-export type FindingStatus = "FAIL" | "PASS" | "MANUAL" | "MUTED";
+export const FindingStatusValues = {
+  FAIL: "FAIL",
+  PASS: "PASS",
+  MANUAL: "MANUAL",
+  MUTED: "MUTED",
+} as const;
 
-const statusColorMap: Record<
-  FindingStatus,
-  "danger" | "warning" | "success" | "default"
-> = {
-  FAIL: "danger",
-  PASS: "success",
-  MANUAL: "warning",
-  MUTED: "default",
-};
+export type FindingStatus =
+  (typeof FindingStatusValues)[keyof typeof FindingStatusValues];
 
-export const StatusFindingBadge = ({
-  status,
-  size = "sm",
-  value,
-  ...props
-}: {
+const STATUS_STYLES = {
+  FAIL: "border-bg-fail text-bg-fail",
+  PASS: "border-bg-pass text-bg-pass",
+  MANUAL: "border-bg-warning text-bg-warning",
+  MUTED: "border-text-neutral-tertiary text-text-neutral-tertiary",
+} as const;
+
+interface StatusFindingBadgeProps {
   status: FindingStatus;
   size?: "sm" | "md" | "lg";
   value?: string | number;
-}) => {
-  const color = statusColorMap[status];
+}
+
+export const StatusFindingBadge = ({
+  status,
+  value,
+}: StatusFindingBadgeProps) => {
+  const statusStyle = STATUS_STYLES[status] || STATUS_STYLES.MUTED;
+  const displayText =
+    status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
 
   return (
-    <Chip
-      className="border-none px-2 py-0"
-      size={size}
-      variant="flat"
-      color={color}
-      {...props}
+    <span
+      className={cn(
+        "inline-flex items-center justify-center rounded px-0 py-0.5",
+        "border-x border-y-0",
+        "min-w-[38px] text-center text-xs font-bold",
+        statusStyle,
+      )}
     >
-      <span className="text-default-600 text-xs font-light tracking-wide">
-        {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
-        {value !== undefined && `: ${value}`}
-      </span>
-    </Chip>
+      {displayText}
+      {value !== undefined && `: ${value}`}
+    </span>
   );
 };

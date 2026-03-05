@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:identity:user",
   "Severity": "medium",
   "ResourceType": "OciIamApiKey",
+  "ResourceGroup": "IAM",
   "Description": "Ensure user API keys rotate within 90 days or less. API keys are used to authenticate API calls. For security purposes, it is recommended that API keys be rotated regularly.",
   "Risk": "Having API keys that have not been rotated in over 90 days increases the risk of unauthorized access if the key is compromised.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcredentials.htm",

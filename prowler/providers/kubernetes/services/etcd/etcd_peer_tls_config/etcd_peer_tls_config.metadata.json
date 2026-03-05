@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Etcd peer communication** is treated as secure when **TLS** is configured with a peer certificate and key (e.g., `--peer-cert-file` and `--peer-key-file`). The assessment inspects etcd containers for these options to determine whether server-to-server traffic is encrypted and authenticated.",
   "Risk": "Without **TLS** on peer links, attackers can intercept or alter Raft traffic, enabling node impersonation and **consensus manipulation**. This endangers **confidentiality** (exposed cluster state), **integrity** (tampered writes), and **availability** (quorum disruption), cascading into control-plane instability.",
   "RelatedUrl": "",

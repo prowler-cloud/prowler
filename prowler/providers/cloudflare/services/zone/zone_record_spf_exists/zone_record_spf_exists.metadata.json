@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_record_spf_exists",
+  "CheckTitle": "SPF record exists with strict policy (-all)",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **SPF (Sender Policy Framework)** records by checking if a TXT record exists that specifies which mail servers are **authorized to send email** on behalf of the domain, and verifies that the record uses a **strict policy (`-all`)** to reject unauthorized senders.",
+  "Risk": "Without **SPF** or with a permissive policy (`~all`, `?all`, `+all`), attackers can forge emails appearing to come from your domain.\n- **Confidentiality**: phishing attacks can harvest sensitive information from recipients who trust spoofed emails\n- **Integrity**: brand reputation damage from fraudulent emails sent in your name\n- **Availability**: email deliverability issues as receiving servers may reject or quarantine legitimate emails\n- **Permissive policies**: `~all` (softfail) only marks emails as suspicious but does not reject them, `?all` (neutral) provides no protection",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/dns/manage-dns-records/how-to/email-records/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to DNS > Records\n3. Click Add record\n4. Select TXT as the record type\n5. Enter @ for the Name field\n6. Enter your SPF record with strict policy (e.g., v=spf1 include:_spf.google.com -all)\n7. Click Save",
+      "Terraform": "```hcl\n# Create SPF record for email authentication with strict policy\nresource \"cloudflare_record\" \"spf\" {\n  zone_id = \"<ZONE_ID>\"\n  name    = \"@\"\n  type    = \"TXT\"\n  content = \"v=spf1 include:_spf.google.com -all\" # Use -all for strict enforcement\n  ttl     = 3600\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure **SPF records** with strict policy (`-all`) listing authorized mail servers.\n- SPF records start with `v=spf1` and define authorized senders\n- Use `-all` (hardfail) to reject emails from unauthorized servers\n- Avoid `~all` (softfail) in production as it only marks suspicious emails but does not reject them\n- Use `include:` to authorize third-party mail services\n- Combine with **DKIM** and **DMARC** for comprehensive email authentication\n- Test SPF records using online validators before deployment",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_record_spf_exists"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "SPF records start with 'v=spf1' and define authorized mail servers. This check verifies both existence and strict policy (-all). Permissive policies like ~all (softfail) or ?all (neutral) will fail this check."
+}

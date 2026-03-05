@@ -1,0 +1,103 @@
+{
+  "Framework": "CUSTOM-FRAMEWORK",
+  "Name": "Custom Security Framework Example v1.0",
+  "Version": "1.0",
+  "Provider": "AWS",
+  "Description": "This is a template for creating custom compliance frameworks using the generic attribute model. Use this when creating frameworks that don't match existing attribute types (CIS, ISO, ENS, MITRE, etc.).",
+  "Requirements": [
+    {
+      "Id": "SEC-001",
+      "Description": "Ensure all storage resources are encrypted at rest",
+      "Name": "Storage Encryption",
+      "Attributes": [
+        {
+          "ItemId": "SEC-001",
+          "Section": "Data Protection",
+          "SubSection": "Encryption",
+          "SubGroup": "Storage",
+          "Service": "s3",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "s3_bucket_default_encryption",
+        "rds_instance_storage_encrypted",
+        "ec2_ebs_volume_encryption"
+      ]
+    },
+    {
+      "Id": "SEC-002",
+      "Description": "Ensure all network traffic is encrypted in transit",
+      "Name": "Network Encryption",
+      "Attributes": [
+        {
+          "ItemId": "SEC-002",
+          "Section": "Data Protection",
+          "SubSection": "Encryption",
+          "SubGroup": "Network",
+          "Service": "multiple",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "s3_bucket_secure_transport_policy",
+        "elb_ssl_listeners",
+        "cloudfront_distributions_https_enabled"
+      ]
+    },
+    {
+      "Id": "IAM-001",
+      "Description": "Ensure MFA is enabled for all privileged accounts",
+      "Name": "Multi-Factor Authentication",
+      "Attributes": [
+        {
+          "ItemId": "IAM-001",
+          "Section": "Identity and Access Management",
+          "SubSection": "Authentication",
+          "SubGroup": "MFA",
+          "Service": "iam",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "iam_root_mfa_enabled",
+        "iam_user_mfa_enabled_console_access"
+      ]
+    },
+    {
+      "Id": "LOG-001",
+      "Description": "Ensure logging is enabled for all critical services",
+      "Name": "Centralized Logging",
+      "Attributes": [
+        {
+          "ItemId": "LOG-001",
+          "Section": "Logging and Monitoring",
+          "SubSection": "Audit Logs",
+          "SubGroup": "CloudTrail",
+          "Service": "cloudtrail",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled"
+      ]
+    },
+    {
+      "Id": "MANUAL-001",
+      "Description": "Ensure security policies are reviewed annually",
+      "Name": "Policy Review",
+      "Attributes": [
+        {
+          "ItemId": "MANUAL-001",
+          "Section": "Governance",
+          "SubSection": "Policy Management",
+          "Service": "manual",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    }
+  ]
+}

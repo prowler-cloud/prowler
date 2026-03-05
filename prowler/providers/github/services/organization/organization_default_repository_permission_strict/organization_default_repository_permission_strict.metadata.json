@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "GitHubOrganization",
+  "ResourceGroup": "governance",
   "Description": "**GitHub organization** base repository permission for members uses a **strict setting** such as `read` or `none` rather than permissive options like `write` or `admin`. *Applies to members, not outside collaborators.*",
   "Risk": "**Excessive default permissions** (`write`/`admin`) erode code **integrity** and **availability**.\n\nAny member-or a compromised account-can alter many repos, inject malicious commits, change tags/releases, or delete branches, enabling supply-chain compromise and large-scale disruptions.",
   "RelatedUrl": "",

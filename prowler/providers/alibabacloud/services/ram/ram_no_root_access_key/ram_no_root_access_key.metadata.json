@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:ram::account-id:root",
   "Severity": "critical",
   "ResourceType": "AlibabaCloudRAMAccessKey",
+  "ResourceGroup": "IAM",
   "Description": "Ensure no **root account access key** exists. Access keys provide programmatic access to a given Alibaba Cloud account.\n\nIt is recommended that all access keys associated with the root account be removed.",
   "Risk": "The **root account** is the most privileged user in an Alibaba Cloud account. Access Keys provide programmatic access to a given Alibaba Cloud account.\n\nRemoving access keys associated with the root account limits vectors by which the account can be compromised and encourages the creation and use of **role-based accounts** that are least privileged.",
   "RelatedUrl": "",
