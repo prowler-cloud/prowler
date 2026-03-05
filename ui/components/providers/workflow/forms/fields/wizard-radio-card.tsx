@@ -1,19 +1,18 @@
+"use client";
+
+import { RadioGroupItem } from "@/components/shadcn/radio-group/radio-group";
 import { cn } from "@/lib/utils";
 
 interface WizardRadioCardProps {
-  name: string;
   value: string;
   checked: boolean;
-  onChange: (value: string) => void;
   children: React.ReactNode;
   isInvalid?: boolean;
 }
 
 export const WizardRadioCard = ({
-  name,
   value,
   checked,
-  onChange,
   children,
   isInvalid = false,
 }: WizardRadioCardProps) => {
@@ -27,20 +26,10 @@ export const WizardRadioCard = ({
         isInvalid && "border-bg-fail",
       )}
     >
-      <input
-        type="radio"
-        name={name}
-        value={value}
-        checked={checked}
-        onChange={() => onChange(value)}
-        className="sr-only"
-      />
       <div className="flex items-center">
         <span className="ml-2">{children}</span>
       </div>
-      <span className="border-default flex h-4 w-4 items-center justify-center rounded-full border">
-        {checked && <span className="bg-button-primary h-2 w-2 rounded-full" />}
-      </span>
+      <RadioGroupItem value={value} />
     </label>
   );
 };

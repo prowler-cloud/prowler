@@ -3,6 +3,7 @@
 import { Control, Controller } from "react-hook-form";
 
 import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
+import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
 import { FormMessage } from "@/components/ui/form";
 
 type RadioGroupM365ViaCredentialsFormProps = {
@@ -24,35 +25,32 @@ export const RadioGroupM365ViaCredentialsTypeForm = ({
       control={control}
       render={({ field }) => (
         <>
-          <div className="flex flex-col gap-4">
+          <RadioGroup
+            name={field.name}
+            value={field.value || ""}
+            onValueChange={(value) => {
+              field.onChange(value);
+              onChange?.(value);
+            }}
+          >
             <span className="text-default-500 text-sm">
               Select Authentication Method
             </span>
             <WizardRadioCard
-              name={field.name}
               value="app_client_secret"
               checked={(field.value || "") === "app_client_secret"}
               isInvalid={isInvalid}
-              onChange={(value) => {
-                field.onChange(value);
-                onChange?.(value);
-              }}
             >
               App Client Secret Credentials
             </WizardRadioCard>
             <WizardRadioCard
-              name={field.name}
               value="app_certificate"
               checked={(field.value || "") === "app_certificate"}
               isInvalid={isInvalid}
-              onChange={(value) => {
-                field.onChange(value);
-                onChange?.(value);
-              }}
             >
               App Certificate Credentials
             </WizardRadioCard>
-          </div>
+          </RadioGroup>
           {errorMessage && (
             <FormMessage className="text-text-error">
               {errorMessage}

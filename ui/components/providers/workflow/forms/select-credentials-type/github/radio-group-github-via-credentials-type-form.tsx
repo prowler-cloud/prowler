@@ -3,6 +3,7 @@
 import { Control, Controller } from "react-hook-form";
 
 import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
+import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
 import { FormMessage } from "@/components/ui/form";
 
 type RadioGroupGitHubViaCredentialsFormProps = {
@@ -24,51 +25,43 @@ export const RadioGroupGitHubViaCredentialsTypeForm = ({
       control={control}
       render={({ field }) => (
         <>
-          <div className="flex flex-col gap-4">
+          <RadioGroup
+            name={field.name}
+            value={field.value || ""}
+            onValueChange={(value) => {
+              field.onChange(value);
+              onChange?.(value);
+            }}
+          >
             <span className="text-default-500 text-sm">
               Personal Access Token
             </span>
             <WizardRadioCard
-              name={field.name}
               value="personal_access_token"
               checked={(field.value || "") === "personal_access_token"}
               isInvalid={isInvalid}
-              onChange={(value) => {
-                field.onChange(value);
-                onChange?.(value);
-              }}
             >
               Personal Access Token
             </WizardRadioCard>
 
             <span className="text-default-500 text-sm">OAuth App</span>
             <WizardRadioCard
-              name={field.name}
               value="oauth_app"
               checked={(field.value || "") === "oauth_app"}
               isInvalid={isInvalid}
-              onChange={(value) => {
-                field.onChange(value);
-                onChange?.(value);
-              }}
             >
               OAuth App Token
             </WizardRadioCard>
 
             <span className="text-default-500 text-sm">GitHub App</span>
             <WizardRadioCard
-              name={field.name}
               value="github_app"
               checked={(field.value || "") === "github_app"}
               isInvalid={isInvalid}
-              onChange={(value) => {
-                field.onChange(value);
-                onChange?.(value);
-              }}
             >
               GitHub App
             </WizardRadioCard>
-          </div>
+          </RadioGroup>
           {errorMessage && (
             <FormMessage className="text-text-error">
               {errorMessage}

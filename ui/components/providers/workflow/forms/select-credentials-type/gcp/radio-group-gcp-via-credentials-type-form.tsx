@@ -3,9 +3,10 @@
 import { Control, Controller } from "react-hook-form";
 
 import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
+import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
 import { FormMessage } from "@/components/ui/form";
 
-type RadioGroupAWSViaCredentialsFormProps = {
+type RadioGroupGCPViaCredentialsFormProps = {
   control: Control<any>;
   isInvalid: boolean;
   errorMessage?: string;
@@ -17,26 +18,28 @@ export const RadioGroupGCPViaCredentialsTypeForm = ({
   isInvalid,
   errorMessage,
   onChange,
-}: RadioGroupAWSViaCredentialsFormProps) => {
+}: RadioGroupGCPViaCredentialsFormProps) => {
   return (
     <Controller
       name="gcpCredentialsType"
       control={control}
       render={({ field }) => (
         <>
-          <div className="flex flex-col gap-4">
+          <RadioGroup
+            name={field.name}
+            value={field.value || ""}
+            onValueChange={(value) => {
+              field.onChange(value);
+              onChange?.(value);
+            }}
+          >
             <span className="text-default-500 text-sm">
               Using Service Account
             </span>
             <WizardRadioCard
-              name={field.name}
               value="service-account"
               checked={(field.value || "") === "service-account"}
               isInvalid={isInvalid}
-              onChange={(value) => {
-                field.onChange(value);
-                onChange?.(value);
-              }}
             >
               Connect via Service Account Key
             </WizardRadioCard>
@@ -44,18 +47,13 @@ export const RadioGroupGCPViaCredentialsTypeForm = ({
               Using Application Default Credentials
             </span>
             <WizardRadioCard
-              name={field.name}
               value="credentials"
               checked={(field.value || "") === "credentials"}
               isInvalid={isInvalid}
-              onChange={(value) => {
-                field.onChange(value);
-                onChange?.(value);
-              }}
             >
               Connect via Application Default Credentials
             </WizardRadioCard>
-          </div>
+          </RadioGroup>
           {errorMessage && (
             <FormMessage className="text-text-error">
               {errorMessage}

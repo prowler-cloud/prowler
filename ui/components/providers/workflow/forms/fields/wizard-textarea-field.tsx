@@ -2,6 +2,7 @@
 
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
+import { Textarea } from "@/components/shadcn/textarea/textarea";
 import { FormControl, FormField, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 
@@ -70,16 +71,13 @@ export const WizardTextareaField = <T extends FieldValues>({
               )}
             </label>
             <FormControl>
-              <textarea
+              <Textarea
                 id={name}
                 aria-label={label}
                 placeholder={placeholder}
                 required={isRequired}
                 rows={maxRows ? Math.min(minRows, maxRows) : minRows}
-                className={cn(
-                  "border-border-input-primary bg-bg-input-primary placeholder:text-text-neutral-tertiary focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press min-h-16 w-full rounded-lg border px-4 py-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-inset",
-                  description ? "mb-1" : "",
-                )}
+                className={cn(description && "mb-1")}
                 {...field}
                 value={value}
               />

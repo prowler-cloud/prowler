@@ -3,6 +3,7 @@
 import { Control, Controller, FieldValues, Path } from "react-hook-form";
 
 import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
+import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
 import { FormMessage } from "@/components/ui/form";
 
 type RadioGroupAlibabaCloudViaCredentialsFormProps<T extends FieldValues> = {
@@ -29,17 +30,19 @@ export const RadioGroupAlibabaCloudViaCredentialsTypeForm = <
 
         return (
           <>
-            <div className="flex flex-col gap-4">
+            <RadioGroup
+              name={field.name}
+              value={currentValue}
+              onValueChange={(value) => {
+                field.onChange(value);
+                onChange?.(value);
+              }}
+            >
               <span className="text-default-500 text-sm">Using RAM Role</span>
               <WizardRadioCard
-                name={field.name}
                 value="role"
                 checked={currentValue === "role"}
                 isInvalid={isInvalid}
-                onChange={(value) => {
-                  field.onChange(value);
-                  onChange?.(value);
-                }}
               >
                 Connect assuming RAM Role
               </WizardRadioCard>
@@ -47,18 +50,13 @@ export const RadioGroupAlibabaCloudViaCredentialsTypeForm = <
                 Using Credentials
               </span>
               <WizardRadioCard
-                name={field.name}
                 value="credentials"
                 checked={currentValue === "credentials"}
                 isInvalid={isInvalid}
-                onChange={(value) => {
-                  field.onChange(value);
-                  onChange?.(value);
-                }}
               >
                 Connect via Access Keys
               </WizardRadioCard>
-            </div>
+            </RadioGroup>
             {errorMessage && (
               <FormMessage className="text-text-error">
                 {errorMessage}
