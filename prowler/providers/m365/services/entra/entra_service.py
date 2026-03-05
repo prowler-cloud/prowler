@@ -277,6 +277,30 @@ class Entra(M365Service):
                                 [],
                             )
                         ],
+                        platform_conditions=PlatformConditions(
+                            include_platforms=[
+                                platform
+                                for platform in (
+                                    getattr(
+                                        getattr(policy.conditions, "platforms", None),
+                                        "include_platforms",
+                                        [],
+                                    )
+                                    or []
+                                )
+                            ],
+                            exclude_platforms=[
+                                platform
+                                for platform in (
+                                    getattr(
+                                        getattr(policy.conditions, "platforms", None),
+                                        "exclude_platforms",
+                                        [],
+                                    )
+                                    or []
+                                )
+                            ],
+                        ),
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=(
@@ -857,12 +881,20 @@ class ClientAppType(Enum):
     OTHER_CLIENTS = "other"
 
 
+class PlatformConditions(BaseModel):
+    """Model representing platform conditions for Conditional Access policies."""
+
+    include_platforms: List[str] = []
+    exclude_platforms: List[str] = []
+
+
 class Conditions(BaseModel):
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
     client_app_types: Optional[List[ClientAppType]]
     user_risk_levels: List[RiskLevel] = []
     sign_in_risk_levels: List[RiskLevel] = []
+    platform_conditions: Optional[PlatformConditions] = None
 
 
 class PersistentBrowser(BaseModel):
