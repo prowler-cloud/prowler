@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.20.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Update Kubernetes API server checks metadata to new format [(#9674)](https://github.com/prowler-cloud/prowler/pull/9674)
+
+---
+
 ## [5.19.0] (Prowler v5.19.0)
 
 ### 🚀 Added
