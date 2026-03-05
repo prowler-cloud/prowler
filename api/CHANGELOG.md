@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.21.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Attack Paths: Migrate network exposure queries from APOC to standard openCypher for Neo4j and Neptune compatibility [(#10265)](https://github.com/prowler-cloud/prowler/pull/10265)
+
 ## [1.20.0] (Prowler v5.19.0)
 
 ### 🚀 Added
