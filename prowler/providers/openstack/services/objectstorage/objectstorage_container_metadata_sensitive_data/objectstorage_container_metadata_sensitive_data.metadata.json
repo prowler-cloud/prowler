@@ -10,7 +10,7 @@
   "ResourceType": "OS::Swift::Container",
   "ResourceGroup": "storage",
   "Description": "**OpenStack Swift container metadata** is evaluated to detect **sensitive data** such as passwords, API keys, secrets, and private keys. Container metadata is accessible to any user with read access to the container. Storing secrets in metadata exposes them to unauthorized access and credential theft.",
-  "Risk": "Container metadata containing sensitive data exposes credentials to any user with container read access. Attackers with read permissions can extract passwords, API keys, and private keys. Stolen credentials enable unauthorized access to other systems, data exfiltration, and privilege escalation.",
+  "Risk": "Container metadata containing **sensitive data** exposes credentials to any user with container read access. Attackers with read permissions can extract **passwords**, **API keys**, and **private keys**. Stolen credentials enable unauthorized access to other systems, **data exfiltration**, and **privilege escalation**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.openstack.org/swift/latest/overview_acl.html",
@@ -24,11 +24,12 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Never store secrets in container metadata. Use Barbican (OpenStack Key Manager), Vault, or external secrets management instead. Remove existing sensitive metadata and rotate any exposed credentials. Implement metadata policies to prevent future secret storage.",
+      "Text": "Never store secrets in container metadata. Use **Barbican** (OpenStack Key Manager), **Vault**, or external secrets management instead. Remove existing sensitive metadata and **rotate any exposed credentials**. Implement metadata policies to prevent future secret storage.",
       "Url": "https://hub.prowler.com/check/objectstorage_container_metadata_sensitive_data"
     }
   },
   "Categories": [
+    "threat-detection",
     "secrets",
     "encryption"
   ],

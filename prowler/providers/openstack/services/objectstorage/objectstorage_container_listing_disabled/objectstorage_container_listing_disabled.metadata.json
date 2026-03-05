@@ -10,7 +10,7 @@
   "ResourceType": "OS::Swift::Container",
   "ResourceGroup": "storage",
   "Description": "**OpenStack Swift containers** are evaluated to verify that **public container listings** are disabled. The `.rlistings` ACL allows users with read access to list all objects within the container. When combined with `.r:*`, this enables unauthenticated users to enumerate all objects, facilitating targeted data exfiltration.",
-  "Risk": "Containers with `.rlistings` enabled allow attackers to enumerate all object names, sizes, and modification dates. This metadata exposure aids targeted attacks, reveals application structure, and can expose sensitive file names. Combined with public read access, it enables complete data exfiltration.",
+  "Risk": "Containers with `.rlistings` enabled allow attackers to enumerate all object names, sizes, and modification dates. This **metadata exposure** aids **targeted attacks**, reveals application structure, and can expose sensitive file names. Combined with public read access, it enables complete **data exfiltration**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.openstack.org/swift/latest/overview_acl.html",
@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Remove `.rlistings` from container read ACLs to prevent public object enumeration. Listings should only be available to authenticated project members. If external access is needed, implement application-level access control with authenticated APIs.",
+      "Text": "Remove `.rlistings` from container read ACLs to prevent **public object enumeration**. Listings should only be available to **authenticated project members**. If external access is needed, implement application-level access control with authenticated APIs.",
       "Url": "https://hub.prowler.com/check/objectstorage_container_listing_disabled"
     }
   },

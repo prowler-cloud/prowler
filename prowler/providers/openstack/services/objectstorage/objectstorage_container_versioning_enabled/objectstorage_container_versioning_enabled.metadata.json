@@ -10,7 +10,7 @@
   "ResourceType": "OS::Swift::Container",
   "ResourceGroup": "storage",
   "Description": "**OpenStack Swift containers** are evaluated to verify that **object versioning** is enabled. Versioning preserves previous versions of objects when they are overwritten or deleted, enabling recovery from accidental modifications, ransomware attacks, and data corruption.",
-  "Risk": "Without versioning, overwritten or deleted objects cannot be recovered. Accidental deletions, ransomware encrypting objects, or malicious modifications result in permanent data loss. Versioning provides a safety net for forensic investigation and disaster recovery.",
+  "Risk": "Without versioning, overwritten or deleted objects **cannot be recovered**. Accidental deletions, **ransomware** encrypting objects, or malicious modifications result in **permanent data loss**. Versioning provides a safety net for forensic investigation and disaster recovery.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.openstack.org/swift/latest/overview_object_versioning.html",
@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable object versioning on all containers storing important data. Create a dedicated versions container and set the X-Versions-Location header. Implement lifecycle policies to manage version retention and storage costs. Combine with container backups for comprehensive data protection.",
+      "Text": "Enable **object versioning** on all containers storing important data. Create a dedicated versions container and set the `X-Versions-Location` header. Implement **lifecycle policies** to manage version retention and storage costs. Combine with container backups for comprehensive data protection.",
       "Url": "https://hub.prowler.com/check/objectstorage_container_versioning_enabled"
     }
   },

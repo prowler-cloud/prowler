@@ -10,7 +10,7 @@
   "ResourceType": "OS::Swift::Container",
   "ResourceGroup": "storage",
   "Description": "**OpenStack Swift containers** are evaluated to verify that the **read ACL** does not use `*:*` (global sharing). The `*:*` ACL grants read access to all authenticated users from any project in the OpenStack deployment, violating project isolation and the principle of least privilege.",
-  "Risk": "Containers with `*:*` read ACL are accessible to every authenticated user in the OpenStack deployment, regardless of their project. This breaks multi-tenant isolation, exposing data to users in other projects. Compromised credentials from any project can access the container's contents.",
+  "Risk": "Containers with `*:*` read ACL are accessible to **every authenticated user** in the OpenStack deployment, regardless of their project. This breaks **multi-tenant isolation**, exposing data to users in other projects. **Compromised credentials** from any project can access the container's contents.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.openstack.org/swift/latest/overview_acl.html",
@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Replace `*:*` read ACLs with project-scoped ACLs (e.g., `project-id:*` or `project-id:user-id`). Use the most restrictive ACL that meets access requirements. Implement regular ACL audits to detect overly permissive configurations. Consider using Keystone role-based access control for fine-grained permissions.",
+      "Text": "Replace `*:*` read ACLs with **project-scoped ACLs** (e.g., `project-id:*` or `project-id:user-id`). Use the **most restrictive ACL** that meets access requirements. Implement regular ACL audits to detect overly permissive configurations. Consider using **Keystone role-based access control** for fine-grained permissions.",
       "Url": "https://hub.prowler.com/check/objectstorage_container_acl_not_globally_shared"
     }
   },

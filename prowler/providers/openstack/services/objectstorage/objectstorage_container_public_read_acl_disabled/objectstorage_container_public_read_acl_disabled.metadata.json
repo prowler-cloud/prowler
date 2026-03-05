@@ -10,7 +10,7 @@
   "ResourceType": "OS::Swift::Container",
   "ResourceGroup": "storage",
   "Description": "**OpenStack Swift containers** are evaluated to verify that **anonymous read access** is not granted. The `.r:*` ACL allows any unauthenticated user on the internet to read objects in the container. This is a critical exposure that can lead to data leaks, especially when containers hold sensitive information such as backups, logs, or application data.",
-  "Risk": "Containers with `.r:*` in the read ACL are publicly accessible without authentication. Attackers can enumerate and download all objects, leading to data breaches, credential exposure, and compliance violations. Public containers are frequently targeted by automated scanners.",
+  "Risk": "Containers with `.r:*` in the read ACL are **publicly accessible** without authentication. Attackers can enumerate and download all objects, leading to **data breaches**, **credential exposure**, and **compliance violations**. Public containers are frequently targeted by automated scanners.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.openstack.org/swift/latest/overview_acl.html",
@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Remove `.r:*` from container read ACLs to prevent anonymous access. Use project-scoped ACLs (e.g., `project-id:*`) or specific user ACLs instead. If public access is required, consider using a CDN or signed URLs with time-limited tokens.",
+      "Text": "Remove `.r:*` from container read ACLs to prevent **anonymous access**. Use **project-scoped ACLs** (e.g., `project-id:*`) or specific user ACLs instead. If public access is required, consider using a **CDN** or **signed URLs** with time-limited tokens.",
       "Url": "https://hub.prowler.com/check/objectstorage_container_public_read_acl_disabled"
     }
   },
