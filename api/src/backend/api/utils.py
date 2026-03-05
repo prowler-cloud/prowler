@@ -85,8 +85,8 @@ def return_prowler_provider(
     | AzureProvider
     | CloudflareProvider
     | GcpProvider
-    | GoogleworkspaceProvider
     | GithubProvider
+    | GoogleworkspaceProvider
     | IacProvider
     | ImageProvider
     | KubernetesProvider
@@ -101,7 +101,7 @@ def return_prowler_provider(
         provider (Provider): The provider object containing the provider type and associated secrets.
 
     Returns:
-        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GoogleworkspaceProvider | GithubProvider | IacProvider | ImageProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OpenstackProvider | OraclecloudProvider: The corresponding provider class.
+        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | GoogleworkspaceProvider | IacProvider | ImageProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OpenstackProvider | OraclecloudProvider: The corresponding provider class.
 
     Raises:
         ValueError: If the provider type specified in `provider.provider` is not supported.
@@ -272,8 +272,8 @@ def initialize_prowler_provider(
     | AzureProvider
     | CloudflareProvider
     | GcpProvider
-    | GoogleworkspaceProvider
     | GithubProvider
+    | GoogleworkspaceProvider
     | IacProvider
     | ImageProvider
     | KubernetesProvider
@@ -289,7 +289,7 @@ def initialize_prowler_provider(
         mutelist_processor (Processor): The mutelist processor object containing the mutelist configuration.
 
     Returns:
-        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | IacProvider | ImageProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OpenstackProvider | OraclecloudProvider: An instance of the corresponding provider class
+        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | GoogleworkspaceProvider | IacProvider | ImageProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OpenstackProvider | OraclecloudProvider: An instance of the corresponding provider class
             initialized with the provider's secrets.
     """
     prowler_provider = return_prowler_provider(provider)

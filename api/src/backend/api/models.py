@@ -283,7 +283,6 @@ class Provider(RowLevelSecurityProtectedModel):
         AWS = "aws", _("AWS")
         AZURE = "azure", _("Azure")
         GCP = "gcp", _("GCP")
-        GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
         KUBERNETES = "kubernetes", _("Kubernetes")
         M365 = "m365", _("M365")
         GITHUB = "github", _("GitHub")
@@ -294,6 +293,7 @@ class Provider(RowLevelSecurityProtectedModel):
         CLOUDFLARE = "cloudflare", _("Cloudflare")
         OPENSTACK = "openstack", _("OpenStack")
         IMAGE = "image", _("Image")
+        GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
 
     @staticmethod
     def validate_aws_uid(value):
