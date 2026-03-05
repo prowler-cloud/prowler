@@ -31,6 +31,7 @@ import {
 } from "@/components/ui";
 import type {
   AttackPathQuery,
+  AttackPathQueryError,
   AttackPathScan,
   GraphNode,
 } from "@/types/attack-paths";
@@ -209,7 +210,7 @@ export default function AttackPathAnalysisPage() {
       );
 
       if (result && "error" in result) {
-        const apiError = result as unknown as { error: string; status: number };
+        const apiError = result as AttackPathQueryError;
         graphState.resetGraph();
 
         if (apiError.status === 404) {
@@ -221,6 +222,11 @@ export default function AttackPathAnalysisPage() {
             "Error",
             "Not enough permissions to execute this query",
           );
+        } else if (apiError.status >= 500) {
+          const serverDownMessage =
+            "Server is temporarily unavailable. Please try again in a few minutes.";
+          graphState.setError(serverDownMessage);
+          showErrorToast("Error", serverDownMessage);
         } else {
           graphState.setError(apiError.error);
           showErrorToast("Error", apiError.error);
@@ -250,8 +256,11 @@ export default function AttackPathAnalysisPage() {
         );
       }
     } catch (error) {
-      const errorMsg =
+      const rawErrorMsg =
         error instanceof Error ? error.message : "Failed to execute query";
+      const errorMsg = rawErrorMsg.includes("Server Components render")
+        ? "Server is temporarily unavailable. Please try again in a few minutes."
+        : rawErrorMsg;
       graphState.resetGraph();
       graphState.setError(errorMsg);
       showErrorToast("Error", errorMsg);
