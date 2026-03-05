@@ -4,6 +4,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ## [5.20.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- `entra_conditional_access_policy_approved_client_app_required_for_mobile` check for m365 provider [(#10216)](https://github.com/prowler-cloud/prowler/pull/10216)
+
 ### 🔄 Changed
 
 - Update Kubernetes API server checks metadata to new format [(#9674)](https://github.com/prowler-cloud/prowler/pull/9674)
