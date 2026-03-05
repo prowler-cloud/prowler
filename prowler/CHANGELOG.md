@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.20.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- OpenStack object storage service with 7 checks [(#10258)](https://github.com/prowler-cloud/prowler/pull/10258)
+
+---
+
 ## [5.19.0] (Prowler v5.19.0)
 
 ### 🚀 Added
