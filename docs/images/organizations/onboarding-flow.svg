@@ -14,8 +14,8 @@
   <text x="140" y="107" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">1</text>
   <text x="140" y="145" text-anchor="middle" font-size="15" font-weight="700" fill="#1a1a2e">Create Management</text>
   <text x="140" y="165" text-anchor="middle" font-size="15" font-weight="700" fill="#1a1a2e">Account Role</text>
-  <rect x="80" y="185" width="120" height="24" rx="12" fill="#E8F0FE"/>
-  <text x="140" y="201" text-anchor="middle" font-size="11" font-weight="600" fill="#4285F4">Manually in IAM</text>
+  <rect x="60" y="185" width="160" height="24" rx="12" fill="#E8F0FE"/>
+  <text x="140" y="201" text-anchor="middle" font-size="11" font-weight="600" fill="#4285F4">Quick Create or Manual</text>
   <text x="140" y="232" text-anchor="middle" font-size="12" fill="#5f6368">Allows Prowler to</text>
   <text x="140" y="248" text-anchor="middle" font-size="12" fill="#5f6368">discover your org</text>
   <text x="140" y="264" text-anchor="middle" font-size="12" fill="#5f6368">structure</text>

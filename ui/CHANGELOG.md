@@ -2,11 +2,16 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.19.1] (Prowler v5.20.0)
+
+## [1.19.1] (Prowler v5.19.1 UNRELEASED)
 
 ### 🐞 Fixed
 
 - Attack Paths: Improved error handling for server errors (5xx) and network failures with user-friendly messages instead of raw internal errors
+
+### 🔐 Security
+
+- npm transitive dependencies patched to resolve 11 Dependabot alerts (6 HIGH, 4 MEDIUM, 1 LOW): hono, @hono/node-server, fast-xml-parser, serialize-javascript, minimatch [(#10267)](https://github.com/prowler-cloud/prowler/pull/10267)
 
 ---
 
