@@ -28,7 +28,7 @@ export const RadioGroupGitHubViaCredentialsTypeForm = ({
           <RadioGroup
             name={field.name}
             value={field.value || ""}
-            onValueChange={(value) => {
+            onValueChange={(value: string) => {
               field.onChange(value);
               onChange?.(value);
             }}
@@ -38,27 +38,18 @@ export const RadioGroupGitHubViaCredentialsTypeForm = ({
             </span>
             <WizardRadioCard
               value="personal_access_token"
-              checked={(field.value || "") === "personal_access_token"}
               isInvalid={isInvalid}
             >
               Personal Access Token
             </WizardRadioCard>
 
             <span className="text-default-500 text-sm">OAuth App</span>
-            <WizardRadioCard
-              value="oauth_app"
-              checked={(field.value || "") === "oauth_app"}
-              isInvalid={isInvalid}
-            >
+            <WizardRadioCard value="oauth_app" isInvalid={isInvalid}>
               OAuth App Token
             </WizardRadioCard>
 
             <span className="text-default-500 text-sm">GitHub App</span>
-            <WizardRadioCard
-              value="github_app"
-              checked={(field.value || "") === "github_app"}
-              isInvalid={isInvalid}
-            >
+            <WizardRadioCard value="github_app" isInvalid={isInvalid}>
               GitHub App
             </WizardRadioCard>
           </RadioGroup>

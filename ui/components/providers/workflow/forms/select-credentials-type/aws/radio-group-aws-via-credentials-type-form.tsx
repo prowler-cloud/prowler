@@ -28,25 +28,17 @@ export const RadioGroupAWSViaCredentialsTypeForm = ({
           <RadioGroup
             name={field.name}
             value={field.value || ""}
-            onValueChange={(value) => {
+            onValueChange={(value: string) => {
               field.onChange(value);
               onChange?.(value);
             }}
           >
             <span className="text-default-500 text-sm">Using IAM Role</span>
-            <WizardRadioCard
-              value="role"
-              checked={(field.value || "") === "role"}
-              isInvalid={isInvalid}
-            >
+            <WizardRadioCard value="role" isInvalid={isInvalid}>
               Connect assuming IAM Role
             </WizardRadioCard>
             <span className="text-default-500 text-sm">Using Credentials</span>
-            <WizardRadioCard
-              value="credentials"
-              checked={(field.value || "") === "credentials"}
-              isInvalid={isInvalid}
-            >
+            <WizardRadioCard value="credentials" isInvalid={isInvalid}>
               Connect via Credentials
             </WizardRadioCard>
           </RadioGroup>

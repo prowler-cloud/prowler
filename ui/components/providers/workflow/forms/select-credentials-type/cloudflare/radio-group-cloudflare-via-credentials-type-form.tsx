@@ -28,7 +28,7 @@ export const RadioGroupCloudflareViaCredentialsTypeForm = ({
           <RadioGroup
             name={field.name}
             value={field.value || ""}
-            onValueChange={(value) => {
+            onValueChange={(value: string) => {
               field.onChange(value);
               onChange?.(value);
             }}
@@ -36,18 +36,10 @@ export const RadioGroupCloudflareViaCredentialsTypeForm = ({
             <span className="text-default-500 text-sm">
               Select Authentication Method
             </span>
-            <WizardRadioCard
-              value="api_token"
-              checked={(field.value || "") === "api_token"}
-              isInvalid={isInvalid}
-            >
+            <WizardRadioCard value="api_token" isInvalid={isInvalid}>
               API Token
             </WizardRadioCard>
-            <WizardRadioCard
-              value="api_key"
-              checked={(field.value || "") === "api_key"}
-              isInvalid={isInvalid}
-            >
+            <WizardRadioCard value="api_key" isInvalid={isInvalid}>
               API Key + Email
             </WizardRadioCard>
           </RadioGroup>

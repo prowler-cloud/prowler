@@ -33,27 +33,19 @@ export const RadioGroupAlibabaCloudViaCredentialsTypeForm = <
             <RadioGroup
               name={field.name}
               value={currentValue}
-              onValueChange={(value) => {
+              onValueChange={(value: string) => {
                 field.onChange(value);
                 onChange?.(value);
               }}
             >
               <span className="text-default-500 text-sm">Using RAM Role</span>
-              <WizardRadioCard
-                value="role"
-                checked={currentValue === "role"}
-                isInvalid={isInvalid}
-              >
+              <WizardRadioCard value="role" isInvalid={isInvalid}>
                 Connect assuming RAM Role
               </WizardRadioCard>
               <span className="text-default-500 text-sm">
                 Using Credentials
               </span>
-              <WizardRadioCard
-                value="credentials"
-                checked={currentValue === "credentials"}
-                isInvalid={isInvalid}
-              >
+              <WizardRadioCard value="credentials" isInvalid={isInvalid}>
                 Connect via Access Keys
               </WizardRadioCard>
             </RadioGroup>

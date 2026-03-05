@@ -28,7 +28,7 @@ export const RadioGroupGCPViaCredentialsTypeForm = ({
           <RadioGroup
             name={field.name}
             value={field.value || ""}
-            onValueChange={(value) => {
+            onValueChange={(value: string) => {
               field.onChange(value);
               onChange?.(value);
             }}
@@ -36,21 +36,13 @@ export const RadioGroupGCPViaCredentialsTypeForm = ({
             <span className="text-default-500 text-sm">
               Using Service Account
             </span>
-            <WizardRadioCard
-              value="service-account"
-              checked={(field.value || "") === "service-account"}
-              isInvalid={isInvalid}
-            >
+            <WizardRadioCard value="service-account" isInvalid={isInvalid}>
               Connect via Service Account Key
             </WizardRadioCard>
             <span className="text-default-500 text-sm">
               Using Application Default Credentials
             </span>
-            <WizardRadioCard
-              value="credentials"
-              checked={(field.value || "") === "credentials"}
-              isInvalid={isInvalid}
-            >
+            <WizardRadioCard value="credentials" isInvalid={isInvalid}>
               Connect via Application Default Credentials
             </WizardRadioCard>
           </RadioGroup>

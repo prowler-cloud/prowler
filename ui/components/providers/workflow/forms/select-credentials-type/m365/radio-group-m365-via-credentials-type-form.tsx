@@ -28,7 +28,7 @@ export const RadioGroupM365ViaCredentialsTypeForm = ({
           <RadioGroup
             name={field.name}
             value={field.value || ""}
-            onValueChange={(value) => {
+            onValueChange={(value: string) => {
               field.onChange(value);
               onChange?.(value);
             }}
@@ -36,18 +36,10 @@ export const RadioGroupM365ViaCredentialsTypeForm = ({
             <span className="text-default-500 text-sm">
               Select Authentication Method
             </span>
-            <WizardRadioCard
-              value="app_client_secret"
-              checked={(field.value || "") === "app_client_secret"}
-              isInvalid={isInvalid}
-            >
+            <WizardRadioCard value="app_client_secret" isInvalid={isInvalid}>
               App Client Secret Credentials
             </WizardRadioCard>
-            <WizardRadioCard
-              value="app_certificate"
-              checked={(field.value || "") === "app_certificate"}
-              isInvalid={isInvalid}
-            >
+            <WizardRadioCard value="app_certificate" isInvalid={isInvalid}>
               App Certificate Credentials
             </WizardRadioCard>
           </RadioGroup>
