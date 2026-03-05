@@ -13,6 +13,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Kubernetes API server checks metadata to new format [(#9674)](https://github.com/prowler-cloud/prowler/pull/9674)
 - Update Kubernetes Controller Manager service metadata to new format [(#9675)](https://github.com/prowler-cloud/prowler/pull/9675)
 - Update Kubernetes Core service metadata to new format [(#9676)](https://github.com/prowler-cloud/prowler/pull/9676)
+- Update Kubernetes Kubelet service metadata to new format [(#9677)](https://github.com/prowler-cloud/prowler/pull/9677)
 
 ---
 
