@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Other",
+  "ResourceGroup": "compute",
   "Description": "**Amazon Lightsail static IPs** detected as **not associated** with any instance, indicating reserved but unused addresses.\n\nThe evaluation focuses on the association state of each static IP to highlight potential leftovers.",
   "Risk": "**Unattached static IPs** incur ongoing charges and indicate asset drift. If DNS or apps still reference the address, requests are blackholed, impacting **availability**. Later attaching the same IP to an unintended host can expose services and data, affecting **confidentiality** and **integrity**.",
   "RelatedUrl": "",

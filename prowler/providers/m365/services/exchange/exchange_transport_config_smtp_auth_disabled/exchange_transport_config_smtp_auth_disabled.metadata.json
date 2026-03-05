@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Exchange Transport Config",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure that SMTP AUTH is disabled at the organization level in Exchange Online to reduce exposure to legacy protocols that can be exploited for malicious use.",
   "Risk": "Leaving SMTP AUTH enabled allows legacy clients to authenticate using outdated methods, increasing the risk of credential compromise and unauthorized email sending.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission",

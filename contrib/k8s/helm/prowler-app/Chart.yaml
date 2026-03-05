@@ -1,0 +1,33 @@
+apiVersion: v2
+name: prowler
+description: Prowler is an Open Cloud Security tool for AWS, Azure, GCP and Kubernetes. It helps for continuous monitoring, security assessments and audits, incident response, compliance, hardening and forensics readiness.
+type: application
+version: 0.0.1
+appVersion: "5.17.0"
+home: https://prowler.com
+icon: https://cdn.prod.website-files.com/68c4ec3f9fb7b154fbcb6e36/68c5e0fea5d0059b9e05834b_Link.png
+keywords:
+  - security
+  - aws
+  - azure
+  - gcp
+  - kubernetes
+maintainers:
+  - name: Mihai
+    email: mihai.legat@gmail.com
+dependencies:
+  # https://artifacthub.io/packages/helm/bitnami/postgresql
+  - name: postgresql
+    version: 18.2.0
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: postgresql.enabled
+  # https://valkey.io/valkey-helm/
+  - name: valkey
+    version: 0.9.3
+    repository: https://valkey.io/valkey-helm/
+    condition: valkey.enabled
+  # https://helm.neo4j.com/neo4j
+  - name: neo4j
+    version: 2025.12.1
+    repository: https://helm.neo4j.com/neo4j
+    condition: neo4j.enabled

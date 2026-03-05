@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceGroup": "container",
   "Description": "The monitoring service in **Kubernetes Engine clusters** depends on the Alibaba Cloud **CloudMonitor** agent to access additional system resources and application services in virtual machine instances.\n\nThe monitor can access metrics about CPU utilization, disk traffic metrics, network traffic, and disk IO information, which help monitor signals and build operations in your Kubernetes Engine clusters.",
   "Risk": "Without **CloudMonitor** enabled, you lack visibility into system metrics and custom metrics. System metrics measure the cluster's infrastructure, such as CPU or memory usage.\n\nWith CloudMonitor, a monitor controller is created that periodically connects to each node and collects metrics about its Pods and containers, then sends the metrics to CloudMonitor server.",
   "RelatedUrl": "",

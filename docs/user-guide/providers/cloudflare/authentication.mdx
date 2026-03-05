@@ -1,0 +1,146 @@
+---
+title: 'Cloudflare Authentication in Prowler'
+---
+
+Prowler for Cloudflare supports the following authentication methods:
+
+- [**API Token**](#api-token-recommended) (**Recommended**)
+- [**API Key and Email (Legacy)**](#api-key-and-email-legacy)
+
+## Required Permissions
+
+Prowler requires read-only access to your Cloudflare zones and their settings. The following permissions are needed:
+
+| Permission | Description |
+|------------|-------------|
+| `Zone:Read` | Read access to zone settings and configurations |
+| `Zone Settings:Read` | Read access to zone security settings (SSL/TLS, HSTS, etc.) |
+| `DNS:Read` | Read access to DNS records (for DNSSEC checks) |
+
+<Warning>
+Ensure your API Token or API Key has access to all zones you want to scan. If permissions are missing, some checks may fail or return incomplete results.
+</Warning>
+
+## API Token (Recommended)
+
+API Tokens are the recommended authentication method because they:
+- Can be scoped to specific permissions and zones
+- Are more secure than global API keys
+- Can be easily rotated without affecting other integrations
+
+### Step 1: Create an API Token
+
+1. **Log into Cloudflare Dashboard**
+   - Go to [https://dash.cloudflare.com](https://dash.cloudflare.com) and sign in
+
+2. **Navigate to API Tokens**
+   - Click on your profile icon in the top right corner
+   - Select **My Profile**
+   - Click on the **API Tokens** tab
+
+3. **Create a Custom Token**
+   - Click **Create Token**
+   - Select **Create Custom Token** (at the bottom)
+
+4. **Configure Token Permissions**
+
+   Give your token a descriptive name (e.g., "Prowler Security Scanner") and add the [required permissions](#required-permissions) listed above.
+
+5. **Set Zone Resources**
+   - Under **Zone Resources**, select either:
+     - **Include → All zones** (to scan all zones in your account)
+     - **Include → Specific zone** (to limit access to specific zones)
+
+6. **Create and Copy Token**
+   - Click **Continue to summary**
+   - Review the permissions and click **Create Token**
+   - **Copy the token immediately** - Cloudflare will only show it once
+
+### Step 2: Store the Token Securely
+
+Store your API token as an environment variable:
+
+```bash
+export CLOUDFLARE_API_TOKEN="your-api-token-here"
+```
+
+<Warning>
+Never commit API tokens to version control or share them in plain text. Use environment variables or a secrets manager.
+</Warning>
+
+## API Key and Email (Legacy)
+
+API Keys provide full access to your Cloudflare account. While supported, this method is less secure than API Tokens because it grants broader permissions.
+
+### Step 1: Get Your API Key
+
+1. **Log into Cloudflare Dashboard**
+   - Go to [https://dash.cloudflare.com](https://dash.cloudflare.com) and sign in
+
+2. **Navigate to API Tokens**
+   - Click on your profile icon in the top right corner
+   - Select **My Profile**
+   - Click on the **API Tokens** tab
+
+3. **View Global API Key**
+   - Scroll down to the **API Keys** section
+   - Click **View** next to **Global API Key**
+   - Enter your password to reveal the key
+   - Copy the API key
+
+### Step 2: Store Credentials Securely
+
+Store both your API key and email as environment variables:
+
+```bash
+export CLOUDFLARE_API_KEY="your-api-key-here"
+export CLOUDFLARE_API_EMAIL="your-email@example.com"
+```
+
+<Note>
+The email must be the same email address used to log into your Cloudflare account.
+</Note>
+
+## Best Practices
+
+### Security Recommendations
+
+- **Use API Tokens instead of API Keys** - Tokens can be scoped to specific permissions
+- **Use environment variables** - Never hardcode credentials in scripts or commands
+- **Rotate credentials regularly** - Create new tokens periodically and revoke old ones
+- **Use least privilege** - Only grant the minimum permissions needed
+- **Monitor token usage** - Review the Cloudflare audit log for suspicious activity
+
+<Warning>
+**Use only one authentication method at a time.** If both API Token and API Key + Email are set, Prowler will use the API Token and log an error message.
+</Warning>
+
+## Troubleshooting
+
+### "Missing X-Auth-Email header" Error
+
+This error occurs when using API Key authentication without providing the email address. Ensure both `CLOUDFLARE_API_KEY` and `CLOUDFLARE_API_EMAIL` are set.
+
+### "Authentication error" or "Permission denied"
+
+- Verify your API Token or API Key is correct and not expired
+- Check that your token has the [required permissions](#required-permissions)
+- Ensure your token has access to the zones you're trying to scan
+
+### "Both API Token and API Key and Email credentials are set"
+
+This warning appears when all three environment variables are set:
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_API_KEY`
+- `CLOUDFLARE_API_EMAIL`
+
+To resolve, unset the credentials you don't want to use:
+
+```bash
+# To use API Token only (recommended)
+unset CLOUDFLARE_API_KEY
+unset CLOUDFLARE_API_EMAIL
+
+# Or to use API Key and Email only
+unset CLOUDFLARE_API_TOKEN
+```

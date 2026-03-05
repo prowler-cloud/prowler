@@ -8,13 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "ClusterRoleBinding",
+  "ResourceGroup": "container",
   "Description": "**RBAC permissions** to the `nodes/proxy` subresource are analyzed. Any user or group granted `get`, `list`, or `watch` via cluster-wide bindings is reported.",
   "Risk": "Access to `nodes/proxy` exposes the **Kubelet API** through the apiserver proxy, which can bypass **audit** and **admission** controls. An adversary could execute commands in pods, read sensitive data, and pivot across nodes, impacting confidentiality and integrity; broad access also risks node-wide service disruption.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#access-to-proxy-subresource-of-nodes",
-    "https://www.linkedin.com/pulse/kubernetes-docker-security-best-practices-mahesh-guruprasad",
-    "https://stackoverflow.com/questions/69200128/what-is-node-proxy-subresource-in-kubernetes"
+    "https://www.linkedin.com/pulse/kubernetes-docker-security-best-practices-mahesh-guruprasad"
   ],
   "Remediation": {
     "Code": {

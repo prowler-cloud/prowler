@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsElasticBeanstalkEnvironment",
+  "ResourceGroup": "compute",
   "Description": "**Elastic Beanstalk environments** have health reporting set to `enhanced` instead of basic.",
   "Risk": "Without **enhanced health**, issues are detected late, raising MTTR and enabling **service outages**. Hidden instance failures or bad deployments can create uneven fleets, degrading **availability** and potentially **integrity** (serving stale versions), while error spikes and thrash increase operational cost.",
   "RelatedUrl": "",

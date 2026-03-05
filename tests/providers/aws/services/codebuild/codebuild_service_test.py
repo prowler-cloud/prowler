@@ -11,6 +11,9 @@ from prowler.providers.aws.services.codebuild.codebuild_service import (
     ExportConfig,
     Project,
     ReportGroup,
+    Webhook,
+    WebhookFilter,
+    WebhookFilterGroup,
     s3Logs,
 )
 from tests.providers.aws.utils import (
@@ -73,6 +76,23 @@ def mock_make_api_call(self, operation_name, kwarg):
                     },
                     "tags": [{"key": "Name", "value": project_name}],
                     "projectVisibility": project_visibility,
+                    "webhook": {
+                        "filterGroups": [
+                            [
+                                {
+                                    "type": "ACTOR_ACCOUNT_ID",
+                                    "pattern": "^123456789$",
+                                    "excludeMatchedPattern": False,
+                                },
+                                {
+                                    "type": "EVENT",
+                                    "pattern": "PUSH",
+                                    "excludeMatchedPattern": False,
+                                },
+                            ]
+                        ],
+                        "branchFilter": "main",
+                    },
                 }
             ]
         }
@@ -155,7 +175,37 @@ class Test_Codebuild_Service:
         assert codebuild.projects[project_arn].tags[0]["key"] == "Name"
         assert codebuild.projects[project_arn].tags[0]["value"] == project_name
         assert codebuild.projects[project_arn].project_visibility == project_visibility
-        # Asserttions related with report groups
+        # Assertions related with webhooks
+        assert codebuild.projects[project_arn].webhook is not None
+        assert isinstance(codebuild.projects[project_arn].webhook, Webhook)
+        assert codebuild.projects[project_arn].webhook.branch_filter == "main"
+        assert len(codebuild.projects[project_arn].webhook.filter_groups) == 1
+        assert isinstance(
+            codebuild.projects[project_arn].webhook.filter_groups[0], WebhookFilterGroup
+        )
+        assert (
+            len(codebuild.projects[project_arn].webhook.filter_groups[0].filters) == 2
+        )
+        assert isinstance(
+            codebuild.projects[project_arn].webhook.filter_groups[0].filters[0],
+            WebhookFilter,
+        )
+        assert (
+            codebuild.projects[project_arn].webhook.filter_groups[0].filters[0].type
+            == "ACTOR_ACCOUNT_ID"
+        )
+        assert (
+            codebuild.projects[project_arn].webhook.filter_groups[0].filters[0].pattern
+            == "^123456789$"
+        )
+        assert (
+            codebuild.projects[project_arn]
+            .webhook.filter_groups[0]
+            .filters[0]
+            .exclude_matched_pattern
+            is False
+        )
+        # Assertions related with report groups
         assert len(codebuild.report_groups) == 1
         assert isinstance(codebuild.report_groups, dict)
         assert isinstance(codebuild.report_groups[report_group_arn], ReportGroup)

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
+  "ResourceGroup": "container",
   "Description": "This check verifies if the Kubernetes API server is configured with the EventRateLimit admission control plugin. This plugin limits the rate of events accepted by the API Server, preventing potential DoS attacks by misbehaving workloads.",
   "Risk": "Without EventRateLimit, the API server could be overwhelmed by a high number of events, leading to DoS and performance issues.",
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",

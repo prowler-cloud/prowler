@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEcrRepository",
+  "ResourceGroup": "container",
   "Description": "Amazon ECR repositories are assessed for **image tag immutability**. Repositories permitting tag updates (`MUTABLE`) are identified; those enforcing immutable tags (such as `IMMUTABLE`) are recognized.",
   "Risk": "Mutable tags allow replacing the image behind a trusted tag, undermining release **integrity**. This enables supply-chain injection, unintended rollouts, and backdoored deployments, harming **availability**. Malicious images can exfiltrate data, impacting **confidentiality**.",
   "RelatedUrl": "",

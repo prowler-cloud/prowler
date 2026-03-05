@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "MongoDBAtlasOrganization",
+  "ResourceGroup": "governance",
   "Description": "Ensure organization requires API operations to originate from an IP Address added to the API access list",
   "Risk": "Without API access list requirement, API operations can originate from any IP address, increasing the risk of unauthorized access",
   "RelatedUrl": "",

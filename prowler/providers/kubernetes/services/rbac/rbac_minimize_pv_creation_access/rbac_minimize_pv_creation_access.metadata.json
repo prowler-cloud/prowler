@@ -8,11 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "ClusterRoleBinding",
+  "ResourceGroup": "storage",
   "Description": "**Kubernetes RBAC** mapping of **users or groups** with the `create` verb on `persistentvolumes` through ClusterRoleBindings.\n\nShows which principals can provision PersistentVolumes cluster-wide.",
   "Risk": "With `create` on `persistentvolumes`, a principal can define **hostPath PVs** and mount them via claims, exposing node files and bypassing pod safeguards.\n\nResults include secret disclosure and filesystem tampering (**confidentiality**/**integrity**), and potential node compromise affecting **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://github.com/kubernetes/kubernetes/issues/81110",
     "https://www.radsecurity.ai/blog/what-is-kubernetes-rbac",
     "https://kubernetes.io/docs/concepts/security/rbac-good-practices/",
     "https://www.bogotobogo.com/DevOps/Docker/Docker_Kubernetes_PersistentVolumes_PersistentVolumeClaims.php",

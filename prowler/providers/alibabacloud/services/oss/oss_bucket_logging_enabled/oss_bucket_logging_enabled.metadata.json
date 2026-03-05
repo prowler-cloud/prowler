@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:oss::account-id:bucket-name",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudOSSBucket",
+  "ResourceGroup": "storage",
   "Description": "**OSS Bucket Access Logging** generates a log that contains access records for each request made to your OSS bucket.\n\nAn access log record contains details about the request, such as the request type, the resources specified in the request, and the time and date the request was processed. It is recommended that bucket access logging be enabled on OSS buckets.",
   "Risk": "By enabling **OSS bucket logging** on target OSS buckets, it is possible to capture all events which may affect objects within target buckets.\n\nConfiguring logs to be placed in a separate bucket allows access to log information useful in **security** and **incident response** workflows.",
   "RelatedUrl": "",

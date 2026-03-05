@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsNetworkFirewallFirewall",
+  "ResourceGroup": "network",
   "Description": "**Network Firewall policies** are assessed for the `StatelessFragmentDefaultActions` setting to confirm **fragmented UDP packets** use `aws:drop` or `aws:forward_to_sfe`.",
   "Risk": "Using `aws:pass` for **fragmented UDP** lets uninspected traffic traverse the firewall. Attackers can evade filters via fragmentation, enabling **data exfiltration** (confidentiality), payload smuggling and lateral movement (integrity), and fragment floods that strain services (availability).",
   "RelatedUrl": "",

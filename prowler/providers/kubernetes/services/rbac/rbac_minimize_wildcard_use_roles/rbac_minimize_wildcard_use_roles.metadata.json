@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "ClusterRole",
+  "ResourceGroup": "IAM",
   "Description": "**Kubernetes RBAC Roles/ClusterRoles** are evaluated for wildcard use in rule `resources` or `verbs`. The presence of `*` means all resources or all actions are granted. This finding highlights roles whose rules include such wildcards.",
   "Risk": "Using `*` broadens access beyond intent:\n- Confidentiality: unrestricted reads of sensitive data\n- Integrity/Availability: create/update/delete across resources\n- Privilege escalation and lateral movement\n- Future drift: new APIs/verbs inherit access automatically",
   "RelatedUrl": "",

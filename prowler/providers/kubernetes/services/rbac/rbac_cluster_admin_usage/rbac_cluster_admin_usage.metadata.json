@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "ClusterRoleBinding",
+  "ResourceGroup": "IAM",
   "Description": "RBAC ClusterRoleBindings that bind to the `cluster-admin` ClusterRole are identified, showing where subjects receive super-user permissions across all namespaces.",
   "Risk": "**Excessive `cluster-admin` grants** give full API control, risking:\n- Secret exfiltration (confidentiality)\n- RBAC tampering (integrity)\n- Destructive actions causing outages (availability)\n\nA compromised subject can escalate, persist via new bindings, and laterally impact all namespaces.",
   "RelatedUrl": "",

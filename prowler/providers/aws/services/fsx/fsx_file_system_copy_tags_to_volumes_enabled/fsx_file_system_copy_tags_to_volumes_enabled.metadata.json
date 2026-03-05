@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Other",
+  "ResourceGroup": "storage",
   "Description": "**Amazon FSx file systems** are configured to **copy tags to volumes** via `copy_tags_to_volumes`.\n\nIdentifies file systems where volume resources will not inherit the file system's tags.",
   "Risk": "Without tag propagation, volumes lack consistent labels used for **ABAC**, classification, and automation. This can erode confidentiality through mis-scoped access controls and impact availability if backups or safeguards aren't applied to untagged volumes.",
   "RelatedUrl": "",

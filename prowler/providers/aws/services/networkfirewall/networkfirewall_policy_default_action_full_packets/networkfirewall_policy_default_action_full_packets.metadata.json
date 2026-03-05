@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsNetworkFirewallFirewall",
+  "ResourceGroup": "network",
   "Description": "**AWS Network Firewall policies** define a **stateless default action** for full packets. This evaluates whether unmatched packets are handled by `aws:drop` or `aws:forward_to_sfe`, meaning they are either discarded or sent to the stateful engine rather than allowed to pass.",
   "Risk": "Using `Pass` as the default allows unmatched full packets to bypass stateless filtering and stateful inspection, enabling reconnaissance, malware delivery, and covert data exfiltration. This undermines **confidentiality** and **integrity**, and can threaten **availability** through unfiltered attacks.",
   "RelatedUrl": "",

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "ClusterRoleBinding",
+  "ResourceGroup": "container",
   "Description": "User or group RBAC assignments that grant privileges to `create`, `update`, or `delete` `validatingwebhookconfigurations` and `mutatingwebhookconfigurations` are identified.\n\nFocus is on permissions that allow modifying **admission webhook** configuration objects.",
   "Risk": "Excess rights over **admission webhooks** allow reading or mutating all admitted API objects, undermining **confidentiality** and **integrity**.\n\nAn attacker could inject privileged mutations, bypass policy, or block admissions, leading to **privilege escalation** and cluster-wide **denial of service**.",
   "RelatedUrl": "",

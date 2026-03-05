@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
+  "ResourceGroup": "container",
   "Description": "This check ensures that the Kubernetes API server is configured with TLS for secure communication. The --tls-cert-file and --tls-private-key-file arguments should be set to enable TLS encryption, thereby securing sensitive data transmitted to and from the API server.",
   "Risk": "If TLS is not properly configured, the API server communication could be unencrypted, leading to potential data breaches.",
   "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",

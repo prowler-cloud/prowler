@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "ClusterRoleBinding",
+  "ResourceGroup": "security",
   "Description": "**RBAC assignments** that grant `update` or `patch` on the `certificatesigningrequests/approval` subresource to **users or groups** via cluster-wide roles and bindings.\n\nThis highlights principals allowed to approve CSRs based on permissions defined in referenced ClusterRoles.",
   "Risk": "Excess CSR approval rights enable **privilege escalation**. A malicious user can approve CSRs to mint client certificates for arbitrary identities, gaining unauthorized API access, impersonating system components, and enabling **data exfiltration** and tampering, harming **confidentiality** and **integrity**.",
   "RelatedUrl": "",
