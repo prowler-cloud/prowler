@@ -9,8 +9,8 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "A Conditional Access policy enforces one of the following grant controls for admin roles or all users across all cloud apps: require device to be marked as compliant, require Microsoft Entra hybrid joined device, or require multifactor authentication.",
-  "Risk": "Without this policy, compromised credentials can be used from unmanaged endpoints or without strong authentication, increasing the risk of unauthorized access and data exposure.",
+  "Description": "A **Conditional Access policy** enforces one of the following grant controls for admin roles or all users across all cloud apps: - 'Require device to be marked as compliant' - 'Require Microsoft Entra hybrid joined device' - 'Require multifactor authentication' This ensures that access is provided only under strong authentication or trusted device conditions.",
+  "Risk": "If this policy is not implemented, attackers with compromised credentials may gain access from unmanaged devices or without strong authentication, increasing the likelihood of **unauthorized access and data breaches**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-grant",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Enforce a Conditional Access baseline where admins or all users must satisfy at least one strong control: compliant device, hybrid joined device, or MFA.",
-      "Url": ""
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required"
     }
   },
   "Categories": [
@@ -34,9 +34,7 @@
   ],
   "DependsOn": [],
   "RelatedTo": [
-    "entra_managed_device_required_for_authentication",
-    "entra_users_mfa_enabled",
-    "entra_admin_users_mfa_enabled"
+    "entra_managed_device_required_for_authentication"
   ],
-  "Notes": "Custom check aligned with UHG-SBD.0012; not mapped to compliance frameworks."
+  "Notes": ""
 }

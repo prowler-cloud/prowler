@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.19.1] (Prowler v5.19.1)
+
+### 🔐 Security
+
+- npm transitive dependencies patched to resolve 11 Dependabot alerts (6 HIGH, 4 MEDIUM, 1 LOW): hono, @hono/node-server, fast-xml-parser, serialize-javascript, minimatch [(#10267)](https://github.com/prowler-cloud/prowler/pull/10267)
+
+---
+
 ## [1.19.0] (Prowler v5.19.0)
 
 ### 🚀 Added

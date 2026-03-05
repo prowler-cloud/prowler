@@ -2,11 +2,23 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.20.0] (Prowler v5.20.0)
+## [5.20.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
 
+- `entra_conditional_access_policy_approved_client_app_required_for_mobile` check for m365 provider [(#10216)](https://github.com/prowler-cloud/prowler/pull/10216)
 - `entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required` check for M365 provider [(#10197)](https://github.com/prowler-cloud/prowler/pull/10197)
+
+### 🔄 Changed
+
+- Update Kubernetes API server checks metadata to new format [(#9674)](https://github.com/prowler-cloud/prowler/pull/9674)
+- Update Kubernetes Controller Manager service metadata to new format [(#9675)](https://github.com/prowler-cloud/prowler/pull/9675)
+- Update Kubernetes Core service metadata to new format [(#9676)](https://github.com/prowler-cloud/prowler/pull/9676)
+- Update Kubernetes Kubelet service metadata to new format [(#9677)](https://github.com/prowler-cloud/prowler/pull/9677)
+- Update Kubernetes RBAC service metadata to new format [(#9678)](https://github.com/prowler-cloud/prowler/pull/9678)
+- Update Kubernetes Scheduler service metadata to new format [(#9679)](https://github.com/prowler-cloud/prowler/pull/9679)
+
+---
 
 ## [5.19.0] (Prowler v5.19.0)
 

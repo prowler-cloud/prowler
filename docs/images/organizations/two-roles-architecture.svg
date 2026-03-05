@@ -46,8 +46,8 @@
   <text x="82" y="384" font-size="11" fill="#4285F4" font-weight="600">organizations:ListTagsForResource</text>
 
   <!-- Deploy badge -->
-  <rect x="145" y="400" width="210" height="28" rx="14" fill="#FFF3E0" stroke="#F9AB00" stroke-width="1.5"/>
-  <text x="250" y="419" text-anchor="middle" font-size="12" font-weight="700" fill="#E65100">Deploy: MANUALLY in IAM Console</text>
+  <rect x="115" y="400" width="270" height="28" rx="14" fill="#FFF3E0" stroke="#F9AB00" stroke-width="1.5"/>
+  <text x="250" y="419" text-anchor="middle" font-size="12" font-weight="700" fill="#E65100">Deploy: Quick Create link or Manual</text>
 
   <!-- ===== Prowler Cloud connector ===== -->
   <rect x="490" y="195" width="120" height="36" rx="8" fill="#F5F5F5" stroke="#E0E0E0" stroke-width="1"/>
