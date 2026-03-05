@@ -93,7 +93,7 @@ The Prowler wizard provides a one-click link that opens the AWS Console with the
 Opens the CloudFormation Console with the Prowler scan role template and `EnableOrganizations=true` pre-filled. You will need to enter the **ExternalId** parameter manually — copy it from the Prowler wizard ([Step 4](#step-4-authenticate-with-your-management-account)).
 </Tip>
 
-1. Click the link above or use the **Create Stack in Management Account** button in the Prowler wizard (which also pre-fills the ExternalId).
+1. Click **[Open Quick Create Stack in AWS Console →](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=Prowler&param_EnableOrganizations=true)** or use the **Create Stack in Management Account** button in the Prowler wizard (which also pre-fills the ExternalId).
 2. Enter the **ExternalId** parameter if not pre-filled.
 3. Check **"I acknowledge that AWS CloudFormation might create IAM resources with custom names"** and click **Create stack**.
 4. Wait for the stack to reach **CREATE_COMPLETE** status.
@@ -295,7 +295,6 @@ The wizard provides two deployment actions:
 
 2. **Open StackSets Console** — links to the CloudFormation StackSets console where you create a StackSet for member accounts ([Step 2](#step-2-deploy-the-cloudformation-stackset)). Copy the template URL shown in the wizard and paste the External ID manually.
 
-{/* TODO: replace screenshot — wizard now shows External ID first, then two deployment buttons (Create Stack + Open StackSets Console), then Role ARN */}
 <Frame>
   <img src="/images/organizations/authentication-details.png" alt="Authentication Details form showing External ID, two deployment buttons (Create Stack in Management Account and Open StackSets Console), Management Account Role ARN field, and deployment confirmation checkbox" />
 </Frame>
@@ -311,7 +310,6 @@ arn:aws:iam::<account-id>:role/ProwlerScan
 
 For example: `arn:aws:iam::123456789012:role/ProwlerScan`
 
-{/* TODO: replace screenshot — field label is now "Management Account Role ARN" */}
 <Frame>
   <img src="/images/organizations/role-arn-field.png" alt="Management Account Role ARN field in the Authentication Details form" />
 </Frame>
@@ -325,8 +323,6 @@ Here's what happens behind the scenes:
 - Prowler creates the organization resource and stores your credentials securely.
 - An asynchronous discovery is triggered to query your AWS Organization structure.
 - You will see a **"Gathering AWS Accounts..."** spinner — this typically takes **30 seconds to 2 minutes** depending on your organization size.
-
-{/* TODO: screenshot of the Authentication Details form with the spinner */}
 
 ## Step 5: Select Accounts to Scan
 
@@ -375,8 +371,6 @@ Some accounts may appear as **blocked** (grayed out, not selectable). This happe
 - The account is **already linked to a different organization** in Prowler (`linked_to_other_organization`).
 
 Hover over the blocked account to see the specific reason.
-
-{/* TODO: screenshot of the tree view with account selection, showing active, already-connected, and blocked accounts */}
 
 ## Step 6: Test Connections
 
@@ -463,8 +457,6 @@ Scans are only launched for accounts that are accessible (passed connection test
 - Scans appear in the **Scans** page as they start and complete.
 - Results populate the **Overview** and **Findings** pages.
 - Prowler runs an **automatic sync every 6 hours** to detect new accounts added to your Organization or accounts that have been removed. New accounts are onboarded automatically based on the parent OU configuration.
-
-{/* TODO: screenshot of the Launch Scan step */}
 
 ## Billing Impact
 
