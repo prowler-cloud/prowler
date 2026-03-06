@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.21.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+- Attack Paths: Complete migration to private graph labels and properties, removing deprecated dual-write support [(#10268)](https://github.com/prowler-cloud/prowler/pull/10268)
+
+
 ## [1.20.0] (Prowler v5.19.0)
 
 ### 🚀 Added

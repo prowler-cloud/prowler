@@ -9,6 +9,10 @@ from rest_framework.exceptions import APIException, PermissionDenied, Validation
 
 from api.attack_paths import database as graph_database
 from api.attack_paths import views_helpers
+from tasks.jobs.attack_paths.config import (
+    PROVIDER_ELEMENT_ID_PROPERTY,
+    PROVIDER_ID_PROPERTY,
+)
 
 
 def _make_neo4j_error(message, code):
@@ -108,7 +112,7 @@ def test_execute_query_serializes_graph(
         labels=["AWSAccount"],
         properties={
             "name": "account",
-            "provider_id": provider_id,
+            PROVIDER_ID_PROPERTY: provider_id,
             "complex": {
                 "items": [
                     attack_paths_graph_stub_classes.NativeValue("value"),
@@ -118,14 +122,14 @@ def test_execute_query_serializes_graph(
         },
     )
     node_2 = attack_paths_graph_stub_classes.Node(
-        "node-2", ["RDSInstance"], {"provider_id": provider_id}
+        "node-2", ["RDSInstance"], {PROVIDER_ID_PROPERTY: provider_id}
     )
     relationship = attack_paths_graph_stub_classes.Relationship(
         element_id="rel-1",
         rel_type="OWNS",
         start_node=node,
         end_node=node_2,
-        properties={"weight": 1, "provider_id": provider_id},
+        properties={"weight": 1, PROVIDER_ID_PROPERTY: provider_id},
     )
     graph = SimpleNamespace(nodes=[node, node_2], relationships=[relationship])
 
@@ -213,20 +217,20 @@ def test_serialize_graph_filters_by_provider_id(attack_paths_graph_stub_classes)
     provider_id = "provider-keep"
 
     node_keep = attack_paths_graph_stub_classes.Node(
-        "n1", ["AWSAccount"], {"provider_id": provider_id}
+        "n1", ["AWSAccount"], {PROVIDER_ID_PROPERTY: provider_id}
     )
     node_drop = attack_paths_graph_stub_classes.Node(
-        "n2", ["AWSAccount"], {"provider_id": "provider-other"}
+        "n2", ["AWSAccount"], {PROVIDER_ID_PROPERTY: "provider-other"}
     )
 
     rel_keep = attack_paths_graph_stub_classes.Relationship(
-        "r1", "OWNS", node_keep, node_keep, {"provider_id": provider_id}
+        "r1", "OWNS", node_keep, node_keep, {PROVIDER_ID_PROPERTY: provider_id}
     )
     rel_drop_by_provider = attack_paths_graph_stub_classes.Relationship(
-        "r2", "OWNS", node_keep, node_drop, {"provider_id": "provider-other"}
+        "r2", "OWNS", node_keep, node_drop, {PROVIDER_ID_PROPERTY: "provider-other"}
     )
     rel_drop_orphaned = attack_paths_graph_stub_classes.Relationship(
-        "r3", "OWNS", node_keep, node_drop, {"provider_id": provider_id}
+        "r3", "OWNS", node_keep, node_drop, {PROVIDER_ID_PROPERTY: provider_id}
     )
 
     graph = SimpleNamespace(
@@ -350,10 +354,8 @@ def test_serialize_properties_filters_internal_fields():
         "_module_name": "cartography:aws",
         "_module_version": "0.98.0",
         # Provider isolation
-        "_provider_id": "42",
-        "_provider_element_id": "42:abc123",
-        "provider_id": "42",
-        "provider_element_id": "42:abc123",
+        PROVIDER_ID_PROPERTY: "42",
+        PROVIDER_ELEMENT_ID_PROPERTY: "42:abc123",
     }
 
     result = views_helpers._serialize_properties(properties)
@@ -440,13 +442,13 @@ def test_execute_custom_query_serializes_graph(
 ):
     provider_id = "test-provider-123"
     node_1 = attack_paths_graph_stub_classes.Node(
-        "node-1", ["AWSAccount"], {"provider_id": provider_id}
+        "node-1", ["AWSAccount"], {PROVIDER_ID_PROPERTY: provider_id}
     )
     node_2 = attack_paths_graph_stub_classes.Node(
-        "node-2", ["RDSInstance"], {"provider_id": provider_id}
+        "node-2", ["RDSInstance"], {PROVIDER_ID_PROPERTY: provider_id}
     )
     relationship = attack_paths_graph_stub_classes.Relationship(
-        "rel-1", "OWNS", node_1, node_2, {"provider_id": provider_id}
+        "rel-1", "OWNS", node_1, node_2, {PROVIDER_ID_PROPERTY: provider_id}
     )
 
     graph_result = MagicMock()
