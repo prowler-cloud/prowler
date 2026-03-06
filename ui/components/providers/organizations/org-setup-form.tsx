@@ -269,8 +269,8 @@ export function OrgSetupForm({
             {/* External ID - shown first for both deployment steps */}
             <div className="flex flex-col gap-4">
               <p className="text-text-neutral-primary text-sm leading-7 font-normal">
-                Use the following <strong>External ID</strong> when deploying the
-                CloudFormation Stack and StackSet.
+                Use the following <strong>External ID</strong> when deploying
+                the CloudFormation Stack and StackSet.
               </p>
               <div className="flex items-center gap-3">
                 <span className="text-text-neutral-tertiary text-xs">
@@ -310,7 +310,8 @@ export function OrgSetupForm({
             <div className="flex flex-col gap-4">
               <p className="text-text-neutral-primary text-sm leading-7 font-normal">
                 1) Deploy the ProwlerScan role in your{" "}
-                <strong>management account</strong> using a CloudFormation Stack.
+                <strong>management account</strong> using a CloudFormation
+                Stack.
               </p>
               <Button
                 variant="outline"
@@ -334,13 +335,14 @@ export function OrgSetupForm({
             <div className="flex flex-col gap-4">
               <p className="text-text-neutral-primary text-sm leading-7 font-normal">
                 2) Deploy the ProwlerScan role to{" "}
-                <strong>member accounts</strong> using a CloudFormation StackSet.
+                <strong>member accounts</strong> using a CloudFormation
+                StackSet.
               </p>
               <p className="text-text-neutral-tertiary text-xs leading-5">
                 Open the StackSets console, select{" "}
                 <strong>Service-managed permissions</strong>, and paste the
-                template URL below. Set the <strong>ExternalId</strong> parameter
-                to the value shown above.
+                template URL below. Set the <strong>ExternalId</strong>{" "}
+                parameter to the value shown above.
               </p>
               <div className="bg-bg-neutral-tertiary border-border-input-primary flex items-center gap-3 rounded-lg border px-4 py-2.5">
                 <span className="text-text-neutral-primary min-w-0 flex-1 truncate font-mono text-xs">
