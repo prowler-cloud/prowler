@@ -84,12 +84,9 @@ logger = get_task_logger(__name__)
 
 
 def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
-    """Run the full Attack Paths scan pipeline for a single provider.
-
-    See the module docstring for a step-by-step breakdown of the pipeline.
-
-    Returns a dict of ingestion exceptions keyed by service name (empty on
-    full success, "global_error" key on fatal failure).
+    """
+    Code based on Cartography, specifically on `cartography.cli.main`, `cartography.cli.CLI.main`,
+    `cartography.sync.run_with_config` and `cartography.sync.Sync.run`.
     """
     ingestion_exceptions = {}  # This will hold any exceptions raised during ingestion
 
