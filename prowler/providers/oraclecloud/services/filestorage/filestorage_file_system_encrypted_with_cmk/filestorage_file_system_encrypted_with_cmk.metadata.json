@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:filestorage:resource",
   "Severity": "medium",
   "ResourceType": "OciFilestorageResource",
+  "ResourceGroup": "storage",
   "Description": "File systems should be encrypted with Customer Managed Keys (CMK) for enhanced security and control over encryption keys.",
   "Risk": "Not meeting this requirement increases security risk.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/",

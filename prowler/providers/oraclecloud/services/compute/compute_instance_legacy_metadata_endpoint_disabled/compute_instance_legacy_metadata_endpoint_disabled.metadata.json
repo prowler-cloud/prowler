@@ -8,12 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Instance",
+  "ResourceGroup": "compute",
   "Description": "**OCI compute instance metadata service** is configured so legacy **IMDS v1** endpoints are disabled, requiring session-authorized **IMDS v2** requests for metadata access",
   "Risk": "Enabled **IMDS v1** permits unauthenticated metadata reads via local access or **SSRF**, compromising **confidentiality** of instance credentials, SSH keys, and custom data. Stolen tokens enable cloud API abuse, driving **privilege escalation**, **lateral movement**, and unauthorized changes that impact **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.oracle.com/en-us/iaas/Content/Compute/Tasks/gettingmetadata.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Compute/enforce-imds-v2.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/oci/OCI-Compute/enforce-imds-v2.html"
   ],
   "Remediation": {
     "Code": {

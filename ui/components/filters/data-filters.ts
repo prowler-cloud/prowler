@@ -76,13 +76,6 @@ export const filterFindings = [
     index: 1,
   },
   {
-    key: FilterType.PROVIDER_TYPE,
-    labelCheckboxGroup: "Cloud Provider",
-    values: [...PROVIDER_TYPES],
-    valueLabelMapping: PROVIDER_TYPE_MAPPING,
-    index: 5,
-  },
-  {
     key: FilterType.DELTA,
     labelCheckboxGroup: "Delta",
     values: ["new", "changed"],

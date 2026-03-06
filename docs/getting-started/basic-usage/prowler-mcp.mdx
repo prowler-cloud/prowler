@@ -139,7 +139,7 @@ STDIO mode is only available when running the MCP server locally.
           "args": ["/absolute/path/to/prowler/mcp_server/"],
           "env": {
             "PROWLER_APP_API_KEY": "<your-api-key-here>",
-            "PROWLER_API_BASE_URL": "https://api.prowler.com"
+            "API_BASE_URL": "https://api.prowler.com/api/v1"
           }
         }
       }
@@ -147,7 +147,7 @@ STDIO mode is only available when running the MCP server locally.
     ```
 
     <Note>
-    Replace `/absolute/path/to/prowler/mcp_server/` with the actual path. The `PROWLER_API_BASE_URL` is optional and defaults to Prowler Cloud API.
+    Replace `/absolute/path/to/prowler/mcp_server/` with the actual path. The `API_BASE_URL` is optional and defaults to Prowler Cloud API.
     </Note>
 
   </Tab>
@@ -167,7 +167,7 @@ STDIO mode is only available when running the MCP server locally.
             "--env",
             "PROWLER_APP_API_KEY=<your-api-key-here>",
             "--env",
-            "PROWLER_API_BASE_URL=https://api.prowler.com",
+            "API_BASE_URL=https://api.prowler.com/api/v1",
             "prowlercloud/prowler-mcp"
           ]
         }
@@ -176,7 +176,7 @@ STDIO mode is only available when running the MCP server locally.
     ```
 
     <Note>
-    The `PROWLER_API_BASE_URL` is optional and defaults to Prowler Cloud API.
+    The `API_BASE_URL` is optional and defaults to Prowler Cloud API.
     </Note>
 
   </Tab>

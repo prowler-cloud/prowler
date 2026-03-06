@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "prowler.fullname" . }}-worker-beat
+  labels:
+    {{- include "prowler.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.worker_beat.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "prowler.fullname" . }}-worker-beat
+  template:
+    metadata:
+      annotations:
+        secret-hash: "{{ printf "%s%s%s" (.Files.Get "templates/api/configmap.yaml" | sha256sum) (.Files.Get "templates/api/secret-valkey.yaml" | sha256sum) | sha256sum }}"
+      {{- with .Values.worker.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "prowler.labels" . | nindent 8 }}
+        app.kubernetes.io/name: {{ include "prowler.fullname" . }}-worker-beat
+        {{- with .Values.worker_beat.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.worker_beat.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "prowler.worker_beat.serviceAccountName" . }}
+      {{- with .Values.worker_beat.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: worker-beat
+          {{- with .Values.worker_beat.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.worker_beat.image.repository }}:{{ .Values.worker_beat.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.worker_beat.image.pullPolicy }}
+          {{- with .Values.worker_beat.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.worker_beat.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "prowler.fullname" . }}-api
+            {{- if .Values.valkey.enabled }}
+            - secretRef:
+                name: {{ include "prowler.fullname" . }}-api-valkey
+            {{- end }}
+            {{- with .Values.api.secrets }}
+            {{- range $index, $secret := . }}
+            - secretRef:
+                name: {{ $secret }}
+            {{- end }}
+            {{- end }}
+          env:
+            {{- include "prowler.django.env" . | nindent 12 }}
+            {{- include "prowler.postgresql.env" . | nindent 12 }}
+            {{- include "prowler.neo4j.env" . | nindent 12 }}
+          {{- with .Values.worker_beat.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.worker_beat.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.worker_beat.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.worker_beat.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.worker_beat.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker_beat.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker_beat.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker_beat.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

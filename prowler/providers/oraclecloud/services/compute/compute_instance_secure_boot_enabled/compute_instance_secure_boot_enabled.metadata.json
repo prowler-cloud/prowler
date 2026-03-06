@@ -8,11 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Instance",
+  "ResourceGroup": "compute",
   "Description": "**OCI compute instances** have **UEFI Secure Boot** enabled so the platform firmware loads only trusted, signed bootloaders, kernels, and drivers at startup.",
   "Risk": "Without **Secure Boot**, unsigned or tampered boot code can run before the OS, enabling **bootkits/rootkits** to gain kernel-level persistence, bypass monitoring, alter logs, and exfiltrate secrets, eroding **integrity** and **confidentiality**, and risking **availability** through destructive changes or ransom staging.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Compute/enable-secure-boot.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/oci/OCI-Compute/enable-secure-boot.html",
     "https://docs.oracle.com/en-us/iaas/Content/Compute/References/shielded-instances.htm"
   ],
   "Remediation": {

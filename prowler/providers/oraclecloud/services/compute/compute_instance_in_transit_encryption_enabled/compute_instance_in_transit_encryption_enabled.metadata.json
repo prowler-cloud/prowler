@@ -8,15 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Instance",
+  "ResourceGroup": "compute",
   "Description": "**OCI compute instances** are evaluated for **in-transit encryption** on paravirtualized block or boot volume attachments, confirming that data exchanged between the instance and attached volumes is encrypted during transfer.",
   "Risk": "Without **in-transit encryption**, volume traffic can be inspected or altered on internal paths. A threat actor or compromised host could read sensitive data, inject corrupted blocks, or replay writes, undermining **confidentiality** and **integrity**, and risking **availability** through data corruption.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://github.com/hitrov/oci-arm-host-capacity/issues/20",
-    "https://skrajend.blogspot.com/2019/02/in-transit-encryption-for-boot-and.html",
     "https://docs.oracle.com/en-us/iaas/Content/Block/Concepts/blockvolumeencryption.htm",
-    "https://www.pulumi.com/registry/packages/oci/api-docs/core/volumeattachment/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Compute/enable-encryption-in-transit.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/oci/OCI-Compute/enable-encryption-in-transit.html"
   ],
   "Remediation": {
     "Code": {

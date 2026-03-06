@@ -65,11 +65,11 @@ def get_providers(role: Role) -> QuerySet[Provider]:
         A QuerySet of Provider objects filtered by the role's provider groups.
         If the role has no provider groups, returns an empty queryset.
     """
-    tenant = role.tenant
+    tenant_id = role.tenant_id
     provider_groups = role.provider_groups.all()
     if not provider_groups.exists():
         return Provider.objects.none()
 
     return Provider.objects.filter(
-        tenant=tenant, provider_groups__in=provider_groups
+        tenant_id=tenant_id, provider_groups__in=provider_groups
     ).distinct()

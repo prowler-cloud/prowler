@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:network:networksecuritygroup",
   "Severity": "high",
   "ResourceType": "OciNetworkSecurityGroup",
+  "ResourceGroup": "network",
   "Description": "Ensure no network security groups allow ingress from 0.0.0.0/0 to port 22. Network security groups provide stateful or stateless filtering of ingress and egress network traffic to OCI resources.",
   "Risk": "Removing unfettered connectivity to remote console services, such as SSH, reduces a server's exposure to risk.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/networksecuritygroups.htm",

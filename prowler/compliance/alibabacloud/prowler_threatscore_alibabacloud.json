@@ -1,0 +1,1107 @@
+{
+  "Framework": "ProwlerThreatScore",
+  "Name": "Prowler ThreatScore Compliance Framework for Alibaba Cloud",
+  "Version": "1.0",
+  "Provider": "alibabacloud",
+  "Description": "Prowler ThreatScore Compliance Framework for Alibaba Cloud ensures that the Alibaba Cloud account is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Logging and Monitoring, and Encryption. This framework provides a comprehensive security assessment for Alibaba Cloud environments including RAM, ECS, OSS, RDS, VPC, and Container Service for Kubernetes.",
+  "Requirements": [
+    {
+      "Id": "1.1.1",
+      "Description": "Ensure no root account access key exists",
+      "Checks": [
+        "ram_no_root_access_key"
+      ],
+      "Attributes": [
+        {
+          "Title": "No root access key exists",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The root account in Alibaba Cloud has the highest level of privileges. Access keys provide programmatic access to the account, and when associated with the root account, they pose a significant security risk. It is recommended that no access keys be associated with the root account, ensuring that all programmatic access is managed through RAM users with least privilege access.",
+          "AdditionalInformation": "Removing access keys associated with the root account limits the vectors by which the most privileged account can be compromised. If an access key is leaked or stolen, attackers gain unrestricted access to all resources in the account. Eliminating root access keys reduces the risk of unauthorized access and enforces the use of RAM users with proper access controls.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.1.2",
+      "Description": "Ensure multi-factor authentication is enabled for all RAM users that have console access",
+      "Checks": [
+        "ram_user_mfa_enabled_console_access"
+      ],
+      "Attributes": [
+        {
+          "Title": "MFA enabled for RAM console users",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Multi-Factor Authentication (MFA) adds an extra layer of protection on top of a username and password. With MFA enabled, when a RAM user logs on to Alibaba Cloud, they will be prompted for their username and password followed by an authentication code from their virtual MFA device. It is recommended that MFA be enabled for all RAM users that have console access.",
+          "AdditionalInformation": "Without Multi-Factor Authentication, a compromised password alone is enough to allow an attacker to access the console, gaining full visibility and control over Alibaba Cloud resources. MFA requires users to verify their identities by entering two authentication factors, making it significantly harder for attackers to gain access.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.1.3",
+      "Description": "Ensure users not logged on for 90 days or longer are disabled for console logon",
+      "Checks": [
+        "ram_user_console_access_unused"
+      ],
+      "Attributes": [
+        {
+          "Title": "Inactive users disabled for console access",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "RAM users can logon to Alibaba Cloud console using their username and password. If a user has not logged on for 90 days or longer, it is recommended to disable the console access of the user to reduce the attack surface.",
+          "AdditionalInformation": "Disabling users from having unnecessary logon privileges reduces the opportunity that an abandoned user or a user with compromised password can be exploited. Inactive accounts are prime targets for attackers as they may have outdated passwords or forgotten access that goes unmonitored.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "1.1.4",
+      "Description": "Ensure access keys are rotated every 90 days or less",
+      "Checks": [
+        "ram_rotate_access_key_90_days"
+      ],
+      "Attributes": [
+        {
+          "Title": "Access keys rotated every 90 days",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Access keys consist of an access key ID and a secret, which are used to sign programmatic requests to Alibaba Cloud. RAM users need their own access keys to make programmatic calls via SDKs, CLIs, or direct API calls. It is recommended that all access keys be regularly rotated to minimize the risk of unauthorized access.",
+          "AdditionalInformation": "Access keys might be compromised by leaving them in code, configuration files, or cloud storage, and then stolen by attackers. Rotating access keys regularly reduces the window of opportunity for a compromised access key to be exploited, limiting potential damage from credential theft.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.1.5",
+      "Description": "Ensure RAM password policy requires minimum length of 14 or greater",
+      "Checks": [
+        "ram_password_policy_minimum_length"
+      ],
+      "Attributes": [
+        {
+          "Title": "RAM password minimum length 14 or greater",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "RAM password policies can be used to ensure password complexity. It is recommended that the password policy require a minimum of 14 or greater characters for any password to enhance security against brute force attacks.",
+          "AdditionalInformation": "Requiring longer and more complex passwords reduces the risk of compromise from brute force attacks, credential stuffing, and other password-based threats. A 14-character minimum makes it significantly harder for attackers to guess or crack passwords.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.1.6",
+      "Description": "Ensure RAM password policy requires at least one uppercase letter",
+      "Checks": [
+        "ram_password_policy_uppercase"
+      ],
+      "Attributes": [
+        {
+          "Title": "RAM password requires uppercase letter",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "RAM password policies can be configured to enforce the use of at least one uppercase letter in user passwords. Including uppercase letters increases password complexity, making them more resilient to brute-force and dictionary attacks.",
+          "AdditionalInformation": "Requiring at least one uppercase letter ensures that passwords are not composed solely of lowercase letters or numbers, which are more predictable and easier to crack. This policy adds complexity and reduces the risk of unauthorized access.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.1.7",
+      "Description": "Ensure RAM password policy requires at least one lowercase letter",
+      "Checks": [
+        "ram_password_policy_lowercase"
+      ],
+      "Attributes": [
+        {
+          "Title": "RAM password requires lowercase letter",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "RAM password policies can be configured to enforce the use of at least one lowercase letter in user passwords. Including lowercase letters increases password complexity, making them more resistant to brute-force and dictionary attacks.",
+          "AdditionalInformation": "Requiring at least one lowercase letter ensures that passwords are not composed solely of numbers or uppercase letters, which are easier to guess. This enforcement improves password complexity and overall account security.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.1.8",
+      "Description": "Ensure RAM password policy requires at least one symbol",
+      "Checks": [
+        "ram_password_policy_symbol"
+      ],
+      "Attributes": [
+        {
+          "Title": "RAM password requires symbol",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "RAM password policies can be configured to enforce the use of at least one special character (symbol) in user passwords. Special characters add complexity, making passwords harder to guess or crack.",
+          "AdditionalInformation": "Requiring a symbol in passwords increases entropy, making brute-force and dictionary attacks more difficult. This policy strengthens overall password security and aligns with industry best practices.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.1.9",
+      "Description": "Ensure RAM password policy prevents password reuse",
+      "Checks": [
+        "ram_password_policy_password_reuse_prevention"
+      ],
+      "Attributes": [
+        {
+          "Title": "RAM password reuse prevention",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "RAM password policies can be configured to prevent users from reusing previous passwords. This ensures that users create new, unique passwords instead of cycling through old ones, enhancing security.",
+          "AdditionalInformation": "Blocking password reuse helps mitigate the risk of credential-based attacks. It prevents users from reverting to previously compromised passwords, reducing the likelihood of unauthorized access through known credentials.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.1.10",
+      "Description": "Ensure RAM password policy expires passwords in 365 days or greater",
+      "Checks": [
+        "ram_password_policy_max_password_age"
+      ],
+      "Attributes": [
+        {
+          "Title": "RAM password expiration policy",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "RAM password policies can require passwords to be expired after a given number of days. It is recommended that the password policy expire passwords after 365 days or greater to balance security with user convenience.",
+          "AdditionalInformation": "Annual password rotation complements other security measures and ensures credentials are periodically refreshed. This approach follows modern security guidance that favors annual password changes combined with MFA over frequent forced rotations that lead to weaker passwords.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.1.11",
+      "Description": "Ensure RAM password policy temporarily blocks logon after 5 incorrect attempts",
+      "Checks": [
+        "ram_password_policy_max_login_attempts"
+      ],
+      "Attributes": [
+        {
+          "Title": "RAM password lockout policy",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "RAM password policies can temporarily block logon after several incorrect logon attempts within an hour. It is recommended that the password policy is set to temporarily block logon after 5 incorrect attempts to prevent brute force attacks.",
+          "AdditionalInformation": "Account lockout policies provide essential protection against brute force and password spraying attacks. By limiting the number of failed authentication attempts, organizations can significantly reduce the risk of credential compromise.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.2.1",
+      "Description": "Ensure RAM policies are attached only to groups or roles",
+      "Checks": [
+        "ram_policy_attached_only_to_group_or_roles"
+      ],
+      "Attributes": [
+        {
+          "Title": "RAM policies attached to groups or roles",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "By default, RAM users, groups, and roles have no access to Alibaba Cloud resources. RAM policies are the means by which privileges are granted. It is recommended that RAM policies be applied directly to groups and roles but not to individual users.",
+          "AdditionalInformation": "Assigning privileges at the group or role level reduces the complexity of access management and reduces the opportunity for a principal to inadvertently receive or retain excessive privileges. This approach simplifies administration and improves security posture.",
+          "LevelOfRisk": 1,
+          "Weight": 1
+        }
+      ]
+    },
+    {
+      "Id": "1.3.1",
+      "Description": "Ensure RAM policies that allow full administrative privileges are not created",
+      "Checks": [
+        "ram_policy_no_administrative_privileges"
+      ],
+      "Attributes": [
+        {
+          "Title": "No RAM policies with full administrative privileges",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "RAM policies define permissions for users, groups, or roles. Following the principle of least privilege, users should be granted only the permissions required to perform their tasks. RAM policies containing Effect: Allow, Action: *, and Resource: * should not be created as they grant unrestricted access.",
+          "AdditionalInformation": "Providing full administrative privileges exposes your resources to potentially unwanted actions. Starting with minimal permissions and granting additional access as necessary is significantly more secure than providing excessive permissions and attempting to restrict them later.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.1.1",
+      "Description": "Ensure legacy networks do not exist",
+      "Checks": [
+        "ecs_instance_no_legacy_network"
+      ],
+      "Attributes": [
+        {
+          "Title": "No legacy networks for ECS instances",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "To prevent use of legacy networks, ECS instances should not have a legacy network configured. Legacy networks have a single network IPv4 prefix range and a single gateway IP address for the whole network, lacking proper network segmentation and security isolation.",
+          "AdditionalInformation": "Legacy networks cannot create subnetworks and are subject to single points of failure. VPC networks provide better security isolation, network segmentation capabilities, and control over IP addressing. Using VPC ensures that resources benefit from modern networking features and security controls.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2",
+      "Description": "Ensure VPC flow logging is enabled in all VPCs",
+      "Checks": [
+        "vpc_flow_logs_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "VPC flow logging enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "VPC Flow Logs capture and record IP traffic information for network interfaces within a VPC, allowing administrators to monitor and analyze network activity. It is recommended to enable VPC Flow Logs to track network traffic and detect anomalous activity.",
+          "AdditionalInformation": "VPC Flow Logs provide visibility into network traffic that traverses the VPC and can be used to detect anomalous traffic or support security investigations. They help identify suspicious activity, failed connection attempts, and potential threats within the VPC.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "2.1.3",
+      "Description": "Ensure RDS instances are not open to the world",
+      "Checks": [
+        "rds_instance_no_public_access_whitelist"
+      ],
+      "Attributes": [
+        {
+          "Title": "RDS instances not publicly accessible",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "Database servers should accept connections only from trusted networks and restrict access from the world. The authorized network whitelist should not contain 0.0.0.0/0, which would allow access to the instance from anywhere on the internet.",
+          "AdditionalInformation": "To minimize the attack surface on a database server, only trusted and required IPs should be whitelisted. Publicly accessible databases are vulnerable to brute-force attacks, unauthorized access attempts, and data breaches. Restricting access ensures that only authorized networks can connect.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "2.1.4",
+      "Description": "Ensure Kubernetes Cluster is created with Private cluster enabled",
+      "Checks": [
+        "cs_kubernetes_private_cluster_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubernetes private cluster enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "A private cluster is a cluster that makes your master inaccessible from the public internet. In a private cluster, nodes do not have public IP addresses, and workloads run in an environment isolated from the internet. Nodes and masters communicate privately using VPC peering.",
+          "AdditionalInformation": "Exposing the Kubernetes API server to the public internet increases the risk of unauthorized access and attacks. Private clusters reduce network latency, improve security by eliminating external IP exposure, and reduce egress costs by using internal networking.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.1.5",
+      "Description": "Ensure Network policy is enabled on Kubernetes Engine Clusters",
+      "Checks": [
+        "cs_kubernetes_network_policy_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubernetes network policy enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "A network policy specifies how groups of pods are allowed to communicate with each other and other network endpoints. NetworkPolicy resources use labels to select pods and define rules for allowed traffic. The Kubernetes Network Policy API allows cluster administrators to specify what pods can communicate with each other.",
+          "AdditionalInformation": "By default, pods are non-isolated and accept traffic from any source. Once a NetworkPolicy selects a pod, that pod will reject any connections not allowed by any NetworkPolicy. Network policies implement defense in depth and least privilege networking, reducing the blast radius of compromised workloads.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.1.6",
+      "Description": "Ensure ENI multiple IP mode is enabled for Kubernetes Cluster",
+      "Checks": [
+        "cs_kubernetes_eni_multiple_ip_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubernetes ENI multiple IP mode enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "Alibaba Cloud ENI (Elastic Network Interface) supports assigning ranges of internal IP addresses as aliases to a VM's network interfaces. Using ENI multiple IP mode via the Terway network plugin allows clusters to allocate IP addresses from a known CIDR block.",
+          "AdditionalInformation": "ENI multiple IPs mode provides better scalability, network segmentation, and firewall controls for pods. Pod IPs are reserved within the network ahead of time, preventing conflicts. Firewall controls can be applied separately from nodes, and pods can directly access hosted services without NAT.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "2.2.1",
+      "Description": "Ensure that OSS bucket is not anonymously or publicly accessible",
+      "Checks": [
+        "actiontrail_oss_bucket_not_publicly_accessible"
+      ],
+      "Attributes": [
+        {
+          "Title": "ActionTrail OSS bucket not publicly accessible",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.2 Storage",
+          "AttributeDescription": "ActionTrail logs a record of every API call made in your Alibaba Cloud account. These log files are stored in an OSS bucket. It is recommended that the access control list (ACL) of the OSS bucket which ActionTrail logs to shall prevent public access to protect sensitive audit log content.",
+          "AdditionalInformation": "Allowing public access to ActionTrail log content may aid an adversary in identifying weaknesses in the affected account's use or configuration. Audit logs contain sensitive information about API activities, user actions, and system changes that should be protected from unauthorized access.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "2.3.1",
+      "Description": "Ensure role-based access control (RBAC) is enabled on Kubernetes Engine Clusters",
+      "Checks": [
+        "cs_kubernetes_rbac_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubernetes RBAC authorization enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "In Kubernetes, RBAC is used to grant permissions to resources at the cluster and namespace level. RBAC allows you to define roles with rules containing a set of permissions, ensuring that subaccounts who bind the roles only have the permissions to access specific resources defined in RBAC policies.",
+          "AdditionalInformation": "The legacy authorizer in Kubernetes Engine grants broad, statically defined permissions. RBAC has significant security advantages and can help ensure that users only have access to specific cluster resources within their own namespace. It is the recommended authorization mode for production clusters.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.3.2",
+      "Description": "Ensure Cluster Check is triggered at least once per week for Kubernetes Clusters",
+      "Checks": [
+        "cs_kubernetes_cluster_check_weekly"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubernetes cluster health check",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "Kubernetes Engine's cluster check feature helps verify the system nodes and components health status. When triggered, the checking process verifies the health state of each node in the cluster and also the cluster configuration including kubelet, docker daemon, kernel, and network iptables configuration.",
+          "AdditionalInformation": "Regular cluster health checks help identify issues before they become critical security vulnerabilities. The checks verify cloud resource health status (VPC, VSwitch, SLB, ECS nodes), kubelet and docker daemon status, and kernel and iptables configurations. Running checks at least weekly ensures timely detection of misconfigurations.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.1.1",
+      "Description": "Ensure ActionTrail is configured to export copies of all log entries",
+      "Checks": [
+        "actiontrail_multi_region_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "ActionTrail multi-region enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.1 Logging",
+          "AttributeDescription": "ActionTrail is a web service that records API calls for your account and delivers log files. The recorded information includes the identity of the API caller, the time of the API call, the source IP address, the request parameters, and the response elements. A multi-region trail ensures that unexpected activities in otherwise unused regions are detected.",
+          "AdditionalInformation": "ActionTrail provides a history of API calls for security analysis, resource change tracking, and compliance auditing. Enabling multi-region logging ensures global service logging is captured, recording management operations performed on all resources in an Alibaba Cloud account.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2",
+      "Description": "Ensure Log Service is enabled on Kubernetes Engine Clusters",
+      "Checks": [
+        "cs_kubernetes_log_service_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubernetes Log Service enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.1 Logging",
+          "AttributeDescription": "Log Service should be connected with Kubernetes clusters to collect audit logs for central monitoring and analysis. By enabling Log Service, you will have container logs, kube-apiserver audit logs, and ingress logs available for incident investigation, compliance auditing, and security monitoring.",
+          "AdditionalInformation": "Log Service automatically collects, processes, and stores container and audit logs in a dedicated datastore. Container logs are collected from containers, audit logs from kube-apiserver, and events about cluster activity (such as Pod or Secret deletions). Central log collection allows access to all information on one dashboard.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3",
+      "Description": "Ensure auditing is enabled for applicable RDS database instances",
+      "Checks": [
+        "rds_instance_sql_audit_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "RDS SQL auditing enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.1 Logging",
+          "AttributeDescription": "SQL auditing should be enabled on all applicable RDS instances. Auditing policy tracks database events and writes them to an audit log, helping to maintain regulatory compliance, understand database activity, and gain insight into discrepancies and anomalies that could indicate security violations.",
+          "AdditionalInformation": "Enabling auditing ensures that all existing and newly created databases are tracked. It helps detect unauthorized access, identify suspicious activity patterns, and support forensic investigations. Auditing is essential for compliance with security frameworks requiring database activity logging.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.1.4",
+      "Description": "Ensure server parameter log_disconnections is enabled for PostgreSQL Database Server",
+      "Checks": [
+        "rds_instance_postgresql_log_disconnections_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "PostgreSQL log_disconnections enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.1 Logging",
+          "AttributeDescription": "Enabling log_disconnections helps PostgreSQL database log session terminations and duration. This log data can be used to identify abnormal patterns, troubleshoot issues, and support security investigations.",
+          "AdditionalInformation": "Logging disconnections provides visibility into session duration patterns that can indicate abnormal behavior. Combined with connection logging, this creates a complete picture of database access patterns. Anomalies in disconnection patterns may indicate unauthorized access attempts or compromised credentials.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "4.1.1",
+      "Description": "Ensure secure transfer required is enabled for OSS buckets",
+      "Checks": [
+        "oss_bucket_secure_transport_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "OSS bucket secure transport enabled",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "The secure transfer option enhances the security of OSS buckets by only allowing requests to the storage account via secure HTTPS connections. Any requests using HTTP will be rejected, ensuring that data is protected during transmission.",
+          "AdditionalInformation": "By default, OSS accepts both HTTP and HTTPS requests, which can expose data to interception. To enforce secure access, HTTP requests should be explicitly denied. This protects sensitive data from man-in-the-middle attacks and ensures compliance with security best practices for data in transit.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "4.2.1",
+      "Description": "Ensure RDS instance TDE protector is encrypted with BYOK",
+      "Checks": [
+        "rds_instance_tde_key_custom"
+      ],
+      "Attributes": [
+        {
+          "Title": "RDS TDE encrypted with customer key",
+          "Section": "4. Encryption",
+          "SubSection": "4.2 At-Rest",
+          "AttributeDescription": "Transparent Data Encryption (TDE) with Bring Your Own Key (BYOK) support provides increased transparency and control over encryption keys. With BYOK, the database encryption key is protected by an asymmetric key stored in KMS that the data owner manages, rather than service-managed keys.",
+          "AdditionalInformation": "BYOK allows user control of TDE encryption keys, restricting who can access them and when. Using customer-managed keys provides additional security through separation of duties and allows organizations to maintain complete control over their encryption key lifecycle, including rotation and revocation.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "2.1.7",
+      "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 22",
+      "Checks": [
+        "ecs_securitygroup_restrict_ssh_internet"
+      ],
+      "Attributes": [
+        {
+          "Title": "Security groups restrict SSH access from internet",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "Security groups provide stateful filtering of ingress/egress network traffic to Alibaba Cloud resources. It is recommended that no security group allows unrestricted ingress access to port 22 (SSH) from the internet (0.0.0.0/0).",
+          "AdditionalInformation": "Removing unfettered connectivity to remote console services such as SSH reduces a server's exposure to risk. Publicly exposed SSH ports are prime targets for brute-force attacks, credential stuffing, and exploitation of SSH vulnerabilities. Restricting access to specific IP addresses or VPNs significantly improves security posture.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.1.8",
+      "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389",
+      "Checks": [
+        "ecs_securitygroup_restrict_rdp_internet"
+      ],
+      "Attributes": [
+        {
+          "Title": "Security groups restrict RDP access from internet",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "Security groups provide stateful filtering of ingress/egress network traffic to Alibaba Cloud resources. It is recommended that no security group allows unrestricted ingress access to port 3389 (RDP) from the internet (0.0.0.0/0).",
+          "AdditionalInformation": "Removing unfettered connectivity to remote console services such as RDP reduces a server's exposure to risk. Publicly exposed RDP ports are common targets for ransomware attacks, brute-force attempts, and exploitation of RDP vulnerabilities. Restricting access is essential for protecting Windows servers.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.2.2",
+      "Description": "Ensure OSS buckets are not publicly accessible",
+      "Checks": [
+        "oss_bucket_not_publicly_accessible"
+      ],
+      "Attributes": [
+        {
+          "Title": "OSS buckets not publicly accessible",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.2 Storage",
+          "AttributeDescription": "OSS buckets are containers used to store objects in Object Storage Service. It is recommended that the access policy on OSS buckets does not allow anonymous and/or public access to prevent unauthorized data exposure.",
+          "AdditionalInformation": "Allowing anonymous and/or public access grants permissions to anyone to access bucket content. Such access might not be desired if storing sensitive data. Public buckets are a common source of data breaches, exposing customer data, credentials, and proprietary information to the internet.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "3.1.5",
+      "Description": "Ensure logging is enabled for OSS buckets",
+      "Checks": [
+        "oss_bucket_logging_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "OSS bucket logging enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.1 Logging",
+          "AttributeDescription": "OSS Bucket Access Logging generates a log that contains access records for each request made to your OSS bucket. An access log record contains details about the request, such as the request type, the resources specified, and the time and date the request was processed.",
+          "AdditionalInformation": "By enabling OSS bucket logging, it is possible to capture all events which may affect objects within target buckets. Configuring logs to be placed in a separate bucket allows access to log information useful in security and incident response workflows for forensic investigations.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "4.2.2",
+      "Description": "Ensure that attached ECS disks are encrypted",
+      "Checks": [
+        "ecs_attached_disk_encrypted"
+      ],
+      "Attributes": [
+        {
+          "Title": "ECS attached disks encrypted",
+          "Section": "4. Encryption",
+          "SubSection": "4.2 At-Rest",
+          "AttributeDescription": "ECS cloud disk encryption protects your data at rest. The cloud disk data encryption feature automatically encrypts data when data is transferred from ECS instances to disks, and decrypts data when the data is read from disks.",
+          "AdditionalInformation": "Databases often contain sensitive and business-critical information. Encrypting data at rest ensures that underlying storage is protected even if physical access to the storage medium is compromised. Without encryption, data on disks can be read by anyone who gains access to the storage.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "4.2.3",
+      "Description": "Ensure that unattached ECS disks are encrypted",
+      "Checks": [
+        "ecs_unattached_disk_encrypted"
+      ],
+      "Attributes": [
+        {
+          "Title": "ECS unattached disks encrypted",
+          "Section": "4. Encryption",
+          "SubSection": "4.2 At-Rest",
+          "AttributeDescription": "Ensure that unattached disks in a subscription are encrypted. Cloud disk encryption protects your data at rest using AES-256 encryption, ensuring that even disks not currently attached to instances maintain data protection.",
+          "AdditionalInformation": "Unattached disks may contain sensitive data from previous usage. Without encryption, this data remains vulnerable to unauthorized access if the storage medium is compromised. Encrypting all disks, including unattached ones, ensures comprehensive data protection.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "4.1.2",
+      "Description": "Ensure RDS instance requires all incoming connections to use SSL",
+      "Checks": [
+        "rds_instance_ssl_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "RDS SSL encryption enabled",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "It is recommended to enforce all incoming connections to SQL database instances to use SSL. SQL database connections if successfully intercepted (MITM) can reveal sensitive data like credentials, database queries, and query outputs.",
+          "AdditionalInformation": "For security, it is recommended to always use SSL encryption when connecting to your database instance. This ensures that data in transit is protected from interception and man-in-the-middle attacks, maintaining confidentiality of sensitive database communications.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "4.2.4",
+      "Description": "Ensure TDE is enabled on RDS instances",
+      "Checks": [
+        "rds_instance_tde_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "RDS TDE enabled",
+          "Section": "4. Encryption",
+          "SubSection": "4.2 At-Rest",
+          "AttributeDescription": "Transparent Data Encryption (TDE) should be enabled on every RDS instance. RDS Database transparent data encryption helps protect against the threat of malicious activity by performing real-time encryption and decryption of the database, associated backups, and log files at rest.",
+          "AdditionalInformation": "TDE provides encryption at rest without requiring changes to the application. It protects the database, backups, and transaction logs from unauthorized access. Even if an attacker gains access to the storage media, they cannot read the data without the encryption keys.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.1.6",
+      "Description": "Ensure server parameter log_connections is enabled for PostgreSQL Database",
+      "Checks": [
+        "rds_instance_postgresql_log_connections_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "PostgreSQL log_connections enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.1 Logging",
+          "AttributeDescription": "Enabling log_connections helps PostgreSQL Database log attempted connections to the server, as well as successful completion of client authentication. Log data can be used to identify, troubleshoot, and repair configuration errors and suboptimal performance.",
+          "AdditionalInformation": "Connection logging provides visibility into who is accessing the database and from where. This information is essential for security monitoring, detecting unauthorized access attempts, and forensic investigations. Combined with disconnection logging, it provides a complete audit trail.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "3.1.7",
+      "Description": "Ensure server parameter log_duration is enabled for PostgreSQL Database",
+      "Checks": [
+        "rds_instance_postgresql_log_duration_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "PostgreSQL log_duration enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.1 Logging",
+          "AttributeDescription": "Enabling log_duration helps PostgreSQL Database log the duration of each completed SQL statement. This generates query and error logs that can be used to identify, troubleshoot, and repair configuration errors and suboptimal performance.",
+          "AdditionalInformation": "Duration logging helps identify slow queries and potential denial of service attacks through resource-intensive queries. It provides insights into database performance patterns and can reveal abnormal query execution times that may indicate security issues.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "3.2.1",
+      "Description": "Ensure RDS SQL audit retention is greater than 6 months",
+      "Checks": [
+        "rds_instance_sql_audit_retention"
+      ],
+      "Attributes": [
+        {
+          "Title": "RDS SQL audit retention configured",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.2 Retention",
+          "AttributeDescription": "Database SQL Audit Retention should be configured to be greater than 90 days or 6 months. Audit logs can be used to check for anomalies and give insight into suspected breaches or misuse of information and access.",
+          "AdditionalInformation": "Adequate retention periods ensure that audit logs are available for security investigations, incident response, and compliance requirements. Many regulatory frameworks require minimum log retention periods, and insufficient retention can result in missing critical evidence during investigations.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "2.3.3",
+      "Description": "Ensure Kubernetes web UI Dashboard is not enabled",
+      "Checks": [
+        "cs_kubernetes_dashboard_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubernetes Dashboard disabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "The Kubernetes Web UI (Dashboard) is backed by a highly privileged Kubernetes Service Account. It is recommended to use ACK User Console instead of Dashboard to avoid any privilege escalation via compromise of the dashboard.",
+          "AdditionalInformation": "The Kubernetes Dashboard can be used for creating or modifying resources with full cluster access. If compromised, an attacker could deploy malicious containers, access secrets, or take control of the entire cluster. Using managed console alternatives provides better security controls.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "3.3.1",
+      "Description": "Ensure CloudMonitor is enabled on Kubernetes Engine Clusters",
+      "Checks": [
+        "cs_kubernetes_cloudmonitor_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Kubernetes CloudMonitor enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.3 Monitoring",
+          "AttributeDescription": "The monitoring service in Kubernetes Engine clusters depends on the Alibaba Cloud CloudMonitor agent to access additional system resources and application services. The monitor can access metrics about CPU utilization, disk traffic, network traffic, and disk IO information.",
+          "AdditionalInformation": "CloudMonitor provides visibility into cluster health and performance, enabling detection of anomalies that could indicate security issues. System metrics help identify resource exhaustion attacks, cryptomining, and other malicious activities that manifest through abnormal resource usage patterns.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "3.3.2",
+      "Description": "Ensure Security Center is Advanced or Enterprise Edition",
+      "Checks": [
+        "securitycenter_advanced_or_enterprise_edition"
+      ],
+      "Attributes": [
+        {
+          "Title": "Security Center Advanced/Enterprise Edition",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.3 Monitoring",
+          "AttributeDescription": "The Advanced or Enterprise Edition of Security Center enables threat detection for network and endpoints, providing malware detection, webshell detection, and anomaly detection capabilities for comprehensive security monitoring.",
+          "AdditionalInformation": "Advanced security monitoring capabilities are essential for detecting and responding to sophisticated threats. The enhanced editions provide real-time threat intelligence, automated response capabilities, and comprehensive visibility into security events across the cloud environment.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.3.3",
+      "Description": "Ensure all assets are installed with security agent",
+      "Checks": [
+        "securitycenter_all_assets_agent_installed"
+      ],
+      "Attributes": [
+        {
+          "Title": "Security Center agent installed on all assets",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.3 Monitoring",
+          "AttributeDescription": "The endpoint protection of Security Center requires an agent to be installed on endpoints to provide comprehensive intrusion detection and protection capabilities, including remote login detection, webshell detection and removal, and anomaly detection.",
+          "AdditionalInformation": "Without the security agent, endpoints lack visibility into security events, leaving potential threats undetected. The agent-based approach enables real-time monitoring of abnormal process behaviors, network connections, and changes to critical files and accounts.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.3.4",
+      "Description": "Ensure notification is enabled on all high risk items",
+      "Checks": [
+        "securitycenter_notification_enabled_high_risk"
+      ],
+      "Attributes": [
+        {
+          "Title": "Security Center high risk notifications enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.3 Monitoring",
+          "AttributeDescription": "All risk item notification should be enabled in Vulnerability, Baseline Risks, Alerts and AccessKey Leak event detection categories to ensure security operators receive timely notifications when security events occur.",
+          "AdditionalInformation": "Timely notification of security events is critical for rapid incident response. Without proper alerting, critical vulnerabilities and security incidents may go unnoticed, allowing attackers extended time to exploit weaknesses and expand their foothold.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.3.5",
+      "Description": "Ensure scheduled vulnerability scan is enabled on all servers",
+      "Checks": [
+        "securitycenter_vulnerability_scan_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Security Center vulnerability scan enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.3 Monitoring",
+          "AttributeDescription": "Scheduled vulnerability scanning should be enabled on all servers to discover system vulnerabilities in a timely manner. This ensures that security teams are aware of potential weaknesses before they can be exploited.",
+          "AdditionalInformation": "Regular vulnerability scanning is essential for maintaining a strong security posture. Automated scans identify missing patches, misconfigurations, and known vulnerabilities, enabling proactive remediation before attackers can exploit these weaknesses.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "2.3.4",
+      "Description": "Ensure endpoint protection is installed on ECS instances",
+      "Checks": [
+        "ecs_instance_endpoint_protection_installed"
+      ],
+      "Attributes": [
+        {
+          "Title": "ECS endpoint protection installed",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "Endpoint protection should be installed on all ECS instances to detect and prevent malware, ransomware, and other malicious activities. Security Center agent provides real-time protection against threats targeting compute instances.",
+          "AdditionalInformation": "Without endpoint protection, ECS instances are vulnerable to malware infections, cryptomining attacks, and unauthorized access. The security agent monitors process execution, network connections, and file system changes to detect and block malicious activities in real-time.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "2.3.5",
+      "Description": "Ensure ECS instances have latest OS patches applied",
+      "Checks": [
+        "ecs_instance_latest_os_patches_applied"
+      ],
+      "Attributes": [
+        {
+          "Title": "ECS instances patched with latest OS updates",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "ECS instances should have the latest operating system patches applied to protect against known vulnerabilities. Unpatched systems are prime targets for attackers exploiting publicly disclosed vulnerabilities.",
+          "AdditionalInformation": "Outdated operating systems contain known vulnerabilities that attackers actively exploit. Regular patching closes security gaps and reduces the attack surface. Many high-profile breaches have resulted from failure to apply available patches in a timely manner.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "3.2.2",
+      "Description": "Ensure SLS logstore retention period is configured adequately",
+      "Checks": [
+        "sls_logstore_retention_period"
+      ],
+      "Attributes": [
+        {
+          "Title": "SLS logstore retention configured",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.2 Retention",
+          "AttributeDescription": "Log Service logstores should have adequate retention periods configured to ensure logs are available for security investigations, compliance requirements, and forensic analysis.",
+          "AdditionalInformation": "Insufficient log retention can result in missing critical evidence during security investigations. Many compliance frameworks require minimum log retention periods, and organizations should configure retention based on their regulatory and operational requirements.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "3.4.1",
+      "Description": "Ensure alert is configured for unauthorized API calls",
+      "Checks": [
+        "sls_unauthorized_api_calls_alert_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "SLS unauthorized API calls alert enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.4 Alerting",
+          "AttributeDescription": "Monitoring unauthorized API calls helps detect malicious activity such as reconnaissance, privilege escalation attempts, or compromised credentials being used to access resources.",
+          "AdditionalInformation": "Unauthorized API calls often indicate an attacker probing for vulnerabilities or attempting to access resources they should not have access to. Early detection of these patterns enables rapid response before significant damage occurs.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.4.2",
+      "Description": "Ensure alert is configured for management console sign-in without MFA",
+      "Checks": [
+        "sls_management_console_signin_without_mfa_alert_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "SLS console sign-in without MFA alert enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.4 Alerting",
+          "AttributeDescription": "Monitoring console sign-ins without MFA helps identify users who have not enabled multi-factor authentication, representing a security gap that could be exploited if credentials are compromised.",
+          "AdditionalInformation": "Sign-ins without MFA are higher risk as they rely solely on password authentication. Alerting on these events helps identify compliance gaps and potential account compromises where attackers may have disabled MFA.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.4.3",
+      "Description": "Ensure alert is configured for management console authentication failures",
+      "Checks": [
+        "sls_management_console_authentication_failures_alert_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "SLS console authentication failures alert enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.4 Alerting",
+          "AttributeDescription": "Monitoring authentication failures helps detect brute-force attacks, credential stuffing attempts, and unauthorized access attempts against the management console.",
+          "AdditionalInformation": "Multiple authentication failures may indicate an ongoing attack attempting to guess credentials. Early detection allows security teams to block attacking IPs, lock affected accounts, or implement additional controls before successful compromise.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.4.4",
+      "Description": "Ensure alert is configured for root account usage",
+      "Checks": [
+        "sls_root_account_usage_alert_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "SLS root account usage alert enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.4 Alerting",
+          "AttributeDescription": "Monitoring root account usage is critical as the root account has unrestricted access to all resources. Any use of the root account should be investigated to ensure it is legitimate and necessary.",
+          "AdditionalInformation": "The root account should rarely be used in normal operations. Alerts on root account activity help detect unauthorized access to the most privileged account and ensure that legitimate root usage is documented and justified.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "3.4.5",
+      "Description": "Ensure alert is configured for RAM role changes",
+      "Checks": [
+        "sls_ram_role_changes_alert_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "SLS RAM role changes alert enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.4 Alerting",
+          "AttributeDescription": "Monitoring RAM role changes helps detect privilege escalation attempts, unauthorized permission modifications, and potential backdoor creation through role manipulation.",
+          "AdditionalInformation": "Changes to RAM roles can grant attackers persistent access or elevated privileges. Alerting on role changes enables rapid detection of unauthorized modifications that could compromise the security of the entire cloud environment.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.4.6",
+      "Description": "Ensure alert is configured for VPC changes",
+      "Checks": [
+        "sls_vpc_changes_alert_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "SLS VPC changes alert enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.4 Alerting",
+          "AttributeDescription": "Monitoring VPC changes helps detect network infrastructure modifications that could expose resources to unauthorized access or disrupt network segmentation controls.",
+          "AdditionalInformation": "VPC changes can significantly impact network security posture. Unauthorized modifications might create network paths that bypass security controls or expose internal resources to the internet. Real-time alerting enables rapid response to potentially malicious changes.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.4.7",
+      "Description": "Ensure alert is configured for VPC network route changes",
+      "Checks": [
+        "sls_vpc_network_route_changes_alert_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "SLS VPC route changes alert enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.4 Alerting",
+          "AttributeDescription": "Monitoring VPC route table changes helps detect modifications that could redirect traffic through malicious endpoints or disrupt legitimate network connectivity.",
+          "AdditionalInformation": "Route table modifications can enable man-in-the-middle attacks by redirecting traffic through attacker-controlled systems. Alerting on route changes helps detect unauthorized network path modifications that could compromise data confidentiality.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.4.8",
+      "Description": "Ensure alert is configured for security group changes",
+      "Checks": [
+        "sls_security_group_changes_alert_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "SLS security group changes alert enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.4 Alerting",
+          "AttributeDescription": "Monitoring security group changes helps detect modifications to firewall rules that could expose resources to unauthorized network access or create security gaps.",
+          "AdditionalInformation": "Security groups are the primary network access control mechanism. Unauthorized changes could open ports to the internet, allow lateral movement, or bypass network segmentation. Real-time alerting enables rapid response to potentially malicious rule changes.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "3.4.9",
+      "Description": "Ensure alert is configured for cloud firewall changes",
+      "Checks": [
+        "sls_cloud_firewall_changes_alert_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "SLS cloud firewall changes alert enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.4 Alerting",
+          "AttributeDescription": "Monitoring cloud firewall changes helps detect modifications to centralized firewall policies that could weaken network security controls across the entire cloud environment.",
+          "AdditionalInformation": "Cloud firewall provides centralized network security policy enforcement. Unauthorized changes could disable protection for multiple resources simultaneously. Alerting ensures that firewall modifications are detected and reviewed promptly.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "3.4.10",
+      "Description": "Ensure alert is configured for OSS bucket policy changes",
+      "Checks": [
+        "sls_oss_bucket_policy_changes_alert_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "SLS OSS bucket policy changes alert enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.4 Alerting",
+          "AttributeDescription": "Monitoring OSS bucket policy changes helps detect modifications that could make buckets publicly accessible or grant unauthorized access to sensitive data stored in object storage.",
+          "AdditionalInformation": "Bucket policy changes are a common vector for data breaches. Attackers may modify policies to exfiltrate data or create backdoor access. Alerting on policy changes enables rapid detection and remediation of potentially dangerous modifications.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "3.4.11",
+      "Description": "Ensure alert is configured for OSS permission changes",
+      "Checks": [
+        "sls_oss_permission_changes_alert_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "SLS OSS permission changes alert enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.4 Alerting",
+          "AttributeDescription": "Monitoring OSS permission changes helps detect modifications to access control lists that could grant unauthorized users access to sensitive data in object storage.",
+          "AdditionalInformation": "Permission changes on OSS buckets can expose sensitive data to unauthorized parties. Alerting on these changes ensures that access control modifications are reviewed and validated, preventing accidental or malicious data exposure.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.4.12",
+      "Description": "Ensure alert is configured for RDS instance configuration changes",
+      "Checks": [
+        "sls_rds_instance_configuration_changes_alert_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "SLS RDS configuration changes alert enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.4 Alerting",
+          "AttributeDescription": "Monitoring RDS instance configuration changes helps detect modifications that could weaken database security, disable auditing, or expose databases to unauthorized access.",
+          "AdditionalInformation": "Database configuration changes can have significant security implications. Modifications might disable encryption, open network access, or turn off audit logging. Alerting ensures that configuration changes are detected and reviewed for security impact.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.4.13",
+      "Description": "Ensure alert is configured for customer-created CMK changes",
+      "Checks": [
+        "sls_customer_created_cmk_changes_alert_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "SLS CMK changes alert enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.4 Alerting",
+          "AttributeDescription": "Monitoring customer-managed key changes helps detect modifications to encryption keys that protect sensitive data, including key deletion, rotation, or policy changes.",
+          "AdditionalInformation": "Customer-managed keys are critical for data protection. Unauthorized key changes could result in data loss if keys are deleted, or data exposure if key policies are weakened. Alerting enables rapid response to protect encrypted data assets.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "rds_instance_postgresql_log_connections_enabled",
+  "CheckTitle": "Parameter log_connections is set to ON for PostgreSQL Database",
+  "CheckType": [
+    "Intrusion into applications",
+    "Unusual logon"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
+  "Description": "Enable `log_connections` on **PostgreSQL Servers**. Enabling `log_connections` helps PostgreSQL Database log attempted connections to the server, as well as successful completion of client authentication.\n\nLog data can be used to identify, troubleshoot, and repair configuration errors and suboptimal performance.",
+  "Risk": "Without **connection logging**, unauthorized access attempts might go unnoticed, and troubleshooting connection issues becomes more difficult.\n\nThis data is essential for **security monitoring** and **incident investigation**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/96751.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-log-connections-for-postgresql.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun rds ModifyParameter --DBInstanceId <instance_id> --Parameters \"{\\\"log_connections\\\":\\\"on\\\"}\"",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **RDS Console**\n2. Select the region and target instance\n3. In the left-side navigation pane, select **Parameters**\n4. Find the `log_connections` parameter and set it to `on`\n5. Click **Apply Changes**",
+      "Url": "https://hub.prowler.com/check/rds_instance_postgresql_log_connections_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

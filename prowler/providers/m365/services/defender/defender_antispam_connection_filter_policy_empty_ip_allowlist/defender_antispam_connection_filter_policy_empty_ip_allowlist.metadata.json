@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Defender Anti-Spam Policy",
+  "ResourceGroup": "security",
   "Description": "This check focuses on Microsoft 365 organizations with Exchange Online mailboxes or standalone Exchange Online Protection (EOP) organizations. It ensures that the connection filter policy's IP Allowlist is empty or undefined to prevent bypassing spam filtering and sender authentication checks, which could lead to successful delivery of malicious emails.",
   "Risk": "Using the IP Allowlist without additional verification like mail flow rules poses a risk, as emails from these sources skip essential security checks (SPF, DKIM, DMARC). This could allow attackers to deliver harmful emails directly to the Inbox.",
   "RelatedUrl": "",
