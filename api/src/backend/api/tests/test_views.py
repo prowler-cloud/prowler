@@ -1190,6 +1190,11 @@ class TestProviderViewSet:
                     "uid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                     "alias": "OpenStack Project",
                 },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C01234abc",
+                    "alias": "Google Workspace Customer",
+                },
             ]
         ),
     )
@@ -1634,6 +1639,56 @@ class TestProviderViewSet:
                     "min_length",
                     "uid",
                 ),
+                # Google Workspace UID validation - missing 'C' prefix
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "01234abc",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - too short (only 8 chars)
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "C1234abc",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - too long (10 chars)
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "C01234abcd",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - invalid characters (uppercase)
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "C01234ABC",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - invalid characters (special chars)
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "C0123-abc",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -1811,17 +1866,17 @@ class TestProviderViewSet:
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 11),
+                ("inserted_at", TODAY, 12),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    11,
+                    12,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    11,
+                    12,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2435,6 +2490,15 @@ class TestProviderSecretViewSet:
                 {
                     "clouds_yaml_content": "clouds:\n  mycloud:\n    auth:\n      auth_url: https://openstack.example.com:5000/v3\n",
                     "clouds_yaml_cloud": "mycloud",
+                },
+            ),
+            # Google Workspace with service account credentials
+            (
+                Provider.ProviderChoices.GOOGLEWORKSPACE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "credentials_content": '{"type": "service_account", "project_id": "test-project", "private_key_id": "key123", "private_key": "-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----\\n", "client_email": "test@test-project.iam.gserviceaccount.com", "client_id": "123456789"}',
+                    "delegated_user": "admin@example.com",
                 },
             ),
         ],
