@@ -97,11 +97,12 @@ class Test_keyvault_rbac_secret_expiration_set:
                 Secret,
             )
 
+            secret_id = str(uuid4())
             secret = Secret(
-                id="id",
+                id=secret_id,
                 name=secret_name,
                 enabled=True,
-                location="location",
+                location="westeurope",
                 attributes=SecretAttributes(expires=None),
             )
             keyvault_client.key_vaults = {
@@ -127,11 +128,11 @@ class Test_keyvault_rbac_secret_expiration_set:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has the secret {secret_name} without expiration date set."
+                == f"Secret '{secret_name}' in KeyVault '{keyvault_name}' does not have expiration date set."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == keyvault_name
-            assert result[0].resource_id == keyvault_id
+            assert result[0].resource_name == secret_name
+            assert result[0].resource_id == secret_id
             assert result[0].location == "westeurope"
 
     def test_key_vaults_invalid_multiple_secrets(self):
@@ -159,18 +160,20 @@ class Test_keyvault_rbac_secret_expiration_set:
                 Secret,
             )
 
+            secret1_id = str(uuid4())
+            secret2_id = str(uuid4())
             secret1 = Secret(
-                id="id",
+                id=secret1_id,
                 name=secret1_name,
                 enabled=True,
-                location="location",
+                location="westeurope",
                 attributes=SecretAttributes(expires=None),
             )
             secret2 = Secret(
-                id="id",
+                id=secret2_id,
                 name=secret2_name,
                 enabled=True,
-                location="location",
+                location="westeurope",
                 attributes=SecretAttributes(expires=84934),
             )
             keyvault_client.key_vaults = {
@@ -192,16 +195,35 @@ class Test_keyvault_rbac_secret_expiration_set:
             }
             check = keyvault_rbac_secret_expiration_set()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
+            # Now we get 1 finding per secret (2 total)
+            assert len(result) == 2
+
+            # Find the FAIL and PASS results by status
+            fail_results = [r for r in result if r.status == "FAIL"]
+            pass_results = [r for r in result if r.status == "PASS"]
+
+            assert len(fail_results) == 1
+            assert len(pass_results) == 1
+
+            # Verify FAIL finding (secret1 without expiration)
             assert (
-                result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has the secret {secret1_name} without expiration date set."
+                fail_results[0].status_extended
+                == f"Secret '{secret1_name}' in KeyVault '{keyvault_name}' does not have expiration date set."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == keyvault_name
-            assert result[0].resource_id == keyvault_id
-            assert result[0].location == "westeurope"
+            assert fail_results[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert fail_results[0].resource_name == secret1_name
+            assert fail_results[0].resource_id == secret1_id
+            assert fail_results[0].location == "westeurope"
+
+            # Verify PASS finding (secret2 with expiration)
+            assert (
+                pass_results[0].status_extended
+                == f"Secret '{secret2_name}' in KeyVault '{keyvault_name}' has expiration date set."
+            )
+            assert pass_results[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert pass_results[0].resource_name == secret2_name
+            assert pass_results[0].resource_id == secret2_id
+            assert pass_results[0].location == "westeurope"
 
     def test_key_vaults_valid_keys(self):
         keyvault_client = mock.MagicMock
@@ -226,11 +248,13 @@ class Test_keyvault_rbac_secret_expiration_set:
                 Secret,
             )
 
+            secret_name = "secret-name"
+            secret_id = str(uuid4())
             secret = Secret(
-                id="id",
-                name="name",
+                id=secret_id,
+                name=secret_name,
                 enabled=False,
-                location="location",
+                location="westeurope",
                 attributes=SecretAttributes(expires=None),
             )
             keyvault_client.key_vaults = {
@@ -256,9 +280,9 @@ class Test_keyvault_rbac_secret_expiration_set:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has all the secrets with expiration date set."
+                == f"Secret '{secret_name}' in KeyVault '{keyvault_name}' has expiration date set."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == keyvault_name
-            assert result[0].resource_id == keyvault_id
+            assert result[0].resource_name == secret_name
+            assert result[0].resource_id == secret_id
             assert result[0].location == "westeurope"

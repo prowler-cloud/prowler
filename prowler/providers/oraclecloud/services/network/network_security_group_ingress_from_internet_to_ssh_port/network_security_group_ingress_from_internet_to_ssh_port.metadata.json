@@ -1,18 +1,19 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "network_security_group_ingress_from_internet_to_ssh_port",
-  "CheckTitle": "Network security group does not allow ingress from 0.0.0.0/0 to port 22 (SSH)",
+  "CheckTitle": "Network security group restricts ingress from 0.0.0.0/0 to port 22 (SSH)",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "NetworkSecurityGroup",
+  "ResourceGroup": "network",
   "Description": "Network security groups with **ingress** from `0.0.0.0/0` exposing **SSH** are identified. This includes rules that explicitly permit `TCP` `22`, use `all` protocols, or define TCP port ranges that encompass `22`.",
   "Risk": "Public **SSH** access enables Internet-wide probing, **brute force**, and **credential stuffing** that can grant shell access. Compromise allows **lateral movement**, data exfiltration (confidentiality), unauthorized changes or malware (integrity), and service disruption or ransomware-driven lockouts (availability).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/unrestricted-ssh-access-via-nsgs.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/oci/OCI-Networking/unrestricted-ssh-access-via-nsgs.html",
     "https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/networksecuritygroups.htm"
   ],
   "Remediation": {

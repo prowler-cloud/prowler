@@ -1,0 +1,40 @@
+{
+  "Provider": "m365",
+  "CheckID": "defender_safe_attachments_policy_enabled",
+  "CheckTitle": "Safe Attachments policy is enabled with secure configuration",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Defender Safe Attachments Policy",
+  "ResourceGroup": "security",
+  "Description": "Safe Attachments provides an additional layer of protection by scanning email attachments in a secure environment before delivering them to recipients.\n\nThe Built-In Protection Policy should have **Enable=True**, **Action=Block**, and **QuarantineTag=AdminOnlyAccessPolicy** to ensure malicious attachments are blocked and quarantined with admin-only access.",
+  "Risk": "Without properly configured Safe Attachments policies, malicious email attachments could reach users' mailboxes and potentially compromise the organization through:\n\n- **Malware delivery** via infected documents\n- **Ransomware attacks** through weaponized attachments\n- **Data exfiltration** using malicious scripts",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/defender-office-365/safe-attachments-about",
+    "https://learn.microsoft.com/en-us/defender-office-365/preset-security-policies"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-SafeAttachmentPolicy -Identity 'Built-In Protection Policy' -Enable $true -Action Block -QuarantineTag AdminOnlyAccessPolicy",
+      "NativeIaC": "",
+      "Other": "1. Go to Microsoft 365 Defender portal (https://security.microsoft.com)\n2. Navigate to Email & collaboration > Policies & rules > Threat policies\n3. Select Safe Attachments under Policies\n4. Click on Built-In Protection Policy\n5. Set Enable to True, Action to Block, and QuarantineTag to AdminOnlyAccessPolicy\n6. Save the configuration",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Safe Attachments with the **Block** action to prevent malicious attachments from reaching users. Use **AdminOnlyAccessPolicy** for the quarantine tag to ensure only administrators can release quarantined items, following the principle of least privilege.",
+      "Url": "https://hub.prowler.com/check/defender_safe_attachments_policy_enabled"
+    }
+  },
+  "Categories": [
+    "email-security",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "defender_malware_policy_common_attachments_filter_enabled"
+  ],
+  "Notes": "This check requires Microsoft Defender for Office 365 Plan 1 or higher license."
+}

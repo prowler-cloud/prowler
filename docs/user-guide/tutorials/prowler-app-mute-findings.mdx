@@ -1,20 +1,26 @@
 ---
-title: 'Mute Findings (Mutelist)'
+title: 'Advanced Mutelist (YAML)'
 ---
 import { VersionBadge } from "/snippets/version-badge.mdx"
 
 <VersionBadge version="5.9.0" />
 
-Prowler App allows users to mute specific findings to focus on the most critical security issues. This comprehensive guide demonstrates how to effectively use the Mutelist feature to manage and prioritize security findings.
+Prowler App allows users to mute specific findings to focus on the most critical security issues. This guide demonstrates how to use the Advanced Mutelist feature with YAML configuration for complex, pattern-based muting rules.
 
-## What Is the Mutelist Feature?
+<Note>
+For muting individual findings without YAML configuration, use [Simple Mutelist](/user-guide/tutorials/prowler-app-simple-mutelist) to mute findings directly from the Findings table.
 
-The Mutelist feature enables users to:
+</Note>
 
-- **Suppress specific findings** from appearing in future scans
-- **Focus on critical issues** by hiding resolved or accepted risks
+## What Is Advanced Mutelist?
+
+Advanced Mutelist enables users to create powerful, pattern-based muting rules using YAML configuration:
+
+- **Define complex muting patterns** using regular expressions
+- **Mute findings by check, region, resource, or tag** across multiple accounts
+- **Apply wildcards** to mute entire categories of findings
+- **Create exceptions** within broad muting rules
 - **Maintain audit trails** of muted findings for compliance purposes
-- **Streamline security workflows** by reducing noise from non-critical findings
 
 ## Prerequisites
 
@@ -28,46 +34,51 @@ Before muting findings, ensure:
 Muting findings does not resolve underlying security issues. Review each finding carefully before muting to ensure it represents an acceptable risk or has been properly addressed.
 
 </Warning>
-## Step 1: Add a provider
+## Step 1: Connect a Provider
 
-To configure Mutelist:
+To configure Advanced Mutelist:
 
 1. Log into Prowler App
-2. Navigate to the providers page
+2. Navigate to the Providers page
 ![Add provider](/images/mutelist-ui-1.png)
-3. Add a provider, then "Configure Muted Findings" button will be enabled in providers page and scans page
+3. Connect a provider to enable Mutelist configuration
 ![Button enabled in providers page](/images/mutelist-ui-2.png)
 ![Button enabled in scans pages](/images/mutelist-ui-3.png)
 
 
-## Step 2: Configure Mutelist
+## Step 2: Configure Advanced Mutelist
 
-1. Open the modal by clicking "Configure Muted Findings" button
-![Open modal](/images/mutelist-ui-4.png)
-1. Provide a valid Mutelist in `YAML` format. More details about Mutelist [here](/user-guide/cli/tutorials/mutelist)
+1. Navigate to the Mutelist page from the left navigation menu
+2. Select the "Advanced" tab
+3. Provide a valid Mutelist configuration in `YAML` format
+
+<Note>
+The YAML format follows the same specification as Prowler CLI. See [CLI Mutelist documentation](/user-guide/cli/tutorials/mutelist) for detailed syntax reference.
+
+</Note>
 ![Valid YAML configuration](/images/mutelist-ui-5.png)
 If the YAML configuration is invalid, an error message will be displayed
 ![Wrong YAML configuration](/images/mutelist-ui-7.png)
 ![Wrong YAML configuration 2](/images/mutelist-ui-8.png)
 
-## Step 3: Review the Mutelist
+## Step 3: Review and Update the Configuration
 
-1. Once added, the configuration can be removed or updated
+1. Once added, the configuration can be updated or removed from the Advanced tab
 ![Remove or update configuration](/images/mutelist-ui-6.png)
 
-## Step 4: Check muted findings in the scan results
+## Step 4: Verify Muted Findings in Scan Results
 
 1. Run a new scan
-2. Check the muted findings in the scan results
-![Check muted fidings](/images/mutelist-ui-9.png)
+2. Navigate to the Findings page to verify muted findings
+![Check muted findings](/images/mutelist-ui-9.png)
 
 <Note>
-The Mutelist configuration takes effect on the next scans.
+The Advanced Mutelist configuration takes effect on subsequent scans. Existing findings are not retroactively muted.
 
 </Note>
-## Mutelist Ready To Use Examples
+## YAML Configuration Examples
 
-Below are examples for different cloud providers supported by Prowler App. Check how the mutelist works [here](/user-guide/cli/tutorials/mutelist#how-the-mutelist-works).
+Below are ready-to-use examples for different cloud providers. For detailed syntax and logic explanation, see [CLI Mutelist documentation](/user-guide/cli/tutorials/mutelist#how-the-mutelist-works).
 
 ### AWS Provider
 

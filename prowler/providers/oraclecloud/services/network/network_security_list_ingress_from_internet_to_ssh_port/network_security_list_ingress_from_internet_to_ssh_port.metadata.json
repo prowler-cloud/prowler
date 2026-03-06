@@ -1,19 +1,20 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "network_security_list_ingress_from_internet_to_ssh_port",
-  "CheckTitle": "Security list does not allow ingress from 0.0.0.0/0 to port 22 (SSH)",
+  "CheckTitle": "Security list restricts ingress from 0.0.0.0/0 to port 22 (SSH)",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "SecurityList",
+  "ResourceGroup": "network",
   "Description": "**OCI security lists** are evaluated for rules that permit **inbound SSH** from `0.0.0.0/0`. Any rule where the destination includes `TCP 22`-or broader rules allowing all TCP or all protocols from `0.0.0.0/0`-indicates public SSH exposure.",
   "Risk": "**Public SSH access** enables Internet-wide **brute force** and **credential stuffing**, risking unauthorized shell access. Compromise can cause data exfiltration (**confidentiality**), command tampering (**integrity**), service disruption (**availability**), and lateral movement in the VCN.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securitylists.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/unrestricted-ssh-access.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/oci/OCI-Networking/unrestricted-ssh-access.html"
   ],
   "Remediation": {
     "Code": {

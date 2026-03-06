@@ -91,6 +91,8 @@ class TestGCPProvider:
                 "shodan_api_key": None,
                 "max_unused_account_days": 180,
                 "storage_min_retention_days": 90,
+                "mig_min_zones": 2,
+                "max_snapshot_age_days": 90,
             }
 
     @freeze_time(datetime.today())

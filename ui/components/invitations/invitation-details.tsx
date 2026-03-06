@@ -34,12 +34,14 @@ const InfoField = ({
   label: string;
   children: React.ReactNode;
 }) => (
-  <div className="flex flex-col gap-1">
+  <div className="flex min-w-0 flex-col gap-1">
     <span className="text-text-neutral-secondary text-xs font-bold">
       {label}
     </span>
-    <div className="border-border-input-primary bg-bg-input-primary flex items-center rounded-lg border p-3">
-      <span className="text-small text-text-neutral-primary">{children}</span>
+    <div className="border-border-input-primary bg-bg-input-primary flex min-w-0 items-center overflow-hidden rounded-lg border p-3">
+      <span className="text-small text-text-neutral-primary min-w-0 truncate">
+        {children}
+      </span>
     </div>
   </div>
 );
@@ -87,18 +89,18 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
             Share this link with the user:
           </h3>
 
-          <div className="flex flex-col items-start justify-between">
+          <div className="flex w-full flex-col items-start justify-between overflow-hidden">
             <Snippet
               classNames={{
-                base: "mx-auto",
+                base: "w-full max-w-full",
+                content: "min-w-0 overflow-hidden",
+                pre: "min-w-0 overflow-hidden text-ellipsis whitespace-nowrap",
               }}
               hideSymbol
               variant="bordered"
-              className="bg-bg-neutral-secondary overflow-hidden py-1 text-ellipsis whitespace-nowrap"
+              className="bg-bg-neutral-secondary max-w-full overflow-hidden py-1"
             >
-              <p className="no-scrollbar w-fit overflow-hidden overflow-x-scroll text-sm text-ellipsis whitespace-nowrap">
-                {invitationLink}
-              </p>
+              <p className="min-w-0 truncate text-sm">{invitationLink}</p>
             </Snippet>
           </div>
         </CardContent>

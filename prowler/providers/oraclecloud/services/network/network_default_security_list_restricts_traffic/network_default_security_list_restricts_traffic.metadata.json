@@ -8,12 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "SecurityList",
-  "Description": "**Default security list** of each VCN is evaluated to allow only VCN-internal `ICMP`. Non-`ICMP` ingress from `0.0.0.0/0` or sources outside the VCN, and non-`ICMP` egress to `0.0.0.0/0`, are considered overly permissive. Only default lists are in scope.",
+  "ResourceGroup": "network",
+  "Description": "**OCI default security list** of each VCN is evaluated to allow only VCN-internal `ICMP`. Non-`ICMP` ingress from `0.0.0.0/0` or sources outside the VCN, and non-`ICMP` egress to `0.0.0.0/0`, are considered overly permissive. Only default lists are in scope.",
   "Risk": "Over-permissive default rules expose subnet workloads to the Internet and enable unrestricted outbound traffic. This risks confidentiality (unauthorized access, data exfiltration), integrity (remote exploitation, lateral movement), and availability (DoS/C2) through broad non-`ICMP` `0.0.0.0/0` paths.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securitylists.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/restrict-traffic-for-default-security-lists.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/oci/OCI-Networking/restrict-traffic-for-default-security-lists.html"
   ],
   "Remediation": {
     "Code": {

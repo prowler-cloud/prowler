@@ -1875,12 +1875,12 @@ class Jira:
                     summary_parts.append(finding.resource_uid)
 
                 summary = " - ".join(summary_parts[1:])
-                summary = f"{summary_parts[0]} {summary}"
+                summary = f"{summary_parts[0]} {summary}"[:255]
 
                 payload = {
                     "fields": {
                         "project": {"key": project_key},
-                        "summary": f"[Prowler] {finding.metadata.Severity.value.upper()} - {finding.metadata.CheckID} - {finding.resource_uid}",
+                        "summary": summary,
                         "description": adf_description,
                         "issuetype": {"name": issue_type},
                         "customfield_10148": {"value": "SDK"},
@@ -2081,7 +2081,7 @@ class Jira:
             if resource_uid:
                 summary_parts.append(resource_uid)
             summary = " - ".join(summary_parts[1:])
-            summary = f"{summary_parts[0]} {summary}"
+            summary = f"{summary_parts[0]} {summary}"[:255]
 
             payload = {
                 "fields": {

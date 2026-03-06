@@ -1,0 +1,39 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "cs_kubernetes_cloudmonitor_enabled",
+  "CheckTitle": "CloudMonitor is set to Enabled on Kubernetes Engine Clusters",
+  "CheckType": [
+    "Threat detection during container runtime"
+  ],
+  "ServiceName": "cs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceGroup": "container",
+  "Description": "The monitoring service in **Kubernetes Engine clusters** depends on the Alibaba Cloud **CloudMonitor** agent to access additional system resources and application services in virtual machine instances.\n\nThe monitor can access metrics about CPU utilization, disk traffic metrics, network traffic, and disk IO information, which help monitor signals and build operations in your Kubernetes Engine clusters.",
+  "Risk": "Without **CloudMonitor** enabled, you lack visibility into system metrics and custom metrics. System metrics measure the cluster's infrastructure, such as CPU or memory usage.\n\nWith CloudMonitor, a monitor controller is created that periodically connects to each node and collects metrics about its Pods and containers, then sends the metrics to CloudMonitor server.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.aliyun.com/document_detail/125508.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/enable-cloud-monitor.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun cs GET /clusters/[cluster_id]/nodepools to verify nodepools.kubernetes_config.cms_enabled is set to true for all node pools.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **ACK Console**\n2. Select the target cluster and click its name to open the cluster detail page\n3. Select **Nodes** on the left column and click the **Monitor** link on the Actions column of the selected node\n4. Verify that OS Metrics data exists in the CloudMonitor page\n5. To enable: Click **Create Kubernetes Cluster** and set `CloudMonitor Agent` to **Enabled** under creation options",
+      "Url": "https://hub.prowler.com/check/cs_kubernetes_cloudmonitor_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

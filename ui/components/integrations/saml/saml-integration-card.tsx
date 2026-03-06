@@ -5,8 +5,8 @@ import { useState } from "react";
 
 import { deleteSamlConfig } from "@/actions/integrations";
 import { Button } from "@/components/shadcn";
+import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
-import { CustomAlertModal } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 
 import { Card, CardContent, CardHeader } from "../../shadcn";
@@ -14,6 +14,7 @@ import { SamlConfigForm } from "./saml-config-form";
 
 export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
   const [isSamlModalOpen, setIsSamlModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const id = samlConfig?.id;
@@ -30,6 +31,7 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
           title: "SAML configuration removed",
           description: result.success,
         });
+        setIsDeleteModalOpen(false);
       } else if (result.errors?.general) {
         toast({
           variant: "destructive",
@@ -37,7 +39,7 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
           description: result.errors.general,
         });
       }
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Error",
@@ -50,8 +52,9 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
 
   return (
     <>
-      <CustomAlertModal
-        isOpen={isSamlModalOpen}
+      {/* Configure SAML Modal */}
+      <Modal
+        open={isSamlModalOpen}
         onOpenChange={setIsSamlModalOpen}
         title="Configure SAML SSO"
       >
@@ -59,7 +62,43 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
           setIsOpen={setIsSamlModalOpen}
           samlConfig={samlConfig}
         />
-      </CustomAlertModal>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        title="Remove SAML Configuration"
+        size="md"
+      >
+        <div className="flex flex-col gap-4">
+          <p className="text-default-600 text-sm">
+            Are you sure you want to remove the SAML SSO configuration? Users
+            will no longer be able to sign in using SAML.
+          </p>
+          <div className="flex w-full justify-end gap-4">
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              onClick={() => setIsDeleteModalOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="lg"
+              disabled={isDeleting}
+              onClick={handleRemoveSaml}
+            >
+              <Trash2Icon className="size-4" />
+              {isDeleting ? "Removing..." : "Remove"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Card variant="base" padding="lg">
         <CardHeader>
@@ -98,11 +137,10 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
                 <Button
                   size="sm"
                   variant="destructive"
-                  disabled={isDeleting}
-                  onClick={handleRemoveSaml}
+                  onClick={() => setIsDeleteModalOpen(true)}
                 >
-                  {!isDeleting && <Trash2Icon size={16} />}
-                  {isDeleting ? "Removing..." : "Remove"}
+                  <Trash2Icon size={16} />
+                  Remove
                 </Button>
               )}
             </div>

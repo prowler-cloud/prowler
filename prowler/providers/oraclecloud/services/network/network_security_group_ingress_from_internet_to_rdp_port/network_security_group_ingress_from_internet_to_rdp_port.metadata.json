@@ -1,20 +1,20 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "network_security_group_ingress_from_internet_to_rdp_port",
-  "CheckTitle": "Network security group does not allow ingress from 0.0.0.0/0 to port 3389 (RDP)",
+  "CheckTitle": "Network security group restricts ingress from 0.0.0.0/0 to port 3389 (RDP)",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "NetworkSecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**OCI Network Security Groups** are evaluated for inbound source `0.0.0.0/0` permitting **RDP** on `TCP 3389`, including broad rules (all TCP or any protocol) that implicitly include that port.",
   "Risk": "Exposed **RDP** enables Internet-scale **brute-force** and **protocol exploit** attempts. Compromise yields interactive access for **data exfiltration** (C), **unauthorized changes** (I), and **service disruption** via ransomware (A), with potential **lateral movement** across the VCN.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",
-    "https://www.cloudquery.io/blog/how-to-find-internet-facing-cloud-assets-in-aws-azure-and-gcp",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/unrestricted-rdp-access-via-nsgs.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/oci/OCI-Networking/unrestricted-rdp-access-via-nsgs.html"
   ],
   "Remediation": {
     "Code": {

@@ -8,16 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Subnet",
-  "Description": "OCI subnets in a VCN have **network flow logging** configured. Evaluation considers an active `flowlogs` configuration targeting the `VCN` or the specific `subnet` in the same region and associated with a log group.",
+  "ResourceGroup": "network",
+  "Description": "**OCI subnets** in a VCN have **network flow logging** configured. Evaluation considers an active `flowlogs` configuration targeting the `VCN` or the specific `subnet` in the same region and associated with a log group.",
   "Risk": "Without flow logs, east-west and ingress/egress traffic is opaque, weakening detection and forensics. Scans, data exfiltration, and lateral movement can go unnoticed, undermining confidentiality and integrity, and delaying response to availability threats like DDoS.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.ateam-oracle.com/post/enable-oci-flow-logs-for-all-subnets-and-stream-logs-to-object-storage-via-service-connector-hub",
-    "https://mdrkb.atlassian.net/wiki/spaces/AAMDARCQSG/pages/541589518/OCI+VCN+Flow",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/enable-flow-logging.html",
-    "https://docs.oracle-java.com/en-us/iaas/Content/Logging/Reference/details_for_vcn_flow_logs.htm",
-    "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",
-    "https://docs.netflowlogic.com/next/nfo_administration_guide/inputs/public-cloud-flow-logs-inputs/oracle-vcn-flow-logs-input-configuration/",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/oci/OCI-Networking/enable-flow-logging.html",
     "https://docs.oracle.com/en-us/iaas/Content/Network/Tasks/vcn-flow-logs-enable.htm"
   ],
   "Remediation": {

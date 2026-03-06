@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Teams Global Meeting Policy",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure only people in the organization can bypass the lobby.",
   "Risk": "Allowing external users or unauthenticated participants to bypass the lobby increases the risk of unauthorized access to sensitive meetings and potential disruptions. It may also lead to unscheduled meetings being initiated by external parties.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps",
