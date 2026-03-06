@@ -18,7 +18,11 @@ import { Button } from "@/components/shadcn/button/button";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
 import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
 import { Form } from "@/components/ui/form";
-import { getAWSCredentialsTemplateLinks } from "@/lib";
+import {
+  getAWSCredentialsTemplateLinks,
+  PROWLER_CF_TEMPLATE_URL,
+  STACKSET_CONSOLE_URL,
+} from "@/lib";
 import { ORG_SETUP_PHASE, OrgSetupPhase } from "@/types/organizations";
 
 import { useOrgSetupSubmission } from "./hooks/use-org-setup-submission";
@@ -39,7 +43,7 @@ const orgSetupSchema = z.object({
     .min(1, "Role ARN is required")
     .regex(
       /^arn:aws:iam::\d{12}:role\//,
-      "Must be a valid IAM Role ARN (e.g., arn:aws:iam::123456789012:role/ProwlerOrgRole)",
+      "Must be a valid IAM Role ARN (e.g., arn:aws:iam::123456789012:role/ProwlerScan)",
     ),
   stackSetDeployed: z.boolean().refine((value) => value, {
     message: "You must confirm the StackSet deployment before continuing.",
@@ -65,6 +69,7 @@ export function OrgSetupForm({
 }: OrgSetupFormProps) {
   const { data: session } = useSession();
   const [isExternalIdCopied, setIsExternalIdCopied] = useState(false);
+  const [isTemplateUrlCopied, setIsTemplateUrlCopied] = useState(false);
   const stackSetExternalId = session?.tenantId ?? "";
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
   const formId = "org-wizard-setup-form";
@@ -90,9 +95,10 @@ export function OrgSetupForm({
 
   const awsOrgId = watch("awsOrgId") || "";
   const isOrgIdValid = /^o-[a-z0-9]{10,32}$/.test(awsOrgId.trim());
-  const stackSetQuickLink =
-    stackSetExternalId &&
-    getAWSCredentialsTemplateLinks(stackSetExternalId).cloudformationQuickLink;
+  const templateLinks = stackSetExternalId
+    ? getAWSCredentialsTemplateLinks(stackSetExternalId)
+    : null;
+  const orgQuickLink = templateLinks?.cloudformationOrgQuickLink;
 
   const { apiError, setApiError, submitOrganizationSetup } =
     useOrgSetupSubmission({
@@ -260,35 +266,11 @@ export function OrgSetupForm({
 
         {setupPhase === ORG_SETUP_PHASE.ACCESS && !isSubmitting && (
           <div className="flex flex-col gap-8">
+            {/* External ID - shown first for both deployment steps */}
             <div className="flex flex-col gap-4">
               <p className="text-text-neutral-primary text-sm leading-7 font-normal">
-                1) Launch the Prowler CloudFormation StackSet in your AWS
-                Console.
-              </p>
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-border-input-primary bg-bg-input-primary text-button-tertiary hover:bg-bg-input-primary active:bg-bg-input-primary h-12 w-full justify-start"
-                disabled={!stackSetQuickLink}
-                asChild
-              >
-                <a
-                  href={stackSetQuickLink || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink className="size-5" />
-                  <span>
-                    Prowler CloudFormation StackSet for AWS Organizations
-                  </span>
-                </a>
-              </Button>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <p className="text-text-neutral-primary text-sm leading-7 font-normal">
-                2) Use the following Prowler External ID parameter in the
-                StackSet.
+                Use the following <strong>External ID</strong> when deploying
+                the CloudFormation Stack and StackSet.
               </p>
               <div className="flex items-center gap-3">
                 <span className="text-text-neutral-tertiary text-xs">
@@ -324,20 +306,102 @@ export function OrgSetupForm({
               </div>
             </div>
 
+            {/* Step 1: Management account - CloudFormation Stack */}
             <div className="flex flex-col gap-4">
               <p className="text-text-neutral-primary text-sm leading-7 font-normal">
-                3) Copy the Prowler IAM Role ARN from AWS and confirm the
-                StackSet is successfully deployed by clicking the checkbox
-                below.
+                1) Deploy the ProwlerScan role in your{" "}
+                <strong>management account</strong> using a CloudFormation
+                Stack.
+              </p>
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-border-input-primary bg-bg-input-primary text-button-tertiary hover:bg-bg-input-primary active:bg-bg-input-primary h-12 w-full justify-start"
+                disabled={!orgQuickLink}
+                asChild
+              >
+                <a
+                  href={orgQuickLink || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="size-5" />
+                  <span>Create Stack in Management Account</span>
+                </a>
+              </Button>
+            </div>
+
+            {/* Step 2: Member accounts - CloudFormation StackSet */}
+            <div className="flex flex-col gap-4">
+              <p className="text-text-neutral-primary text-sm leading-7 font-normal">
+                2) Deploy the ProwlerScan role to{" "}
+                <strong>member accounts</strong> using a CloudFormation
+                StackSet.
+              </p>
+              <p className="text-text-neutral-tertiary text-xs leading-5">
+                Open the StackSets console, select{" "}
+                <strong>Service-managed permissions</strong>, and paste the
+                template URL below. Set the <strong>ExternalId</strong>{" "}
+                parameter to the value shown above.
+              </p>
+              <div className="bg-bg-neutral-tertiary border-border-input-primary flex items-center gap-3 rounded-lg border px-4 py-2.5">
+                <span className="text-text-neutral-primary min-w-0 flex-1 truncate font-mono text-xs">
+                  {PROWLER_CF_TEMPLATE_URL}
+                </span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(
+                        PROWLER_CF_TEMPLATE_URL,
+                      );
+                      setIsTemplateUrlCopied(true);
+                      setTimeout(() => setIsTemplateUrlCopied(false), 1500);
+                    } catch {
+                      // Ignore clipboard errors
+                    }
+                  }}
+                  className="text-text-neutral-secondary hover:text-text-neutral-primary shrink-0 transition-colors"
+                  aria-label="Copy template URL"
+                >
+                  {isTemplateUrlCopied ? (
+                    <Check className="size-4" />
+                  ) : (
+                    <Copy className="size-4" />
+                  )}
+                </button>
+              </div>
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-border-input-primary bg-bg-input-primary text-button-tertiary hover:bg-bg-input-primary active:bg-bg-input-primary h-12 w-full justify-start"
+                asChild
+              >
+                <a
+                  href={STACKSET_CONSOLE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="size-5" />
+                  <span>Open StackSets Console</span>
+                </a>
+              </Button>
+            </div>
+
+            {/* Step 3: Role ARN + confirm */}
+            <div className="flex flex-col gap-4">
+              <p className="text-text-neutral-primary text-sm leading-7 font-normal">
+                3) Paste the management account Role ARN and confirm both
+                deployments are complete.
               </p>
             </div>
 
             <WizardInputField
               control={control}
               name="roleArn"
-              label="Role ARN"
+              label="Management Account Role ARN"
               labelPlacement="outside"
-              placeholder="e.g. arn:aws:iam::123456789012:role/ProwlerOrgRole"
+              placeholder="e.g. arn:aws:iam::123456789012:role/ProwlerScan"
               isRequired={false}
               requiredIndicator
             />
@@ -365,7 +429,8 @@ export function OrgSetupForm({
                       htmlFor="stackSetDeployed"
                       className="text-text-neutral-tertiary text-xs leading-5 font-normal"
                     >
-                      The StackSet has been successfully deployed in AWS
+                      The Stack and StackSet have been successfully deployed in
+                      AWS
                       <span className="text-text-error-primary">*</span>
                     </label>
                   </>
