@@ -8,15 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "EventRule",
-  "Description": "OCI Events rules configured to capture **IAM policy create, update, and delete** events (`com.oraclecloud.identitycontrolplane.createpolicy`, `com.oraclecloud.identitycontrolplane.updatepolicy`, `com.oraclecloud.identitycontrolplane.deletepolicy`) and include a **notification action**.",
+  "ResourceGroup": "messaging",
+  "Description": "**OCI Events rules** configured to capture **IAM policy create, update, and delete** events (`com.oraclecloud.identitycontrolplane.createpolicy`, `com.oraclecloud.identitycontrolplane.updatepolicy`, `com.oraclecloud.identitycontrolplane.deletepolicy`) and include a **notification action**.",
   "Risk": "Without alerts on **IAM policy changes**, permissions can be altered unnoticed, enabling **privilege escalation**, unauthorized data access, and persistent footholds. Delayed visibility degrades **confidentiality** and **integrity** and slows incident response across compartments.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://github.com/bridgecrewio/checkov/issues/1957",
-    "https://www.ateam-oracle.com/post/part-1-event-based-integration-with-oci-iam",
-    "https://hub.steampipe.io/mods/turbot/oci_compliance/queries/events_rule_notification_iam_policy_changes",
-    "https://docs.public.content.oci.oraclecloud.com/en-us/iaas/Content/cloud-guard/using/export-notifs-config.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Events/detect-iam-policy-changes.html",
     "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm"
   ],
   "Remediation": {

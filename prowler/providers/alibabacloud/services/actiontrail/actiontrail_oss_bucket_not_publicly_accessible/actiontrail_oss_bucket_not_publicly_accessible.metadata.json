@@ -1,0 +1,41 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "actiontrail_oss_bucket_not_publicly_accessible",
+  "CheckTitle": "The OSS used to store ActionTrail logs is not publicly accessible",
+  "CheckType": [
+    "Sensitive file tampering"
+  ],
+  "ServiceName": "actiontrail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:oss::account-id:bucket-name",
+  "Severity": "critical",
+  "ResourceType": "AlibabaCloudOSSBucket",
+  "ResourceGroup": "storage",
+  "Description": "**ActionTrail** logs a record of every API call made in your Alibaba Cloud account. These log files are stored in an **OSS bucket**.\n\nIt is recommended that the **Access Control List (ACL)** of the OSS bucket, which ActionTrail logs to, prevents public access to the ActionTrail logs.",
+  "Risk": "Allowing **public access** to ActionTrail log content may aid an adversary in identifying weaknesses in the affected account's use or configuration.\n\nExposed audit logs can reveal sensitive information about your infrastructure, API usage patterns, and security configurations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.aliyun.com/document_detail/31954.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ActionTrail/trail-bucket-publicly-accessible.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ossutil set-acl oss://<bucketName> private -b",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"alicloud_oss_bucket_public_access_block\" \"actiontrail\" {\n  bucket              = alicloud_oss_bucket.actiontrail.bucket\n  block_public_access = true\n}"
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **OSS Console**\n2. Right-click on the bucket and select **Basic Settings**\n3. In the Access Control List pane, click **Configure**\n4. The Bucket ACL tab shows three types of grants: `Private`, `Public Read`, `Public Read/Write`\n5. Ensure **Private** is set for the bucket\n6. Click **Save** to save the ACL",
+      "Url": "https://hub.prowler.com/check/actiontrail_oss_bucket_not_publicly_accessible"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [
+    "oss_bucket_not_publicly_accessible"
+  ],
+  "RelatedTo": [],
+  "Notes": ""
+}

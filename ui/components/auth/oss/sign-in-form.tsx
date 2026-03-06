@@ -32,6 +32,7 @@ export const SignInForm = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   useEffect(() => {
     const samlError = searchParams.get("sso_saml_failed");
@@ -122,7 +123,7 @@ export const SignInForm = ({
     });
 
     if (result?.message === "Success") {
-      router.push("/");
+      router.push(callbackUrl);
     } else if (result?.errors && "credentials" in result.errors) {
       const message = result.errors.credentials ?? "Invalid email or password";
 

@@ -329,7 +329,11 @@ config_azure = {
     "defender_attack_path_minimal_risk_level": "High",
 }
 
-config_gcp = {"shodan_api_key": None, "max_unused_account_days": 30}
+config_gcp = {
+    "shodan_api_key": None,
+    "mig_min_zones": 2,
+    "max_unused_account_days": 30,
+}
 
 config_kubernetes = {
     "audit_log_maxbackup": 10,

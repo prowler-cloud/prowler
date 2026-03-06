@@ -13,8 +13,10 @@ class defender_ensure_mcas_is_enabled(Check):
             if "MCAS" not in settings:
                 report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.subscription = subscription_name
-                report.resource_name = "MCAS"
-                report.resource_id = "MCAS"
+                report.resource_name = subscription_name
+                report.resource_id = (
+                    f"/subscriptions/{defender_client.subscriptions[subscription_name]}"
+                )
                 report.status = "FAIL"
                 report.status_extended = f"Microsoft Defender for Cloud Apps not exists for subscription {subscription_name}."
             else:
@@ -22,7 +24,6 @@ class defender_ensure_mcas_is_enabled(Check):
                     metadata=self.metadata(), resource=settings["MCAS"]
                 )
                 report.subscription = subscription_name
-                report.resource_name = "MCAS"
                 if settings["MCAS"].enabled:
                     report.status = "PASS"
                     report.status_extended = f"Microsoft Defender for Cloud Apps is enabled for subscription {subscription_name}."

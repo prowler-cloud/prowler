@@ -8,12 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "EventRule",
-  "Description": "OCI Events rules monitor **IAM identity provider** creation, update, and deletion and include a **notification action**. The evaluation identifies rules that filter these events and route matching activity to a notification destination.",
+  "ResourceGroup": "messaging",
+  "Description": "**OCI Events rules** monitor **IAM identity provider** creation, update, and deletion and include a **notification action**. The evaluation identifies rules that filter these events and route matching activity to a notification destination.",
   "Risk": "Without alerts on **identity provider** changes, federation can be modified unnoticed, enabling unauthorized SSO, privilege escalation, or account takeover. Delayed visibility degrades incident response and threatens **confidentiality** and **integrity** of tenant access.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Events/",
-    "https://hub.steampipe.io/mods/turbot/oci_compliance/queries/events_rule_notification_identity_provider_changes",
     "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
     "https://docs.oracle.com/en-us/iaas/Content/Events/Reference/eventsproducers.htm"
   ],

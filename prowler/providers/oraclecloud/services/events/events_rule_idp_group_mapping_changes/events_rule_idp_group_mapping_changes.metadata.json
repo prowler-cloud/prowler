@@ -8,14 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "EventRule",
+  "ResourceGroup": "messaging",
   "Description": "**OCI Events rules** monitor **IdP group mapping changes** with **notification actions** for `com.oraclecloud.identitycontrolplane.createidpgroupmapping`, `com.oraclecloud.identitycontrolplane.deleteidpgroupmapping`, and `com.oraclecloud.identitycontrolplane.updateidpgroupmapping`.",
   "Risk": "Without **alerts** on IdP group mapping changes, federated users can gain unauthorized group memberships unnoticed, enabling **privilege escalation** and broader access to OCI resources. This undermines **confidentiality** and **integrity**, and may affect **availability** through misuse of elevated permissions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://github.com/bridgecrewio/checkov/issues/1959",
     "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
-    "https://docs.public.content.oci.oraclecloud.com/en-us/iaas/Content/Events/Reference/eventsproducers.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Events/detect-idp-group-mapping-changes.html"
+    "https://docs.oracle.com/en-us/iaas/Content/Events/Reference/eventsproducers.htm"
   ],
   "Remediation": {
     "Code": {

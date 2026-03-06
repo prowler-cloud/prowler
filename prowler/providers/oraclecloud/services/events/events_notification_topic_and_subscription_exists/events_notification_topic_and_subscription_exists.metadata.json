@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "OnsTopic",
+  "ResourceGroup": "messaging",
   "Description": "**OCI Notifications** is evaluated for the existence of at least one **topic** that has one or more **subscriptions**.\n\nThe focus is on whether subscribed endpoints are present to receive Events and monitoring alerts.",
   "Risk": "Without subscribed topics, alerts are not delivered, reducing **visibility** and delaying detection of malicious or accidental changes. This undermines **confidentiality** (undetected data access), **integrity** (unauthorized config changes), and **availability** (unresolved outages).",
   "RelatedUrl": "",

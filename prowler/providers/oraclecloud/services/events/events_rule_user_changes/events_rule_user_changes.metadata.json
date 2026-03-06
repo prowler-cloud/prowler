@@ -8,14 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "EventRule",
-  "Description": "OCI **Events rules** targeting **IAM user changes** (e.g., `com.oraclecloud.identitycontrolplane.createuser` and related update/delete/state events) are assessed for attached **notification actions**.\n\nThe finding indicates which rules listen for these events and whether they are configured to emit alerts.",
+  "ResourceGroup": "messaging",
+  "Description": "**OCI Events rules** targeting **IAM user changes** (e.g., `com.oraclecloud.identitycontrolplane.createuser` and related update/delete/state events) are assessed for attached **notification actions**.\n\nThe finding indicates which rules listen for these events and whether they are configured to emit alerts.",
   "Risk": "Absent alerts on user lifecycle events, **unauthorized account creation**, **privilege escalation**, or **re-enabling disabled users** may go undetected. This delays containment, enabling persistence and lateral movement that erode **confidentiality** and **integrity**, and introduces audit gaps reducing **accountability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Events/detect-iam-user-changes.html",
-    "https://orca.security/resources/cloud-risk-encyclopedia/notification-not-configured-for-iam-user-changes/",
-    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
-    "https://www.ateam-oracle.com/post/part-1-event-based-integration-with-oci-iam"
+    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm"
   ],
   "Remediation": {
     "Code": {

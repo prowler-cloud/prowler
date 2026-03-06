@@ -36,6 +36,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
     def test_defender_no_iot_hub_solutions(self):
         defender_client = mock.MagicMock
         defender_client.iot_security_solutions = {AZURE_SUBSCRIPTION_ID: {}}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
 
         with (
             mock.patch(
@@ -59,8 +60,8 @@ class Test_defender_ensure_iot_hub_defender_is_on:
                 result[0].status_extended
                 == f"No IoT Security Solutions found in the subscription {AZURE_SUBSCRIPTION_ID}."
             )
-            assert result[0].resource_name == "IoT Hub Defender"
-            assert result[0].resource_id == "IoT Hub Defender"
+            assert result[0].resource_name == AZURE_SUBSCRIPTION_ID
+            assert result[0].resource_id == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
 
     def test_defender_iot_hub_solution_disabled(self):
         resource_id = str(uuid4())

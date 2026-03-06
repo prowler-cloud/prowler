@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "EventRule",
+  "ResourceGroup": "messaging",
   "Description": "**OCI Events rules** subscribe to **Cloud Guard problem lifecycle events**-`com.oraclecloud.cloudguard.problemdetected`, `com.oraclecloud.cloudguard.problemdismissed`, and `com.oraclecloud.cloudguard.problemremediated`-and include **notification actions**. *When Cloud Guard sets a reporting region, rules are expected in that region.*",
   "Risk": "Without notifications for Cloud Guard problems, incidents can go unseen, delaying response. Ongoing issues can erode **confidentiality** via data exfiltration, threaten **integrity** through unremediated changes, and impact **availability** by allowing attacks to persist. Silent failures of automated remediation may also go unnoticed.",
   "RelatedUrl": "",

@@ -8,7 +8,8 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "EventRule",
-  "Description": "OCI Events rules monitor **network gateway** lifecycle and attachment changes (DRG, Internet, NAT, Service, and Local Peering gateways) and include **notification actions** so changes generate alerts.\n\nThe evaluation looks for rules filtered to these events and confirms they trigger notifications.",
+  "ResourceGroup": "messaging",
+  "Description": "**OCI Events rules** monitor **network gateway** lifecycle and attachment changes (DRG, Internet, NAT, Service, and Local Peering gateways) and include **notification actions** so changes generate alerts.\n\nThe evaluation looks for rules filtered to these events and confirms they trigger notifications.",
   "Risk": "Unalerted gateway changes can reroute traffic, expose services, or sever connectivity.\n\nAttackers or misconfigurations may modify routes or attachments to enable data exfiltration, man-in-the-middle, or denial of service, degrading **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:identity:user",
   "Severity": "medium",
   "ResourceType": "OciIamUser",
+  "ResourceGroup": "IAM",
   "Description": "Instance Principal authentication should be used instead of user credentials.",
   "Risk": "Not meeting this IAM requirement increases security risk.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm",

@@ -387,6 +387,7 @@ def is_policy_public(
     is_cross_account_allowed=True,
     not_allowed_actions: list = [],
     check_cross_service_confused_deputy=False,
+    trusted_account_ids: list = None,
 ) -> bool:
     """
     Check if the policy allows public access to the resource.
@@ -397,10 +398,19 @@ def is_policy_public(
         is_cross_account_allowed (bool): If the policy can allow cross-account access, default: True (https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html#cross-service-confused-deputy-prevention)
         not_allowed_actions (list): List of actions that are not allowed, default: []. If not_allowed_actions is empty, the function will not consider the actions in the policy.
         check_cross_service_confused_deputy (bool): If the policy is checked for cross-service confused deputy, default: False
+        trusted_account_ids (list): A list of trusted accound ids to reduce false positives on cross-account checks
     Returns:
         bool: True if the policy allows public access, False otherwise
     """
     is_public = False
+
+    if trusted_account_ids is None:
+        trusted_account_ids = []
+
+    trusted_accounts = set(trusted_account_ids)
+    if source_account:
+        trusted_accounts.add(source_account)
+
     if policy:
         for statement in policy.get("Statement", []):
             # Only check allow statements
@@ -414,13 +424,19 @@ def is_policy_public(
                         isinstance(principal.get("AWS"), str)
                         and source_account
                         and not is_cross_account_allowed
-                        and source_account not in principal.get("AWS", "")
+                        and not any(
+                            trusted_account in principal.get("AWS", "")
+                            for trusted_account in trusted_accounts
+                        )
                     ) or (
                         isinstance(principal.get("AWS"), list)
                         and source_account
                         and not is_cross_account_allowed
-                        and not any(
-                            source_account in principal_aws
+                        and not all(
+                            any(
+                                trusted_account in principal_aws
+                                for trusted_account in trusted_accounts
+                            )
                             for principal_aws in principal["AWS"]
                         )
                     ):

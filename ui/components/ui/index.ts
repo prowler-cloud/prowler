@@ -12,6 +12,7 @@ export * from "./feedback-banner/feedback-banner";
 export * from "./headers/navigation-header";
 export * from "./label/Label";
 export * from "./main-layout/main-layout";
+export * from "./navigation-progress";
 export * from "./select";
 export * from "./sidebar";
 export * from "./toast";

@@ -1,0 +1,39 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "cs_kubernetes_cluster_check_weekly",
+  "CheckTitle": "Cluster Check triggered at least once per week for Kubernetes Clusters",
+  "CheckType": [
+    "Threat detection during container runtime"
+  ],
+  "ServiceName": "cs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceGroup": "container",
+  "Description": "**Kubernetes Engine's cluster check** feature helps you verify the system nodes and components healthy status.\n\nWhen you trigger the checking, the process validates the health state of each node in your cluster and also the cluster configuration (`kubelet`, `docker daemon`, `kernel`, and network `iptables` configuration). If there are consecutive health check failures, the diagnose reports to admin for further repair.",
+  "Risk": "Kubernetes Engine uses the node's health status to determine if a node needs to be repaired. A cluster health check includes: cloud resource healthy status including **VPC/VSwitch**, **SLB**, and every **ECS node** status in the cluster; the `kubelet`, `docker daemon`, `kernel`, `iptables` configurations on every node.\n\nWithout regular cluster checks, potential issues may go undetected and could lead to **cluster instability** or **security vulnerabilities**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.aliyun.com/document_detail/114882.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/cluster-check.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun cs GET /clusters/[cluster_id]/checks to verify cluster checks are being run regularly. Trigger a check if needed.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **ACK Console**\n2. Select the target cluster and open the **More** pop-menu for advanced options\n3. Select **Global Check** and click the **Start** button to trigger the checking\n4. Verify the checking time and details in Global Check\n5. It is recommended to trigger cluster checks at least once per week",
+      "Url": "https://hub.prowler.com/check/cs_kubernetes_cluster_check_weekly"
+    }
+  },
+  "Categories": [
+    "cluster-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Teams Global Meeting Policy",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure only organizers and co-organizers can present in a Teams meeting. The recommended state is 'Only organizers and co-organizers'.",
   "Risk": "Allowing everyone to present increases the risk that a malicious user can inadvertently show inappropriate content.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/microsoftteams/meeting-who-present-request-control",

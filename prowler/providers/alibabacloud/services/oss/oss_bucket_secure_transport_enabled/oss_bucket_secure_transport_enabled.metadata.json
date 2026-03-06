@@ -1,0 +1,39 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "oss_bucket_secure_transport_enabled",
+  "CheckTitle": "Secure transfer required is set to Enabled",
+  "CheckType": [
+    "Sensitive file tampering"
+  ],
+  "ServiceName": "oss",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:oss::account-id:bucket-name",
+  "Severity": "high",
+  "ResourceType": "AlibabaCloudOSSBucket",
+  "ResourceGroup": "storage",
+  "Description": "Enable **data encryption in transit**. The secure transfer enhances the security of OSS buckets by only allowing requests to the storage account via a secure connection.\n\nFor example, when calling REST APIs to access storage accounts, the connection must use **HTTPS**. Any requests using HTTP will be rejected.",
+  "Risk": "Without **secure transfer enforcement**, OSS buckets may accept HTTP requests, which are not encrypted in transit.\n\nThis exposes data to potential **interception** and **man-in-the-middle attacks**, compromising data confidentiality and integrity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/85111.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-OSS/enable-secure-transfer.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"alicloud_oss_bucket\" \"example\" {\n  bucket = \"example-bucket\"\n  \n  policy = jsonencode({\n    \"Version\": \"1\",\n    \"Statement\": [{\n      \"Effect\": \"Deny\",\n      \"Principal\": [\"*\"],\n      \"Action\": [\"oss:*\"],\n      \"Resource\": [\"acs:oss:*:*:example-bucket\", \"acs:oss:*:*:example-bucket/*\"],\n      \"Condition\": {\n        \"Bool\": {\n          \"acs:SecureTransport\": \"false\"\n        }\n      }\n    }]\n  })\n}"
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **OSS Console**\n2. In the bucket-list pane, click on a target OSS bucket\n3. Click on **Files** in the top middle of the console\n4. Click on **Authorize**\n5. Configure: `Whole Bucket`, `*`, `None` (Authorized Operation) and `http` (Conditions: Access Method) to deny HTTP access\n6. Click **Save**",
+      "Url": "https://hub.prowler.com/check/oss_bucket_secure_transport_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

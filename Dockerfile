@@ -6,12 +6,13 @@ LABEL org.opencontainers.image.source="https://github.com/prowler-cloud/prowler"
 ARG POWERSHELL_VERSION=7.5.0
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 
-ARG TRIVY_VERSION=0.66.0
+ARG TRIVY_VERSION=0.69.2
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget libicu72 libunwind8 libssl3 libcurl4 ca-certificates apt-transport-https gnupg \
+    build-essential pkg-config libzstd-dev zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell

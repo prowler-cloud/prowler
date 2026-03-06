@@ -1,0 +1,36 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_instance_suspended_without_persistent_disks",
+  "CheckTitle": "Suspended VM instance does not have persistent disks attached",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "compute.googleapis.com/Instance",
+  "ResourceGroup": "compute",
+  "Description": "This check identifies VM instances in a **SUSPENDED** or **SUSPENDING** state with persistent disks still attached.\n\nPersistent disks on suspended VMs remain accessible through the GCP API and could contain **sensitive data** while the instance is inactive, potentially creating security blind spots in long-forgotten infrastructure.",
+  "Risk": "Persistent disks on suspended VM instances remain accessible through the GCP API and may contain **sensitive data**, creating potential security risks:\n\n- **Unauthorized data access** if credentials are compromised or permissions are misconfigured\n- **Data exposure** from forgotten infrastructure that is no longer actively monitored\n- **Security blind spots** where suspended resources are overlooked during security reviews and audits",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/icompute/docs/instances/suspend-resume-instance"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud compute instances delete INSTANCE_NAME --zone=ZONE",
+      "NativeIaC": "",
+      "Other": "1. Open the Google Cloud Console\n2. Navigate to Compute Engine > VM instances\n3. Identify suspended instances with attached disks\n4. If the instance is no longer needed, select it and click DELETE\n5. If the instance will be resumed, take no action or resume it with: gcloud compute instances resume INSTANCE_NAME --zone=ZONE",
+      "Terraform": "```hcl\n# To remediate, either delete the suspended instance or resume it\n# Delete by removing the resource from your Terraform configuration\n# Or resume by changing the desired_status\nresource \"google_compute_instance\" \"example_resource\" {\n  name         = \"example-instance\"\n  machine_type = \"e2-medium\"\n  zone         = \"us-central1-a\"\n\n  # Set desired_status to RUNNING to resume the instance\n  desired_status = \"RUNNING\"\n\n  boot_disk {\n    initialize_params {\n      image = \"debian-cloud/debian-11\"\n    }\n  }\n\n  network_interface {\n    network = \"default\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Regularly review suspended VM instances to reduce your attack surface. Either **resume** instances if still needed, or **delete** them along with their attached disks to eliminate potential data exposure. Implement automated policies to detect and alert on long-suspended instances as part of your security monitoring.",
+      "Url": "https://hub.prowler.com/check/compute_instance_suspended_without_persistent_disks"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [
+    "compute_instance_disk_auto_delete_disabled"
+  ],
+  "Notes": "This check is focused on security risks rather than cost optimization. Persistent disks on suspended VMs remain accessible and may contain sensitive data, creating potential unauthorized access risks."
+}

@@ -8,13 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "EventRule",
+  "ResourceGroup": "messaging",
   "Description": "**OCI Events rules** targeting `com.oraclecloud.identitysignon.interactivelogin` are assessed for configured **notification actions** to monitor local user interactive sign-ins. Rules are compartment-scoped and can cover child compartments.",
   "Risk": "Without alerts on local sign-ins, **account takeovers** and **brute-force** attempts can go unnoticed. Attackers with local access can exfiltrate data (confidentiality), change configurations (integrity), and disrupt services (availability), delaying detection and response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Events/detect-oci-local-authentication.html",
-    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
-    "https://blogs.oracle.com/ateam/post/methods-and-ways-to-extract-session-information-using-oci-audit-and-integrate-into-external-systems"
+    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm"
   ],
   "Remediation": {
     "Code": {

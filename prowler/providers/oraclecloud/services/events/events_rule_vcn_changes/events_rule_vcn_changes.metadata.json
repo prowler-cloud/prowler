@@ -8,15 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "EventRule",
+  "ResourceGroup": "messaging",
   "Description": "**OCI Events rules** exist to capture **VCN lifecycle changes** (`create`, `update`, `delete`) via event types `com.oraclecloud.virtualnetwork.createvcn`, `com.oraclecloud.virtualnetwork.updatevcn`, `com.oraclecloud.virtualnetwork.deletevcn`, and include **notification actions**.",
   "Risk": "Missing alerts for **VCN changes** reduces visibility of network perimeter modifications.\n\nAttackers or mistakes can silently open Internet access, alter routes for **data exfiltration**, or delete gateways/subnets, harming **confidentiality** and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.public.content.oci.oraclecloud.com/en-us/iaas/Content/Events/Reference/eventsproducers.htm",
-    "https://hub.steampipe.io/mods/turbot/oci_compliance/queries/events_rule_notification_vcn_changes",
-    "https://github.com/bridgecrewio/checkov/issues/1965",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Events/detect-vcn-changes.html",
-    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm"
+    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+    "https://docs.oracle.com/en-us/iaas/Content/Events/Reference/eventsproducers.htm"
   ],
   "Remediation": {
     "Code": {

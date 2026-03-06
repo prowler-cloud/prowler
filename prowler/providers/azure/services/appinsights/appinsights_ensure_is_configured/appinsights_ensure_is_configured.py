@@ -12,8 +12,10 @@ class appinsights_ensure_is_configured(Check):
             report = Check_Report_Azure(metadata=self.metadata(), resource={})
             report.status = "PASS"
             report.subscription = subscription_name
-            report.resource_name = "AppInsights"
-            report.resource_id = "AppInsights"
+            report.resource_name = subscription_name
+            report.resource_id = (
+                f"/subscriptions/{appinsights_client.subscriptions[subscription_name]}"
+            )
             report.status_extended = f"There is at least one AppInsight configured in subscription {subscription_name}."
 
             if len(components) < 1:
