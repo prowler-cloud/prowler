@@ -1129,7 +1129,8 @@
         "iam_role_sa_enforce_separation_of_duties",
         "iam_sa_no_administrative_privileges",
         "iam_sa_no_user_managed_keys",
-        "apikeys_api_restricted_with_gemini_api"
+        "apikeys_api_restricted_with_gemini_api",
+        "gemini_api_disabled"
       ],
       "Attributes": [
         {
