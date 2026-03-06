@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Teams Global Meeting Policy",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure users can't read or write messages in external meeting chats with untrusted organizations.",
   "Risk": "Allowing chat in external meetings increases the risk of exploits like GIFShell or DarkGate malware being delivered to users through untrusted organizations.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps",

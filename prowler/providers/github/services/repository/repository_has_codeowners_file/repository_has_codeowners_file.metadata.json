@@ -7,16 +7,14 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "devops",
   "Description": "GitHub repositories declare **code ownership** via a `CODEOWNERS` file mapping file patterns to users or teams. This evaluation checks whether such a file exists in standard locations (`/`, `.github/`, or `docs/`) to enable automatic reviewer assignment.",
   "Risk": "Missing `CODEOWNERS` undermines **integrity** and **separation of duties**:\n- PRs can merge without accountable, domain reviews\n- Critical paths risk unauthorized or low-quality changes\nThis raises **software supply chain** exposure, enabling code tampering, hidden backdoors, and unsafe config modifications.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners",
-    "https://graphite.com/guides/in-depth-guide-github-codeowners",
-    "https://github.blog/news-insights/product-news/introducing-code-owners/",
-    "https://dev.to/aviator_co/a-modern-guide-to-codeowners-242h",
-    "https://blog.nashtechglobal.com/default-reviewers-through-codeowners-file/"
+    "https://github.blog/news-insights/product-news/introducing-code-owners/"
   ],
   "Remediation": {
     "Code": {

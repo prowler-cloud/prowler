@@ -18,6 +18,7 @@ from prowler.providers.aws.services.iam.lib.policy import (
 
 TRUSTED_AWS_ACCOUNT_NUMBER = "123456789012"
 NON_TRUSTED_AWS_ACCOUNT_NUMBER = "111222333444"
+TRUSTED_AWS_ACCOUNT_NUMBER_LIST = ["123456789012", "123456789013", "123456789014"]
 
 TRUSTED_ORGANIZATION_ID = "o-123456789012"
 NON_TRUSTED_ORGANIZATION_ID = "o-111222333444"
@@ -1650,6 +1651,49 @@ class Test_Policy:
             policy_deny_specific_root_principal,
             TRUSTED_AWS_ACCOUNT_NUMBER,
             is_cross_account_allowed=False,
+        )
+
+    def test_cross_account_access_trusted_account_list(self):
+        policy = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                        "AWS": f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER_LIST[0]}:root"
+                    },
+                    "Action": "*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert not is_policy_public(
+            policy,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=False,
+            trusted_account_ids=TRUSTED_AWS_ACCOUNT_NUMBER_LIST,
+        )
+
+    def test_cross_account_access_with_principal_list_trusted_account_list(self):
+        policy = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                        "AWS": [
+                            f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER_LIST[0]}:root",
+                            f"arn:aws:iam::{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:root",
+                        ]
+                    },
+                    "Action": "*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert is_policy_public(
+            policy,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=False,
+            trusted_account_ids=TRUSTED_AWS_ACCOUNT_NUMBER_LIST,
         )
 
     def test_policy_allows_public_access_with_wildcard_principal(self):

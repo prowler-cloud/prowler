@@ -7,8 +7,9 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Repository default branch** enforces **signed and verified commits** (`Require signed commits`), allowing only commits with valid cryptographic signatures to be pushed or merged.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "devops",
+  "Description": "**GitHub repository default branch** enforces **signed and verified commits** (`Require signed commits`), allowing only commits with valid cryptographic signatures to be pushed or merged.",
   "Risk": "Without required signing, commit authorship can be spoofed and unverified changes added, impacting integrity.\n- Backdoor injection\n- History tampering and forged identities\n- Release pipeline abuse and supply-chain compromise",
   "RelatedUrl": "",
   "AdditionalURLs": [

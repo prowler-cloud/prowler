@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsWafRegionalWebAcl",
+  "ResourceGroup": "security",
   "Description": "**AWS WAF Classic Regional web ACL** contains at least one **rule** or **rule group** to inspect and act on HTTP(S) requests. An ACL with no entries is considered empty.",
   "Risk": "With no rules, the web ACL performs no inspection, letting malicious traffic through.\n- **Confidentiality**: data exposure via SQLi/XSS\n- **Integrity**: unauthorized actions or tampering\n- **Availability**: abuse/bot traffic causing degradation or denial",
   "RelatedUrl": "",

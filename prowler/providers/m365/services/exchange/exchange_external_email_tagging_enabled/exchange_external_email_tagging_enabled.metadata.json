@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Exchange External Mail Tagging",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure that emails from external senders are identified using the native External tag experience in Outlook clients, which helps users recognize messages originating outside the organization.",
   "Risk": "If external email tagging is not enabled, users may be unable to quickly identify emails coming from outside the organization, increasing the risk of phishing or social engineering attacks.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/exchange/set-externalinoutlook?view=exchange-ps",

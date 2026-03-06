@@ -7,16 +7,14 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "Repository default branch applies **branch protection rules** to **administrators** via `enforce_admins`, holding admin pushes to the same requirements as other contributors (reviews, status checks, and push restrictions).",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "devops",
+  "Description": "**GitHub repository default branch** applies **branch protection rules** to **administrators** via `enforce_admins`, holding admin pushes to the same requirements as other contributors (reviews, status checks, and push restrictions).",
   "Risk": "Without admin enforcement, privileged users can bypass reviews and checks, enabling **unauthorized code changes**. A compromised admin token can inject backdoors, alter dependencies, or disable safeguards, undermining **integrity**, exposing secrets (**confidentiality**), and causing outages (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
-    "https://spectralops.io/blog/how-to-set-up-git-branch-protection-rules/",
-    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#do-not-allow-bypassing-the-above-settings",
-    "https://pkg.go.dev/github.com/cdktf/cdktf-provider-github-go/github/v15/branchprotectionv3",
-    "https://mattbrictson.com/blog/github-repo-setup"
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#do-not-allow-bypassing-the-above-settings"
   ],
   "Remediation": {
     "Code": {

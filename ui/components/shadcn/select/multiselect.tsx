@@ -224,9 +224,9 @@ export function MultiSelectValue({
         .filter((value) => items.has(value))
         .map((value) => (
           <Badge
-            variant="outline"
+            variant="tag"
             data-selected-item
-            className="text-bg-button-secondary group flex items-center gap-1.5 border-slate-300 bg-slate-100 px-2 py-1 text-xs font-medium dark:border-slate-600 dark:bg-slate-800"
+            className="group flex items-center gap-1.5 px-2 py-1 text-xs font-medium"
             key={value}
             onClick={
               clickToRemove
@@ -239,7 +239,7 @@ export function MultiSelectValue({
           >
             {items.get(value)}
             {clickToRemove && (
-              <XIcon className="text-bg-button-secondary group-hover:text-destructive size-3 transition-colors" />
+              <XIcon className="text-text-neutral-primary group-hover:text-destructive size-3 transition-colors" />
             )}
           </Badge>
         ))}
@@ -247,9 +247,9 @@ export function MultiSelectValue({
         style={{
           display: overflowAmount > 0 && !shouldWrap ? "block" : "none",
         }}
-        variant="outline"
+        variant="tag"
         ref={overflowRef}
-        className="text-bg-button-secondary border-slate-300 bg-slate-100 px-2 py-1 text-xs font-medium dark:border-slate-600 dark:bg-slate-800"
+        className="px-2 py-1 text-xs font-medium"
       >
         +{overflowAmount}
       </Badge>

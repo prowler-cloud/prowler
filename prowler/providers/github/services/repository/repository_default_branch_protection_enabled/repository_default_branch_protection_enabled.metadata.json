@@ -7,17 +7,14 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Repository default branch** has **branch protection rules** enabled to restrict direct changes and require reviewed, validated merges. The evaluation determines whether the default branch enforces such rules.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "devops",
+  "Description": "**GitHub repository default branch** has **branch protection rules** enabled to restrict direct changes and require reviewed, validated merges. The evaluation determines whether the default branch enforces such rules.",
   "Risk": "Without default-branch protection, changes can bypass reviews and checks, enabling:\n- Unauthorized direct pushes/force pushes\n- Malicious code injection and workflow tampering\n- Accidental deletions or unstable releases\nThis undermines code **integrity** and service **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
-    "https://spectralops.io/blog/how-to-set-up-git-branch-protection-rules/",
-    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches",
-    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule#creating-a-branch-protection-rule",
-    "https://web.archive.org/web/20210212232912/https://docs.github.com/en/github/administering-a-repository/managing-a-branch-protection-rule",
-    "https://dev.to/pixiebrix/disable-a-direct-push-to-github-main-branch-8c2"
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
   ],
   "Remediation": {
     "Code": {

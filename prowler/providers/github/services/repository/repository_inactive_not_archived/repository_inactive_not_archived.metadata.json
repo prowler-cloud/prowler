@@ -7,13 +7,13 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "",
-  "Description": "**GitHub repositories** that remain **unarchived** and show no activity beyond a configured inactivity window (e.g., `180` days) are identified. The evaluation considers the most recent repository activity to surface long-idle codebases that are still unarchived.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "devops",
+  "Description": "**GitHub repository** that remains **unarchived** and show no activity beyond a configured inactivity window (e.g., `180` days) are identified. The evaluation considers the most recent repository activity to surface long-idle codebases that are still unarchived.",
   "Risk": "Unarchived, long-inactive repos expand attack surface. Stale code and dependencies can hide unpatched flaws; writable state enables **integrity** compromise via malicious commits or workflow abuse; exposed secrets threaten **confidentiality**. Attackers can leverage them for lateral movement and supply-chain tampering.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.github.com/en/repositories/archiving-a-github-repository/archiving-repositories",
-    "https://github.blog/news-insights/product-news/archiving-repositories/"
+    "https://docs.github.com/en/repositories/archiving-a-github-repository/archiving-repositories"
   ],
   "Remediation": {
     "Code": {

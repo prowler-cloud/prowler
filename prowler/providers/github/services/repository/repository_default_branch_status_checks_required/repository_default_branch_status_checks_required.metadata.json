@@ -7,18 +7,15 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "devops",
   "Description": "**GitHub repository default branch** uses **required status checks**, indicating whether merges are gated by successful check results on pull requests",
   "Risk": "Without required checks, unvetted commits can be merged, degrading code **integrity** and **availability**. Skipped or failing validations may introduce vulnerable dependencies, break builds, or allow malicious code, enabling supply-chain compromise and rapid propagation to production.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
     "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging",
-    "https://dev.to/bobbyg603/github-status-checks-and-branch-protection-made-easy-2cnf",
-    "https://medium.com/picus-security-engineering/how-to-handle-cancelable-github-actions-which-require-status-checks-to-pass-before-merging-63545083da4e",
-    "https://stackoverflow.com/questions/76948223/github-require-specific-checks-to-pass-before-merging",
-    "https://docs.gearset.com/en/articles/2437757-managing-status-check-rules-in-github",
-    "https://graphite.com/guides/mandatory-pull-request-checks-and-requirements-in-github"
+    "https://docs.gearset.com/en/articles/2437757-managing-status-check-rules-in-github"
   ],
   "Remediation": {
     "Code": {

@@ -7,8 +7,9 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",
-  "ResourceType": "",
-  "Description": "**Public repositories** include a `SECURITY.md` policy file that tells researchers how to report vulnerabilities. The evaluation focuses on the presence of this file in public repositories.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "devops",
+  "Description": "**GitHub public repository** include a `SECURITY.md` policy file that tells researchers how to report vulnerabilities. The evaluation focuses on the presence of this file in public repositories.",
   "Risk": "Without **SECURITY.md**, reporters may use public issues or ad-hoc channels, causing premature disclosure or missed reports. This widens the exploit window and impacts **confidentiality** (leaked details), **integrity** (unauthorized changes), and **availability** (DoS from unpatched flaws).",
   "RelatedUrl": "",
   "AdditionalURLs": [

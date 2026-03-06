@@ -7,18 +7,14 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "Repository default branch requires **Code Owners** approval for pull requests that modify paths declared in `CODEOWNERS`",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "devops",
+  "Description": "**GitHub repository default branch** requires **Code Owners** approval for pull requests that modify paths declared in `CODEOWNERS`",
   "Risk": "Without required **Code Owners** review, non-owners can merge changes to sensitive code, undermining **integrity**.\nThis increases the chance of **malicious code injection**, hidden backdoors, or fragile changes that enable **data exfiltration** or cause outages, impacting confidentiality and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-review-from-code-owners",
-    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
-    "https://vercel.com/academy/production-monorepos/code-governance",
-    "https://www.arnica.io/blog/what-every-developer-should-know-about-github-codeowners",
-    "https://stackoverflow.com/questions/77440426/require-only-one-codeowner-on-github-to-review-a-pr",
-    "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#requiring-code-owner-review",
-    "https://www.baeldung.com/ops/github-block-pull-request-merge"
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule"
   ],
   "Remediation": {
     "Code": {

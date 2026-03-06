@@ -7,15 +7,15 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "",
-  "Description": "**Default branch deletion** setting in GitHub repositories; evaluates whether branch protections or rulesets have `Allow deletions` disabled for the default branch.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "devops",
+  "Description": "**GitHub repository default branch** have **branch protections** or **rulesets** with `Allow deletions` disabled.",
   "Risk": "Permitting default branch deletion undermines **availability** by breaking CI/CD, releases, and PR targets.\n\nIt also impacts **integrity**: the canonical ref can be removed, enabling history tampering, branch hijacking, and harder audits/rollbacks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
     "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches",
-    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets",
-    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#allow-deletions"
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets"
   ],
   "Remediation": {
     "Code": {

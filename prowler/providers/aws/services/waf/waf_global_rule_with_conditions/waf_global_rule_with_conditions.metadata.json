@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsWafRule",
+  "ResourceGroup": "security",
   "Description": "**AWS WAF Classic global rules** contain at least one **condition** that matches HTTP(S) requests the rule evaluates for action (e.g., `allow`, `block`, `count`).",
   "Risk": "**No-condition rules** never match traffic, providing no filtering. Malicious requests (SQLi/XSS, bots) can reach origins, impacting **confidentiality** (data exfiltration), **integrity** (tampering), and **availability** (service disruption). They may also create a false sense of coverage.",
   "RelatedUrl": "",

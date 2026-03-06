@@ -7,8 +7,9 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",
-  "ResourceType": "",
-  "Description": "**Repository default branch** enforces `Require linear history`, blocking merge commits and allowing only `squash` or `rebase` merges",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "devops",
+  "Description": "**GitHub repository default branch** enforces `Require linear history`, blocking merge commits and allowing only `squash` or `rebase` merges",
   "Risk": "Without a **linear history**, commit provenance is harder to verify, weakening **integrity** and **accountability**.\n\nMerge commits can obscure diffs entering the default branch, hindering audits and rollbacks, enabling unnoticed **malicious or unreviewed code**, and delaying incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [

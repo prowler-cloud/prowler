@@ -1,5 +1,5 @@
 import { test as authUnlimitedVisibilitySetup } from '@playwright/test';
-import { authenticateAndSaveState } from '@/tests/helpers';
+import { SignInPage } from '../sign-in-base/sign-in-base-page';
 
 const unlimitedVisibilityUserFile = 'playwright/.auth/unlimited_visibility_user.json';
 
@@ -11,5 +11,6 @@ authUnlimitedVisibilitySetup('authenticate as unlimited visibility e2e user',  a
     throw new Error('E2E_UNLIMITED_VISIBILITY_USER and E2E_UNLIMITED_VISIBILITY_PASSWORD environment variables are required');
   }
 
-  await authenticateAndSaveState(page, unlimitedVisibilityEmail, unlimitedVisibilityPassword, unlimitedVisibilityUserFile);
+  const signInPage = new SignInPage(page);
+  await signInPage.authenticateAndSaveState({ email: unlimitedVisibilityEmail, password: unlimitedVisibilityPassword }, unlimitedVisibilityUserFile);
 });

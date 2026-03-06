@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
   "Description": "Enable `log_duration` on **PostgreSQL Servers**. Enabling `log_duration` helps PostgreSQL Database log the duration of each completed SQL statement which in turn generates query and error logs.\n\nQuery and error logs can be used to identify, troubleshoot, and repair configuration errors and sub-optimal performance.",
   "Risk": "Without **duration logging**, it's difficult to identify **slow queries**, **performance bottlenecks**, and potential **DoS attempts**.\n\nThis information is critical for database performance tuning and security monitoring.",
   "RelatedUrl": "",

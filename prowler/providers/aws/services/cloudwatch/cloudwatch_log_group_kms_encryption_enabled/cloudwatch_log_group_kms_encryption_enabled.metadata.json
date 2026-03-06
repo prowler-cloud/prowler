@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudWatch log groups** are assessed for **at-rest encryption** by checking if an **AWS KMS key** is associated with the log group via `kmsKeyId`.",
   "Risk": "Without a **customer-managed KMS key**, logs rely on service-managed encryption, limiting control and auditability.\n- Confidentiality: weaker key-policy barriers against unauthorized reads\n- Integrity/availability: no custom rotation or rapid revoke, hindering incident response and compliance",
   "RelatedUrl": "",

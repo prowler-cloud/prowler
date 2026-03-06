@@ -7,8 +7,9 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "",
-  "Description": "Repository default branch enforces **required reviews** with a minimum of `2` approving reviews before a pull request can be merged.\n\nAssesses whether an approval threshold of at least `2` is configured for code changes targeting the default branch.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "devops",
+  "Description": "**GitHub repository default branch** enforces **required reviews** with a minimum of `2` approving reviews before a pull request can be merged.\n\nAssesses whether an approval threshold of at least `2` is configured for code changes targeting the default branch.",
   "Risk": "Without multi-review approval on the default branch, a single actor can merge changes, degrading **integrity** and **accountability**. This enables:\n- supply-chain tampering or backdoors\n- introduction of exploitable bugs\n- bypass of change control via compromised accounts",
   "RelatedUrl": "",
   "AdditionalURLs": [
