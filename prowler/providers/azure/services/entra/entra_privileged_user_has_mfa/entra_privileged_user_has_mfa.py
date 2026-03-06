@@ -21,7 +21,7 @@ class entra_privileged_user_has_mfa(Check):
                         f"Privileged user {user.name} does not have MFA."
                     )
 
-                    if len(user.authentication_methods) > 1:
+                    if user.is_mfa_capable:
                         report.status = "PASS"
                         report.status_extended = f"Privileged user {user.name} has MFA."
 

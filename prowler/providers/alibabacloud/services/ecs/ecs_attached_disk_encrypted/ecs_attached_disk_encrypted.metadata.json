@@ -1,0 +1,39 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ecs_attached_disk_encrypted",
+  "CheckTitle": "Virtual Machines disk are encrypted",
+  "CheckType": [
+    "Sensitive file tampering"
+  ],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:ecs:region:account-id:disk/{disk-id}",
+  "Severity": "high",
+  "ResourceType": "AlibabaCloudECSDisk",
+  "ResourceGroup": "storage",
+  "Description": "**ECS cloud disk encryption** protects your data at rest. The cloud disk data encryption feature automatically encrypts data when data is transferred from ECS instances to disks, and decrypts data when read from disks.\n\nEnsure that disks are encrypted when they are created with the creation of VM instances.",
+  "Risk": "**Unencrypted disks** attached to ECS instances pose a security risk as they may contain sensitive data that could be accessed if the disk is compromised or accessed by unauthorized parties.\n\nData at rest without encryption is vulnerable to **unauthorized access** if storage media is lost, stolen, or improperly decommissioned.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/59643.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ECS/encrypt-vm-instance-disks.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun ecs CreateDisk --DiskName <disk_name> --Size <size> --Encrypted true --KmsKeyId <kms_key_id>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"alicloud_ecs_disk\" \"encrypted\" {\n  zone_id   = \"cn-hangzhou-a\"\n  disk_name = \"encrypted-disk\"\n  category  = \"cloud_efficiency\"\n  size      = 20\n  encrypted = true\n  kms_key_id = alicloud_kms_key.example.id\n}"
+    },
+    "Recommendation": {
+      "Text": "**Encrypt a system disk when copying an image:**\n1. Log on to the **ECS Console** > **Instances & Images** > **Images**\n2. Select the **Custom Image** tab and select target image\n3. Click **Copy Image** and check the **Encrypt** box\n4. Select a key and click **OK**\n\n**Encrypt a data disk when creating an instance:**\n1. Log on to the **ECS Console** > **Instances & Images** > **Instances** > **Create Instance**\n2. In the Storage section, click **Add Disk**\n3. Select **Disk Encryption** and choose a key\n\n**Note:** You cannot directly convert unencrypted disks to encrypted disks.",
+      "Url": "https://hub.prowler.com/check/ecs_attached_disk_encrypted"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

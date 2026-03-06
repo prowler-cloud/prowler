@@ -1,0 +1,41 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "cs_kubernetes_log_service_enabled",
+  "CheckTitle": "Log Service is set to Enabled on Kubernetes Engine Clusters",
+  "CheckType": [
+    "Threat detection during container runtime"
+  ],
+  "ServiceName": "cs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
+  "Severity": "high",
+  "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceGroup": "container",
+  "Description": "**Log Service** is a complete real-time data logging service on Alibaba Cloud supporting collection, shipping, search, storage, and analysis for logs.\n\nLog Service can automatically collect, process, and store your container and audit logs in a dedicated, persistent datastore. Container logs are collected from your containers, audit logs from the `kube-apiserver` or deployed ingress, and events about cluster activity such as the deletion of Pods or Secrets.",
+  "Risk": "Without **Log Service** enabled, you lose visibility into container and system logs. The per-node logging agent collects: `kube-apiserver` audit logs, ingress visiting logs, and standard output/error logs from containerized processes.\n\nLack of logging makes **incident investigation**, **compliance auditing**, and **security monitoring** significantly more difficult.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.aliyun.com/document_detail/91406.html",
+    "https://help.aliyun.com/document_detail/86532.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/enable-log-service.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun cs GET /clusters/[cluster_id] to verify AuditProjectName is set. When creating a new cluster, set Enable Log Service to Enabled.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **ACK Console**\n2. Select the target cluster and click its name to open the cluster detail page\n3. Select **Cluster Auditing** on the left column and check if the audit page is shown\n4. To enable: When creating a new cluster, set `Enable Log Service` to **Enabled**",
+      "Url": "https://hub.prowler.com/check/cs_kubernetes_log_service_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

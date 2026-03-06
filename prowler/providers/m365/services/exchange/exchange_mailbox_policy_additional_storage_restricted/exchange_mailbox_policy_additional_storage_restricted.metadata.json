@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Exchange Mailboxes Policy",
+  "ResourceGroup": "collaboration",
   "Description": "Restrict the availability of additional storage providers (e.g., Box, Dropbox, Google Drive) in Outlook on the web to prevent users from accessing external storage services through the OWA interface.",
   "Risk": "Allowing users to access third-party storage providers from Outlook on the web increases the risk of data exfiltration and exposure to untrusted content or malware.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/exchange/set-owamailboxpolicy?view=exchange-ps",

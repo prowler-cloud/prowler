@@ -1,10 +1,13 @@
 import os
+import sys
+import types
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.conf import settings
 
+import api
 import api.apps as api_apps_module
 from api.apps import (
     ApiConfig,
@@ -150,3 +153,82 @@ def test_ensure_crypto_keys_skips_when_env_vars(monkeypatch, tmp_path):
 
     # Assert: orchestrator did not trigger generation when env present
     assert called["ensure"] is False
+
+
+@pytest.fixture(autouse=True)
+def stub_api_modules():
+    """Provide dummy modules imported during ApiConfig.ready()."""
+    created = []
+    for name in ("api.schema_extensions", "api.signals"):
+        if name not in sys.modules:
+            sys.modules[name] = types.ModuleType(name)
+            created.append(name)
+
+    yield
+
+    for name in created:
+        sys.modules.pop(name, None)
+
+
+def _set_argv(monkeypatch, argv):
+    monkeypatch.setattr(sys, "argv", argv, raising=False)
+
+
+def _set_testing(monkeypatch, value):
+    monkeypatch.setattr(settings, "TESTING", value, raising=False)
+
+
+def _make_app():
+    return ApiConfig("api", api)
+
+
+def test_ready_initializes_driver_for_api_process(monkeypatch):
+    config = _make_app()
+    _set_argv(monkeypatch, ["gunicorn"])
+    _set_testing(monkeypatch, False)
+
+    with patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None), patch(
+        "api.attack_paths.database.init_driver"
+    ) as init_driver:
+        config.ready()
+
+    init_driver.assert_called_once()
+
+
+def test_ready_skips_driver_for_celery(monkeypatch):
+    config = _make_app()
+    _set_argv(monkeypatch, ["celery", "-A", "api"])
+    _set_testing(monkeypatch, False)
+
+    with patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None), patch(
+        "api.attack_paths.database.init_driver"
+    ) as init_driver:
+        config.ready()
+
+    init_driver.assert_not_called()
+
+
+def test_ready_skips_driver_for_manage_py_skip_command(monkeypatch):
+    config = _make_app()
+    _set_argv(monkeypatch, ["manage.py", "migrate"])
+    _set_testing(monkeypatch, False)
+
+    with patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None), patch(
+        "api.attack_paths.database.init_driver"
+    ) as init_driver:
+        config.ready()
+
+    init_driver.assert_not_called()
+
+
+def test_ready_skips_driver_when_testing(monkeypatch):
+    config = _make_app()
+    _set_argv(monkeypatch, ["gunicorn"])
+    _set_testing(monkeypatch, True)
+
+    with patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None), patch(
+        "api.attack_paths.database.init_driver"
+    ) as init_driver:
+        config.ready()
+
+    init_driver.assert_not_called()

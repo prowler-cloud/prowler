@@ -1,5 +1,5 @@
 import { test as authManageAccountSetup } from '@playwright/test';
-import { authenticateAndSaveState } from '@/tests/helpers';
+import { SignInPage } from '../sign-in-base/sign-in-base-page';
 
 const manageAccountUserFile = 'playwright/.auth/manage_account_user.json';
 
@@ -11,5 +11,6 @@ authManageAccountSetup('authenticate as manage account e2e user',  async ({ page
     throw new Error('E2E_MANAGE_ACCOUNT_USER and E2E_MANAGE_ACCOUNT_PASSWORD environment variables are required');
   }
 
-  await authenticateAndSaveState(page, accountEmail, accountPassword, manageAccountUserFile);
+  const signInPage = new SignInPage(page);
+  await signInPage.authenticateAndSaveState({ email: accountEmail, password: accountPassword }, manageAccountUserFile);
 });

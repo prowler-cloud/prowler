@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_tls_1_3_enabled",
+  "CheckTitle": "TLS 1.3 is enabled",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **TLS 1.3** configuration by checking if it is enabled to benefit from **improved security** through simplified cipher suites and **faster handshakes** with zero round-trip time resumption.",
+  "Risk": "Without **TLS 1.3**, connections use older TLS versions with less secure characteristics.\n- **Confidentiality**: legacy TLS versions have more complex cipher negotiations that may expose weaknesses\n- **Integrity**: older protocols lack protection against downgrade attacks that TLS 1.3 provides\n- **Performance**: slower handshakes impact user experience and increase latency",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/tls-13/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to SSL/TLS > Edge Certificates\n3. Scroll to TLS 1.3\n4. Toggle the setting to On\n5. Verify that your clients support TLS 1.3 (all modern browsers do)",
+      "Terraform": "```hcl\n# Enable TLS 1.3 for improved security and performance\nresource \"cloudflare_zone_settings_override\" \"tls_settings\" {\n  zone_id = \"<ZONE_ID>\"\n  settings {\n    tls_1_3 = \"on\" # Critical: enables most secure TLS version with faster handshakes\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **TLS 1.3** to provide the most secure and efficient TLS connections.\n- All modern browsers support TLS 1.3 ensuring broad compatibility\n- TLS 1.3 removes obsolete cryptographic algorithms\n- Zero round-trip time (0-RTT) resumption improves performance\n- Combine with minimum TLS version set to 1.2 or higher",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_tls_1_3_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "TLS 1.3 is enabled by default on Cloudflare but should be verified. It provides security improvements and performance benefits through simplified handshakes."
+}

@@ -16,6 +16,19 @@ class elbv2_insecure_ssl_ciphers(Check):
             "ELBSecurityPolicy-TLS13-1-2-Res-2021-06",
             "ELBSecurityPolicy-TLS13-1-2-Ext1-2021-06",
             "ELBSecurityPolicy-TLS13-1-2-Ext2-2021-06",
+            # AWS post-quantum (PQ) TLS policies (TLS 1.2+ minimum)
+            "ELBSecurityPolicy-TLS13-1-2-Ext1-PQ-2025-09",
+            "ELBSecurityPolicy-TLS13-1-2-Ext2-PQ-2025-09",
+            "ELBSecurityPolicy-TLS13-1-2-PQ-2025-09",
+            "ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09",
+            "ELBSecurityPolicy-TLS13-1-3-PQ-2025-09",
+            # AWS FIPS post-quantum (PQ) TLS policies (TLS 1.2+ minimum)
+            "ELBSecurityPolicy-TLS13-1-2-Ext0-FIPS-PQ-2025-09",
+            "ELBSecurityPolicy-TLS13-1-2-Ext1-FIPS-PQ-2025-09",
+            "ELBSecurityPolicy-TLS13-1-2-Ext2-FIPS-PQ-2025-09",
+            "ELBSecurityPolicy-TLS13-1-2-FIPS-PQ-2025-09",
+            "ELBSecurityPolicy-TLS13-1-2-Res-FIPS-PQ-2025-09",
+            "ELBSecurityPolicy-TLS13-1-3-FIPS-PQ-2025-09",
         ]
         for lb in elbv2_client.loadbalancersv2.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
