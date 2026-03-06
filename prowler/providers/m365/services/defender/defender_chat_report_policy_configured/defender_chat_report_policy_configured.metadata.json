@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Defender Report Submission Policy",
+  "ResourceGroup": "security",
   "Description": "Ensure Defender report submission policy is properly configured to use customized addresses and enable chat message reporting to customized addresses, while disabling report chat message to Microsoft.",
   "Risk": "If Defender report submission policy is not properly configured, reported messages from Teams may not be handled or routed correctly, reducing the organization's ability to respond to threats.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/submissions-teams?view=o365-worldwide",

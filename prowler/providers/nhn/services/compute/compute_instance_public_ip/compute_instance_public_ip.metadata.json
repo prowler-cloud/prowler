@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "VMInstance",
+  "ResourceGroup": "compute",
   "Description": "Check if a floating(public) IP is assigned to an NHN compute instance.",
   "Risk": "",
   "RelatedUrl": "",

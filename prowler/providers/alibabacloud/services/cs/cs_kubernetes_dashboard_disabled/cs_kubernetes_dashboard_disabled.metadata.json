@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
   "Severity": "high",
   "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceGroup": "container",
   "Description": "**Dashboard** is a web-based Kubernetes user interface that can be used to deploy containerized applications to a Kubernetes cluster, troubleshoot your containerized application, and manage the cluster itself.\n\nYou should disable the **Kubernetes Web UI (Dashboard)** when running on Kubernetes Engine. The Dashboard is backed by a highly privileged Kubernetes Service Account. It is recommended to use the **ACK User Console** instead to avoid privilege escalation via a compromised dashboard.",
   "Risk": "The **Kubernetes Dashboard** is backed by a highly privileged Service Account. If the Dashboard is compromised, it could allow an attacker to gain **full control** over the cluster and potentially **escalate privileges**.\n\nAttackers who gain access to the Dashboard can deploy malicious workloads, exfiltrate secrets, and compromise the entire cluster.",
   "RelatedUrl": "",

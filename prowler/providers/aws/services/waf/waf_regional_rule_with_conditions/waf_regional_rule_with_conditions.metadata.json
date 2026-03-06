@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsWafRegionalRule",
+  "ResourceGroup": "security",
   "Description": "**AWS WAF Classic Regional rules** have one or more **conditions (predicates)** attached (IP, byte/regex, geo, size, SQLi/XSS) to define which requests the rule evaluates",
   "Risk": "An empty rule never matches, letting traffic bypass that control. This weakens defense-in-depth and can impact **confidentiality** (data exfiltration), **integrity** (SQLi/XSS), and **availability** (missing rate/size limits), depending on Web ACL order and default action.",
   "RelatedUrl": "",

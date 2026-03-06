@@ -13,7 +13,6 @@ import {
   CardVariant,
   ResourceStatsCard,
 } from "@/components/shadcn";
-import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 import { calculatePercentage } from "@/lib/utils";
 interface FindingsData {
   total: number;
@@ -38,8 +37,6 @@ export const StatusChart = ({
   const handleSegmentClick = (dataPoint: DonutDataPoint) => {
     // Build the URL with current filters plus status and muted
     const params = new URLSearchParams(searchParams.toString());
-
-    mapProviderFiltersForFindings(params);
 
     // Add status filter based on which segment was clicked
     if (dataPoint.name === "Fail Findings") {

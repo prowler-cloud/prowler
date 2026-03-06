@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "dns_record_cname_target_valid",
+  "CheckTitle": "DNS records pointing to hostnames have valid targets without takeover risk",
+  "CheckType": [],
+  "ServiceName": "dns",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "DNSRecord",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare DNS records** (CNAME, MX, NS, SRV) that point to hostnames are assessed for **dangling record** vulnerabilities by checking if the target domain resolves to a valid address, preventing **subdomain takeover**, **mail interception**, and **service hijacking** attacks.",
+  "Risk": "Dangling **DNS records** pointing to non-existent targets create multiple vulnerabilities.\n- **Confidentiality**: dangling CNAME/NS allows subdomain takeover; dangling MX allows mail interception\n- **Integrity**: attackers can impersonate your organization, intercept emails, or hijack services\n- **Availability**: legitimate services may be disrupted or redirected to attacker-controlled infrastructure",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/dns/manage-dns-records/how-to/create-dns-records/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to DNS > Records\n3. Identify CNAME, MX, NS, or SRV records with dangling targets\n4. Either update the record to point to a valid target or delete the record\n5. If the target service was decommissioned, remove the DNS record",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove or update **dangling DNS records** to prevent takeover and interception attacks.\n- Regularly audit DNS records when decommissioning services\n- Remove CNAME, MX, NS, and SRV records pointing to deprovisioned resources\n- Monitor for unauthorized changes to DNS records\n- Consider using DNS monitoring tools to detect dangling records",
+      "Url": "https://hub.prowler.com/checks/cloudflare/dns_record_cname_target_valid"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Subdomain takeover occurs when a CNAME or NS record points to a service that has been deprovisioned, allowing attackers to claim that service and control the subdomain. Similarly, dangling MX records can allow mail interception, and dangling SRV records can expose service discovery vulnerabilities."
+}

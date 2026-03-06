@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
   "Description": "Enable **SQL auditing** on all RDS instances (except SQL Server 2012/2016/2017 and MariaDB TX). Auditing tracks database events and writes them to an audit log.\n\nIt helps to maintain **regulatory compliance**, understand database activity, and gain insight into discrepancies and anomalies that could indicate business concerns or suspected security violations.",
   "Risk": "Without **SQL auditing**, it's difficult to detect **unauthorized access**, **data breaches**, or **malicious activity** within the database.\n\nIt also hinders **forensic investigations** and compliance reporting.",
   "RelatedUrl": "",

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Group Settings",
+  "ResourceGroup": "governance",
   "Description": "Ensure that a dynamic group is created for guest users in Microsoft Entra to enforce conditional access policies and security controls automatically.",
   "Risk": "Without a dynamic group for guest users, administrators may need to manually manage access controls, leading to potential security gaps and inconsistent policy enforcement.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/users/groups-create-rule",

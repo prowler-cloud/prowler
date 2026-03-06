@@ -76,6 +76,7 @@ class Organization(GithubService):
                                             id=user.id,
                                             name=user.login,
                                             mfa_required=None,  # Users don't have MFA requirements like orgs
+                                            is_verified=None,
                                         )
                                         logger.info(
                                             f"Added user '{user.login}' as organization for checks"
@@ -195,7 +196,7 @@ class Organization(GithubService):
             if isinstance(base_permission_raw, str)
             else None
         )
-
+        is_verified = _extract_flag("is_verified", bool)
         organizations[org.id] = Org(
             id=org.id,
             name=org.login,
@@ -216,6 +217,7 @@ class Organization(GithubService):
                 "members_allowed_repository_creation_type"
             ],
             base_permission=base_permission,
+            is_verified=is_verified,
         )
 
 
@@ -231,3 +233,4 @@ class Org(BaseModel):
     members_can_create_internal_repositories: Optional[bool] = None
     members_allowed_repository_creation_type: Optional[str] = None
     base_permission: Optional[str] = None
+    is_verified: Optional[bool] = None

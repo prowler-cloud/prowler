@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "dns_record_no_wildcard",
+  "CheckTitle": "DNS records do not use wildcard entries",
+  "CheckType": [],
+  "ServiceName": "dns",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "DNSRecord",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare DNS records** are assessed for **wildcard usage** by checking if A, AAAA, CNAME, MX, or SRV records use wildcard entries (*.example.com) which can **increase attack surface**, expose unintended services, or allow mail interception.",
+  "Risk": "**Wildcard DNS records** can expose unintended services and increase attack surface.\n- **Confidentiality**: any subdomain resolves, potentially exposing internal naming conventions; wildcard MX allows mail interception\n- **Integrity**: attackers can access unintended services via arbitrary subdomains\n- **Availability**: wildcard records may route traffic or services not designed for public access",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/dns/manage-dns-records/how-to/create-dns-records/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to DNS > Records\n3. Identify wildcard DNS records (starting with *.)\n4. Evaluate if the wildcard is necessary for your use case\n5. Replace wildcard records with specific subdomain records where possible",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Avoid using **wildcard DNS records** unless absolutely necessary.\n- Use specific subdomain records instead of wildcards\n- If wildcards are required, ensure the target service handles unknown subdomains securely\n- Document the business justification for any wildcard records\n- Combine with proper web server configuration to reject unknown hosts",
+      "Url": "https://hub.prowler.com/checks/cloudflare/dns_record_no_wildcard"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Wildcard DNS records (*.example.com) cause any subdomain query to resolve. While useful for some applications, they can expose services unintentionally and make subdomain enumeration easier for attackers. Wildcard MX records can accept mail for any subdomain, and wildcard SRV records can expose services on arbitrary subdomains."
+}

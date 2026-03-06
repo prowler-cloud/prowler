@@ -1,24 +1,19 @@
 {
   "Provider": "mongodbatlas",
   "CheckID": "clusters_encryption_at_rest_enabled",
-  "CheckTitle": "MongoDB Atlas cluster has encryption at rest enabled with a supported provider or EBS volume encryption",
+  "CheckTitle": "Cluster has encryption at rest enabled with a supported provider or EBS volume encryption",
   "CheckType": [],
   "ServiceName": "clusters",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "",
-  "Description": "MongoDB Atlas clusters are evaluated for **encryption at rest**. The check looks for a supported encryption provider configured (not `NONE`) or storage-level encryption enabled (e.g., `encryptEBSVolume=true`). Unsupported providers or explicit disablement are highlighted.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**MongoDB Atlas clusters** are evaluated for **encryption at rest**. The check looks for a supported encryption provider configured (not `NONE`) or storage-level encryption enabled (e.g., `encryptEBSVolume=true`). Unsupported providers or explicit disablement are highlighted.",
   "Risk": "Absent or misconfigured at-rest encryption allows disks and snapshots to be read if storage, backups, or images are accessed by attackers or insiders. This exposes sensitive records, erodes **confidentiality**, and enables quiet **data exfiltration** after host or control-plane compromise.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.mongodb.com/docs/atlas/security-kms-encryption/",
-    "https://library.tf/providers/timgchile/mongodbatlas/latest/docs/resources/encryption_at_rest",
-    "https://codemax.app/snippet/advanced-data-encryption-strategies-for-mongodb-atlas/",
-    "https://www.pulumi.com/registry/packages/mongodbatlas/api-docs/getencryptionatrest/",
-    "https://www.prisma.io/dataguide/mongodb/mongodb-atlas-setup",
-    "https://dinfratechsource.wordpress.com/2019/06/24/mongodb-in-the-cloud-with-atlas/",
-    "https://stackoverflow.com/questions/44369296/how-to-enable-mongodb-atlas-data-encryption-at-rest"
+    "https://www.mongodb.com/docs/atlas/security-kms-encryption/"
   ],
   "Remediation": {
     "Code": {

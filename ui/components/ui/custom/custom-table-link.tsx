@@ -21,7 +21,9 @@ export const TableLink = ({ href, label, isDisabled }: TableLinkProps) => {
 
   return (
     <Button asChild variant="link" size="sm" className="text-xs">
-      <Link href={href}>{label}</Link>
+      <Link href={href} prefetch={false}>
+        {label}
+      </Link>
     </Button>
   );
 };

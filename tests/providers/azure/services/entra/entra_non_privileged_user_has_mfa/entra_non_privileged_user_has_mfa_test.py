@@ -69,7 +69,6 @@ class Test_entra_non_privileged_user_has_mfa:
                 entra_non_privileged_user_has_mfa,
             )
             from prowler.providers.azure.services.entra.entra_service import (
-                AuthMethod,
                 DirectoryRole,
                 User,
             )
@@ -77,7 +76,7 @@ class Test_entra_non_privileged_user_has_mfa:
             user = User(
                 id=user_id,
                 name="foo",
-                authentication_methods=[AuthMethod(id=str(uuid4()), type="foo")],
+                is_mfa_capable=False,
             )
 
             entra_client.users = {DOMAIN: {f"foo@{DOMAIN}": user}}
@@ -117,7 +116,6 @@ class Test_entra_non_privileged_user_has_mfa:
                 entra_non_privileged_user_has_mfa,
             )
             from prowler.providers.azure.services.entra.entra_service import (
-                AuthMethod,
                 DirectoryRole,
                 User,
             )
@@ -125,10 +123,7 @@ class Test_entra_non_privileged_user_has_mfa:
             user = User(
                 id=user_id,
                 name="foo",
-                authentication_methods=[
-                    AuthMethod(id=str(uuid4()), type="foo"),
-                    AuthMethod(id=str(uuid4()), type="bar"),
-                ],
+                is_mfa_capable=True,
             )
 
             entra_client.users = {DOMAIN: {f"foo@{DOMAIN}": user}}
@@ -165,7 +160,6 @@ class Test_entra_non_privileged_user_has_mfa:
                 entra_non_privileged_user_has_mfa,
             )
             from prowler.providers.azure.services.entra.entra_service import (
-                AuthMethod,
                 DirectoryRole,
                 User,
             )
@@ -173,7 +167,7 @@ class Test_entra_non_privileged_user_has_mfa:
             user = User(
                 id=user_id,
                 name="foo",
-                authentication_methods=[AuthMethod(id=str(uuid4()), type="foo")],
+                is_mfa_capable=False,
             )
 
             entra_client.users = {DOMAIN: {f"foo@{DOMAIN}": user}}
@@ -207,7 +201,6 @@ class Test_entra_non_privileged_user_has_mfa:
                 entra_non_privileged_user_has_mfa,
             )
             from prowler.providers.azure.services.entra.entra_service import (
-                AuthMethod,
                 DirectoryRole,
                 User,
             )
@@ -215,10 +208,7 @@ class Test_entra_non_privileged_user_has_mfa:
             user = User(
                 id=user_id,
                 name="foo",
-                authentication_methods=[
-                    AuthMethod(id=str(uuid4()), type="foo"),
-                    AuthMethod(id=str(uuid4()), type="bar"),
-                ],
+                is_mfa_capable=True,
             )
 
             entra_client.users = {DOMAIN: {f"foo@{DOMAIN}": user}}

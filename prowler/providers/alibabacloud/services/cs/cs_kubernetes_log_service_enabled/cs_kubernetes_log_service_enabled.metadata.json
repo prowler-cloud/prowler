@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
   "Severity": "high",
   "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceGroup": "container",
   "Description": "**Log Service** is a complete real-time data logging service on Alibaba Cloud supporting collection, shipping, search, storage, and analysis for logs.\n\nLog Service can automatically collect, process, and store your container and audit logs in a dedicated, persistent datastore. Container logs are collected from your containers, audit logs from the `kube-apiserver` or deployed ingress, and events about cluster activity such as the deletion of Pods or Secrets.",
   "Risk": "Without **Log Service** enabled, you lose visibility into container and system logs. The per-node logging agent collects: `kube-apiserver` audit logs, ingress visiting logs, and standard output/error logs from containerized processes.\n\nLack of logging makes **incident investigation**, **compliance auditing**, and **security monitoring** significantly more difficult.",
   "RelatedUrl": "",

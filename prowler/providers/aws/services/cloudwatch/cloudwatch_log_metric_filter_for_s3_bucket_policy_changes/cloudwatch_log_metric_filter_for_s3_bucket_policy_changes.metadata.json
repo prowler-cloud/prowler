@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudTrail** logs are assessed for a **CloudWatch metric filter** matching S3 bucket configuration changes (ACL, policy, CORS, lifecycle, replication; e.g., `PutBucketPolicy`, `DeleteBucketPolicy`) and for an associated **CloudWatch alarm**.",
   "Risk": "Without alerting on S3 policy and ACL changes, unauthorized modifications can go unnoticed, weakening **confidentiality** and **integrity**. Misuse could expose buckets publicly, grant write/delete access, or alter replication paths, enabling data exfiltration and destructive actions.",
   "RelatedUrl": "",

@@ -82,7 +82,7 @@ export const createNewUser = async (formData: SignUpFormData) => {
     }
 
     return parsedResponse;
-  } catch (error) {
+  } catch (_error) {
     return {
       errors: [
         {
@@ -127,7 +127,7 @@ export const getToken = async (formData: SignInFormData) => {
       accessToken,
       refreshToken,
     };
-  } catch (error) {
+  } catch (_error) {
     throw new Error("Error in trying to get token");
   }
 };
@@ -188,5 +188,5 @@ export const getUserByMe = async (accessToken: string) => {
 };
 
 export async function logOut() {
-  await signOut();
+  await signOut({ redirectTo: "/sign-in" });
 }

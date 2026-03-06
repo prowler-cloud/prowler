@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "acs:oss::account-id:bucket-name",
   "Severity": "high",
   "ResourceType": "AlibabaCloudOSSBucket",
+  "ResourceGroup": "storage",
   "Description": "Enable **data encryption in transit**. The secure transfer enhances the security of OSS buckets by only allowing requests to the storage account via a secure connection.\n\nFor example, when calling REST APIs to access storage accounts, the connection must use **HTTPS**. Any requests using HTTP will be rejected.",
   "Risk": "Without **secure transfer enforcement**, OSS buckets may accept HTTP requests, which are not encrypted in transit.\n\nThis exposes data to potential **interception** and **man-in-the-middle attacks**, compromising data confidentiality and integrity.",
   "RelatedUrl": "",

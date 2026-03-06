@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "compute",
   "Description": "**Lightsail instances** that have a **public IP** and at least one firewall rule allowing **public ports** are treated as publicly exposed. The evaluation inspects instance addressing and port rules to detect any port or range marked `public`.",
   "Risk": "Public IP plus open ports enables Internet scanning, brute force, and exploits.\n- Confidentiality: data exfiltration\n- Integrity: RCE/admin takeover via exposed services\n- Availability: DoS or abuse (botnets, cryptomining), service disruption",
   "RelatedUrl": "",

@@ -85,12 +85,15 @@ export const WatchlistCard = ({
   const isEmpty = items.length === 0;
 
   return (
-    <Card variant="base" className="flex min-h-[405px] min-w-[312px] flex-col">
+    <Card
+      variant="base"
+      className="flex min-h-[405px] w-full flex-col overflow-hidden"
+    >
       <div className="flex items-center justify-between">
         <CardTitle>{title}</CardTitle>
         {headerAction}
       </div>
-      <CardContent className="flex flex-col">
+      <CardContent className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {isEmpty ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-12 py-6">
             {/* Icon and message */}
@@ -102,19 +105,15 @@ export const WatchlistCard = ({
             </div>
 
             {/* Description with link */}
-            <p className="text-text-neutral-tertiary w-full text-sm leading-6">
-              {emptyState?.description && ctaHref && (
-                <>
-                  Visit the{" "}
-                  <Button variant="link" size="link-sm" asChild>
-                    <Link href={ctaHref}>
-                      {emptyState.linkText || ctaLabel}
-                    </Link>
-                  </Button>{" "}
-                  {emptyState.description}
-                </>
-              )}
-            </p>
+            {emptyState?.description && ctaHref && (
+              <p className="text-text-neutral-tertiary w-full text-sm leading-6">
+                Visit the{" "}
+                <Button variant="link" size="link-sm" asChild>
+                  <Link href={ctaHref}>{emptyState.linkText || ctaLabel}</Link>
+                </Button>{" "}
+                {emptyState.description}
+              </p>
+            )}
           </div>
         ) : (
           <>
@@ -149,7 +148,7 @@ export const WatchlistCard = ({
                     }
                   }}
                   className={cn(
-                    "flex h-[54px] items-center justify-between gap-2 px-3 py-[11px]",
+                    "flex h-[54px] min-w-0 items-center justify-between gap-2 px-3 py-[11px]",
                     !isLast && "border-border-neutral-tertiary border-b",
                     isClickable &&
                       "hover:bg-bg-neutral-tertiary cursor-pointer",
@@ -161,10 +160,10 @@ export const WatchlistCard = ({
                     </div>
                   )}
 
-                  <p className="text-text-neutral-secondary flex-1 truncate text-sm leading-6">
+                  <p className="text-text-neutral-secondary w-0 flex-1 truncate text-sm leading-6">
                     {item.label}
                   </p>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex shrink-0 items-center gap-1.5">
                     <p
                       className={cn(
                         "text-sm leading-6 font-bold",
