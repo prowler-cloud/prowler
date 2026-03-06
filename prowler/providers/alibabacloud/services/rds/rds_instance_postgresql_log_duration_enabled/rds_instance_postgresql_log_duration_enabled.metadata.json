@@ -1,0 +1,39 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "rds_instance_postgresql_log_duration_enabled",
+  "CheckTitle": "Server parameter log_duration is set to ON for PostgreSQL Database Server",
+  "CheckType": [
+    "Intrusion into applications"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
+  "Description": "Enable `log_duration` on **PostgreSQL Servers**. Enabling `log_duration` helps PostgreSQL Database log the duration of each completed SQL statement which in turn generates query and error logs.\n\nQuery and error logs can be used to identify, troubleshoot, and repair configuration errors and sub-optimal performance.",
+  "Risk": "Without **duration logging**, it's difficult to identify **slow queries**, **performance bottlenecks**, and potential **DoS attempts**.\n\nThis information is critical for database performance tuning and security monitoring.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/96751.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-log-duration-for-postgresql.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun rds ModifyParameter --DBInstanceId <instance_id> --Parameters \"{\\\"log_duration\\\":\\\"on\\\"}\"",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **RDS Console**\n2. Select the region and target instance\n3. In the left-side navigation pane, select **Parameters**\n4. Find the `log_duration` parameter and set it to `on`\n5. Click **Apply Changes**",
+      "Url": "https://hub.prowler.com/check/rds_instance_postgresql_log_duration_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,39 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ecs_instance_no_legacy_network",
+  "CheckTitle": "Legacy networks does not exist",
+  "CheckType": [
+    "Suspicious network connection"
+  ],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:ecs:region:account-id:instance/{instance-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudECSInstance",
+  "ResourceGroup": "compute",
+  "Description": "In order to prevent use of **legacy networks**, ECS instances should not have a legacy network configured.\n\nLegacy networks have a single network IPv4 prefix range and a single gateway IP address for the whole network. With legacy networks, you cannot create subnetworks or switch from legacy to auto or custom subnet networks.",
+  "Risk": "**Legacy networks** can have an impact on high network traffic ECS instances and are subject to a **single point of failure**.\n\nThey also lack the security isolation and network segmentation capabilities provided by **VPCs**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/87190.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-VPC/legacy-network-usage.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun ecs CreateInstance --InstanceName <instance_name> --ImageId <image_id> --InstanceType <instance_type> --VSwitchId <vswitch_id>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **ECS Console**\n2. In the left-side navigation pane, choose **Instance & Image** > **Instances**\n3. Click **Create Instance**\n4. Specify the basic instance information required and click **Next: Networking**\n5. Select the Network Type of **VPC**",
+      "Url": "https://hub.prowler.com/check/ecs_instance_no_legacy_network"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

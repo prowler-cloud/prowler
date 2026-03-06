@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_user_mfa_enabled_console_access",
+  "CheckTitle": "Multi-factor authentication is enabled for all RAM users that have a console password",
+  "CheckType": [
+    "Unusual logon",
+    "Abnormal account"
+  ],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:ram::account-id:user/{user-name}",
+  "Severity": "high",
+  "ResourceType": "AlibabaCloudRAMUser",
+  "ResourceGroup": "IAM",
+  "Description": "**Multi-Factor Authentication (MFA)** adds an extra layer of protection on top of a username and password.\n\nWith MFA enabled, when a user logs on to Alibaba Cloud, they will be prompted for their username and password followed by an authentication code from their virtual MFA device. It is recommended that MFA be enabled for all users that have a console password.",
+  "Risk": "**MFA** requires users to verify their identities by entering two authentication factors. When MFA is enabled, an attacker faces at least two different authentication mechanisms.\n\nThe additional security makes it significantly harder for an attacker to gain access even if passwords are compromised.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/119555.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RAM/ram-user-multi-factor-authentication-enabled.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **RAM Console**\n2. For each user with console access, go to the user's details\n3. In the **Console Logon Management** section, click **Modify Logon Settings**\n4. For `Enable MFA`, select **Required**\n5. Click **OK** to save the settings",
+      "Url": "https://hub.prowler.com/check/ram_user_mfa_enabled_console_access"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,21 +1,19 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "database_autonomous_database_access_restricted",
-  "CheckTitle": "Oracle Autonomous Shared Database (ADB) is deployed within a VCN or restricts public access with whitelisted IPs excluding 0.0.0.0/0",
+  "CheckTitle": "Autonomous Shared Database (ADB) is deployed within a VCN or restricts public access with whitelisted IPs excluding 0.0.0.0/0",
   "CheckType": [],
   "ServiceName": "database",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AutonomousDatabase",
-  "Description": "**Autonomous Database (shared)** network exposure is evaluated: instances are treated as restricted when using a **VCN private endpoint** or when **ACLs** allow only specified IPs/VCNs. It identifies configurations with no ACL and no VCN, or ACLs permitting `0.0.0.0/0`.",
+  "ResourceGroup": "database",
+  "Description": "**OCI Autonomous Database (shared)** network exposure is evaluated: instances are treated as restricted when using a **VCN private endpoint** or when **ACLs** allow only specified IPs/VCNs. It identifies configurations with no ACL and no VCN, or ACLs permitting `0.0.0.0/0`.",
   "Risk": "With **open access**, attackers can probe endpoints, brute-force credentials, or abuse leaked wallets to connect.\n\nImpact:\n- Confidentiality: unauthorized queries and data exfiltration\n- Integrity: malicious changes\n- Availability: heavy queries or scans causing service disruption",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.oracle.com/en/cloud/paas/autonomous-database/adbsa/autonomous-private-endpoints.html",
-    "https://mjromeo81.com/2020/12/24/oracle-autonomous-database-setting-up-acls-and-private-endpoints/",
-    "https://mjromeo81.com/category/cloud/autonomous-database/",
-    "https://icodealot.com/dbtools-connections-with-adb-access-control-list/",
     "https://www.oracle.com/cloud/networking/private-endpoint/supported-services/"
   ],
   "Remediation": {

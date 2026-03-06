@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_customer_created_cmk_changes_alert_enabled",
+  "CheckTitle": "A log monitoring and alerts are set up for disabling or deletion of customer created CMKs",
+  "CheckType": [
+    "Sensitive file tampering",
+    "Cloud threat detection"
+  ],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceGroup": "monitoring",
+  "Description": "Real-time monitoring of API calls can be achieved by directing **ActionTrail Logs** to Log Service and establishing corresponding query and alarms.\n\nIt is recommended that a query and alarm be established for customer-created **KMS keys** which have changed state to disabled or deletion.",
+  "Risk": "Data encrypted with **disabled or deleted keys** will no longer be accessible.\n\nThis could lead to **data loss** or **business disruption** if keys are inadvertently or maliciously disabled.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/kms-cmk-config-changes-alert.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **SLS Console**\n2. Ensure **ActionTrail** is enabled\n3. Select **Alerts**\n4. Ensure alert rule has been enabled for disabling or deletion of customer-created CMKs",
+      "Url": "https://hub.prowler.com/check/sls_customer_created_cmk_changes_alert_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

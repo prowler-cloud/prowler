@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayStage",
+  "ResourceGroup": "api_gateway",
   "Description": "**API Gateway stage** has a **client certificate** configured so HTTP/S integrations can perform **mutual TLS** and authenticate API Gateway to the backend",
   "Risk": "Without client authentication to the backend, requests cannot be proven to originate from API Gateway. Direct calls to the backend may bypass gateway policies, enabling unauthorized access and data tampering. This degrades **integrity** and **confidentiality** and reduces auditability.",
   "RelatedUrl": "",
