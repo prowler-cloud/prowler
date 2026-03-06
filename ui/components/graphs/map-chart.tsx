@@ -36,7 +36,7 @@ const MAP_COLORS = {
   pointHover: "var(--bg-fail)",
 } as const;
 
-const RISK_LEVELS = {
+export const RISK_LEVELS = {
   LOW_HIGH: "low-high",
   HIGH: "high",
   CRITICAL: "critical",

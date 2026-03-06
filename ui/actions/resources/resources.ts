@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getResources = async ({
@@ -17,7 +18,7 @@ export const getResources = async ({
   page?: number;
   query?: string;
   sort?: string;
-  filters?: Record<string, string>;
+  filters?: Record<string, string | string[] | undefined>;
   pageSize?: number;
   include?: string;
   fields?: string[];
@@ -38,9 +39,7 @@ export const getResources = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const response = await fetch(url.toString(), {
@@ -66,7 +65,7 @@ export const getLatestResources = async ({
   page?: number;
   query?: string;
   sort?: string;
-  filters?: Record<string, string>;
+  filters?: Record<string, string | string[] | undefined>;
   pageSize?: number;
   include?: string;
   fields?: string[];
@@ -87,9 +86,7 @@ export const getLatestResources = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const response = await fetch(url.toString(), {
@@ -107,6 +104,10 @@ export const getMetadataInfo = async ({
   query = "",
   sort = "",
   filters = {},
+}: {
+  query?: string;
+  sort?: string;
+  filters?: Record<string, string | string[] | undefined>;
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -115,9 +116,7 @@ export const getMetadataInfo = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const response = await fetch(url.toString(), {
@@ -135,6 +134,10 @@ export const getLatestMetadataInfo = async ({
   query = "",
   sort = "",
   filters = {},
+}: {
+  query?: string;
+  sort?: string;
+  filters?: Record<string, string | string[] | undefined>;
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -143,9 +146,7 @@ export const getLatestMetadataInfo = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const response = await fetch(url.toString(), {

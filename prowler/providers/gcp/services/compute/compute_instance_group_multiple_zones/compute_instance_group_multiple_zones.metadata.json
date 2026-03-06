@@ -1,0 +1,37 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_instance_group_multiple_zones",
+  "CheckTitle": "Ensure Managed Instance Groups span multiple zones for high availability",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "compute.googleapis.com/InstanceGroupManager",
+  "ResourceGroup": "compute",
+  "Description": "Managed Instance Groups (MIGs) should be configured for multi-zone deployments to ensure high availability and fault tolerance. A multi-zone MIG distributes instances across multiple zones within a region, protecting applications from zonal failures.",
+  "Risk": "Running a MIG in a single zone creates a single point of failure. If that zone experiences an outage, all instances in the group become unavailable, resulting in application downtime during zonal failures, no automatic failover to healthy zones, and reduced resilience against infrastructure issues.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/compute/docs/instance-groups/regional-migs",
+    "https://cloud.google.com/compute/docs/instance-groups/distributing-instances-with-regional-instance-groups"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud compute instance-groups managed create INSTANCE_GROUP_NAME --region=REGION --template=INSTANCE_TEMPLATE --size=TARGET_SIZE --zones=ZONE1,ZONE2,ZONE3",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Compute Engine > Instance groups\n2. Click 'Create instance group'\n3. Select 'New managed instance group (stateless)'\n4. For 'Location', select 'Multiple zones'\n5. Choose the target region and zones\n6. Configure the instance template and target size\n7. Click 'Create'",
+      "Terraform": "```hcl\n# Create a regional MIG that spans multiple zones\nresource \"google_compute_region_instance_group_manager\" \"example\" {\n  name               = \"example-mig\"\n  region             = \"us-central1\"\n  base_instance_name = \"example\"\n  target_size        = 3\n\n  version {\n    instance_template = google_compute_instance_template.example.id\n  }\n\n  # Distribute instances across multiple zones\n  distribution_policy_zones = [\"us-central1-a\", \"us-central1-b\", \"us-central1-c\"]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Use regional managed instance groups instead of zonal MIGs to distribute instances across multiple zones. This provides automatic failover and load distribution, ensuring high availability for production workloads.",
+      "Url": "https://hub.prowler.com/check/compute_instance_group_multiple_zones"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check uses a configurable minimum zone count (default: 2). Configure via 'mig_min_zones' in config.yaml."
+}

@@ -8,12 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Bucket",
+  "ResourceGroup": "storage",
   "Description": "**OCI Object Storage buckets** are assessed for **public accessibility**. Buckets configured as `NoPublicAccess` deny anonymous reads; any other public access setting indicates bucket contents may be reachable without authentication.",
   "Risk": "**Public buckets** enable unauthenticated downloads and content listing, compromising **confidentiality** and exposing metadata. Hotlinking can drive unexpected **egress costs** and degrade **availability** through bandwidth exhaustion and service abuse.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.oracle.com/en-us/iaas/Content/Object/Tasks/managingbuckets.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-ObjectStorage/publicly-accessible-buckets.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/oci/OCI-ObjectStorage/publicly-accessible-buckets.html"
   ],
   "Remediation": {
     "Code": {

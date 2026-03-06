@@ -5,22 +5,6 @@ import {
   ProviderType,
 } from "@/types/providers";
 
-/**
- * Maps overview provider filters to findings page provider filters.
- * Converts provider_id__in to provider__in and removes provider_type__in
- * since provider__in is more specific.
- */
-export const mapProviderFiltersForFindings = (
-  params: URLSearchParams,
-): void => {
-  const providerIds = params.get("filter[provider_id__in]");
-  if (providerIds) {
-    params.delete("filter[provider_id__in]");
-    params.delete("filter[provider_type__in]");
-    params.set("filter[provider__in]", providerIds);
-  }
-};
-
 export const extractProviderUIDs = (
   providersData: ProvidersApiResponse,
 ): string[] => {
@@ -98,7 +82,14 @@ export const getProviderFormType = (
   via?: string,
 ): ProviderFormType => {
   // Providers that need credential type selection
-  const needsSelector = ["aws", "gcp", "github", "m365"].includes(providerType);
+  const needsSelector = [
+    "aws",
+    "gcp",
+    "github",
+    "m365",
+    "alibabacloud",
+    "cloudflare",
+  ].includes(providerType);
 
   // Show selector if no via parameter and provider needs it
   if (needsSelector && !via) {
@@ -133,6 +124,20 @@ export const getProviderFormType = (
     return "credentials";
   }
 
+  // AlibabaCloud specific forms
+  if (providerType === "alibabacloud") {
+    if (via === "role") return "role";
+    if (via === "credentials") return "credentials";
+  }
+
+  // Cloudflare credential types
+  if (
+    providerType === "cloudflare" &&
+    ["api_token", "api_key"].includes(via || "")
+  ) {
+    return "credentials";
+  }
+
   // Other providers go directly to credentials form
   if (!needsSelector) {
     return "credentials";
@@ -154,7 +159,11 @@ export const requiresBackButton = (via?: string | null): boolean => {
     "github_app",
     "app_client_secret",
     "app_certificate",
+    "api_token",
+    "api_key",
   ];
+  // Note: "role" is already included for AWS, now also used by AlibabaCloud
+  // "api_token" and "api_key" are used by Cloudflare
 
   return validViaTypes.includes(via);
 };

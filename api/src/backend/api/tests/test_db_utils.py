@@ -550,6 +550,36 @@ class TestRlsTransaction:
                                     mock_sleep.assert_any_call(1.0)
                                     assert mock_logger.info.call_count == 2
 
+    def test_rls_transaction_operational_error_inside_context_no_retry(
+        self, tenants_fixture, enable_read_replica
+    ):
+        """Test OperationalError raised inside context does not retry."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_conn = MagicMock()
+                mock_cursor = MagicMock()
+                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+                mock_connections.__getitem__.return_value = mock_conn
+                mock_connections.__contains__.return_value = True
+
+                with patch("api.db_utils.transaction.atomic") as mock_atomic:
+                    mock_atomic.return_value.__enter__.return_value = None
+                    mock_atomic.return_value.__exit__.return_value = False
+
+                    with patch("api.db_utils.time.sleep") as mock_sleep:
+                        with patch(
+                            "api.db_utils.set_read_db_alias", return_value="token"
+                        ):
+                            with patch("api.db_utils.reset_read_db_alias"):
+                                with pytest.raises(OperationalError):
+                                    with rls_transaction(tenant_id):
+                                        raise OperationalError("Conflict with recovery")
+
+                                mock_sleep.assert_not_called()
+
     def test_rls_transaction_max_three_attempts_for_replica(
         self, tenants_fixture, enable_read_replica
     ):
@@ -578,6 +608,38 @@ class TestRlsTransaction:
                                         pass
 
                                 assert mock_atomic.call_count == 3
+
+    def test_rls_transaction_replica_no_retry_when_disabled(
+        self, tenants_fixture, enable_read_replica
+    ):
+        """Test replica retry is disabled when retry_on_replica=False."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_conn = MagicMock()
+                mock_cursor = MagicMock()
+                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+                mock_connections.__getitem__.return_value = mock_conn
+                mock_connections.__contains__.return_value = True
+
+                with patch("api.db_utils.transaction.atomic") as mock_atomic:
+                    mock_atomic.side_effect = OperationalError("Replica error")
+
+                    with patch("api.db_utils.time.sleep") as mock_sleep:
+                        with patch(
+                            "api.db_utils.set_read_db_alias", return_value="token"
+                        ):
+                            with patch("api.db_utils.reset_read_db_alias"):
+                                with pytest.raises(OperationalError):
+                                    with rls_transaction(
+                                        tenant_id, retry_on_replica=False
+                                    ):
+                                        pass
+
+                                assert mock_atomic.call_count == 1
+                                mock_sleep.assert_not_called()
 
     def test_rls_transaction_only_one_attempt_for_primary(self, tenants_fixture):
         """Test only 1 attempt for primary database."""

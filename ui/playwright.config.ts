@@ -1,4 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
+import fs from "fs";
+import path from "path";
+
+const localEnvPath = path.resolve(__dirname, ".env.local");
+if (fs.existsSync(localEnvPath)) {
+  process.loadEnvFile(localEnvPath);
+}
 
 export default defineConfig({
   testDir: "./tests",
@@ -88,10 +95,18 @@ export default defineConfig({
     // Test Suite Projects
     // ===========================================
     // These projects run the actual test suites
+
+    // This project runs the sign-in-base test suite (form, navigation, accessibility)
     {
-      name: "chromium",
+      name: "sign-in-base",
       use: { ...devices["Desktop Chrome"] },
-      testMatch: "auth-login.spec.ts",
+      testMatch: /sign-in-base\/.*\.spec\.ts/,
+    },
+    // This project runs the auth test suite (middleware, session, token refresh)
+    {
+      name: "auth",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /auth\/.*\.spec\.ts/,
     },
     // This project runs the sign-up test suite
     {
@@ -119,7 +134,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: process.env.CI ? "npm run start" : "npm run dev",
+    command: process.env.CI ? "pnpm run start" : "pnpm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
@@ -129,8 +144,9 @@ export default defineConfig({
       AUTH_SECRET: process.env.AUTH_SECRET || "fallback-ci-secret-for-testing",
       AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST || "true",
       NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:3000",
-      E2E_USER: process.env.E2E_USER || "e2e@prowler.com",
-      E2E_PASSWORD: process.env.E2E_PASSWORD || "Thisisapassword123@",
+      E2E_ADMIN_USER: process.env.E2E_ADMIN_USER || "e2e@prowler.com",
+      E2E_ADMIN_PASSWORD:
+        process.env.E2E_ADMIN_PASSWORD || "Thisisapassword123@",
     },
   },
 });

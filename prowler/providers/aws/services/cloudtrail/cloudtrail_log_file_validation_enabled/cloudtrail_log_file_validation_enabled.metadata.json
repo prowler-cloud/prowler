@@ -12,13 +12,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudTrailTrail",
+  "ResourceGroup": "monitoring",
   "Description": "**AWS CloudTrail trails** are evaluated for **log file integrity validation** being enabled (`LogFileValidationEnabled`).\n\nWhen enabled, CloudTrail generates signed digest files to verify that S3-delivered log files remain unchanged.",
   "Risk": "Without validation, adversaries can alter, forge, or delete audit entries without detection, compromising log **integrity** and non-repudiation.\n\nThis impairs investigations, enables alert evasion, and obscures unauthorized changes across regions or accounts.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-intro.html",
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-enabling.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudTrail/cloudtrail-log-file-integrity-validation.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudTrail/cloudtrail-log-file-integrity-validation.html",
     "https://deepwiki.com/acantril/learn-cantrill-io-labs/7.1-cloudtrail-log-file-integrity"
   ],
   "Remediation": {

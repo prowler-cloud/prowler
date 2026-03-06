@@ -8,11 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Bucket",
-  "Description": "**Object Storage buckets** use **customer-managed encryption keys** (`CMEK`) for server-side encryption, with an associated KMS key configured on the bucket.",
+  "ResourceGroup": "storage",
+  "Description": "**OCI Object Storage buckets** use **customer-managed encryption keys** (`CMEK`) for server-side encryption, with an associated KMS key configured on the bucket.",
   "Risk": "Without `CMEK`, encryption relies on provider-managed keys, reducing control over **confidentiality** and key lifecycle. You cannot strictly limit key usage, enforce custom rotation, or revoke keys for crypto-erasure, increasing exposure to unauthorized decryption, data exfiltration, and auditability gaps.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-ObjectStorage/buckets-encrypted-with-cmks.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/oci/OCI-ObjectStorage/buckets-encrypted-with-cmks.html",
     "https://docs.oracle.com/en-us/iaas/Content/Object/home.htm"
   ],
   "Remediation": {

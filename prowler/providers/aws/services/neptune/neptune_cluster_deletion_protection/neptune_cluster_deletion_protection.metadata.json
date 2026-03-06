@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "database",
   "Description": "Neptune DB cluster has **deletion protection** enabled.",
   "Risk": "Absence of **deletion protection** weakens **availability** and **integrity**: clusters can be removed by accidental admin actions, rogue automation, or compromised credentials.\n\nCluster deletion causes immediate service outage, potential permanent data loss, and extended recovery time if backups or restores are insufficient.",
   "RelatedUrl": "",

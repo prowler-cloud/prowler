@@ -8,12 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Bucket",
+  "ResourceGroup": "storage",
   "Description": "**OCI Object Storage buckets** are assessed for **versioning** being set to `Enabled`, indicating prior object versions are retained when updates or deletions occur.",
   "Risk": "**No versioning** lets overwrites or deletions permanently remove data, harming **availability** and **integrity**. Malicious or accidental actions, automated jobs, or malware can wipe or corrupt objects without rollback, enabling **ransomware-style** encryption and large-scale data loss.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.oracle.com/en-us/iaas/Content/Object/home.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-ObjectStorage/enable-versioning.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/oci/OCI-ObjectStorage/enable-versioning.html"
   ],
   "Remediation": {
     "Code": {

@@ -1,6 +1,7 @@
 name: 'Tools: Backport'
 
 on:
+  # zizmor: ignore[dangerous-triggers] - intentional: needs write access for backport PRs, no PR code checkout
   pull_request_target:
     branches:
       - 'master'

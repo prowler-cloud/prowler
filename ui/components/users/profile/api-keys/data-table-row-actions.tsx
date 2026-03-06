@@ -1,21 +1,15 @@
 "use client";
 
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownSection,
-  DropdownTrigger,
-} from "@heroui/dropdown";
-import {
-  DeleteDocumentBulkIcon,
-  EditDocumentBulkIcon,
-} from "@heroui/shared-icons";
 import { Row } from "@tanstack/react-table";
-import clsx from "clsx";
+import { Pencil, Trash2 } from "lucide-react";
 
 import { VerticalDotsIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
+import {
+  ActionDropdown,
+  ActionDropdownDangerZone,
+  ActionDropdownItem,
+} from "@/components/shadcn/dropdown";
 
 import { EnrichedApiKey } from "./types";
 
@@ -24,8 +18,6 @@ interface DataTableRowActionsProps {
   onEdit: (apiKey: EnrichedApiKey) => void;
   onRevoke: (apiKey: EnrichedApiKey) => void;
 }
-
-const iconClasses = "text-2xl text-default-500 pointer-events-none shrink-0";
 
 export function DataTableRowActions({
   row,
@@ -39,53 +31,29 @@ export function DataTableRowActions({
 
   return (
     <div className="relative flex items-center justify-end gap-2">
-      <Dropdown
-        className="border-border-neutral-secondary bg-bg-neutral-secondary border shadow-xl"
-        placement="bottom"
-      >
-        <DropdownTrigger>
+      <ActionDropdown
+        trigger={
           <Button variant="ghost" size="icon-sm" className="rounded-full">
             <VerticalDotsIcon className="text-slate-400" />
           </Button>
-        </DropdownTrigger>
-        <DropdownMenu
-          closeOnSelect
-          aria-label="API Key actions"
-          color="default"
-          variant="flat"
-        >
-          <DropdownSection title="Actions">
-            <DropdownItem
-              key="edit"
-              description="Edit the API key name"
-              textValue="Edit name"
-              startContent={<EditDocumentBulkIcon className={iconClasses} />}
-              onPress={() => onEdit(apiKey)}
-            >
-              Edit name
-            </DropdownItem>
-          </DropdownSection>
-          {canRevoke ? (
-            <DropdownSection title="Danger zone">
-              <DropdownItem
-                key="revoke"
-                className="text-text-error"
-                color="danger"
-                description="Revoke this API key permanently"
-                textValue="Revoke"
-                startContent={
-                  <DeleteDocumentBulkIcon
-                    className={clsx(iconClasses, "!text-text-error")}
-                  />
-                }
-                onPress={() => onRevoke(apiKey)}
-              >
-                Revoke
-              </DropdownItem>
-            </DropdownSection>
-          ) : null}
-        </DropdownMenu>
-      </Dropdown>
+        }
+      >
+        <ActionDropdownItem
+          icon={<Pencil />}
+          label="Edit API Key"
+          onSelect={() => onEdit(apiKey)}
+        />
+        {canRevoke && (
+          <ActionDropdownDangerZone>
+            <ActionDropdownItem
+              icon={<Trash2 />}
+              label="Revoke API Key"
+              destructive
+              onSelect={() => onRevoke(apiKey)}
+            />
+          </ActionDropdownDangerZone>
+        )}
+      </ActionDropdown>
     </div>
   );
 }

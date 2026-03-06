@@ -8,12 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Bucket",
-  "Description": "**Object Storage buckets** have service logs for **write access events** enabled.\n\nThe evaluation identifies buckets with an active `write` logging category scoped to the bucket and region; only `read` logging does not satisfy this condition.",
+  "ResourceGroup": "storage",
+  "Description": "**OCI Object Storage buckets** have service logs for **write access events** enabled.\n\nThe evaluation identifies buckets with an active `write` logging category scoped to the bucket and region; only `read` logging does not satisfy this condition.",
   "Risk": "Without **write logging**, unauthorized or accidental overwrites and deletions can go **undetected**, degrading **data integrity** and **availability**.\n\nMissing audit evidence weakens **non-repudiation**, impedes incident response, and allows covert tampering without reliable forensic reconstruction.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-ObjectStorage/enable-write-level-logging.html",
-    "https://docs.prowler.com/checks/oci/oci-logging/objectstorage_bucket_logging_enabled",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/oci/OCI-ObjectStorage/enable-write-level-logging.html",
     "https://docs.oracle.com/en-us/iaas/Content/Logging/Concepts/loggingoverview.htm"
   ],
   "Remediation": {
