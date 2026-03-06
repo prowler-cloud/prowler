@@ -8,7 +8,8 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "DynamicResourceGroup",
-  "Description": "OCI dynamic groups configured for **instance principal** access to workloads like **Compute instances**, **Functions**, and **Autonomous Databases**. The evaluation looks for matching rules that target these resources (e.g., `instance`, `fnfunc`, `autonomousdatabase`) to confirm workload identity usage.",
+  "ResourceGroup": "IAM",
+  "Description": "**OCI dynamic groups** configured for **instance principal** access to workloads like **Compute instances**, **Functions**, and **Autonomous Databases**. The evaluation looks for matching rules that target these resources (e.g., `instance`, `fnfunc`, `autonomousdatabase`) to confirm workload identity usage.",
   "Risk": "Using user credentials or long-lived keys instead of **instance principals** exposes secrets and weakens **least privilege** and **accountability**. Stolen keys from code or pipelines enable unauthorized API calls, data exfiltration, and privilege abuse, impacting **confidentiality** and **integrity** of OCI resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [

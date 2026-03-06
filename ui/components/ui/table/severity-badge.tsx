@@ -1,53 +1,46 @@
-import { Chip } from "@heroui/chip";
-import clsx from "clsx";
-import React from "react";
+import { cn } from "@/lib/utils";
 
-import { AlertIcon } from "@/components/icons";
-
-type Severity = "informational" | "low" | "medium" | "high" | "critical";
-
-const severityIconMap = {
-  critical: <AlertIcon size={14} className="mr-1" />,
+export const SeverityValues = {
+  INFORMATIONAL: "informational",
+  LOW: "low",
+  MEDIUM: "medium",
+  HIGH: "high",
+  CRITICAL: "critical",
 } as const;
 
-const getSeverityColor = (
-  severity: Severity,
-): "danger" | "warning" | "default" => {
-  switch (severity) {
-    case "critical":
-      return "danger";
-    case "high":
-      return "danger";
-    case "medium":
-      return "warning";
-    case "low":
-      return "default";
-    default:
-      return "default"; // this is a fallback, though unnecessary due to typing
-  }
-};
+export type Severity = (typeof SeverityValues)[keyof typeof SeverityValues];
 
-const getSeverityIcon = (severity: Severity): React.ReactNode | null => {
-  return severity === "critical" ? severityIconMap.critical : null;
-};
+const SEVERITY_CHIP_COLORS = {
+  critical: "bg-bg-data-critical",
+  high: "bg-bg-data-high",
+  medium: "bg-bg-data-medium",
+  low: "bg-bg-data-low",
+  informational: "bg-bg-data-info",
+} as const;
 
-export const SeverityBadge = ({ severity }: { severity: Severity }) => {
-  const color = getSeverityColor(severity);
+const SEVERITY_DISPLAY_NAMES = {
+  critical: "Critical",
+  high: "High",
+  medium: "Medium",
+  low: "Low",
+  informational: "Info",
+} as const;
+
+interface SeverityBadgeProps {
+  severity: Severity;
+}
+
+export const SeverityBadge = ({ severity }: SeverityBadgeProps) => {
+  const chipColor =
+    SEVERITY_CHIP_COLORS[severity] || SEVERITY_CHIP_COLORS.informational;
+  const displayName = SEVERITY_DISPLAY_NAMES[severity] || severity;
 
   return (
-    <Chip
-      className={clsx("text-default-600 gap-1 border-none capitalize", {
-        "bg-system-severity-critical text-white dark:text-white":
-          severity === "critical",
-      })}
-      size="sm"
-      variant="flat"
-      color={color}
-      endContent={getSeverityIcon(severity)}
-    >
-      <span className="text-text-neutral-primary text-xs font-light tracking-wide">
-        {severity}
+    <div className="flex items-center gap-1">
+      <div className={cn("size-3 rounded", chipColor)} />
+      <span className="text-text-neutral-primary text-sm capitalize">
+        {displayName}
       </span>
-    </Chip>
+    </div>
   );
 };

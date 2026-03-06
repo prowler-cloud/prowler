@@ -8,18 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Policy",
+  "ResourceGroup": "IAM",
   "Description": "**OCI IAM policies** are reviewed for **overly broad entitlements**, specifically statements granting `manage all-resources` without scoping to particular services or compartments. Only **active policies** are considered; the default tenant admin policy is excluded.",
   "Risk": "Broad `manage all-resources` grants erode **least privilege**, enabling access across the tenancy. A compromised user or misused token could cause **privilege escalation**, **data exfiltration**, destructive changes, and service disruption, impacting confidentiality, integrity, and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.linkedin.com/pulse/identity-access-management-oracle-cloud-control-authentication-mklqc",
-    "https://docs.oracle.com/en-us/iaas/Content/Identity/getstarted/identity-domains.htm",
-    "https://docs.prowler.com/checks/oci/oci-iam-policies/identity_service_level_admins_exist",
-    "https://dbarepository.wordpress.com/2025/03/14/identity-and-access-management-policies-in-oci/",
-    "https://monowar-mukul.medium.com/cloud-identity-and-access-management-iam-for-the-beginner-392ba6de238",
-    "https://diversedaily.com/iam-policy-optimization-fine-tuned-iam-policies-prevent-costly-accidental-resource-usage/",
     "https://docs.oracle.com/en-us/iaas/Content/Identity/Concepts/policygetstarted.htm",
-    "https://www.ateam-oracle.com/post/oracle-cloud-infrastructure-compartments"
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/getstarted/identity-domains.htm"
   ],
   "Remediation": {
     "Code": {

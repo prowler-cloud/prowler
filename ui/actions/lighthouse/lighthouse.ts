@@ -518,8 +518,8 @@ export const deleteLighthouseProviderByType = async (
 };
 
 /**
- * Get lighthouse providers configuration with default models
- * Returns only the default model for each provider to avoid loading hundreds of models
+ * Get lighthouse providers configuration with all available models
+ * Fetches all models for each provider to populate the model selector
  */
 export const getLighthouseProvidersConfig = async () => {
   try {
@@ -544,47 +544,19 @@ export const getLighthouseProvidersConfig = async () => {
         (p: LighthouseProviderResource) => p.attributes?.is_active,
       ) || [];
 
-    // Build provider configuration with only default models
     const providersConfig = await Promise.all(
       activeProviders.map(async (provider: LighthouseProviderResource) => {
         const providerType = provider.attributes
           .provider_type as LighthouseProvider;
-        const defaultModelId = defaultModels[providerType];
 
-        // Fetch only the default model for this provider if it exists
-        let defaultModel = null;
-        if (defaultModelId) {
-          const headers = await getAuthHeaders({ contentType: false });
-          const url = new URL(`${apiBaseUrl}/lighthouse/models`);
-          url.searchParams.append("filter[provider_type]", providerType);
-          url.searchParams.append("filter[model_id]", defaultModelId);
-
-          try {
-            const response = await fetch(url.toString(), {
-              method: "GET",
-              headers,
-            });
-            const data = await response.json();
-            if (data.data && data.data.length > 0) {
-              defaultModel = {
-                id: data.data[0].attributes.model_id,
-                name:
-                  data.data[0].attributes.model_name ||
-                  data.data[0].attributes.model_id,
-              };
-            }
-          } catch (error) {
-            console.error(
-              `[Server] Error fetching default model for ${providerType}:`,
-              error,
-            );
-          }
-        }
+        // Fetch all models for this provider
+        const modelsResponse = await getLighthouseModelIds(providerType);
+        const models: ModelOption[] = modelsResponse.data || [];
 
         return {
           id: providerType,
           name: PROVIDER_DISPLAY_NAMES[providerType],
-          models: defaultModel ? [defaultModel] : [],
+          models: models,
         };
       }),
     );

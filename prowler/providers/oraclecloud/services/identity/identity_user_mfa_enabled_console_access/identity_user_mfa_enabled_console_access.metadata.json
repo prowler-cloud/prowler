@@ -8,16 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "User",
+  "ResourceGroup": "IAM",
   "Description": "**OCI IAM users** with **console password access** are expected to have **multifactor authentication** enabled. The evaluation inspects each local user allowed to sign in to the Console and identifies those without an active second factor.",
   "Risk": "Console-password accounts without **MFA** are exposed to **phishing**, **credential stuffing**, and **brute force**.\n\nA stolen password can grant Console access, enabling privilege escalation, key creation, and data access-compromising **confidentiality**, **integrity**, and **availability** across OCI.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.oracle.com/en-us/iaas/Content/Security/Reference/iam_security_topic-IAM_MFA.htm",
-    "https://docs.oracle.com/en-us/iaas/Content/Security/Reference/iam_security_topic-iam_mfa_identity_domains_signon_policy.htm",
     "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/usingmfa.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/enable-mfa-for-user-accounts.html",
-    "https://dzone.com/articles/strengthening-iam-security-for-cloud-iaas-accounts",
-    "https://docs.oracle.com/en-us/iaas/tools/oci-cli/3.63.3/oci_cli_docs/cmdref/iam/mfa-totp-device.html"
+    "https://docs.oracle.com/en-us/iaas/Content/Security/Reference/iam_security_topic-IAM_MFA.htm"
   ],
   "Remediation": {
     "Code": {

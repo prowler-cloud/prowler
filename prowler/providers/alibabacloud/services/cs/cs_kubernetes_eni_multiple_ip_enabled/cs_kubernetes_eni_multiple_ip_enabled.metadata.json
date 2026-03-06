@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "cs_kubernetes_eni_multiple_ip_enabled",
+  "CheckTitle": "ENI multiple IP mode support for Kubernetes Cluster",
+  "CheckType": [
+    "Threat detection during container runtime",
+    "Suspicious network connection"
+  ],
+  "ServiceName": "cs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceGroup": "container",
+  "Description": "Alibaba Cloud **ENI (Elastic Network Interface)** supports assigning ranges of internal IP addresses as aliases to a single virtual machine's ENI network interfaces.\n\nWith **ENI multiple IP mode**, Kubernetes Engine clusters can allocate IP addresses from a CIDR block known to **Terway** network plugin. This makes your cluster more scalable and allows better interaction with other Alibaba Cloud products.",
+  "Risk": "Without **ENI multiple IP mode** (provided by Terway), pods share the node's network interface in a less scalable way.\n\nUsing ENI multiple IPs allows pod IPs to be reserved within the network ahead of time, preventing conflict with other compute resources, and allows firewall controls for Pods to be applied separately from their nodes.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/en/ack/ack-managed-and-ack-dedicated/user-guide/associate-multiple-security-groups-with-an-eni",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/enable-multi-ip-mode.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Terway network plugin must be selected during cluster creation to support ENI multiple IP mode.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "When creating a new cluster, select **Terway** in the `Network Plugin` option to enable ENI multiple IP mode support.\n\n**Note:** Existing clusters using Flannel cannot be migrated to Terway.",
+      "Url": "https://hub.prowler.com/check/cs_kubernetes_eni_multiple_ip_enabled"
+    }
+  },
+  "Categories": [
+    "cluster-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

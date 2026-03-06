@@ -8,12 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Compartment",
+  "ResourceGroup": "governance",
   "Description": "**OCI root compartment** is evaluated for the presence of **user resources**. The finding highlights any assets created at the tenancy root and provides a count per `resource_type`.",
   "Risk": "**Resources in the root compartment** inherit broad tenancy-level policies, weakening **least privilege**. Compromise or error can enable wide **unauthorized access**, **lateral movement**, and destructive changes, degrading **confidentiality** and **integrity**, while complicating audits and quota governance.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcompartments.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/check-for-root-compartment-resources.html"
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcompartments.htm"
   ],
   "Remediation": {
     "Code": {

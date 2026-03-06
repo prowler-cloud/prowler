@@ -8,12 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "User",
-  "Description": "OCI IAM users with **active API signing keys** older than `90` days are identified. Key age is derived from each key's creation time; only active keys are considered. Users without API keys are recorded.",
+  "ResourceGroup": "IAM",
+  "Description": "**OCI IAM users** with **active API signing keys** older than `90` days are identified. Key age is derived from each key's creation time; only active keys are considered. Users without API keys are recorded.",
   "Risk": "Long-lived API keys widen exposure. If a key leaks, an attacker can sign OCI API calls without MFA, enabling unauthorized changes (**integrity**), data access (**confidentiality**), and service outages (**availability**). Delayed rotation prolongs dwell time and complicates incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcredentials.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/rotate-user-api-keys.html"
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcredentials.htm"
   ],
   "Remediation": {
     "Code": {

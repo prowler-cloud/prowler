@@ -8,16 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Policy",
+  "ResourceGroup": "IAM",
   "Description": "**OCI IAM policies** are analyzed for statements granting `manage all-resources in tenancy` to groups. Only the `Tenant Admin Policy` for the Administrators group should include this broad verb. Any other active policy containing this tenancy-wide permission is identified.",
   "Risk": "Tenancy-wide `manage` rights for non-admins allow complete control of identities and resources. A compromised account can escalate privileges, exfiltrate data across compartments, alter or delete workloads and backups, and disable monitoring-impacting **confidentiality**, **integrity**, and **availability** of the entire tenancy.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://speakerdeck.com/ocise/ociji-shu-zi-liao-idoyobiakusesuguan-li-iam-gai-yao",
-    "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm",
-    "https://blog.rishoradev.com/2025/05/12/enabling-oracle-generative-ai-rag-agent-for-oci-regions/",
-    "https://speakerdeck.com/ocise/oci-design-guide-for-csps",
-    "https://www.thatfinnishguy.blog/2018/04/27/deep-dive-into-oci-with-compartments-users-groups-and-policies/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/tenancy-administrator-group-access.html"
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm"
   ],
   "Remediation": {
     "Code": {

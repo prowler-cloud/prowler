@@ -8,16 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Compartment",
+  "ResourceGroup": "governance",
   "Description": "**OCI tenancy** includes at least one **active non-root compartment**. Only compartments below the `root` level are considered, indicating that resources are organized outside the root scope.",
   "Risk": "Using only the `root` compartment removes segmentation and forces broad tenancy-wide access. This endangers **confidentiality** and **integrity** through cross-project visibility, mis-scoped policies, and accidental changes with global impact, and can affect **availability** via bulk deletions or misconfigurations.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/create-non-root-compartment.html",
-    "https://oci-ansible-modules.readthedocs.io/en/latest/modules/oci_compartment_module.html",
-    "https://dasini.net/blog/2021/08/10/discovering-mysql-database-service-episode-2-create-a-compartment/",
-    "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcompartments.htm",
-    "https://climbtheladder.com/10-oci-compartment-best-practices/",
-    "https://www.ateam-oracle.com/post/oracle-cloud-infrastructure-compartments"
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcompartments.htm"
   ],
   "Remediation": {
     "Code": {

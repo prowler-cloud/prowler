@@ -8,7 +8,8 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "User",
-  "Description": "OCI tenancy administrator accounts (members of the `Administrators` group) are inspected for configured user **API keys** tied to those identities.",
+  "ResourceGroup": "IAM",
+  "Description": "**OCI tenancy administrator accounts** (members of the `Administrators` group) are inspected for configured user **API keys** tied to those identities.",
   "Risk": "**Admin API keys** are long-lived secrets that can be stolen from endpoints or repos, enabling non-interactive, MFA-less access. Attackers could run privileged API calls, exfiltrate data, modify policies, or delete resources, impacting **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [

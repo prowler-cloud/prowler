@@ -8,12 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "User",
-  "Description": "**Oracle Cloud Infrastructure (OCI) IAM user auth tokens** are evaluated for **rotation age** against a `90-day` threshold using each token's creation time. Tokens older than this window indicate the token has not been recently rotated.",
+  "ResourceGroup": "IAM",
+  "Description": "**OCI IAM user auth tokens** are evaluated for **rotation age** against a `90-day` threshold using each token's creation time. Tokens older than this window indicate the token has not been recently rotated.",
   "Risk": "Stale **auth tokens** increase exposure of **confidential data** and enable **persistent unauthorized API access** if compromised. Long-lived tokens can outlast password resets and role changes, weakening **least privilege** and enabling **lateral movement** and data exfiltration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/rotate-user-auth-tokens.html"
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm"
   ],
   "Remediation": {
     "Code": {

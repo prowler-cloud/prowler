@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsDynamoDbTable",
+  "ResourceGroup": "database",
   "Description": "**DynamoDB tables** use **automatic capacity scaling** via `on-demand` mode or `PROVISIONED` mode with **auto scaling** enabled for both `read` and `write` capacity units.\n\nProvisioned tables are evaluated for scaling on both dimensions.",
   "Risk": "**Insufficient capacity scaling** causes throttling that degrades **availability** and increases latency.\n\nSustained throttling can trigger retry storms, timeouts, and backlogs, risking missed writes or out-of-order processing that impacts **data integrity** and drives **operational costs**.",
   "RelatedUrl": "",

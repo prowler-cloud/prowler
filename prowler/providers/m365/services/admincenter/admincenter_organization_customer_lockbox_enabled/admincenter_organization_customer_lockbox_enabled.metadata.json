@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Exchange Organization Configuration",
+  "ResourceGroup": "collaboration",
   "Description": "Customer Lockbox ensures that Microsoft support engineers cannot access content in your tenant to perform a service operation without explicit approval. This feature provides an additional layer of control and transparency over data access requests.",
   "Risk": "If Customer Lockbox is not enabled, Microsoft support personnel can access your organization's data for troubleshooting without explicit approval, potentially increasing the risk of unauthorized access or data exfiltration.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/security/fundamentals/customer-lockbox-overview",

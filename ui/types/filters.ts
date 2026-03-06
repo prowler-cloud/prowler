@@ -11,6 +11,7 @@ export interface FilterOption {
   labelCheckboxGroup: string;
   values: string[];
   valueLabelMapping?: Array<{ [uid: string]: FilterEntity }>;
+  labelFormatter?: (value: string) => string;
   index?: number;
   showSelectAll?: boolean;
   defaultToSelectAll?: boolean;
@@ -33,4 +34,6 @@ export enum FilterType {
   SEVERITY = "severity__in",
   STATUS = "status__in",
   DELTA = "delta__in",
+  CATEGORY = "category__in",
+  RESOURCE_GROUPS = "resource_groups__in",
 }

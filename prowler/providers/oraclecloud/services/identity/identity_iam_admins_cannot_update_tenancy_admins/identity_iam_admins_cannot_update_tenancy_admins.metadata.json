@@ -8,12 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Policy",
+  "ResourceGroup": "IAM",
   "Description": "**OCI IAM policies** granting **manage/use** on **groups or users** in the tenancy are evaluated for a condition that excludes the **Administrators** group, such as `target.group.name != 'Administrators'`.\n\nPolicies missing this restriction are identified.",
   "Risk": "Ability to modify the **Administrators** group enables **privilege escalation** to full tenancy control. This threatens confidentiality (broad data access), integrity (policy/user changes), and availability (resource deletion). Attackers could add persistence accounts, disable safeguards, and evade oversight.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/protect-administrators-group-with-access-policies.html"
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm"
   ],
   "Remediation": {
     "Code": {

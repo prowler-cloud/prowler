@@ -1,5 +1,5 @@
 ---
-title: 'Dashboard'
+title: "Dashboard"
 ---
 
 Prowler allows you to run your own local dashboards using the csv outputs provided by Prowler
@@ -34,26 +34,30 @@ The overview page provides a full impression of your findings obtained from Prow
 
 This page allows for multiple functions:
 
-* Apply filters:
+- Apply filters:
 
-    * Assesment Date
-    * Account
-    * Region
-    * Severity
-    * Service
-    * Status
+  - Assesment Date
+  - Account
+  - Region
+  - Severity
+  - Service
+  - Provider
+  - Status
+  - Category
 
-* See which files has been scanned to generate the dashboard by placing your mouse on the `?` icon:
+- See which files has been scanned to generate the dashboard by placing your mouse on the `?` icon:
 
-    <img src="/images/cli/dashboard/dashboard-files-scanned.png" />
+  {" "}
+  <img src="/images/cli/dashboard/dashboard-files-scanned.png" />
 
-* Download the `Top Findings by Severity` table using the button `DOWNLOAD THIS TABLE AS CSV` or `DOWNLOAD THIS TABLE AS XLSX`
+- Download the `Top Findings by Severity` table using the button `DOWNLOAD THIS TABLE AS CSV` or `DOWNLOAD THIS TABLE AS XLSX`
 
-* Click the provider cards to filter by provider.
+- Click the provider cards to filter by provider.
 
-* On the dropdowns under `Top Findings by Severity` you can apply multiple sorts to see the information, also you will get a detailed view of each finding using the dropdowns:
+- On the dropdowns under `Top Findings by Severity` you can apply multiple sorts to see the information, also you will get a detailed view of each finding using the dropdowns:
 
-    <img src="/images/cli/dashboard/dropdown.png" />
+  {" "}
+  <img src="/images/cli/dashboard/dropdown.png" />
 
 ## Compliance Page
 
@@ -110,17 +114,16 @@ To change the path, modify the values `folder_path_overview` or `folder_path_com
 <Note>
 If you have any issue related with dashboards, check that the output path where the dashboard is getting the outputs is correct.
 
-
 </Note>
 ## Output Support
 
 Prowler dashboard supports the detailed outputs:
 
-| Provider| V3| V4| COMPLIANCE-V3| COMPLIANCE-V4
-|----------|----------|----------|----------|----------
-| AWS| ✅| ✅| ✅| ✅
-| Azure| ❌| ✅| ❌| ✅
-| Kubernetes| ❌| ✅| ❌| ✅
-| GCP| ❌| ✅| ❌| ✅
-| M365| ❌| ✅| ❌| ✅
-| GitHub| ❌| ✅| ❌| ✅
+| Provider   | V3  | V4  | COMPLIANCE-V3 | COMPLIANCE-V4 |
+| ---------- | --- | --- | ------------- | ------------- |
+| AWS        | ✅  | ✅  | ✅            | ✅            |
+| Azure      | ❌  | ✅  | ❌            | ✅            |
+| Kubernetes | ❌  | ✅  | ❌            | ✅            |
+| GCP        | ❌  | ✅  | ❌            | ✅            |
+| M365       | ❌  | ✅  | ❌            | ✅            |
+| GitHub     | ❌  | ✅  | ❌            | ✅            |

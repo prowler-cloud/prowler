@@ -1,6 +1,8 @@
 "use client";
 
+import { SelectViaAlibabaCloud } from "@/components/providers/workflow/forms/select-credentials-type/alibabacloud";
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
+import { SelectViaCloudflare } from "@/components/providers/workflow/forms/select-credentials-type/cloudflare";
 import { SelectViaGCP } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
 import { SelectViaGitHub } from "@/components/providers/workflow/forms/select-credentials-type/github";
 import { SelectViaM365 } from "@/components/providers/workflow/forms/select-credentials-type/m365";
@@ -27,6 +29,12 @@ export const CredentialsUpdateInfo = ({
     }
     if (providerType === "m365") {
       return <SelectViaM365 initialVia={initialVia} />;
+    }
+    if (providerType === "cloudflare") {
+      return <SelectViaCloudflare initialVia={initialVia} />;
+    }
+    if (providerType === "alibabacloud") {
+      return <SelectViaAlibabaCloud initialVia={initialVia} />;
     }
     return null;
   };

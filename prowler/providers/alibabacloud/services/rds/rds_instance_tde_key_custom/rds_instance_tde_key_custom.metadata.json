@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "rds_instance_tde_key_custom",
+  "CheckTitle": "RDS instance TDE protector is encrypted with BYOK (Use your own key)",
+  "CheckType": [
+    "Sensitive file tampering",
+    "Intrusion into applications"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
+  "Description": "**TDE with BYOK** support provides increased transparency and control, increased security with an HSM-backed KMS service, and promotion of separation of duties.\n\nBased on business needs or criticality of data, it is recommended that the TDE protector is encrypted by a key that is managed by the data owner (**BYOK**).",
+  "Risk": "Using **service-managed keys** means the cloud provider manages the encryption keys. **BYOK (Bring Your Own Key)** gives you full control over the key lifecycle and permissions.\n\nThis ensures that even the cloud provider cannot access your data without your explicit permission.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/96121.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-tde-with-cmk.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun rds ModifyDBInstanceTDE --DBInstanceId <instance_id> --TDEStatus Enabled --EncryptionKey <kms_key_id>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"alicloud_db_instance\" \"example\" {\n  engine           = \"MySQL\"\n  engine_version   = \"8.0\"\n  instance_type    = \"rds.mysql.s1.small\"\n  instance_storage = 20\n  tde_status       = \"Enabled\"\n  encryption_key   = alicloud_kms_key.example.id\n}"
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **RDS Console**\n2. Go to **Data Security** > **TDE** tab\n3. Click the switch next to **Disabled**\n4. In the displayed dialog box, choose **custom key**\n5. Click **Confirm**",
+      "Url": "https://hub.prowler.com/check/rds_instance_tde_key_custom"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
