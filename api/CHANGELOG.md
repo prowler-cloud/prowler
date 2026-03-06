@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.20.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Attack Paths: Add missing logging for query execution and exception details in scan error handling [(#10269)](https://github.com/prowler-cloud/prowler/pull/10269)
+
 ## [1.20.0] (Prowler v5.19.0)
 
 ### 🚀 Added
