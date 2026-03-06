@@ -8,6 +8,14 @@ export const DOCS_URLS = {
     "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
 } as const;
 
+// CloudFormation template URL for the ProwlerScan role
+export const PROWLER_CF_TEMPLATE_URL =
+  "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml";
+
+// AWS Console URL for creating a new StackSet
+export const STACKSET_CONSOLE_URL =
+  "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacksets/create";
+
 export const getProviderHelpText = (provider: string) => {
   switch (provider) {
     case "aws":
@@ -86,6 +94,7 @@ export const getAWSCredentialsTemplateLinks = (
   cloudformation: string;
   terraform: string;
   cloudformationQuickLink: string;
+  cloudformationOrgQuickLink: string;
 } => {
   let links = {};
 
@@ -113,5 +122,6 @@ export const getAWSCredentialsTemplateLinks = (
       terraform: string;
     }),
     cloudformationQuickLink: `https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=Prowler&param_ExternalId=${externalId}${bucketName ? `&param_EnableS3Integration=true&param_S3IntegrationBucketName=${bucketName}` : ""}`,
+    cloudformationOrgQuickLink: `https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=Prowler&param_ExternalId=${externalId}&param_EnableOrganizations=true${bucketName ? `&param_EnableS3Integration=true&param_S3IntegrationBucketName=${bucketName}` : ""}`,
   };
 };
