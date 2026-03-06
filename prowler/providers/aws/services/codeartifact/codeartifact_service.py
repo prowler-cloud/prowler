@@ -96,6 +96,7 @@ class CodeArtifact(AWSService):
                                         namespace=package_namespace,
                                         package=package_name,
                                         sortBy="PUBLISHED_TIME",
+                                        maxResults=1,
                                     )
                                 )
                             else:
@@ -111,6 +112,7 @@ class CodeArtifact(AWSService):
                                         format=package_format,
                                         package=package_name,
                                         sortBy="PUBLISHED_TIME",
+                                        maxResults=1,
                                     )
                                 )
                             latest_version = ""
