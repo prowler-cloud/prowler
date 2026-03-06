@@ -35,7 +35,7 @@ def _aggregate_requirement_statistics_from_database(
         }
     """
     requirement_statistics_by_check_id = {}
-
+    # TODO: take into account that now the relation is 1 finding == 1 resource, review this when the logic changes
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         aggregated_statistics_queryset = (
             Finding.all_objects.filter(
