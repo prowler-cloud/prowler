@@ -2,14 +2,6 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-<<<<<<< HEAD
-=======
-## [1.20.0] (Prowler v5.20.0 UNRELEASED)
-
-### 🐞 Changed
-
-- Attack Paths: Improved error handling for server errors (5xx) and network failures with user-friendly messages instead of raw internal errors and layout changes. [(#10249)](https://github.com/prowler-cloud/prowler/pull/10249)
-- Refactor simple providers with new components and styles.[(#10259)](https://github.com/prowler-cloud/prowler/pull/10259)
 
 ## [1.19.1] (Prowler v5.19.1 UNRELEASED)
 
@@ -23,7 +15,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
->>>>>>> 2e60bb82d (fix(ui): skip launch step when updating provider credentials (#10278))
 ## [1.19.0] (Prowler v5.19.0)
 
 ### 🚀 Added
