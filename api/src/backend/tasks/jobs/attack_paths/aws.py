@@ -241,6 +241,7 @@ def sync_aws_account(
                 logger.warning(
                     f"Caught exception syncing function {func_name} from AWS account {prowler_api_provider.uid}: {e}. "
                     "Continuing to the next AWS sync function.",
+                    exc_info=True,
                 )
 
                 continue
