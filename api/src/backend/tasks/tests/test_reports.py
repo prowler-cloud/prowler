@@ -199,6 +199,46 @@ class TestAggregateRequirementStatistics:
         assert result["check_1"]["passed"] == 1
         assert result["check_1"]["total"] == 1
 
+    def test_multiple_resources_no_double_count(self, tenants_fixture, scans_fixture):
+        """Verify a finding with multiple resources is only counted once."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            scan=scan,
+            uid="finding-1",
+            check_id="check_1",
+            status=StatusChoices.PASS,
+            severity=Severity.high,
+            impact=Severity.high,
+            check_metadata={},
+            raw_result={},
+        )
+        # Link two resources to the same finding
+        for i in range(2):
+            resource = Resource.objects.create(
+                tenant_id=tenant.id,
+                provider=scan.provider,
+                uid=f"resource-{i}",
+                name=f"resource-{i}",
+                region="us-east-1",
+                service="test",
+                type="test::resource",
+            )
+            ResourceFindingMapping.objects.create(
+                tenant_id=tenant.id,
+                finding=finding,
+                resource=resource,
+            )
+
+        result = _aggregate_requirement_statistics_from_database(
+            str(tenant.id), str(scan.id)
+        )
+
+        assert result["check_1"]["passed"] == 1
+        assert result["check_1"]["total"] == 1
+
 
 class TestColorHelperFunctions:
     """Test suite for color helper functions."""
