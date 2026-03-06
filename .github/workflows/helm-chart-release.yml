@@ -1,0 +1,49 @@
+name: 'Helm: Chart Release'
+
+on:
+  release:
+    types:
+      - 'published'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CHART_PATH: contrib/k8s/helm/prowler-app
+
+jobs:
+  release-helm-chart:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Set up Helm
+        uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4.3.0
+
+      - name: Set appVersion from release tag
+        run: |
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          echo "Setting appVersion to ${RELEASE_TAG}"
+          sed -i "s/^appVersion:.*/appVersion: \"${RELEASE_TAG}\"/" ${{ env.CHART_PATH }}/Chart.yaml
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Update chart dependencies
+        run: helm dependency update ${{ env.CHART_PATH }}
+
+      - name: Package Helm chart
+        run: helm package ${{ env.CHART_PATH }} --destination .helm-packages
+
+      - name: Push chart to GHCR
+        run: |
+          PACKAGE=$(ls .helm-packages/*.tgz)
+          helm push "$PACKAGE" oci://ghcr.io/${{ github.repository_owner }}/charts
