@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Teams Global Messaging Policy",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure Teams user reporting settings allow a user to report a message as malicious for further analysis",
   "Risk": "Without proper security reporting enabled, users cannot effectively report suspicious or malicious messages, potentially allowing security threats to go unnoticed.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/submissions-teams?view=o365-worldwide",

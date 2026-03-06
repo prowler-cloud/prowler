@@ -15,6 +15,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEcsTaskDefinition",
+  "ResourceGroup": "container",
   "Description": "**Amazon ECS task definitions** in `host` network mode are assessed for containers where `privileged=false` and the container `user` is `root` or unset.",
   "Risk": "Sharing the host network lets containers reach host interfaces directly. Running as **root** (or with no user set) increases the chance to bind low ports, sniff traffic, or impersonate services, and makes kernel flaws more exploitable-enabling data exfiltration, tampering, and outages, impacting **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",

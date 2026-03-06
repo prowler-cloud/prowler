@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Teams Global Meeting Policy",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure meeting chat does not allow anonymous users.",
   "Risk": "Allowing anonymous users to participate in meeting chat can expose sensitive information and increase the risk of inappropriate content being shared by unverified participants.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps",

@@ -49,7 +49,6 @@ export const DataTableRowDetails = ({ entityId }: { entityId: string }) => {
           });
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
         console.error("Error in fetchScanDetails:", error);
       } finally {
         setIsLoading(false);

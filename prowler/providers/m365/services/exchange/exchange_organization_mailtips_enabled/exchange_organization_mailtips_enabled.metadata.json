@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Exchange Organization Configuration",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure that MailTips are enabled in Exchange Online to provide users with informative messages while composing emails, helping to avoid issues such as sending to large groups or external recipients unintentionally.",
   "Risk": "Without MailTips, users may inadvertently send sensitive information externally or generate non-delivery reports, leading to communication errors and potential data exposure.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/mailtips/mailtips",

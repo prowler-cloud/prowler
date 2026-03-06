@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEcsTaskDefinition",
+  "ResourceGroup": "container",
   "Description": "**Amazon ECS task definitions** are evaluated for containers configured with **privileged mode** (`privileged: true`).\n\nThe outcome indicates whether any container definition enables this setting.",
   "Risk": "**Privileged containers** can act with host-level root, breaking isolation. A foothold lets attackers achieve **container escape**, mount host devices, read secrets, alter configs, and control other workloads-impacting confidentiality, integrity, and availability via data theft, tampering, and service disruption.",
   "RelatedUrl": "",

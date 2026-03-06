@@ -44,11 +44,13 @@ def generate_finding_output(
     check_id: str = "service_test_check_id",
     check_title: str = "service_test_check_id",
     check_type: list[str] = ["test-type"],
+    provider_uid: str = None,
 ) -> Finding:
     return Finding(
         auth_method="profile: default",
         timestamp=timestamp if timestamp else datetime.now(),
         account_uid=account_uid,
+        provider_uid=provider_uid,
         account_name=account_name,
         account_email="",
         account_organization_uid="test-organization-id",

@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_record_dmarc_exists",
+  "CheckTitle": "DMARC record exists with enforcement policy (p=reject or p=quarantine)",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **DMARC (Domain-based Message Authentication, Reporting, and Conformance)** records by checking if a TXT record exists at `_dmarc` subdomain with an **enforcement policy (`p=reject` or `p=quarantine`)** to actively block or quarantine spoofed emails.",
+  "Risk": "Without **DMARC** or with a monitoring-only policy (`p=none`), there is no active protection against email spoofing.\n- **Confidentiality**: attackers can spoof emails for phishing campaigns to steal credentials\n- **Integrity**: no visibility into email authentication failures or abuse attempts\n- **Reputation**: domain reputation damage from spoofed emails sent in your name\n- **Monitoring-only policy**: `p=none` only generates reports but does not block or quarantine spoofed emails, providing no real protection",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/dns/manage-dns-records/how-to/email-records/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to DNS > Records\n3. Click Add record\n4. Select TXT as the record type\n5. Enter _dmarc for the Name field\n6. Enter your DMARC policy with enforcement (e.g., v=DMARC1; p=reject; rua=mailto:dmarc@example.com)\n7. Click Save",
+      "Terraform": "```hcl\n# Create DMARC record with enforcement policy\nresource \"cloudflare_record\" \"dmarc\" {\n  zone_id = \"<ZONE_ID>\"\n  name    = \"_dmarc\"\n  type    = \"TXT\"\n  content = \"v=DMARC1; p=reject; rua=mailto:dmarc@example.com\" # Use p=reject or p=quarantine for enforcement\n  ttl     = 3600\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Implement **DMARC** with an enforcement policy (`p=reject` or `p=quarantine`).\n- `p=reject`: receiving servers should reject emails that fail authentication\n- `p=quarantine`: receiving servers should send suspicious emails to spam folder\n- `p=none`: only monitoring, provides no protection (will fail this check)\n- Ensure SPF and DKIM are properly configured before enabling enforcement\n- Configure `rua` to receive aggregate reports on authentication results\n- Use `pct` parameter to gradually roll out enforcement (e.g., `pct=10` for 10% of emails)",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_record_dmarc_exists"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "DMARC records are TXT records at _dmarc subdomain starting with 'v=DMARC1'. This check verifies both existence and enforcement policy (p=reject or p=quarantine). Monitoring-only policy (p=none) will fail this check."
+}
