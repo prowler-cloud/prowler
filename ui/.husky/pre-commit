@@ -37,8 +37,8 @@ CODE_REVIEW_ENABLED=$(echo "$CODE_REVIEW_ENABLED" | tr '[:upper:]' '[:lower:]')
 echo -e "${BLUE}ℹ️  Code Review Status: ${CODE_REVIEW_ENABLED}${NC}"
 echo ""
 
-# Get staged files (what will be committed)
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(tsx?|jsx?)$' || true)
+# Get staged files in the UI folder only (what will be committed)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM -- 'ui/**' | grep -E '\.(tsx?|jsx?)$' || true)
 
 if [ "$CODE_REVIEW_ENABLED" = "true" ]; then
   if [ -z "$STAGED_FILES" ]; then
@@ -62,7 +62,7 @@ You are a code reviewer for the Prowler UI project. Analyze the full file conten
 **RULES TO CHECK:**
 1. React Imports: NO `import * as React` or `import React, {` → Use `import { useState }`
 2. TypeScript: NO union types like `type X = "a" | "b"` → Use const-based: `const X = {...} as const`
-3. Tailwind: NO `var()` or hex colors in className → Use Tailwind utilities and semantic color classes.
+3. Tailwind: NO `var()` or hex colors in className → Use Tailwind utilities and semantic color classes. Exception: `var()` is allowed when passing colors to chart/graph components that require CSS color strings (not Tailwind classes) for their APIs.
 4. cn(): Use for merging multiple classes or for conditionals (handles Tailwind conflicts with twMerge) → `cn(BUTTON_STYLES.base, BUTTON_STYLES.active, isLoading && "opacity-50")`
 5. React 19: NO `useMemo`/`useCallback` without reason
 6. Zod v4: Use `.min(1)` not `.nonempty()`, `z.email()` not `z.string().email()`. All inputs must be validated with Zod.
@@ -135,12 +135,19 @@ else
   echo ""
 fi
 
-# Run healthcheck (typecheck and lint check)
+# Check if there are any UI files to validate
+if [ -z "$STAGED_FILES" ] && [ "$CODE_REVIEW_ENABLED" = "true" ]; then
+  echo -e "${YELLOW}⏭️  No UI files to validate, skipping healthcheck${NC}"
+  echo ""
+  exit 0
+fi
+
+# Run healthcheck (typecheck and lint check) only if there are UI changes
 echo -e "${BLUE}🏥 Running healthcheck...${NC}"
 echo ""
 
 cd ui || cd .
-if npm run healthcheck; then
+if pnpm run healthcheck; then
   echo ""
   echo -e "${GREEN}✅ Healthcheck passed${NC}"
   echo ""
@@ -152,11 +159,66 @@ else
   exit 1
 fi
 
+# Run unit tests (targeted based on staged files)
+echo -e "${BLUE}🧪 Running unit tests...${NC}"
+echo ""
+
+# Get staged source files (exclude test files)
+# Note: we already cd'd into ui/, so pathspecs are relative (no ui/ prefix)
+STAGED_SOURCE_FILES=$(git diff --cached --name-only --diff-filter=ACM -- '*.ts' '*.tsx' | grep -v '\.test\.\|\.spec\.\|vitest\.config\|vitest\.setup' || true)
+
+# Check if critical paths changed (lib/, types/, config/)
+CRITICAL_PATHS_CHANGED=$(git diff --cached --name-only -- 'lib/**' 'types/**' 'config/**' 'middleware.ts' 'vitest.config.ts' 'vitest.setup.ts' || true)
+
+if [ -n "$CRITICAL_PATHS_CHANGED" ]; then
+  echo -e "${YELLOW}Critical paths changed - running ALL unit tests${NC}"
+  if pnpm run test:run; then
+    echo ""
+    echo -e "${GREEN}✅ Unit tests passed${NC}"
+    echo ""
+  else
+    echo ""
+    echo -e "${RED}❌ Unit tests failed${NC}"
+    echo -e "${RED}Fix failing tests before committing${NC}"
+    echo ""
+    exit 1
+  fi
+elif [ -n "$STAGED_SOURCE_FILES" ]; then
+  echo -e "${YELLOW}Running tests related to changed files:${NC}"
+  echo "$STAGED_SOURCE_FILES" | while IFS= read -r file; do [ -n "$file" ] && echo "  - $file"; done
+  echo ""
+  # shellcheck disable=SC2086 # Word splitting is intentional - vitest needs each file as separate arg
+  if pnpm exec vitest related $STAGED_SOURCE_FILES --run; then
+    echo ""
+    echo -e "${GREEN}✅ Unit tests passed${NC}"
+    echo ""
+  else
+    echo ""
+    echo -e "${RED}❌ Unit tests failed${NC}"
+    echo -e "${RED}Fix failing tests before committing${NC}"
+    echo ""
+    exit 1
+  fi
+else
+  echo -e "${YELLOW}No source files changed - running ALL unit tests${NC}"
+  if pnpm run test:run; then
+    echo ""
+    echo -e "${GREEN}✅ Unit tests passed${NC}"
+    echo ""
+  else
+    echo ""
+    echo -e "${RED}❌ Unit tests failed${NC}"
+    echo -e "${RED}Fix failing tests before committing${NC}"
+    echo ""
+    exit 1
+  fi
+fi
+
 # Run build
 echo -e "${BLUE}🔨 Running build...${NC}"
 echo ""
 
-if npm run build; then
+if pnpm run build; then
   echo ""
   echo -e "${GREEN}✅ Build passed${NC}"
   echo ""

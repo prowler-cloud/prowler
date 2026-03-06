@@ -8,14 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "FileSystem",
+  "ResourceGroup": "storage",
   "Description": "**OCI File Storage** file systems use **Customer-Managed Keys** (`CMEK`) for encryption when a KMS key is associated, instead of the default Oracle-managed encryption.",
   "Risk": "Using provider-managed keys limits control over key lifecycle and access, weakening **confidentiality**. You cannot enforce custom rotation, revoke use, or apply granular key permissions, increasing exposure to insider misuse, legal compulsion, or compromised services. It may hinder **compliance** and complicate incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/oci-policies/storage/ensure-oci-file-system-is-encrypted-with-a-customer-managed-key",
-    "https://avd.aquasec.com/misconfig/oracle/file-storage/file-systems-cmk-encryption/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-FileStorage/file-storage-systems-encrypted-with-cmks.html",
-    "https://docs.oracle.com/en-us/iaas/"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/oci/OCI-FileStorage/file-storage-systems-encrypted-with-cmks.html",
+    "https://docs.oracle.com/en-us/iaas/Content/File/Tasks/encrypt-file-system.htm"
   ],
   "Remediation": {
     "Code": {

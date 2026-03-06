@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Etcd** is configured to require **TLS client certificate authentication** when the etcd container includes `--client-cert-auth`, so client access is validated with trusted certificates.",
   "Risk": "Without **mTLS client auth**, any reachable client can query or mutate etcd:\n- Confidentiality: exposure of Secrets and cluster metadata\n- Integrity: tampering with RBAC, pods, and configs\n- Availability: destructive writes can disrupt the control plane",
   "RelatedUrl": "",

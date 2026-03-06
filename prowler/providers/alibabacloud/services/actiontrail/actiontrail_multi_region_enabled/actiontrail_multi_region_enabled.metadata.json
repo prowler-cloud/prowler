@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "actiontrail_multi_region_enabled",
+  "CheckTitle": "ActionTrail are configured to export copies of all Log entries",
+  "CheckType": [
+    "Unusual logon",
+    "Cloud threat detection"
+  ],
+  "ServiceName": "actiontrail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:actiontrail::account-id:trail",
+  "Severity": "critical",
+  "ResourceType": "AlibabaCloudActionTrail",
+  "ResourceGroup": "monitoring",
+  "Description": "**ActionTrail** is a web service that records API calls for your account and delivers log files to you.\n\nThe recorded information includes the identity of the API caller, the time of the API call, the source IP address of the API caller, the request parameters, and the response elements returned by the Alibaba Cloud service. ActionTrail provides a history of API calls for an account, including API calls made via the Management Console, SDKs, and command line tools.",
+  "Risk": "The API call history produced by ActionTrail enables **security analysis**, **resource change tracking**, and **compliance auditing**.\n\nEnsuring that a **multi-region trail** exists will detect unexpected activities occurring in otherwise unused regions. Global Service Logging should be enabled by default to capture events generated on Alibaba Cloud global services, ensuring the recording of management operations performed on all resources in an Alibaba Cloud account.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/28829.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ActionTrail/enable-multi-region-trails.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun actiontrail CreateTrail --Name <trail_name> --OssBucketName <oss_bucket_for_actiontrail> --RoleName aliyunactiontraildefaultrole --SlsProjectArn <sls_project_arn_for_actiontrail> --SlsWriteRoleArn <sls_role_arn_for_actiontrail> --EventRW <api_type_for_actiontrail>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"alicloud_actiontrail_trail\" \"example\" {\n  trail_name         = \"multi-region-trail\"\n  trail_region       = \"All\"\n  sls_project_arn    = \"acs:log:cn-hangzhou:123456789:project/actiontrail-project\"\n  sls_write_role_arn = data.alicloud_ram_roles.actiontrail.roles.0.arn\n}"
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **ActionTrail Console**\n2. Click on **Trails** in the left navigation pane\n3. Click **Add new trail**\n4. Enter a trail name in the `Trail name` box\n5. Set **Yes** for `Apply Trail to All Regions`\n6. Specify an OSS bucket name in the `OSS bucket` box\n7. Specify an SLS project name in the `SLS project` box\n8. Click **Create**",
+      "Url": "https://hub.prowler.com/check/actiontrail_multi_region_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

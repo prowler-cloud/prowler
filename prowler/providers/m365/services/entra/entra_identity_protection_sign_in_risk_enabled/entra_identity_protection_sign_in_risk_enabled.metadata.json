@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Conditional Access Policy",
+  "ResourceGroup": "IAM",
   "Description": "Ensure that Identity Protection sign-in risk policies are enabled to detect and respond to suspicious high and medium risk login attempts in real time.",
   "Risk": "Without Identity Protection sign-in risk policies enabled, suspicious sign-in attempts may go unnoticed, allowing attackers to access accounts using stolen or compromised credentials. This increases the risk of unauthorized access, data breaches, and privilege escalation.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",

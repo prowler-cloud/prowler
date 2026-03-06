@@ -1,5 +1,9 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
+
+MAX_WORKERS = 10
 
 
 class AzureService:
@@ -19,6 +23,25 @@ class AzureService:
         self.locations = provider.locations
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
+
+        self.thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
+
+    def __threading_call__(self, call, iterator):
+        """Execute a function across multiple items using threading."""
+        items = list(iterator) if not isinstance(iterator, list) else iterator
+
+        futures = {self.thread_pool.submit(call, item): item for item in items}
+        results = []
+
+        for future in as_completed(futures):
+            try:
+                result = future.result()
+                if result is not None:
+                    results.append(result)
+            except Exception:
+                pass
+
+        return results
 
     def __set_clients__(self, identity, session, service, region_config):
         clients = {}

@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "VMInstance",
+  "ResourceGroup": "compute",
   "Description": "Checks if NHN Compute VM instances are using appropriate security group configurations. Using only the default security group can pose a security risk.",
   "Risk": "",
   "RelatedUrl": "",

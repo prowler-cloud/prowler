@@ -1,0 +1,40 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_ram_role_changes_alert_enabled",
+  "CheckTitle": "Log monitoring and alerts are set up for RAM Role changes",
+  "CheckType": [
+    "Abnormal account",
+    "Cloud threat detection"
+  ],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceGroup": "monitoring",
+  "Description": "It is recommended that a query and alarm be established for **RAM Role** creation, deletion, and updating activities.",
+  "Risk": "Monitoring **role creation**, **deletion**, and **updating** activities will help in identifying potential **malicious actions** at an early stage.\n\nUnauthorized role changes could lead to privilege escalation.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/91784.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/ram-policy-changes-alert.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **SLS Console**\n2. Ensure **ActionTrail** is enabled\n3. Select **Alerts**\n4. Ensure alert rule has been enabled for RAM/ResourceManager policy changes",
+      "Url": "https://hub.prowler.com/check/sls_ram_role_changes_alert_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,5 +1,5 @@
 import { test as authManageIntegrationsSetup } from '@playwright/test';
-import { authenticateAndSaveState } from '@/tests/helpers';
+import { SignInPage } from '../sign-in-base/sign-in-base-page';
 
 const manageIntegrationsUserFile = 'playwright/.auth/manage_integrations_user.json';
 
@@ -11,5 +11,6 @@ authManageIntegrationsSetup('authenticate as integrations e2e user',  async ({ p
     throw new Error('E2E_MANAGE_INTEGRATIONS_USER and E2E_MANAGE_INTEGRATIONS_PASSWORD environment variables are required');
   }
 
-  await authenticateAndSaveState(page, integrationsEmail, integrationsPassword, manageIntegrationsUserFile);
+  const signInPage = new SignInPage(page);
+  await signInPage.authenticateAndSaveState({ email: integrationsEmail, password: integrationsPassword }, manageIntegrationsUserFile);
 });

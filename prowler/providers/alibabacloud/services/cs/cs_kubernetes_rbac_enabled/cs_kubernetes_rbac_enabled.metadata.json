@@ -1,0 +1,41 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "cs_kubernetes_rbac_enabled",
+  "CheckTitle": "Role-based access control (RBAC) authorization is Enabled on Kubernetes Engine Clusters",
+  "CheckType": [
+    "Threat detection during container runtime",
+    "Abnormal account"
+  ],
+  "ServiceName": "cs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
+  "Severity": "high",
+  "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceGroup": "container",
+  "Description": "In Kubernetes, authorizers interact by granting a permission if any authorizer grants the permission. The legacy authorizer in Kubernetes Engine grants broad, statically defined permissions.\n\nTo ensure that **RBAC** limits permissions correctly, you must disable the legacy authorizer. RBAC has significant security advantages, helps ensure that users only have access to specific cluster resources within their own namespace, and is now stable in Kubernetes.",
+  "Risk": "In Kubernetes, **RBAC** is used to grant permissions to resources at the cluster and namespace level. RBAC allows you to define roles with rules containing a set of permissions.\n\nWithout RBAC, legacy authorization mechanisms like **ABAC** grant **overly broad permissions**, increasing the risk of unauthorized access and privilege escalation.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.aliyun.com/document_detail/87656.html",
+    "https://help.aliyun.com/document_detail/119596.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/enable-rbac-authorization.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "RBAC is enabled by default on new ACK clusters. Verify cluster authorization configuration.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **ACK Console**\n2. Navigate to **Clusters** -> **Authorizations** page\n3. Select the target RAM sub-account and configure the RBAC roles on specific clusters or namespaces\n4. Ensure **RBAC** is enabled and legacy ABAC authorization is disabled",
+      "Url": "https://hub.prowler.com/check/cs_kubernetes_rbac_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

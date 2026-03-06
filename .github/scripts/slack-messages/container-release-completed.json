@@ -1,5 +1,6 @@
 {
   "channel": "${{ env.SLACK_CHANNEL_ID }}",
+  "ts": "${{ env.MESSAGE_TS }}",
   "attachments": [
     {
       "color": "${{ env.STATUS_COLOR }}",

@@ -1,6 +1,5 @@
 "use client";
 
-import { Spacer } from "@heroui/spacer";
 import Image from "next/image";
 
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
@@ -57,7 +56,6 @@ export const ComplianceHeader = ({
           labelCheckboxGroup: "Regions",
           values: uniqueRegions,
           index: 1, // Show after framework filters
-          defaultToSelectAll: true, // Default to all regions selected
         },
       ]
     : [];
@@ -73,10 +71,12 @@ export const ComplianceHeader = ({
   return (
     <>
       {hasContent && (
-        <div className="flex w-full items-start justify-between gap-6">
+        <div className="flex w-full items-start justify-between gap-6 sm:mb-8">
           <div className="flex flex-1 flex-col justify-end gap-4">
+            {/* Showed in the details page */}
             {selectedScan && <ComplianceScanInfo scan={selectedScan} />}
 
+            {/* Showed in the compliance page */}
             {showProviders && <DataCompliance scans={scans} />}
             {!hideFilters && allFilters.length > 0 && (
               <DataTableFilterCustom filters={allFilters} />
@@ -96,7 +96,6 @@ export const ComplianceHeader = ({
           )}
         </div>
       )}
-      {hasContent && <Spacer y={8} />}
     </>
   );
 };
