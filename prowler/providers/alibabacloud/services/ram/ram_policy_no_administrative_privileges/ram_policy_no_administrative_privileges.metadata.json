@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:ram::account-id:policy/{policy-name}",
   "Severity": "critical",
   "ResourceType": "AlibabaCloudRAMPolicy",
+  "ResourceGroup": "IAM",
   "Description": "**RAM policies** represent permissions that can be granted to users, groups, or roles. It is recommended to grant **least privilege**—that is, granting only the permissions required to perform tasks.\n\nDetermine what users need to do and then create policies with permissions that only fit those tasks, instead of allowing full administrative privileges.",
   "Risk": "It is more secure to start with a minimum set of permissions and grant additional permissions as necessary. Providing **full administrative privileges** exposes your resources to potentially unwanted actions.\n\nRAM policies with `\"Effect\": \"Allow\"`, `\"Action\": \"*\"`, and `\"Resource\": \"*\"` should be prohibited.",
   "RelatedUrl": "",

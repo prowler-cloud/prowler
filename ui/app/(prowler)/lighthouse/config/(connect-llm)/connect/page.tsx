@@ -7,7 +7,7 @@ import { ConnectLLMProvider } from "@/components/lighthouse/connect-llm-provider
 import { SelectBedrockAuthMethod } from "@/components/lighthouse/select-bedrock-auth-method";
 import type { LighthouseProvider } from "@/types/lighthouse";
 
-const BEDROCK_AUTH_MODES = {
+export const BEDROCK_AUTH_MODES = {
   IAM: "iam",
   API_KEY: "api_key",
 } as const;

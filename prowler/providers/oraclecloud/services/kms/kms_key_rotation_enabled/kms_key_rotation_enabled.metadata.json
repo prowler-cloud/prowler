@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "oci:kms:resource",
   "Severity": "medium",
   "ResourceType": "OciKmsResource",
+  "ResourceGroup": "security",
   "Description": "Customer Managed Keys should be rotated at least annually to reduce the risk of key compromise.",
   "Risk": "Not meeting this requirement increases security risk.",
   "RelatedUrl": "https://docs.oracle.com/en-us/iaas/",

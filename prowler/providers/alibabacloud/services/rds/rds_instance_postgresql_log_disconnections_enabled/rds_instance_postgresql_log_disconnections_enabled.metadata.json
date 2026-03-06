@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceGroup": "database",
   "Description": "Enable `log_disconnections` on **PostgreSQL Servers**. Enabling `log_disconnections` helps PostgreSQL Database log session terminations of the server, as well as duration of the session.\n\nLog data can be used to identify, troubleshoot, and repair configuration errors and suboptimal performance.",
   "Risk": "Without **disconnection logging**, it's harder to track session durations and identify abnormal disconnection patterns that might indicate **attacks** or **stability issues**.",
   "RelatedUrl": "",

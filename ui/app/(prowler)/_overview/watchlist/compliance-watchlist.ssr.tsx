@@ -1,7 +1,7 @@
 import {
-  adaptComplianceOverviewsResponse,
-  getCompliancesOverview,
-} from "@/actions/compliances";
+  adaptComplianceWatchlistResponse,
+  getComplianceWatchlist,
+} from "@/actions/overview/compliance-watchlist";
 
 import { pickFilterParams } from "../_lib/filter-params";
 import { SSRComponentProps } from "../_types";
@@ -11,20 +11,19 @@ export const ComplianceWatchlistSSR = async ({
   searchParams,
 }: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);
+  const response = await getComplianceWatchlist({ filters });
+  const enrichedData = adaptComplianceWatchlistResponse(response);
 
-  const response = await getCompliancesOverview({ filters });
-  const { data } = adaptComplianceOverviewsResponse(response);
-
-  // Filter out ProwlerThreatScore and limit to 5 items
-  const items = data
-    .filter((item) => item.framework !== "ProwlerThreatScore")
-    .slice(0, 5)
-    .map((compliance) => ({
-      id: compliance.id,
-      framework: compliance.framework,
-      label: compliance.label,
-      icon: compliance.icon,
-      score: compliance.score,
+  // Filter out ProwlerThreatScore and pass all items to client
+  // Client handles sorting and limiting to display count
+  const items = enrichedData
+    .filter((item) => !item.complianceId.toLowerCase().includes("threatscore"))
+    .map((item) => ({
+      id: item.id,
+      framework: item.complianceId,
+      label: item.label,
+      icon: item.icon,
+      score: item.score,
     }));
 
   return <ComplianceWatchlist items={items} />;

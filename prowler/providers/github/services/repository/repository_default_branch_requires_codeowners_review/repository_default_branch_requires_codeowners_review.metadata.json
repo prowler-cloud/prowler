@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "github:user-id:repository/repository-name",
   "Severity": "high",
   "ResourceType": "GitHubRepository",
+  "ResourceGroup": "devops",
   "Description": "Ensure that code owners are required to review and approve any proposed changes that affect their respective areas of ownership in the code base.",
   "Risk": "If code owner approval is not required, unauthorized or unqualified individuals may merge changes to sensitive or critical areas of the codebase, increasing the risk of security vulnerabilities, bugs, or malicious modifications.",
   "RelatedUrl": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#requiring-code-owner-review",

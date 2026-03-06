@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "defender_atp_safe_attachments_and_docs_configured",
+  "CheckTitle": "ATP Safe Attachments policy has Safe Documents enabled and click-through blocked for SharePoint, OneDrive, and Microsoft Teams",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Defender ATP Policy",
+  "ResourceGroup": "security",
+  "Description": "**Safe Attachments** for SharePoint, OneDrive, and Microsoft Teams protects organizations from inadvertently sharing malicious files. When enabled, files identified as malicious are blocked and cannot be opened, copied, moved, or shared until further actions are taken by the organization's security team.",
+  "Risk": "Without **Safe Attachments** enabled, users may download, sync, or access **malicious files** from SharePoint, OneDrive, or Teams, potentially leading to **malware infections** across the organization. If **Safe Documents** is disabled or users can bypass **Protected View**, malicious content in Office documents may execute and **compromise endpoints**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/defender-office-365/safe-attachments-about",
+    "https://learn.microsoft.com/en-us/defender-office-365/safe-documents-in-e5-plus-security-about"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-AtpPolicyForO365 -EnableATPForSPOTeamsODB $true -EnableSafeDocs $true -AllowSafeDocsOpen $false",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft 365 Defender portal at https://security.microsoft.com.\n2. Go to **Email & Collaboration** > **Policies & Rules** > **Threat policies**.\n3. Under **Policies**, select **Safe Attachments**.\n4. Click on **Global settings**.\n5. Enable **Turn on Defender for Office 365 for SharePoint, OneDrive, and Microsoft Teams**.\n6. Enable **Turn on Safe Documents for Office clients**.\n7. Disable **Allow people to click through Protected View even if Safe Documents identified the file as malicious**.\n8. Click **Save**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **Safe Attachments** for SharePoint, OneDrive, and Microsoft Teams along with **Safe Documents** to protect users from malicious files. Block users from bypassing **Protected View** warnings for files identified as malicious to maintain **defense-in-depth**.",
+      "Url": "https://hub.prowler.com/check/defender_atp_safe_attachments_and_docs_configured"
+    }
+  },
+  "Categories": [
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check requires Microsoft Defender for Office 365 Plan 1 or Plan 2 (included in E5 license). Safe Documents specifically requires Microsoft 365 E5 or Microsoft 365 E5 Security."
+}

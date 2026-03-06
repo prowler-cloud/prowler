@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsSnsTopic",
+  "ResourceGroup": "messaging",
   "Description": "Amazon SNS subscriptions are evaluated for endpoint protocol. Subscriptions using `http` are identified, while **HTTPS** endpoints indicate encrypted delivery in transit.",
   "Risk": "Using **HTTP** leaves SNS deliveries unencrypted, compromising **confidentiality** via eavesdropping. MITM attackers can modify payloads or headers, damaging **integrity**, inject malicious content into downstream systems, or capture subscription data for spoofing and unauthorized actions.",
   "RelatedUrl": "",

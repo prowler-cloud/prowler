@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:ecs:region:account-id:security-group/{security-group-id}",
   "Severity": "high",
   "ResourceType": "AlibabaCloudECSSecurityGroup",
+  "ResourceGroup": "network",
   "Description": "**Security groups** provide stateful filtering of ingress/egress network traffic to Alibaba Cloud resources.\n\nIt is recommended that no security group allows unrestricted ingress access to port **22 (SSH)**.",
   "Risk": "Removing unfettered connectivity to remote console services, such as **SSH**, reduces a server's exposure to risk.\n\nUnrestricted SSH access from the internet (`0.0.0.0/0`) exposes systems to **brute force attacks**, **credential stuffing**, and **exploitation of SSH vulnerabilities**.",
   "RelatedUrl": "",

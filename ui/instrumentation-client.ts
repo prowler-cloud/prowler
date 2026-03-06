@@ -12,7 +12,7 @@ import {
   startProgress,
 } from "@/components/ui/navigation-progress/use-navigation-progress";
 
-const NAVIGATION_TYPE = {
+export const NAVIGATION_TYPE = {
   PUSH: "push",
   REPLACE: "replace",
   TRAVERSE: "traverse",

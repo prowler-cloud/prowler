@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { ServiceOverview } from "@/actions/overview";
-import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 
 import { SortToggleButton } from "./sort-toggle-button";
 import { WatchlistCard, WatchlistItem } from "./watchlist-card";
@@ -29,9 +28,6 @@ export const ServiceWatchlist = ({ items }: { items: ServiceOverview[] }) => {
 
   const handleItemClick = (item: WatchlistItem) => {
     const params = new URLSearchParams(searchParams.toString());
-
-    mapProviderFiltersForFindings(params);
-
     params.set("filter[service__in]", item.key);
     params.set("filter[status__in]", "FAIL");
     router.push(`/findings?${params.toString()}`);

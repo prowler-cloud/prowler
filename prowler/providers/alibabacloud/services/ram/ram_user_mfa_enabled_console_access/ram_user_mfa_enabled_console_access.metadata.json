@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "acs:ram::account-id:user/{user-name}",
   "Severity": "high",
   "ResourceType": "AlibabaCloudRAMUser",
+  "ResourceGroup": "IAM",
   "Description": "**Multi-Factor Authentication (MFA)** adds an extra layer of protection on top of a username and password.\n\nWith MFA enabled, when a user logs on to Alibaba Cloud, they will be prompted for their username and password followed by an authentication code from their virtual MFA device. It is recommended that MFA be enabled for all users that have a console password.",
   "Risk": "**MFA** requires users to verify their identities by entering two authentication factors. When MFA is enabled, an attacker faces at least two different authentication mechanisms.\n\nThe additional security makes it significantly harder for an attacker to gain access even if passwords are compromised.",
   "RelatedUrl": "",

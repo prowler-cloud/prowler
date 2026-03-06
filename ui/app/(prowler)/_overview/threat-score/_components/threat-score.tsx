@@ -133,7 +133,6 @@ export function ThreatScore({
               outerRadius={115}
               startAngle={200}
               endAngle={-20}
-              hasDots
               tooltipData={tooltipData}
             />
           </div>

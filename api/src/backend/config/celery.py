@@ -1,6 +1,7 @@
 import warnings
 
 from celery import Celery, Task
+
 from config.env import env
 
 # Suppress specific warnings from django-rest-auth: https://github.com/iMerica/dj-rest-auth/issues/684

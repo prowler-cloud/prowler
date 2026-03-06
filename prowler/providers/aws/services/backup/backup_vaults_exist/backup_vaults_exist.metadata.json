@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsBackupBackupVault",
+  "ResourceGroup": "storage",
   "Description": "**AWS Backup** in the account/region includes at least one **backup vault** that stores and organizes recovery points for use by backup plans and copies.",
   "Risk": "Without a vault, recovery points cannot be created or retained in AWS Backup, degrading **availability** and **integrity**. Data may be irrecoverable after deletion, ransomware, or misconfiguration, and RPO/RTO targets may be missed during incidents.",
   "RelatedUrl": "",

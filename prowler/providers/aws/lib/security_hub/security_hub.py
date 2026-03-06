@@ -55,7 +55,7 @@ class SecurityHubConnection(Connection):
     Attributes:
         enabled_regions (set): Set of regions where Security Hub is enabled.
         disabled_regions (set): Set of regions where Security Hub is disabled.
-        partition (str): AWS partition (e.g., aws, aws-cn, aws-us-gov) where SecurityHub is deployed.
+        partition (str): AWS partition (e.g., aws, aws-cn, aws-eusc, aws-us-gov) where SecurityHub is deployed.
     """
 
     enabled_regions: set = None
@@ -70,7 +70,7 @@ class SecurityHub:
     Attributes:
         _session (Session): AWS session object for authentication and communication with AWS services.
         _aws_account_id (str): AWS account ID associated with the SecurityHub instance.
-        _aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-us-gov) where SecurityHub is deployed.
+        _aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-eusc, aws-us-gov) where SecurityHub is deployed.
         _findings_per_region (dict): Dictionary containing findings per region.
         _enabled_regions (dict): Dictionary containing enabled regions with SecurityHub clients.
 
@@ -115,7 +115,7 @@ class SecurityHub:
         Args:
         - aws_session (Session): AWS session object for authentication and communication with AWS services.
         - aws_account_id (str): AWS account ID associated with the SecurityHub instance.
-        - aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-us-gov) where SecurityHub is deployed.
+        - aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-eusc, aws-us-gov) where SecurityHub is deployed.
         - findings (list[AWSSecurityFindingFormat]): List of findings to filter and send to Security Hub.
         - aws_security_hub_available_regions (list[str]): List of regions where Security Hub is available.
         - send_only_fails (bool): Flag indicating whether to send only findings with status 'FAIL'.
@@ -477,7 +477,7 @@ class SecurityHub:
 
         Args:
             aws_account_id (str): AWS account ID to check for Prowler integration.
-            aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-us-gov).
+            aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-eusc, aws-us-gov).
             regions (set): Set of regions to check for Security Hub integration.
             raise_on_exception (bool): Whether to raise an exception if an error occurs.
             profile (str): AWS profile name to use for authentication.
