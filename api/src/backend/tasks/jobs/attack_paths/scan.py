@@ -7,8 +7,8 @@ it with Prowler-specific data, then swap it into the tenant's long-lived
 database so queries never see a half-built graph.
 
 Two databases are involved:
-- Temporary (tmp-<attack_paths_scan_id>): short-lived, single-provider, dropped after sync.
-- Tenant (<tenant_uuid>): long-lived, multi-provider, what the API queries against.
+- Temporary (db-tmp-scan-<attack_paths_scan_id>): short-lived, single-provider, dropped after sync.
+- Tenant (db-tenant-<tenant_uuid>): long-lived, multi-provider, what the API queries against.
 
 Pipeline steps:
 
@@ -51,8 +51,6 @@ Pipeline steps:
 On failure the temp database is dropped, the scan is marked FAILED, and the
 exception propagates to Celery.
 
-Based on Cartography's cartography.cli.main, cartography.sync.run_with_config,
-and cartography.sync.Sync.run.
 """
 
 import logging
