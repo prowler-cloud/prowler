@@ -2,7 +2,12 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.19.1] (Prowler v5.19.1)
+
+## [1.19.1] (Prowler v5.19.1 UNRELEASED)
+
+### 🐞 Fixed
+
+- Attack Paths: Improved error handling for server errors (5xx) and network failures with user-friendly messages instead of raw internal errors
 
 ### 🔐 Security
 
