@@ -334,6 +334,8 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
         # Organize by Marco and Categoria
         marcos = {}
         for req in data.requirements:
+            if req.status == StatusChoices.MANUAL:
+                continue
             m = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
             if m:
                 marco = getattr(m, "Marco", "Otros")
