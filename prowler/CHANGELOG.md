@@ -20,6 +20,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update MongoDB Atlas Organizations service metadata to new format [(#9658)](https://github.com/prowler-cloud/prowler/pull/9658)
 - Update MongoDB Atlas clusters service metadata to new format [(#9657)](https://github.com/prowler-cloud/prowler/pull/9657)
 - Update GitHub Repository service metadata to new format [(#9659)](https://github.com/prowler-cloud/prowler/pull/9659)
+- Update GitHub Organization service metadata to new format [(#10273)](https://github.com/prowler-cloud/prowler/pull/10273)
 
 ---
 
