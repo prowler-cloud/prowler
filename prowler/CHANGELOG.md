@@ -8,6 +8,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `entra_conditional_access_policy_approved_client_app_required_for_mobile` check for m365 provider [(#10216)](https://github.com/prowler-cloud/prowler/pull/10216)
 - `entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required` check for M365 provider [(#10197)](https://github.com/prowler-cloud/prowler/pull/10197)
+- `apikeys_api_restricted_with_gemini_api` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
+- `gemini_api_disabled` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
 
 ### 🔄 Changed
 
