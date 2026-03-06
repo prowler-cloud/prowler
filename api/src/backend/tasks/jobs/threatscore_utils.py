@@ -35,19 +35,27 @@ def _aggregate_requirement_statistics_from_database(
         }
     """
     requirement_statistics_by_check_id = {}
-
+    # TODO: take into account that now the relation is 1 finding == 1 resource, review this when the logic changes
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         aggregated_statistics_queryset = (
             Finding.all_objects.filter(
-                tenant_id=tenant_id, scan_id=scan_id, muted=False
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                muted=False,
+                resources__provider__is_deleted=False,
             )
             .values("check_id")
             .annotate(
                 total_findings=Count(
                     "id",
+                    distinct=True,
                     filter=Q(status__in=[StatusChoices.PASS, StatusChoices.FAIL]),
                 ),
-                passed_findings=Count("id", filter=Q(status=StatusChoices.PASS)),
+                passed_findings=Count(
+                    "id",
+                    distinct=True,
+                    filter=Q(status=StatusChoices.PASS),
+                ),
             )
         )
 
