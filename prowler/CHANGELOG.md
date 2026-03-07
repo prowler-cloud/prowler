@@ -6,6 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- IONOS Cloud provider with `compute` service and `compute_server_public_internet_access` check [(#10281)](https://github.com/prowler-cloud/prowler/pull/10281)
 - `entra_conditional_access_policy_device_code_flow_blocked` check for M365 provider [(#10218)](https://github.com/prowler-cloud/prowler/pull/10218)
 
 ### 🔄 Changed

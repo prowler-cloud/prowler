@@ -350,6 +350,15 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif "ionoscloud" in provider_class_name.lower():
+                    provider_class(
+                        username=getattr(arguments, "username", None),
+                        password=getattr(arguments, "password", None),
+                        token=getattr(arguments, "token", None),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
 
         except TypeError as error:
             logger.critical(
