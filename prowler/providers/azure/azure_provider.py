@@ -507,6 +507,7 @@ class AzureProvider(Provider):
                             tenant_id=azure_credentials["tenant_id"],
                             client_id=azure_credentials["client_id"],
                             client_secret=azure_credentials["client_secret"],
+                            authority=region_config.authority,
                         )
                         return credentials
                     except ClientAuthenticationError as error:
@@ -579,7 +580,10 @@ class AzureProvider(Provider):
                 )
         else:
             try:
-                credentials = InteractiveBrowserCredential(tenant_id=tenant_id)
+                credentials = InteractiveBrowserCredential(
+                    tenant_id=tenant_id,
+                    authority=region_config.authority,
+                )
             except Exception as error:
                 logger.critical(
                     "Failed to retrieve azure credentials using browser authentication"
