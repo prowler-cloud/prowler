@@ -8,6 +8,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `entra_conditional_access_policy_approved_client_app_required_for_mobile` check for m365 provider [(#10216)](https://github.com/prowler-cloud/prowler/pull/10216)
 - `entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required` check for M365 provider [(#10197)](https://github.com/prowler-cloud/prowler/pull/10197)
+- IONOS Cloud provider with `compute` service and `compute_server_public_internet_access` check [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
 
 ### 🔄 Changed
 

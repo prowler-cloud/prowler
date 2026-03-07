@@ -119,6 +119,7 @@ from prowler.lib.outputs.outputs import extract_findings_statistics, report
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.alibabacloud.models import AlibabaCloudOutputOptions
+from prowler.providers.ionoscloud.models import IonosCloudOutputOptions
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.aws.models import AWSOutputOptions
@@ -383,6 +384,10 @@ def prowler():
         )
     elif provider == "openstack":
         output_options = OpenStackOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "ionoscloud":
+        output_options = IonosCloudOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
 

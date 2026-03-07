@@ -1,0 +1,39 @@
+{
+  "Provider": "ionoscloud",
+  "CheckID": "compute_server_public_internet_access",
+  "CheckTitle": "Ensure IONOS Cloud servers with public IPs have firewall rules enabled",
+  "CheckType": [
+    "Software and Configuration Checks"
+  ],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "ionos://compute/datacenters/{datacenter-id}/servers/{server-id}",
+  "Severity": "medium",
+  "ResourceType": "IonosCloudServer",
+  "ResourceGroup": "compute",
+  "Description": "Checks whether an IONOS Cloud server has at least one Network Interface Card (NIC) carrying a public (internet-routable) IP address. Servers directly reachable from the internet increase the attack surface and must be protected by appropriate firewall rules.",
+  "Risk": "A server with a public IP is directly reachable from the internet. Without strict firewall rules, an attacker can attempt to reach any open port (SSH, RDP, application ports) on the server, increasing the risk of unauthorized access, data exfiltration, and service disruption.",
+  "RelatedUrl": "https://docs.ionos.com/cloud/compute-engine/virtual-servers/how-tos/create-a-server",
+  "AdditionalURLs": [
+    "https://docs.ionos.com/cloud/compute-engine/networking/firewall-rules",
+    "https://docs.ionos.com/cloud/compute-engine/networking/nics"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ionosctl server nic update --datacenter-id <dc-id> --server-id <server-id> --nic-id <nic-id> --ips ''",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"ionoscloud_nic\" \"example\" {\n  datacenter_id = ionoscloud_datacenter.example.id\n  server_id     = ionoscloud_server.example.id\n  lan           = 2\n  firewall_active = true\n  firewall_type   = \"INGRESS\"\n}"
+    },
+    "Recommendation": {
+      "Text": "1. Log in to the IONOS Cloud DCD (Data Center Designer).\n2. Navigate to the server and select the NIC with the public IP.\n3. Enable the IONOS Cloud Firewall on the NIC.\n4. Add specific ingress rules that allow only the necessary ports and source IPs.\n5. Remove the public IP if the server does not need internet access; use a NAT gateway instead.\n6. Consider placing internet-facing servers behind a load balancer and removing direct public IPs.",
+      "Url": "https://docs.ionos.com/cloud/compute-engine/networking/firewall-rules"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check reports FAIL for any server with at least one public IP. Review each finding to determine whether the exposure is intentional and properly protected."
+}
