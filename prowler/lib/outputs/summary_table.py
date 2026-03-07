@@ -96,6 +96,9 @@ def display_summary_table(
                 if provider.identity.project_name
                 else provider.identity.project_id
             )
+        elif provider.type == "ionoscloud":
+            entity_type = "User"
+            audited_entities = provider.identity.user_email
         elif provider.type == "image":
             entity_type = "Image"
             audited_entities = ", ".join(provider.images)
