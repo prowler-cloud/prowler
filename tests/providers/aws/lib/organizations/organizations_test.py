@@ -27,7 +27,9 @@ class Test_AWS_Organizations:
             ResourceId=account_id, Tags=[{"Key": "key", "Value": "value"}]
         )
 
-        metadata, tags, ou_metadata = get_organizations_metadata(account_id, boto3.Session())
+        metadata, tags, ou_metadata = get_organizations_metadata(
+            account_id, boto3.Session()
+        )
         org = parse_organizations_metadata(metadata, tags, ou_metadata)
 
         assert isinstance(org, AWSOrganizationsInfo)
@@ -75,3 +77,80 @@ class Test_AWS_Organizations:
         assert org.account_tags == {"test-key": "test-value"}
         assert org.account_ou_id == ""
         assert org.account_ou_name == ""
+
+    @mock_aws
+    def test_organizations_with_ou(self):
+        client = boto3.client("organizations", region_name=AWS_REGION_US_EAST_1)
+
+        client.create_organization(FeatureSet="ALL")
+        account_id = client.create_account(
+            AccountName="ou-account", Email="ou@example.org"
+        )["CreateAccountStatus"]["AccountId"]
+
+        root_id = client.list_roots()["Roots"][0]["Id"]
+        ou = client.create_organizational_unit(ParentId=root_id, Name="SecurityOU")[
+            "OrganizationalUnit"
+        ]
+
+        client.move_account(
+            AccountId=account_id,
+            SourceParentId=root_id,
+            DestinationParentId=ou["Id"],
+        )
+
+        metadata, tags, ou_metadata = get_organizations_metadata(
+            account_id, boto3.Session()
+        )
+        org = parse_organizations_metadata(metadata, tags, ou_metadata)
+
+        assert org.account_ou_id == ou["Id"]
+        assert org.account_ou_name == "SecurityOU"
+
+    @mock_aws
+    def test_organizations_with_nested_ou(self):
+        client = boto3.client("organizations", region_name=AWS_REGION_US_EAST_1)
+
+        client.create_organization(FeatureSet="ALL")
+        account_id = client.create_account(
+            AccountName="nested-account", Email="nested@example.org"
+        )["CreateAccountStatus"]["AccountId"]
+
+        root_id = client.list_roots()["Roots"][0]["Id"]
+        parent_ou = client.create_organizational_unit(
+            ParentId=root_id, Name="Infrastructure"
+        )["OrganizationalUnit"]
+        child_ou = client.create_organizational_unit(
+            ParentId=parent_ou["Id"], Name="Security"
+        )["OrganizationalUnit"]
+
+        client.move_account(
+            AccountId=account_id,
+            SourceParentId=root_id,
+            DestinationParentId=child_ou["Id"],
+        )
+
+        metadata, tags, ou_metadata = get_organizations_metadata(
+            account_id, boto3.Session()
+        )
+        org = parse_organizations_metadata(metadata, tags, ou_metadata)
+
+        assert org.account_ou_id == child_ou["Id"]
+        assert org.account_ou_name == "Infrastructure/Security"
+
+    def test_parse_organizations_metadata_with_ou(self):
+        tags = {"Tags": []}
+        metadata = {
+            "Account": {
+                "Id": AWS_ACCOUNT_NUMBER,
+                "Arn": f"arn:aws:organizations::123456789012:account/o-abc123/{AWS_ACCOUNT_NUMBER}",
+                "Email": "test@example.org",
+                "Name": "test-account",
+                "Status": "ACTIVE",
+            }
+        }
+        ou_metadata = {"ou_id": "ou-xxxx-12345678", "ou_path": "Infra/Security"}
+
+        org = parse_organizations_metadata(metadata, tags, ou_metadata)
+
+        assert org.account_ou_id == "ou-xxxx-12345678"
+        assert org.account_ou_name == "Infra/Security"

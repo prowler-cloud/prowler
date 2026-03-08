@@ -435,9 +435,11 @@ class AwsProvider(Provider):
                 f"Getting AWS Organizations metadata for account {aws_account_id}"
             )
 
-            organizations_metadata, list_tags_for_resource, ou_metadata = get_organizations_metadata(
-                aws_account_id=aws_account_id,
-                session=organizations_session,
+            organizations_metadata, list_tags_for_resource, ou_metadata = (
+                get_organizations_metadata(
+                    aws_account_id=aws_account_id,
+                    session=organizations_session,
+                )
             )
 
             if organizations_metadata:

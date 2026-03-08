@@ -63,7 +63,9 @@ def get_organizations_metadata(
         return {}, {}, {}
 
 
-def parse_organizations_metadata(metadata: dict, tags: dict, ou_metadata: dict = None) -> AWSOrganizationsInfo:
+def parse_organizations_metadata(
+    metadata: dict, tags: dict, ou_metadata: dict = None
+) -> AWSOrganizationsInfo:
     try:
         # Convert Tags dictionary to String
         account_details_tags = {}
