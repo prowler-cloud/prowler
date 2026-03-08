@@ -27,8 +27,8 @@ class Test_AWS_Organizations:
             ResourceId=account_id, Tags=[{"Key": "key", "Value": "value"}]
         )
 
-        metadata, tags = get_organizations_metadata(account_id, boto3.Session())
-        org = parse_organizations_metadata(metadata, tags)
+        metadata, tags, ou_metadata = get_organizations_metadata(account_id, boto3.Session())
+        org = parse_organizations_metadata(metadata, tags, ou_metadata)
 
         assert isinstance(org, AWSOrganizationsInfo)
         assert org.account_email == mockemail
@@ -43,6 +43,8 @@ class Test_AWS_Organizations:
         )
         assert org.organization_id == org_id
         assert org.account_tags == {"key": "value"}
+        assert org.account_ou_id == ""
+        assert org.account_ou_name == ""
 
     def test_parse_organizations_metadata(self):
         tags = {"Tags": [{"Key": "test-key", "Value": "test-value"}]}
@@ -71,3 +73,5 @@ class Test_AWS_Organizations:
         )
         assert org.organization_arn == arn
         assert org.account_tags == {"test-key": "test-value"}
+        assert org.account_ou_id == ""
+        assert org.account_ou_name == ""
