@@ -1,7 +1,7 @@
 import sys
 from io import StringIO
 
-from mock import patch
+from mock import MagicMock, patch
 
 from prowler.config.config import prowler_version, timestamp
 from prowler.lib.logger import logger
@@ -12,6 +12,9 @@ from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provi
 from tests.providers.azure.azure_fixtures import set_mocked_azure_provider
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 from tests.providers.github.github_fixtures import APP_ID, set_mocked_github_provider
+from tests.providers.googleworkspace.googleworkspace_fixtures import (
+    set_mocked_googleworkspace_provider,
+)
 from tests.providers.kubernetes.kubernetes_fixtures import (
     set_mocked_kubernetes_provider,
 )
@@ -350,6 +353,62 @@ mongodbatlas_html_assessment_summary = """
                     </div>
                 </div>"""
 
+image_registry_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Image Assessment Summary
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Registry URL:</b> myregistry.io
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Image Credentials
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Image authentication method:</b> Docker login
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
+image_list_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Image Assessment Summary
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Images:</b> nginx:latest, alpine:3.18
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Image Credentials
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Image authentication method:</b> No auth
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
 
 def get_aws_html_header(args: list) -> str:
     """
@@ -398,7 +457,7 @@ def get_aws_html_header(args: list) -> str:
         <div class="row mt-3">
         <div class="col-md-4">
             <a href="https://github.com/prowler-cloud/prowler/"><img class="float-left card-img-left mt-4 mr-4 ml-4"
-                        src=https://prowler.com/wp-content/uploads/logo-html.png
+                        src=https://raw.githubusercontent.com/prowler-cloud/prowler/dc7d2d5aeb92fdf12e8604f42ef6472cd3e8e889/docs/img/prowler-logo-black.png
                         alt="prowler-logo"
                         style="width: 15rem; height:auto;"/></a>
             <div class="card">
@@ -853,6 +912,54 @@ class TestHTML:
         summary = output.get_assessment_summary(provider)
 
         assert summary == mongodbatlas_html_assessment_summary
+
+    def test_googleworkspace_get_assessment_summary(self):
+        """Test Google Workspace HTML assessment summary generation."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+        provider = set_mocked_googleworkspace_provider()
+
+        summary = output.get_assessment_summary(provider)
+
+        assert "Google Workspace Assessment Summary" in summary
+        assert "Google Workspace Credentials" in summary
+        assert "<b>Domain:</b> test-company.com" in summary
+        assert "<b>Customer ID:</b> C1234567" in summary
+        assert "<b>Delegated User:</b> prowler-reader@test-company.com" in summary
+        assert (
+            "<b>Authentication Method:</b> Service Account with Domain-Wide Delegation"
+            in summary
+        )
+
+    def test_image_get_assessment_summary_with_registry(self):
+        """Test Image HTML assessment summary with registry URL."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "image"
+        provider.registry = "myregistry.io"
+        provider.images = ["nginx:latest", "alpine:3.18"]
+        provider.auth_method = "Docker login"
+
+        summary = output.get_assessment_summary(provider)
+
+        assert summary == image_registry_html_assessment_summary
+
+    def test_image_get_assessment_summary_with_images(self):
+        """Test Image HTML assessment summary with image list."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "image"
+        provider.registry = None
+        provider.images = ["nginx:latest", "alpine:3.18"]
+        provider.auth_method = "No auth"
+
+        summary = output.get_assessment_summary(provider)
+
+        assert summary == image_list_html_assessment_summary
 
     def test_process_markdown_bold_text(self):
         """Test that **text** is converted to <strong>text</strong>"""

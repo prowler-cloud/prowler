@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -13,8 +12,9 @@ import { AuthDivider } from "@/components/auth/oss/auth-divider";
 import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomInput } from "@/components/ui/custom";
+import { CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { SignInFormData, signInSchema } from "@/types";
 
@@ -32,6 +32,7 @@ export const SignInForm = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   useEffect(() => {
     const samlError = searchParams.get("sso_saml_failed");
@@ -122,7 +123,7 @@ export const SignInForm = ({
     });
 
     if (result?.message === "Success") {
-      router.push("/");
+      router.push(callbackUrl);
     } else if (result?.errors && "credentials" in result.errors) {
       const message = result.errors.credentials ?? "Invalid email or password";
 
@@ -156,32 +157,20 @@ export const SignInForm = ({
             type="email"
             label="Email"
             placeholder="Enter your email"
-            isInvalid={!!form.formState.errors.email}
-            showFormMessage
           />
           {!isSamlMode && (
-            <CustomInput
-              control={form.control}
-              name="password"
-              password
-              isInvalid={!!form.formState.errors.password}
-            />
+            <CustomInput control={form.control} name="password" password />
           )}
 
-          <CustomButton
+          <Button
             type="submit"
-            ariaLabel="Log in"
-            ariaDisabled={isLoading}
+            aria-label="Log in"
+            aria-disabled={isLoading}
             className="w-full"
-            variant="solid"
-            color="action"
-            size="md"
-            radius="md"
-            isLoading={isLoading}
-            isDisabled={isLoading}
+            disabled={isLoading}
           >
-            {isLoading ? <span>Loading</span> : <span>Log in</span>}
-          </CustomButton>
+            {isLoading ? "Loading..." : "Log in"}
+          </Button>
         </form>
       </Form>
 
@@ -197,21 +186,19 @@ export const SignInForm = ({
           />
         )}
         <Button
-          startContent={
-            !isSamlMode && (
-              <Icon
-                className="text-default-500"
-                icon="mdi:shield-key"
-                width={24}
-              />
-            )
-          }
-          variant="bordered"
-          className="w-full"
+          variant="outline"
+          className="w-full gap-2"
           onClick={() => {
             form.setValue("isSamlMode", !isSamlMode);
           }}
         >
+          {!isSamlMode && (
+            <Icon
+              className="text-default-500"
+              icon="mdi:shield-key"
+              width={24}
+            />
+          )}
           {isSamlMode ? "Back" : "Continue with SAML SSO"}
         </Button>
       </div>

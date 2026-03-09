@@ -45,6 +45,14 @@ export const ProviderCredentialFields = {
   GITHUB_APP_ID: "github_app_id",
   GITHUB_APP_KEY: "github_app_key_content",
 
+  // MongoDB Atlas fields
+  ATLAS_PUBLIC_KEY: "atlas_public_key",
+  ATLAS_PRIVATE_KEY: "atlas_private_key",
+
+  // IaC fields
+  REPOSITORY_URL: "repository_url",
+  ACCESS_TOKEN: "access_token",
+
   // OCI fields
   OCI_USER: "user",
   OCI_FINGERPRINT: "fingerprint",
@@ -53,6 +61,21 @@ export const ProviderCredentialFields = {
   OCI_TENANCY: "tenancy",
   OCI_REGION: "region",
   OCI_PASS_PHRASE: "pass_phrase",
+
+  // Alibaba Cloud fields
+  ALIBABACLOUD_ACCESS_KEY_ID: "access_key_id",
+  ALIBABACLOUD_ACCESS_KEY_SECRET: "access_key_secret",
+  ALIBABACLOUD_ROLE_ARN: "role_arn",
+  ALIBABACLOUD_ROLE_SESSION_NAME: "role_session_name",
+
+  // Cloudflare fields
+  CLOUDFLARE_API_TOKEN: "api_token",
+  CLOUDFLARE_API_KEY: "api_key",
+  CLOUDFLARE_API_EMAIL: "api_email",
+
+  // OpenStack fields
+  OPENSTACK_CLOUDS_YAML_CONTENT: "clouds_yaml_content",
+  OPENSTACK_CLOUDS_YAML_CLOUD: "clouds_yaml_cloud",
 } as const;
 
 // Type for credential field values
@@ -81,6 +104,8 @@ export const ErrorPointers = {
   OAUTH_APP_TOKEN: "/data/attributes/secret/oauth_app_token",
   GITHUB_APP_ID: "/data/attributes/secret/github_app_id",
   GITHUB_APP_KEY: "/data/attributes/secret/github_app_key_content",
+  REPOSITORY_URL: "/data/attributes/secret/repository_url",
+  ACCESS_TOKEN: "/data/attributes/secret/access_token",
   CERTIFICATE_CONTENT: "/data/attributes/secret/certificate_content",
   OCI_USER: "/data/attributes/secret/user",
   OCI_FINGERPRINT: "/data/attributes/secret/fingerprint",
@@ -89,6 +114,17 @@ export const ErrorPointers = {
   OCI_TENANCY: "/data/attributes/secret/tenancy",
   OCI_REGION: "/data/attributes/secret/region",
   OCI_PASS_PHRASE: "/data/attributes/secret/pass_phrase",
+  ATLAS_PUBLIC_KEY: "/data/attributes/secret/atlas_public_key",
+  ATLAS_PRIVATE_KEY: "/data/attributes/secret/atlas_private_key",
+  ALIBABACLOUD_ACCESS_KEY_ID: "/data/attributes/secret/access_key_id",
+  ALIBABACLOUD_ACCESS_KEY_SECRET: "/data/attributes/secret/access_key_secret",
+  ALIBABACLOUD_ROLE_ARN: "/data/attributes/secret/role_arn",
+  ALIBABACLOUD_ROLE_SESSION_NAME: "/data/attributes/secret/role_session_name",
+  CLOUDFLARE_API_TOKEN: "/data/attributes/secret/api_token",
+  CLOUDFLARE_API_KEY: "/data/attributes/secret/api_key",
+  CLOUDFLARE_API_EMAIL: "/data/attributes/secret/api_email",
+  OPENSTACK_CLOUDS_YAML_CONTENT: "/data/attributes/secret/clouds_yaml_content",
+  OPENSTACK_CLOUDS_YAML_CLOUD: "/data/attributes/secret/clouds_yaml_cloud",
 } as const;
 
 export type ErrorPointer = (typeof ErrorPointers)[keyof typeof ErrorPointers];

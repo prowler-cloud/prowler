@@ -476,7 +476,9 @@
     {
       "Id": "1.2.2",
       "Description": "Limit the ability to create repositories to trusted users and teams.",
-      "Checks": [],
+      "Checks": [
+        "organization_repository_creation_limited"
+      ],
       "Attributes": [
         {
           "Section": "1 Source Code",
@@ -776,7 +778,9 @@
     {
       "Id": "1.3.9",
       "Description": "Confirm the domains an organization owns with a \"Verified\" badge.",
-      "Checks": [],
+      "Checks": [
+        "organization_verified_badge"
+      ],
       "Attributes": [
         {
           "Section": "1 Source Code",

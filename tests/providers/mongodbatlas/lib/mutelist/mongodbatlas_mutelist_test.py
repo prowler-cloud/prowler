@@ -157,7 +157,7 @@ class TestMongoDBAtlasMutelist:
                 "*": {
                     "Checks": {
                         "clusters_backup_enabled": {
-                            "Regions": ["WESTERN_EUROPE"],
+                            "Regions": ["western_europe"],
                             "Resources": ["*"],
                         }
                     }
@@ -172,7 +172,7 @@ class TestMongoDBAtlasMutelist:
         finding.check_metadata.CheckID = "clusters_backup_enabled"
         finding.status = "FAIL"
         finding.resource_name = "any-cluster"
-        finding.location = "WESTERN_EUROPE"
+        finding.location = "western_europe"
         finding.resource_tags = []
 
         assert mutelist.is_finding_muted(finding, "any-org-id")

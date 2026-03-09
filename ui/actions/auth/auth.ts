@@ -4,6 +4,7 @@ import { AuthError } from "next-auth";
 
 import { signIn, signOut } from "@/auth.config";
 import { apiBaseUrl } from "@/lib";
+import { addAuthEvent } from "@/lib/sentry-breadcrumbs";
 import type { SignInFormData, SignUpFormData } from "@/types";
 
 export async function authenticate(
@@ -11,6 +12,7 @@ export async function authenticate(
   formData: SignInFormData,
 ) {
   try {
+    addAuthEvent("login", { email: formData.email });
     await signIn("credentials", {
       ...formData,
       redirect: false,
@@ -20,6 +22,7 @@ export async function authenticate(
     };
   } catch (error) {
     if (error instanceof AuthError) {
+      addAuthEvent("error", { type: error.type });
       switch (error.type) {
         case "CredentialsSignin":
           return {
@@ -79,7 +82,7 @@ export const createNewUser = async (formData: SignUpFormData) => {
     }
 
     return parsedResponse;
-  } catch (error) {
+  } catch (_error) {
     return {
       errors: [
         {
@@ -124,7 +127,7 @@ export const getToken = async (formData: SignInFormData) => {
       accessToken,
       refreshToken,
     };
-  } catch (error) {
+  } catch (_error) {
     throw new Error("Error in trying to get token");
   }
 };
@@ -185,5 +188,5 @@ export const getUserByMe = async (accessToken: string) => {
 };
 
 export async function logOut() {
-  await signOut();
+  await signOut({ redirectTo: "/sign-in" });
 }

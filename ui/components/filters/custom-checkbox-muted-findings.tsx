@@ -1,44 +1,56 @@
 "use client";
 
-import { Checkbox } from "@heroui/checkbox";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
 
+import { Checkbox } from "@/components/shadcn";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 
+// Constants for muted filter URL values
+const MUTED_FILTER_VALUES = {
+  EXCLUDE: "false",
+  INCLUDE: "include",
+} as const;
+
 export const CustomCheckboxMutedFindings = () => {
-  const { updateFilter, clearFilter } = useUrlFilters();
   const searchParams = useSearchParams();
-  const [excludeMuted, setExcludeMuted] = useState(
-    searchParams.get("filter[muted]") === "false",
-  );
+  const { navigateWithParams } = useUrlFilters();
 
-  const handleMutedChange = (value: boolean) => {
-    setExcludeMuted(value);
+  // Get the current muted filter value from URL
+  const mutedFilterValue = searchParams.get("filter[muted]");
 
-    // Only URL  update if value is false else remove filter
-    if (value) {
-      updateFilter("muted", "false");
-    } else {
-      clearFilter("muted");
-    }
+  // URL states:
+  // - filter[muted]=false → Exclude muted (checkbox UNCHECKED)
+  // - filter[muted]=include → Include muted (checkbox CHECKED)
+  const includeMuted = mutedFilterValue === MUTED_FILTER_VALUES.INCLUDE;
+
+  const handleMutedChange = (checked: boolean | "indeterminate") => {
+    const isChecked = checked === true;
+
+    navigateWithParams((params) => {
+      if (isChecked) {
+        // Include muted: set special value (API will ignore invalid value and show all)
+        params.set("filter[muted]", MUTED_FILTER_VALUES.INCLUDE);
+      } else {
+        // Exclude muted: apply filter to show only non-muted
+        params.set("filter[muted]", MUTED_FILTER_VALUES.EXCLUDE);
+      }
+    });
   };
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full items-center gap-2 text-nowrap">
       <Checkbox
-        classNames={{
-          label: "text-small",
-          wrapper: "checkbox-update",
-        }}
-        size="md"
-        color="primary"
-        aria-label="Include Mutelist"
-        isSelected={excludeMuted}
-        onValueChange={handleMutedChange}
+        id="include-muted"
+        checked={includeMuted}
+        onCheckedChange={handleMutedChange}
+        aria-label="Include muted findings"
+      />
+      <label
+        htmlFor="include-muted"
+        className="cursor-pointer text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
       >
-        Exclude muted findings
-      </Checkbox>
+        Include muted findings
+      </label>
     </div>
   );
 };

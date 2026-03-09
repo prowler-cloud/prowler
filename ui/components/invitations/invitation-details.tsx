@@ -1,11 +1,11 @@
 "use client";
 
-import { Card, CardBody } from "@heroui/card";
-import { Divider } from "@heroui/divider";
 import { Snippet } from "@heroui/snippet";
+import Link from "next/link";
 
 import { AddIcon } from "../icons";
-import { CustomButton } from "../ui/custom";
+import { Button, Card, CardContent, CardHeader } from "../shadcn";
+import { Separator } from "../shadcn/separator/separator";
 import { DateWithTime } from "../ui/entities";
 
 interface InvitationDetailsProps {
@@ -34,10 +34,14 @@ const InfoField = ({
   label: string;
   children: React.ReactNode;
 }) => (
-  <div className="flex flex-col gap-1">
-    <span className="text-xs font-bold text-gray-500">{label}</span>
-    <div className="flex items-center rounded-lg bg-gray-50 p-3">
-      <span className="text-small text-gray-900">{children}</span>
+  <div className="flex min-w-0 flex-col gap-1">
+    <span className="text-text-neutral-secondary text-xs font-bold">
+      {label}
+    </span>
+    <div className="border-border-input-primary bg-bg-input-primary flex min-w-0 items-center overflow-hidden rounded-lg border p-3">
+      <span className="text-small text-text-neutral-primary min-w-0 truncate">
+        {children}
+      </span>
     </div>
   </div>
 );
@@ -53,17 +57,9 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
 
   return (
     <div className="flex flex-col gap-x-4 gap-y-8">
-      <Card
-        isBlurred
-        className="bg-background/60 dark:bg-prowler-blue-800 border-none"
-        shadow="sm"
-      >
-        <CardBody>
-          <h2 className="text-md text-foreground/90 font-bold">
-            Invitation details
-          </h2>
-          <Divider className="my-4" />
-
+      <Card variant="base" padding="lg">
+        <CardHeader>Invitation details</CardHeader>
+        <CardContent>
           <div className="flex flex-col gap-3">
             <InfoField label="Email">{attributes.email}</InfoField>
 
@@ -88,38 +84,34 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
             </div>
           </div>
 
-          <Divider className="my-4" />
-          <h3 className="text-small text-foreground/90 pb-2 font-bold">
+          <Separator className="my-4" />
+          <h3 className="text-text-neutral-primary pb-2 text-sm font-bold">
             Share this link with the user:
           </h3>
 
-          <div className="flex flex-col items-start justify-between">
+          <div className="flex w-full flex-col items-start justify-between overflow-hidden">
             <Snippet
               classNames={{
-                base: "mx-auto",
+                base: "w-full max-w-full",
+                content: "min-w-0 overflow-hidden",
+                pre: "min-w-0 overflow-hidden text-ellipsis whitespace-nowrap",
               }}
               hideSymbol
               variant="bordered"
-              className="overflow-hidden bg-gray-50 py-1 text-ellipsis whitespace-nowrap dark:bg-slate-800"
+              className="bg-bg-neutral-secondary max-w-full overflow-hidden py-1"
             >
-              <p className="no-scrollbar text-small w-fit overflow-hidden overflow-x-scroll text-ellipsis whitespace-nowrap">
-                {invitationLink}
-              </p>
+              <p className="min-w-0 truncate text-sm">{invitationLink}</p>
             </Snippet>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
       <div className="flex w-full items-center justify-end">
-        <CustomButton
-          asLink="/invitations/"
-          ariaLabel="Send Invitation"
-          variant="solid"
-          color="action"
-          size="md"
-          endContent={<AddIcon size={20} />}
-        >
-          Back to Invitations
-        </CustomButton>
+        <Button asChild size="default" className="gap-2">
+          <Link href="/invitations/">
+            Back to Invitations
+            <AddIcon size={20} />
+          </Link>
+        </Button>
       </div>
     </div>
   );

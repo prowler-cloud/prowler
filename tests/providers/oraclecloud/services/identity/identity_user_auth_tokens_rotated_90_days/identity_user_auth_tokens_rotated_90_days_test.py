@@ -4,7 +4,7 @@ from tests.providers.oraclecloud.oci_fixtures import (
     OCI_COMPARTMENT_ID,
     OCI_REGION,
     OCI_TENANCY_ID,
-    set_mocked_oci_provider,
+    set_mocked_oraclecloud_provider,
 )
 
 
@@ -41,7 +41,7 @@ class Test_identity_user_auth_tokens_rotated_90_days:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_oci_provider(),
+                return_value=set_mocked_oraclecloud_provider(),
             ),
             mock.patch(
                 "prowler.providers.oraclecloud.services.identity.identity_user_auth_tokens_rotated_90_days.identity_user_auth_tokens_rotated_90_days.identity_client",
@@ -102,7 +102,7 @@ class Test_identity_user_auth_tokens_rotated_90_days:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_oci_provider(),
+                return_value=set_mocked_oraclecloud_provider(),
             ),
             mock.patch(
                 "prowler.providers.oraclecloud.services.identity.identity_user_auth_tokens_rotated_90_days.identity_user_auth_tokens_rotated_90_days.identity_client",
@@ -136,7 +136,7 @@ class Test_identity_user_auth_tokens_rotated_90_days:
                     assert pass_results[0].compartment_id is not None
 
                     # Verify metadata
-                    assert pass_results[0].check_metadata.Provider == "oci"
+                    assert pass_results[0].check_metadata.Provider == "oraclecloud"
                     assert (
                         pass_results[0].check_metadata.CheckID
                         == "identity_user_auth_tokens_rotated_90_days"
@@ -187,7 +187,7 @@ class Test_identity_user_auth_tokens_rotated_90_days:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_oci_provider(),
+                return_value=set_mocked_oraclecloud_provider(),
             ),
             mock.patch(
                 "prowler.providers.oraclecloud.services.identity.identity_user_auth_tokens_rotated_90_days.identity_user_auth_tokens_rotated_90_days.identity_client",
@@ -221,7 +221,7 @@ class Test_identity_user_auth_tokens_rotated_90_days:
                     assert fail_results[0].compartment_id is not None
 
                     # Verify metadata
-                    assert fail_results[0].check_metadata.Provider == "oci"
+                    assert fail_results[0].check_metadata.Provider == "oraclecloud"
                     assert (
                         fail_results[0].check_metadata.CheckID
                         == "identity_user_auth_tokens_rotated_90_days"

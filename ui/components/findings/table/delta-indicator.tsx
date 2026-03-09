@@ -1,6 +1,7 @@
 import { Tooltip } from "@heroui/tooltip";
 
-import { CustomButton } from "@/components/ui/custom/custom-button";
+import { Button } from "@/components/shadcn";
+import { DOCS_URLS } from "@/lib/external-urls";
 import { cn } from "@/lib/utils";
 
 interface DeltaIndicatorProps {
@@ -18,16 +19,21 @@ export const DeltaIndicator = ({ delta }: DeltaIndicatorProps) => {
               ? "New finding."
               : "Status changed since the previous scan."}
           </span>
-          <CustomButton
-            ariaLabel="Learn more about findings"
-            color="transparent"
-            size="sm"
-            className="text-primary h-auto min-w-0 p-0"
-            asLink="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-8-analyze-the-findings"
-            target="_blank"
+          <Button
+            aria-label="Learn more about findings"
+            variant="link"
+            size="default"
+            className="text-button-primary h-auto min-w-0 p-0 text-xs"
+            asChild
           >
-            Learn more
-          </CustomButton>
+            <a
+              href={DOCS_URLS.FINDINGS_ANALYSIS}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Learn more
+            </a>
+          </Button>
         </div>
       }
     >

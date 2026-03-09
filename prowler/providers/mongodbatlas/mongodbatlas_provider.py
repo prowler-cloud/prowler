@@ -17,6 +17,7 @@ from prowler.providers.mongodbatlas.exceptions.exceptions import (
     MongoDBAtlasAuthenticationError,
     MongoDBAtlasCredentialsError,
     MongoDBAtlasIdentityError,
+    MongoDBAtlasInvalidOrganizationIdError,
     MongoDBAtlasSessionError,
 )
 from prowler.providers.mongodbatlas.lib.mutelist.mutelist import MongoDBAtlasMutelist
@@ -54,6 +55,7 @@ class MongodbatlasProvider(Provider):
         mutelist_content: dict = None,
         # Optional filters
         atlas_project_id: str = None,
+        atlas_organization_id: str = None,
     ):
         """
         MongoDB Atlas Provider constructor
@@ -67,6 +69,7 @@ class MongodbatlasProvider(Provider):
             mutelist_path: Path to the mutelist file
             mutelist_content: Mutelist content
             atlas_project_id: Project ID to filter
+            atlas_organization_id: Organization ID
         """
         logger.info("Instantiating MongoDB Atlas Provider...")
 
@@ -79,6 +82,7 @@ class MongodbatlasProvider(Provider):
 
         # Store filter options
         self._project_id = atlas_project_id
+        self._organization_id = atlas_organization_id
 
         # Audit Config
         if config_content:
@@ -292,6 +296,7 @@ class MongodbatlasProvider(Provider):
         atlas_public_key: str = "",
         atlas_private_key: str = "",
         raise_on_exception: bool = True,
+        provider_id: str = None,
     ) -> Connection:
         """
         Test connection to MongoDB Atlas
@@ -300,7 +305,7 @@ class MongodbatlasProvider(Provider):
             atlas_public_key: MongoDB Atlas API public key
             atlas_private_key: MongoDB Atlas API private key
             raise_on_exception: Whether to raise exceptions
-
+            provider_id: MongoDB Atlas project ID to validate access (added for API compatibility)
         Returns:
             Connection: Connection status
         """
@@ -310,10 +315,17 @@ class MongodbatlasProvider(Provider):
                 atlas_private_key=atlas_private_key,
             )
 
-            MongodbatlasProvider.setup_identity(session)
+            identity = MongodbatlasProvider.setup_identity(session)
+
+            if provider_id and identity.organization_id != provider_id:
+                raise MongoDBAtlasInvalidOrganizationIdError(
+                    file=os.path.basename(__file__),
+                    message=f"The provided credentials do not have access to the organization with the provided ID: {provider_id}",
+                )
 
             return Connection(is_connected=True)
-
+        except MongoDBAtlasInvalidOrganizationIdError:
+            raise
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

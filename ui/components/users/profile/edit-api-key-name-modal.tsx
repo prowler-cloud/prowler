@@ -6,9 +6,9 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateApiKey } from "@/actions/api-keys/api-keys";
+import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
-import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
 import { Form, FormButtons } from "@/components/ui/form";
 
 import { EnrichedApiKey } from "./api-keys/types";
@@ -92,8 +92,8 @@ export const EditApiKeyNameModal = ({
   };
 
   return (
-    <CustomAlertModal
-      isOpen={isOpen}
+    <Modal
+      open={isOpen}
       onOpenChange={(open) => !open && handleClose()}
       title="Edit API Key Name"
       size="lg"
@@ -117,7 +117,6 @@ export const EditApiKeyNameModal = ({
               placeholder="My API Key"
               variant="bordered"
               isRequired
-              isInvalid={!!form.formState.errors.name}
             />
           </div>
 
@@ -130,6 +129,6 @@ export const EditApiKeyNameModal = ({
           />
         </form>
       </Form>
-    </CustomAlertModal>
+    </Modal>
   );
 };

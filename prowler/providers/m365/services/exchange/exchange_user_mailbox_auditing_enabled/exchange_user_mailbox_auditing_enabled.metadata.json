@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Exchange Mailboxes Properties",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure mailbox auditing is enabled for all user mailboxes, including the configuration of audit actions for owners, delegates, and admins beyond the Microsoft defaults. The difference between both subscription is the log age so this parameter is configurable and users can set it to their subscription needs.",
   "Risk": "If auditing is not properly enabled and configured, critical mailbox actions may go unrecorded, reducing the ability to investigate incidents, enforce compliance, or detect malicious behavior.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/purview/audit-mailboxes?view=o365-worldwide",

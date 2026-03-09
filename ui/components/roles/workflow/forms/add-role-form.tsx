@@ -5,20 +5,17 @@ import { Divider } from "@heroui/divider";
 import { Tooltip } from "@heroui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "clsx";
-import { InfoIcon, SaveIcon } from "lucide-react";
+import { InfoIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { addRole } from "@/actions/roles/roles";
+import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
-import {
-  CustomButton,
-  CustomDropdownSelection,
-  CustomInput,
-} from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
+import { CustomInput } from "@/components/ui/custom";
+import { Form, FormButtons } from "@/components/ui/form";
 import { getErrorMessage, permissionFormFields } from "@/lib";
 import { addRoleFormSchema, ApiError } from "@/types";
 
@@ -162,7 +159,6 @@ export const AddRoleForm = ({
           placeholder="Enter role name"
           variant="bordered"
           isRequired
-          isInvalid={!!form.formState.errors.name}
         />
 
         <div className="flex flex-col gap-4">
@@ -178,6 +174,7 @@ export const AddRoleForm = ({
               label: "text-small",
               wrapper: "checkbox-update",
             }}
+            color="default"
           >
             Grant all admin permissions
           </Checkbox>
@@ -199,6 +196,7 @@ export const AddRoleForm = ({
                       label: "text-small",
                       wrapper: "checkbox-update",
                     }}
+                    color="default"
                   >
                     {label}
                   </Checkbox>
@@ -235,15 +233,21 @@ export const AddRoleForm = ({
               name="groups"
               control={form.control}
               render={({ field }) => (
-                <CustomDropdownSelection
-                  label="Select Groups"
-                  name="groups"
-                  values={groups}
-                  selectedKeys={field.value || []}
-                  onChange={(name, selectedValues) =>
-                    field.onChange(selectedValues)
-                  }
-                />
+                <div className="flex flex-col gap-2">
+                  <EnhancedMultiSelect
+                    options={groups.map((group) => ({
+                      label: group.name,
+                      value: group.id,
+                    }))}
+                    onValueChange={field.onChange}
+                    defaultValue={field.value || []}
+                    placeholder="Select groups"
+                    searchable={true}
+                    hideSelectAll={true}
+                    emptyIndicator="No results found"
+                    resetOnDefaultValueChange={true}
+                  />
+                </div>
               )}
             />
             {form.formState.errors.groups && (
@@ -253,20 +257,7 @@ export const AddRoleForm = ({
             )}
           </div>
         )}
-        <div className="flex w-full justify-end sm:gap-6">
-          <CustomButton
-            type="submit"
-            ariaLabel="Add Role"
-            className="w-1/2"
-            variant="solid"
-            color="action"
-            size="lg"
-            isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
-          >
-            {isLoading ? <>Loading</> : <span>Add Role</span>}
-          </CustomButton>
-        </div>
+        <FormButtons submitText="Add Role" isDisabled={isLoading} />
       </form>
     </Form>
   );

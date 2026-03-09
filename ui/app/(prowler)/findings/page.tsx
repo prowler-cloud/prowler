@@ -1,7 +1,7 @@
-import { Spacer } from "@heroui/spacer";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 
 import {
+  getFindingById,
   getFindings,
   getLatestFindings,
   getLatestMetadataInfo,
@@ -9,13 +9,14 @@ import {
 } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
+import { FindingDetailsSheet } from "@/components/findings";
 import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
-  ColumnFindings,
+  FindingsTableWithSelection,
   SkeletonTableFindings,
 } from "@/components/findings/table";
 import { ContentLayout } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
+import { FilterTransitionWrapper } from "@/contexts";
 import {
   createDict,
   createScanDetailsMapping,
@@ -24,10 +25,10 @@ import {
   hasDateOrScanFilter,
 } from "@/lib";
 import {
-  createProviderDetailsMapping,
-  extractProviderUIDs,
+  createProviderDetailsMappingById,
+  extractProviderIds,
 } from "@/lib/provider-helpers";
-import { FilterEntity, ScanEntity, ScanProps } from "@/types";
+import { ScanEntity, ScanProps } from "@/types";
 import { FindingProps, SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
@@ -36,35 +37,97 @@ export default async function Findings({
   searchParams: Promise<SearchParamsProps>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const { searchParamsKey, encodedSort } =
-    extractSortAndKey(resolvedSearchParams);
+  const { encodedSort } = extractSortAndKey(resolvedSearchParams);
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
   // Check if the searchParams contain any date or scan filter
   const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
 
-  const [metadataInfoData, providersData, scansData] = await Promise.all([
-    (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
-      query,
-      sort: encodedSort,
-      filters,
-    }),
-    getProviders({ pageSize: 50 }),
-    getScans({ pageSize: 50 }),
-  ]);
+  // Check if there's a specific finding ID to fetch
+  const findingId = resolvedSearchParams.id?.toString();
 
-  // Extract unique regions and services from the new endpoint
+  const [metadataInfoData, providersData, scansData, findingByIdData] =
+    await Promise.all([
+      (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
+        query,
+        sort: encodedSort,
+        filters,
+      }),
+      getProviders({ pageSize: 50 }),
+      getScans({ pageSize: 50 }),
+      findingId
+        ? getFindingById(findingId, "resources,scan.provider")
+        : Promise.resolve(null),
+    ]);
+
+  // Process the finding data to match the expected structure
+  const processedFinding = findingByIdData?.data
+    ? (() => {
+        const finding = findingByIdData.data;
+        const included = findingByIdData.included || [];
+
+        // Build dictionaries from included data
+        type IncludedItem = {
+          type: string;
+          id: string;
+          attributes: Record<string, unknown>;
+          relationships?: {
+            provider?: { data?: { id: string } };
+          };
+        };
+
+        const resourceDict: Record<string, unknown> = {};
+        const scanDict: Record<string, IncludedItem> = {};
+        const providerDict: Record<string, unknown> = {};
+
+        included.forEach((item: IncludedItem) => {
+          if (item.type === "resources") {
+            resourceDict[item.id] = {
+              id: item.id,
+              attributes: item.attributes,
+            };
+          } else if (item.type === "scans") {
+            scanDict[item.id] = item;
+          } else if (item.type === "providers") {
+            providerDict[item.id] = {
+              id: item.id,
+              attributes: item.attributes,
+            };
+          }
+        });
+
+        const scanId = finding.relationships?.scan?.data?.id;
+        const resourceId = finding.relationships?.resources?.data?.[0]?.id;
+        const scan = scanId ? scanDict[scanId] : undefined;
+        const providerId = scan?.relationships?.provider?.data?.id;
+        const resource = resourceId ? resourceDict[resourceId] : undefined;
+        const provider = providerId ? providerDict[providerId] : undefined;
+
+        return {
+          ...finding,
+          relationships: {
+            scan: scan
+              ? { data: scan, attributes: scan.attributes }
+              : undefined,
+            resource: resource,
+            provider: provider,
+          },
+        } as FindingProps;
+      })()
+    : null;
+
+  // Extract unique regions, services, categories, groups from the new endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
   const uniqueResourceTypes =
     metadataInfoData?.data?.attributes?.resource_types || [];
+  const uniqueCategories = metadataInfoData?.data?.attributes?.categories || [];
+  const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
 
-  // Extract provider UIDs and details using helper functions
-  const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
+  // Extract provider IDs and details using helper functions
+  const providerIds = providersData ? extractProviderIds(providersData) : [];
   const providerDetails = providersData
-    ? (createProviderDetailsMapping(providerUIDs, providersData) as {
-        [uid: string]: FilterEntity;
-      }[])
+    ? createProviderDetailsMappingById(providerIds, providersData)
     : [];
 
   // Extract scan UUIDs with "completed" state and more than one resource
@@ -78,26 +141,33 @@ export default async function Findings({
     completedScans?.map((scan: ScanProps) => scan.id) || [];
 
   const scanDetails = createScanDetailsMapping(
-    completedScans,
+    completedScans || [],
     providersData,
   ) as { [uid: string]: ScanEntity }[];
 
   return (
     <ContentLayout title="Findings" icon="lucide:tag">
-      <FindingsFilters
-        providerUIDs={providerUIDs}
-        providerDetails={providerDetails}
-        completedScans={completedScans || []}
-        completedScanIds={completedScanIds}
-        scanDetails={scanDetails}
-        uniqueRegions={uniqueRegions}
-        uniqueServices={uniqueServices}
-        uniqueResourceTypes={uniqueResourceTypes}
-      />
-      <Spacer y={8} />
-      <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
-        <SSRDataTable searchParams={resolvedSearchParams} />
-      </Suspense>
+      <FilterTransitionWrapper>
+        <div className="mb-6">
+          <FindingsFilters
+            providers={providersData?.data || []}
+            providerIds={providerIds}
+            providerDetails={providerDetails}
+            completedScans={completedScans || []}
+            completedScanIds={completedScanIds}
+            scanDetails={scanDetails}
+            uniqueRegions={uniqueRegions}
+            uniqueServices={uniqueServices}
+            uniqueResourceTypes={uniqueResourceTypes}
+            uniqueCategories={uniqueCategories}
+            uniqueGroups={uniqueGroups}
+          />
+        </div>
+        <Suspense fallback={<SkeletonTableFindings />}>
+          <SSRDataTable searchParams={resolvedSearchParams} />
+        </Suspense>
+      </FilterTransitionWrapper>
+      {processedFinding && <FindingDetailsSheet finding={processedFinding} />}
     </ContentLayout>
   );
 }
@@ -164,9 +234,7 @@ const SSRDataTable = async ({
           <p>{findingsData.errors[0].detail}</p>
         </div>
       )}
-      <DataTable
-        key={Date.now()}
-        columns={ColumnFindings}
+      <FindingsTableWithSelection
         data={expandedResponse?.data || []}
         metadata={findingsData?.meta}
       />

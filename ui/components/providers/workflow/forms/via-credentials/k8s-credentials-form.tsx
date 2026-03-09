@@ -1,6 +1,6 @@
 import { Control } from "react-hook-form";
 
-import { CustomTextarea } from "@/components/ui/custom";
+import { WizardTextareaField } from "@/components/providers/workflow/forms/fields";
 import { KubernetesCredentials } from "@/types";
 
 export const KubernetesCredentialsForm = ({
@@ -18,7 +18,7 @@ export const KubernetesCredentialsForm = ({
           Please provide the kubeconfig content for your Kubernetes credentials.
         </div>
       </div>
-      <CustomTextarea
+      <WizardTextareaField
         control={control}
         name="kubeconfig_content"
         label="Kubeconfig Content"
@@ -27,7 +27,6 @@ export const KubernetesCredentialsForm = ({
         variant="bordered"
         minRows={10}
         isRequired
-        isInvalid={!!control._formState.errors.kubeconfig_content}
       />
     </>
   );

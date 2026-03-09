@@ -1,6 +1,7 @@
 name: 'Tools: PR Conflict Checker'
 
 on:
+  # zizmor: ignore[dangerous-triggers] - intentional: needs write access for conflict labels/comments, checkout uses PR head SHA for read-only grep
   pull_request_target:
     types:
       - 'opened'
@@ -25,14 +26,15 @@ jobs:
 
     steps:
       - name: Checkout PR head
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Get changed files
         id: changed-files
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
         with:
           files: '**'
 
@@ -45,7 +47,7 @@ jobs:
           HAS_CONFLICTS=false
 
           # Check each changed file for conflict markers
-          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+          for file in ${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}; do
             if [ -f "$file" ]; then
               echo "Checking file: $file"
 
@@ -70,6 +72,8 @@ jobs:
             echo "has_conflicts=false" >> $GITHUB_OUTPUT
             echo "No conflict markers found in changed files"
           fi
+        env:
+          STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
 
       - name: Manage conflict label
         env:
@@ -97,7 +101,7 @@ jobs:
           body-includes: '<!-- conflict-checker-comment -->'
 
       - name: Create or update comment
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}

@@ -7,15 +7,12 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
   "Description": "Microsoft Purview tenant setting for **audit log search** is assessed to confirm unified audit log ingestion (`UnifiedAuditLogIngestionEnabled`), which records user and admin activities and makes them searchable.",
   "Risk": "Without **audit log ingestion/search**, activity trails are missing or delayed, reducing visibility and accountability.\n- Data exfiltration and privilege abuse go undetected (confidentiality/integrity)\n- Incident response and forensics fail due to absent evidence, increasing dwell time",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/purview/audit-search",
-    "https://compliance.microsoft.com.",
-    "https://www.tenable.com/audits/items/CIS_Microsoft_365_v1.5.0_E3_Level_1.audit:63d04d00b1e7ed175c72ae6c2e2c80ea",
-    "https://www.tenable.com/audits/items/CIS_Microsoft_365_v2.0.0_E3_Level_1.audit:4fdccb74c65ae6e0849ae23f74122e96",
     "https://learn.microsoft.com/en-us/purview/audit-search?tabs=microsoft-purview-portal",
     "https://learn.microsoft.com/en-us/purview/audit-log-enable-disable"
   ],

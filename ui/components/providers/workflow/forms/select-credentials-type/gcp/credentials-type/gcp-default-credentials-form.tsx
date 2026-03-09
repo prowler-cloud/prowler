@@ -1,6 +1,6 @@
 import { Control } from "react-hook-form";
 
-import { CustomInput } from "@/components/ui/custom";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { GCPDefaultCredentials } from "@/types";
 
 export const GCPDefaultCredentialsForm = ({
@@ -18,7 +18,7 @@ export const GCPDefaultCredentialsForm = ({
           Please provide the information for your GCP credentials.
         </div>
       </div>
-      <CustomInput
+      <WizardInputField
         control={control}
         name="client_id"
         type="text"
@@ -27,9 +27,8 @@ export const GCPDefaultCredentialsForm = ({
         placeholder="Enter the Client ID"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.client_id}
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name="client_secret"
         type="password"
@@ -38,9 +37,8 @@ export const GCPDefaultCredentialsForm = ({
         placeholder="Enter the Client Secret"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.client_secret}
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name="refresh_token"
         type="password"
@@ -49,7 +47,6 @@ export const GCPDefaultCredentialsForm = ({
         placeholder="Enter the Refresh Token"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.refresh_token}
       />
     </>
   );

@@ -1,3 +1,4 @@
+import pytest
 from mock import patch
 
 from prowler.lib.check.checks_loader import (
@@ -190,18 +191,22 @@ class TestCheckLoader:
     def test_load_checks_to_execute_with_severities_and_services_not_within_severity(
         self,
     ):
+        """Test that service not in metadata causes sys.exit(1) when used with severities"""
         bulk_checks_metatada = {
             S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
         }
         service_list = ["ec2"]
         severities = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY]
 
-        assert set() == load_checks_to_execute(
-            bulk_checks_metadata=bulk_checks_metatada,
-            service_list=service_list,
-            severities=severities,
-            provider=self.provider,
-        )
+        # ec2 service doesn't exist in the metadata, so it should exit with error
+        with pytest.raises(SystemExit) as exc_info:
+            load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metatada,
+                service_list=service_list,
+                severities=severities,
+                provider=self.provider,
+            )
+        assert exc_info.value.code == 1
 
     def test_load_checks_to_execute_with_checks_file(
         self,
@@ -382,3 +387,140 @@ class TestCheckLoader:
             categories=categories,
             provider=self.provider,
         )
+
+    def test_load_checks_to_execute_with_invalid_check(self):
+        """Test that invalid check names cause sys.exit(1)"""
+        bulk_checks_metatada = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+        check_list = ["invalid_check_name"]
+
+        with pytest.raises(SystemExit) as exc_info:
+            load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metatada,
+                check_list=check_list,
+                provider=self.provider,
+            )
+        assert exc_info.value.code == 1
+
+    def test_load_checks_to_execute_with_multiple_invalid_checks(self):
+        """Test that multiple invalid check names cause sys.exit(1)"""
+        bulk_checks_metatada = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+        check_list = ["invalid_check_1", "invalid_check_2", "invalid_check_3"]
+
+        with pytest.raises(SystemExit) as exc_info:
+            load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metatada,
+                check_list=check_list,
+                provider=self.provider,
+            )
+        assert exc_info.value.code == 1
+
+    def test_load_checks_to_execute_with_mixed_valid_invalid_checks(self):
+        """Test that mix of valid and invalid checks cause sys.exit(1)"""
+        bulk_checks_metatada = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+        check_list = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME, "invalid_check"]
+
+        with pytest.raises(SystemExit) as exc_info:
+            load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metatada,
+                check_list=check_list,
+                provider=self.provider,
+            )
+        assert exc_info.value.code == 1
+
+    def test_load_checks_to_execute_with_invalid_service(self):
+        """Test that invalid service names cause sys.exit(1)"""
+        bulk_checks_metatada = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+        service_list = ["invalid_service"]
+
+        with pytest.raises(SystemExit) as exc_info:
+            load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metatada,
+                service_list=service_list,
+                provider=self.provider,
+            )
+        assert exc_info.value.code == 1
+
+    def test_load_checks_to_execute_with_invalid_service_and_severity(self):
+        """Test that invalid service names with severity cause sys.exit(1)"""
+        bulk_checks_metatada = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+        service_list = ["invalid_service"]
+        severities = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY]
+
+        with pytest.raises(SystemExit) as exc_info:
+            load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metatada,
+                service_list=service_list,
+                severities=severities,
+                provider=self.provider,
+            )
+        assert exc_info.value.code == 1
+
+    def test_load_checks_to_execute_with_multiple_invalid_services(self):
+        """Test that multiple invalid service names cause sys.exit(1)"""
+        bulk_checks_metatada = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+        service_list = ["invalid_service_1", "invalid_service_2"]
+
+        with pytest.raises(SystemExit) as exc_info:
+            load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metatada,
+                service_list=service_list,
+                provider=self.provider,
+            )
+        assert exc_info.value.code == 1
+
+    def test_load_checks_to_execute_with_invalid_category(self):
+        """Test that invalid category names cause sys.exit(1)"""
+        bulk_checks_metatada = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+        categories = {"invalid_category"}
+
+        with pytest.raises(SystemExit) as exc_info:
+            load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metatada,
+                categories=categories,
+                provider=self.provider,
+            )
+        assert exc_info.value.code == 1
+
+    def test_load_checks_to_execute_with_multiple_invalid_categories(self):
+        """Test that multiple invalid category names cause sys.exit(1)"""
+        bulk_checks_metatada = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+        categories = {"invalid_category_1", "invalid_category_2"}
+
+        with pytest.raises(SystemExit) as exc_info:
+            load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metatada,
+                categories=categories,
+                provider=self.provider,
+            )
+        assert exc_info.value.code == 1
+
+    def test_load_checks_to_execute_with_mixed_valid_invalid_categories(self):
+        """Test that mix of valid and invalid categories cause sys.exit(1)"""
+        bulk_checks_metatada = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+        categories = {"internet-exposed", "invalid_category"}
+
+        with pytest.raises(SystemExit) as exc_info:
+            load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metatada,
+                categories=categories,
+                provider=self.provider,
+            )
+        assert exc_info.value.code == 1

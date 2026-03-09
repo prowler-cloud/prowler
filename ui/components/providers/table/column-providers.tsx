@@ -45,21 +45,27 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
   },
   {
     accessorKey: "scanJobs",
-    header: "Scan Jobs",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Scan Jobs" />
+    ),
     cell: ({ row }) => {
       const {
         attributes: { uid },
       } = getProviderData(row);
       return <LinkToScans providerUid={uid} />;
     },
+    enableSorting: false,
   },
   {
     accessorKey: "groupNames",
-    header: "Groups",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Groups" />
+    ),
     cell: ({ row }) => {
       const { groupNames } = getProviderData(row);
       return <GroupNameChips groupNames={groupNames || []} />;
     },
+    enableSorting: false,
   },
   {
     accessorKey: "uid",
@@ -95,9 +101,11 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
   },
   {
     id: "actions",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
     cell: ({ row }) => {
       return <DataTableRowActions row={row} />;
     },
+    enableSorting: false,
   },
 ];
 

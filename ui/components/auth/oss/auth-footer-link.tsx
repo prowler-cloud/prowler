@@ -14,7 +14,7 @@ export const AuthFooterLink = ({
   return (
     <p className="text-small text-center">
       {text}&nbsp;
-      <CustomLink size="base" href={href} target="_self">
+      <CustomLink size="md" href={href} target="_self">
         {linkText}
       </CustomLink>
     </p>

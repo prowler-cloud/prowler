@@ -1,16 +1,15 @@
 "use client";
 
-import { Card, CardBody } from "@heroui/card";
 import { Progress } from "@heroui/progress";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useState } from "react";
 
-import { DownloadIconButton, toast } from "@/components/ui";
-import { downloadComplianceCsv } from "@/lib/helper";
+import { Card, CardContent } from "@/components/shadcn/card/card";
+import { getReportTypeForFramework } from "@/lib/compliance/compliance-report-types";
 import { ScanEntity } from "@/types/scans";
 
 import { getComplianceIcon } from "../icons";
+import { ComplianceDownloadContainer } from "./compliance-download-container";
 
 interface ComplianceCardProps {
   title: string;
@@ -38,7 +37,6 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   const searchParams = useSearchParams();
   const router = useRouter();
   const hasRegionFilter = searchParams.has("filter[region__in]");
-  const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   const formatTitle = (title: string) => {
     return title.split("-").join(" ");
@@ -47,23 +45,6 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   const ratingPercentage = Math.floor(
     (passingRequirements / totalRequirements) * 100,
   );
-
-  // Calculates the percentage change in passing requirements compared to the previous scan.
-  //
-  // const prevRatingPercentage = Math.floor(
-  //   (prevPassingRequirements / prevTotalRequirements) * 100,
-  // );
-
-  // const getScanChange = () => {
-  //   const scanDifference = ratingPercentage - prevRatingPercentage;
-  //   if (scanDifference < 0 && scanDifference <= -1) {
-  //     return `${scanDifference}% from last scan`;
-  //   }
-  //   if (scanDifference > 0 && scanDifference >= 1) {
-  //     return `+${scanDifference}% from last scan`;
-  //   }
-  //   return "No changes from last scan";
-  // };
 
   const getRatingColor = (ratingPercentage: number) => {
     if (ratingPercentage <= 10) {
@@ -102,21 +83,15 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
 
     router.push(`${path}?${params.toString()}`);
   };
-  const handleDownload = async () => {
-    setIsDownloading(true);
-    try {
-      await downloadComplianceCsv(scanId, complianceId, toast);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
 
   return (
-    <Card fullWidth isHoverable shadow="sm">
-      <CardBody
-        className="dark:bg-prowler-blue-800 flex cursor-pointer flex-row items-center justify-between gap-4"
-        onClick={navigateToDetail}
-      >
+    <Card
+      variant="base"
+      padding="md"
+      className="cursor-pointer transition-shadow hover:shadow-md"
+      onClick={navigateToDetail}
+    >
+      <CardContent className="p-0">
         <div className="flex w-full items-center gap-4">
           {getComplianceIcon(title) && (
             <Image
@@ -158,22 +133,21 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
                     e.stopPropagation();
                   }
                 }}
-                role="button"
+                role="group"
                 tabIndex={0}
               >
-                <DownloadIconButton
-                  paramId={complianceId}
-                  onDownload={handleDownload}
-                  textTooltip="Download compliance CSV report"
-                  isDisabled={hasRegionFilter}
-                  isDownloading={isDownloading}
+                <ComplianceDownloadContainer
+                  compact
+                  scanId={scanId}
+                  complianceId={complianceId}
+                  reportType={getReportTypeForFramework(title)}
+                  disabled={hasRegionFilter}
                 />
               </div>
-              {/* <small>{getScanChange()}</small> */}
             </div>
           </div>
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 };

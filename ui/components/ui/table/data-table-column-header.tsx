@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import { Column } from "@tanstack/react-table";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HTMLAttributes } from "react";
@@ -65,26 +64,34 @@ export const DataTableColumnHeader = <TData, TValue>({
       currentSortParam === "" ||
       (currentSortParam !== param && currentSortParam !== `-${param}`)
     ) {
-      return <ChevronsLeftRightIcon size={14} className="ml-2 rotate-90" />;
+      return <ChevronsLeftRightIcon size={14} className="ml-1 rotate-90" />;
     }
     return currentSortParam === `-${param}` ? (
-      <ArrowDownIcon size={12} className="ml-2" />
+      <ArrowDownIcon size={12} className="ml-1" />
     ) : (
-      <ArrowUpIcon size={12} className="ml-2" />
+      <ArrowUpIcon size={12} className="ml-1" />
     );
   };
 
+  const baseClassName =
+    "text-text-neutral-primary flex h-8 items-center text-left align-middle text-sm font-semibold whitespace-nowrap outline-none -ml-px";
+
   if (!column.getCanSort()) {
-    return <div>{title}</div>;
+    return (
+      <div className={baseClassName}>
+        <span className="block break-normal whitespace-nowrap">{title}</span>
+      </div>
+    );
   }
 
   return (
-    <Button
-      className="text-tiny text-foreground-500 flex h-10 w-full items-center justify-between bg-transparent px-0 text-left align-middle font-semibold whitespace-nowrap outline-none dark:text-slate-400"
-      onPress={getToggleSortingHandler}
+    <button
+      type="button"
+      className={`${baseClassName} hover:text-text-neutral-tertiary cursor-pointer`}
+      onClick={getToggleSortingHandler}
     >
       <span className="block break-normal whitespace-nowrap">{title}</span>
       {renderSortIcon()}
-    </Button>
+    </button>
   );
 };

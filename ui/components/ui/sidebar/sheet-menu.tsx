@@ -22,10 +22,7 @@ export function SheetMenu() {
           <MenuIcon size={20} />
         </Button>
       </SheetTrigger>
-      <SheetContent
-        className="dark:bg-prowler-theme-midnight flex h-full flex-col px-3 sm:w-72"
-        side="left"
-      >
+      <SheetContent className="flex h-full flex-col px-3 sm:w-72" side="left">
         <SheetHeader>
           <SheetTitle className="sr-only">Sidebar</SheetTitle>
           <SheetDescription className="sr-only" />

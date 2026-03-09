@@ -11,13 +11,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsLambdaFunction",
+  "ResourceGroup": "serverless",
   "Description": "**Lambda functions** using **obsolete runtimes**-such as `python3.8`, `nodejs14.x`, `go1.x`, `ruby2.7`-are identified against a curated list of deprecated runtime identifiers.",
   "Risk": "Unmaintained runtimes lack security patches, exposing code and libraries to known CVEs (**confidentiality, integrity**).\n\nDeprecation can block create/update and break builds, causing failed deployments or runtime errors (**availability**). Tooling may stop supporting builds, slowing fixes and recovery.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://aws.amazon.com/blogs/compute/managing-aws-lambda-runtime-upgrades/",
     "https://docs.aws.amazon.com/lambda/latest/dg/runtime-support-policy.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/supported-runtime-environment.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Lambda/supported-runtime-environment.html",
     "https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html"
   ],
   "Remediation": {
@@ -32,9 +33,7 @@
       "Url": "https://hub.prowler.com/check/awslambda_function_using_supported_runtimes"
     }
   },
-  "Categories": [
-    "container-security"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -10,7 +10,7 @@ This can help for really large accounts, but please be aware of AWS API rate lim
 2. **API Rate Limits**: Most of the rate limits in AWS are applied at the API level. Each API call to an AWS service counts towards the rate limit for that service.
 3. **Throttling Responses**: When you exceed the rate limit for a service, AWS responds with a throttling error. In AWS SDKs, these are typically represented as `ThrottlingException` or `RateLimitExceeded` errors.
 
-For information on Prowler's retrier configuration please refer to this [page](https://docs.prowler.cloud/en/latest/tutorials/aws/boto3-configuration/).
+For information on Prowler's retrier configuration please refer to this [page](https://docs.prowler.com/user-guide/providers/aws/boto3-configuration/).
 
 <Note>
 You might need to increase the `--aws-retries-max-attempts` parameter from the default value of 3. The retrier follows an exponential backoff strategy.
