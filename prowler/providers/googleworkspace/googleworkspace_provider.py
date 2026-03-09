@@ -479,6 +479,7 @@ class GoogleworkspaceProvider(Provider):
         credentials_content: str = None,
         delegated_user: str = None,
         raise_on_exception: bool = True,
+        provider_id: str = None,
     ) -> Connection:
         """Test connection to Google Workspace.
 
@@ -489,6 +490,7 @@ class GoogleworkspaceProvider(Provider):
             credentials_content (str): Service Account JSON credentials as a string.
             delegated_user (str): Email of the user to impersonate via Domain-Wide Delegation.
             raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
+            provider_id (str): The provider ID (Customer ID). Optional, not used in connection test.
 
         Returns:
             Connection: Connection object with success status or error information.
