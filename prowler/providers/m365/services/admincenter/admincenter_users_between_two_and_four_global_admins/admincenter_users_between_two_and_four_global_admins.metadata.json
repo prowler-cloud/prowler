@@ -6,7 +6,7 @@
   "ServiceName": "admincenter",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "Count of users assigned the **Global Administrator** role in the **Microsoft 365 tenant** is between `2` and `4` (inclusive).",

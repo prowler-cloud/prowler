@@ -6,7 +6,7 @@
   "ServiceName": "admincenter",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
   "Description": "**Microsoft 365 calendar sharing** is evaluated at the organization level to determine if sharing with external recipients is disabled, including blocking anonymous access and links sent outside the tenant.",

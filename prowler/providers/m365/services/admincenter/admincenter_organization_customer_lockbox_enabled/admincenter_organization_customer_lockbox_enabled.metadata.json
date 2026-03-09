@@ -6,7 +6,7 @@
   "ServiceName": "admincenter",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
   "Description": "**Microsoft 365 organization** setting indicates whether **Customer Lockbox** is enabled to require explicit approval for Microsoft support access to customer content",
