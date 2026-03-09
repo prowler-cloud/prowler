@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
   "Description": "**Alibaba Cloud Simple Log Service (SLS)** should have a metric filter and alarm configured for **Cloud Firewall** rule changes. By directing **ActionTrail** logs to SLS and establishing corresponding query and alert rules, real-time monitoring of firewall modifications can be achieved. This ensures that any creation, update, or deletion of Cloud Firewall control policies is promptly detected and reviewed.",
   "Risk": "Without monitoring for **Cloud Firewall** changes, unauthorized or accidental modifications to firewall rules may go undetected. This could lead to **network exposure**, allowing malicious traffic to reach protected resources or blocking legitimate traffic. Failure to detect firewall rule changes in a timely manner increases the risk of **data breaches**, **lateral movement**, and **service disruption**.",

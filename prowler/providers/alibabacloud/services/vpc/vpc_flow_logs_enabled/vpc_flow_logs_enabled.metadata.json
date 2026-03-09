@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::VPC::FlowLog",
   "ResourceGroup": "network",
   "Description": "**Alibaba Cloud VPC Flow Logs** capture IP traffic information for Elastic Network Interfaces, VSwitches, or entire VPCs. When a flow log is created for a VPC, all ENIs within it, including newly created ones, are automatically monitored. Flow log data is stored in **Log Service** where it can be viewed and analyzed for security and operational purposes.",
   "Risk": "Without **VPC Flow Logs** enabled, there is no visibility into network traffic traversing the VPC. This prevents detection of **anomalous traffic patterns**, **unauthorized network connections**, and **data exfiltration attempts**, and severely limits the ability to investigate network-based security incidents.",

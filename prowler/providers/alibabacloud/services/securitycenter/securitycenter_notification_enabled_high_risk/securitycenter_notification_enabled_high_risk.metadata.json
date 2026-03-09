@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::SAS::Instance",
   "ResourceGroup": "security",
   "Description": "**Alibaba Cloud Security Center** should have all **risk item notifications** enabled across Vulnerability, Baseline Risks, Alerts, and AccessKey Leak event detection categories. This ensures that relevant security operators receive notifications as soon as critical security events occur, enabling timely incident response.",
   "Risk": "Without **notifications enabled** for high-risk items in Security Center, security operators may not be aware of critical security events such as **vulnerability discoveries**, **baseline violations**, **intrusion alerts**, and **AccessKey leaks** in a timely manner. This leads to **delayed incident response** and **prolonged security exposure**, increasing the potential impact of threats.",

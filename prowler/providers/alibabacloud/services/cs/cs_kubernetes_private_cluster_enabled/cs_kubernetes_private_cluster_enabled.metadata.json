@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::CS::ManagedKubernetesCluster",
   "ResourceGroup": "container",
   "Description": "**Alibaba Cloud Kubernetes Engine** clusters should be configured as **private clusters** to ensure that the API server endpoint is not accessible from the public internet. In a private cluster, nodes do not have public IP addresses and all communication between nodes and the master occurs privately through **VPC peering**. This significantly reduces the attack surface by eliminating direct internet exposure of the cluster's control plane and worker nodes.",
   "Risk": "Exposing the **API server endpoint** to the public internet increases the attack surface of the cluster, allowing attackers to probe for vulnerabilities, perform **brute force attacks** against authentication, or exploit misconfigurations. A publicly accessible API server can be targeted by automated scanning tools and botnets, increasing the risk of unauthorized access. This directly impacts the **confidentiality** and **integrity** of the cluster by potentially allowing attackers to execute commands, deploy malicious workloads, or exfiltrate sensitive data.",

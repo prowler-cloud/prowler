@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
   "Description": "**Alibaba Cloud Simple Log Service (SLS)** should have a query and alarm configured for **RAM Role** creation, deletion, and updating activities. By directing **ActionTrail** logs to SLS and establishing corresponding alert rules, real-time monitoring of role changes can be achieved. This ensures that any modifications to RAM roles are detected promptly, enabling early identification of unauthorized privilege escalation attempts.",
   "Risk": "Without monitoring for **RAM role changes**, unauthorized creation, modification, or deletion of roles may go undetected. This could lead to **privilege escalation**, where an attacker creates or modifies roles to gain elevated access to cloud resources. Undetected role changes compromise the **integrity** of the identity and access management framework and may result in **unauthorized access** to sensitive data and services across the entire cloud environment.",

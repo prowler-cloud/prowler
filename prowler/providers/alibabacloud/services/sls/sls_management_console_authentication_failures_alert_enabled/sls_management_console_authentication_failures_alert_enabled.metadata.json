@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
   "Description": "**Alibaba Cloud Simple Log Service (SLS)** should have a query and alarm configured for **failed console authentication attempts**. Real-time monitoring of API calls can be achieved by directing **ActionTrail** logs to SLS and establishing corresponding alert rules. This ensures that repeated login failures are detected promptly, enabling early identification of brute-force attacks or credential stuffing attempts against the Management Console.",
   "Risk": "Without monitoring for **failed console authentication attempts**, brute-force attacks and credential stuffing campaigns may go undetected. Failure to identify these patterns increases the risk of **unauthorized access** to the Management Console. Monitoring failed logins provides critical indicators such as source IP addresses that can be used for **threat correlation** and proactive blocking, reducing the time to detect and respond to **account compromise** attempts.",

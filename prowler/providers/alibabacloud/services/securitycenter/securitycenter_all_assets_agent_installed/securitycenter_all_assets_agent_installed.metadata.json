@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::SAS::Instance",
   "ResourceGroup": "security",
   "Description": "**Alibaba Cloud Security Center** requires an agent to be installed on each endpoint to provide comprehensive endpoint intrusion detection and protection capabilities. The agent enables remote logon detection, **webshell detection** and removal, **anomaly detection** of abnormal process behaviors and network connections, and monitoring of changes to key files and suspicious accounts.",
   "Risk": "Assets without the **Security Center agent** installed become blind spots in security monitoring, as they are not protected by endpoint intrusion detection capabilities. This leaves them vulnerable to **malware infections**, **unauthorized access**, **webshell attacks**, and **anomalous process execution** without any alerts being generated.",

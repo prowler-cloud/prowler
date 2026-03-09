@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::ECS::Disk",
   "ResourceGroup": "storage",
   "Description": "**Alibaba Cloud ECS cloud disk encryption** protects data at rest by automatically encrypting data when it is transferred from ECS instances to disks and decrypting it when read. This check verifies that unattached (detached) disks have encryption enabled, since unattached disks may still contain sensitive data from previous workloads and are especially vulnerable if not properly managed.",
   "Risk": "**Unencrypted unattached disks** pose a significant security risk as they may contain sensitive data that could be accessed if the disk is compromised or accessed by unauthorized parties. Unattached disks are especially vulnerable as they may be overlooked in security monitoring, increasing the risk of **unauthorized access** and **data breaches** that impact **confidentiality**.",

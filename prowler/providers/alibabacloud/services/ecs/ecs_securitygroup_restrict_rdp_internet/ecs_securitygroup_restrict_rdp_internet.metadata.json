@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::ECS::SecurityGroup",
   "ResourceGroup": "network",
   "Description": "**Alibaba Cloud ECS security groups** provide stateful filtering of ingress and egress network traffic to cloud resources. This check verifies that no security group allows unrestricted ingress access to port **3389** (RDP) from the internet (`0.0.0.0/0` or `::/0`). Restricting RDP access to trusted IP addresses significantly reduces the attack surface of ECS instances.",
   "Risk": "Unrestricted **RDP access** from the internet (`0.0.0.0/0`) exposes systems to **brute force attacks**, **credential stuffing**, and **exploitation of RDP vulnerabilities** such as BlueKeep. This can lead to **unauthorized access**, **data exfiltration**, and full system compromise, impacting **confidentiality**, **integrity**, and **availability**.",

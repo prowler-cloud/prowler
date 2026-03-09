@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::ECS::Instance",
   "ResourceGroup": "compute",
   "Description": "**Alibaba Cloud ECS instances** should use **VPC (Virtual Private Cloud)** networks instead of legacy classic networks. Legacy networks have a single IPv4 prefix range and a single gateway IP address for the whole network, preventing the creation of subnetworks or migration to auto/custom subnet networks. This check verifies that no ECS instances are configured with a legacy network type.",
   "Risk": "**Legacy networks** lack the security isolation and network segmentation capabilities provided by **VPCs**, creating a **single point of failure** for high-traffic instances. Without proper network segmentation, lateral movement by attackers becomes easier, impacting **confidentiality** and **integrity** of workloads sharing the same flat network.",

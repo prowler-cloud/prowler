@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::OSS::Bucket",
   "ResourceGroup": "storage",
   "Description": "**Alibaba Cloud OSS Bucket Access Logging** generates a log record for each request made to your OSS bucket, containing details such as the request type, the resources specified, and the time and date the request was processed. Enabling bucket access logging on all OSS buckets ensures that access patterns are recorded and available for security analysis and incident response workflows.",
   "Risk": "Without **OSS bucket logging** enabled, access events affecting objects within target buckets are not captured. This limits the ability to perform **security analysis**, **incident response**, and **forensic investigations**, as there is no record of who accessed or modified stored data.",

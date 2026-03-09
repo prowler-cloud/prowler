@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::RDS::DBInstance",
   "ResourceGroup": "database",
   "Description": "**Alibaba Cloud RDS PostgreSQL instances** should have the `log_disconnections` parameter set to `on`. Enabling this parameter logs session terminations and the duration of each session. This data is valuable for identifying abnormal disconnection patterns, troubleshooting performance issues, and supporting **security auditing** and **incident investigation**.",
   "Risk": "Without **disconnection logging**, it is harder to track session durations and identify abnormal disconnection patterns that might indicate **attacks**, **session hijacking**, or **stability issues**. This reduces visibility into database activity, impacting **security monitoring** and the ability to perform effective **forensic analysis**.",

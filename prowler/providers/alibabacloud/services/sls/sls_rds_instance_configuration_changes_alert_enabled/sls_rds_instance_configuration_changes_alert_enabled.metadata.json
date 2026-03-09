@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
   "Description": "**Alibaba Cloud Simple Log Service (SLS)** should have a metric filter and alarm configured for **RDS Instance** configuration changes. By directing **ActionTrail** logs to SLS and establishing corresponding alert rules, real-time monitoring of database configuration modifications can be achieved. This ensures that any changes to RDS instance settings, such as security parameters, network configurations, or access controls, are promptly detected and reviewed.",
   "Risk": "Without monitoring for **RDS Instance configuration changes**, unauthorized or accidental modifications to database servers may go undetected. This could lead to **security misconfigurations** such as enabling public access, disabling encryption, or weakening authentication settings. Delayed detection of configuration changes increases the risk of **data breaches**, **unauthorized database access**, and **service disruption**, potentially compromising the **confidentiality** and **integrity** of stored data.",

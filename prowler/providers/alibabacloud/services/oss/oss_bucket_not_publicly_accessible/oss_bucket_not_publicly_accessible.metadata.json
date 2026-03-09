@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::OSS::Bucket",
   "ResourceGroup": "storage",
   "Description": "**Alibaba Cloud Object Storage Service (OSS)** buckets store objects that may contain sensitive data. It is recommended that the access policy on OSS buckets does not allow **anonymous** or **public access**, ensuring that only authorized identities can interact with bucket contents. The bucket ACL should be set to `private` to prevent unintended data exposure.",
   "Risk": "Allowing **anonymous** or **public access** to OSS buckets grants permissions to anyone on the internet to read or modify bucket content. This can lead to **data breaches**, **unauthorized data exfiltration**, **data tampering**, and **compliance violations**, particularly when buckets contain sensitive or regulated information.",

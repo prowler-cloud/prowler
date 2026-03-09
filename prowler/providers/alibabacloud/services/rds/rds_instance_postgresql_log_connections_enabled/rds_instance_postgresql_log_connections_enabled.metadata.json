@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::RDS::DBInstance",
   "ResourceGroup": "database",
   "Description": "**Alibaba Cloud RDS PostgreSQL instances** should have the `log_connections` parameter set to `on`. Enabling this parameter logs each attempted connection to the server, including successful client authentication. This log data is essential for identifying, troubleshooting, and repairing configuration errors, detecting unauthorized access attempts, and supporting **security auditing**.",
   "Risk": "Without **connection logging** enabled, unauthorized access attempts to the database may go unnoticed, making it difficult to detect **brute-force attacks** or **credential compromise**. This gap in visibility impacts the ability to perform **security monitoring**, **incident investigation**, and **forensic analysis**, reducing overall **confidentiality** assurance.",

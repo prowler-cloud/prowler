@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::RDS::DBInstance",
   "ResourceGroup": "database",
   "Description": "**Alibaba Cloud RDS instances** should enforce **SSL encryption** for all incoming connections. SSL protects data in transit between the application and the database, preventing interception of sensitive data such as credentials, database queries, and query outputs. This check verifies that SSL encryption is enabled on the RDS instance.",
   "Risk": "If **SSL is not enabled**, data in transit including credentials and query results can be intercepted by attackers performing **Man-in-the-Middle (MITM) attacks**. This compromises data **confidentiality** and **integrity**, potentially leading to **credential theft**, **data exfiltration**, and unauthorized manipulation of database communications.",

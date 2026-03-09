@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::RAM::User",
   "ResourceGroup": "IAM",
   "Description": "**Alibaba Cloud RAM** access keys consist of an access key ID and a secret, which are used to sign programmatic requests. RAM users need their own access keys to make programmatic calls from SDKs, CLIs, or direct API calls. It is recommended that all access keys be **regularly rotated** every 90 days or less to reduce the window of opportunity for compromised keys to be used.",
   "Risk": "Access keys might be compromised by being left in code, configuration files, or cloud storage and then stolen by attackers. Without regular **access key rotation**, a compromised key can remain valid indefinitely, allowing persistent unauthorized access. This threatens the **confidentiality**, **integrity**, and **availability** of all resources accessible via those credentials.",

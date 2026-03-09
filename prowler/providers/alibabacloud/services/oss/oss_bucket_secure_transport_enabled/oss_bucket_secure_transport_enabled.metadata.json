@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "NotDefined",
+  "ResourceType": "ALIYUN::OSS::Bucket",
   "ResourceGroup": "storage",
   "Description": "**Alibaba Cloud OSS** buckets should enforce **secure transfer** by requiring all requests to use HTTPS. A bucket policy that denies requests with `acs:SecureTransport` set to `false` ensures that data in transit is encrypted, rejecting any unencrypted HTTP connections to the storage endpoint.",
   "Risk": "Without **secure transfer enforcement**, OSS buckets accept HTTP requests that transmit data in plaintext. This exposes stored data to potential **interception**, **man-in-the-middle attacks**, and **eavesdropping**, compromising data **confidentiality** and **integrity** during transit.",
