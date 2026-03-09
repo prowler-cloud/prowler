@@ -8,14 +8,11 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Attack Paths: Improved error handling for server errors (5xx) and network failures with user-friendly messages instead of raw internal errors and layout changes. [(#10249)](https://github.com/prowler-cloud/prowler/pull/10249)
 - Refactor simple providers with new components and styles.[(#10259)](https://github.com/prowler-cloud/prowler/pull/10259)
+- AWS Organizations onboarding now uses a clearer 3-step flow: deploy the ProwlerScan role in the management account via CloudFormation Stack, deploy to member accounts via StackSet with a copyable template URL, and confirm with the Role ARN [(#10274)](https://github.com/prowler-cloud/prowler/pull/10274)
 
 ---
 
 ## [1.19.1] (Prowler v5.19.1 UNRELEASED)
-
-### 🔄 Changed
-
-- AWS Organizations onboarding now uses a clearer 3-step flow: deploy the ProwlerScan role in the management account via CloudFormation Stack, deploy to member accounts via StackSet with a copyable template URL, and confirm with the Role ARN [(#10274)](https://github.com/prowler-cloud/prowler/pull/10274)
 
 ### 🐞 Fixed
 

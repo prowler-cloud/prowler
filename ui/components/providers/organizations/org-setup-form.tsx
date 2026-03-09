@@ -375,6 +375,7 @@ export function OrgSetupForm({
                 variant="outline"
                 size="lg"
                 className="border-border-input-primary bg-bg-input-primary text-button-tertiary hover:bg-bg-input-primary active:bg-bg-input-primary h-12 w-full justify-start"
+                disabled={!isExternalIdCopied}
                 asChild
               >
                 <a
