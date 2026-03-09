@@ -13,12 +13,17 @@ const organizationsActionsMock = vi.hoisted(() => ({
   listOrganizationUnitsSafe: vi.fn(),
 }));
 
+const scansActionsMock = vi.hoisted(() => ({
+  getScans: vi.fn(),
+}));
+
 vi.mock("@/actions/providers", () => providersActionsMock);
 vi.mock("@/actions/manage-groups", () => manageGroupsActionsMock);
 vi.mock(
   "@/actions/organizations/organizations",
   () => organizationsActionsMock,
 );
+vi.mock("@/actions/scans", () => scansActionsMock);
 
 import { SearchParamsProps } from "@/types";
 import { ProviderGroupsResponse } from "@/types/components";
@@ -190,6 +195,7 @@ const toProviderRow = (
   ...overrides,
   rowType: PROVIDERS_ROW_TYPE.PROVIDER,
   groupNames: provider.id === "provider-1" ? ["AWS Team"] : [],
+  hasSchedule: false,
   relationships: {
     ...provider.relationships,
     ...overrides?.relationships,
@@ -356,6 +362,7 @@ describe("loadProvidersAccountsViewData", () => {
     manageGroupsActionsMock.getProviderGroups.mockResolvedValue(
       providerGroupsResponse,
     );
+    scansActionsMock.getScans.mockResolvedValue({ data: [] });
 
     // When
     const viewData = await loadProvidersAccountsViewData({
@@ -439,6 +446,7 @@ describe("loadProvidersAccountsViewData", () => {
         },
       ],
     });
+    scansActionsMock.getScans.mockResolvedValue({ data: [] });
 
     // When
     const viewData = await loadProvidersAccountsViewData({
@@ -471,6 +479,7 @@ describe("loadProvidersAccountsViewData", () => {
     organizationsActionsMock.listOrganizationUnitsSafe.mockResolvedValue({
       data: [],
     });
+    scansActionsMock.getScans.mockResolvedValue({ data: [] });
 
     // When
     const viewData = await loadProvidersAccountsViewData({
