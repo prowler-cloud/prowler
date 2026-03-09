@@ -3,8 +3,9 @@ name: django-migration-psql
 description: >
   Reviews Django migration files for PostgreSQL best practices specific to Prowler.
   Trigger: When creating migrations, running makemigrations/pgmakemigrations, reviewing migration PRs,
-  adding indexes or constraints to database tables, or modifying existing migration files.
-  Always use this skill when you see AddIndex, CreateModel, or AddConstraint operations in migration files.
+  adding indexes or constraints to database tables, modifying existing migration files, or writing
+  data backfill migrations. Always use this skill when you see AddIndex, CreateModel, AddConstraint,
+  RunPython, bulk_create, bulk_update, or backfill operations in migration files.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
@@ -14,6 +15,7 @@ metadata:
     - "Creating or reviewing Django migrations"
     - "Adding indexes or constraints to database tables"
     - "Running makemigrations or pgmakemigrations"
+    - "Writing data backfill or data migration"
 allowed-tools: Read, Grep, Glob
 ---
 
@@ -246,6 +248,121 @@ WHERE indexrelid::regclass::text LIKE '%find_tenant_check_ins%';
 
 This is optional. For smaller tables or non-production environments, letting the migration run normally is fine.
 
+## Rule 5: data backfills — never inline, always batched
+
+Data backfills (updating existing rows, populating new columns, generating summary data) are the most dangerous migrations. A naive `Model.objects.all().update(...)` on a multi-million row table will hold a transaction lock for minutes, blow out WAL, and potentially OOM the worker.
+
+### Never backfill inline in the migration
+
+The migration should only dispatch the work. The actual backfill runs asynchronously via Celery tasks, outside the migration transaction.
+
+```python
+# 0090_backfill_finding_group_summaries.py
+from django.db import migrations
+
+def trigger_backfill(apps, schema_editor):
+    from tasks.jobs.backfill import backfill_finding_group_summaries_task
+    Tenant = apps.get_model("api", "Tenant")
+    from api.db_router import MainRouter
+
+    tenant_ids = Tenant.objects.using(MainRouter.admin_db).values_list("id", flat=True)
+    for tenant_id in tenant_ids:
+        backfill_finding_group_summaries_task.delay(tenant_id=str(tenant_id))
+
+class Migration(migrations.Migration):
+    dependencies = [("api", "0089_previous_migration")]
+    operations = [
+        migrations.RunPython(trigger_backfill, migrations.RunPython.noop),
+    ]
+```
+
+The migration finishes in seconds. The backfill runs in the background per-tenant.
+
+### Exception: trivial updates
+
+Single-statement bulk updates on small result sets are OK inline:
+
+```python
+# Fine — single UPDATE, small result set, no iteration
+def backfill_graph_data_ready(apps, schema_editor):
+    AttackPathsScan = apps.get_model("api", "AttackPathsScan")
+    AttackPathsScan.objects.using(MainRouter.admin_db).filter(
+        state="completed", graph_data_ready=False,
+    ).update(graph_data_ready=True)
+```
+
+Use inline only when you're confident the affected row count is small (< ~10K rows).
+
+### Batch processing in the Celery task
+
+The actual backfill task must process data in batches. Use the helpers in `api.db_utils`:
+
+```python
+from api.db_utils import create_objects_in_batches, update_objects_in_batches, batch_delete
+
+# Creating objects in batches (500 per transaction)
+create_objects_in_batches(tenant_id, ScanCategorySummary, summaries, batch_size=500)
+
+# Updating objects in batches
+update_objects_in_batches(tenant_id, Finding, findings, fields=["status"], batch_size=500)
+
+# Deleting in batches
+batch_delete(tenant_id, queryset, batch_size=settings.DJANGO_DELETION_BATCH_SIZE)
+```
+
+Each batch runs in its own `rls_transaction()` so:
+- A failure in batch N doesn't roll back batches 1 through N-1
+- Lock duration is bounded to the batch size
+- Memory stays constant regardless of total row count
+
+### Rules for backfill tasks
+
+1. **One RLS transaction per batch.** Never wrap the entire backfill in a single transaction. Each batch gets its own `rls_transaction(tenant_id)`.
+
+2. **Use `bulk_create` / `bulk_update` with explicit `batch_size`.** Never `.save()` in a loop. The default batch_size is 500.
+
+3. **Use `.iterator()` for reads.** When reading source data, use `queryset.iterator()` to avoid loading the entire result set into memory.
+
+4. **Use `.only()` / `.values_list()` for reads.** Fetch only the columns you need, not full model instances.
+
+5. **Catch and skip per-item failures.** Don't let one bad row kill the entire backfill. Log the error, count it, continue.
+
+```python
+scans_processed = 0
+scans_skipped = 0
+
+for scan_id in scan_ids:
+    try:
+        result = process_scan(tenant_id, scan_id)
+        scans_processed += 1
+    except Exception:
+        logger.warning("Failed to process scan %s", scan_id)
+        scans_skipped += 1
+
+logger.info("Backfill done: %d processed, %d skipped", scans_processed, scans_skipped)
+```
+
+6. **Log totals at start and end, not per-batch.** Per-batch logging floods the logs. Log the total count at the start, and the processed/skipped counts at the end.
+
+7. **Use `ignore_conflicts=True` for idempotent creates.** Makes the backfill safe to re-run if interrupted.
+
+```python
+Model.objects.bulk_create(objects, batch_size=500, ignore_conflicts=True)
+```
+
+8. **Iterate per-tenant.** Dispatch one Celery task per tenant. This gives you natural parallelism, bounded memory per task, and the ability to retry a single tenant without re-running everything.
+
+### Existing examples
+
+| Migration | Task |
+|---|---|
+| `0062_backfill_daily_severity_summaries.py` | `backfill_daily_severity_summaries_task` |
+| `0080_backfill_attack_paths_graph_data_ready.py` | Inline (trivial update) |
+| `0082_backfill_finding_group_summaries.py` | `backfill_finding_group_summaries_task` |
+
+Task implementations: `tasks/jobs/backfill.py`
+Batch utilities: `api/db_utils.py` (`batch_delete`, `create_objects_in_batches`, `update_objects_in_batches`)
+
 ## Decision tree
 
 ```
@@ -257,11 +374,18 @@ New model?
 ├── Yes → CreateModel + AddConstraint in one migration
 │         AddIndex in separate migration(s), one per table
 └── No, just indexes?
-    ├── Regular table → AddIndex in its own migration
-    └── Partitioned table (findings, resource_finding_mappings)?
-        ├── Step 1: RunPython + create_index_on_partitions (atomic=False)
-        └── Step 2: AddIndex on parent (separate migration)
-            └── Large table? → Consider --fake + manual apply
+│   ├── Regular table → AddIndex in its own migration
+│   └── Partitioned table (findings, resource_finding_mappings)?
+│       ├── Step 1: RunPython + create_index_on_partitions (atomic=False)
+│       └── Step 2: AddIndex on parent (separate migration)
+│           └── Large table? → Consider --fake + manual apply
+└── Data backfill?
+    ├── Trivial update (< ~10K rows)? → Inline RunPython is OK
+    └── Large backfill? → Migration dispatches Celery task(s)
+        ├── One task per tenant
+        ├── Batch processing (bulk_create/bulk_update, batch_size=500)
+        ├── One rls_transaction per batch
+        └── Catch + skip per-item failures, log totals
 ```
 
 ## Quick reference
@@ -273,6 +397,8 @@ New model?
 | Indexes on a regular table | Separate migration, one table per file |
 | Indexes on a partitioned table | Two migrations: partitions first (`RunPython` + `atomic=False`), then parent (`AddIndex`) |
 | Index on a huge partitioned table | Same two migrations, but fake + apply manually in production |
+| Trivial data backfill (< ~10K rows) | Inline `RunPython` with single `.update()` call |
+| Large data backfill | Migration dispatches Celery task per tenant, task batches with `rls_transaction` |
 
 ## Review output format
 
