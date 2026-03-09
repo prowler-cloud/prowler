@@ -6,7 +6,7 @@
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "security",
   "Description": "**Microsoft Defender connection filter policy** is evaluated to determine whether the **IP Allowlist** (`IPAllowList`) is configured. The finding indicates if any IP addresses are present in the policy's allow list for Exchange Online or standalone EOP environments.",

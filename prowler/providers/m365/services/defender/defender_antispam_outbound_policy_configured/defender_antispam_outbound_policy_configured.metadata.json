@@ -6,7 +6,7 @@
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "low",
   "ResourceType": "NotDefined",
   "ResourceGroup": "security",
   "Description": "**Microsoft Defender for Office 365 outbound spam policies** must send **administrator alerts** and Bcc **suspicious outbound messages** when a sender exceeds limits or is blocked. The assessment checks for `notify limit exceeded` and `notify sender blocked` with recipient addresses in the default policy and any applicable custom policies.",

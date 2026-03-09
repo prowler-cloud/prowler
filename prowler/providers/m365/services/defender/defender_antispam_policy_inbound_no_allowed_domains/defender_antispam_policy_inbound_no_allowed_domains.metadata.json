@@ -6,7 +6,7 @@
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "low",
   "ResourceType": "NotDefined",
   "ResourceGroup": "security",
   "Description": "**Microsoft Defender for Office 365 inbound anti-spam policies** are evaluated for domains listed in `AllowedSenderDomains`.\n\nThe finding identifies any policy where this list is populated rather than empty.",

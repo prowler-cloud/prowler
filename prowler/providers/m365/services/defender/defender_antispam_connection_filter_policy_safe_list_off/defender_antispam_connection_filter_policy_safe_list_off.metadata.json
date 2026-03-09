@@ -6,7 +6,7 @@
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "security",
   "Description": "**Microsoft Defender for Office 365 connection filter policy** safe list setting is evaluated. When enabled, mail from Microsoft-managed IPs skips spam filtering and some sender authentication. The finding indicates whether this implicit bypass is turned off.",
