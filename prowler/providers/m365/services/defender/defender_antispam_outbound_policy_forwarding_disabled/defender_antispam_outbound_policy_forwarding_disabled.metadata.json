@@ -7,13 +7,13 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Defender outbound spam policies** are evaluated to confirm that automatic mail forwarding is disabled in the default policy and in any custom policies applied to users, groups, or domains.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "**Microsoft Defender for Office 365 outbound spam policies** are evaluated to confirm that automatic mail forwarding is disabled in the default policy and in any custom policies applied to users, groups, or domains.",
   "Risk": "Allowing **automatic forwarding** enables covert **data exfiltration**, eroding **confidentiality**. Attackers or insiders can auto-route mail to external inboxes, persist access, evade monitoring, and harvest sensitive content (tickets, approvals, MFA codes), enabling **lateral movement** and fraud while reducing auditability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-protection-about",
-    "https://security.microsoft.com/."
+    "https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-protection-about"
   ],
   "Remediation": {
     "Code": {

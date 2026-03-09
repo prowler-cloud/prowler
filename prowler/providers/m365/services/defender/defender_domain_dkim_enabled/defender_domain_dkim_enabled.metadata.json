@@ -7,19 +7,14 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Exchange Online domains** use **DKIM signing** for outbound mail. This evaluates each domain to confirm an active DKIM configuration so messages include a verifiable signature via the domain's DKIM selectors.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Exchange Online domains** use **DKIM signing** for outbound mail. This evaluates each domain to confirm an active DKIM configuration so messages include a verifiable signature via the domain's DKIM selectors.",
   "Risk": "Without **DKIM**, recipients can't verify sender authenticity, enabling **domain spoofing** and **BEC phishing**.\n\nAttackers can impersonate trusted mail to steal credentials, deliver malware, and pivot internally, impacting **confidentiality** and **integrity**. Messages may also fail **DMARC** alignment, reducing deliverability and trust.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.tenable.com/audits/items/CIS_Microsoft_365_v1.4.0_E3_Level_1.audit:2555af4ce33dad1aeec6eb0988662416",
     "https://learn.microsoft.com/en-us/powershell/module/exchangepowershell/set-dkimsigningconfig?view=exchange-ps",
-    "https://github.com/MicrosoftDocs/office-docs-powershell/blob/main/exchange/exchange-ps/exchange/New-DkimSigningConfig.md",
     "https://learn.microsoft.com/en-us/powershell/module/exchange/set-dkimsigningconfig?view=exchange-ps",
-    "https://danielchronlund.com/2020/04/29/quickly-check-and-manage-your-exchange-online-dns-records-for-spf-dkim-and-dmarc-with-powershell/",
-    "https://www.lunavi.com/blog/enable-dkim-in-exchange-online-protection",
-    "https://www.alitajran.com/configure-dkim-record-for-office-365/",
-    "https://security.microsoft.com/.",
     "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/use-dkim-to-validate-outbound-email?view=o365-worldwide"
   ],
   "Remediation": {

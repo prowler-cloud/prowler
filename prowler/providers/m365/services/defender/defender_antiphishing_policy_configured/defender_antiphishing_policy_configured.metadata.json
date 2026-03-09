@@ -6,20 +6,16 @@
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
   "Description": "**Microsoft Defender for Office 365 anti-phishing policies** are evaluated for custom scoping to users, groups, or domains and precedence over the default, plus key settings: **spoof intelligence**, DMARC honoring, `quarantine` actions for spoof/DMARC, **safety tips**, unauthenticated sender indicators, and policy enablement.",
   "Risk": "Missing or lax configuration lets **spoofed** and **impersonated** emails reach inboxes. Ignoring DMARC or not using `quarantine` enables delivery of fraudulent messages, driving **credential theft**, **BEC**, and **account takeover**, compromising data **confidentiality** and **integrity** and enabling lateral movement via mailbox rule abuse.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://powerdmarc.com/dmarc-for-office-365/",
-    "https://agio.com/anti-phishing-protection-for-microsoft-365/",
     "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/set-up-anti-phishing-policies?view=o365-worldwide",
-    "https://ironscales.com/guides/microsoft-365-defender/anti-phishing-policies-in-microsoft-365",
     "https://learn.microsoft.com/en-us/defender-office-365/anti-phishing-policies-mdo-configure",
-    "https://learn.microsoft.com/en-us/defender-office-365/anti-phishing-policies-about",
-    "https://security.microsoft.com.",
-    "https://www.linkedin.com/pulse/reduce-phishing-emails-how-configure-microsoft-office-de-la-vega-ma0mc"
+    "https://learn.microsoft.com/en-us/defender-office-365/anti-phishing-policies-about"
   ],
   "Remediation": {
     "Code": {

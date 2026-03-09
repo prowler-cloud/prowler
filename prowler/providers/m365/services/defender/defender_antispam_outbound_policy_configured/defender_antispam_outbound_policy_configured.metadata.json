@@ -7,19 +7,14 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Defender outbound spam policies** must send **administrator alerts** and Bcc **suspicious outbound messages** when a sender exceeds limits or is blocked. The assessment checks for `notify limit exceeded` and `notify sender blocked` with recipient addresses in the default policy and any applicable custom policies.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "**Microsoft Defender for Office 365 outbound spam policies** must send **administrator alerts** and Bcc **suspicious outbound messages** when a sender exceeds limits or is blocked. The assessment checks for `notify limit exceeded` and `notify sender blocked` with recipient addresses in the default policy and any applicable custom policies.",
   "Risk": "Absent alerts and copies, **compromised mailboxes** can exfiltrate data and send phishing undetected. This harms **email deliverability** through blocklisting and throttling (**availability**), undermines domain **integrity**, and impedes **forensics** by removing evidence needed to triage abusive outbound traffic.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.nakivo.com/blog/configuring-office-365-spam-filter/",
     "https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-protection-about",
-    "https://www.duocircle.com/content/outbound-spam-filtering/outbound-spam-office-365",
-    "https://learn.microsoft.com/is-is/defender-office-365/outbound-spam-policies-configure",
-    "https://security.microsoft.com.",
-    "https://www.thatlazyadmin.com/2019/04/01/configure-outbound-spam-notification-office-365-exchange-online/",
-    "https://blog.admindroid.com/configure-outbound-spam-policy-in-microsoft-365/",
-    "https://www.linkedin.com/pulse/set-up-outbound-spam-notifications-exchange-online-ankit-sharma-eqspf"
+    "https://learn.microsoft.com/is-is/defender-office-365/outbound-spam-policies-configure"
   ],
   "Remediation": {
     "Code": {

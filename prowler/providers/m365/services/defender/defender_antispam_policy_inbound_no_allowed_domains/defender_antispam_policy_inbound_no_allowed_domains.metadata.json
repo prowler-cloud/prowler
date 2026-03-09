@@ -7,19 +7,14 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Inbound anti-spam policies** are evaluated for domains listed in `AllowedSenderDomains`.\n\nThe finding identifies any policy where this list is populated rather than empty.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "**Microsoft Defender for Office 365 inbound anti-spam policies** are evaluated for domains listed in `AllowedSenderDomains`.\n\nThe finding identifies any policy where this list is populated rather than empty.",
   "Risk": "Populating `AllowedSenderDomains` makes messages from those domains skip **spam filtering** and **email authentication** (SPF, DKIM, DMARC), often delivered with SCL `-1`. Attackers can spoof such domains to phish credentials, enable BEC, and alter mailboxes, undermining **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alitajran.com/allowlist-domain-microsoft-365/",
     "https://learn.microsoft.com/en-us/powershell/module/exchangepowershell/set-hostedcontentfilterpolicy?view=exchange-ps",
-    "https://security.microsoft.com).",
-    "https://lazyadmin.nl/office-365/whitelist-domain-office-365/",
-    "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/configure-the-allowed-sender-domains?view=o365-worldwide",
     "https://learn.microsoft.com/en-us/defender-office-365/anti-spam-policies-configure",
-    "https://www.youtube.com/watch?v=nT5xjJzlKzc",
-    "https://cloudinfra.net/bypass-spam-filtering-in-microsoft-365-office-365/",
     "https://learn.microsoft.com/en-us/defender-office-365/anti-spam-protection-about#allow-and-block-lists-in-anti-spam-policies"
   ],
   "Remediation": {

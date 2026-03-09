@@ -7,12 +7,12 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
   "Description": "**Microsoft Defender connection filter policy** is evaluated to determine whether the **IP Allowlist** (`IPAllowList`) is configured. The finding indicates if any IP addresses are present in the policy's allow list for Exchange Online or standalone EOP environments.",
   "Risk": "Allowlisted IPs bypass **SPF**, **DKIM**, **DMARC** and antispam, enabling **phishing** and **spoofing** that steal credentials (confidentiality), deliver **malware** or fraudulent mail (integrity), and cause **inbox flooding** (availability). Attackers can abuse compromised or shared relays on those IPs to deliver malicious mail.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://security.microsoft.com.",
     "https://learn.microsoft.com/en-us/powershell/module/exchange/set-hostedconnectionfilterpolicy?view=exchange-ps"
   ],
   "Remediation": {

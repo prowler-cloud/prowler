@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "analytics",
   "Description": "**AWS Glue jobs** are assessed for **continuous CloudWatch logging**, confirming that runtime events and outputs are sent to **CloudWatch Logs** via the `--enable-continuous-cloudwatch-log` configuration.",
   "Risk": "Missing job logs hide execution details and access patterns, enabling undetected credential abuse, data exfiltration in scripts, or tampering with transforms. This reduces confidentiality and integrity, hinders incident response, and can mask failures that impact availability.",
   "RelatedUrl": "",

@@ -1,6 +1,5 @@
-import { Spacer } from "@heroui/spacer";
 import Link from "next/link";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 
 import { getInvitations } from "@/actions/invitations/invitation";
 import { getRoles } from "@/actions/roles";
@@ -28,21 +27,22 @@ export default async function Invitations({
     <ContentLayout title="Invitations" icon="lucide:mail">
       <FilterControls search />
 
-      <div className="flex flex-row items-center justify-between">
-        <DataTableFilterCustom filters={filterInvitations || []} />
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-row items-end justify-between">
+          <DataTableFilterCustom filters={filterInvitations || []} />
 
-        <Button asChild>
-          <Link href="/invitations/new">
-            Send Invitation
-            <AddIcon size={20} />
-          </Link>
-        </Button>
+          <Button asChild>
+            <Link href="/invitations/new">
+              Send Invitation
+              <AddIcon size={20} />
+            </Link>
+          </Button>
+        </div>
+
+        <Suspense key={searchParamsKey} fallback={<SkeletonTableInvitation />}>
+          <SSRDataTable searchParams={resolvedSearchParams} />
+        </Suspense>
       </div>
-      <Spacer y={8} />
-
-      <Suspense key={searchParamsKey} fallback={<SkeletonTableInvitation />}>
-        <SSRDataTable searchParams={resolvedSearchParams} />
-      </Suspense>
     </ContentLayout>
   );
 }

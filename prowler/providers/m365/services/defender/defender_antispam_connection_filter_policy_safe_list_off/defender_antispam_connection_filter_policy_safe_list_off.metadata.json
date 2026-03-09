@@ -7,12 +7,12 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Defender connection filter policy** safe list setting is evaluated. When enabled, mail from Microsoft-managed IPs skips spam filtering and some sender authentication. The finding indicates whether this implicit bypass is turned off.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "**Microsoft Defender for Office 365 connection filter policy** safe list setting is evaluated. When enabled, mail from Microsoft-managed IPs skips spam filtering and some sender authentication. The finding indicates whether this implicit bypass is turned off.",
   "Risk": "With the safe list on, inbound mail can bypass SPF/DKIM/DMARC and spam heuristics, allowing spoofed or phishing messages to reach inboxes. This risks credential theft (confidentiality), enables account takeover and tampering (integrity), and may lead to malware-driven outages (availability).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://security.microsoft.com.",
     "https://learn.microsoft.com/en-us/defender-office-365/connection-filter-policies-configure",
     "https://learn.microsoft.com/en-us/defender-office-365/create-safe-sender-lists-in-office-365#use-the-ip-allow-list"
   ],
