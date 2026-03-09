@@ -33,6 +33,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Alibaba Cloud services metadata to new format [(#10289)](https://github.com/prowler-cloud/prowler/pull/10289)
 - Update M365 Admin Center service metadata to new format [(#9680)](https://github.com/prowler-cloud/prowler/pull/9680)
 - Update M365 Defender service metadata to new format [(#9681)](https://github.com/prowler-cloud/prowler/pull/9681)
+- Update M365 Purview service metadata to new format [(#9092)](https://github.com/prowler-cloud/prowler/pull/9092)
 
 ---
 
