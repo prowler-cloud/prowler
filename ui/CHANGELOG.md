@@ -9,15 +9,15 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Attack Paths: Improved error handling for server errors (5xx) and network failures with user-friendly messages instead of raw internal errors and layout changes. [(#10249)](https://github.com/prowler-cloud/prowler/pull/10249)
 - Refactor simple providers with new components and styles.[(#10259)](https://github.com/prowler-cloud/prowler/pull/10259)
 
+### 🔐 Security
+
+- npm transitive dependencies patched to resolve 11 Dependabot alerts (6 HIGH, 4 MEDIUM, 1 LOW): hono, @hono/node-server, fast-xml-parser, serialize-javascript, minimatch [(#10267)](https://github.com/prowler-cloud/prowler/pull/10267)
+
 ## [1.19.1] (Prowler v5.19.1 UNRELEASED)
 
 ### 🐞 Fixed
 
 - Provider wizard now closes after updating credentials instead of incorrectly advancing to the Launch Scan step, which caused API errors for providers with existing scheduled scans [(#10278)](https://github.com/prowler-cloud/prowler/pull/10278)
-
-### 🔐 Security
-
-- npm transitive dependencies patched to resolve 11 Dependabot alerts (6 HIGH, 4 MEDIUM, 1 LOW): hono, @hono/node-server, fast-xml-parser, serialize-javascript, minimatch [(#10267)](https://github.com/prowler-cloud/prowler/pull/10267)
 
 ---
 
