@@ -48,6 +48,7 @@ export const StatusBadge = ({
   className?: string;
 }) => {
   const color = statusColorMap[status as keyof typeof statusColorMap];
+  const displayLabel = statusDisplayMap[status] || status;
 
   return (
     <Chip
@@ -70,9 +71,7 @@ export const StatusBadge = ({
           <span>executing</span>
         </div>
       ) : (
-        <span className="flex items-center justify-center">
-          {statusDisplayMap[status as keyof typeof statusDisplayMap] || status}
-        </span>
+        <span className="flex items-center justify-center">{displayLabel}</span>
       )}
     </Chip>
   );

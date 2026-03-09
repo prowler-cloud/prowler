@@ -7,18 +7,15 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
   "Description": "**Microsoft 365 organization** setting indicates whether **Customer Lockbox** is enabled to require explicit approval for Microsoft support access to customer content",
   "Risk": "Without **Customer Lockbox**, Microsoft engineers may access tenant content during support without your approval, undermining **confidentiality** and **accountability**. This increases risks of targeted data exposure, insider misuse, and weakens auditability of access during troubleshooting.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://blog.ciaops.com/2016/08/31/enable-customer-lockbox-from-classic-office-365-admin-portal/",
     "https://www.gitbit.org/course/ms-500/learn/locking-down-your-microsoft-365-tenant-from-microsoft-engineers-fldnualgc",
-    "https://microsoft365junction.com/2024/01/08/power-platform-implementing-security-customer-loxbox-how-to-enable-customer-lockbox-policy/",
     "https://learn.microsoft.com/en-us/azure/security/fundamentals/customer-lockbox-overview",
     "https://learn.microsoft.com/en-us/microsoft-365/compliance/customer-lockbox-requests?redirectSourcePath=%2flv-lv%2farticle%2fOffice-365-klientu-lockbox-piepras%25C4%25ABjumu-36f9cdd1-e64c-421b-a7e4-4a54d16440a2&view=o365-worldwide",
-    "https://petri.com/windows-365-customer-lockbox/",
-    "https://admin.microsoft.com.",
     "https://learnthecontent.com/exam/microsoft-365/ms-700-managing-microsoft-teams/s/enable-customer-lockbox-for-data-security"
   ],
   "Remediation": {

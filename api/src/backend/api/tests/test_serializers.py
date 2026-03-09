@@ -2,6 +2,7 @@ import pytest
 from rest_framework.exceptions import ValidationError
 
 from api.v1.serializer_utils.integrations import S3ConfigSerializer
+from api.v1.serializers import ImageProviderSecret
 
 
 class TestS3ConfigSerializer:
@@ -98,3 +99,37 @@ class TestS3ConfigSerializer:
         serializer = S3ConfigSerializer(data=data)
         assert not serializer.is_valid()
         assert "output_directory" in serializer.errors
+
+
+class TestImageProviderSecret:
+    """Test cases for ImageProviderSecret validation."""
+
+    def test_valid_no_credentials(self):
+        serializer = ImageProviderSecret(data={})
+        assert serializer.is_valid()
+
+    def test_valid_token_only(self):
+        serializer = ImageProviderSecret(data={"registry_token": "tok"})
+        assert serializer.is_valid()
+
+    def test_valid_username_and_password(self):
+        serializer = ImageProviderSecret(
+            data={"registry_username": "user", "registry_password": "pass"}
+        )
+        assert serializer.is_valid()
+
+    def test_valid_token_with_username_only(self):
+        serializer = ImageProviderSecret(
+            data={"registry_token": "tok", "registry_username": "user"}
+        )
+        assert serializer.is_valid()
+
+    def test_invalid_username_without_password(self):
+        serializer = ImageProviderSecret(data={"registry_username": "user"})
+        assert not serializer.is_valid()
+        assert "non_field_errors" in serializer.errors
+
+    def test_invalid_password_without_username(self):
+        serializer = ImageProviderSecret(data={"registry_password": "pass"})
+        assert not serializer.is_valid()
+        assert "non_field_errors" in serializer.errors

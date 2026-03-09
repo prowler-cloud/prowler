@@ -7,12 +7,12 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
   "Description": "**Microsoft 365 groups** are assessed for their visibility setting.\n\nThe finding highlights groups configured as `Public`; groups set to `Private` align with the intended privacy posture.",
   "Risk": "**Public visibility** lets any authenticated tenant user discover and self-join, accessing group files, conversations, SharePoint sites, and calendars.\n\nThis weakens **confidentiality** and can enable unauthorized changes that affect **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://admin.microsoft.com.",
     "https://learn.microsoft.com/en-us/microsoft-365/admin/create-groups/manage-groups?view=o365-worldwide",
     "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/microsoft-365-groups-governance"
   ],

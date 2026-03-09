@@ -7,13 +7,12 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
   "Description": "**Microsoft 365 calendar sharing** is evaluated at the organization level to determine if sharing with external recipients is disabled, including blocking anonymous access and links sent outside the tenant.",
   "Risk": "Allowing **external calendar sharing** exposes meeting metadata (subjects, locations, attendees, patterns), weakening confidentiality. Adversaries can profile staff, craft convincing spear-phish or fake invites, time fraud attempts, and stage meeting hijacks, increasing **BEC** and social engineering success.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.infrassist.com/script-hub/disable-calendar-sharing-with-external-users/",
-    "https://admin.microsoft.com.",
     "https://learn.microsoft.com/en-us/microsoft-365/admin/manage/share-calendars-with-external-users?view=o365-worldwide",
     "https://m365scripts.com/microsoft365/how-to-stop-users-from-sharing-their-own-calendars/",
     "https://learn.microsoft.com/en-my/answers/questions/1165808/external-calendar-sharing-for-single-user-in-exo"

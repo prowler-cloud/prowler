@@ -1,14 +1,15 @@
 {
   "Provider": "m365",
   "CheckID": "admincenter_users_between_two_and_four_global_admins",
-  "CheckTitle": "Microsoft 365 tenant has between two and four Global Administrators",
+  "CheckTitle": "Tenant has between two and four Global Administrators",
   "CheckType": [],
   "ServiceName": "admincenter",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "Count of users assigned the **Global Administrator** role in the tenant is between `2` and `4` (inclusive).",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Count of users assigned the **Global Administrator** role in the **Microsoft 365 tenant** is between `2` and `4` (inclusive).",
   "Risk": "Having 1 **Global Administrator** jeopardizes availability if that account is unavailable or locked out. Having 5 expands the attack surface; one compromised admin can enable tenant-wide changes, data exfiltration, and privilege escalation, impacting confidentiality and integrity.",
   "RelatedUrl": "",
   "AdditionalURLs": [

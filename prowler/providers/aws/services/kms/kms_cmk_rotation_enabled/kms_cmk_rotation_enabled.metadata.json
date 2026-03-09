@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsKmsKey",
+  "ResourceGroup": "security",
   "Description": "**Customer-managed KMS symmetric keys** in the `Enabled` state are evaluated to confirm `automatic rotation` of key material is configured",
   "Risk": "Without **automatic rotation**, long-lived key material increases confidentiality and integrity risk. If a KMS key is exposed, attackers can unwrap data keys and decrypt stored data until the key changes. It also reduces crypto agility and may conflict with mandated rotation policies.",
   "RelatedUrl": "",
