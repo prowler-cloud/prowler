@@ -13,7 +13,8 @@
   "Risk": "If **SSL is not enabled**, data in transit including credentials and query results can be intercepted by attackers performing **Man-in-the-Middle (MITM) attacks**. This compromises data **confidentiality** and **integrity**, potentially leading to **credential theft**, **data exfiltration**, and unauthorized manipulation of database communications.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/32474.htm"
+    "https://www.alibabacloud.com/help/doc-detail/32474.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-encryption-in-transit.html"
   ],
   "Remediation": {
     "Code": {

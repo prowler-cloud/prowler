@@ -13,7 +13,8 @@
   "Risk": "Without **CloudMonitor** enabled on Kubernetes Engine clusters, there is no automated collection of system-level metrics such as CPU, memory, disk, and network usage. This lack of visibility can delay detection of **resource exhaustion**, **node failures**, and **abnormal workload behavior**, increasing the risk of undetected **availability** and **performance** issues. In a security context, the absence of monitoring data impairs the ability to identify **denial-of-service conditions** or **cryptojacking** activities running on cluster nodes.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/ack/"
+    "https://www.alibabacloud.com/help/en/ack/",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/enable-cloud-monitor.html"
   ],
   "Remediation": {
     "Code": {

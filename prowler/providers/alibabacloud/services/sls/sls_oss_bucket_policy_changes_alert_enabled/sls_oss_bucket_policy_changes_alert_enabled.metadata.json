@@ -13,7 +13,8 @@
   "Risk": "Without monitoring for **OSS bucket policy changes**, permissive or malicious policy modifications may go undetected. This could lead to **unintended data exposure**, allowing unauthorized users to access, modify, or delete sensitive objects stored in OSS buckets. Delayed detection of policy changes increases the risk of **data breaches**, **data exfiltration**, and **compliance violations**, as attackers could silently widen access to critical storage resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/oss-bucket-authority-changes-alert.html"
   ],
   "Remediation": {
     "Code": {

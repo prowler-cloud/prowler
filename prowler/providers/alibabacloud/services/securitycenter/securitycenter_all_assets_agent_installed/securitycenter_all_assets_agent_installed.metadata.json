@@ -13,7 +13,8 @@
   "Risk": "Assets without the **Security Center agent** installed become blind spots in security monitoring, as they are not protected by endpoint intrusion detection capabilities. This leaves them vulnerable to **malware infections**, **unauthorized access**, **webshell attacks**, and **anomalous process execution** without any alerts being generated.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/111650.htm"
+    "https://www.alibabacloud.com/help/doc-detail/111650.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SecurityCenter/install-security-agent.html"
   ],
   "Remediation": {
     "Code": {

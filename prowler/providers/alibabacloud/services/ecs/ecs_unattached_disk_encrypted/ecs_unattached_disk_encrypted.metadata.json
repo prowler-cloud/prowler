@@ -13,7 +13,8 @@
   "Risk": "**Unencrypted unattached disks** pose a significant security risk as they may contain sensitive data that could be accessed if the disk is compromised or accessed by unauthorized parties. Unattached disks are especially vulnerable as they may be overlooked in security monitoring, increasing the risk of **unauthorized access** and **data breaches** that impact **confidentiality**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/59643.htm"
+    "https://www.alibabacloud.com/help/doc-detail/59643.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ECS/encrypt-unattached-disks.html"
   ],
   "Remediation": {
     "Code": {

@@ -13,7 +13,8 @@
   "Risk": "Without monitoring for **RDS Instance configuration changes**, unauthorized or accidental modifications to database servers may go undetected. This could lead to **security misconfigurations** such as enabling public access, disabling encryption, or weakening authentication settings. Delayed detection of configuration changes increases the risk of **data breaches**, **unauthorized database access**, and **service disruption**, potentially compromising the **confidentiality** and **integrity** of stored data.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/rds-instance-config-changes-alert.html"
   ],
   "Remediation": {
     "Code": {

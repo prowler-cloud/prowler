@@ -13,7 +13,8 @@
   "Risk": "Without **OSS bucket logging** enabled, access events affecting objects within target buckets are not captured. This limits the ability to perform **security analysis**, **incident response**, and **forensic investigations**, as there is no record of who accessed or modified stored data.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/31900.htm"
+    "https://www.alibabacloud.com/help/doc-detail/31900.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-OSS/enable-bucket-access-logging.html"
   ],
   "Remediation": {
     "Code": {

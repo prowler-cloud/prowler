@@ -13,7 +13,8 @@
   "Risk": "Without **Log Service** enabled, there is no centralized collection of container logs, audit trails, or cluster events. This severely impairs the ability to perform **incident investigation**, **compliance auditing**, and **security monitoring**. Attackers could operate undetected within the cluster, as there would be no audit trail of API server calls, pod lifecycle events, or container output. The lack of logging directly impacts the **confidentiality** and **integrity** of the cluster by removing a critical detection and forensic capability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/ack/"
+    "https://www.alibabacloud.com/help/en/ack/",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/enable-log-service.html"
   ],
   "Remediation": {
     "Code": {

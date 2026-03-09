@@ -13,7 +13,8 @@
   "Risk": "Without monitoring for **VPC changes**, unauthorized or accidental modifications to virtual network infrastructure may go undetected. This could disrupt **network connectivity**, create **security vulnerabilities**, or expose internal resources to untrusted networks. Unauthorized VPC modifications increase the risk of **service disruption**, **data interception**, and **lateral movement** within the cloud environment, potentially compromising the **confidentiality** and **availability** of all connected resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/vpc-config-changes-alert.html"
   ],
   "Remediation": {
     "Code": {

@@ -13,7 +13,8 @@
   "Risk": "**Short retention periods** for audit logs can result in the loss of critical forensic data needed for **incident investigation**, **compliance auditing**, and **regulatory reporting**. Many regulations and security frameworks require minimum retention periods for audit data, and failing to meet them can result in **non-compliance** penalties.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/96123.html"
+    "https://www.alibabacloud.com/help/doc-detail/96123.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/configure-log-retention-period.html"
   ],
   "Remediation": {
     "Code": {

@@ -13,7 +13,8 @@
   "Risk": "Assigning privileges directly to individual users instead of **groups or roles** increases the complexity of access management. As the number of users grows, this complexity can lead to principals inadvertently receiving or retaining **excessive privileges**, threatening the **confidentiality** and **integrity** of cloud resources. It also makes auditing and compliance reviews significantly more difficult.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/116820.htm"
+    "https://www.alibabacloud.com/help/doc-detail/116820.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RAM/receive-permissions-via-ram-groups-only.html"
   ],
   "Remediation": {
     "Code": {

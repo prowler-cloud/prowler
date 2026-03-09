@@ -13,7 +13,8 @@
   "Risk": "Access keys might be compromised by being left in code, configuration files, or cloud storage and then stolen by attackers. Without regular **access key rotation**, a compromised key can remain valid indefinitely, allowing persistent unauthorized access. This threatens the **confidentiality**, **integrity**, and **availability** of all resources accessible via those credentials.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/116401.htm"
+    "https://www.alibabacloud.com/help/doc-detail/116401.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RAM/access-keys-rotation.html"
   ],
   "Remediation": {
     "Code": {

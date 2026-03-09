@@ -13,7 +13,8 @@
   "Risk": "Without monitoring for **single-factor console logins**, accounts that are not protected by MFA may go unnoticed. This increases the risk of **unauthorized access** through compromised credentials, as passwords alone are insufficient to prevent account takeover. Failure to enforce and monitor MFA compliance weakens the overall **authentication posture** and may lead to **privilege escalation** or **data breaches** if an attacker gains access to an unprotected account.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/single-factor-console-logins-alert.html"
   ],
   "Remediation": {
     "Code": {

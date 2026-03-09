@@ -13,7 +13,8 @@
   "Risk": "Without **secure transfer enforcement**, OSS buckets accept HTTP requests that transmit data in plaintext. This exposes stored data to potential **interception**, **man-in-the-middle attacks**, and **eavesdropping**, compromising data **confidentiality** and **integrity** during transit.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/85111.htm"
+    "https://www.alibabacloud.com/help/doc-detail/85111.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-OSS/enable-secure-transfer.html"
   ],
   "Remediation": {
     "Code": {

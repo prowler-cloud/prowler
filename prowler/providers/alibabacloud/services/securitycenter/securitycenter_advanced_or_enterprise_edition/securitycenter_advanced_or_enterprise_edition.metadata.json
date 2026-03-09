@@ -13,7 +13,8 @@
   "Risk": "Using the **Basic or Free Edition** of Security Center limits threat detection capabilities to basic vulnerability scanning only. Without the **Advanced or Enterprise Edition**, critical protections such as **malware detection**, **intrusion prevention**, **webshell detection**, and **anomalous behavior analysis** are unavailable, leaving workloads exposed to sophisticated cloud threats.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/product/28498.htm"
+    "https://www.alibabacloud.com/help/product/28498.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SecurityCenter/security-center-plan.html"
   ],
   "Remediation": {
     "Code": {

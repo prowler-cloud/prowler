@@ -13,7 +13,8 @@
   "Risk": "Without **connection logging** enabled, unauthorized access attempts to the database may go unnoticed, making it difficult to detect **brute-force attacks** or **credential compromise**. This gap in visibility impacts the ability to perform **security monitoring**, **incident investigation**, and **forensic analysis**, reducing overall **confidentiality** assurance.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/96751.htm"
+    "https://www.alibabacloud.com/help/doc-detail/96751.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-log-connections-for-postgresql.html"
   ],
   "Remediation": {
     "Code": {

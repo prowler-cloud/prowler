@@ -12,7 +12,9 @@
   "Description": "**Alibaba Cloud Security Center** provides endpoint protection for ECS instances, offering real-time detection and removal of viruses, spyware, and other malicious software. This check verifies that the **Security Center agent** is installed and active on all ECS instances, ensuring configurable alerts notify administrators when known malicious software attempts to install itself or execute on the instance.",
   "Risk": "ECS instances without **endpoint protection** are vulnerable to **malware**, **viruses**, **webshells**, and other security threats that can compromise **confidentiality**, **integrity**, and **availability**. Without real-time monitoring, security incidents may go undetected, allowing attackers to maintain persistent access and exfiltrate sensitive data.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ECS/enable-endpoint-protection.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun sas InstallBackupClient --Uuid <instance_uuid>",

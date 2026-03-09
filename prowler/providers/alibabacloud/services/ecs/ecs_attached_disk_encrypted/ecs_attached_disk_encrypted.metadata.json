@@ -13,7 +13,8 @@
   "Risk": "**Unencrypted disks** attached to ECS instances pose a significant security risk, as sensitive data could be exposed if the disk is compromised, improperly decommissioned, or accessed by unauthorized parties. Data at rest without encryption is vulnerable to **unauthorized access**, impacting **confidentiality** and potentially leading to **data breaches** or **regulatory non-compliance**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/59643.htm"
+    "https://www.alibabacloud.com/help/doc-detail/59643.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ECS/encrypt-vm-instance-disks.html"
   ],
   "Remediation": {
     "Code": {

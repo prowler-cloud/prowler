@@ -13,7 +13,8 @@
   "Risk": "Without a **multi-region trail** enabled, API calls made in regions outside the primary trail's scope will not be recorded. This creates blind spots in **security analysis**, **resource change tracking**, and **compliance auditing**, potentially allowing unauthorized or malicious activity to go undetected across your Alibaba Cloud account.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/28829.htm"
+    "https://www.alibabacloud.com/help/doc-detail/28829.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ActionTrail/enable-multi-region-trails.html"
   ],
   "Remediation": {
     "Code": {

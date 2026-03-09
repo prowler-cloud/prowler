@@ -13,7 +13,8 @@
   "Risk": "The **Kubernetes Dashboard** is backed by a highly privileged Service Account that grants broad access to cluster resources. If the Dashboard is compromised through a vulnerability or unauthorized access, an attacker could gain **full control** over the cluster, deploy malicious workloads, exfiltrate **secrets**, and **escalate privileges**. This directly impacts the **confidentiality**, **integrity**, and **availability** of all workloads and data within the cluster.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/86494.html"
+    "https://www.alibabacloud.com/help/doc-detail/86494.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/disable-kubernetes-dashboard.html"
   ],
   "Remediation": {
     "Code": {

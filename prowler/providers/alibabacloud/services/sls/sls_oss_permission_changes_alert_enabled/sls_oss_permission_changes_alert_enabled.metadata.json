@@ -13,7 +13,8 @@
   "Risk": "Without monitoring for **OSS permission changes**, unauthorized modifications to bucket access controls may go undetected. This could allow attackers to grant themselves or others **unauthorized access** to sensitive objects stored in OSS buckets. Delayed detection of permission changes increases the risk of **data exfiltration**, **data tampering**, and **compliance violations**, as the confidentiality and integrity of stored data may be compromised.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/oss-bucket-permission-changes-alert.html"
   ],
   "Remediation": {
     "Code": {

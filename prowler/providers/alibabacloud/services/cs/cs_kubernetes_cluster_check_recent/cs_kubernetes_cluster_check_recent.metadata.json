@@ -13,7 +13,8 @@
   "Risk": "Without regular cluster health checks within the configured period, potential issues such as **node failures**, **misconfigured network rules**, or **degraded system components** may go undetected. This increases the risk of **cluster instability**, **service outages**, and **security vulnerabilities** that could be exploited by attackers. Delayed detection of unhealthy nodes or misconfigured components can also impact the **integrity** and **availability** of workloads running on the cluster.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/ack/"
+    "https://www.alibabacloud.com/help/en/ack/",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/cluster-check.html"
   ],
   "Remediation": {
     "Code": {

@@ -13,7 +13,8 @@
   "Risk": "Unrestricted **SSH access** from the internet (`0.0.0.0/0`) exposes systems to **brute force attacks**, **credential stuffing**, and **exploitation of SSH vulnerabilities**. This can lead to **unauthorized access**, **data exfiltration**, and full system compromise, impacting **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/25387.htm"
+    "https://www.alibabacloud.com/help/doc-detail/25387.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ECS/unrestricted-ssh-access.html"
   ],
   "Remediation": {
     "Code": {

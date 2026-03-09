@@ -13,7 +13,8 @@
   "Risk": "Without monitoring for **CMK state changes**, data encrypted with **disabled or deleted keys** will become permanently inaccessible. This could lead to **data loss**, **business disruption**, and **compliance violations**. Malicious actors who gain access to the KMS service could silently disable or schedule deletion of critical encryption keys, rendering protected data unrecoverable if not detected in time.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/kms-cmk-config-changes-alert.html"
   ],
   "Remediation": {
     "Code": {

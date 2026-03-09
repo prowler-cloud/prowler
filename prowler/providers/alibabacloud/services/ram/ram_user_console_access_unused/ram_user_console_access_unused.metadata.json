@@ -13,7 +13,8 @@
   "Risk": "Inactive accounts with console access enabled are common targets for attackers attempting **account takeover**. An abandoned user account or one with a **compromised password** that has not been used in over 90 days may go unmonitored, allowing unauthorized access to go undetected. This poses a significant risk to the **confidentiality** and **integrity** of cloud resources accessible through the compromised account.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/116820.htm"
+    "https://www.alibabacloud.com/help/doc-detail/116820.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RAM/inactive-ram-user.html"
   ],
   "Remediation": {
     "Code": {

@@ -13,7 +13,8 @@
   "Risk": "Allowing **anonymous** or **public access** to OSS buckets grants permissions to anyone on the internet to read or modify bucket content. This can lead to **data breaches**, **unauthorized data exfiltration**, **data tampering**, and **compliance violations**, particularly when buckets contain sensitive or regulated information.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/31896.htm"
+    "https://www.alibabacloud.com/help/doc-detail/31896.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-OSS/publicly-accessible-oss-bucket.html"
   ],
   "Remediation": {
     "Code": {

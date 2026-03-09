@@ -13,7 +13,8 @@
   "Risk": "Without monitoring for **RAM role changes**, unauthorized creation, modification, or deletion of roles may go undetected. This could lead to **privilege escalation**, where an attacker creates or modifies roles to gain elevated access to cloud resources. Undetected role changes compromise the **integrity** of the identity and access management framework and may result in **unauthorized access** to sensitive data and services across the entire cloud environment.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/91784.htm"
+    "https://www.alibabacloud.com/help/doc-detail/91784.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/ram-policy-changes-alert.html"
   ],
   "Remediation": {
     "Code": {

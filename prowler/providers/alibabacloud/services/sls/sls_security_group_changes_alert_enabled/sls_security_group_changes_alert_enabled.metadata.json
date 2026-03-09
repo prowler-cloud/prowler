@@ -13,7 +13,8 @@
   "Risk": "Without monitoring for **security group changes**, unauthorized modifications to network access controls may go undetected. This could lead to resources and services being **unintentionally exposed** to the internet or untrusted networks. Unauthorized security group modifications increase the risk of **network exposure**, **unauthorized access**, and **lateral movement** within the cloud environment, potentially compromising the **confidentiality** and **availability** of critical services.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/security-group-config-changes-alert.html"
   ],
   "Remediation": {
     "Code": {

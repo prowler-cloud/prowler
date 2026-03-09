@@ -13,7 +13,8 @@
   "Risk": "Without **VPC Flow Logs** enabled, there is no visibility into network traffic traversing the VPC. This prevents detection of **anomalous traffic patterns**, **unauthorized network connections**, and **data exfiltration attempts**, and severely limits the ability to investigate network-based security incidents.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/90628.html"
+    "https://www.alibabacloud.com/help/doc-detail/90628.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-VPC/enable-flow-logs.html"
   ],
   "Remediation": {
     "Code": {

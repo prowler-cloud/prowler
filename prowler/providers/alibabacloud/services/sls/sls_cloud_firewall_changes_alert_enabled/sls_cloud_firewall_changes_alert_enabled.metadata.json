@@ -13,7 +13,8 @@
   "Risk": "Without monitoring for **Cloud Firewall** changes, unauthorized or accidental modifications to firewall rules may go undetected. This could lead to **network exposure**, allowing malicious traffic to reach protected resources or blocking legitimate traffic. Failure to detect firewall rule changes in a timely manner increases the risk of **data breaches**, **lateral movement**, and **service disruption**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/cloudfirewall-control-policy-changes-alert.html"
   ],
   "Remediation": {
     "Code": {

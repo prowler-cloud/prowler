@@ -13,7 +13,8 @@
   "Risk": "Without **ENI multiple IP mode** (provided by the **Terway** network plugin), pods share the node's network interface in a less scalable manner and cannot have independent security group associations. This limits the ability to apply **granular firewall controls** at the pod level, increasing the risk of **lateral movement** if a pod is compromised. The inability to isolate pod networking from node networking weakens **network segmentation** and reduces the overall **security posture** of the cluster.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/ack/ack-managed-and-ack-dedicated/user-guide/associate-multiple-security-groups-with-an-eni"
+    "https://www.alibabacloud.com/help/en/ack/ack-managed-and-ack-dedicated/user-guide/associate-multiple-security-groups-with-an-eni",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/enable-multi-ip-mode.html"
   ],
   "Remediation": {
     "Code": {

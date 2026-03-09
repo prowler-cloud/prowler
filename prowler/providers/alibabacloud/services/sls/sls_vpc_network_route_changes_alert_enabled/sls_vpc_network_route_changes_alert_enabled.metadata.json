@@ -13,7 +13,8 @@
   "Risk": "Without monitoring for **route table changes**, unauthorized modifications to network routes may go undetected. This could allow attackers to redirect traffic through **malicious intermediaries** for interception or manipulation. Undetected route changes increase the risk of **man-in-the-middle attacks**, **data exfiltration**, and **service disruption**, as traffic may be silently diverted away from intended destinations, compromising the **confidentiality** and **integrity** of data in transit.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/vpc-network-route-changes-alert.html"
   ],
   "Remediation": {
     "Code": {

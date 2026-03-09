@@ -13,7 +13,8 @@
   "Risk": "The **root account** has unrestricted access to all resources and services within the Alibaba Cloud account. If access keys for the root account are compromised, an attacker gains **full administrative control** over the entire account, including the ability to create, modify, or delete any resource. This poses a critical risk to the **confidentiality**, **integrity**, and **availability** of all cloud resources and data.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/102600.htm"
+    "https://www.alibabacloud.com/help/doc-detail/102600.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RAM/remove-root-access-keys.html"
   ],
   "Remediation": {
     "Code": {

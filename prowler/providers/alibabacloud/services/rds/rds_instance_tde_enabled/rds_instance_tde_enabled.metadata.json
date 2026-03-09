@@ -13,7 +13,8 @@
   "Risk": "**Data at rest** that is not encrypted is vulnerable to unauthorized access if the underlying storage media or backups are compromised, stolen, or improperly decommissioned. Without TDE, attackers with physical or administrative access to the storage layer can read sensitive data directly, impacting **confidentiality** and potentially leading to **data breaches**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/33510.html"
+    "https://www.alibabacloud.com/help/doc-detail/33510.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-sql-database-tde.html"
   ],
   "Remediation": {
     "Code": {

@@ -13,7 +13,8 @@
   "Risk": "Without monitoring for **failed console authentication attempts**, brute-force attacks and credential stuffing campaigns may go undetected. Failure to identify these patterns increases the risk of **unauthorized access** to the Management Console. Monitoring failed logins provides critical indicators such as source IP addresses that can be used for **threat correlation** and proactive blocking, reducing the time to detect and respond to **account compromise** attempts.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/account-continuous-login-failures-alert.html"
   ],
   "Remediation": {
     "Code": {

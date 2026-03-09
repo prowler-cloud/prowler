@@ -13,7 +13,8 @@
   "Risk": "Without monitoring for **root account usage**, activities performed by the most privileged account may go unnoticed. The root account has unrestricted access to all resources and services, making it a high-value target for attackers. Failure to detect unauthorized root account usage increases the risk of **complete account takeover**, **data destruction**, and **irreversible configuration changes** that could compromise the **confidentiality**, **integrity**, and **availability** of all cloud resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/root-account-login-frequent-alert.html"
   ],
   "Remediation": {
     "Code": {

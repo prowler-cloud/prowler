@@ -13,7 +13,8 @@
   "Risk": "RAM policies granting **full administrative privileges** (`*:*`) expose all cloud resources to potentially unwanted actions. If such a policy is attached to a compromised user, group, or role, an attacker gains unrestricted access to create, modify, or delete any resource, severely impacting the **confidentiality**, **integrity**, and **availability** of the entire Alibaba Cloud environment.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/93733.htm"
+    "https://www.alibabacloud.com/help/doc-detail/93733.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RAM/policies-with-full-administrative-privileges.html"
   ],
   "Remediation": {
     "Code": {

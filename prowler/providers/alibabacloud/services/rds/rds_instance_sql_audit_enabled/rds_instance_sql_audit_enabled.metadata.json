@@ -13,7 +13,8 @@
   "Risk": "Without **SQL auditing**, it is difficult to detect **unauthorized access**, **data breaches**, or **malicious activity** within the database. The absence of audit logs hinders **forensic investigations**, compliance reporting, and the ability to identify **data exfiltration** or **privilege escalation** attempts, impacting **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/96123.html"
+    "https://www.alibabacloud.com/help/doc-detail/96123.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-audit-logs.html"
   ],
   "Remediation": {
     "Code": {

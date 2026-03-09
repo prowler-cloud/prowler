@@ -13,7 +13,8 @@
   "Risk": "Without **RBAC** enabled, Kubernetes clusters may rely on legacy authorization mechanisms such as **ABAC**, which grant **overly broad permissions** that cannot be scoped to specific namespaces or resource types. This increases the risk of **unauthorized access** and **privilege escalation**, where a compromised service account or user could gain access to sensitive resources across the entire cluster. The lack of granular access control directly impacts the **confidentiality** and **integrity** of workloads and secrets stored in the cluster.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/ack/"
+    "https://www.alibabacloud.com/help/en/ack/",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/enable-rbac-authorization.html"
   ],
   "Remediation": {
     "Code": {

@@ -13,7 +13,8 @@
   "Risk": "Without **duration logging**, it is difficult to identify **slow queries**, **performance bottlenecks**, and potential **DoS attempts** against the database. This lack of visibility impacts the ability to optimize database performance and detect **malicious activity** such as resource exhaustion attacks, reducing overall **availability** assurance.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/96751.htm"
+    "https://www.alibabacloud.com/help/doc-detail/96751.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-log-duration-for-postgresql.html"
   ],
   "Remediation": {
     "Code": {

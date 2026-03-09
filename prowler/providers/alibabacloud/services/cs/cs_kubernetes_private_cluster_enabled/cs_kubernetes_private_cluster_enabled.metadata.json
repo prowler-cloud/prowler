@@ -13,7 +13,8 @@
   "Risk": "Exposing the **API server endpoint** to the public internet increases the attack surface of the cluster, allowing attackers to probe for vulnerabilities, perform **brute force attacks** against authentication, or exploit misconfigurations. A publicly accessible API server can be targeted by automated scanning tools and botnets, increasing the risk of unauthorized access. This directly impacts the **confidentiality** and **integrity** of the cluster by potentially allowing attackers to execute commands, deploy malicious workloads, or exfiltrate sensitive data.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/ack/"
+    "https://www.alibabacloud.com/help/en/ack/",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/private-cluster.html"
   ],
   "Remediation": {
     "Code": {

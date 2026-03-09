@@ -13,7 +13,8 @@
   "Risk": "Without monitoring for **unauthorized API calls**, patterns of failed access attempts may go undetected. These patterns often indicate **malicious activity** such as attackers probing for permissions or attempting to exploit misconfigured access controls. Failure to detect unauthorized API calls in a timely manner increases the risk of **security breaches**, as it delays identification of compromised credentials and **privilege escalation** attempts across cloud services.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/unauthorized-api-calls-alert.html"
   ],
   "Remediation": {
     "Code": {

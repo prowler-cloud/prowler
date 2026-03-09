@@ -13,7 +13,8 @@
   "Risk": "Without **notifications enabled** for high-risk items in Security Center, security operators may not be aware of critical security events such as **vulnerability discoveries**, **baseline violations**, **intrusion alerts**, and **AccessKey leaks** in a timely manner. This leads to **delayed incident response** and **prolonged security exposure**, increasing the potential impact of threats.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/111648.htm"
+    "https://www.alibabacloud.com/help/doc-detail/111648.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SecurityCenter/enable-high-risk-item-notifications.html"
   ],
   "Remediation": {
     "Code": {

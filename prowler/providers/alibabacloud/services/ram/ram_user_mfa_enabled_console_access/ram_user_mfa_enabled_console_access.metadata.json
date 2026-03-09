@@ -13,7 +13,8 @@
   "Risk": "Without **MFA** enabled, RAM user accounts rely solely on passwords for authentication. If a password is compromised through phishing, credential stuffing, or other attacks, an attacker gains full access to the account. Enabling MFA requires an additional authentication factor, making it significantly harder for attackers to gain unauthorized access even with compromised credentials, thereby protecting the **confidentiality**, **integrity**, and **availability** of cloud resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/119555.htm"
+    "https://www.alibabacloud.com/help/doc-detail/119555.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RAM/ram-user-multi-factor-authentication-enabled.html"
   ],
   "Remediation": {
     "Code": {

@@ -13,7 +13,8 @@
   "Risk": "Using **service-managed keys** means the cloud provider manages the encryption keys, limiting the data owner's control over key access and rotation. Without **BYOK (Bring Your Own Key)**, the cloud provider retains the ability to access encrypted data, reducing **confidentiality** assurance and making it harder to enforce **separation of duties** and **key lifecycle management** policies.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/96121.html"
+    "https://www.alibabacloud.com/help/doc-detail/96121.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-tde-with-cmk.html"
   ],
   "Remediation": {
     "Code": {

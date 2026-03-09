@@ -13,7 +13,8 @@
   "Risk": "Allowing **public access** (`0.0.0.0/0`) to the database significantly increases the risk of **brute-force attacks**, **unauthorized access**, and **data exfiltration**. Databases exposed to the internet are prime targets for attackers, and a successful breach can compromise **confidentiality**, **integrity**, and **availability** of all stored data.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/26198.htm"
+    "https://www.alibabacloud.com/help/doc-detail/26198.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/disable-network-public-access.html"
   ],
   "Remediation": {
     "Code": {

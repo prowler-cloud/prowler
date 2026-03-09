@@ -13,7 +13,8 @@
   "Risk": "Without **disconnection logging**, it is harder to track session durations and identify abnormal disconnection patterns that might indicate **attacks**, **session hijacking**, or **stability issues**. This reduces visibility into database activity, impacting **security monitoring** and the ability to perform effective **forensic analysis**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/96751.htm"
+    "https://www.alibabacloud.com/help/doc-detail/96751.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-log-disconnections-for-postgresql.html"
   ],
   "Remediation": {
     "Code": {

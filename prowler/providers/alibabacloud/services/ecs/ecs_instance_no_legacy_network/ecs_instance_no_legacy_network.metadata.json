@@ -13,7 +13,8 @@
   "Risk": "**Legacy networks** lack the security isolation and network segmentation capabilities provided by **VPCs**, creating a **single point of failure** for high-traffic instances. Without proper network segmentation, lateral movement by attackers becomes easier, impacting **confidentiality** and **integrity** of workloads sharing the same flat network.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/87190.htm"
+    "https://www.alibabacloud.com/help/doc-detail/87190.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-VPC/legacy-network-usage.html"
   ],
   "Remediation": {
     "Code": {

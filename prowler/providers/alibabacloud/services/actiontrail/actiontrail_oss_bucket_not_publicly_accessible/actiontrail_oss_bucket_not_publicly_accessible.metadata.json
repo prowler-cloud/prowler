@@ -13,7 +13,8 @@
   "Risk": "Allowing **public access** to the OSS bucket containing ActionTrail logs may expose sensitive information about your infrastructure, API usage patterns, and security configurations. An adversary could use this information to identify weaknesses in the affected account, leading to potential **data breaches**, **privilege escalation**, and **compliance violations**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/31954.htm"
+    "https://www.alibabacloud.com/help/doc-detail/31954.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ActionTrail/trail-bucket-publicly-accessible.html"
   ],
   "Remediation": {
     "Code": {

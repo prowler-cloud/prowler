@@ -13,7 +13,8 @@
   "Risk": "Insufficient log retention periods may result in the **loss of forensic evidence** needed for security investigations and incident response. If logs are deleted before an incident is detected, it becomes impossible to determine the scope, impact, and root cause of security breaches. Short retention periods may also lead to **compliance violations** with regulations that mandate specific log retention durations, affecting the organization's **integrity** and **accountability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/48990.htm"
+    "https://www.alibabacloud.com/help/doc-detail/48990.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/sufficient-logstore-data-retention-period.html"
   ],
   "Remediation": {
     "Code": {
