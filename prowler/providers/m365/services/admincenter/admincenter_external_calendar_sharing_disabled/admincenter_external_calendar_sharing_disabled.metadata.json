@@ -31,7 +31,8 @@
   },
   "Categories": [
     "internet-exposed",
-    "trust-boundaries"
+    "trust-boundaries",
+    "e5"
   ],
   "DependsOn": [],
   "RelatedTo": [],
