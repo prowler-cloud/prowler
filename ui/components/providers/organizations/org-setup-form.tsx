@@ -1,5 +1,6 @@
 "use client";
 
+import { useClipboard } from "@heroui/use-clipboard";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -68,9 +69,13 @@ export function OrgSetupForm({
   initialPhase = ORG_SETUP_PHASE.DETAILS,
 }: OrgSetupFormProps) {
   const { data: session } = useSession();
-  const [isExternalIdCopied, setIsExternalIdCopied] = useState(false);
-  const [isTemplateUrlCopied, setIsTemplateUrlCopied] = useState(false);
   const stackSetExternalId = session?.tenantId ?? "";
+  const { copied: isExternalIdCopied, copy: copyExternalId } = useClipboard({
+    timeout: 1500,
+  });
+  const { copied: isTemplateUrlCopied, copy: copyTemplateUrl } = useClipboard({
+    timeout: 1500,
+  });
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
   const formId = "org-wizard-setup-form";
 
@@ -284,15 +289,7 @@ export function OrgSetupForm({
                   <button
                     type="button"
                     disabled={!stackSetExternalId}
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(stackSetExternalId);
-                        setIsExternalIdCopied(true);
-                        setTimeout(() => setIsExternalIdCopied(false), 1500);
-                      } catch {
-                        // Ignore clipboard errors (e.g., unsupported browser context).
-                      }
-                    }}
+                    onClick={() => copyExternalId(stackSetExternalId)}
                     className="text-text-neutral-secondary hover:text-text-neutral-primary shrink-0 transition-colors"
                     aria-label="Copy external ID"
                   >
@@ -350,17 +347,7 @@ export function OrgSetupForm({
                 </span>
                 <button
                   type="button"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(
-                        PROWLER_CF_TEMPLATE_URL,
-                      );
-                      setIsTemplateUrlCopied(true);
-                      setTimeout(() => setIsTemplateUrlCopied(false), 1500);
-                    } catch {
-                      // Ignore clipboard errors
-                    }
-                  }}
+                  onClick={() => copyTemplateUrl(PROWLER_CF_TEMPLATE_URL)}
                   className="text-text-neutral-secondary hover:text-text-neutral-primary shrink-0 transition-colors"
                   aria-label="Copy template URL"
                 >
