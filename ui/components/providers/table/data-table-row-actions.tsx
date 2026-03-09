@@ -1,7 +1,7 @@
 "use client";
 
 import { Row } from "@tanstack/react-table";
-import { Pencil, PlugZap, Trash2 } from "lucide-react";
+import { KeyRound, Pencil, Rocket, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { checkConnectionProvider } from "@/actions/providers/providers";
@@ -15,13 +15,16 @@ import {
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
-import { ProviderProps } from "@/types/providers";
+import {
+  isProvidersOrganizationRow,
+  ProvidersTableRow,
+} from "@/types/providers-table";
 
 import { EditForm } from "../forms";
 import { DeleteForm } from "../forms/delete-form";
 
 interface DataTableRowActionsProps {
-  row: Row<ProviderProps>;
+  row: Row<ProvidersTableRow>;
 }
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
@@ -29,14 +32,20 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const provider = row.original;
-  const providerId = provider.id;
-  const providerType = provider.attributes.provider;
-  const providerUid = provider.attributes.uid;
-  const providerAlias = provider.attributes.alias ?? null;
-  const providerSecretId = provider.relationships.secret.data?.id ?? null;
+  const rowData = row.original;
+  const isOrganizationRow = isProvidersOrganizationRow(rowData);
+  const provider = isOrganizationRow ? null : rowData;
+  const providerId = provider?.id ?? "";
+  const providerType = provider?.attributes.provider ?? "aws";
+  const providerUid = provider?.attributes.uid ?? "";
+  const providerAlias = provider?.attributes.alias ?? null;
+  const providerSecretId = provider?.relationships.secret.data?.id ?? null;
 
   const handleTestConnection = async () => {
+    if (!providerId) {
+      return;
+    }
+
     setLoading(true);
     const formData = new FormData();
     formData.append("providerId", providerId);
@@ -44,7 +53,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     setLoading(false);
   };
 
-  const hasSecret = Boolean(provider.relationships.secret.data);
+  const hasSecret = Boolean(provider?.relationships.secret.data);
 
   return (
     <>
@@ -53,11 +62,13 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         onOpenChange={setIsEditOpen}
         title="Edit Provider Alias"
       >
-        <EditForm
-          providerId={providerId}
-          providerAlias={providerAlias}
-          setIsOpen={setIsEditOpen}
-        />
+        {provider && (
+          <EditForm
+            providerId={providerId}
+            providerAlias={providerAlias ?? undefined}
+            setIsOpen={setIsEditOpen}
+          />
+        )}
       </Modal>
       <Modal
         open={isDeleteOpen}
@@ -65,7 +76,9 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         title="Are you absolutely sure?"
         description="This action cannot be undone. This will permanently delete your provider account and remove your data from the server."
       >
-        <DeleteForm providerId={providerId} setIsOpen={setIsDeleteOpen} />
+        {provider && (
+          <DeleteForm providerId={providerId} setIsOpen={setIsDeleteOpen} />
+        )}
       </Modal>
       <ProviderWizardModal
         open={isWizardOpen}
@@ -86,35 +99,30 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         <ActionDropdown
           trigger={
             <Button variant="ghost" size="icon-sm" className="rounded-full">
-              <VerticalDotsIcon className="text-slate-400" />
+              <VerticalDotsIcon className="text-text-neutral-secondary" />
             </Button>
           }
         >
           <ActionDropdownItem
             icon={<Pencil />}
-            label={hasSecret ? "Update Credentials" : "Add Credentials"}
-            onSelect={() => setIsWizardOpen(true)}
+            label="Edit Provider Alias"
+            onSelect={() => setIsEditOpen(true)}
+            disabled={isOrganizationRow}
           />
           <ActionDropdownItem
-            icon={<PlugZap />}
+            icon={<KeyRound />}
+            label="Update Credentials"
+            onSelect={() => setIsWizardOpen(true)}
+            disabled={isOrganizationRow}
+          />
+          <ActionDropdownItem
+            icon={<Rocket />}
             label={loading ? "Testing..." : "Test Connection"}
-            description={
-              hasSecret && !loading
-                ? "Check the provider connection"
-                : loading
-                  ? "Checking provider connection"
-                  : "Add credentials to test the connection"
-            }
             onSelect={(e) => {
               e.preventDefault();
               handleTestConnection();
             }}
-            disabled={!hasSecret || loading}
-          />
-          <ActionDropdownItem
-            icon={<Pencil />}
-            label="Edit Provider Alias"
-            onSelect={() => setIsEditOpen(true)}
+            disabled={isOrganizationRow || !hasSecret || loading}
           />
           <ActionDropdownDangerZone>
             <ActionDropdownItem
@@ -122,6 +130,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
               label="Delete Provider"
               destructive
               onSelect={() => setIsDeleteOpen(true)}
+              disabled={isOrganizationRow}
             />
           </ActionDropdownDangerZone>
         </ActionDropdown>
