@@ -43,7 +43,7 @@ export const getProviderGroups = async ({
       headers,
     });
 
-    return handleApiResponse(response);
+    return await handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching provider groups:", error);
     return undefined;

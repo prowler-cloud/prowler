@@ -8,7 +8,7 @@ import { getProviderLogo } from "../ui/entities";
 interface ProviderInfoProps {
   connected: boolean | null;
   provider: ProviderType;
-  providerAlias: string;
+  providerAlias: string | null;
   providerUID?: string;
 }
 
@@ -50,11 +50,20 @@ export const ProviderInfo = ({
   };
 
   return (
-    <div className="flex items-center text-sm">
-      <div className="flex items-center gap-4">
+    <div className="flex min-w-0 items-center text-sm">
+      <div className="flex min-w-0 items-center gap-4">
         <div className="shrink-0">{getProviderLogo(provider)}</div>
         {getIcon()}
-        <span className="font-medium">{providerAlias || providerUID}</span>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="truncate font-medium">
+            {providerAlias || providerUID}
+          </span>
+          {providerUID && (
+            <span className="text-text-neutral-tertiary truncate text-xs">
+              UID: {providerUID}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

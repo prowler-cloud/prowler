@@ -1,19 +1,19 @@
 import { Suspense } from "react";
 
-import { getProviders } from "@/actions/providers";
-import { FilterControls, filterProviders } from "@/components/filters";
 import { ManageGroupsButton } from "@/components/manage-groups";
 import {
   AddProviderButton,
   MutedFindingsConfigButton,
+  ProvidersAccountsTable,
+  ProvidersFilters,
 } from "@/components/providers";
-import {
-  ColumnProviders,
-  SkeletonTableProviders,
-} from "@/components/providers/table";
+import { SkeletonTableProviders } from "@/components/providers/table";
+import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { ContentLayout } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
-import { ProviderProps, SearchParamsProps } from "@/types";
+import { FilterTransitionWrapper } from "@/contexts";
+import { SearchParamsProps } from "@/types";
+
+import { loadProvidersAccountsViewData } from "./providers-page.utils";
 
 export default async function Providers({
   searchParams,
@@ -25,13 +25,11 @@ export default async function Providers({
 
   return (
     <ContentLayout title="Cloud Providers" icon="lucide:cloud-cog">
-      <div className="flex flex-col gap-6">
-        <FilterControls search customFilters={filterProviders || []} />
-        <ProvidersActions />
+      <FilterTransitionWrapper>
         <Suspense key={searchParamsKey} fallback={<ProvidersTableFallback />}>
           <ProvidersTable searchParams={resolvedSearchParams} />
         </Suspense>
-      </div>
+      </FilterTransitionWrapper>
     </ContentLayout>
   );
 }
@@ -48,10 +46,26 @@ const ProvidersActions = () => {
 
 const ProvidersTableFallback = () => {
   return (
-    <div className="grid grid-cols-12 gap-4">
-      <div className="col-span-12">
-        <SkeletonTableProviders />
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-6">
+            <Skeleton className="h-5 w-16 rounded" />
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Skeleton className="h-10 w-36 rounded-md" />
+            <Skeleton className="h-10 w-40 rounded-md" />
+            <Skeleton className="h-10 w-36 rounded-md" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Skeleton className="h-10 rounded-md" />
+          <Skeleton className="h-10 rounded-md" />
+          <Skeleton className="h-10 rounded-md" />
+          <Skeleton className="h-10 rounded-md" />
+        </div>
       </div>
+      <SkeletonTableProviders />
     </div>
   );
 };
@@ -61,55 +75,37 @@ const ProvidersTable = async ({
 }: {
   searchParams: SearchParamsProps;
 }) => {
-  const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const sort = searchParams.sort?.toString();
-  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
-
-  // Extract all filter parameters
-  const filters = Object.fromEntries(
-    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
-  );
-
-  // Extract query from filters
-  const query = (filters["filter[search]"] as string) || "";
-
-  const providersData = await getProviders({
-    query,
-    page,
-    sort,
-    filters,
-    pageSize,
+  const providersView = await loadProvidersAccountsViewData({
+    searchParams,
+    isCloud: process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true",
   });
 
-  const providerGroupDict =
-    providersData?.included
-      ?.filter((item: any) => item.type === "provider-groups")
-      .reduce((acc: Record<string, string>, group: any) => {
-        acc[group.id] = group.attributes.name;
-        return acc;
-      }, {}) || {};
-
-  const enrichedProviders =
-    providersData?.data?.map((provider: ProviderProps) => {
-      const groupNames =
-        provider.relationships?.provider_groups?.data?.map(
-          (group: { id: string }) =>
-            providerGroupDict[group.id] || "Unknown Group",
-        ) || [];
-      return { ...provider, groupNames };
-    }) || [];
-
   return (
-    <>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-6">
+          <button
+            type="button"
+            className="border-button-primary text-text-neutral-primary border-b-2 pb-2 text-sm font-medium"
+          >
+            Accounts
+          </button>
+        </div>
+        <ProvidersActions />
+      </div>
+      <ProvidersFilters
+        filters={providersView.filters}
+        providers={providersView.providers}
+      />
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12">
-          <DataTable
-            columns={ColumnProviders}
-            data={enrichedProviders || []}
-            metadata={providersData?.meta}
+          <ProvidersAccountsTable
+            isCloud={process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"}
+            metadata={providersView.metadata}
+            rows={providersView.rows}
           />
         </div>
       </div>
-    </>
+    </div>
   );
 };
