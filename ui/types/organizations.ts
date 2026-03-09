@@ -152,6 +152,71 @@ export interface OrganizationResource {
   id: string;
   type: "organizations";
   attributes: OrganizationAttributes;
+  relationships?: {
+    providers?: {
+      data: Array<{
+        id: string;
+        type: "providers";
+      }>;
+    };
+    organizational_units?: {
+      data: Array<{
+        id: string;
+        type: "organizational-units";
+      }>;
+    };
+  };
+}
+
+export interface OrganizationListResponse {
+  data: OrganizationResource[];
+  meta?: {
+    version?: string;
+  };
+}
+
+export interface OrganizationUnitAttributes {
+  name: string;
+  external_id: string;
+  parent_external_id: string | null;
+  metadata: Record<string, unknown>;
+  inserted_at?: string;
+  updated_at?: string;
+}
+
+export interface OrganizationUnitRelationships {
+  organization: {
+    data: {
+      id: string;
+      type: "organizations";
+    };
+  };
+  parent?: {
+    data: {
+      id: string;
+      type: "organizational-units";
+    } | null;
+  };
+  providers?: {
+    data: Array<{
+      id: string;
+      type: "providers";
+    }>;
+  };
+}
+
+export interface OrganizationUnitResource {
+  id: string;
+  type: "organizational-units";
+  attributes: OrganizationUnitAttributes;
+  relationships: OrganizationUnitRelationships;
+}
+
+export interface OrganizationUnitListResponse {
+  data: OrganizationUnitResource[];
+  meta?: {
+    version?: string;
+  };
 }
 
 export interface DiscoveryAttributes {

@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
+import {
+  OrganizationListResponse,
+  OrganizationUnitListResponse,
+} from "@/types";
 
 const PATH_IDENTIFIER_PATTERN = /^[A-Za-z0-9_-]+$/;
 
@@ -35,6 +39,24 @@ function hasActionError(result: unknown): result is { error: unknown } {
       (result as Record<string, unknown>).error !== null &&
       (result as Record<string, unknown>).error !== undefined,
   );
+}
+
+async function fetchOptionalCollection<T extends { data: unknown[] }>(
+  url: URL,
+): Promise<T> {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  try {
+    const response = await fetch(url.toString(), { headers });
+
+    if (!response.ok) {
+      return { data: [] } as unknown as T;
+    }
+
+    return (await handleApiResponse(response)) as T;
+  } catch {
+    return { data: [] } as unknown as T;
+  }
 }
 
 /**
@@ -82,11 +104,59 @@ export const listOrganizationsByExternalId = async (externalId: string) => {
 
   try {
     const response = await fetch(url.toString(), { headers });
-    return handleApiResponse(response);
+    return await handleApiResponse(response);
   } catch (error) {
     return handleApiError(error);
   }
 };
+
+/**
+ * Lists AWS organizations available for the current tenant.
+ * GET /api/v1/organizations?filter[org_type]=aws
+ */
+export const listOrganizations = async () => {
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/organizations`);
+  url.searchParams.set("filter[org_type]", "aws");
+
+  try {
+    const response = await fetch(url.toString(), { headers });
+    return await handleApiResponse(response);
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const listOrganizationsSafe =
+  async (): Promise<OrganizationListResponse> => {
+    const url = new URL(`${apiBaseUrl}/organizations`);
+    url.searchParams.set("filter[org_type]", "aws");
+
+    return fetchOptionalCollection<OrganizationListResponse>(url);
+  };
+
+/**
+ * Lists organization units available for the current tenant.
+ * GET /api/v1/organizational-units
+ */
+export const listOrganizationUnits = async () => {
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/organizational-units`);
+
+  try {
+    const response = await fetch(url.toString(), { headers });
+    return await handleApiResponse(response);
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const listOrganizationUnitsSafe =
+  async (): Promise<OrganizationUnitListResponse> => {
+    const url = new URL(`${apiBaseUrl}/organizational-units`);
+
+    return fetchOptionalCollection<OrganizationUnitListResponse>(url);
+  };
 
 /**
  * Creates an organization secret (role-based credentials).
