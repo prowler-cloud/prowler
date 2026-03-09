@@ -6,7 +6,31 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- `entra_conditional_access_policy_approved_client_app_required_for_mobile` check for m365 provider [(#10216)](https://github.com/prowler-cloud/prowler/pull/10216)
+- `entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required` check for M365 provider [(#10197)](https://github.com/prowler-cloud/prowler/pull/10197)
 - OpenStack object storage service with 7 checks [(#10258)](https://github.com/prowler-cloud/prowler/pull/10258)
+
+### 🔄 Changed
+
+- Update Kubernetes API server checks metadata to new format [(#9674)](https://github.com/prowler-cloud/prowler/pull/9674)
+- Update Kubernetes Controller Manager service metadata to new format [(#9675)](https://github.com/prowler-cloud/prowler/pull/9675)
+- Update Kubernetes Core service metadata to new format [(#9676)](https://github.com/prowler-cloud/prowler/pull/9676)
+- Update Kubernetes Kubelet service metadata to new format [(#9677)](https://github.com/prowler-cloud/prowler/pull/9677)
+- Update Kubernetes RBAC service metadata to new format [(#9678)](https://github.com/prowler-cloud/prowler/pull/9678)
+- Update Kubernetes Scheduler service metadata to new format [(#9679)](https://github.com/prowler-cloud/prowler/pull/9679)
+- Update MongoDB Atlas Organizations service metadata to new format [(#9658)](https://github.com/prowler-cloud/prowler/pull/9658)
+- Update MongoDB Atlas clusters service metadata to new format [(#9657)](https://github.com/prowler-cloud/prowler/pull/9657)
+- Update GitHub Repository service metadata to new format [(#9659)](https://github.com/prowler-cloud/prowler/pull/9659)
+- Update GitHub Organization service metadata to new format [(#10273)](https://github.com/prowler-cloud/prowler/pull/10273)
+- Update Oracle Cloud Compute Engine service metadata to new format [(#9371)](https://github.com/prowler-cloud/prowler/pull/9371)
+- Update Oracle Cloud Database service metadata to new format [(#9372)](https://github.com/prowler-cloud/prowler/pull/9372)
+- Update Oracle Cloud File Storage service metadata to new format [(#9374)](https://github.com/prowler-cloud/prowler/pull/9374)
+- Update Oracle Cloud Integration service metadata to new format [(#9376)](https://github.com/prowler-cloud/prowler/pull/9376)
+- Update Oracle Cloud KMS service metadata to new format [(#9377)](https://github.com/prowler-cloud/prowler/pull/9377)
+- Update Oracle Cloud Network service metadata to new format [(#9378)](https://github.com/prowler-cloud/prowler/pull/9378)
+- Update Oracle Cloud Object Storage service metadata to new format [(#9379)](https://github.com/prowler-cloud/prowler/pull/9379)
+- Update Oracle Cloud Events service metadata to new format [(#9373)](https://github.com/prowler-cloud/prowler/pull/9373)
+- Update Oracle Cloud Identity service metadata to new format [(#9375)](https://github.com/prowler-cloud/prowler/pull/9375)
 
 ---
 

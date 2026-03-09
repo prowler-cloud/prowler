@@ -39,8 +39,8 @@ class Test_objectstorage_container_versioning_enabled:
 
             assert len(result) == 0
 
-    def test_container_versioning_enabled(self):
-        """Test container with versioning enabled (PASS)."""
+    def test_container_versioning_enabled_versions_location(self):
+        """Test container with versioning enabled via X-Versions-Location (PASS)."""
         objectstorage_client = mock.MagicMock()
         objectstorage_client.containers = [
             ObjectStorageContainer(
@@ -54,6 +54,7 @@ class Test_objectstorage_container_versioning_enabled:
                 write_ACL="",
                 versioning_enabled=True,
                 versions_location="versioned-container_versions",
+                history_location="",
                 sync_to="",
                 sync_key="",
                 metadata={},
@@ -88,6 +89,56 @@ class Test_objectstorage_container_versioning_enabled:
             assert result[0].region == OPENSTACK_REGION
             assert result[0].project_id == OPENSTACK_PROJECT_ID
 
+    def test_container_versioning_enabled_history_location(self):
+        """Test container with versioning enabled via X-History-Location (PASS)."""
+        objectstorage_client = mock.MagicMock()
+        objectstorage_client.containers = [
+            ObjectStorageContainer(
+                id="container-1",
+                name="history-container",
+                region=OPENSTACK_REGION,
+                project_id=OPENSTACK_PROJECT_ID,
+                object_count=10,
+                bytes_used=1024,
+                read_ACL="",
+                write_ACL="",
+                versioning_enabled=True,
+                versions_location="",
+                history_location="history-container_versions",
+                sync_to="",
+                sync_key="",
+                metadata={},
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.objectstorage.objectstorage_container_versioning_enabled.objectstorage_container_versioning_enabled.objectstorage_client",
+                new=objectstorage_client,
+            ),
+        ):
+            from prowler.providers.openstack.services.objectstorage.objectstorage_container_versioning_enabled.objectstorage_container_versioning_enabled import (
+                objectstorage_container_versioning_enabled,
+            )
+
+            check = objectstorage_container_versioning_enabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == "Container history-container has versioning enabled (history location: history-container_versions)."
+            )
+            assert result[0].resource_id == "container-1"
+            assert result[0].resource_name == "history-container"
+            assert result[0].region == OPENSTACK_REGION
+            assert result[0].project_id == OPENSTACK_PROJECT_ID
+
     def test_container_versioning_disabled(self):
         """Test container without versioning (FAIL)."""
         objectstorage_client = mock.MagicMock()
@@ -103,6 +154,7 @@ class Test_objectstorage_container_versioning_enabled:
                 write_ACL="",
                 versioning_enabled=False,
                 versions_location="",
+                history_location="",
                 sync_to="",
                 sync_key="",
                 metadata={},
@@ -152,6 +204,7 @@ class Test_objectstorage_container_versioning_enabled:
                 write_ACL="",
                 versioning_enabled=True,
                 versions_location="Pass_versions",
+                history_location="",
                 sync_to="",
                 sync_key="",
                 metadata={},
@@ -167,6 +220,7 @@ class Test_objectstorage_container_versioning_enabled:
                 write_ACL="",
                 versioning_enabled=False,
                 versions_location="",
+                history_location="",
                 sync_to="",
                 sync_key="",
                 metadata={},

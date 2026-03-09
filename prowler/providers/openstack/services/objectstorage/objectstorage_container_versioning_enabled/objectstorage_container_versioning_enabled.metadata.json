@@ -20,11 +20,11 @@
     "Code": {
       "CLI": "swift post <container_name> -H 'X-Versions-Location: <versions_container>'",
       "NativeIaC": "",
-      "Other": "1. Create a versions container: `swift post <container_name>_versions`\n2. Enable versioning: `swift post <container_name> -H 'X-Versions-Location: <container_name>_versions'`\n3. Verify: `swift stat <container_name>` shows Versions header",
+      "Other": "1. Create a versions container: `swift post <container_name>_versions`\n2. Enable versioning (stack mode): `swift post <container_name> -H 'X-Versions-Location: <container_name>_versions'`\n   Or enable versioning (history mode): `swift post <container_name> -H 'X-History-Location: <container_name>_versions'`\n3. Verify: `swift stat <container_name>` shows Versions header",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable **object versioning** on all containers storing important data. Create a dedicated versions container and set the `X-Versions-Location` header. Implement **lifecycle policies** to manage version retention and storage costs. Combine with container backups for comprehensive data protection.",
+      "Text": "Enable **object versioning** on all containers storing important data. Create a dedicated versions container and set the `X-Versions-Location` (stack mode) or `X-History-Location` (history mode) header. Implement **lifecycle policies** to manage version retention and storage costs. Combine with container backups for comprehensive data protection.",
       "Url": "https://hub.prowler.com/check/objectstorage_container_versioning_enabled"
     }
   },
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Swift supports two versioning modes: X-Versions-Location (stack mode, stores versions in a separate container) and X-History-Location (history mode). This check verifies that versions_location is set, indicating versioning is configured."
+  "Notes": "Swift supports two versioning modes: X-Versions-Location (stack mode, stores versions in a separate container) and X-History-Location (history mode). This check verifies that either versions_location or history_location is set, indicating versioning is configured."
 }

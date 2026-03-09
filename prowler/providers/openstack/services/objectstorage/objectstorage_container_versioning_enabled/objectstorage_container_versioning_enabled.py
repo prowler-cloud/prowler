@@ -16,7 +16,9 @@ class objectstorage_container_versioning_enabled(Check):
             report = CheckReportOpenStack(metadata=self.metadata(), resource=container)
             if container.versioning_enabled:
                 report.status = "PASS"
-                report.status_extended = f"Container {container.name} has versioning enabled (versions location: {container.versions_location})."
+                location = container.versions_location or container.history_location
+                mode = "versions" if container.versions_location else "history"
+                report.status_extended = f"Container {container.name} has versioning enabled ({mode} location: {location})."
             else:
                 report.status = "FAIL"
                 report.status_extended = (

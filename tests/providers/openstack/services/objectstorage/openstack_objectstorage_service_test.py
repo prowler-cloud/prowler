@@ -48,6 +48,7 @@ class TestObjectStorageService:
         mock_container1.read_ACL = ".r:*,.rlistings"
         mock_container1.write_ACL = "*:*"
         mock_container1.versions_location = "container-1_versions"
+        mock_container1.history_location = ""
         mock_container1.sync_to = "https://other-cluster/v1/AUTH_test/container-1"
         mock_container1.sync_key = "shared-secret"
         mock_container1.metadata = {"environment": "production"}
@@ -59,6 +60,7 @@ class TestObjectStorageService:
         mock_container2.read_ACL = ""
         mock_container2.write_ACL = ""
         mock_container2.versions_location = ""
+        mock_container2.history_location = ""
         mock_container2.sync_to = ""
         mock_container2.sync_key = ""
         mock_container2.metadata = {}
@@ -92,6 +94,7 @@ class TestObjectStorageService:
         assert service.containers[0].write_ACL == "*:*"
         assert service.containers[0].versioning_enabled is True
         assert service.containers[0].versions_location == "container-1_versions"
+        assert service.containers[0].history_location == ""
         assert (
             service.containers[0].sync_to
             == "https://other-cluster/v1/AUTH_test/container-1"
@@ -124,6 +127,7 @@ class TestObjectStorageService:
         del mock_container.read_ACL
         del mock_container.write_ACL
         del mock_container.versions_location
+        del mock_container.history_location
         del mock_container.sync_to
         del mock_container.sync_key
         del mock_container.metadata
@@ -146,6 +150,7 @@ class TestObjectStorageService:
         assert service.containers[0].write_ACL == ""
         assert service.containers[0].versioning_enabled is False
         assert service.containers[0].versions_location == ""
+        assert service.containers[0].history_location == ""
         assert service.containers[0].sync_to == ""
         assert service.containers[0].sync_key == ""
         assert service.containers[0].metadata == {}
@@ -161,6 +166,7 @@ class TestObjectStorageService:
         mock_container.read_ACL = None
         mock_container.write_ACL = None
         mock_container.versions_location = None
+        mock_container.history_location = None
         mock_container.sync_to = None
         mock_container.sync_key = None
         mock_container.metadata = {}
@@ -213,6 +219,7 @@ class TestObjectStorageService:
             write_ACL="*:*",
             versioning_enabled=True,
             versions_location="container-1_versions",
+            history_location="",
             sync_to="https://other-cluster/v1/AUTH_test/container-1",
             sync_key="shared-secret",
             metadata={"environment": "production"},
@@ -228,6 +235,7 @@ class TestObjectStorageService:
         assert container.write_ACL == "*:*"
         assert container.versioning_enabled is True
         assert container.versions_location == "container-1_versions"
+        assert container.history_location == ""
         assert container.sync_to == "https://other-cluster/v1/AUTH_test/container-1"
         assert container.sync_key == "shared-secret"
         assert container.metadata == {"environment": "production"}
@@ -268,6 +276,7 @@ class TestObjectStorageService:
         mock_container_uk.read_ACL = ""
         mock_container_uk.write_ACL = ""
         mock_container_uk.versions_location = ""
+        mock_container_uk.history_location = ""
         mock_container_uk.sync_to = ""
         mock_container_uk.sync_key = ""
         mock_container_uk.metadata = {}
@@ -279,6 +288,7 @@ class TestObjectStorageService:
         mock_container_de.read_ACL = ".r:*"
         mock_container_de.write_ACL = ""
         mock_container_de.versions_location = ""
+        mock_container_de.history_location = ""
         mock_container_de.sync_to = ""
         mock_container_de.sync_key = ""
         mock_container_de.metadata = {}
@@ -316,6 +326,7 @@ class TestObjectStorageService:
         mock_container.read_ACL = ""
         mock_container.write_ACL = ""
         mock_container.versions_location = ""
+        mock_container.history_location = ""
         mock_container.sync_to = ""
         mock_container.sync_key = ""
         mock_container.metadata = {}
@@ -348,6 +359,7 @@ class TestObjectStorageService:
         mock_container.read_ACL = ""
         mock_container.write_ACL = ""
         mock_container.versions_location = ""
+        mock_container.history_location = ""
         mock_container.sync_to = ""
         mock_container.sync_key = ""
         mock_container.metadata = {}
@@ -361,3 +373,31 @@ class TestObjectStorageService:
         assert len(service.containers) == 1
         assert service.containers[0].id == "container-uk"
         assert service.containers[0].region == "UK1"
+
+    def test_objectstorage_list_containers_history_location_versioning(self):
+        """Test that history_location (X-History-Location) enables versioning."""
+        provider = set_mocked_openstack_provider()
+
+        mock_container = MagicMock()
+        mock_container.name = "history-container"
+        mock_container.count = 3
+        mock_container.bytes = 256
+        mock_container.read_ACL = ""
+        mock_container.write_ACL = ""
+        mock_container.versions_location = ""
+        mock_container.history_location = "history-container_versions"
+        mock_container.sync_to = ""
+        mock_container.sync_key = ""
+        mock_container.metadata = {}
+
+        provider.connection.object_store.containers.return_value = [mock_container]
+        provider.connection.object_store.get_container_metadata.return_value = (
+            mock_container
+        )
+
+        service = ObjectStorage(provider)
+
+        assert len(service.containers) == 1
+        assert service.containers[0].versioning_enabled is True
+        assert service.containers[0].versions_location == ""
+        assert service.containers[0].history_location == "history-container_versions"

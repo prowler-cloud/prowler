@@ -37,9 +37,10 @@ class ObjectStorage(OpenStackService):
 
                     metadata = getattr(detail, "metadata", None) or {}
 
-                    # Extract versioning info
+                    # Extract versioning info (Swift supports two modes)
                     versions_location = getattr(detail, "versions_location", "") or ""
-                    versioning_enabled = bool(versions_location)
+                    history_location = getattr(detail, "history_location", "") or ""
+                    versioning_enabled = bool(versions_location or history_location)
 
                     self.containers.append(
                         ObjectStorageContainer(
@@ -53,6 +54,7 @@ class ObjectStorage(OpenStackService):
                             write_ACL=getattr(detail, "write_ACL", "") or "",
                             versioning_enabled=versioning_enabled,
                             versions_location=versions_location,
+                            history_location=history_location,
                             sync_to=getattr(detail, "sync_to", "") or "",
                             sync_key=getattr(detail, "sync_key", "") or "",
                             metadata=metadata if isinstance(metadata, dict) else {},
@@ -84,6 +86,7 @@ class ObjectStorageContainer:
     write_ACL: str
     versioning_enabled: bool
     versions_location: str
+    history_location: str
     sync_to: str
     sync_key: str
     metadata: Dict[str, str]
