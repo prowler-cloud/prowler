@@ -30,6 +30,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Oracle Cloud Object Storage service metadata to new format [(#9379)](https://github.com/prowler-cloud/prowler/pull/9379)
 - Update Oracle Cloud Events service metadata to new format [(#9373)](https://github.com/prowler-cloud/prowler/pull/9373)
 - Update Oracle Cloud Identity service metadata to new format [(#9375)](https://github.com/prowler-cloud/prowler/pull/9375)
+- Update Alibaba Cloud services metadata to new format
 
 ---
 

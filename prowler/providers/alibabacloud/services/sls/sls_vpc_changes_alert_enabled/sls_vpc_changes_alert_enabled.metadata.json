@@ -2,28 +2,24 @@
   "Provider": "alibabacloud",
   "CheckID": "sls_vpc_changes_alert_enabled",
   "CheckTitle": "Log monitoring and alerts are set up for VPC changes",
-  "CheckType": [
-    "Suspicious network connection",
-    "Cloud threat detection"
-  ],
+  "CheckType": [],
   "ServiceName": "sls",
   "SubServiceName": "",
-  "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "monitoring",
-  "Description": "It is recommended that a **log search/analysis query and alarm** be established for **VPC changes**.",
-  "Risk": "Monitoring changes to **VPC** will help ensure VPC traffic flow is not getting impacted.\n\nUnauthorized VPC modifications could disrupt network connectivity or create security vulnerabilities.",
+  "Description": "**Alibaba Cloud Simple Log Service (SLS)** should have a log search/analysis query and alarm configured for **VPC** changes. By directing **ActionTrail** logs to SLS and establishing corresponding alert rules, real-time monitoring of VPC modifications can be achieved. This ensures that any creation, deletion, or modification of VPCs and their associated components is promptly detected and reviewed.",
+  "Risk": "Without monitoring for **VPC changes**, unauthorized or accidental modifications to virtual network infrastructure may go undetected. This could disrupt **network connectivity**, create **security vulnerabilities**, or expose internal resources to untrusted networks. Unauthorized VPC modifications increase the risk of **service disruption**, **data interception**, and **lateral movement** within the cloud environment, potentially compromising the **confidentiality** and **availability** of all connected resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/vpc-config-changes-alert.html"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aliyun sls create-alert --project <project-name> --alert-name vpc-changes --alert-displayname 'VPC Changes Alert' --condition 'event.serviceName: Vpc and (event.eventName: CreateVpc or event.eventName: DeleteVpc or event.eventName: ModifyVpcAttribute)' --dashboard <dashboard-name> --schedule '{\"type\":\"FixedRate\",\"interval\":\"1m\"}'",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Log on to the **SLS Console**.\n2. Ensure **ActionTrail** is enabled and delivering logs to a **Log Service** project.\n3. Navigate to the project receiving ActionTrail logs.\n4. Select **Alerts** and click **Create Alert Rule**.\n5. Configure the query to filter for VPC changes: `event.serviceName: Vpc and (event.eventName: CreateVpc or event.eventName: DeleteVpc or event.eventName: ModifyVpcAttribute)`.\n6. Set the alert **schedule**, **notification method**, and **severity**.\n7. Save and enable the alert rule.",
       "Terraform": ""
     },
     "Recommendation": {
