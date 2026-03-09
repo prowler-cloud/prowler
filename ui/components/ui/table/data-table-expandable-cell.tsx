@@ -13,6 +13,8 @@ interface DataTableExpandableCellProps<TData> {
   children: React.ReactNode;
   /** Whether to show the expand/collapse toggle (default: true) */
   showToggle?: boolean;
+  /** Explicit expanded state — pass to break React Compiler memoization */
+  isExpanded?: boolean;
 }
 
 /**
@@ -43,19 +45,20 @@ export function DataTableExpandableCell<TData>({
   row,
   children,
   showToggle = true,
+  isExpanded,
 }: DataTableExpandableCellProps<TData>) {
   const isChildRow = row.depth > 0;
   const canExpand = row.getCanExpand();
 
   return (
     <div
-      className="flex items-center gap-2"
+      className="flex min-w-0 items-center gap-2 overflow-hidden"
       style={{ paddingLeft: `${row.depth * INDENT_PER_LEVEL_REM}rem` }}
     >
       {showToggle && (
         <>
           {canExpand ? (
-            <DataTableExpandToggle row={row} />
+            <DataTableExpandToggle row={row} isExpanded={isExpanded} />
           ) : isChildRow ? (
             <CornerDownRightIcon className="h-4 w-4 shrink-0" />
           ) : (
