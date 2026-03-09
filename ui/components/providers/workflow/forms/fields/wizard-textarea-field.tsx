@@ -87,7 +87,7 @@ export const WizardTextareaField = <T extends FieldValues>({
                 {description}
               </p>
             )}
-            <FormMessage className="text-text-error max-w-full text-xs" />
+            <FormMessage className="text-text-error-primary max-w-full text-xs" />
           </div>
         );
       }}
