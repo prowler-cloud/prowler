@@ -53,6 +53,7 @@ export interface ProvidersProviderRow
   rowType: typeof PROVIDERS_ROW_TYPE.PROVIDER;
   relationships: ProviderTableRelationships;
   groupNames: string[];
+  hasSchedule: boolean;
   subRows?: ProvidersTableRow[];
 }
 

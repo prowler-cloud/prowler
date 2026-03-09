@@ -4,6 +4,7 @@ import {
   listOrganizationUnitsSafe,
 } from "@/actions/organizations/organizations";
 import { getProviders } from "@/actions/providers";
+import { getScans } from "@/actions/scans";
 import {
   extractFiltersAndQuery,
   extractSortAndKey,
@@ -19,6 +20,7 @@ import {
   ProvidersApiResponse,
   SearchParamsProps,
 } from "@/types";
+import { SCAN_TRIGGER, ScanProps } from "@/types/scans";
 import {
   PROVIDER_DISPLAY_NAMES,
   PROVIDER_TYPES,
@@ -168,8 +170,31 @@ const createProviderGroupLookup = (
   return lookup;
 };
 
+const ACTIVE_SCAN_STATES = new Set(["scheduled", "available", "executing"]);
+
+const buildScheduledProviderIds = (
+  scans: ScanProps[],
+): Set<string> => {
+  const scheduled = new Set<string>();
+
+  for (const scan of scans) {
+    if (
+      scan.attributes.trigger === SCAN_TRIGGER.SCHEDULED &&
+      ACTIVE_SCAN_STATES.has(scan.attributes.state)
+    ) {
+      const providerId = scan.relationships.provider?.data?.id;
+      if (providerId) {
+        scheduled.add(providerId);
+      }
+    }
+  }
+
+  return scheduled;
+};
+
 const enrichProviders = (
   providersResponse?: ProvidersApiResponse,
+  scheduledProviderIds?: Set<string>,
 ): ProvidersProviderRow[] => {
   const providerGroupLookup = createProviderGroupLookup(providersResponse);
 
@@ -181,6 +206,7 @@ const enrichProviders = (
         (providerGroup: { id: string }) =>
           providerGroupLookup.get(providerGroup.id) ?? "Unknown Group",
       ) ?? [],
+    hasSchedule: scheduledProviderIds?.has(provider.id) ?? false,
   }));
 };
 
@@ -512,6 +538,7 @@ export async function loadProvidersAccountsViewData({
     providersResponse,
     allProvidersResponse,
     providerGroupsResponse,
+    scansResponse,
     organizationsResponse,
     organizationUnitsResponse,
   ] = await Promise.all([
@@ -524,9 +551,19 @@ export async function loadProvidersAccountsViewData({
         sort: encodedSort,
       }),
     ),
-    // Unfiltered fetch for ProviderTypeSelector and AccountsSelector
+    // Unfiltered fetch for ProviderTypeSelector
     resolveActionResult(getProviders({ pageSize: 100 })),
     resolveActionResult(getProviderGroups({ page: 1, pageSize: 100 })),
+    // Fetch active scheduled scans to determine daily schedule per provider
+    resolveActionResult(
+      getScans({
+        pageSize: 100,
+        filters: {
+          "filter[trigger]": SCAN_TRIGGER.SCHEDULED,
+          "filter[state__in]": "scheduled,available",
+        },
+      }),
+    ),
     isCloud
       ? listOrganizationsSafe()
       : Promise.resolve(emptyOrganizationsResponse),
@@ -535,9 +572,13 @@ export async function loadProvidersAccountsViewData({
       : Promise.resolve(emptyOrganizationUnitsResponse),
   ]);
 
+  const scheduledProviderIds = buildScheduledProviderIds(
+    scansResponse?.data ?? [],
+  );
+
   const providers = applyLocalFilters({
     ...localFilters,
-    providers: enrichProviders(providersResponse),
+    providers: enrichProviders(providersResponse, scheduledProviderIds),
   });
 
   return {

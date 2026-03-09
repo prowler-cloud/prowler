@@ -166,7 +166,12 @@ export const ColumnProviders: ColumnDef<ProvidersTableRow>[] = [
         );
       }
 
-      return <LinkToScans providerUid={row.original.attributes.uid} />;
+      return (
+        <LinkToScans
+          hasSchedule={row.original.hasSchedule}
+          providerUid={row.original.attributes.uid}
+        />
+      );
     },
     enableSorting: false,
   },
@@ -206,7 +211,7 @@ export const ColumnProviders: ColumnDef<ProvidersTableRow>[] = [
       return (
         <DateWithTime
           dateTime={row.original.attributes.inserted_at}
-          showTime={false}
+          showTime
         />
       );
     },
