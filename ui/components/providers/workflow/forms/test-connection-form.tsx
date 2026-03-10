@@ -22,7 +22,7 @@ import { checkTaskStatus } from "@/lib/helper";
 import { ProviderType } from "@/types";
 import { ApiError, testConnectionFormSchema } from "@/types";
 
-import { ProviderInfo } from "../..";
+import { ProviderConnectionInfo } from "./provider-connection-info";
 
 type FormValues = z.input<typeof testConnectionFormSchema>;
 
@@ -243,7 +243,7 @@ export const TestConnectionForm = ({
           </>
         )}
 
-        <ProviderInfo
+        <ProviderConnectionInfo
           connected={providerData.data.attributes.connection.connected}
           provider={providerData.data.attributes.provider}
           providerAlias={providerData.data.attributes.alias}

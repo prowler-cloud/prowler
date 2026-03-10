@@ -7,6 +7,9 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🔄 Changed
 
 - Attack Paths: Migrate network exposure queries from APOC to standard openCypher for Neo4j and Neptune compatibility [(#10266)](https://github.com/prowler-cloud/prowler/pull/10266)
+- `POST /api/v1/providers` returns `409 Conflict` if already exists [(#10293)](https://github.com/prowler-cloud/prowler/pull/10293)
+
+---
 
 ## [1.20.0] (Prowler v5.19.0)
 
@@ -35,6 +38,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🐞 Fixed
 
+- PDF compliance reports consistency with UI: exclude resourceless findings and fix ENS MANUAL status handling [(#10270)](https://github.com/prowler-cloud/prowler/pull/10270)
 - Attack Paths: Orphaned temporary Neo4j databases are now cleaned up on scan failure and provider deletion [(#10101)](https://github.com/prowler-cloud/prowler/pull/10101)
 - Attack Paths: scan no longer raises `DatabaseError` when provider is deleted mid-scan [(#10116)](https://github.com/prowler-cloud/prowler/pull/10116)
 - Tenant compliance summaries recalculated after provider deletion [(#10172)](https://github.com/prowler-cloud/prowler/pull/10172)

@@ -1,32 +1,30 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "actiontrail_oss_bucket_not_publicly_accessible",
-  "CheckTitle": "The OSS used to store ActionTrail logs is not publicly accessible",
-  "CheckType": [
-    "Sensitive file tampering"
-  ],
+  "CheckTitle": "The OSS bucket used to store ActionTrail logs is not publicly accessible",
+  "CheckType": [],
   "ServiceName": "actiontrail",
   "SubServiceName": "",
-  "ResourceIdTemplate": "acs:oss::account-id:bucket-name",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "AlibabaCloudOSSBucket",
+  "ResourceType": "ALIYUN::ACTIONTRAIL::Trail",
   "ResourceGroup": "storage",
-  "Description": "**ActionTrail** logs a record of every API call made in your Alibaba Cloud account. These log files are stored in an **OSS bucket**.\n\nIt is recommended that the **Access Control List (ACL)** of the OSS bucket, which ActionTrail logs to, prevents public access to the ActionTrail logs.",
-  "Risk": "Allowing **public access** to ActionTrail log content may aid an adversary in identifying weaknesses in the affected account's use or configuration.\n\nExposed audit logs can reveal sensitive information about your infrastructure, API usage patterns, and security configurations.",
+  "Description": "**Alibaba Cloud ActionTrail** logs a record of every API call made in your account and stores these log files in an **OSS bucket**. It is recommended that the **Access Control List (ACL)** of the OSS bucket used by ActionTrail is set to `private` to prevent unauthorized public access to sensitive audit log data.",
+  "Risk": "Allowing **public access** to the OSS bucket containing ActionTrail logs may expose sensitive information about your infrastructure, API usage patterns, and security configurations. An adversary could use this information to identify weaknesses in the affected account, leading to potential **data breaches**, **privilege escalation**, and **compliance violations**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://help.aliyun.com/document_detail/31954.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ActionTrail/trail-bucket-publicly-accessible.html"
+    "https://www.alibabacloud.com/help/doc-detail/31954.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ActionTrail/trail-bucket-publicly-accessible.html"
   ],
   "Remediation": {
     "Code": {
       "CLI": "ossutil set-acl oss://<bucketName> private -b",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Log on to the **OSS Console**\n2. Right-click on the bucket and select **Basic Settings**\n3. In the Access Control List pane, click **Configure**\n4. The Bucket ACL tab shows three types of grants: `Private`, `Public Read`, `Public Read/Write`\n5. Ensure **Private** is set for the bucket\n6. Click **Save** to save the ACL",
       "Terraform": "resource \"alicloud_oss_bucket_public_access_block\" \"actiontrail\" {\n  bucket              = alicloud_oss_bucket.actiontrail.bucket\n  block_public_access = true\n}"
     },
     "Recommendation": {
-      "Text": "1. Log on to the **OSS Console**\n2. Right-click on the bucket and select **Basic Settings**\n3. In the Access Control List pane, click **Configure**\n4. The Bucket ACL tab shows three types of grants: `Private`, `Public Read`, `Public Read/Write`\n5. Ensure **Private** is set for the bucket\n6. Click **Save** to save the ACL",
+      "Text": "Set the ACL of the OSS bucket used to store ActionTrail logs to private to prevent unauthorized public access to sensitive audit log data.",
       "Url": "https://hub.prowler.com/check/actiontrail_oss_bucket_not_publicly_accessible"
     }
   },

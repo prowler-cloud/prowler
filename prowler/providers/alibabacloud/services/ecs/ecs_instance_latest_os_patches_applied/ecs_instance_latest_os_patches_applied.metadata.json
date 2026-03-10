@@ -1,32 +1,29 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "ecs_instance_latest_os_patches_applied",
-  "CheckTitle": "The latest OS Patches for all Virtual Machines are applied",
-  "CheckType": [
-    "Malicious software",
-    "Web application threat detection"
-  ],
+  "CheckTitle": "ECS instance has latest OS patches applied",
+  "CheckType": [],
   "ServiceName": "ecs",
   "SubServiceName": "",
-  "ResourceIdTemplate": "acs:ecs:region:account-id:instance/{instance-id}",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AlibabaCloudECSInstance",
+  "ResourceType": "ALIYUN::ECS::Instance",
   "ResourceGroup": "compute",
-  "Description": "Windows and Linux virtual machines should be kept updated to address specific bugs or flaws, improve OS or application's general stability, and fix **security vulnerabilities**.\n\nThe Alibaba Cloud **Security Center** checks for the latest updates in Linux and Windows systems.",
-  "Risk": "**Unpatched systems** are vulnerable to known security exploits and may be compromised by attackers.\n\nKeeping systems updated with the latest patches is critical for maintaining security and preventing **exploitation of known vulnerabilities**.",
+  "Description": "**Alibaba Cloud Security Center** checks for the latest updates in Linux and Windows systems running on ECS instances. Keeping virtual machines updated with the latest OS patches addresses specific bugs, improves general stability, and fixes **security vulnerabilities**. This check verifies that all known vulnerabilities detected by Security Center have been patched on each ECS instance.",
+  "Risk": "**Unpatched systems** are vulnerable to known security exploits and can be compromised by attackers leveraging publicly disclosed vulnerabilities. Failure to apply patches in a timely manner increases the risk of **unauthorized access**, **malware infection**, and **data breaches**, impacting the **confidentiality**, **integrity**, and **availability** of the system.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ECS/apply-latest-os-patches.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ECS/apply-latest-os-patches.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "Logon to Security Center Console > Select Vulnerabilities > Apply all patches for vulnerabilities",
+      "CLI": "aliyun sas FixCheckWarnings --CheckIds <check_ids>",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Log on to the **Security Center Console**.\n2. Select **Vulnerabilities** in the left-side navigation pane.\n3. Review all detected vulnerabilities.\n4. Apply all available patches for the reported vulnerabilities.\n5. Verify that vulnerabilities are resolved after patching.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "1. Log on to the **Security Center Console**\n2. Select **Vulnerabilities**\n3. Ensure all vulnerabilities are fixed\n4. Apply all patches for vulnerabilities",
+      "Text": "Regularly review and apply OS patches on all ECS instances using the **Alibaba Cloud Security Center** vulnerability management feature to maintain a strong security posture.",
       "Url": "https://hub.prowler.com/check/ecs_instance_latest_os_patches_applied"
     }
   },
