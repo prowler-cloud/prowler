@@ -2,7 +2,7 @@
 
 import { Control } from "react-hook-form";
 
-import { CustomInput } from "@/components/ui/custom";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { CloudflareTokenCredentials } from "@/types";
 
@@ -23,7 +23,7 @@ export const CloudflareApiTokenCredentialsForm = ({
           method.
         </div>
       </div>
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.CLOUDFLARE_API_TOKEN}
         type="password"
