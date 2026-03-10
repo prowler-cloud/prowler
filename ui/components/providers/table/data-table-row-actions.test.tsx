@@ -25,6 +25,10 @@ vi.mock("../forms/delete-form", () => ({
   DeleteForm: () => null,
 }));
 
+vi.mock("@/components/ui", () => ({
+  useToast: () => ({ toast: vi.fn() }),
+}));
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 const createRow = () =>
