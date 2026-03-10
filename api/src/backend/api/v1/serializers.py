@@ -970,6 +970,15 @@ class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
                     pointer="/data/attributes/uid",
                 )
             raise
+        except IntegrityError as e:
+            # Handle race conditions where the unique constraint is enforced at the DB level
+            # after validation has already passed.
+            if "unique_provider_uids" in str(e):
+                raise ConflictException(
+                    detail="Provider already exists.",
+                    pointer="/data/attributes/uid",
+                )
+            raise
 
 
 class ProviderUpdateSerializer(BaseWriteSerializer):
