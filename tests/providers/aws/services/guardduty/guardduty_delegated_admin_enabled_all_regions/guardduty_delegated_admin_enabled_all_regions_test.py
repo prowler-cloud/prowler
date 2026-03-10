@@ -26,8 +26,6 @@ def mock_make_api_call_org_admin_and_config(self, operation_name, api_params):
         }
     if operation_name == "DescribeOrganizationConfiguration":
         return {
-            "AutoEnable": True,
-            "MemberAccountLimitReached": False,
             "AutoEnableOrganizationMembers": "ALL",
         }
     return orig(self, operation_name, api_params)
@@ -46,8 +44,6 @@ def mock_make_api_call_org_admin_no_auto_enable(self, operation_name, api_params
         }
     if operation_name == "DescribeOrganizationConfiguration":
         return {
-            "AutoEnable": False,
-            "MemberAccountLimitReached": False,
             "AutoEnableOrganizationMembers": "NONE",
         }
     return orig(self, operation_name, api_params)
@@ -59,8 +55,6 @@ def mock_make_api_call_no_org_admin(self, operation_name, api_params):
         return {"AdminAccounts": []}
     if operation_name == "DescribeOrganizationConfiguration":
         return {
-            "AutoEnable": False,
-            "MemberAccountLimitReached": False,
             "AutoEnableOrganizationMembers": "NONE",
         }
     return orig(self, operation_name, api_params)

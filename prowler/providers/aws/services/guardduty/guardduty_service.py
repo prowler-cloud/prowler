@@ -1,5 +1,6 @@
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -246,6 +247,15 @@ class GuardDuty(AWSService):
                         for existing in self.organization_admin_accounts
                     ):
                         self.organization_admin_accounts.append(admin_account)
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -263,15 +273,21 @@ class GuardDuty(AWSService):
                 org_config = regional_client.describe_organization_configuration(
                     DetectorId=detector.id
                 )
-                detector.organization_auto_enable = org_config.get("AutoEnable", False)
                 detector.organization_auto_enable_members = org_config.get(
                     "AutoEnableOrganizationMembers", "NONE"
                 )
-                detector.organization_member_limit_reached = org_config.get(
-                    "MemberAccountLimitReached", False
+                detector.organization_config_available = True
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                # Expected when not running from management or delegated admin account
+                logger.warning(
+                    f"{detector.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{detector.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            # This API may fail if not running from management or delegated admin account
             logger.error(
                 f"{detector.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -290,7 +306,7 @@ class Detector(BaseModel):
     arn: str
     region: str
     enabled_in_account: bool
-    status: bool = None
+    status: Optional[bool] = None
     findings: list = []
     member_accounts: list = []
     administrator_account: str = None
@@ -302,6 +318,5 @@ class Detector(BaseModel):
     lambda_protection: bool = False
     ec2_malware_protection: bool = False
     # Organization configuration fields
-    organization_auto_enable: bool = False
     organization_auto_enable_members: str = "NONE"  # NEW, ALL, or NONE
-    organization_member_limit_reached: bool = False
+    organization_config_available: bool = False

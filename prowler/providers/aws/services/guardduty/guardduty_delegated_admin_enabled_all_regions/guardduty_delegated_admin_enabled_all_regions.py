@@ -36,9 +36,9 @@ class guardduty_delegated_admin_enabled_all_regions(Check):
             detector_enabled = detector.enabled_in_account and detector.status
 
             # Check if auto-enable is configured for organization members
-            auto_enable_configured = (
-                detector.organization_auto_enable
-                or detector.organization_auto_enable_members in ("NEW", "ALL")
+            auto_enable_configured = detector.organization_auto_enable_members in (
+                "NEW",
+                "ALL",
             )
 
             # Determine overall status
@@ -47,8 +47,8 @@ class guardduty_delegated_admin_enabled_all_regions(Check):
                 issues.append("no delegated administrator configured")
             if not detector_enabled:
                 issues.append("detector not enabled")
-            if not auto_enable_configured and has_delegated_admin:
-                # Only report auto-enable issue if running from delegated admin
+            if not auto_enable_configured and detector.organization_config_available:
+                # Only report auto-enable issue if org config data is available
                 issues.append("organization auto-enable not configured")
 
             if issues:
