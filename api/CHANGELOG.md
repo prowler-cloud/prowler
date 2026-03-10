@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [1.21.0] (Prowler UNRELEASED)
 
 ### 🔄 Changed
@@ -20,7 +18,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
->>>>>>> 3288a4a13 (fix(api): add missing logging for Attack Paths query execution and scan error handling (#10269))
 ## [1.20.0] (Prowler v5.19.0)
 
 ### 🚀 Added
