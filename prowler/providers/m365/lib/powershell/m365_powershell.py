@@ -116,7 +116,7 @@ class M365PowerShell(PowerShellSession):
             # Use single quotes to prevent PowerShell variable expansion;
             # only escape embedded single quotes (' → '') — do NOT sanitize()
             # as secrets legitimately contain $, !, # etc.
-            sanitized_secret = credentials.client_secret.replace("'", "''")
+            sanitized_secret = (credentials.client_secret or "").replace("'", "''")
             self.execute(f"$clientSecret = '{sanitized_secret}'")
             self.execute(f"$tenantID = '{sanitized_tenant_id}'")
             self.execute(
