@@ -6,6 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🔄 Changed
 
+- Attack Paths: Migrate network exposure queries from APOC to standard openCypher for Neo4j and Neptune compatibility [(#10266)](https://github.com/prowler-cloud/prowler/pull/10266)
 - `POST /api/v1/providers` returns `409 Conflict` if already exists [(#10293)](https://github.com/prowler-cloud/prowler/pull/10293)
 
 ---
@@ -15,6 +16,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🐞 Fixed
 
 - Attack Paths: Security hardening for custom query endpoint (Cypher blocklist, input validation, rate limiting, Helm lockdown) [(#10238)](https://github.com/prowler-cloud/prowler/pull/10238)
+- Attack Paths: Add missing logging for query execution and exception details in scan error handling [(#10269)](https://github.com/prowler-cloud/prowler/pull/10269)
 
 ---
 
