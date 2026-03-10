@@ -99,13 +99,26 @@ export function DataTableRowActions({
       // Single: test only this provider
       if (!providerId) return;
       setLoading(true);
-      await testSingleConnection(providerId);
+      const result = await testSingleConnection(providerId);
       setLoading(false);
+
+      if (result?.error) {
+        toast({
+          variant: "destructive",
+          title: "Connection test failed",
+          description: result.error,
+        });
+      } else {
+        toast({
+          title: "Connection test completed",
+          description: "Provider tested successfully.",
+        });
+      }
     }
   };
 
-  // When there's a selection, only show "Test Connection"
-  if (hasSelection) {
+  // When this row is part of the selection, only show "Test Connection"
+  if (hasSelection && isRowSelected) {
     const bulkCount =
       isRowSelected && testableProviderIds.length > 1
         ? ` (${testableProviderIds.length})`
