@@ -61,7 +61,7 @@ export const getProviderGroupInfoById = async (providerGroupId: string) => {
       headers,
     });
 
-    return handleApiResponse(response);
+    return await handleApiResponse(response);
   } catch (error) {
     handleApiError(error);
   }
@@ -112,7 +112,7 @@ export const createProviderGroup = async (formData: FormData) => {
       body,
     });
 
-    return handleApiResponse(response, "/providers?tab=account-groups");
+    return await handleApiResponse(response, "/providers?tab=account-groups");
   } catch (error) {
     handleApiError(error);
   }
@@ -157,7 +157,7 @@ export const updateProviderGroup = async (
       body: JSON.stringify(payload),
     });
 
-    return handleApiResponse(response);
+    return await handleApiResponse(response);
   } catch (error) {
     handleApiError(error);
   }
