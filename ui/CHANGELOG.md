@@ -8,6 +8,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Attack Paths: Improved error handling for server errors (5xx) and network failures with user-friendly messages instead of raw internal errors and layout changes. [(#10249)](https://github.com/prowler-cloud/prowler/pull/10249)
 - Refactor simple providers with new components and styles.[(#10259)](https://github.com/prowler-cloud/prowler/pull/10259)
+- Providers page redesigned with cloud organization hierarchy, HeroUI-to-shadcn migration, organization and account group filters, and row selection for bulk actions [(#10292)](https://github.com/prowler-cloud/prowler/pull/10292)
 
 ### 🔐 Security
 
