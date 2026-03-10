@@ -131,6 +131,7 @@ export const listOrganizationsSafe =
   async (): Promise<OrganizationListResponse> => {
     const url = new URL(`${apiBaseUrl}/organizations`);
     url.searchParams.set("filter[org_type]", "aws");
+    url.searchParams.set("page[size]", "100");
 
     return fetchOptionalCollection<OrganizationListResponse>(url);
   };
@@ -154,6 +155,7 @@ export const listOrganizationUnits = async () => {
 export const listOrganizationUnitsSafe =
   async (): Promise<OrganizationUnitListResponse> => {
     const url = new URL(`${apiBaseUrl}/organizational-units`);
+    url.searchParams.set("page[size]", "100");
 
     return fetchOptionalCollection<OrganizationUnitListResponse>(url);
   };
