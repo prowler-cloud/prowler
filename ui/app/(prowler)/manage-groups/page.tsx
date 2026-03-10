@@ -50,7 +50,7 @@ export default async function ManageGroupsPage({
       <div className="col-span-1 flex-col justify-start md:col-span-6">
         <FilterControls />
         <Spacer y={8} />
-        <h3 className="mb-4 text-sm font-bold uppercase">Provider Groups</h3>
+        <h3 className="mb-4 text-sm font-bold uppercase">Account Groups</h3>
         <Suspense key={searchParamsKey} fallback={<SkeletonManageGroups />}>
           <SSRDataTable searchParams={resolvedSearchParams} />
         </Suspense>

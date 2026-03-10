@@ -115,7 +115,7 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
               icon: VolumeX,
               active: pathname === "/mutelist",
             },
-            { href: "/manage-groups", label: "Provider Groups", icon: Group },
+            { href: "/manage-groups", label: "Account Groups", icon: Group },
             { href: "/scans", label: "Scan Jobs", icon: Timer },
             { href: "/integrations", label: "Integrations", icon: Puzzle },
             { href: "/roles", label: "Roles", icon: UserCog },

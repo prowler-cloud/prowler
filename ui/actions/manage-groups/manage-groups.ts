@@ -168,7 +168,7 @@ export const deleteProviderGroup = async (formData: FormData) => {
 
   if (!providerGroupId) {
     return {
-      errors: [{ detail: "Provider Group ID is required." }],
+      errors: [{ detail: "Account Group ID is required." }],
     };
   }
 
