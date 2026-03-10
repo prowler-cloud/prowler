@@ -296,6 +296,193 @@ describe("buildProvidersTableRows", () => {
     expect(rows[1].rowType).toBe(PROVIDERS_ROW_TYPE.PROVIDER);
   });
 
+  it("nests organizational units recursively up to multiple levels", () => {
+    // Given — OU hierarchy: org-1 > ou-root > ou-child > ou-grandchild
+    const providers = [
+      toProviderRow(providersResponse.data[0], {
+        relationships: {
+          ...providersResponse.data[0].relationships,
+          organization: {
+            data: { type: "organizations", id: "org-1" },
+          },
+          organization_unit: {
+            data: { type: "organizational-units", id: "ou-grandchild" },
+          },
+        },
+      }),
+    ];
+
+    // When
+    const rows = buildProvidersTableRows({
+      providers,
+      organizations: [
+        {
+          id: "org-1",
+          type: "organizations",
+          attributes: {
+            name: "Root Organization",
+            org_type: "aws",
+            external_id: "o-root",
+            metadata: {},
+            root_external_id: "r-root",
+          },
+          relationships: {},
+        },
+      ],
+      organizationUnits: [
+        {
+          id: "ou-root",
+          type: "organizational-units",
+          attributes: {
+            name: "Production",
+            external_id: "ou-prod",
+            parent_external_id: "r-root",
+            metadata: {},
+          },
+          relationships: {
+            organization: {
+              data: { type: "organizations", id: "org-1" },
+            },
+          },
+        },
+        {
+          id: "ou-child",
+          type: "organizational-units",
+          attributes: {
+            name: "EMEA",
+            external_id: "ou-emea",
+            parent_external_id: "ou-prod",
+            metadata: {},
+          },
+          relationships: {
+            organization: {
+              data: { type: "organizations", id: "org-1" },
+            },
+          },
+        },
+        {
+          id: "ou-grandchild",
+          type: "organizational-units",
+          attributes: {
+            name: "Security",
+            external_id: "ou-security",
+            parent_external_id: "ou-emea",
+            metadata: {},
+          },
+          relationships: {
+            organization: {
+              data: { type: "organizations", id: "org-1" },
+            },
+          },
+        },
+      ],
+      isCloud: true,
+    });
+
+    // Then — org > ou-root > ou-child > ou-grandchild > provider
+    expect(rows).toHaveLength(1);
+    const orgRow = rows[0];
+    expect(orgRow.rowType).toBe(PROVIDERS_ROW_TYPE.ORGANIZATION);
+    expect(orgRow.subRows).toHaveLength(1);
+
+    const ouRoot = orgRow.subRows![0];
+    expect(ouRoot.rowType).toBe(PROVIDERS_ROW_TYPE.ORGANIZATION);
+    expect(ouRoot.subRows).toHaveLength(1);
+
+    const ouChild = ouRoot.subRows![0];
+    expect(ouChild.rowType).toBe(PROVIDERS_ROW_TYPE.ORGANIZATION);
+    expect(ouChild.subRows).toHaveLength(1);
+
+    const ouGrandchild = ouChild.subRows![0];
+    expect(ouGrandchild.rowType).toBe(PROVIDERS_ROW_TYPE.ORGANIZATION);
+    expect(ouGrandchild.subRows).toHaveLength(1);
+    expect(ouGrandchild.subRows![0].rowType).toBe(PROVIDERS_ROW_TYPE.PROVIDER);
+  });
+
+  it("nests providers under OUs using relationship-based parent IDs", () => {
+    // Given — providers have no org/OU linkage; tree is built from OU relationships
+    const providers = [
+      toProviderRow(providersResponse.data[0]),
+    ];
+
+    // When
+    const rows = buildProvidersTableRows({
+      providers,
+      organizations: [
+        {
+          id: "org-1",
+          type: "organizations",
+          attributes: {
+            name: "Root Organization",
+            org_type: "aws",
+            external_id: "o-root",
+            metadata: {},
+            root_external_id: "r-root",
+          },
+          relationships: {},
+        },
+      ],
+      organizationUnits: [
+        {
+          id: "ou-parent",
+          type: "organizational-units",
+          attributes: {
+            name: "Workloads",
+            external_id: "ou-workloads",
+            parent_external_id: null,
+            metadata: {},
+          },
+          relationships: {
+            organization: {
+              data: { type: "organizations", id: "org-1" },
+            },
+            parent: {
+              data: null,
+            },
+          },
+        },
+        {
+          id: "ou-child",
+          type: "organizational-units",
+          attributes: {
+            name: "Team A",
+            external_id: "ou-team-a",
+            parent_external_id: null,
+            metadata: {},
+          },
+          relationships: {
+            organization: {
+              data: { type: "organizations", id: "org-1" },
+            },
+            parent: {
+              data: { type: "organizational-units", id: "ou-parent" },
+            },
+            providers: {
+              data: [{ type: "providers", id: "provider-1" }],
+            },
+          },
+        },
+      ],
+      isCloud: true,
+    });
+
+    // Then — org > ou-parent > ou-child > provider
+    // Provider is claimed by ou-child via relationships, so org's direct
+    // providers list becomes empty and the org row only contains the OU subtree.
+    expect(rows).toHaveLength(1);
+    const orgRow = rows[0];
+    expect(orgRow.subRows).toHaveLength(1);
+
+    const ouParent = orgRow.subRows![0];
+    expect(ouParent.rowType).toBe(PROVIDERS_ROW_TYPE.ORGANIZATION);
+    expect(ouParent.subRows).toHaveLength(1);
+
+    const ouChild = ouParent.subRows![0];
+    expect(ouChild.rowType).toBe(PROVIDERS_ROW_TYPE.ORGANIZATION);
+    expect(ouChild.subRows).toHaveLength(1);
+    expect(ouChild.subRows![0].rowType).toBe(PROVIDERS_ROW_TYPE.PROVIDER);
+  });
+
   it("groups providers from organization relationships when provider resources do not expose organization linkage", () => {
     // Given
     const providers = providersResponse.data.map((provider) =>
