@@ -32,7 +32,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
 ## Project Overview
 
-The Prowler SDK is the core Python engine powering cloud security assessments across AWS, Azure, GCP, Kubernetes, GitHub, M365, and more. It includes 1000+ security checks and 30+ compliance frameworks.
+The Prowler SDK is the core Python engine powering cloud security assessments across AWS, Azure, GCP, Kubernetes, GitHub, M365, and more. It includes 1100+ security checks and 85+ compliance frameworks.
 
 ---
 

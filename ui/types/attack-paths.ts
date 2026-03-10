@@ -43,6 +43,7 @@ export type ProviderType = (typeof PROVIDER_TYPES)[keyof typeof PROVIDER_TYPES];
 export interface AttackPathScanAttributes {
   state: ScanState;
   progress: number;
+  graph_data_ready: boolean;
   provider_alias: string;
   provider_type: ProviderType;
   provider_uid: string;
@@ -72,7 +73,7 @@ export interface AttackPathScansResponse {
 }
 
 // Data type constants
-const DATA_TYPES = {
+export const DATA_TYPES = {
   STRING: "string",
   NUMBER: "number",
   BOOLEAN: "boolean",
@@ -90,11 +91,18 @@ export interface AttackPathQueryParameter {
   required?: boolean;
 }
 
+export interface AttackPathQueryAttribution {
+  text: string;
+  link: string;
+}
+
 export interface AttackPathQueryAttributes {
   name: string;
+  short_description: string;
   description: string;
   provider: string;
   parameters: AttackPathQueryParameter[];
+  attribution: AttackPathQueryAttribution | null;
 }
 
 export interface AttackPathQuery {
@@ -167,8 +175,13 @@ export interface AttackPathQueryResult {
   data: QueryResultData;
 }
 
+export interface AttackPathQueryError {
+  error: string;
+  status: number;
+}
+
 // Finding severity and status constants
-const FINDING_SEVERITIES = {
+export const FINDING_SEVERITIES = {
   CRITICAL: "critical",
   HIGH: "high",
   MEDIUM: "medium",
@@ -179,7 +192,7 @@ const FINDING_SEVERITIES = {
 type FindingSeverity =
   (typeof FINDING_SEVERITIES)[keyof typeof FINDING_SEVERITIES];
 
-const FINDING_STATUSES = {
+export const FINDING_STATUSES = {
   PASS: "PASS",
   FAIL: "FAIL",
   MANUAL: "MANUAL",

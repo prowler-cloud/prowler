@@ -13,8 +13,7 @@
   "Risk": "Without deletion protection enabled, VM instances are vulnerable to **accidental deletion** by users with sufficient permissions.\n\nThis could result in:\n- **Service disruption** and downtime for critical applications\n- **Data loss** if persistent disks are also deleted\n- **Recovery delays** while recreating instances and restoring configurations",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://cloud.google.com/compute/docs/instances/preventing-accidental-vm-deletion",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-deletion-protection.html"
+    "https://cloud.google.com/compute/docs/instances/preventing-accidental-vm-deletion"
   ],
   "Remediation": {
     "Code": {

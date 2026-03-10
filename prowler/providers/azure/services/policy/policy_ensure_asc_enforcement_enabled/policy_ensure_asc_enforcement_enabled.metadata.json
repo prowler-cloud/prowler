@@ -1,27 +1,32 @@
 {
   "Provider": "azure",
   "CheckID": "policy_ensure_asc_enforcement_enabled",
-  "CheckTitle": "Ensure Any of the ASC Default Policy Settings are Not Set to 'Disabled'",
+  "CheckTitle": "Security Center built-in policy assignment has enforcement mode set to Default",
   "CheckType": [],
   "ServiceName": "policy",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Microsoft.Authorization/policyAssignments",
+  "ResourceType": "microsoft.authorization/policyassignments",
   "ResourceGroup": "governance",
-  "Description": "None of the settings offered by ASC Default policy should be set to effect Disabled.",
-  "Risk": "A security policy defines the desired configuration of your workloads and helps ensure compliance with company or regulatory security requirements. ASC Default policy is associated with every subscription by default. ASC default policy assignment is a set of security recommendations based on best practices. Enabling recommendations in ASC default policy ensures that Azure security center provides the ability to monitor all of the supported recommendations and optionally allow automated action for a few of the supported recommendations.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/security-policy-concept",
+  "Description": "**Defender for Cloud default policy assignment** (`SecurityCenterBuiltIn`) uses enforcement mode `Default` rather than `DoNotEnforce`",
+  "Risk": "With `DoNotEnforce`, policy effects like `deny` and `deployIfNotExists` aren't applied, letting insecure configs persist. This erodes **confidentiality** and **integrity** (exposed endpoints, weak encryption) and can affect **availability** via unpatched or misconfigured services, enabling compromise and lateral movement.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/policy-reference",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/implement-security-recommendations",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/security-policy-concept"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az policy assignment update --name SecurityCenterBuiltIn --scope /subscriptions/<SUBSCRIPTION_ID> --enforcement-mode Default",
+      "NativeIaC": "```bicep\n// Set enforcement mode to Default for the Security Center built-in assignment\n// Deploy at subscription scope\ntargetScope = 'subscription'\n\nresource policyAssignment 'Microsoft.Authorization/policyAssignments@2021-06-01' = {\n  name: 'SecurityCenterBuiltIn'\n  properties: {\n    policyDefinitionId: '<POLICY_OR_INITIATIVE_DEFINITION_ID>'\n    enforcementMode: 'Default' // CRITICAL: Ensures the assignment enforces policy (fixes the finding)\n  }\n}\n```",
+      "Other": "1. In Azure portal, go to Policy > Assignments\n2. Find the assignment named \"SecurityCenterBuiltIn\" and select it\n3. Click Edit assignment\n4. Set Enforcement mode to Enabled (Default)\n5. Click Review + save to apply",
+      "Terraform": "```hcl\n# Set enforcement mode to Default for the Security Center built-in assignment\nresource \"azurerm_policy_assignment\" \"<example_resource_name>\" {\n  name                 = \"SecurityCenterBuiltIn\"\n  scope                = \"/subscriptions/<SUBSCRIPTION_ID>\"\n  policy_definition_id = \"<POLICY_OR_INITIATIVE_DEFINITION_ID>\"\n  enforcement_mode     = \"Default\" # CRITICAL: Enables enforcement to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu 2. Select Policy 3. Select ASC Default for each subscription 4. Click on 'view Assignment' 5. Click on 'Edit assignment' 6. Ensure Policy Enforcement is Enabled 7. Click 'Review + Save'",
-      "Url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/implement-security-recommendations"
+      "Text": "Keep enforcement mode `Default` on the default initiative and avoid disabling critical effects. Apply at scale for consistent governance, align with **least privilege** and **defense in depth**, validate changes in `Audit` in non-prod, and manage justified exceptions via time-bound policy exemptions instead of turning enforcement off.",
+      "Url": "https://hub.prowler.com/check/policy_ensure_asc_enforcement_enabled"
     }
   },
   "Categories": [],

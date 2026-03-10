@@ -1,30 +1,38 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_server_is_on",
-  "CheckTitle": "Ensure That Microsoft Defender for Servers Is Set to 'On'",
+  "CheckTitle": "Defender for Servers is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureDefenderPlan",
+  "ResourceType": "microsoft.security/pricings",
   "ResourceGroup": "security",
-  "Description": "Ensure That Microsoft Defender for Servers Is Set to 'On'",
-  "Risk": "Turning on Microsoft Defender for Servers enables threat detection for Servers, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
+  "Description": "**Microsoft Defender for Servers** subscription plan (`VirtualMachines`) is configured to the `Standard` tier. The evaluation checks whether the Servers plan is enabled at this level for all server workloads in the subscription.",
+  "Risk": "Without **Defender for Servers**, endpoints lack unified EDR, hardening, and threat analytics. This enables silent malware, credential theft, and lateral movement, driving data exfiltration (C), ransomware/tampering (I), and outages or cryptomining abuse (A).",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/plan-defender-for-servers-select-plan",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/faq-defender-for-servers",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/microsoft-defender-vm-server.html",
+    "https://learn.microsoft.com/en-us/answers/questions/1131575/defender-for-servers-policy-definitions.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/microsoft-defender-vm-server.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-servers#terraform"
+      "CLI": "az security pricing create --name VirtualMachines --tier Standard",
+      "NativeIaC": "```bicep\n// Enable Defender for Servers (Standard) at subscription scope\n@description('Enable Microsoft Defender for Servers (Standard)')\ntargetScope = 'subscription'\n\nresource <example_resource_name> 'Microsoft.Security/pricings@2024-01-01' = {\n  name: 'VirtualMachines'\n  properties: {\n    pricingTier: 'Standard' // Critical: sets Defender for Servers to ON (Standard)\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Microsoft Defender for Cloud\n2. Select Environment settings, then your <subscription>\n3. On Defender plans, set Servers to On (Standard)\n4. Click Save",
+      "Terraform": "```hcl\n# Enable Defender for Servers (Standard) on the subscription\nresource \"azurerm_security_center_subscription_pricing\" \"<example_resource_name>\" {\n  resource_type = \"VirtualMachines\"\n  tier          = \"Standard\" # Critical: sets Defender for Servers to ON (Standard)\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enabling Microsoft Defender for Cloud standard pricing tier allows for better security assessment with threat detection provided by the Microsoft Security Response Center (MSRC), advanced security policies, adaptive application control, network threat detection, and regulatory compliance management.",
-      "Url": ""
+      "Text": "Enable the **Defender for Servers** plan at the **subscription** scope with tier `Standard`, choosing P1 or P2 per asset risk. Ensure all Azure VMs and Arc-enabled servers are covered for EDR integration. Apply **defense in depth** and **least privilege**, and continuously monitor and tune alerts.",
+      "Url": "https://hub.prowler.com/check/defender_ensure_defender_for_server_is_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

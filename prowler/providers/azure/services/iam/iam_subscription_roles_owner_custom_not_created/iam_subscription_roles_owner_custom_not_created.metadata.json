@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "iam_subscription_roles_owner_custom_not_created",
-  "CheckTitle": "Ensure that no custom subscription owner roles are created",
+  "CheckTitle": "Custom role is not a subscription owner role",
   "CheckType": [],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureRole",
+  "ResourceType": "microsoft.authorization/roledefinitions",
   "ResourceGroup": "IAM",
-  "Description": "Ensure that no custom subscription owner roles are created",
-  "Risk": "Subscription ownership should not include permission to create custom owner roles. The principle of least privilege should be followed and only necessary privileges should be assigned instead of allowing full administrative access.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/role-based-access-control/custom-roles",
+  "Description": "**Azure custom roles** are analyzed for wildcard permissions. Roles that allow `*` in `actions` within their assignable scopes are treated as **owner-equivalent**, granting unrestricted control over subscription resources.",
+  "Risk": "Wildcard access grants full administrative control at subscription scope. If abused or compromised, an actor can exfiltrate data, alter configurations, deploy malware, delete resources, and disable logging, impacting confidentiality, integrity, and availability across the subscription.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/role-based-access-control/custom-roles",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/AccessControl/remove-custom-owner-roles.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/AccessControl/remove-custom-owner-roles.html",
-      "Terraform": ""
+      "CLI": "az role definition update --role-definition '{\"Name\":\"<example_role_name>\",\"Description\":\"Restricted custom role\",\"Actions\":[\"Microsoft.Resources/subscriptions/resourceGroups/read\"],\"NotActions\":[],\"DataActions\":[],\"NotDataActions\":[],\"AssignableScopes\":[\"/subscriptions/<example_subscription_id>\"]}'",
+      "NativeIaC": "```bicep\n// Subscription-scoped deployment to ensure the custom role does not use global \"*\" permissions\ntargetScope = 'subscription'\n\nresource roleDef 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {\n  name: guid(subscription().id, '<role_name>') // CRITICAL: use GUID for role definition name\n  properties: {\n    roleName: '<role_name>'\n    description: 'Restricted custom role'\n    assignableScopes: [\n      subscription().id\n    ]\n    permissions: [\n      {\n        actions: [\n          'Microsoft.Resources/subscriptions/resourceGroups/read' // CRITICAL: remove \"*\" and allow only specific actions to avoid owner-equivalent wildcard\n        ]\n        notActions: []\n        dataActions: []\n        notDataActions: []\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to Subscriptions > <your subscription> > Access control (IAM)\n2. Select the Roles tab, then open the Custom roles tab\n3. Click the custom role that is failing, then click Edit\n4. In Permissions, remove the action \"*\" (All permissions)\n5. Add only the specific actions required (avoid using \"*\")\n6. Click Save",
+      "Terraform": "```hcl\n# Define a custom role without using the global \"*\" action\nresource \"azurerm_role_definition\" \"<example_resource_name>\" {\n  name  = \"<example_resource_name>\"\n  scope = \"/subscriptions/<example_subscription_id>\"\n\n  permissions {\n    actions = [\"Microsoft.Resources/subscriptions/resourceGroups/read\"] # CRITICAL: do not use \"*\"; specify only required actions\n  }\n\n  assignable_scopes = [\"/subscriptions/<example_subscription_id>\"]\n}\n```"
     },
     "Recommendation": {
-      "Text": "Custom subscription owner roles should not be created. This is because the principle of least privilege should be followed and only necessary privileges should be assigned instead of allowing full administrative access",
-      "Url": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/AccessControl/remove-custom-owner-roles.html"
+      "Text": "Avoid owner-equivalent custom roles. Apply **least privilege**: prefer built-in roles, define explicit allowed `actions` (avoid `*`), and limit assignment scope to the minimum needed. Enforce **separation of duties**, require just-in-time elevation, and perform periodic access reviews to prevent privilege creep.",
+      "Url": "https://hub.prowler.com/check/iam_subscription_roles_owner_custom_not_created"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

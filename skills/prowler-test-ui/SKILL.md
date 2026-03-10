@@ -26,8 +26,40 @@ ui/tests/
 └── {page-name}/
     ├── {page-name}-page.ts   # Page Object Model
     ├── {page-name}.spec.ts   # ALL tests (single file per feature)
-    └── {page-name}.md        # Test documentation
+    └── {page-name}.md        # Test documentation (MANDATORY - sync with spec.ts)
 ```
+
+---
+
+## MANDATORY Checklist (Create or Modify Tests)
+
+**⚠️ ALWAYS verify BEFORE completing any E2E task:**
+
+### When CREATING new tests:
+- [ ] `{page-name}-page.ts` - Page Object created/updated
+- [ ] `{page-name}.spec.ts` - Tests added with correct tags (@TEST-ID)
+- [ ] `{page-name}.md` - Documentation created with ALL test cases
+- [ ] Test IDs in `.md` match tags in `.spec.ts`
+
+### When MODIFYING existing tests:
+- [ ] `{page-name}.md` MUST be updated if:
+  - Test cases were added/removed
+  - Test flow changed (steps)
+  - Preconditions or expected results changed
+  - Tags or priorities changed
+- [ ] Test IDs synchronized between `.md` and `.spec.ts`
+
+### Quick validation:
+```bash
+# Verify .md exists for each test folder
+ls ui/tests/{feature}/{feature}.md
+
+# Verify test IDs match
+grep -o "@[A-Z]*-E2E-[0-9]*" ui/tests/{feature}/{feature}.spec.ts | sort -u
+grep -o "\`[A-Z]*-E2E-[0-9]*\`" ui/tests/{feature}/{feature}.md | sort -u
+```
+
+**❌ An E2E change is NOT considered complete without updating the corresponding .md file**
 
 ---
 
@@ -45,6 +77,33 @@ ui/tests/
 
 ---
 
+## Wait Strategies (CRITICAL)
+
+**⚠️ NEVER use `networkidle` - it causes flaky tests!**
+
+| Strategy | Use Case |
+|----------|----------|
+| ❌ `networkidle` | NEVER - flaky with polling/WebSockets |
+| ⚠️ `load` | Only when absolutely necessary |
+| ✅ `expect(element).toBeVisible()` | PREFERRED - wait for specific UI state |
+| ✅ `page.waitForURL()` | Wait for navigation |
+| ✅ `pageObject.verifyPageLoaded()` | BEST - encapsulated verification |
+
+**GOOD:**
+```typescript
+await homePage.verifyPageLoaded();
+await expect(page).toHaveURL("/dashboard");
+await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+```
+
+**BAD:**
+```typescript
+await page.waitForLoadState("networkidle"); // ❌ FLAKY
+await page.waitForTimeout(2000);            // ❌ ARBITRARY WAIT
+```
+
+---
+
 ## Prowler Base Page
 
 ```typescript
@@ -55,11 +114,12 @@ export class BasePage {
 
   async goto(path: string): Promise<void> {
     await this.page.goto(path);
-    await this.page.waitForLoadState("networkidle");
+    // Child classes should override verifyPageLoaded() to wait for specific elements
   }
 
-  async waitForPageLoad(): Promise<void> {
-    await this.page.waitForLoadState("networkidle");
+  // Override in child classes to wait for page-specific elements
+  async verifyPageLoaded(): Promise<void> {
+    await expect(this.page.locator("main")).toBeVisible();
   }
 
   // Prowler-specific: notification handling
@@ -75,6 +135,33 @@ export class BasePage {
   }
 }
 ```
+
+---
+
+## Page Navigation Verification Pattern
+
+**⚠️ URL assertions belong in Page Objects, NOT in tests!**
+
+When verifying redirects or page navigation, create dedicated methods in the target Page Object:
+
+```typescript
+// ✅ GOOD - In SignInPage
+async verifyOnSignInPage(): Promise<void> {
+  await expect(this.page).toHaveURL(/\/sign-in/);
+  await expect(this.pageTitle).toBeVisible();
+}
+
+// ✅ GOOD - In test
+await homePage.goto();  // Try to access protected route
+await signInPage.verifyOnSignInPage();  // Verify redirect
+
+// ❌ BAD - Direct assertions in test
+await homePage.goto();
+await expect(page).toHaveURL(/\/sign-in/);  // Should be in Page Object
+await expect(page.getByText("Sign in")).toBeVisible();
+```
+
+**Naming convention:** `verifyOn{PageName}Page()` for redirect verification methods.
 
 ---
 

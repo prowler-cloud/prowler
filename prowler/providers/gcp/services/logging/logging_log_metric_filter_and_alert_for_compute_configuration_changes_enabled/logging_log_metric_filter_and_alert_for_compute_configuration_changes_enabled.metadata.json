@@ -13,7 +13,7 @@
   "Risk": "Without monitoring for Compute Engine configuration changes, **unauthorized modifications** to compute resources may go undetected. Attackers can establish **persistence** through instance modifications, escalate privileges via IAM policy changes, disable security controls, or pivot to other resources. This compromises **confidentiality**, **integrity**, and **availability** of workloads and may enable **data exfiltration** or **lateral movement**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/gcp-compute-engine-configuration-changes.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/ComputeEngine/gcp-compute-engine-configuration-changes.html",
     "https://cloud.google.com/logging/docs/audit",
     "https://cloud.google.com/monitoring/alerts"
   ],

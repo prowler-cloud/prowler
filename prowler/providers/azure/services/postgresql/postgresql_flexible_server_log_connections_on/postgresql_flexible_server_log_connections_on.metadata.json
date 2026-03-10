@@ -1,30 +1,37 @@
 {
   "Provider": "azure",
   "CheckID": "postgresql_flexible_server_log_connections_on",
-  "CheckTitle": "Ensure server parameter 'log_connections' is set to 'ON' for PostgreSQL Database Server",
+  "CheckTitle": "PostgreSQL flexible server has log_connections enabled",
   "CheckType": [],
   "ServiceName": "postgresql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "PostgreSQL",
+  "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
   "ResourceGroup": "database",
-  "Description": "Enable log_connections on PostgreSQL Servers.",
-  "Risk": "Enabling log_connections helps PostgreSQL Database to log attempted connection to the server, as well as successful completion of client authentication. Log data can be used to identify, troubleshoot, and repair configuration errors and suboptimal performance.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/rest/api/postgresql/configurations/listbyserver",
+  "Description": "**Azure Database for PostgreSQL Flexible Server** evaluates the `log_connections` setting that controls logging of client connection attempts and authentication results.\n\nThe finding indicates whether this parameter is set to `ON`.",
+  "Risk": "Without **connection logging**, visibility of access attempts is lost, making **brute force** and **credential stuffing** harder to detect. This weakens **confidentiality** and **integrity**, hinders incident investigations, and can mask **lateral movement** or unauthorized data access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/answers/questions/683954/log-connections-cannot-be-set-on-azure-postgresql",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/PostgreSQL/log-connections.html",
+    "https://learn.microsoft.com/en-us/azure/postgresql/security/security-audit?tabs=portal"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az postgres server configuration set --resource-group <resourceGroupName> --server-name <serverName> --name log_connections --value on",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/PostgreSQL/log-connections.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_12#terraform"
+      "Other": "1. Sign in to the Azure portal\n2. Go to: Azure Database for PostgreSQL > Flexible servers > select <example_resource_name>\n3. Under Settings, open Server parameters and search for \"log_connections\"\n4. Confirm the parameter shows Value: ON and is Read-only (no change required)",
+      "Terraform": ""
     },
     "Recommendation": {
-      "Text": "From Azure Portal 1. Login to Azure Portal using https://portal.azure.com. 2. Go to Azure Database for PostgreSQL servers. 3. For each database, click on Server parameters. 4. Search for log_connections. 5. Click ON and save. From Azure CLI Use the below command to update log_connections configuration. az postgres server configuration set --resource-group <resourceGroupName> -- server-name <serverName> --name log_connections --value on From PowerShell Use the below command to update log_connections configuration. Update-AzPostgreSqlConfiguration -ResourceGroupName <ResourceGroupName> - ServerName <ServerName> -Name log_connections -Value on",
-      "Url": "https://learn.microsoft.com/en-us/azure/postgresql/single-server/how-to-configure-server-parameters-using-portal"
+      "Text": "Set `log_connections` to `ON` and integrate logs with centralized monitoring. Define retention and alerts for abnormal patterns. Combine with **least privilege**, strong authentication, and network restrictions to deliver **defense in depth** and prevent unauthorized access.",
+      "Url": "https://hub.prowler.com/check/postgresql_flexible_server_log_connections_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

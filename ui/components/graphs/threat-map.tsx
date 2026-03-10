@@ -381,7 +381,6 @@ export function ThreatMap({
     }
 
     svg.appendChild(pointsGroup);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     dimensions,
     data.locations,

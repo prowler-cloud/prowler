@@ -2,6 +2,196 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.20.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `entra_conditional_access_policy_approved_client_app_required_for_mobile` check for m365 provider [(#10216)](https://github.com/prowler-cloud/prowler/pull/10216)
+- `entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required` check for M365 provider [(#10197)](https://github.com/prowler-cloud/prowler/pull/10197)
+- Add `trusted_ips` configurable option to `opensearch_service_domains_not_publicly_accessible` check to reduce false positives on IP-restricted policies [(#8631)](https://github.com/prowler-cloud/prowler/pull/8631)
+
+### 🔄 Changed
+
+- Update Kubernetes API server checks metadata to new format [(#9674)](https://github.com/prowler-cloud/prowler/pull/9674)
+- Update Kubernetes Controller Manager service metadata to new format [(#9675)](https://github.com/prowler-cloud/prowler/pull/9675)
+- Update Kubernetes Core service metadata to new format [(#9676)](https://github.com/prowler-cloud/prowler/pull/9676)
+- Update Kubernetes Kubelet service metadata to new format [(#9677)](https://github.com/prowler-cloud/prowler/pull/9677)
+- Update Kubernetes RBAC service metadata to new format [(#9678)](https://github.com/prowler-cloud/prowler/pull/9678)
+- Update Kubernetes Scheduler service metadata to new format [(#9679)](https://github.com/prowler-cloud/prowler/pull/9679)
+- Update MongoDB Atlas Organizations service metadata to new format [(#9658)](https://github.com/prowler-cloud/prowler/pull/9658)
+- Update MongoDB Atlas clusters service metadata to new format [(#9657)](https://github.com/prowler-cloud/prowler/pull/9657)
+- Update GitHub Repository service metadata to new format [(#9659)](https://github.com/prowler-cloud/prowler/pull/9659)
+- Update GitHub Organization service metadata to new format [(#10273)](https://github.com/prowler-cloud/prowler/pull/10273)
+- Update Oracle Cloud Compute Engine service metadata to new format [(#9371)](https://github.com/prowler-cloud/prowler/pull/9371)
+- Update Oracle Cloud Database service metadata to new format [(#9372)](https://github.com/prowler-cloud/prowler/pull/9372)
+- Update Oracle Cloud File Storage service metadata to new format [(#9374)](https://github.com/prowler-cloud/prowler/pull/9374)
+- Update Oracle Cloud Integration service metadata to new format [(#9376)](https://github.com/prowler-cloud/prowler/pull/9376)
+- Update Oracle Cloud KMS service metadata to new format [(#9377)](https://github.com/prowler-cloud/prowler/pull/9377)
+- Update Oracle Cloud Network service metadata to new format [(#9378)](https://github.com/prowler-cloud/prowler/pull/9378)
+- Update Oracle Cloud Object Storage service metadata to new format [(#9379)](https://github.com/prowler-cloud/prowler/pull/9379)
+- Update Oracle Cloud Events service metadata to new format [(#9373)](https://github.com/prowler-cloud/prowler/pull/9373)
+- Update Oracle Cloud Identity service metadata to new format [(#9375)](https://github.com/prowler-cloud/prowler/pull/9375)
+- Update Alibaba Cloud services metadata to new format [(#10289)](https://github.com/prowler-cloud/prowler/pull/10289)
+- Update M365 Admin Center service metadata to new format [(#9680)](https://github.com/prowler-cloud/prowler/pull/9680)
+- Update M365 Defender service metadata to new format [(#9681)](https://github.com/prowler-cloud/prowler/pull/9681)
+- Update M365 Purview service metadata to new format [(#9092)](https://github.com/prowler-cloud/prowler/pull/9092)
+
+---
+
+## [5.19.0] (Prowler v5.19.0)
+
+### 🚀 Added
+
+- `entra_authentication_method_sms_voice_disabled` check for M365 provider [(#10212)](https://github.com/prowler-cloud/prowler/pull/10212)
+- `Google Workspace` provider support with Directory service including 1 security check [(#10022)](https://github.com/prowler-cloud/prowler/pull/10022)
+- `entra_conditional_access_policy_app_enforced_restrictions` check for M365 provider [(#10058)](https://github.com/prowler-cloud/prowler/pull/10058)
+- `entra_app_registration_no_unused_privileged_permissions` check for M365 provider [(#10080)](https://github.com/prowler-cloud/prowler/pull/10080)
+- `defenderidentity_health_issues_no_open` check for M365 provider [(#10087)](https://github.com/prowler-cloud/prowler/pull/10087)
+- `organization_verified_badge` check for GitHub provider [(#10033)](https://github.com/prowler-cloud/prowler/pull/10033)
+- OpenStack provider `clouds_yaml_content` parameter for API integration [(#10003)](https://github.com/prowler-cloud/prowler/pull/10003)
+- `defender_safe_attachments_policy_enabled` check for M365 provider [(#9833)](https://github.com/prowler-cloud/prowler/pull/9833)
+- `defender_safelinks_policy_enabled` check for M365 provider [(#9832)](https://github.com/prowler-cloud/prowler/pull/9832)
+- CSA CCM 4.0 for the AWS provider [(#10018)](https://github.com/prowler-cloud/prowler/pull/10018)
+- CSA CCM 4.0 for the GCP provider [(#10042)](https://github.com/prowler-cloud/prowler/pull/10042)
+- CSA CCM 4.0 for the Azure provider [(#10039)](https://github.com/prowler-cloud/prowler/pull/10039)
+- CSA CCM 4.0 for the Oracle Cloud provider [(#10057)](https://github.com/prowler-cloud/prowler/pull/10057)
+- OCI regions updater script and CI workflow [(#10020)](https://github.com/prowler-cloud/prowler/pull/10020)
+- `image` provider for container image scanning with Trivy integration [(#9984)](https://github.com/prowler-cloud/prowler/pull/9984)
+- CSA CCM 4.0 for the Alibaba Cloud provider [(#10061)](https://github.com/prowler-cloud/prowler/pull/10061)
+- ECS Exec (ECS-006) privilege escalation detection via `ecs:ExecuteCommand` + `ecs:DescribeTasks` [(#10066)](https://github.com/prowler-cloud/prowler/pull/10066)
+- `--export-ocsf` CLI flag to upload OCSF scan results to Prowler Cloud [(#10095)](https://github.com/prowler-cloud/prowler/pull/10095)
+- `scan_id` field in OCSF `unmapped` output for ingestion correlation [(#10095)](https://github.com/prowler-cloud/prowler/pull/10095)
+- `defenderxdr_endpoint_privileged_user_exposed_credentials` check for M365 provider [(#10084)](https://github.com/prowler-cloud/prowler/pull/10084)
+- `defenderxdr_critical_asset_management_pending_approvals` check for M365 provider [(#10085)](https://github.com/prowler-cloud/prowler/pull/10085)
+- `entra_seamless_sso_disabled` check for M365 provider [(#10086)](https://github.com/prowler-cloud/prowler/pull/10086)
+- Registry scan mode for `image` provider: enumerate and scan all images from OCI standard, Docker Hub, and ECR [(#9985)](https://github.com/prowler-cloud/prowler/pull/9985)
+- File descriptor limits (`ulimits`) for Docker Compose worker services to prevent `Too many open files` errors [(#10107)](https://github.com/prowler-cloud/prowler/pull/10107)
+- SecNumCloud compliance framework for the AWS provider [(#10117)](https://github.com/prowler-cloud/prowler/pull/10117)
+- CIS 6.0 for the AWS provider [(#10127)](https://github.com/prowler-cloud/prowler/pull/10127)
+- `entra_conditional_access_policy_require_mfa_for_management_api` check for M365 provider [(#10150)](https://github.com/prowler-cloud/prowler/pull/10150)
+- OpenStack provider multiple regions support [(#10135)](https://github.com/prowler-cloud/prowler/pull/10135)
+- `entra_break_glass_account_fido2_security_key_registered` check for M365 provider [(#10213)](https://github.com/prowler-cloud/prowler/pull/10213)
+- `entra_default_app_management_policy_enabled` check for M365 provider [(#9898)](https://github.com/prowler-cloud/prowler/pull/9898)
+- OpenStack networking service with 6 security checks [(#9970)](https://github.com/prowler-cloud/prowler/pull/9970)
+- OpenStack block storage service with 7 security checks [(#10120)](https://github.com/prowler-cloud/prowler/pull/10120)
+- OpenStack compute service with 7 security checks [(#9944)](https://github.com/prowler-cloud/prowler/pull/9944)
+- OpenStack image service with 6 security checks [(#10096)](https://github.com/prowler-cloud/prowler/pull/10096)
+- `--provider-uid` CLI flag for IaC provider, used as `cloud.account.uid` in OCSF output and required with `--export-ocsf` [(#10233)](https://github.com/prowler-cloud/prowler/pull/10233)
+- `unmapped.provider_uid` field in OCSF output to match CLI scan results with API provider entities during ingestion [(#10231)](https://github.com/prowler-cloud/prowler/pull/10231)
+- `unmapped.provider` field in OCSF output for provider name availability in non-cloud providers like Kubernetes [(#10240)](https://github.com/prowler-cloud/prowler/pull/10240)
+
+### 🔄 Changed
+
+- Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
+- GitHub provider enhanced documentation and `repository_branch_delete_on_merge_enabled` logic [(#9830)](https://github.com/prowler-cloud/prowler/pull/9830)
+- Parallelize Cloudflare zone API calls with threading to improve scan performance [(#9982)](https://github.com/prowler-cloud/prowler/pull/9982)
+- Update GCP API Keys service metadata to new format [(#9637)](https://github.com/prowler-cloud/prowler/pull/9637)
+- Update GCP BigQuery service metadata to new format [(#9638)](https://github.com/prowler-cloud/prowler/pull/9638)
+- Update GCP Cloud SQL service metadata to new format [(#9639)](https://github.com/prowler-cloud/prowler/pull/9639)
+- Update GCP Cloud Storage service metadata to new format [(#9640)](https://github.com/prowler-cloud/prowler/pull/9640)
+- Update GCP Compute Engine service metadata to new format [(#9641)](https://github.com/prowler-cloud/prowler/pull/9641)
+- Update GCP Dataproc service metadata to new format [(#9642)](https://github.com/prowler-cloud/prowler/pull/9642)
+- Update GCP DNS service metadata to new format [(#9643)](https://github.com/prowler-cloud/prowler/pull/9643)
+- Update GCP GCR service metadata to new format [(#9644)](https://github.com/prowler-cloud/prowler/pull/9644)
+- Update GCP GKE service metadata to new format [(#9645)](https://github.com/prowler-cloud/prowler/pull/9645)
+- Update GCP IAM service metadata to new format [(#9646)](https://github.com/prowler-cloud/prowler/pull/9646)
+- Update GCP KMS service metadata to new format [(#9647)](https://github.com/prowler-cloud/prowler/pull/9647)
+- Update GCP Logging service metadata to new format [(#9648)](https://github.com/prowler-cloud/prowler/pull/9648)
+- Update Azure Key Vault service metadata to new format [(#9621)](https://github.com/prowler-cloud/prowler/pull/9621)
+- Update Azure Entra ID service metadata to new format [(#9619)](https://github.com/prowler-cloud/prowler/pull/9619)
+- Update Azure Virtual Machines service metadata to new format [(#9629)](https://github.com/prowler-cloud/prowler/pull/9629)
+- Cloudflare provider credential validation with specific exceptions [(#9910)](https://github.com/prowler-cloud/prowler/pull/9910)
+- Enhance AWS IAM privilege escalation detection with patterns from pathfinding.cloud library [(#9922)](https://github.com/prowler-cloud/prowler/pull/9922)
+- Bump Trivy from 0.66.0 to 0.69.2 [(#10210)](https://github.com/prowler-cloud/prowler/pull/10210)
+- Standardize GitHub and M365 provider account UIDs for consistent OCSF output [(#10226)](https://github.com/prowler-cloud/prowler/pull/10226)
+- Standardize Cloudflare account and resource UIDs to prevent None values in findings [(#10227)](https://github.com/prowler-cloud/prowler/pull/10227)
+
+### 🐞 Fixed
+
+- Update AWS checks metadata URLs to replace deprecated Trend Micro CloudOne Conformity (EOL July 2026) with Vision One and remove docs.prowler.com references [(#10068)](https://github.com/prowler-cloud/prowler/pull/10068)
+- Standardize resource_id values across Azure checks to use actual Azure resource IDs and prevent duplicate resource entries [(#9994)](https://github.com/prowler-cloud/prowler/pull/9994)
+- VPC endpoint service collection filtering third-party services that caused AccessDenied errors on `DescribeVpcEndpointServicePermissions` [(#10152)](https://github.com/prowler-cloud/prowler/pull/10152)
+- Handle serialization errors in OCSF output for non-serializable resource metadata [(#10129)](https://github.com/prowler-cloud/prowler/pull/10129)
+- Respect `AWS_ENDPOINT_URL` environment variable for STS session creation [(#10228)](https://github.com/prowler-cloud/prowler/pull/10228)
+- Help text and typos in CLI flags [(#10040)](https://github.com/prowler-cloud/prowler/pull/10040)
+- `elbv2_insecure_ssl_ciphers` false positive on AWS post-quantum (PQ) TLS policies like `ELBSecurityPolicy-TLS13-1-2-PQ-2025-09` [(#10219)](https://github.com/prowler-cloud/prowler/pull/10219)
+
+### 🔐 Security
+
+- Bumped `py-ocsf-models` to 0.8.1 and `cryptography` to 44.0.3 [(#10059)](https://github.com/prowler-cloud/prowler/pull/10059)
+- Harden GitHub Actions workflows against expression injection, add `persist-credentials: false` to checkout steps, and configure dependabot cooldown [(#10200)](https://github.com/prowler-cloud/prowler/pull/10200)
+
+---
+
+## [5.18.3] (Prowler v5.18.3)
+
+### 🐞 Fixed
+
+- `pip install prowler` failing on systems without C compiler due to `netifaces` transitive dependency from `openstacksdk` [(#10055)](https://github.com/prowler-cloud/prowler/pull/10055)
+- `kms_key_not_publicly_accessible` false negative for specific KMS actions (e.g., `kms:DescribeKey`, `kms:Decrypt`) with unrestricted principals [(#10071)](https://github.com/prowler-cloud/prowler/pull/10071)
+- Remove account_id and location for manual requirements in M365CIS [(#10105)](https://github.com/prowler-cloud/prowler/pull/10105)
+
+---
+
+## [5.18.2] (Prowler v5.18.2)
+
+### 🐞 Fixed
+
+- `--repository` and `--organization` flags combined interaction in GitHub provider, qualifying unqualified repository names with organization [(#10001)](https://github.com/prowler-cloud/prowler/pull/10001)
+- HPACK library logging tokens in debug mode for Azure, M365, and Cloudflare providers [(#10010)](https://github.com/prowler-cloud/prowler/pull/10010)
+
+### 🐞 Fixed
+
+- Use `defusedxml` in the Alibaba Cloud OSS service to prevent XXE vulnerabilities when parsing XML responses [(#9999)](https://github.com/prowler-cloud/prowler/pull/9999)
+
+---
+
+## [5.18.0] (Prowler v5.18.0)
+
+### 🚀 Added
+
+- `entra_emergency_access_exclusion` check for M365 provider [(#9903)](https://github.com/prowler-cloud/prowler/pull/9903)
+- `defender_zap_for_teams_enabled` check for M365 provider [(#9838)](https://github.com/prowler-cloud/prowler/pull/9838)
+- `compute_instance_suspended_without_persistent_disks` check for GCP provider [(#9747)](https://github.com/prowler-cloud/prowler/pull/9747)
+- `codebuild_project_webhook_filters_use_anchored_patterns` check for AWS provider to detect CodeBreach vulnerability [(#9840)](https://github.com/prowler-cloud/prowler/pull/9840)
+- `defender_atp_safe_attachments_policy_enabled` check for M365 provider [(#9837)](https://github.com/prowler-cloud/prowler/pull/9837)
+- `exchange_shared_mailbox_sign_in_disabled` check for M365 provider [(#9828)](https://github.com/prowler-cloud/prowler/pull/9828)
+- CloudTrail Timeline abstraction for querying resource modification history [(#9101)](https://github.com/prowler-cloud/prowler/pull/9101)
+- Cloudflare `--account-id` filter argument [(#9894)](https://github.com/prowler-cloud/prowler/pull/9894)
+- `entra_all_apps_conditional_access_coverage` check for M365 provider [(#9902)](https://github.com/prowler-cloud/prowler/pull/9902)
+- `rds_instance_extended_support` check for AWS provider [(#9865)](https://github.com/prowler-cloud/prowler/pull/9865)
+- `OpenStack` provider support with Compute service including 1 security check [(#9811)](https://github.com/prowler-cloud/prowler/pull/9811)
+- `OpenStack` documentation for the support in the CLI [(#9848)](https://github.com/prowler-cloud/prowler/pull/9848)
+- Add HIPAA compliance framework for the Azure provider [(#9957)](https://github.com/prowler-cloud/prowler/pull/9957)
+- Cloudflare provider credentials as constructor parameters (`api_token`, `api_key`, `api_email`) [(#9907)](https://github.com/prowler-cloud/prowler/pull/9907)
+- CIS 3.1 for the Oracle Cloud provider [(#9971)](https://github.com/prowler-cloud/prowler/pull/9971)
+
+### 🔄 Changed
+
+- Update Azure App Service service metadata to new format [(#9613)](https://github.com/prowler-cloud/prowler/pull/9613)
+- Update Azure Application Insights service metadata to new format [(#9614)](https://github.com/prowler-cloud/prowler/pull/9614)
+- Update Azure Container Registry service metadata to new format [(#9615)](https://github.com/prowler-cloud/prowler/pull/9615)
+- Update Azure Cosmos DB service metadata to new format [(#9616)](https://github.com/prowler-cloud/prowler/pull/9616)
+- Update Azure Databricks service metadata to new format [(#9617)](https://github.com/prowler-cloud/prowler/pull/9617)
+- Parallelize Azure Key Vault vaults and vaults contents retrieval to improve performance [(#9876)](https://github.com/prowler-cloud/prowler/pull/9876)
+- Update Azure IAM service metadata to new format [(#9620)](https://github.com/prowler-cloud/prowler/pull/9620)
+- Update Azure Policy service metadata to new format [(#9625)](https://github.com/prowler-cloud/prowler/pull/9625)
+- Update Azure MySQL service metadata to new format [(#9623)](https://github.com/prowler-cloud/prowler/pull/9623)
+- Update Azure Defender service metadata to new format [(#9618)](https://github.com/prowler-cloud/prowler/pull/9618)
+- Make AWS cross-account checks configurable through `trusted_account_ids` config parameter [(#9692)](https://github.com/prowler-cloud/prowler/pull/9692)
+- Update Azure PostgreSQL service metadata to new format [(#9626)](https://github.com/prowler-cloud/prowler/pull/9626)
+- Update Azure SQL Server service metadata to new format [(#9627)](https://github.com/prowler-cloud/prowler/pull/9627)
+- Update Azure Network service metadata to new format [(#9624)](https://github.com/prowler-cloud/prowler/pull/9624)
+- Update Azure Storage service metadata to new format [(#9628)](https://github.com/prowler-cloud/prowler/pull/9628)
+
+### 🐞 Fixed
+
+- Duplicated findings in `entra_user_with_vm_access_has_mfa` check when user has multiple VM access roles [(#9914)](https://github.com/prowler-cloud/prowler/pull/9914)
+- Jira integration failing with `INVALID_INPUT` error when sending findings with long resource UIDs exceeding 255-character summary limit [(#9926)](https://github.com/prowler-cloud/prowler/pull/9926)
+- CSV/XLSX download failure in dashboard [(#9946)](https://github.com/prowler-cloud/prowler/pull/9946)
+
+---
+
 ## [5.17.0] (Prowler v5.17.0)
 
 ### Added
@@ -27,6 +217,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CIS 6.0 for M365 provider [(#9779)](https://github.com/prowler-cloud/prowler/pull/9779)
 - CIS 5.0 compliance framework for the Azure provider [(#9777)](https://github.com/prowler-cloud/prowler/pull/9777)
 - `Cloudflare` Bot protection, WAF, Privacy, Anti-Scraping and Zone configuration checks [(#9425)](https://github.com/prowler-cloud/prowler/pull/9425)
+- `Cloudflare` `waf` and `dns record` checks [(#9426)](https://github.com/prowler-cloud/prowler/pull/9426)
 
 ### Changed
 

@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_defender_for_arm_is_on",
-  "CheckTitle": "Ensure That Microsoft Defender for Azure Resource Manager Is Set To 'On' ",
+  "CheckTitle": "Defender for Azure Resource Manager is set to On (Standard pricing tier)",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureDefenderPlan",
+  "ResourceType": "microsoft.security/pricings",
   "ResourceGroup": "security",
-  "Description": "Ensure That Microsoft Defender for Azure Resource Manager Is Set To 'On' ",
-  "Risk": "Scanning resource requests lets you be alerted every time there is suspicious activity in order to prevent a security threat from being introduced.",
+  "Description": "**Microsoft Defender for Cloud** plan for **Azure Resource Manager** is configured at the `Standard` tier for the subscription",
+  "Risk": "Without this protection, malicious or misconfigured ARM deployments can go unnoticed. Adversaries could create high-privilege roles, disable logging, or deploy exfiltration paths and crypto workloads, degrading **integrity**, **confidentiality**, and **availability** of Azure resources.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://techcommunity.microsoft.com/blog/coreinfrastructureandsecurityblog/switch-to-the-new-defender-for-resource-manager-pricing-plan/4001636",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/pricing-tier.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az security pricing create --name Arm --tier Standard",
+      "NativeIaC": "```bicep\n// Enable Microsoft Defender for Azure Resource Manager at Standard tier\nresource example_pricing 'Microsoft.Security/pricings@2023-01-01' = {\n  name: 'Arm'\n  properties: {\n    pricingTier: 'Standard' // Critical: sets Defender for ARM plan to Standard (ON)\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Microsoft Defender for Cloud\n2. Select Environment settings > your subscription\n3. Open Defender plans\n4. Set \"Defender for Azure Resource Manager\" to On/Standard\n5. Click Save",
+      "Terraform": "```hcl\n# Enable Microsoft Defender for Azure Resource Manager at Standard tier\nresource \"azurerm_security_center_subscription_pricing\" \"<example_resource_name>\" {\n  tier          = \"Standard\"   # Critical: enables Standard pricing (ON)\n  resource_type = \"Arm\"        # Critical: targets Defender for Azure Resource Manager\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable  Microsoft Defender for Azure Resource Manager",
-      "Url": ""
+      "Text": "Enable Microsoft Defender for **Azure Resource Manager** at the `Standard` tier across all subscriptions. Apply least privilege to deployment principals, enforce the plan via policy for new subscriptions, and route alerts to centralized monitoring to support defense-in-depth and rapid response.",
+      "Url": "https://hub.prowler.com/check/defender_ensure_defender_for_arm_is_on"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "../tooltip";
 
-const INFO_FIELD_VARIANTS = {
+export const INFO_FIELD_VARIANTS = {
   default: "default",
   simple: "simple",
   transparent: "transparent",

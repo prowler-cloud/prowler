@@ -1,21 +1,13 @@
 import uuid
-
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import openai
 import pytest
-
 from botocore.exceptions import ClientError
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
-
-from api.models import (
-    Integration,
-    LighthouseProviderConfiguration,
-    LighthouseProviderModels,
-    Scan,
-    StateChoices,
-)
+from django_celery_results.models import TaskResult
 from tasks.jobs.lighthouse_providers import (
     _create_bedrock_client,
     _extract_bedrock_credentials,
@@ -27,9 +19,19 @@ from tasks.tasks import (
     check_lighthouse_provider_connection_task,
     generate_outputs_task,
     perform_attack_paths_scan_task,
+    perform_scheduled_scan_task,
     refresh_lighthouse_provider_models_task,
     s3_integration_task,
     security_hub_integration_task,
+)
+
+from api.models import (
+    Integration,
+    LighthouseProviderConfiguration,
+    LighthouseProviderModels,
+    Scan,
+    StateChoices,
+    Task,
 )
 
 
@@ -2137,3 +2139,215 @@ class TestCleanupOrphanScheduledScans:
         assert not Scan.objects.filter(id=orphan_scan.id).exists()
         assert Scan.objects.filter(id=scheduled_scan.id).exists()
         assert Scan.objects.filter(id=available_scan_other_task.id).exists()
+
+
+@pytest.mark.django_db
+class TestPerformScheduledScanTask:
+    """Unit tests for perform_scheduled_scan_task."""
+
+    @staticmethod
+    @contextmanager
+    def _override_task_request(task, **attrs):
+        request = task.request
+        sentinel = object()
+        previous = {key: getattr(request, key, sentinel) for key in attrs}
+        for key, value in attrs.items():
+            setattr(request, key, value)
+
+        try:
+            yield
+        finally:
+            for key, prev in previous.items():
+                if prev is sentinel:
+                    if hasattr(request, key):
+                        delattr(request, key)
+                else:
+                    setattr(request, key, prev)
+
+    def _create_periodic_task(self, provider_id, tenant_id, interval_hours=24):
+        interval, _ = IntervalSchedule.objects.get_or_create(
+            every=interval_hours, period="hours"
+        )
+        return PeriodicTask.objects.create(
+            name=f"scan-perform-scheduled-{provider_id}",
+            task="scan-perform-scheduled",
+            interval=interval,
+            kwargs=f'{{"tenant_id": "{tenant_id}", "provider_id": "{provider_id}"}}',
+            enabled=True,
+        )
+
+    def _create_task_result(self, tenant_id, task_id):
+        task_result = TaskResult.objects.create(
+            task_id=task_id,
+            task_name="scan-perform-scheduled",
+            status="STARTED",
+            date_created=datetime.now(timezone.utc),
+        )
+        Task.objects.create(
+            id=task_id, task_runner_task=task_result, tenant_id=tenant_id
+        )
+        return task_result
+
+    def test_skip_when_scheduled_scan_executing(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Skip a scheduled run when another scheduled scan is already executing."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+
+        executing_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.EXECUTING,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            result = perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=str(provider.id)
+            )
+
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
+        assert result["id"] == str(executing_scan.id)
+        assert result["state"] == StateChoices.EXECUTING
+        assert (
+            Scan.objects.filter(
+                tenant_id=tenant.id,
+                provider=provider,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.SCHEDULED,
+            ).count()
+            == 0
+        )
+
+    def test_creates_next_scheduled_scan_after_completion(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Create a next scheduled scan after a successful run completes."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        self._create_periodic_task(provider.id, tenant.id)
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+
+        def _complete_scan(tenant_id, scan_id, provider_id):
+            other_scheduled = Scan.objects.filter(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.SCHEDULED,
+            ).exclude(id=scan_id)
+            assert not other_scheduled.exists()
+            scan_instance = Scan.objects.get(id=scan_id)
+            scan_instance.state = StateChoices.COMPLETED
+            scan_instance.save()
+            return {"status": "ok"}
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan", side_effect=_complete_scan),
+            patch("tasks.tasks._perform_scan_complete_tasks"),
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=str(provider.id)
+            )
+
+        scheduled_scans = Scan.objects.filter(
+            tenant_id=tenant.id,
+            provider=provider,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+        )
+        assert scheduled_scans.count() == 1
+        assert scheduled_scans.first().scheduled_at > datetime.now(timezone.utc)
+        assert (
+            Scan.objects.filter(
+                tenant_id=tenant.id,
+                provider=provider,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
+            ).count()
+            == 1
+        )
+        assert (
+            Scan.objects.filter(
+                tenant_id=tenant.id,
+                provider=provider,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.COMPLETED,
+            ).count()
+            == 1
+        )
+
+    def test_dedupes_multiple_scheduled_scans_before_run(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Ensure duplicated scheduled scans are removed before executing."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+
+        scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduled_at=datetime.now(timezone.utc),
+            scheduler_task_id=periodic_task.id,
+        )
+        duplicate_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduled_at=scheduled_scan.scheduled_at,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        def _complete_scan(tenant_id, scan_id, provider_id):
+            other_scheduled = Scan.objects.filter(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
+            ).exclude(id=scan_id)
+            assert not other_scheduled.exists()
+            scan_instance = Scan.objects.get(id=scan_id)
+            scan_instance.state = StateChoices.COMPLETED
+            scan_instance.save()
+            return {"status": "ok"}
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan", side_effect=_complete_scan),
+            patch("tasks.tasks._perform_scan_complete_tasks"),
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=str(provider.id)
+            )
+
+        assert not Scan.objects.filter(id=duplicate_scan.id).exists()
+        assert Scan.objects.filter(id=scheduled_scan.id).exists()
+        assert (
+            Scan.objects.filter(
+                tenant_id=tenant.id,
+                provider=provider,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
+            ).count()
+            == 1
+        )

@@ -35,7 +35,7 @@ export const QuerySelector = ({
             <div className="flex flex-col gap-1">
               <span className="font-medium">{query.attributes.name}</span>
               <span className="text-xs text-gray-500">
-                {query.attributes.description}
+                {query.attributes.short_description}
               </span>
             </div>
           </SelectItem>

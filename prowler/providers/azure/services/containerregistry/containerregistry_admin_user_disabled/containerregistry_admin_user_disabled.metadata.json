@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "containerregistry_admin_user_disabled",
-  "CheckTitle": "Ensure admin user is disabled for Azure Container Registry",
+  "CheckTitle": "Container Registry admin user is disabled",
   "CheckType": [],
   "ServiceName": "containerregistry",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "ContainerRegistry",
+  "ResourceType": "microsoft.containerregistry/registries",
   "ResourceGroup": "container",
-  "Description": "Ensure that the admin user is disabled and Role-Based Access Control (RBAC) is used instead since it could grant unrestricted access to the registry",
-  "Risk": "If the admin user is enabled, it may lead to unauthorized access to the container registry and its resources, which could compromise the confidentiality, integrity, and availability of the images stored within.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-authentication?tabs=azure-cli#admin-account",
+  "Description": "**Azure Container Registry** admin account configuration, confirming the built-in **admin user** is disabled so access relies on Microsoft Entra-based **RBAC** identities and scoped roles.",
+  "Risk": "Using a shared, always-valid **admin credential** grants full push/pull and lacks attribution. Compromise enables unauthorized image pulls (confidentiality), malicious pushes or tag changes (integrity), and deletions or lockout (availability), enabling supply-chain attacks and lateral movement.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-authentication?tabs=azure-cli#admin-account"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "az acr update --name <RegistryName> --resource-group <ResourceGroupName> --admin-enabled false",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "```bicep\n// Azure Container Registry with admin user disabled\nresource acr 'Microsoft.ContainerRegistry/registries@2025-11-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  sku: {\n    name: '<SKU_NAME>'\n  }\n  properties: {\n    adminUserEnabled: false // Critical: disables the admin user to pass the check\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Container registries and select your registry\n2. Under Settings, open Access keys\n3. Set Admin user to Disabled\n4. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_container_registry\" \"example\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<location>\"\n  sku                 = \"<SKU_NAME>\"\n\n  admin_enabled = false # Critical: disables ACR admin user to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Disable the admin user on Azure Container Registry through the Azure Portal: 1. Navigate to your Container Registry. 2. In the settings, select 'Access keys'. 3. Ensure the 'Admin user' checkbox is not ticked. For all actions relying on registry access, switch to using Role-Based Access Control.",
-      "Url": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-authentication?tabs=azure-cli#admin-account"
+      "Text": "Disable the **admin account** and require Microsoft Entra-backed **RBAC**. Assign least-privilege roles to users, service principals, or managed identities. Prefer short-lived credentials, rotate any residual secrets, and apply defense-in-depth with network restrictions and continuous auditing of registry access.",
+      "Url": "https://hub.prowler.com/check/containerregistry_admin_user_disabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access",
+    "secrets"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "The transition away from using the admin user to RBAC will facilitate a more secure and manageable access model, minimizing the potential risk of unauthorized access to your container images."

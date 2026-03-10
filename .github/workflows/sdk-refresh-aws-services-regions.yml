@@ -28,6 +28,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           ref: 'master'
+          persist-credentials: false
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
@@ -82,9 +83,14 @@ jobs:
 
       - name: PR creation result
         run: |
-          if [[ "${{ steps.create-pr.outputs.pull-request-number }}" ]]; then
-            echo "✓ Pull request #${{ steps.create-pr.outputs.pull-request-number }} created successfully"
-            echo "URL: ${{ steps.create-pr.outputs.pull-request-url }}"
+          if [[ "${STEPS_CREATE_PR_OUTPUTS_PULL_REQUEST_NUMBER}" ]]; then
+            echo "✓ Pull request #${STEPS_CREATE_PR_OUTPUTS_PULL_REQUEST_NUMBER} created successfully"
+            echo "URL: ${STEPS_CREATE_PR_OUTPUTS_PULL_REQUEST_URL}"
           else
             echo "✓ No changes detected - AWS regions are up to date"
           fi
+
+        env:
+          STEPS_CREATE_PR_OUTPUTS_PULL_REQUEST_NUMBER: ${{ steps.create-pr.outputs.pull-request-number }}
+
+          STEPS_CREATE_PR_OUTPUTS_PULL_REQUEST_URL: ${{ steps.create-pr.outputs.pull-request-url }}

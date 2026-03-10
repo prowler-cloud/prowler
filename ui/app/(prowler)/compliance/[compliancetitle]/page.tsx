@@ -9,7 +9,7 @@ import {
 import { getThreatScore } from "@/actions/overview";
 import {
   ClientAccordionWrapper,
-  ComplianceDownloadButton,
+  ComplianceDownloadContainer,
   ComplianceHeader,
   RequirementsStatusCard,
   RequirementsStatusCardSkeleton,
@@ -128,20 +128,17 @@ export default async function ComplianceDetail({
             selectedScan={selectedScan}
           />
         </div>
-        {(() => {
-          const framework = attributesData?.data?.[0]?.attributes?.framework;
-          const reportType = getReportTypeForFramework(framework);
-
-          return selectedScanId && reportType ? (
-            <div className="mb-4 flex-shrink-0 self-end sm:mb-0 sm:self-start sm:pt-1">
-              <ComplianceDownloadButton
-                scanId={selectedScanId}
-                reportType={reportType}
-                label="Download report"
-              />
-            </div>
-          ) : null;
-        })()}
+        {selectedScanId && (
+          <div className="mb-4 flex-shrink-0 self-end sm:mb-0 sm:self-start sm:pt-1">
+            <ComplianceDownloadContainer
+              scanId={selectedScanId}
+              complianceId={complianceId}
+              reportType={getReportTypeForFramework(
+                attributesData?.data?.[0]?.attributes?.framework,
+              )}
+            />
+          </div>
+        )}
       </div>
 
       <Suspense
@@ -151,8 +148,9 @@ export default async function ComplianceDetail({
             {/* Mobile: each card on own row | Tablet: ThreatScore full row, others share row | Desktop: all 3 in one row */}
             <div
               className={cn(
-                "grid grid-cols-1 gap-6 md:grid-cols-2",
-                isThreatScore && "xl:grid-cols-[minmax(280px,320px)_auto_1fr]",
+                "grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]",
+                isThreatScore &&
+                  "xl:grid-cols-[minmax(280px,320px)_minmax(280px,400px)_1fr]",
               )}
             >
               {isThreatScore && (
@@ -209,7 +207,7 @@ const SSRComplianceContent = async ({
   if (!scanId || type === "tasks") {
     return (
       <div className="flex flex-col gap-8">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
           <RequirementsStatusCard pass={0} fail={0} manual={0} />
           <TopFailedSectionsCard sections={[]} />
           {/* <SectionsFailureRateCard categories={[]} /> */}
@@ -244,8 +242,9 @@ const SSRComplianceContent = async ({
       {/* Mobile: each card on own row | Tablet: ThreatScore full row, others share row | Desktop: all 3 in one row */}
       <div
         className={cn(
-          "grid grid-cols-1 gap-6 md:grid-cols-2",
-          threatScoreData && "xl:grid-cols-[minmax(280px,320px)_auto_1fr]",
+          "grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]",
+          threatScoreData &&
+            "xl:grid-cols-[minmax(280px,320px)_minmax(280px,400px)_1fr]",
         )}
       >
         {threatScoreData && (

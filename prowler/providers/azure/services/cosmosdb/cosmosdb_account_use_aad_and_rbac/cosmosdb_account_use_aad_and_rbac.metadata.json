@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "cosmosdb_account_use_aad_and_rbac",
-  "CheckTitle": "Use Azure Active Directory (AAD) Client Authentication and Azure RBAC where possible.",
+  "CheckTitle": "Cosmos DB account has local authentication disabled and uses Azure AD authentication with Azure RBAC",
   "CheckType": [],
   "ServiceName": "cosmosdb",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "CosmosDB",
+  "Severity": "high",
+  "ResourceType": "microsoft.documentdb/databaseaccounts",
   "ResourceGroup": "database",
-  "Description": "Cosmos DB can use tokens or AAD for client authentication which in turn will use Azure RBAC for authorization. Using AAD is significantly more secure because AAD handles the credentials and allows for MFA and centralized management, and the Azure RBAC better integrated with the rest of Azure.",
-  "Risk": "AAD client authentication is considerably more secure than token-based authentication because the tokens must be persistent at the client. AAD does not require this.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/cosmos-db/role-based-access-control",
+  "Description": "**Azure Cosmos DB accounts** configured to use **Microsoft Entra ID** with **Azure RBAC** by disabling key-based credentials (`disableLocalAuth=true`). Clients authenticate with identities rather than account keys.",
+  "Risk": "With local/key-based auth enabled, **long-lived account keys** can be leaked or shared, enabling unauthorized reads/writes and tampering. Access bypasses **MFA** and granular **RBAC**, hindering rotation/revocation and increasing persistence and lateral movement risks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-connect-role-based-access-control?pivots=azure-cli"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az resource update --resource-group <RESOURCE_GROUP> --name <COSMOS_ACCOUNT_NAME> --resource-type Microsoft.DocumentDB/databaseAccounts --set properties.disableLocalAuth=true",
+      "NativeIaC": "```bicep\n// Bicep: Disable local (key-based) auth on a Cosmos DB account\nresource account 'Microsoft.DocumentDB/databaseAccounts@2025-10-15' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  kind: 'GlobalDocumentDB'\n  properties: {\n    databaseAccountOfferType: 'Standard'\n    locations: [{ locationName: resourceGroup().location }]\n    disableLocalAuth: true // Critical: Disables key-based auth to enforce Entra ID + Azure RBAC\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal and open your Cosmos DB account\n2. In the left menu, select Keys\n3. Turn on Disable key-based authentication (Disable local authentication)\n4. Click Save",
+      "Terraform": "```hcl\n# Terraform: Disable local (key-based) auth on a Cosmos DB account\nresource \"azurerm_cosmosdb_account\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<example_resource_name>\"\n  offer_type          = \"Standard\"\n  kind                = \"GlobalDocumentDB\"\n\n  geo_location {\n    location          = \"<example_resource_name>\"\n    failover_priority = 0\n  }\n\n  local_authentication_disabled = true # Critical: Disables key-based auth to enforce Entra ID + RBAC\n}\n```"
     },
     "Recommendation": {
-      "Text": "Map all the resources that currently access to the Azure Cosmos DB account with keys or access tokens. Create an Azure Active Directory (AAD) identity for each of these resources: For Azure resources, you can create a managed identity . You may choose between system-assigned and user-assigned managed identities. For non-Azure resources, create an AAD identity. Grant each AAD identity the minimum permission it requires. When possible, we recommend you use one of the 2 built-in role definitions: Cosmos DB Built-in Data Reader or Cosmos DB Built-in Data Contributor. Validate that the new resource is functioning correctly. After new permissions are granted to identities, it may take a few hours until they propagate. When all resources are working correctly with the new identities, continue to the next step. You can use the az resource update powershell command: $cosmosdbname = 'cosmos-db-account-name' $resourcegroup = 'resource-group-name' $cosmosdb = az cosmosdb show --name $cosmosdbname --resource-group $resourcegroup | ConvertFrom-Json az resource update --ids $cosmosdb.id --set properties.disableLocalAuth=true --latest- include-preview",
-      "Url": "https://learn.microsoft.com/en-us/azure/cosmos-db/role-based-access-control"
+      "Text": "Disable local authentication by setting `disableLocalAuth=true` and require **Entra ID + Azure RBAC** for control and data access. Use **managed identities**, apply **least privilege** roles, retire shared keys, and enforce **zero trust** with conditional access and short-lived credentials.",
+      "Url": "https://hub.prowler.com/check/cosmosdb_account_use_aad_and_rbac"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access",
+    "secrets"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

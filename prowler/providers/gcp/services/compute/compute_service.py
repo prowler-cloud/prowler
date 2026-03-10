@@ -198,6 +198,7 @@ class Compute(GCPService):
                                     "deletionProtection", False
                                 ),
                                 network_interfaces=network_interfaces,
+                                status=instance.get("status", "RUNNING"),
                                 on_host_maintenance=instance.get("scheduling", {}).get(
                                     "onHostMaintenance", "MIGRATE"
                                 ),
@@ -700,6 +701,7 @@ class Instance(BaseModel):
     provisioning_model: str = "STANDARD"
     deletion_protection: bool = False
     network_interfaces: list[NetworkInterface] = []
+    status: str = "RUNNING"
     on_host_maintenance: str = "MIGRATE"
 
 

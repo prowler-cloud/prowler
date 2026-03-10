@@ -1,30 +1,38 @@
 {
   "Provider": "azure",
   "CheckID": "cosmosdb_account_firewall_use_selected_networks",
-  "CheckTitle": "Ensure That 'Firewalls & Networks' Is Limited to Use Selected Networks Instead of All Networks",
+  "CheckTitle": "Cosmos DB account firewall allows access only from selected networks",
   "CheckType": [],
   "ServiceName": "cosmosdb",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "CosmosDB",
+  "ResourceType": "microsoft.documentdb/databaseaccounts",
   "ResourceGroup": "database",
-  "Description": "Limiting your Cosmos DB to only communicate on whitelisted networks lowers its attack footprint.",
-  "Risk": "Selecting certain networks for your Cosmos DB to communicate restricts the number of networks including the internet that can interact with what is stored within the database.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-configure-private-endpoints",
+  "Description": "**Azure Cosmos DB accounts** limit connectivity to **selected networks** using virtual network rules and/or IP allowlists rather than permitting access from all networks.\n\nThe evaluation determines whether the account's network firewall enforces this restriction.",
+  "Risk": "Access from all networks enlarges the attack surface. If keys or tokens are exposed or privileges are misconfigured, attackers anywhere can read or modify data, harming **confidentiality** and **integrity**.\n\nWeak segmentation also enables SSRF/pivot paths from Azure services and can impact **availability** through abuse.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-vnet-service-endpoint",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-firewall",
+    "https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-portal"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az cosmosdb database list / az cosmosdb show <database id> **isVirtualNetworkFilterEnabled should be set to true**",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az cosmosdb network-rule add -g <RESOURCE_GROUP> -n <ACCOUNT_NAME> --subnet <example_resource_id>",
+      "NativeIaC": "```bicep\n// Enable selected networks only by turning on VNet filter and adding one allowed subnet\nresource cosmos 'Microsoft.DocumentDB/databaseAccounts@2025-10-15' = {\n  name: '<example_resource_name>'\n  location: '<LOCATION>'\n  properties: {\n    databaseAccountOfferType: 'Standard'\n    locations: [{ locationName: '<LOCATION>'; failoverPriority: 0 }]\n    isVirtualNetworkFilterEnabled: true // CRITICAL: Enables VNet firewall (selected networks only)\n    virtualNetworkRules: [\n      {\n        id: '<example_resource_id>' // CRITICAL: Subnet resource ID allowed to access the account\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In Azure Portal, open your Cosmos DB account\n2. Go to Settings > Networking\n3. Select Selected networks\n4. Click Add existing virtual network, choose the VNet and Subnet, then click Enable and Add\n5. Click Save",
+      "Terraform": "```hcl\n# Enable Cosmos DB VNet firewall and allow a specific subnet\nresource \"azurerm_cosmosdb_account\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = azurerm_resource_group.<example_resource_name>.location\n  resource_group_name = azurerm_resource_group.<example_resource_name>.name\n  offer_type          = \"Standard\"\n  kind                = \"GlobalDocumentDB\"\n\n  consistency_policy { consistency_level = \"Session\" }\n  geo_location { location = azurerm_resource_group.<example_resource_name>.location failover_priority = 0 }\n\n  is_virtual_network_filter_enabled = true  # CRITICAL: Enforces selected networks only\n  virtual_network_rule {\n    id = \"<example_resource_id>\"           # CRITICAL: Subnet resource ID allowed to access the account\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Open the portal menu. 2. Select the Azure Cosmos DB blade. 3. Select a Cosmos DB account to audit. 4. Select Networking. 5. Under Public network access, select Selected networks. 6. Under Virtual networks, select + Add existing virtual network or + Add a new virtual network. 7. For existing networks, select subscription, virtual network, subnet and click Add. For new networks, provide a name, update the default values if required, and click Create. 8. Click Save.",
-      "Url": "https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-portal"
+      "Text": "Set network access to `Selected networks` with **least privilege**:\n- Prefer **private endpoints** or VNet service endpoints with subnet ACLs\n- Keep IP allowlists minimal; avoid `0.0.0.0`\n- *When feasible*, set `publicNetworkAccess=Disabled` with Private Link\n- Apply **defense in depth** and monitor access and firewall changes",
+      "Url": "https://hub.prowler.com/check/cosmosdb_account_firewall_use_selected_networks"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Failure to whitelist the correct networks will result in a connection loss."

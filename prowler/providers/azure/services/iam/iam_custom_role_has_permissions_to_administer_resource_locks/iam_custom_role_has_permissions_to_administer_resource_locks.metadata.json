@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "iam_custom_role_has_permissions_to_administer_resource_locks",
-  "CheckTitle": "Ensure an IAM custom role has permissions to administer resource locks",
+  "CheckTitle": "Custom role has permission to administer resource locks",
   "CheckType": [],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "AzureRole",
+  "Severity": "medium",
+  "ResourceType": "microsoft.authorization/roledefinitions",
   "ResourceGroup": "IAM",
-  "Description": "Ensure a Custom Role is Assigned Permissions for Administering Resource Locks",
-  "Risk": "In Azure, resource locks are a way to prevent accidental deletion or modification of critical resources. These locks can be set at the resource group level or the individual resource level. Resource locks administration is a critical task that should be preformed from a custom role with the appropriate permissions. This ensures that only authorized users can administer resource locks.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/lock-resources?tabs=json",
+  "Description": "**Azure custom RBAC roles** include the `Microsoft.Authorization/locks/*` action, indicating permission to administer **management locks** at subscription, resource group, or resource scope.",
+  "Risk": "Absent a scoped custom role for `Microsoft.Authorization/locks/*`, lock control falls to broad roles (e.g., Owner), weakening **least privilege**. Locks can be disabled or altered, enabling unauthorized changes or deletion, harming **integrity** and **availability**, and reducing **separation of duties** and accountability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/lock-resources?tabs=json",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/AccessControl/resource-lock-custom-role.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/AccessControl/resource-lock-custom-role.html",
-      "Terraform": ""
+      "CLI": "az role definition create --role-definition '{\"Name\":\"<role_name>\",\"Description\":\"Custom role to administer resource locks\",\"IsCustom\":true,\"Actions\":[\"Microsoft.Authorization/locks/*\"],\"NotActions\":[],\"AssignableScopes\":[\"/subscriptions/<subscription_id>\"]}'",
+      "NativeIaC": "```bicep\n// Custom role that can administer resource locks\ntargetScope = 'subscription'\n\nresource roleDef 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {\n  name: guid(subscription().id, '<role_name>') // CRITICAL: use GUID for role definition name\n  properties: {\n    roleName: '<role_name>'\n    description: 'Custom role to administer resource locks'\n    permissions: [\n      {\n        actions: [\n          'Microsoft.Authorization/locks/*' // CRITICAL: grants lock administration to pass the check\n        ]\n        notActions: []\n      }\n    ]\n    assignableScopes: [ subscription().id ]\n  }\n}\n```",
+      "Other": "1. In the Azure portal, go to the target scope (Subscription or Resource group) and open Access control (IAM)\n2. Click Roles, find your custom role, and select Edit\n3. Go to Permissions > Add permissions\n4. Search for \"Microsoft.Authorization/locks\" and select Microsoft.Authorization/locks/*\n5. Click Add, then Review + save > Save",
+      "Terraform": "```hcl\n# Custom role with permission to administer resource locks\nresource \"azurerm_role_definition\" \"<example_resource_name>\" {\n  name  = \"<example_resource_name>\"\n  scope = \"/subscriptions/<example_resource_id>\"\n\n  permissions {\n    actions = [\n      \"Microsoft.Authorization/locks/*\" # CRITICAL: adds lock admin permission to pass the check\n    ]\n  }\n\n  assignable_scopes = [\"/subscriptions/<example_resource_id>\"]\n}\n```"
     },
     "Recommendation": {
-      "Text": "Resouce locks are needed to prevent accidental deletion or modification of critical Azure resources. The administration of resource locks should be performed from a custom role with the appropriate permissions.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/AccessControl/resource-lock-custom-role.html"
+      "Text": "Define a **least-privilege custom role** restricted to `Microsoft.Authorization/locks/*` and assign it to a tightly controlled group at minimal scope. Apply **separation of duties**, use just-in-time elevation, audit lock changes, and avoid broad roles or pipeline identities managing locks. Layer with **defense-in-depth** controls.",
+      "Url": "https://hub.prowler.com/check/iam_custom_role_has_permissions_to_administer_resource_locks"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

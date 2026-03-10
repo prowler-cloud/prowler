@@ -19,7 +19,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/apigateway/latest/developerguide/security-monitoring.html",
     "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-logging.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/APIGateway/cloudwatch-logs.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/APIGateway/cloudwatch-logs.html",
     "https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html",
     "https://repost.aws/knowledge-center/api-gateway-cloudwatch-logs",
     "https://repost.aws/knowledge-center/api-gateway-missing-cloudwatch-logs",

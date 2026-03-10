@@ -1,30 +1,36 @@
 {
   "Provider": "azure",
   "CheckID": "iam_role_user_access_admin_restricted",
-  "CheckTitle": "Ensure 'User Access Administrator' role is restricted",
+  "CheckTitle": "Role assignment does not grant the User Access Administrator role",
   "CheckType": [],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AzureIAMRoleassignment",
+  "ResourceType": "microsoft.authorization/roleassignments",
   "ResourceGroup": "IAM",
-  "Description": "Checks for active assignments of the highly privileged 'User Access Administrator' role in Azure subscriptions.",
-  "Risk": "Persistent assignment of this role can lead to privilege escalation and unauthorized access, increasing the risk of security breaches.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/privileged#user-access-administrator",
+  "Description": "**Azure subscription role assignments** granting **User Access Administrator** are identified to surface principals able to manage access (`Azure RBAC`) at that scope.",
+  "Risk": "Persistent `User Access Administrator` enables assigning high-privilege roles and reading control-plane data, enabling privilege escalation and unauthorized access. Impact: **confidentiality** (data exposure), **integrity** (unauthorized changes), **availability** (service disruption).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/role-based-access-control/elevate-access-global-admin?tabs=azure-portal%2Centra-audit-logs",
+    "https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/privileged#user-access-administrator"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az role assignment delete --role 'User Access Administrator' --scope '/subscriptions/<subscription_id>'",
+      "CLI": "az role assignment delete --assignee <principal_id_or_upn> --role \"User Access Administrator\" --scope \"/subscriptions/<subscription_id>\"",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. In the Azure portal, go to Subscriptions and select <subscription>.\n2. Open Access control (IAM) > Role assignments.\n3. Filter by Role = User Access Administrator.\n4. Select the assignment(s) and click Remove. Confirm.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Remove 'User Access Administrator' role assignments immediately after use to minimize security risks.",
-      "Url": "https://learn.microsoft.com/en-us/azure/role-based-access-control/elevate-access-global-admin?tabs=azure-portal%2Centra-audit-logs"
+      "Text": "Enforce **least privilege**:\n- Avoid standing `User Access Administrator`; use time-bound, approval-based elevation (PIM)\n- Scope access to only required subscriptions/resource groups\n- Require MFA and monitor role activity\n- Review regularly and remove unused grants",
+      "Url": "https://hub.prowler.com/check/iam_role_user_access_admin_restricted"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
