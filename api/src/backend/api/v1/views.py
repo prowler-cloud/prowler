@@ -3,6 +3,7 @@ import glob
 import json
 import logging
 import os
+import time
 
 from collections import defaultdict
 from copy import deepcopy
@@ -2570,13 +2571,34 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             provider_id,
         )
 
+        start = time.monotonic()
         graph = attack_paths_views_helpers.execute_query(
             database_name,
             query_definition,
             parameters,
             provider_id,
         )
+        query_duration = time.monotonic() - start
         graph_database.clear_cache(database_name)
+
+        result_nodes = len(graph.get("nodes", []))
+        result_relationships = len(graph.get("relationships", []))
+        logger.info(
+            "attack_paths_query_run",
+            extra={
+                "user_id": str(request.user.id),
+                "tenant_id": str(attack_paths_scan.provider.tenant_id),
+                "metadata": {
+                    "query_id": query_definition.id,
+                    "provider": query_definition.provider,
+                    "scan_id": pk,
+                    "provider_id": provider_id,
+                    "result_nodes": result_nodes,
+                    "result_relationships": result_relationships,
+                    "query_duration": round(query_duration, 3),
+                },
+            },
+        )
 
         status_code = status.HTTP_200_OK
         if not graph.get("nodes"):
@@ -2618,12 +2640,34 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         )
         provider_id = str(attack_paths_scan.provider_id)
 
+        start = time.monotonic()
         graph = attack_paths_views_helpers.execute_custom_query(
             database_name,
             serializer.validated_data["query"],
             provider_id,
         )
+        query_duration = time.monotonic() - start
         graph_database.clear_cache(database_name)
+
+        query_length = len(serializer.validated_data["query"])
+        result_nodes = len(graph.get("nodes", []))
+        result_relationships = len(graph.get("relationships", []))
+        logger.info(
+            "attack_paths_custom_query_run",
+            extra={
+                "user_id": str(request.user.id),
+                "tenant_id": str(attack_paths_scan.provider.tenant_id),
+                "metadata": {
+                    "provider": attack_paths_scan.provider.provider,
+                    "scan_id": pk,
+                    "provider_id": provider_id,
+                    "query_length": query_length,
+                    "result_nodes": result_nodes,
+                    "result_relationships": result_relationships,
+                    "query_duration": round(query_duration, 3),
+                },
+            },
+        )
 
         status_code = status.HTTP_200_OK
         if not graph.get("nodes"):
