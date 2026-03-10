@@ -212,6 +212,13 @@ const getFilterValues = (
     .filter(Boolean);
 };
 
+/**
+ * Filters providers client-side by organization and provider group.
+ *
+ * The API's ProviderFilter does not support `organization_id__in` or
+ * `provider_group_id__in`, so these filters must be applied after fetching.
+ * TODO: Move to server-side when API adds support for these filter params.
+ */
 const applyLocalFilters = ({
   organizationIds,
   providerGroupIds,
@@ -423,12 +430,20 @@ export function buildProvidersTableRows({
     (organizationUnit) => organizationUnit.relationships.parent !== undefined,
   );
 
+  // Build a set of provider IDs that are assigned to OUs, so we can
+  // exclude them from the org's direct children and avoid duplication.
+  const providersAssignedToOu = new Set(
+    Array.from(providersByOrganizationUnitId.values()).flatMap((providers) =>
+      providers.map((p) => p.id),
+    ),
+  );
+
   const organizationRows = organizations
     .map((organization) => {
       const organizationProvidersFromRelationships = getProviderRowsByIds({
         providerIds: getRelationshipProviderIds(organization.relationships),
         providerLookup,
-      });
+      }).filter((provider) => !providersAssignedToOu.has(provider.id));
       const organizationProviders =
         organizationProvidersFromRelationships.length > 0
           ? organizationProvidersFromRelationships
@@ -507,7 +522,9 @@ export async function loadProvidersAccountsViewData({
       providerTypeFilter;
   }
 
-  // Remove client-side-only filters before sending to the API
+  // Remove client-side-only filters before sending to the API.
+  // TODO: Move organization and account group filtering to server-side
+  // when API adds support for `organization_id__in` and `provider_group_id__in`.
   delete providerFilters[`filter[${PROVIDERS_PAGE_FILTER.PROVIDER_TYPE}]`];
   delete providerFilters[`filter[${PROVIDERS_PAGE_FILTER.ORGANIZATION}]`];
   delete providerFilters[`filter[${PROVIDERS_PAGE_FILTER.ACCOUNT_GROUP}]`];
@@ -536,13 +553,14 @@ export async function loadProvidersAccountsViewData({
         sort: encodedSort,
       }),
     ),
-    // Unfiltered fetch for ProviderTypeSelector
-    resolveActionResult(getProviders({ pageSize: 100 })),
-    resolveActionResult(getProviderGroups({ page: 1, pageSize: 100 })),
+    // Unfiltered fetch for ProviderTypeSelector — only needs distinct types;
+    // TODO: Replace with a dedicated lightweight endpoint when available.
+    resolveActionResult(getProviders({ pageSize: 500 })),
+    resolveActionResult(getProviderGroups({ page: 1, pageSize: 500 })),
     // Fetch active scheduled scans to determine daily schedule per provider
     resolveActionResult(
       getScans({
-        pageSize: 100,
+        pageSize: 500,
         filters: {
           "filter[trigger]": SCAN_TRIGGER.SCHEDULED,
           "filter[state__in]": "scheduled,available",

@@ -481,6 +481,128 @@ describe("buildProvidersTableRows", () => {
     expect(ouChild.subRows![0].rowType).toBe(PROVIDERS_ROW_TYPE.PROVIDER);
   });
 
+  it("does not duplicate providers that appear in both org relationships and OU assignments", () => {
+    // Given — provider-1 is linked to org-1 AND assigned to ou-1
+    const providers = [
+      toProviderRow(providersResponse.data[0], {
+        relationships: {
+          ...providersResponse.data[0].relationships,
+          organization: {
+            data: { type: "organizations", id: "org-1" },
+          },
+          organization_unit: {
+            data: { type: "organizational-units", id: "ou-1" },
+          },
+        },
+      }),
+    ];
+
+    // When
+    const rows = buildProvidersTableRows({
+      providers,
+      organizations: [
+        {
+          id: "org-1",
+          type: "organizations",
+          attributes: {
+            name: "Root Organization",
+            org_type: "aws",
+            external_id: "o-root",
+            metadata: {},
+            root_external_id: "r-root",
+          },
+          relationships: {
+            providers: {
+              data: [{ type: "providers", id: "provider-1" }],
+            },
+          },
+        },
+      ],
+      organizationUnits: [
+        {
+          id: "ou-1",
+          type: "organizational-units",
+          attributes: {
+            name: "Security OU",
+            external_id: "ou-security",
+            parent_external_id: "r-root",
+            metadata: {},
+          },
+          relationships: {
+            organization: {
+              data: { type: "organizations", id: "org-1" },
+            },
+          },
+        },
+      ],
+      isCloud: true,
+    });
+
+    // Then — provider appears only under OU, not duplicated at org level
+    expect(rows).toHaveLength(1);
+    const orgRow = rows[0];
+    expect(orgRow.rowType).toBe(PROVIDERS_ROW_TYPE.ORGANIZATION);
+    // Org should contain only the OU row, not the provider directly
+    expect(orgRow.subRows).toHaveLength(1);
+    expect(orgRow.subRows![0].rowType).toBe(PROVIDERS_ROW_TYPE.ORGANIZATION);
+    // The OU should contain the provider
+    expect(orgRow.subRows![0].subRows).toHaveLength(1);
+    expect(orgRow.subRows![0].subRows![0].rowType).toBe(
+      PROVIDERS_ROW_TYPE.PROVIDER,
+    );
+    expect(orgRow.subRows![0].subRows![0].id).toBe("provider-1");
+  });
+
+  it("keeps org-only providers as direct org children even when org has relationship data", () => {
+    // Given — provider-1 belongs to org-1 but has no OU
+    const providers = [
+      toProviderRow(providersResponse.data[0], {
+        relationships: {
+          ...providersResponse.data[0].relationships,
+          organization: {
+            data: { type: "organizations", id: "org-1" },
+          },
+          organization_unit: {
+            data: null,
+          },
+        },
+      }),
+    ];
+
+    // When
+    const rows = buildProvidersTableRows({
+      providers,
+      organizations: [
+        {
+          id: "org-1",
+          type: "organizations",
+          attributes: {
+            name: "Root Organization",
+            org_type: "aws",
+            external_id: "o-root",
+            metadata: {},
+            root_external_id: "r-root",
+          },
+          relationships: {
+            providers: {
+              data: [{ type: "providers", id: "provider-1" }],
+            },
+          },
+        },
+      ],
+      organizationUnits: [],
+      isCloud: true,
+    });
+
+    // Then — provider appears as a direct child of the org
+    expect(rows).toHaveLength(1);
+    const orgRow = rows[0];
+    expect(orgRow.rowType).toBe(PROVIDERS_ROW_TYPE.ORGANIZATION);
+    expect(orgRow.subRows).toHaveLength(1);
+    expect(orgRow.subRows![0].rowType).toBe(PROVIDERS_ROW_TYPE.PROVIDER);
+    expect(orgRow.subRows![0].id).toBe("provider-1");
+  });
+
   it("groups providers from organization relationships when provider resources do not expose organization linkage", () => {
     // Given
     const providers = providersResponse.data.map((provider) =>
