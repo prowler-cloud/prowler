@@ -273,7 +273,7 @@ CREATE INDEX IF NOT EXISTS idx_parent
     ON parent_table (column_name);
 ```
 
-This is what `create_index_on_partitions` in `api/db_utils.py` does. Always use the helper in Django migrations. See the `django-migration-psql` skill for the two-step migration pattern.
+PostgreSQL will automatically recognize partition-level indexes as part of the parent index definition when the index names and definitions match.
 
 ### Prioritize active partitions
 
@@ -323,24 +323,6 @@ ORDER BY table_fqn, index_fqn;
 Then run each session's indexes in a separate `REINDEX INDEX CONCURRENTLY` call. Set `NUMBER_OF_SESSIONS` based on `max_parallel_maintenance_workers` and available I/O.
 
 ## Dropping indexes
-
-### Isolate each deletion in its own migration
-
-Each index drop goes in a dedicated migration with nothing else in it.
-
-### Fake the migration, drop manually
-
-Django's built-in index deletion is slower and holds locks. Fake the migration first, then drop manually during low-traffic hours:
-
-```bash
-# Mark as applied without running
-python manage.py migrate api <migration_name> --fake
-```
-
-```sql
--- Drop manually during maintenance window
-DROP INDEX CONCURRENTLY IF EXISTS <index_name>;
-```
 
 ### Post-drop maintenance
 
@@ -393,8 +375,6 @@ VACUUM (ANALYZE) table_name;
 | Library | Context7 ID | Use for |
 |---------|-------------|---------|
 | PostgreSQL | `/websites/postgresql_org_docs_current` | Index types, EXPLAIN, partitioned table indexing, REINDEX |
-| Django 5.2 | `/websites/djangoproject_en_5_2` | Database indexes, migration operations, `SchemaEditor` |
-| django-postgres-extra | `/SectorLabs/django-postgres-extra` | Partitioned models, partition management |
 
 **Example queries:**
 ```
@@ -409,6 +389,4 @@ mcp_context7_query-docs(libraryId="/websites/postgresql_org_docs_current", query
 
 ## Resources
 
-- **Partition helpers**: `api/src/backend/api/db_utils.py` (`create_index_on_partitions`, `drop_index_on_partitions`)
-- **Migration skill**: See `django-migration-psql` for the two-step migration pattern
 - **EXPLAIN Visualizer**: [pev](https://tatiyants.com/pev/)

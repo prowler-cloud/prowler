@@ -10,13 +10,13 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
-  scope: [api]
+  scope: [api, root]
   auto_invoke:
     - "Creating or reviewing Django migrations"
     - "Adding indexes or constraints to database tables"
     - "Running makemigrations or pgmakemigrations"
     - "Writing data backfill or data migration"
-allowed-tools: Read, Grep, Glob
+allowed-tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 
 ## When to use
@@ -165,8 +165,8 @@ class Migration(migrations.Migration):
 Key details:
 - `atomic = False` is mandatory. `CREATE INDEX CONCURRENTLY` cannot run inside a transaction.
 - Always provide `reverse_code` using `drop_index_on_partitions` so rollbacks work.
-- Use `all_partitions=False` (default) to skip old partitions where the index isn't needed.
-- Use `all_partitions=True` only when migrating existing critical indexes that must cover historical data.
+- The default is `all_partitions=True`, which creates indexes on every partition CONCURRENTLY (no locks). This is the safe default.
+- Do NOT use `all_partitions=False` unless you understand the consequence: Step 2's `AddIndex` on the parent will create indexes on the skipped partitions **with locks** (not CONCURRENTLY), because PostgreSQL fills in missing partition indexes inline during parent index creation.
 
 ### Step 2: register the index with Django
 
@@ -242,8 +242,7 @@ WHERE indexrelid::regclass::text LIKE '%find_tenant_check_ins%';
 
 ### When to use this approach
 
-- The table has more than ~10M rows.
-- The deployment pipeline has a migration timeout that the index creation would exceed.
+- The table will grow exponentially, e.g.: findings.
 - You want to control exactly when the I/O hit happens (e.g., during a maintenance window).
 
 This is optional. For smaller tables or non-production environments, letting the migration run normally is fine.
@@ -416,14 +415,14 @@ When implementing or debugging migration patterns, query these libraries via `mc
 
 | Library | Context7 ID | Use for |
 |---------|-------------|---------|
-| Django 5.2 | `/websites/djangoproject_en_5_2` | Migration operations, indexes, constraints, `SchemaEditor` |
+| Django 5.1 | `/websites/djangoproject_en_5_1` | Migration operations, indexes, constraints, `SchemaEditor` |
 | PostgreSQL | `/websites/postgresql_org_docs_current` | `CREATE INDEX CONCURRENTLY`, partitioned tables, `pg_inherits` |
 | django-postgres-extra | `/SectorLabs/django-postgres-extra` | Partitioned models, `PostgresPartitionedModel`, partition management |
 
 **Example queries:**
 ```
-mcp_context7_query-docs(libraryId="/websites/djangoproject_en_5_2", query="migration operations AddIndex RunPython atomic")
-mcp_context7_query-docs(libraryId="/websites/djangoproject_en_5_2", query="database indexes Meta class concurrently")
+mcp_context7_query-docs(libraryId="/websites/djangoproject_en_5_1", query="migration operations AddIndex RunPython atomic")
+mcp_context7_query-docs(libraryId="/websites/djangoproject_en_5_1", query="database indexes Meta class concurrently")
 mcp_context7_query-docs(libraryId="/websites/postgresql_org_docs_current", query="CREATE INDEX CONCURRENTLY partitioned table")
 mcp_context7_query-docs(libraryId="/SectorLabs/django-postgres-extra", query="partitioned model range partition index")
 ```
