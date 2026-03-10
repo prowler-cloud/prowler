@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import type { ReactNode } from "react";
 
 import { ProviderTypeSelector } from "@/app/(prowler)/_overview/_components/provider-type-selector";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
@@ -22,7 +23,7 @@ import { ProviderConnectionStatus, ProviderProps } from "@/types/providers";
 interface ProvidersFiltersProps {
   filters: FilterOption[];
   providers: ProviderProps[];
-  actions?: React.ReactNode;
+  actions?: ReactNode;
 }
 
 export const ProvidersFilters = ({

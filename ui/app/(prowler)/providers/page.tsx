@@ -36,7 +36,7 @@ export default async function Providers({
           activeTab={activeTab}
           accountsContent={
             <Suspense
-              key={searchParamsKey}
+              key={`accounts-${searchParamsKey}`}
               fallback={<ProvidersTableFallback />}
             >
               <ProvidersAccountsContent searchParams={resolvedSearchParams} />
@@ -44,7 +44,7 @@ export default async function Providers({
           }
           accountGroupsContent={
             <Suspense
-              key={searchParamsKey}
+              key={`groups-${searchParamsKey}`}
               fallback={<AccountGroupsFallback />}
             >
               <AccountGroupsContent searchParams={resolvedSearchParams} />

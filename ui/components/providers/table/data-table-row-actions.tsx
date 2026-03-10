@@ -120,9 +120,7 @@ export function DataTableRowActions({
   // When this row is part of the selection, only show "Test Connection"
   if (hasSelection && isRowSelected) {
     const bulkCount =
-      isRowSelected && testableProviderIds.length > 1
-        ? ` (${testableProviderIds.length})`
-        : "";
+      testableProviderIds.length > 1 ? ` (${testableProviderIds.length})` : "";
 
     return (
       <div className="relative flex items-center justify-end gap-2">
@@ -141,10 +139,7 @@ export function DataTableRowActions({
               handleTestConnection();
             }}
             disabled={
-              isOrganizationRow ||
-              (!isRowSelected && !hasSecret) ||
-              (isRowSelected && testableProviderIds.length === 0) ||
-              loading
+              isOrganizationRow || testableProviderIds.length === 0 || loading
             }
           />
         </ActionDropdown>

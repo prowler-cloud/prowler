@@ -346,8 +346,8 @@ export function GroupNameChips({ groupNames }: GroupNameChipsProps) {
 
   return (
     <div className="flex max-w-[260px] flex-wrap gap-1">
-      {groupNames.map((name) => (
-        <Badge key={name} variant="tag">
+      {groupNames.map((name, index) => (
+        <Badge key={index} variant="tag">
           {name}
         </Badge>
       ))}
