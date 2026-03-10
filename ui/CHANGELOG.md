@@ -6,7 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
-- Image (Container Registry) provider support in UI: badge icon, credentials form, and provider-type filtering
+- Image (Container Registry) provider support in UI: badge icon, credentials form, and provider-type filtering [(#10167)](https://github.com/prowler-cloud/prowler/pull/10167)
 - OpenStack provider support in the UI [(#10046)](https://github.com/prowler-cloud/prowler/pull/10046)
 - PDF report available for the CSA CCM compliance framework [(#10088)](https://github.com/prowler-cloud/prowler/pull/10088)
 - Cloudflare provider support [(#9910)](https://github.com/prowler-cloud/prowler/pull/9910)
