@@ -39,7 +39,10 @@ from prowler.lib.check.check import (
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
-from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.check.compliance_models import (
+    Compliance,
+    get_bulk_compliance_frameworks_universal,
+)
 from prowler.lib.check.custom_checks_metadata import (
     parse_custom_checks_metadata_file,
     update_checks_metadata,
@@ -65,7 +68,10 @@ from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
 from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
-from prowler.lib.outputs.compliance.compliance import display_compliance_table
+from prowler.lib.outputs.compliance.compliance import (
+    display_compliance_table,
+    process_universal_compliance_frameworks,
+)
 from prowler.lib.outputs.compliance.csa.csa_alibabacloud import AlibabaCloudCSA
 from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
 from prowler.lib.outputs.compliance.csa.csa_azure import AzureCSA
@@ -214,6 +220,8 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
+    universal_frameworks = {}
+
     # Skip compliance frameworks for external-tool providers
     if provider not in EXTERNAL_TOOL_PROVIDERS:
         bulk_compliance_frameworks = Compliance.get_bulk(provider)
@@ -221,6 +229,8 @@ def prowler():
         bulk_checks_metadata = update_checks_metadata_with_compliance(
             bulk_compliance_frameworks, bulk_checks_metadata
         )
+        # Load universal compliance frameworks for new rendering pipeline
+        universal_frameworks = get_bulk_compliance_frameworks_universal(provider)
 
     # Update checks metadata if the --custom-checks-metadata-file is present
     custom_checks_metadata = None
@@ -233,12 +243,12 @@ def prowler():
         )
 
     if args.list_compliance:
-        print_compliance_frameworks(bulk_compliance_frameworks)
+        all_frameworks = {**bulk_compliance_frameworks, **universal_frameworks}
+        print_compliance_frameworks(all_frameworks)
         sys.exit()
     if args.list_compliance_requirements:
-        print_compliance_requirements(
-            bulk_compliance_frameworks, args.list_compliance_requirements
-        )
+        all_frameworks = {**bulk_compliance_frameworks, **universal_frameworks}
+        print_compliance_requirements(all_frameworks, args.list_compliance_requirements)
         sys.exit()
 
     # Load checks to execute
@@ -252,6 +262,7 @@ def prowler():
         compliance_frameworks=compliance_framework,
         categories=categories,
         provider=provider,
+        universal_frameworks=universal_frameworks,
     )
 
     # if --list-checks-json, dump a json file and exit
@@ -522,8 +533,22 @@ def prowler():
     input_compliance_frameworks = set(output_options.output_modes).intersection(
         get_available_compliance_frameworks(provider)
     )
+
+    # ── Universal compliance frameworks (provider-agnostic) ──
+    universal_processed = process_universal_compliance_frameworks(
+        input_compliance_frameworks=input_compliance_frameworks,
+        universal_frameworks=universal_frameworks,
+        finding_outputs=finding_outputs,
+        output_directory=output_options.output_directory,
+        output_filename=output_options.output_filename,
+        provider=provider,
+        generated_outputs=generated_outputs,
+    )
+    input_compliance_frameworks -= universal_processed
+
     if provider == "aws":
         for compliance_name in input_compliance_frameworks:
+
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
@@ -667,6 +692,7 @@ def prowler():
 
     elif provider == "azure":
         for compliance_name in input_compliance_frameworks:
+
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
@@ -782,6 +808,7 @@ def prowler():
 
     elif provider == "gcp":
         for compliance_name in input_compliance_frameworks:
+
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
@@ -897,6 +924,7 @@ def prowler():
 
     elif provider == "kubernetes":
         for compliance_name in input_compliance_frameworks:
+
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
@@ -951,6 +979,7 @@ def prowler():
 
     elif provider == "m365":
         for compliance_name in input_compliance_frameworks:
+
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
@@ -1004,6 +1033,7 @@ def prowler():
 
     elif provider == "nhn":
         for compliance_name in input_compliance_frameworks:
+
             if compliance_name.startswith("iso27001_"):
                 # Generate ISO27001 Finding Object
                 filename = (
@@ -1032,6 +1062,7 @@ def prowler():
 
     elif provider == "github":
         for compliance_name in input_compliance_frameworks:
+
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
@@ -1061,6 +1092,7 @@ def prowler():
 
     elif provider == "oraclecloud":
         for compliance_name in input_compliance_frameworks:
+
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
@@ -1101,6 +1133,7 @@ def prowler():
 
     elif provider == "alibabacloud":
         for compliance_name in input_compliance_frameworks:
+
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
                 filename = (
@@ -1245,6 +1278,9 @@ def prowler():
                     output_options.output_filename,
                     output_options.output_directory,
                     compliance_overview,
+                    universal_frameworks=universal_frameworks,
+                    provider=provider,
+                    output_formats=args.output_formats,
                 )
             if compliance_overview:
                 print(
