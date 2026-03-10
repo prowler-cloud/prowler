@@ -1,17 +1,11 @@
 "use client";
 
-import { ReactNode, useState } from "react";
-
 import { useRouter } from "next/navigation";
+import { ReactNode } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn";
 
-const PROVIDER_TAB = {
-  ACCOUNTS: "accounts",
-  ACCOUNT_GROUPS: "account-groups",
-} as const;
-
-type ProviderTab = (typeof PROVIDER_TAB)[keyof typeof PROVIDER_TAB];
+import { PROVIDER_TAB, type ProviderTab } from "./provider-page-tabs.shared";
 
 interface ProviderPageTabsProps {
   activeTab: ProviderTab;
@@ -24,12 +18,15 @@ export const ProviderPageTabs = ({
   accountsContent,
   accountGroupsContent,
 }: ProviderPageTabsProps) => {
-  const [currentTab, setCurrentTab] = useState<ProviderTab>(activeTab);
   const router = useRouter();
 
   const handleTabChange = (tab: string) => {
     const typedTab = tab as ProviderTab;
-    setCurrentTab(typedTab);
+
+    if (typedTab === activeTab) {
+      return;
+    }
+
     if (typedTab === PROVIDER_TAB.ACCOUNTS) {
       router.push("/providers");
     } else {
@@ -39,7 +36,7 @@ export const ProviderPageTabs = ({
 
   return (
     <Tabs
-      value={currentTab}
+      value={activeTab}
       onValueChange={handleTabChange}
       className="flex w-full flex-col gap-6"
     >
@@ -60,6 +57,3 @@ export const ProviderPageTabs = ({
     </Tabs>
   );
 };
-
-export { PROVIDER_TAB };
-export type { ProviderTab };

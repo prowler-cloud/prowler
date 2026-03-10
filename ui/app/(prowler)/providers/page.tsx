@@ -13,8 +13,8 @@ import { FilterTransitionWrapper } from "@/contexts";
 import { SearchParamsProps } from "@/types";
 
 import { AccountGroupsContent } from "./account-groups-content";
-import { PROVIDER_TAB, ProviderPageTabs } from "./provider-page-tabs";
-import type { ProviderTab } from "./provider-page-tabs";
+import { ProviderPageTabs } from "./provider-page-tabs";
+import { getProviderTab } from "./provider-page-tabs.shared";
 import { loadProvidersAccountsViewData } from "./providers-page.utils";
 
 export default async function Providers({
@@ -23,8 +23,7 @@ export default async function Providers({
   searchParams: Promise<SearchParamsProps>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const activeTab =
-    (resolvedSearchParams.tab as ProviderTab) || PROVIDER_TAB.ACCOUNTS;
+  const activeTab = getProviderTab(resolvedSearchParams.tab);
 
   // Exclude `tab` from the Suspense key so switching tabs doesn't re-suspend
   const { tab: _, ...paramsWithoutTab } = resolvedSearchParams || {};
