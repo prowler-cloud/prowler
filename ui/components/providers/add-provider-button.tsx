@@ -12,10 +12,7 @@ export const AddProviderButton = () => {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
-        Add Cloud Provider
-        <AddIcon size={20} />
-      </Button>
+      <Button onClick={() => setOpen(true)}>Add Provider</Button>
       <ProviderWizardModal open={open} onOpenChange={setOpen} />
     </>
   );
