@@ -125,7 +125,7 @@ _BLOCKED_PATTERNS = [
     re.compile(r"\bapoc\.load\b", re.IGNORECASE),
     re.compile(r"\bapoc\.import\b", re.IGNORECASE),
     re.compile(r"\bapoc\.export\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.cypher\.run\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.cypher\b", re.IGNORECASE),
     re.compile(r"\bapoc\.systemdb\b", re.IGNORECASE),
     re.compile(r"\bapoc\.config\b", re.IGNORECASE),
     re.compile(r"\bapoc\.periodic\b", re.IGNORECASE),
