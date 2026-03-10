@@ -84,6 +84,16 @@ export const AccountGroupsContent = async ({
   );
 };
 
+interface EditGroupRelationships {
+  providers?: { data: ProviderProps[] };
+  roles?: { data: Role[] };
+}
+
+interface EditGroupData {
+  attributes: { name: string };
+  relationships: EditGroupRelationships;
+}
+
 const EditGroupSection = ({
   providerGroupId,
   groupData,
@@ -91,13 +101,7 @@ const EditGroupSection = ({
   allRoles,
 }: {
   providerGroupId: string;
-  groupData: {
-    attributes: { name: string };
-    relationships: {
-      providers?: { data: ProviderProps[] };
-      roles?: { data: Role[] };
-    };
-  };
+  groupData: EditGroupData;
   allProviders: { id: string; name: string }[];
   allRoles: { id: string; name: string }[];
 }) => {

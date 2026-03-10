@@ -148,24 +148,20 @@ export interface OrganizationAttributes {
   updated_at?: string;
 }
 
+interface OrganizationRelationshipRef<T extends string = string> {
+  data: Array<{ id: string; type: T }>;
+}
+
+interface OrganizationRelationships {
+  providers?: OrganizationRelationshipRef<"providers">;
+  organizational_units?: OrganizationRelationshipRef<"organizational-units">;
+}
+
 export interface OrganizationResource {
   id: string;
   type: "organizations";
   attributes: OrganizationAttributes;
-  relationships?: {
-    providers?: {
-      data: Array<{
-        id: string;
-        type: "providers";
-      }>;
-    };
-    organizational_units?: {
-      data: Array<{
-        id: string;
-        type: "organizational-units";
-      }>;
-    };
-  };
+  relationships?: OrganizationRelationships;
 }
 
 export interface OrganizationListResponse {
@@ -186,23 +182,12 @@ export interface OrganizationUnitAttributes {
 
 export interface OrganizationUnitRelationships {
   organization: {
-    data: {
-      id: string;
-      type: "organizations";
-    };
+    data: { id: string; type: "organizations" };
   };
   parent?: {
-    data: {
-      id: string;
-      type: "organizational-units";
-    } | null;
+    data: { id: string; type: "organizational-units" } | null;
   };
-  providers?: {
-    data: Array<{
-      id: string;
-      type: "providers";
-    }>;
-  };
+  providers?: OrganizationRelationshipRef<"providers">;
 }
 
 export interface OrganizationUnitResource {
