@@ -132,69 +132,77 @@ Only **Detection Finding** (`class_uid: 2004`) records are accepted. Other OCSF 
 
 ## Required permissions
 
-The **Manage Ingestions** RBAC permission controls access to the ingestion endpoints. Without this permission, findings cannot be submitted via the API or `--export-ocsf`.
+The **Manage Ingestions** RBAC permission controls access to the ingestion endpoints. Without this permission, findings cannot be submitted via the API or `--push-to-cloud`.
 
 For more information about RBAC permissions, refer to the [Prowler App RBAC documentation](/user-guide/tutorials/prowler-app-rbac).
 
 ## Using the CLI
 
-The `--export-ocsf` flag uploads scan results directly to Prowler Cloud after a scan completes. This approach automates the ingestion process without manual file uploads.
+The `--push-to-cloud` flag uploads scan results directly to Prowler Cloud after a scan completes. This approach automates the ingestion process without manual file uploads.
 
 ### Prerequisites
 
 - A valid Prowler Cloud API key (see [API Keys](/user-guide/tutorials/prowler-app-api-keys))
-- The `PROWLER_API_KEY` environment variable configured
+- The `PROWLER_CLOUD_API_KEY` environment variable configured
 
 ### Basic usage
 
 ```bash
-export PROWLER_API_KEY="pk_your_api_key_here"
+export PROWLER_CLOUD_API_KEY="pk_your_api_key_here"
 
-prowler aws --export-ocsf
+prowler aws --push-to-cloud
 ```
 
 ### Combining with output formats
 
-When using `--export-ocsf` with custom output formats that exclude OCSF, Prowler generates a temporary OCSF file for upload:
+When using `--push-to-cloud` with custom output formats that exclude OCSF, Prowler generates a temporary OCSF file for upload:
 
 The temporary OCSF file is saved in the system temporary directory and not in the output path passed with `-o`.
 
 ```bash
-prowler aws --services accessanalyzer -M csv --export-ocsf -o /tmp/scan-output
+prowler aws --services accessanalyzer -M csv --push-to-cloud -o /tmp/scan-output
 ```
 
 When default output formats include OCSF, Prowler reuses the existing file. Default output formats include JSON-OCSF:
 
 ```bash
-prowler aws --services accessanalyzer --export-ocsf -o /tmp/scan-output
+prowler aws --services accessanalyzer --push-to-cloud -o /tmp/scan-output
 ```
 
 ### CLI output examples
 
 **Successful upload:**
 ```
-Exporting OCSF to Prowler Cloud, please wait...
+Pushing findings to Prowler Cloud, please wait...
 
-OCSF export accepted. Ingestion job: fa8bc8c5-4925-46a0-9fe0-f6575905e094
+Findings successfully pushed to Prowler Cloud. Ingestion job: fa8bc8c5-4925-46a0-9fe0-f6575905e094
+See more details here: https://cloud.prowler.com/scans
 ```
 
 **Missing API key:**
 ```
-WARNING: OCSF export skipped: no API key configured. Set the PROWLER_API_KEY
+Push to Prowler Cloud skipped: no API key configured. Set the PROWLER_CLOUD_API_KEY
 environment variable to enable it. Scan results were saved to
 /tmp/scan-output/prowler-output-123456789012-20260217131755.ocsf.json
 ```
 
 **API unreachable:**
 ```
-WARNING: OCSF export skipped: could not reach the Prowler Cloud API at
+Push to Prowler Cloud failed: could not reach the Prowler Cloud API at
 https://api.prowler.com. Check the URL and your network connection. Scan results
 were saved to /tmp/scan-output/prowler-output-123456789012-20260217131755.ocsf.json
 ```
 
+**No subscription:**
+```
+Push to Prowler Cloud failed: this feature is only available with a Prowler Cloud
+subscription. Scan results were saved to
+/tmp/scan-output/prowler-output-123456789012-20260217131755.ocsf.json
+```
+
 **Invalid API key:**
 ```
-WARNING: OCSF export failed: the API returned HTTP 401. Verify your API key is
+Push to Prowler Cloud failed: the API returned HTTP 401. Verify your API key is
 valid and has the right permissions. Scan results were saved to
 /tmp/scan-output/prowler-output-123456789012-20260217131755.ocsf.json
 ```
@@ -212,10 +220,10 @@ The Ingestion API provides endpoints for submitting OCSF files and monitoring jo
 Include the API key in the `Authorization` header:
 
 ```bash
-export PROWLER_API_KEY="pk_your_api_key_here"
+export PROWLER_CLOUD_API_KEY="pk_your_api_key_here"
 
 curl -X POST \
-  -H "Authorization: Api-Key ${PROWLER_API_KEY}" \
+  -H "Authorization: Api-Key ${PROWLER_CLOUD_API_KEY}" \
   -F "file=@/path/to/findings.ocsf.json" \
   https://api.prowler.com/api/v1/ingestions
 ```
@@ -229,7 +237,7 @@ Upload a `.ocsf.json` file containing a JSON array of OCSF Detection Finding rec
 **Request:**
 ```bash
 curl -X POST \
-  -H "Authorization: Api-Key ${PROWLER_API_KEY}" \
+  -H "Authorization: Api-Key ${PROWLER_CLOUD_API_KEY}" \
   -F "file=@scan-results.ocsf.json" \
   https://api.prowler.com/api/v1/ingestions
 ```
@@ -267,7 +275,7 @@ Monitor the progress of an ingestion job.
 **Request:**
 ```bash
 curl -X GET \
-  -H "Authorization: Api-Key ${PROWLER_API_KEY}" \
+  -H "Authorization: Api-Key ${PROWLER_CLOUD_API_KEY}" \
   -H "Accept: application/vnd.api+json" \
   https://api.prowler.com/api/v1/ingestions/3650fef9-8e5f-4808-a95f-74f0afae8499
 ```
@@ -319,7 +327,7 @@ Retrieve a list of ingestion jobs for the tenant.
 **Request:**
 ```bash
 curl -X GET \
-  -H "Authorization: Api-Key ${PROWLER_API_KEY}" \
+  -H "Authorization: Api-Key ${PROWLER_CLOUD_API_KEY}" \
   -H "Accept: application/vnd.api+json" \
   "https://api.prowler.com/api/v1/ingestions?filter[status]=completed&page[size]=10"
 ```
@@ -333,7 +341,7 @@ Retrieve error details for a specific ingestion job.
 **Request:**
 ```bash
 curl -X GET \
-  -H "Authorization: Api-Key ${PROWLER_API_KEY}" \
+  -H "Authorization: Api-Key ${PROWLER_CLOUD_API_KEY}" \
   -H "Accept: application/vnd.api+json" \
   https://api.prowler.com/api/v1/ingestions/3650fef9-8e5f-4808-a95f-74f0afae8499/errors
 ```
@@ -363,9 +371,9 @@ Prowler must be installed in the CI/CD environment before running scans. Refer t
 
 - name: Run Prowler and upload to Cloud
   env:
-    PROWLER_API_KEY: ${{ secrets.PROWLER_API_KEY }}
+    PROWLER_CLOUD_API_KEY: ${{ secrets.PROWLER_CLOUD_API_KEY }}
   run: |
-    prowler aws --services s3,iam --export-ocsf
+    prowler aws --services s3,iam --push-to-cloud
 ```
 
 ### GitLab CI
@@ -374,9 +382,9 @@ Prowler must be installed in the CI/CD environment before running scans. Refer t
 prowler_scan:
   script:
     - pip install prowler
-    - prowler aws --services s3,iam --export-ocsf
+    - prowler aws --services s3,iam --push-to-cloud
   variables:
-    PROWLER_API_KEY: $PROWLER_API_KEY
+    PROWLER_CLOUD_API_KEY: $PROWLER_CLOUD_API_KEY
 ```
 
 ## Billing impact
@@ -391,6 +399,23 @@ Each unique cloud account discovered in ingested OCSF findings counts as one **p
 For pricing details, see [Prowler Cloud Pricing](https://prowler.com/pricing).
 
 ## Troubleshooting
+
+### "Push to Prowler Cloud skipped: no API key configured"
+
+- Set the `PROWLER_CLOUD_API_KEY` environment variable before running the scan
+- Verify the variable is exported and not empty
+
+### "Push to Prowler Cloud failed: could not reach the Prowler Cloud API"
+
+- Verify network connectivity to `api.prowler.com`
+- Check firewall rules allow outbound HTTPS traffic
+- Confirm the API endpoint is not blocked by proxy settings
+- If using a custom base URL via `PROWLER_CLOUD_API_BASE_URL`, verify it is correct
+
+### "Push to Prowler Cloud failed: this feature is only available with a Prowler Cloud subscription"
+
+- The API returned HTTP 402, meaning your tenant does not have an active subscription
+- Visit [Prowler Cloud Pricing](https://prowler.com/pricing) to review available plans
 
 ### HTTP 401 Unauthorized
 
@@ -408,9 +433,3 @@ For pricing details, see [Prowler Cloud Pricing](https://prowler.com/pricing).
 - Check the `/api/v1/ingestions/{id}/errors` endpoint for details
 - Verify the OCSF file format is valid
 - Ensure the file contains Detection Finding records
-
-### CLI reports "could not reach the Prowler Cloud API"
-
-- Verify network connectivity to `api.prowler.com`
-- Check firewall rules allow outbound HTTPS traffic
-- Confirm the API endpoint is not blocked by proxy settings

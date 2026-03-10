@@ -1,5 +1,6 @@
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -12,12 +13,17 @@ class GuardDuty(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.detectors = []
+        self.organization_admin_accounts = []
         self.__threading_call__(self._list_detectors)
         self.__threading_call__(self._get_detector, self.detectors)
         self._list_findings()
         self._list_members()
         self._get_administrator_account()
         self._list_tags_for_resource()
+        self.__threading_call__(self._list_organization_admin_accounts)
+        self.__threading_call__(
+            self._describe_organization_configuration, self.detectors
+        )
 
     def _list_detectors(self, regional_client):
         logger.info("GuardDuty - listing detectors...")
@@ -216,13 +222,97 @@ class GuardDuty(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
+    def _list_organization_admin_accounts(self, regional_client):
+        """List GuardDuty delegated administrator accounts for the organization.
+
+        This API is only available to the organization management account or
+        a delegated administrator account.
+        """
+        logger.info("GuardDuty - listing organization admin accounts...")
+        try:
+            paginator = regional_client.get_paginator(
+                "list_organization_admin_accounts"
+            )
+            for page in paginator.paginate():
+                for admin in page.get("AdminAccounts", []):
+                    admin_account = OrganizationAdminAccount(
+                        admin_account_id=admin.get("AdminAccountId"),
+                        admin_status=admin.get("AdminStatus"),
+                        region=regional_client.region,
+                    )
+                    # Avoid duplicates across regions for the same admin account
+                    if not any(
+                        existing.admin_account_id == admin_account.admin_account_id
+                        and existing.region == admin_account.region
+                        for existing in self.organization_admin_accounts
+                    ):
+                        self.organization_admin_accounts.append(admin_account)
+        except ClientError as error:
+            if error.response["Error"]["Code"] in (
+                "AccessDeniedException",
+                "BadRequestException",
+            ):
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_organization_configuration(self, detector):
+        """Describe the organization configuration for a GuardDuty detector.
+
+        This provides information about auto-enable settings for the organization.
+        """
+        logger.info("GuardDuty - describing organization configuration...")
+        try:
+            if detector.id and detector.enabled_in_account:
+                regional_client = self.regional_clients[detector.region]
+                org_config = regional_client.describe_organization_configuration(
+                    DetectorId=detector.id
+                )
+                detector.organization_auto_enable_members = org_config.get(
+                    "AutoEnableOrganizationMembers", "NONE"
+                )
+                detector.organization_config_available = True
+        except ClientError as error:
+            if error.response["Error"]["Code"] in (
+                "AccessDeniedException",
+                "BadRequestException",
+            ):
+                # Expected when not running from management or delegated admin account
+                logger.warning(
+                    f"{detector.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{detector.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{detector.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+class OrganizationAdminAccount(BaseModel):
+    """Represents a GuardDuty delegated administrator account."""
+
+    admin_account_id: str
+    admin_status: str  # ENABLED or DISABLE_IN_PROGRESS
+    region: str
+
 
 class Detector(BaseModel):
     id: str
     arn: str
     region: str
     enabled_in_account: bool
-    status: bool = None
+    status: Optional[bool] = None
     findings: list = []
     member_accounts: list = []
     administrator_account: str = None
@@ -233,3 +323,6 @@ class Detector(BaseModel):
     eks_runtime_monitoring: bool = False
     lambda_protection: bool = False
     ec2_malware_protection: bool = False
+    # Organization configuration fields
+    organization_auto_enable_members: str = "NONE"  # NEW, ALL, or NONE
+    organization_config_available: bool = False

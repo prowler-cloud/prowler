@@ -1,6 +1,6 @@
 import { Control } from "react-hook-form";
 
-import { CustomInput } from "@/components/ui/custom";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { AlibabaCloudCredentials } from "@/types";
 
@@ -20,7 +20,7 @@ export const AlibabaCloudStaticCredentialsForm = ({
           access to the resources you want Prowler to assess.
         </div>
       </div>
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID}
         type="text"
@@ -30,7 +30,7 @@ export const AlibabaCloudStaticCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET}
         type="password"

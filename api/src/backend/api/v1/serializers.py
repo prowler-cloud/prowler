@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
@@ -958,6 +959,26 @@ class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
                 "help_text": "Unique identifier for the provider, set by the provider, e.g. AWS account ID, Azure subscription ID, GCP project ID, etc.",
             },
         }
+
+    def create(self, validated_data):
+        try:
+            return super().create(validated_data)
+        except DjangoValidationError as e:
+            if "unique_provider_uids" in str(e):
+                raise ConflictException(
+                    detail="Provider already exists.",
+                    pointer="/data/attributes/uid",
+                )
+            raise
+        except IntegrityError as e:
+            # Handle race conditions where the unique constraint is enforced at the DB level
+            # after validation has already passed.
+            if "unique_provider_uids" in str(e):
+                raise ConflictException(
+                    detail="Provider already exists.",
+                    pointer="/data/attributes/uid",
+                )
+            raise
 
 
 class ProviderUpdateSerializer(BaseWriteSerializer):

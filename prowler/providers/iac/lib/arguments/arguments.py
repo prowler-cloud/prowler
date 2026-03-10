@@ -1,3 +1,5 @@
+import re
+
 SCANNERS_CHOICES = [
     "vuln",
     "misconfig",
@@ -68,6 +70,12 @@ def init_parser(self):
         default=None,
         help="GitHub OAuth app token for authenticated repository cloning. If not provided, will use GITHUB_OAUTH_APP_TOKEN env var.",
     )
+    iac_scan_subparser.add_argument(
+        "--provider-uid",
+        dest="provider_uid",
+        default=None,
+        help="Unique identifier for the IaC provider. Required when using --push-to-cloud.",
+    )
 
 
 def validate_arguments(arguments):
@@ -80,4 +88,19 @@ def validate_arguments(arguments):
                 False,
                 "--scan-path (-P) and --scan-repository-url (-R) are mutually exclusive. Please specify only one.",
             )
+    push_to_cloud = getattr(arguments, "push_to_cloud", False)
+    provider_uid = getattr(arguments, "provider_uid", None)
+    if push_to_cloud and not provider_uid:
+        return (
+            False,
+            "--provider-uid is required when using --push-to-cloud with the IAC provider.",
+        )
+    if provider_uid and not re.match(
+        r"^(https?://|git@|ssh://)[^\s/]+[^\s]*\.git$|^(https?://)[^\s/]+[^\s]*$",
+        provider_uid,
+    ):
+        return (
+            False,
+            "--provider-uid must be a valid repository URL (e.g., https://github.com/user/repo or https://github.com/user/repo.git).",
+        )
     return (True, "")
