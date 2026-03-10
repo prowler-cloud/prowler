@@ -6,7 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🐞 Changed
 
-- `POST /api/v1/providers` returns `409 Conflict` if already exists [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+- `POST /api/v1/providers` returns `409 Conflict` if already exists [(#10293)](https://github.com/prowler-cloud/prowler/pull/10293)
 
 ---
 
