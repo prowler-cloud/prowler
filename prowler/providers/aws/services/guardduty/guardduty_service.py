@@ -248,7 +248,10 @@ class GuardDuty(AWSService):
                     ):
                         self.organization_admin_accounts.append(admin_account)
         except ClientError as error:
-            if error.response["Error"]["Code"] == "AccessDeniedException":
+            if error.response["Error"]["Code"] in (
+                "AccessDeniedException",
+                "BadRequestException",
+            ):
                 logger.warning(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
@@ -278,7 +281,10 @@ class GuardDuty(AWSService):
                 )
                 detector.organization_config_available = True
         except ClientError as error:
-            if error.response["Error"]["Code"] == "AccessDeniedException":
+            if error.response["Error"]["Code"] in (
+                "AccessDeniedException",
+                "BadRequestException",
+            ):
                 # Expected when not running from management or delegated admin account
                 logger.warning(
                     f"{detector.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
