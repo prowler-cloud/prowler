@@ -17,6 +17,10 @@ SAMPLE_TRIVY_OUTPUT = {
                     "Severity": "LOW",
                     "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/s3/avd-aws-0001",
                     "RuleID": "AVD-AWS-0001",
+                    "CauseMetadata": {
+                        "StartLine": 10,
+                        "EndLine": 15,
+                    },
                 },
                 {
                     "ID": "AVD-AWS-0002",
@@ -27,6 +31,10 @@ SAMPLE_TRIVY_OUTPUT = {
                     "Severity": "LOW",
                     "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/s3/avd-aws-0002",
                     "RuleID": "AVD-AWS-0002",
+                    "CauseMetadata": {
+                        "StartLine": 20,
+                        "EndLine": 25,
+                    },
                 },
             ],
             "Vulnerabilities": [],
@@ -46,6 +54,10 @@ SAMPLE_TRIVY_OUTPUT = {
                     "Severity": "LOW",
                     "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/s3/avd-aws-0003",
                     "RuleID": "AVD-AWS-0003",
+                    "CauseMetadata": {
+                        "StartLine": 30,
+                        "EndLine": 35,
+                    },
                 }
             ],
             "Vulnerabilities": [],
@@ -67,6 +79,10 @@ SAMPLE_FAILED_CHECK = {
     "Severity": "low",
     "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/s3/avd-aws-0001",
     "RuleID": "AVD-AWS-0001",
+    "CauseMetadata": {
+        "StartLine": 10,
+        "EndLine": 15,
+    },
 }
 
 SAMPLE_PASSED_CHECK = {
@@ -78,6 +94,10 @@ SAMPLE_PASSED_CHECK = {
     "Severity": "low",
     "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/s3/avd-aws-0003",
     "RuleID": "AVD-AWS-0003",
+    "CauseMetadata": {
+        "StartLine": 30,
+        "EndLine": 35,
+    },
 }
 
 # Additional sample checks

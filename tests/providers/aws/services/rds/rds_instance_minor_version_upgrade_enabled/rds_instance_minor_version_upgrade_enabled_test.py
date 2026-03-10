@@ -18,7 +18,7 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "DBEngineVersions": [
                 {
-                    "Engine": "mysql",
+                    "Engine": "postgresres",
                     "EngineVersion": "8.0.32",
                     "DBEngineDescription": "description",
                     "DBEngineVersionDescription": "description",

@@ -12,12 +12,13 @@ from prowler.providers.aws.services.iam.lib.policy import (
     is_condition_block_restrictive,
     is_condition_block_restrictive_organization,
     is_condition_block_restrictive_sns_endpoint,
-    is_policy_public,
     is_condition_restricting_ip_access,
+    is_policy_public,
 )
 
 TRUSTED_AWS_ACCOUNT_NUMBER = "123456789012"
 NON_TRUSTED_AWS_ACCOUNT_NUMBER = "111222333444"
+TRUSTED_AWS_ACCOUNT_NUMBER_LIST = ["123456789012", "123456789013", "123456789014"]
 
 TRUSTED_ORGANIZATION_ID = "o-123456789012"
 NON_TRUSTED_ORGANIZATION_ID = "o-111222333444"
@@ -1652,6 +1653,49 @@ class Test_Policy:
             is_cross_account_allowed=False,
         )
 
+    def test_cross_account_access_trusted_account_list(self):
+        policy = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                        "AWS": f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER_LIST[0]}:root"
+                    },
+                    "Action": "*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert not is_policy_public(
+            policy,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=False,
+            trusted_account_ids=TRUSTED_AWS_ACCOUNT_NUMBER_LIST,
+        )
+
+    def test_cross_account_access_with_principal_list_trusted_account_list(self):
+        policy = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                        "AWS": [
+                            f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER_LIST[0]}:root",
+                            f"arn:aws:iam::{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:root",
+                        ]
+                    },
+                    "Action": "*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert is_policy_public(
+            policy,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=False,
+            trusted_account_ids=TRUSTED_AWS_ACCOUNT_NUMBER_LIST,
+        )
+
     def test_policy_allows_public_access_with_wildcard_principal(self):
         policy_allow_wildcard_principal = {
             "Statement": [
@@ -2185,8 +2229,6 @@ class Test_Policy:
         }
         assert check_admin_access(policy)
 
-
-
     def test_is_condition_restricting_ip_access_no_condition(self):
         assert not is_condition_restricting_ip_access({})
 
@@ -2236,25 +2278,33 @@ class Test_Policy:
         condition_mixed_array_with_wildcard = {
             "IpAddress": {"aws:SourceIp": ["*", "192.168.1.1"]},
         }
-        assert not is_condition_restricting_ip_access(condition_mixed_array_with_wildcard)
+        assert not is_condition_restricting_ip_access(
+            condition_mixed_array_with_wildcard
+        )
 
     def test_is_condition_restricting_ip_access_mixed_array_not_restricted(self):
         condition_mixed_array_not_restricted = {
             "IpAddress": {"aws:SourceIp": ["*", "0.0.0.0/0"]},
         }
-        assert not is_condition_restricting_ip_access(condition_mixed_array_not_restricted)
+        assert not is_condition_restricting_ip_access(
+            condition_mixed_array_not_restricted
+        )
 
     def test_is_condition_restricting_ip_access_mixed_array_with_unrestricted_ip(self):
         condition_mixed_array_with_unrestricted = {
             "IpAddress": {"aws:SourceIp": ["192.168.1.1", "10.0.0.1", "*"]},
         }
-        assert not is_condition_restricting_ip_access(condition_mixed_array_with_unrestricted)
+        assert not is_condition_restricting_ip_access(
+            condition_mixed_array_with_unrestricted
+        )
 
     def test_is_condition_restricting_ip_access_mixed_array_with_internet_range(self):
         condition_mixed_array_with_internet = {
             "IpAddress": {"aws:SourceIp": ["192.168.1.1", "10.0.0.1", "0.0.0.0/0"]},
         }
-        assert not is_condition_restricting_ip_access(condition_mixed_array_with_internet)
+        assert not is_condition_restricting_ip_access(
+            condition_mixed_array_with_internet
+        )
 
     def test_is_condition_restricting_ip_access_case_insensitive(self):
         condition_case_insensitive = {

@@ -1,19 +1,22 @@
 "use client";
 
+import { useState } from "react";
+
+import { ProviderWizardModal } from "@/components/providers/wizard";
+import { Button } from "@/components/shadcn";
+
 import { AddIcon } from "../icons";
-import { CustomButton } from "../ui/custom";
 
 export const AddProviderButton = () => {
+  const [open, setOpen] = useState(false);
+
   return (
-    <CustomButton
-      asLink="/providers/connect-account"
-      ariaLabel="Add Cloud Provider"
-      variant="solid"
-      color="action"
-      size="md"
-      endContent={<AddIcon size={20} />}
-    >
-      Add Cloud Provider
-    </CustomButton>
+    <>
+      <Button onClick={() => setOpen(true)}>
+        Add Cloud Provider
+        <AddIcon size={20} />
+      </Button>
+      <ProviderWizardModal open={open} onOpenChange={setOpen} />
+    </>
   );
 };

@@ -59,8 +59,11 @@ class RDS(AWSService):
                                 endpoint=instance.get("Endpoint", {}),
                                 engine=instance["Engine"],
                                 engine_version=instance["EngineVersion"],
+                                engine_lifecycle_support=instance.get(
+                                    "EngineLifecycleSupport"
+                                ),
                                 status=instance["DBInstanceStatus"],
-                                public=instance["PubliclyAccessible"],
+                                public=instance.get("PubliclyAccessible", False),
                                 encrypted=instance["StorageEncrypted"],
                                 auto_minor_version_upgrade=instance[
                                     "AutoMinorVersionUpgrade"
@@ -80,7 +83,7 @@ class RDS(AWSService):
                                     for item in instance["DBParameterGroups"]
                                 ],
                                 multi_az=instance["MultiAZ"],
-                                username=instance["MasterUsername"],
+                                username=instance.get("MasterUsername", ""),
                                 iam_auth=instance.get(
                                     "IAMDatabaseAuthenticationEnabled", False
                                 ),
@@ -338,6 +341,13 @@ class RDS(AWSService):
                             logger.warning(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
+                        elif (
+                            error.response["Error"]["Code"]
+                            == "DBParameterGroupNotFound"
+                        ):
+                            logger.warning(
+                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
                         else:
                             logger.error(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -524,6 +534,7 @@ class DBInstance(BaseModel):
     endpoint: dict
     engine: str
     engine_version: str
+    engine_lifecycle_support: Optional[str] = None
     status: str
     public: bool
     encrypted: bool

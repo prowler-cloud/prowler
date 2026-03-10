@@ -1,0 +1,37 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "blockstorage_boot_volume_encrypted_with_cmk",
+  "CheckTitle": "Boot volume is encrypted with Customer Managed Key",
+  "CheckType": [],
+  "ServiceName": "blockstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "BootVolume",
+  "ResourceGroup": "storage",
+  "Description": "Boot volumes use **customer-managed keys (CMEK)** when a Vault key is assigned (`kms_key_id` present), rather than default Oracle-managed encryption.",
+  "Risk": "Without **CMEK**, control over encryption is limited: you cannot rapidly disable or rotate keys to contain compromise, weakening **confidentiality** of boot data and backups. Provider-managed keys reduce **separation of duties** and **auditability**, hindering incident response and compliance for sensitive systems.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-BlockVolume/block-volumes-encrypted-with-cmks.html",
+    "https://docs.public.content.oci.oraclecloud.com/en-us/iaas/Content/Block/Concepts/managingblockencryptionkeys.htm"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "oci bv boot-volume update --boot-volume-id <example_resource_id> --kms-key-id <example_resource_id>",
+      "NativeIaC": "",
+      "Other": "1. In the OCI Console, go to Storage > Block Storage > Boot Volumes\n2. Click the boot volume name\n3. Click Edit (or Assign master encryption key)\n4. Select a Customer-managed key from Vault\n5. Click Save",
+      "Terraform": "```hcl\nresource \"oci_core_boot_volume_kms_key\" \"<example_resource_name>\" {\n  boot_volume_id = \"<example_resource_id>\"  # Critical: target boot volume to update\n  kms_key_id     = \"<example_resource_id>\"  # Critical: assigns a Customer Managed Key (CMK) to the boot volume\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Encrypt boot volumes with **customer-managed keys** and enforce **least privilege** on key usage. Define a key lifecycle (new keys for rotation), monitor and audit key access, and restrict key scope to required compartments and services to achieve **defense in depth** and rapid revocation when needed.",
+      "Url": "https://hub.prowler.com/check/blockstorage_boot_volume_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,15 +1,16 @@
-import { Spacer } from "@nextui-org/react";
-import React, { Suspense } from "react";
+import Link from "next/link";
+import { Suspense } from "react";
 
 import { getInvitations } from "@/actions/invitations/invitation";
 import { getRoles } from "@/actions/roles";
 import { FilterControls } from "@/components/filters";
 import { filterInvitations } from "@/components/filters/data-filters";
-import { SendInvitationButton } from "@/components/invitations";
+import { AddIcon } from "@/components/icons";
 import {
   ColumnsInvitation,
   SkeletonTableInvitation,
 } from "@/components/invitations/table";
+import { Button } from "@/components/shadcn";
 import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { InvitationProps, Role, SearchParamsProps } from "@/types";
@@ -17,22 +18,31 @@ import { InvitationProps, Role, SearchParamsProps } from "@/types";
 export default async function Invitations({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Invitations" icon="ci:users">
+    <ContentLayout title="Invitations" icon="lucide:mail">
       <FilterControls search />
-      <Spacer y={8} />
-      <SendInvitationButton />
-      <Spacer y={4} />
-      <DataTableFilterCustom filters={filterInvitations || []} />
-      <Spacer y={8} />
 
-      <Suspense key={searchParamsKey} fallback={<SkeletonTableInvitation />}>
-        <SSRDataTable searchParams={searchParams} />
-      </Suspense>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-row items-end justify-between">
+          <DataTableFilterCustom filters={filterInvitations || []} />
+
+          <Button asChild>
+            <Link href="/invitations/new">
+              Send Invitation
+              <AddIcon size={20} />
+            </Link>
+          </Button>
+        </div>
+
+        <Suspense key={searchParamsKey} fallback={<SkeletonTableInvitation />}>
+          <SSRDataTable searchParams={resolvedSearchParams} />
+        </Suspense>
+      </div>
     </ContentLayout>
   );
 }
@@ -110,6 +120,7 @@ const SSRDataTable = async ({
 
   return (
     <DataTable
+      key={Date.now()}
       columns={ColumnsInvitation}
       data={expandedResponse?.data || []}
       metadata={invitationsData?.meta}

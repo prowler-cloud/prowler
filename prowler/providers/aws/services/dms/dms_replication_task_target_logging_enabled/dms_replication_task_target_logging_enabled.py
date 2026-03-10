@@ -32,47 +32,49 @@ class dms_replication_task_target_logging_enabled(Check):
             "LOGGER_SEVERITY_DETAILED_DEBUG",
         ]
         findings = []
-        for (
-            replication_task_arn,
-            replication_task,
-        ) in dms_client.replication_tasks.items():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource=replication_task
-            )
-            report.resource_arn = replication_task_arn
+        # Check if replication_tasks is not None before iterating
+        if dms_client.replication_tasks:
+            for (
+                replication_task_arn,
+                replication_task,
+            ) in dms_client.replication_tasks.items():
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource=replication_task
+                )
+                report.resource_arn = replication_task_arn
 
-            if not replication_task.logging_enabled:
-                report.status = "FAIL"
-                report.status_extended = f"DMS Replication Task {replication_task.id} does not have logging enabled for target events."
-            else:
-                missing_components = []
-                source_capture_compliant = False
-                source_unload_compliant = False
-
-                for component in replication_task.log_components:
-                    if (
-                        component["Id"] == "TARGET_APPLY"
-                        and component["Severity"] in MINIMUM_SEVERITY_LEVELS
-                    ):
-                        source_capture_compliant = True
-                    elif (
-                        component["Id"] == "TARGET_LOAD"
-                        and component["Severity"] in MINIMUM_SEVERITY_LEVELS
-                    ):
-                        source_unload_compliant = True
-
-                if not source_capture_compliant:
-                    missing_components.append("Target Apply")
-                if not source_unload_compliant:
-                    missing_components.append("Target Load")
-
-                if source_capture_compliant and source_unload_compliant:
-                    report.status = "PASS"
-                    report.status_extended = f"DMS Replication Task {replication_task.id} has logging enabled with the minimum severity level in target events."
-                else:
+                if not replication_task.logging_enabled:
                     report.status = "FAIL"
-                    report.status_extended = f"DMS Replication Task {replication_task.id} does not meet the minimum severity level of logging in {' and '.join(missing_components)} events."
+                    report.status_extended = f"DMS Replication Task {replication_task.id} does not have logging enabled for target events."
+                else:
+                    missing_components = []
+                    source_capture_compliant = False
+                    source_unload_compliant = False
 
-            findings.append(report)
+                    for component in replication_task.log_components:
+                        if (
+                            component["Id"] == "TARGET_APPLY"
+                            and component["Severity"] in MINIMUM_SEVERITY_LEVELS
+                        ):
+                            source_capture_compliant = True
+                        elif (
+                            component["Id"] == "TARGET_LOAD"
+                            and component["Severity"] in MINIMUM_SEVERITY_LEVELS
+                        ):
+                            source_unload_compliant = True
+
+                    if not source_capture_compliant:
+                        missing_components.append("Target Apply")
+                    if not source_unload_compliant:
+                        missing_components.append("Target Load")
+
+                    if source_capture_compliant and source_unload_compliant:
+                        report.status = "PASS"
+                        report.status_extended = f"DMS Replication Task {replication_task.id} has logging enabled with the minimum severity level in target events."
+                    else:
+                        report.status = "FAIL"
+                        report.status_extended = f"DMS Replication Task {replication_task.id} does not meet the minimum severity level of logging in {' and '.join(missing_components)} events."
+
+                findings.append(report)
 
         return findings

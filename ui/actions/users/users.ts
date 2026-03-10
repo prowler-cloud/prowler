@@ -3,12 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getErrorMessage,
-  parseStringify,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getUsers = async ({
   page = 1,
@@ -39,12 +35,9 @@ export const getUsers = async ({
     const users = await fetch(url.toString(), {
       headers,
     });
-    const data = await users.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/users");
-    return parsedData;
+
+    return handleApiResponse(users);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching users:", error);
     return undefined;
   }
@@ -88,15 +81,9 @@ export const updateUser = async (formData: FormData) => {
       }),
     });
 
-    const data = await response.json();
-    revalidatePath("/users");
-    return parseStringify(data);
+    return handleApiResponse(response, "/users");
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error);
-    return {
-      error: getErrorMessage(error),
-    };
+    handleApiError(error);
   }
 };
 
@@ -129,20 +116,9 @@ export const updateUserRole = async (formData: FormData) => {
       body: JSON.stringify(requestBody),
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      return { error: data.errors || "An error occurred" };
-    }
-
-    revalidatePath("/users"); // Update the path as needed
-    return parseStringify(data);
+    return handleApiResponse(response, "/users");
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error);
-    return {
-      error: getErrorMessage(error),
-    };
+    handleApiError(error);
   }
 };
 
@@ -178,15 +154,15 @@ export const deleteUser = async (formData: FormData) => {
     revalidatePath("/users");
     return data || { success: true };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error deleting user:", error);
-    return { error: getErrorMessage(error) };
+    handleApiError(error);
   }
 };
 
 export const getUserInfo = async () => {
   const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/users/me?include=roles`);
+  const url = new URL(
+    `${apiBaseUrl}/users/me?include=roles,memberships,memberships.tenant`,
+  );
 
   try {
     const response = await fetch(url.toString(), {
@@ -198,12 +174,8 @@ export const getUserInfo = async () => {
       throw new Error(`Failed to fetch user data: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/profile");
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching profile:", error);
     return undefined;
   }
@@ -224,16 +196,8 @@ export const getUserMemberships = async (userId: string) => {
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch user memberships: ${response.statusText}`,
-      );
-    }
-
-    const data = await response.json();
-    return parseStringify(data);
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching user memberships:", error);
     return { data: [] };
   }

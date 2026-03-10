@@ -72,7 +72,7 @@ export const awsCredentialsTypeSchema = z.object({
 export const addProviderFormSchema = z
   .object({
     providerType: z.enum(PROVIDER_TYPES, {
-      required_error: "Please select a provider type",
+      error: "Please select a provider type",
     }),
   })
   .and(
@@ -80,33 +80,63 @@ export const addProviderFormSchema = z
       z.object({
         providerType: z.literal("aws"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(12, "Provider ID is required"),
       }),
       z.object({
         providerType: z.literal("azure"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
         awsCredentialsType: z.string().optional(),
       }),
       z.object({
         providerType: z.literal("m365"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
       }),
       z.object({
         providerType: z.literal("gcp"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
         awsCredentialsType: z.string().optional(),
       }),
       z.object({
         providerType: z.literal("kubernetes"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
         awsCredentialsType: z.string().optional(),
       }),
       z.object({
         providerType: z.literal("github"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
+      }),
+      z.object({
+        providerType: z.literal("iac"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
+      }),
+      z.object({
+        providerType: z.literal("oraclecloud"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
+      }),
+      z.object({
+        providerType: z.literal("mongodbatlas"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
+      }),
+      z.object({
+        providerType: z.literal("alibabacloud"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
+      }),
+      z.object({
+        providerType: z.literal("cloudflare"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
+      z.object({
+        providerType: z.literal("openstack"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
       }),
@@ -125,55 +155,56 @@ export const addCredentialsFormSchema = (
         ? {
             [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: z
               .string()
-              .nonempty("AWS Access Key ID is required"),
+              .min(1, "AWS Access Key ID is required"),
             [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: z
               .string()
-              .nonempty("AWS Secret Access Key is required"),
+              .min(1, "AWS Secret Access Key is required"),
             [ProviderCredentialFields.AWS_SESSION_TOKEN]: z.string().optional(),
           }
         : providerType === "azure"
           ? {
               [ProviderCredentialFields.CLIENT_ID]: z
                 .string()
-                .nonempty("Client ID is required"),
+                .min(1, "Client ID is required"),
               [ProviderCredentialFields.CLIENT_SECRET]: z
                 .string()
-                .nonempty("Client Secret is required"),
+                .min(1, "Client Secret is required"),
               [ProviderCredentialFields.TENANT_ID]: z
                 .string()
-                .nonempty("Tenant ID is required"),
+                .min(1, "Tenant ID is required"),
             }
           : providerType === "gcp"
             ? {
                 [ProviderCredentialFields.CLIENT_ID]: z
                   .string()
-                  .nonempty("Client ID is required"),
+                  .min(1, "Client ID is required"),
                 [ProviderCredentialFields.CLIENT_SECRET]: z
                   .string()
-                  .nonempty("Client Secret is required"),
+                  .min(1, "Client Secret is required"),
                 [ProviderCredentialFields.REFRESH_TOKEN]: z
                   .string()
-                  .nonempty("Refresh Token is required"),
+                  .min(1, "Refresh Token is required"),
               }
             : providerType === "kubernetes"
               ? {
                   [ProviderCredentialFields.KUBECONFIG_CONTENT]: z
                     .string()
-                    .nonempty("Kubeconfig Content is required"),
+                    .min(1, "Kubeconfig Content is required"),
                 }
               : providerType === "m365"
                 ? {
                     [ProviderCredentialFields.CLIENT_ID]: z
                       .string()
-                      .nonempty("Client ID is required"),
+                      .min(1, "Client ID is required"),
                     [ProviderCredentialFields.CLIENT_SECRET]: z
                       .string()
-                      .nonempty("Client Secret is required"),
+                      .optional(),
+                    [ProviderCredentialFields.CERTIFICATE_CONTENT]: z
+                      .string()
+                      .optional(),
                     [ProviderCredentialFields.TENANT_ID]: z
                       .string()
-                      .nonempty("Tenant ID is required"),
-                    [ProviderCredentialFields.USER]: z.string().optional(),
-                    [ProviderCredentialFields.PASSWORD]: z.string().optional(),
+                      .min(1, "Tenant ID is required"),
                   }
                 : providerType === "github"
                   ? {
@@ -190,27 +221,115 @@ export const addCredentialsFormSchema = (
                         .string()
                         .optional(),
                     }
-                  : {}),
+                  : providerType === "iac"
+                    ? {
+                        [ProviderCredentialFields.REPOSITORY_URL]: z
+                          .string()
+                          .optional(),
+                        [ProviderCredentialFields.ACCESS_TOKEN]: z
+                          .string()
+                          .optional(),
+                      }
+                    : providerType === "oraclecloud"
+                      ? {
+                          [ProviderCredentialFields.OCI_USER]: z
+                            .string()
+                            .min(1, "User OCID is required"),
+                          [ProviderCredentialFields.OCI_FINGERPRINT]: z
+                            .string()
+                            .min(1, "Fingerprint is required"),
+                          [ProviderCredentialFields.OCI_KEY_CONTENT]: z
+                            .string()
+                            .min(1, "Private Key Content is required"),
+                          [ProviderCredentialFields.OCI_TENANCY]: z
+                            .string()
+                            .min(1, "Tenancy OCID is required"),
+                          [ProviderCredentialFields.OCI_REGION]: z
+                            .string()
+                            .min(1, "Region is required"),
+                          [ProviderCredentialFields.OCI_PASS_PHRASE]: z
+                            .union([z.string(), z.literal("")])
+                            .optional(),
+                        }
+                      : providerType === "mongodbatlas"
+                        ? {
+                            [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: z
+                              .string()
+                              .min(1, "Atlas Public Key is required"),
+                            [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: z
+                              .string()
+                              .min(1, "Atlas Private Key is required"),
+                          }
+                        : providerType === "alibabacloud"
+                          ? {
+                              [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]:
+                                z.string().min(1, "Access Key ID is required"),
+                              [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]:
+                                z
+                                  .string()
+                                  .min(1, "Access Key Secret is required"),
+                            }
+                          : providerType === "cloudflare"
+                            ? {
+                                [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]:
+                                  z.string().optional(),
+                                [ProviderCredentialFields.CLOUDFLARE_API_KEY]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.CLOUDFLARE_API_EMAIL]:
+                                  z
+                                    .string()
+                                    .superRefine((val, ctx) => {
+                                      if (val && val.trim() !== "") {
+                                        const emailRegex =
+                                          /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                                        if (!emailRegex.test(val)) {
+                                          ctx.addIssue({
+                                            code: z.ZodIssueCode.custom,
+                                            message:
+                                              "Please enter a valid email address",
+                                          });
+                                        }
+                                      }
+                                    })
+                                    .optional(),
+                              }
+                            : providerType === "openstack"
+                              ? {
+                                  [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]:
+                                    z
+                                      .string()
+                                      .min(
+                                        1,
+                                        "Clouds YAML content is required",
+                                      ),
+                                  [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]:
+                                    z.string().min(1, "Cloud name is required"),
+                                }
+                              : {}),
     })
-    .superRefine((data: Record<string, any>, ctx) => {
+    .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {
-        const hasUser = !!data[ProviderCredentialFields.USER];
-        const hasPassword = !!data[ProviderCredentialFields.PASSWORD];
-
-        if (hasUser && !hasPassword) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "If you provide a user, you must also provide a password",
-            path: [ProviderCredentialFields.PASSWORD],
-          });
-        }
-
-        if (hasPassword && !hasUser) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "If you provide a password, you must also provide a user",
-            path: [ProviderCredentialFields.USER],
-          });
+        // Validate based on the via parameter
+        if (via === "app_client_secret") {
+          const clientSecret = data[ProviderCredentialFields.CLIENT_SECRET];
+          if (!clientSecret || clientSecret.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "Client Secret is required",
+              path: [ProviderCredentialFields.CLIENT_SECRET],
+            });
+          }
+        } else if (via === "app_certificate") {
+          const certificateContent =
+            data[ProviderCredentialFields.CERTIFICATE_CONTENT];
+          if (!certificateContent || certificateContent.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "Certificate Content is required",
+              path: [ProviderCredentialFields.CERTIFICATE_CONTENT],
+            });
+          }
         }
       }
 
@@ -219,7 +338,7 @@ export const addCredentialsFormSchema = (
         if (via === "personal_access_token") {
           if (!data[ProviderCredentialFields.PERSONAL_ACCESS_TOKEN]) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: "Personal Access Token is required",
               path: [ProviderCredentialFields.PERSONAL_ACCESS_TOKEN],
             });
@@ -227,7 +346,7 @@ export const addCredentialsFormSchema = (
         } else if (via === "oauth_app") {
           if (!data[ProviderCredentialFields.OAUTH_APP_TOKEN]) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: "OAuth App Token is required",
               path: [ProviderCredentialFields.OAUTH_APP_TOKEN],
             });
@@ -235,16 +354,47 @@ export const addCredentialsFormSchema = (
         } else if (via === "github_app") {
           if (!data[ProviderCredentialFields.GITHUB_APP_ID]) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: "GitHub App ID is required",
               path: [ProviderCredentialFields.GITHUB_APP_ID],
             });
           }
           if (!data[ProviderCredentialFields.GITHUB_APP_KEY]) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: "GitHub App Private Key is required",
               path: [ProviderCredentialFields.GITHUB_APP_KEY],
+            });
+          }
+        }
+      }
+
+      if (providerType === "cloudflare") {
+        // For Cloudflare, validation depends on the 'via' parameter
+        if (via === "api_token") {
+          const apiToken = data[ProviderCredentialFields.CLOUDFLARE_API_TOKEN];
+          if (!apiToken || apiToken.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "API Token is required",
+              path: [ProviderCredentialFields.CLOUDFLARE_API_TOKEN],
+            });
+          }
+        } else if (via === "api_key") {
+          const apiKey = data[ProviderCredentialFields.CLOUDFLARE_API_KEY];
+          const apiEmail = data[ProviderCredentialFields.CLOUDFLARE_API_EMAIL];
+          if (!apiKey || apiKey.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "API Key is required",
+              path: [ProviderCredentialFields.CLOUDFLARE_API_KEY],
+            });
+          }
+          if (!apiEmail || apiEmail.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "Email is required",
+              path: [ProviderCredentialFields.CLOUDFLARE_API_EMAIL],
             });
           }
         }
@@ -259,7 +409,7 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
           [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
           [ProviderCredentialFields.ROLE_ARN]: z
             .string()
-            .nonempty("AWS Role ARN is required"),
+            .min(1, "AWS Role ARN is required"),
           [ProviderCredentialFields.EXTERNAL_ID]: z.string().optional(),
           [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: z.string().optional(),
           [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: z
@@ -270,21 +420,58 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
           [ProviderCredentialFields.ROLE_SESSION_NAME]: z.string().optional(),
           [ProviderCredentialFields.CREDENTIALS_TYPE]: z.string().optional(),
         })
-        .refine(
-          (data) =>
+        .superRefine((data, ctx) => {
+          if (
             data[ProviderCredentialFields.CREDENTIALS_TYPE] !==
-              "access-secret-key" ||
-            (data[ProviderCredentialFields.AWS_ACCESS_KEY_ID] &&
-              data[ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]),
-          {
-            message: "AWS Access Key ID and Secret Access Key are required.",
-            path: [ProviderCredentialFields.AWS_ACCESS_KEY_ID],
-          },
-        )
-    : z.object({
-        providerId: z.string(),
-        providerType: z.string(),
-      });
+            "access-secret-key"
+          ) {
+            return;
+          }
+
+          const hasAccessKey =
+            (data[ProviderCredentialFields.AWS_ACCESS_KEY_ID] || "").trim()
+              .length > 0;
+          const hasSecretAccessKey =
+            (data[ProviderCredentialFields.AWS_SECRET_ACCESS_KEY] || "").trim()
+              .length > 0;
+
+          if (!hasAccessKey) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "AWS Access Key ID is required.",
+              path: [ProviderCredentialFields.AWS_ACCESS_KEY_ID],
+            });
+          }
+
+          if (!hasSecretAccessKey) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "AWS Secret Access Key is required.",
+              path: [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY],
+            });
+          }
+        })
+    : providerType === "alibabacloud"
+      ? z.object({
+          [ProviderCredentialFields.PROVIDER_ID]: z.string(),
+          [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
+          [ProviderCredentialFields.ALIBABACLOUD_ROLE_ARN]: z
+            .string()
+            .min(1, "RAM Role ARN is required"),
+          [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: z
+            .string()
+            .min(1, "Access Key ID is required"),
+          [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: z
+            .string()
+            .min(1, "Access Key Secret is required"),
+          [ProviderCredentialFields.ALIBABACLOUD_ROLE_SESSION_NAME]: z
+            .string()
+            .optional(),
+        })
+      : z.object({
+          providerId: z.string(),
+          providerType: z.string(),
+        });
 
 export const addCredentialsServiceAccountFormSchema = (
   providerType: ProviderType,
@@ -347,8 +534,8 @@ export const editProviderFormSchema = (currentAlias: string) =>
   });
 
 export const editInviteFormSchema = z.object({
-  invitationId: z.string().uuid(),
-  invitationEmail: z.string().email(),
+  invitationId: z.uuid(),
+  invitationEmail: z.email(),
   expires_at: z.string().optional(),
   role: z.string().optional(),
 });
@@ -360,10 +547,7 @@ export const editUserFormSchema = () =>
       .min(3, { message: "The name must have at least 3 characters." })
       .max(150, { message: "The name cannot exceed 150 characters." })
       .optional(),
-    email: z
-      .string()
-      .email({ message: "Please enter a valid email address." })
-      .optional(),
+    email: z.email({ error: "Please enter a valid email address." }).optional(),
     password: z
       .string()
       .min(1, { message: "The password cannot be empty." })
@@ -393,7 +577,7 @@ export const mutedFindingsConfigFormSchema = z.object({
       const yamlValidation = validateYaml(val);
       if (!yamlValidation.isValid) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Invalid YAML format: ${yamlValidation.error}`,
         });
         return;
@@ -402,7 +586,7 @@ export const mutedFindingsConfigFormSchema = z.object({
       const mutelistValidation = validateMutelistYaml(val);
       if (!mutelistValidation.isValid) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Invalid mutelist structure: ${mutelistValidation.error}`,
         });
       }

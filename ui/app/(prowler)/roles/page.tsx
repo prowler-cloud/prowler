@@ -1,12 +1,12 @@
-import { Spacer } from "@nextui-org/react";
+import Link from "next/link";
 import { Suspense } from "react";
 
 import { getRoles } from "@/actions/roles";
 import { FilterControls } from "@/components/filters";
 import { filterRoles } from "@/components/filters/data-filters";
-import { AddRoleButton } from "@/components/roles";
-import { ColumnsRoles } from "@/components/roles/table";
-import { SkeletonTableRoles } from "@/components/roles/table";
+import { AddIcon } from "@/components/icons";
+import { ColumnsRoles, SkeletonTableRoles } from "@/components/roles/table";
+import { Button } from "@/components/shadcn";
 import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { SearchParamsProps } from "@/types";
@@ -14,22 +14,30 @@ import { SearchParamsProps } from "@/types";
 export default async function Roles({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Roles" icon="mdi:account-key-outline">
+    <ContentLayout title="Roles" icon="lucide:user-cog">
       <FilterControls search />
-      <Spacer y={8} />
-      <AddRoleButton />
-      <Spacer y={4} />
-      <DataTableFilterCustom filters={filterRoles || []} />
-      <Spacer y={8} />
 
-      <Suspense key={searchParamsKey} fallback={<SkeletonTableRoles />}>
-        <SSRDataTable searchParams={searchParams} />
-      </Suspense>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-row items-end justify-between">
+          <DataTableFilterCustom filters={filterRoles || []} />
+          <Button asChild>
+            <Link href="/roles/new">
+              Add Role
+              <AddIcon size={20} />
+            </Link>
+          </Button>
+        </div>
+
+        <Suspense key={searchParamsKey} fallback={<SkeletonTableRoles />}>
+          <SSRDataTable searchParams={resolvedSearchParams} />
+        </Suspense>
+      </div>
     </ContentLayout>
   );
 }
@@ -55,6 +63,7 @@ const SSRDataTable = async ({
 
   return (
     <DataTable
+      key={`roles-${Date.now()}`}
       columns={ColumnsRoles}
       data={rolesData?.data || []}
       metadata={rolesData?.meta}

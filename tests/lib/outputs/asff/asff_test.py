@@ -105,7 +105,9 @@ class TestASFF:
             resource_uid="test-arn",
             resource_tags={"key1": "value1"},
         )
-        finding.metadata.Remediation.Recommendation.Url = ""
+        finding.metadata.Remediation.Recommendation.Url = (
+            "https://hub.prowler.com/check/check-id"
+        )
 
         timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -147,7 +149,7 @@ class TestASFF:
             Remediation=Remediation(
                 Recommendation=Recommendation(
                     Text=finding.metadata.Remediation.Recommendation.Text,
-                    Url="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+                    Url="https://hub.prowler.com/check/check-id",
                 )
             ),
             Description=finding.status_extended,
@@ -170,7 +172,9 @@ class TestASFF:
             resource_name="test-resource",
             resource_uid="test-arn",
         )
-        finding.metadata.Remediation.Recommendation.Url = ""
+        finding.metadata.Remediation.Recommendation.Url = (
+            "https://hub.prowler.com/check/check-id"
+        )
 
         timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -212,7 +216,7 @@ class TestASFF:
             Remediation=Remediation(
                 Recommendation=Recommendation(
                     Text=finding.metadata.Remediation.Recommendation.Text,
-                    Url="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+                    Url="https://hub.prowler.com/check/check-id",
                 )
             ),
             Description=finding.status_extended,
@@ -238,7 +242,9 @@ class TestASFF:
             resource_uid="test-arn",
             resource_tags={"key1": "value1"},
         )
-        finding.metadata.Remediation.Recommendation.Url = ""
+        finding.metadata.Remediation.Recommendation.Url = (
+            "https://hub.prowler.com/check/check-id"
+        )
         finding.metadata.Remediation.Recommendation.Text = "x" * 513
 
         timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -281,7 +287,7 @@ class TestASFF:
             Remediation=Remediation(
                 Recommendation=Recommendation(
                     Text=f"{'x' * 509}...",
-                    Url="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+                    Url="https://hub.prowler.com/check/check-id",
                 )
             ),
             Description=finding.status_extended,
@@ -517,7 +523,9 @@ class TestASFF:
             resource_uid="test-arn",
             resource_tags={"key1": "value1"},
         )
-        finding.metadata.Remediation.Recommendation.Url = ""
+        finding.metadata.Remediation.Recommendation.Url = (
+            "https://hub.prowler.com/check/check-id"
+        )
 
         timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -560,7 +568,7 @@ class TestASFF:
                 "Remediation": {
                     "Recommendation": {
                         "Text": "",
-                        "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+                        "Url": "https://hub.prowler.com/check/check-id",
                     }
                 },
             }

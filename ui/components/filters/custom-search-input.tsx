@@ -1,8 +1,7 @@
-import { Input } from "@nextui-org/react";
-import debounce from "lodash.debounce";
+import { Input } from "@heroui/input";
 import { SearchIcon, XCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { useUrlFilters } from "@/hooks/use-url-filters";
 
@@ -10,6 +9,7 @@ export const CustomSearchInput: React.FC = () => {
   const searchParams = useSearchParams();
   const { updateFilter } = useUrlFilters();
   const [searchQuery, setSearchQuery] = useState("");
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const applySearch = useCallback(
     (query: string) => {
@@ -24,7 +24,12 @@ export const CustomSearchInput: React.FC = () => {
 
   const debouncedChangeHandler = useCallback(
     (value: string) => {
-      debounce((val) => applySearch(val), 300)(value);
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      debounceTimeoutRef.current = setTimeout(() => {
+        applySearch(value);
+      }, 300);
     },
     [applySearch],
   );
@@ -39,18 +44,33 @@ export const CustomSearchInput: React.FC = () => {
     setSearchQuery(searchFromUrl);
   }, [searchParams]);
 
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <Input
-      variant="flat"
+      style={{
+        borderRadius: "0.5rem",
+      }}
       classNames={{
-        label: "tracking-tight font-light !text-default-600 text-sm !z-0 pb-1",
+        base: "w-full [&]:!rounded-lg [&>*]:!rounded-lg",
+        input:
+          "text-bg-button-secondary placeholder:text-bg-button-secondary text-sm",
+        inputWrapper:
+          "!border-border-input-primary !bg-bg-input-primary dark:!bg-input/30 dark:hover:!bg-input/50 hover:!bg-bg-neutral-secondary !border [&]:!rounded-lg !shadow-xs !transition-[color,box-shadow] focus-within:!border-border-input-primary-press focus-within:!ring-1 focus-within:!ring-border-input-primary-press focus-within:!ring-offset-1 !h-10 !px-4 !py-3 !outline-none",
+        clearButton: "text-bg-button-secondary",
       }}
       aria-label="Search"
-      label="Search"
       placeholder="Search..."
-      labelPlacement="inside"
       value={searchQuery}
-      startContent={<SearchIcon className="text-default-400" width={16} />}
+      startContent={
+        <SearchIcon className="text-bg-button-secondary shrink-0" width={16} />
+      }
       onChange={(e) => {
         const value = e.target.value;
         setSearchQuery(value);
@@ -58,13 +78,14 @@ export const CustomSearchInput: React.FC = () => {
       }}
       endContent={
         searchQuery && (
-          <button onClick={clearIconSearch} className="focus:outline-none">
-            <XCircle className="h-4 w-4 text-default-400" />
+          <button
+            onClick={clearIconSearch}
+            className="text-bg-button-secondary shrink-0 focus:outline-none"
+          >
+            <XCircle className="text-bg-button-secondary h-4 w-4" />
           </button>
         )
       }
-      radius="sm"
-      size="sm"
     />
   );
 };

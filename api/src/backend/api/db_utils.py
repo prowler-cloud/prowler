@@ -1,16 +1,34 @@
 import re
 import secrets
+import time
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
+from celery.utils.log import get_task_logger
+from config.env import env
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager
-from django.db import connection, models, transaction
+from django.db import (
+    DEFAULT_DB_ALIAS,
+    OperationalError,
+    connections,
+    models,
+    transaction,
+)
 from django_celery_beat.models import PeriodicTask
 from psycopg2 import connect as psycopg2_connect
 from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
 from rest_framework_json_api.serializers import ValidationError
+
+from api.db_router import (
+    READ_REPLICA_ALIAS,
+    get_read_db_alias,
+    reset_read_db_alias,
+    set_read_db_alias,
+)
+
+logger = get_task_logger(__name__)
 
 DB_USER = settings.DATABASES["default"]["USER"] if not settings.TESTING else "test"
 DB_PASSWORD = (
@@ -25,6 +43,9 @@ DB_PROWLER_PASSWORD = (
 TASK_RUNNER_DB_TABLE = "django_celery_results_taskresult"
 POSTGRES_TENANT_VAR = "api.tenant_id"
 POSTGRES_USER_VAR = "api.user_id"
+
+REPLICA_MAX_ATTEMPTS = env.int("POSTGRES_REPLICA_MAX_ATTEMPTS", default=3)
+REPLICA_RETRY_BASE_DELAY = env.float("POSTGRES_REPLICA_RETRY_BASE_DELAY", default=0.5)
 
 SET_CONFIG_QUERY = "SELECT set_config(%s, %s::text, TRUE);"
 
@@ -49,7 +70,12 @@ def psycopg_connection(database_alias: str):
 
 
 @contextmanager
-def rls_transaction(value: str, parameter: str = POSTGRES_TENANT_VAR):
+def rls_transaction(
+    value: str,
+    parameter: str = POSTGRES_TENANT_VAR,
+    using: str | None = None,
+    retry_on_replica: bool = True,
+):
     """
     Creates a new database transaction setting the given configuration value for Postgres RLS. It validates the
     if the value is a valid UUID.
@@ -57,16 +83,63 @@ def rls_transaction(value: str, parameter: str = POSTGRES_TENANT_VAR):
     Args:
         value (str): Database configuration parameter value.
         parameter (str): Database configuration parameter name, by default is 'api.tenant_id'.
+        using (str | None): Optional database alias to run the transaction against. Defaults to the
+            active read alias (if any) or Django's default connection.
     """
-    with transaction.atomic():
-        with connection.cursor() as cursor:
-            try:
-                # just in case the value is an UUID object
-                uuid.UUID(str(value))
-            except ValueError:
-                raise ValidationError("Must be a valid UUID")
-            cursor.execute(SET_CONFIG_QUERY, [parameter, value])
-            yield cursor
+    requested_alias = using or get_read_db_alias()
+    db_alias = requested_alias or DEFAULT_DB_ALIAS
+    if db_alias not in connections:
+        db_alias = DEFAULT_DB_ALIAS
+
+    alias = db_alias
+    is_replica = READ_REPLICA_ALIAS and alias == READ_REPLICA_ALIAS
+    max_attempts = REPLICA_MAX_ATTEMPTS if is_replica and retry_on_replica else 1
+
+    for attempt in range(1, max_attempts + 1):
+        router_token = None
+        yielded_cursor = False
+
+        # On final attempt, fallback to primary
+        if attempt == max_attempts and is_replica:
+            logger.warning(
+                f"RLS transaction failed after {attempt - 1} attempts on replica, "
+                f"falling back to primary DB"
+            )
+            alias = DEFAULT_DB_ALIAS
+
+        conn = connections[alias]
+        try:
+            if alias != DEFAULT_DB_ALIAS:
+                router_token = set_read_db_alias(alias)
+
+            with transaction.atomic(using=alias):
+                with conn.cursor() as cursor:
+                    try:
+                        # just in case the value is a UUID object
+                        uuid.UUID(str(value))
+                    except ValueError:
+                        raise ValidationError("Must be a valid UUID")
+                    cursor.execute(SET_CONFIG_QUERY, [parameter, value])
+                    yielded_cursor = True
+                    yield cursor
+            return
+        except OperationalError as e:
+            if yielded_cursor:
+                raise
+            # If on primary or max attempts reached, raise
+            if not is_replica or attempt == max_attempts:
+                raise
+
+            # Retry with exponential backoff
+            delay = REPLICA_RETRY_BASE_DELAY * (2 ** (attempt - 1))
+            logger.info(
+                f"RLS transaction failed on replica (attempt {attempt}/{max_attempts}), "
+                f"retrying in {delay}s. Error: {e}"
+            )
+            time.sleep(delay)
+        finally:
+            if router_token is not None:
+                reset_read_db_alias(router_token)
 
 
 class CustomUserManager(BaseUserManager):
@@ -381,7 +454,7 @@ def create_index_on_partitions(
             all_partitions=True
         )
     """
-    with connection.cursor() as cursor:
+    with schema_editor.connection.cursor() as cursor:
         cursor.execute(
             """
             SELECT inhrelid::regclass::text
@@ -393,6 +466,7 @@ def create_index_on_partitions(
         partitions = [row[0] for row in cursor.fetchall()]
 
     where_sql = f" WHERE {where}" if where else ""
+    conn = schema_editor.connection
     for partition in partitions:
         if _should_create_index_on_partition(partition, all_partitions):
             idx_name = f"{partition.replace('.', '_')}_{index_name}"
@@ -401,7 +475,12 @@ def create_index_on_partitions(
                 f"ON {partition} USING {method} ({columns})"
                 f"{where_sql};"
             )
-            schema_editor.execute(sql)
+            old_autocommit = conn.connection.autocommit
+            conn.connection.autocommit = True
+            try:
+                schema_editor.execute(sql)
+            finally:
+                conn.connection.autocommit = old_autocommit
 
 
 def drop_index_on_partitions(
@@ -417,7 +496,8 @@ def drop_index_on_partitions(
         parent_table: The name of the root table (e.g. "findings").
         index_name: The same short name used when creating them.
     """
-    with connection.cursor() as cursor:
+    conn = schema_editor.connection
+    with conn.cursor() as cursor:
         cursor.execute(
             """
             SELECT inhrelid::regclass::text
@@ -431,7 +511,18 @@ def drop_index_on_partitions(
     for partition in partitions:
         idx_name = f"{partition.replace('.', '_')}_{index_name}"
         sql = f"DROP INDEX CONCURRENTLY IF EXISTS {idx_name};"
-        schema_editor.execute(sql)
+        old_autocommit = conn.connection.autocommit
+        conn.connection.autocommit = True
+        try:
+            schema_editor.execute(sql)
+        finally:
+            conn.connection.autocommit = old_autocommit
+
+
+def generate_api_key_prefix():
+    """Generate a random 8-character prefix for API keys (e.g., 'pk_abc123de')."""
+    random_chars = generate_random_token(length=8)
+    return f"pk_{random_chars}"
 
 
 # Postgres enum definition for member role

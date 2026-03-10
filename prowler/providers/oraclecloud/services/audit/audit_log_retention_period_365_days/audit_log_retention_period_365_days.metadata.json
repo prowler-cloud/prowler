@@ -1,0 +1,38 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "audit_log_retention_period_365_days",
+  "CheckTitle": "Tenancy audit log retention period is 365 days or greater",
+  "CheckType": [],
+  "ServiceName": "audit",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Compartment",
+  "ResourceGroup": "governance",
+  "Description": "**OCI Audit configuration** defines tenancy-wide log retention for audit events. The finding evaluates whether the retention period (days) is `>= 365` and that an audit configuration exists, *applying across all regions and compartments*.",
+  "Risk": "**Insufficient audit retention** or missing configuration shrinks the **detection window** and breaks **accountability**.\n\nEvidence for older actions may be unavailable, enabling attackers to evade detection, mask **data exfiltration**, and impede **forensic reconstruction** and compliance reporting.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Audit/Tasks/settingretentionperiod.htm",
+    "https://docs.oracle.com/en-us/iaas/tools/terraform-provider-oci/4.88.1/docs/r/audit_configuration.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "oci audit configuration update --compartment-id <tenancy-ocid> --retention-period-days 365",
+      "NativeIaC": "",
+      "Other": "1. Open the OCI Console and go to Governance & Administration > Audit\n2. Click Configuration\n3. Set Retention period (days) to 365\n4. Click Save",
+      "Terraform": "```hcl\nresource \"oci_audit_configuration\" \"<example_resource_name>\" {\n  compartment_id        = var.tenancy_ocid\n  retention_period_days = 365 # Critical: sets audit log retention to 365 days to pass the check\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set audit retention to `>= 365` days at the tenancy level and protect the setting with **least privilege** and **separation of duties**.\n\nAdopt **defense in depth**: export audit logs to centralized, immutable storage or a SIEM for extended retention, integrity, and continuous monitoring.",
+      "Url": "https://hub.prowler.com/check/audit_log_retention_period_365_days"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

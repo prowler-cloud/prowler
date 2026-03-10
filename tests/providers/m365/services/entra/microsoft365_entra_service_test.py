@@ -1,17 +1,22 @@
-from unittest.mock import patch
+import asyncio
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from prowler.providers.m365.models import M365IdentityInfo
 from prowler.providers.m365.services.entra.entra_service import (
     AdminConsentPolicy,
     AdminRoles,
+    ApplicationEnforcedRestrictions,
     ApplicationsConditions,
-    AuthenticationStrength,
+    AppManagementRestrictions,
     AuthorizationPolicy,
     AuthPolicyRoles,
     ConditionalAccessGrantControl,
     ConditionalAccessPolicy,
     ConditionalAccessPolicyState,
     Conditions,
+    CredentialRestriction,
+    DefaultAppManagementPolicy,
     DefaultUserRolePermissions,
     Entra,
     GrantControlOperator,
@@ -73,7 +78,7 @@ async def mock_entra_get_conditional_access_policies(_):
                     ConditionalAccessGrantControl.COMPLIANT_DEVICE,
                 ],
                 operator=GrantControlOperator.OR,
-                authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
+                authentication_strength="Phishing-resistant MFA",
             ),
             session_controls=SessionControls(
                 persistent_browser=PersistentBrowser(
@@ -85,6 +90,9 @@ async def mock_entra_get_conditional_access_policies(_):
                     frequency=24,
                     type=SignInFrequencyType.HOURS,
                     interval=SignInFrequencyInterval.TIME_BASED,
+                ),
+                application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                    is_enabled=False
                 ),
             ),
             state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
@@ -153,19 +161,56 @@ async def mock_entra_get_organization(_):
     ]
 
 
+async def mock_entra_get_default_app_management_policy(_):
+    return DefaultAppManagementPolicy(
+        id="00000000-0000-0000-0000-000000000000",
+        name="Default app management tenant policy",
+        description="Default tenant policy that enforces app management restrictions.",
+        is_enabled=True,
+        application_restrictions=AppManagementRestrictions(
+            password_credentials=[
+                CredentialRestriction(
+                    restriction_type="passwordAddition",
+                    state="enabled",
+                ),
+                CredentialRestriction(
+                    restriction_type="passwordLifetime",
+                    state="enabled",
+                    max_lifetime="P365D",
+                ),
+                CredentialRestriction(
+                    restriction_type="customPasswordAddition",
+                    state="enabled",
+                ),
+            ],
+            key_credentials=[
+                CredentialRestriction(
+                    restriction_type="asymmetricKeyLifetime",
+                    state="enabled",
+                    max_lifetime="P365D",
+                ),
+            ],
+        ),
+    )
+
+
 class Test_Entra_Service:
     def test_get_client(self):
-        admincenter_client = Entra(
-            set_mocked_m365_provider(identity=M365IdentityInfo(tenant_domain=DOMAIN))
-        )
-        assert admincenter_client.client.__class__.__name__ == "GraphServiceClient"
+        with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+            admincenter_client = Entra(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            assert admincenter_client.client.__class__.__name__ == "GraphServiceClient"
 
     @patch(
         "prowler.providers.m365.services.entra.entra_service.Entra._get_authorization_policy",
         new=mock_entra_get_authorization_policy,
     )
     def test_get_authorization_policy(self):
-        entra_client = Entra(set_mocked_m365_provider())
+        with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+            entra_client = Entra(set_mocked_m365_provider())
         assert entra_client.authorization_policy.id == "id-1"
         assert entra_client.authorization_policy.name == "Name 1"
         assert entra_client.authorization_policy.description == "Description 1"
@@ -193,7 +238,8 @@ class Test_Entra_Service:
         new=mock_entra_get_conditional_access_policies,
     )
     def test_get_conditional_access_policies(self):
-        entra_client = Entra(set_mocked_m365_provider())
+        with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+            entra_client = Entra(set_mocked_m365_provider())
         assert entra_client.conditional_access_policies == {
             "id-1": ConditionalAccessPolicy(
                 id="id-1",
@@ -219,7 +265,7 @@ class Test_Entra_Service:
                         ConditionalAccessGrantControl.COMPLIANT_DEVICE,
                     ],
                     operator=GrantControlOperator.OR,
-                    authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
+                    authentication_strength="Phishing-resistant MFA",
                 ),
                 session_controls=SessionControls(
                     persistent_browser=PersistentBrowser(
@@ -232,6 +278,9 @@ class Test_Entra_Service:
                         type=SignInFrequencyType.HOURS,
                         interval=SignInFrequencyInterval.TIME_BASED,
                     ),
+                    application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                        is_enabled=False
+                    ),
                 ),
                 state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
             )
@@ -242,7 +291,8 @@ class Test_Entra_Service:
         new=mock_entra_get_groups,
     )
     def test_get_groups(self):
-        entra_client = Entra(set_mocked_m365_provider())
+        with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+            entra_client = Entra(set_mocked_m365_provider())
         assert len(entra_client.groups) == 2
         assert entra_client.groups[0]["id"] == "id-1"
         assert entra_client.groups[0]["name"] == "group1"
@@ -258,7 +308,8 @@ class Test_Entra_Service:
         new=mock_entra_get_admin_consent_policy,
     )
     def test_get_admin_consent_policy(self):
-        entra_client = Entra(set_mocked_m365_provider())
+        with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+            entra_client = Entra(set_mocked_m365_provider())
         assert entra_client.admin_consent_policy.admin_consent_enabled
         assert entra_client.admin_consent_policy.notify_reviewers
         assert entra_client.admin_consent_policy.email_reminders_to_reviewers is False
@@ -269,18 +320,64 @@ class Test_Entra_Service:
         new=mock_entra_get_organization,
     )
     def test_get_organization(self):
-        entra_client = Entra(set_mocked_m365_provider())
+        with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+            entra_client = Entra(set_mocked_m365_provider())
         assert len(entra_client.organizations) == 1
         assert entra_client.organizations[0].id == "org1"
         assert entra_client.organizations[0].name == "Organization 1"
         assert entra_client.organizations[0].on_premises_sync_enabled
 
     @patch(
+        "prowler.providers.m365.services.entra.entra_service.Entra._get_default_app_management_policy",
+        new=mock_entra_get_default_app_management_policy,
+    )
+    def test_get_default_app_management_policy(self):
+        with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+            entra_client = Entra(set_mocked_m365_provider())
+        assert (
+            entra_client.default_app_management_policy.id
+            == "00000000-0000-0000-0000-000000000000"
+        )
+        assert (
+            entra_client.default_app_management_policy.name
+            == "Default app management tenant policy"
+        )
+        assert (
+            entra_client.default_app_management_policy.description
+            == "Default tenant policy that enforces app management restrictions."
+        )
+        assert entra_client.default_app_management_policy.is_enabled is True
+        app_restrictions = (
+            entra_client.default_app_management_policy.application_restrictions
+        )
+        assert len(app_restrictions.password_credentials) == 3
+        assert (
+            app_restrictions.password_credentials[0].restriction_type
+            == "passwordAddition"
+        )
+        assert (
+            app_restrictions.password_credentials[1].restriction_type
+            == "passwordLifetime"
+        )
+        assert app_restrictions.password_credentials[1].max_lifetime == "P365D"
+        assert (
+            app_restrictions.password_credentials[2].restriction_type
+            == "customPasswordAddition"
+        )
+        assert len(app_restrictions.key_credentials) == 1
+        assert (
+            app_restrictions.key_credentials[0].restriction_type
+            == "asymmetricKeyLifetime"
+        )
+        assert app_restrictions.key_credentials[0].max_lifetime == "P365D"
+
+    @patch(
         "prowler.providers.m365.services.entra.entra_service.Entra._get_users",
         new=mock_entra_get_users,
     )
     def test_get_users(self):
-        entra_client = Entra(set_mocked_m365_provider())
+        with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+            entra_client = Entra(set_mocked_m365_provider())
         assert len(entra_client.users) == 3
         assert entra_client.users["user-1"].id == "user-1"
         assert entra_client.users["user-1"].name == "User 1"
@@ -303,3 +400,196 @@ class Test_Entra_Service:
         ]
         assert entra_client.users["user-3"].on_premises_sync_enabled
         assert not entra_client.users["user-3"].is_mfa_capable
+
+    def test__get_users_paginates_through_next_links(self):
+        entra_service = Entra.__new__(Entra)
+        entra_service.user_accounts_status = {"user-6": {"AccountDisabled": True}}
+
+        users_page_one = [
+            SimpleNamespace(
+                id="user-1",
+                display_name="User 1",
+                on_premises_sync_enabled=True,
+            ),
+            SimpleNamespace(
+                id="user-2",
+                display_name="User 2",
+                on_premises_sync_enabled=False,
+            ),
+            SimpleNamespace(
+                id="user-3",
+                display_name="User 3",
+                on_premises_sync_enabled=None,
+            ),
+            SimpleNamespace(
+                id="user-4",
+                display_name="User 4",
+                on_premises_sync_enabled=True,
+            ),
+            SimpleNamespace(
+                id="user-5",
+                display_name="User 5",
+                on_premises_sync_enabled=False,
+            ),
+        ]
+        users_page_two = [
+            SimpleNamespace(
+                id="user-6",
+                display_name="User 6",
+                on_premises_sync_enabled=True,
+            )
+        ]
+
+        users_response_page_one = SimpleNamespace(
+            value=users_page_one,
+            odata_next_link="next-link",
+        )
+        users_response_page_two = SimpleNamespace(
+            value=users_page_two,
+            odata_next_link=None,
+        )
+
+        users_with_url_builder = SimpleNamespace(
+            get=AsyncMock(return_value=users_response_page_two)
+        )
+        with_url_mock = MagicMock(return_value=users_with_url_builder)
+
+        users_builder = SimpleNamespace(
+            get=AsyncMock(return_value=users_response_page_one),
+            with_url=with_url_mock,
+        )
+
+        role_members_response = SimpleNamespace(
+            value=[
+                SimpleNamespace(id="user-1"),
+                SimpleNamespace(id="user-6"),
+            ]
+        )
+        members_builder = SimpleNamespace(
+            get=AsyncMock(return_value=role_members_response)
+        )
+        directory_roles_builder = SimpleNamespace(
+            get=AsyncMock(
+                return_value=SimpleNamespace(
+                    value=[
+                        SimpleNamespace(
+                            id="role-1",
+                            role_template_id="role-template-1",
+                        )
+                    ]
+                )
+            ),
+            by_directory_role_id=MagicMock(
+                return_value=SimpleNamespace(members=members_builder)
+            ),
+        )
+
+        registration_details_response = SimpleNamespace(
+            value=[
+                SimpleNamespace(
+                    id="user-1",
+                    is_mfa_capable=True,
+                    methods_registered=["fido2SecurityKey"],
+                ),
+                SimpleNamespace(
+                    id="user-6",
+                    is_mfa_capable=True,
+                    methods_registered=["mobilePhone"],
+                ),
+            ],
+            odata_next_link=None,
+        )
+        registration_details_builder = SimpleNamespace(
+            get=AsyncMock(return_value=registration_details_response),
+            with_url=MagicMock(
+                return_value=SimpleNamespace(get=AsyncMock(return_value=None))
+            ),
+        )
+        reports_builder = SimpleNamespace(
+            authentication_methods=SimpleNamespace(
+                user_registration_details=registration_details_builder
+            )
+        )
+
+        entra_service.client = SimpleNamespace(
+            users=users_builder,
+            directory_roles=directory_roles_builder,
+            reports=reports_builder,
+        )
+
+        users = asyncio.run(entra_service._get_users())
+
+        assert len(users) == 6
+        assert users_builder.get.await_count == 1
+        assert users_builder.get.await_args.kwargs == {}
+        with_url_mock.assert_called_once_with("next-link")
+        assert users["user-1"].directory_roles_ids == ["role-template-1"]
+        assert users["user-6"].directory_roles_ids == ["role-template-1"]
+        assert users["user-6"].account_enabled is False
+        assert users["user-1"].is_mfa_capable is True
+        assert users["user-2"].is_mfa_capable is False
+        assert users["user-1"].authentication_methods == ["fido2SecurityKey"]
+        assert users["user-6"].authentication_methods == ["mobilePhone"]
+        assert users["user-2"].authentication_methods == []
+
+    def test__get_user_registration_details_handles_pagination(self):
+        entra_service = Entra.__new__(Entra)
+
+        registration_response_page_one = SimpleNamespace(
+            value=[
+                SimpleNamespace(
+                    id="user-1",
+                    is_mfa_capable=True,
+                    methods_registered=[
+                        "fido2SecurityKey",
+                        "microsoftAuthenticatorPush",
+                    ],
+                ),
+            ],
+            odata_next_link="next-link",
+        )
+        registration_response_page_two = SimpleNamespace(
+            value=[
+                SimpleNamespace(
+                    id="user-2", is_mfa_capable=False, methods_registered=[]
+                ),
+            ],
+            odata_next_link=None,
+        )
+
+        registration_builder_next = SimpleNamespace(
+            get=AsyncMock(return_value=registration_response_page_two)
+        )
+        registration_builder = SimpleNamespace(
+            get=AsyncMock(return_value=registration_response_page_one),
+            with_url=MagicMock(return_value=registration_builder_next),
+        )
+
+        entra_service.client = SimpleNamespace(
+            reports=SimpleNamespace(
+                authentication_methods=SimpleNamespace(
+                    user_registration_details=registration_builder
+                )
+            )
+        )
+
+        registration_details = asyncio.run(
+            entra_service._get_user_registration_details()
+        )
+
+        assert registration_details == {
+            "user-1": {
+                "is_mfa_capable": True,
+                "authentication_methods": [
+                    "fido2SecurityKey",
+                    "microsoftAuthenticatorPush",
+                ],
+            },
+            "user-2": {
+                "is_mfa_capable": False,
+                "authentication_methods": [],
+            },
+        }
+        registration_builder.get.assert_awaited()
+        registration_builder.with_url.assert_called_once_with("next-link")
+        registration_builder_next.get.assert_awaited()

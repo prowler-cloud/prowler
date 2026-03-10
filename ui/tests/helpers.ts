@@ -1,7 +1,11 @@
-import { Page, expect } from "@playwright/test";
+import { Locator, Page, expect, request } from "@playwright/test";
+import { AWSProviderCredential, AWSProviderData, AWS_CREDENTIAL_OPTIONS, ProvidersPage } from "./providers/providers-page";
+import { ScansPage } from "./scans/scans-page";
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
+  INVALID_EMAIL: "Please enter a valid email address.",
+  PASSWORD_REQUIRED: "Password is required.",
 } as const;
 
 export const URLS = {
@@ -13,8 +17,8 @@ export const URLS = {
 
 export const TEST_CREDENTIALS = {
   VALID: {
-    email: process.env.E2E_USER || "e2e@prowler.com",
-    password: process.env.E2E_PASSWORD || "Thisisapassword123@",
+    email: process.env.E2E_ADMIN_USER || "e2e@prowler.com",
+    password: process.env.E2E_ADMIN_PASSWORD || "Thisisapassword123@",
   },
   INVALID: {
     email: "invalid@example.com",
@@ -26,111 +30,191 @@ export const TEST_CREDENTIALS = {
   },
 } as const;
 
-export async function goToLogin(page: Page) {
-  await page.goto("/sign-in");
+/**
+ * Generate a random base36 suffix of specified length
+ * Used for creating unique test data to avoid conflicts
+ */
+export function makeSuffix(len: number): string {
+  let s = "";
+  while (s.length < len) {
+    s += Math.random().toString(36).slice(2);
+  }
+  return s.slice(0, len);
 }
 
-export async function goToSignUp(page: Page) {
-  await page.goto("/sign-up");
+export async function getSession(page: Page) {
+  const response = await page.request.get("/api/auth/session");
+  return response.json();
 }
 
-export async function fillLoginForm(
+export async function getSessionWithoutCookies(page: Page) {
+  const currentUrl = page.url();
+  const baseUrl = currentUrl.startsWith("http")
+    ? new URL(currentUrl).origin
+    : process.env.NEXTAUTH_URL || "http://localhost:3000";
+
+  const apiContext = await request.newContext({ baseURL: baseUrl });
+  const response = await apiContext.get("/api/auth/session");
+  const session = await response.json();
+  await apiContext.dispose();
+
+  return session;
+}
+
+export async function verifySessionValid(page: Page) {
+  const session = await getSession(page);
+  expect(session).toBeTruthy();
+  expect(session.user).toBeTruthy();
+  expect(session.accessToken).toBeTruthy();
+  expect(session.refreshToken).toBeTruthy();
+  return session;
+}
+
+
+export async function addAWSProvider(
   page: Page,
-  email: string,
-  password: string,
-) {
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(password);
+  accountId: string,
+  accessKey: string,
+  secretKey: string,
+): Promise<void> {
+  // Prepare test data for AWS provider
+  const awsProviderData: AWSProviderData = {
+    accountId: accountId,
+    alias: "Test E2E AWS Account - Credentials",
+  };
+
+  // Prepare static credentials
+  const staticCredentials: AWSProviderCredential = {
+    type: AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
+    accessKeyId: accessKey,
+    secretAccessKey: secretKey,
+  };
+
+  // Create providers page object
+  const providersPage = new ProvidersPage(page);
+
+  // Navigate to providers page
+  await providersPage.goto();
+  await providersPage.verifyPageLoaded();
+
+  // Start adding new provider
+  await providersPage.clickAddProvider();
+  await providersPage.verifyConnectAccountPageLoaded();
+
+  // Select AWS provider
+  await providersPage.selectAWSProvider();
+
+  // Fill provider details
+  await providersPage.fillAWSProviderDetails(awsProviderData);
+  await providersPage.clickNext();
+
+  // Verify credentials page is loaded
+  await providersPage.verifyCredentialsPageLoaded();
+
+  // Select static credentials type
+  await providersPage.selectCredentialsType(
+    AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
+  );
+  // Fill static credentials
+  await providersPage.fillStaticCredentials(staticCredentials);
+  await providersPage.clickNext();
+
+  // Launch scan
+  await providersPage.verifyLaunchScanPageLoaded();
+  await providersPage.clickNext();
+
+  // Wait for redirect to provider page
+  const scansPage = new ScansPage(page);
+  await scansPage.verifyPageLoaded();
 }
 
-export async function submitLoginForm(page: Page) {
-  await page.getByRole("button", { name: "Log in" }).click();
-}
+export async function deleteProviderIfExists(page: ProvidersPage, providerUID: string): Promise<void> {
+  // Delete the provider if it exists
 
-export async function login(
-  page: Page,
-  credentials: { email: string; password: string } = TEST_CREDENTIALS.VALID,
-) {
-  await fillLoginForm(page, credentials.email, credentials.password);
-  await submitLoginForm(page);
-}
+  // Navigate to providers page
+  await page.goto();
+  await expect(page.providersTable).toBeVisible({ timeout: 10000 });
 
-export async function verifySuccessfulLogin(page: Page) {
-  await expect(page).toHaveURL("/");
-  await expect(page.locator("main")).toBeVisible();
-  await expect(
-    page
-      .getByLabel("Breadcrumbs")
-      .getByRole("heading", { name: "Overview", exact: true }),
-  ).toBeVisible();
-}
+  const allRows = page.providersTable.locator("tbody tr");
 
-export async function verifyLoginError(
-  page: Page,
-  errorMessage = "Invalid email or password",
-) {
-  await expect(page.getByText(errorMessage)).toBeVisible();
-  await expect(page).toHaveURL("/sign-in");
-}
+  const isNoResultsRow = async (row: Locator): Promise<boolean> => {
+    const text = await row.textContent();
+    return text?.includes("No results") || text?.includes("No data") || false;
+  };
 
-export async function toggleSamlMode(page: Page) {
-  await page.getByText("Continue with SAML SSO").click();
-}
+  const findProviderRow = async (): Promise<Locator | null> => {
+    const rowByText = page.providersTable
+      .locator("tbody tr")
+      .filter({ hasText: providerUID })
+      .first();
+    if (await rowByText.isVisible().catch(() => false)) {
+      return rowByText;
+    }
 
-export async function goBackFromSaml(page: Page) {
-  await page.getByText("Back").click();
-}
+    const count = await allRows.count();
+    for (let i = 0; i < count; i++) {
+      const row = allRows.nth(i);
+      if (await isNoResultsRow(row)) {
+        continue;
+      }
+      const rowText = await row.textContent();
+      if (rowText?.includes(providerUID)) {
+        return row;
+      }
+    }
 
-export async function verifySamlModeActive(page: Page) {
-  await expect(page.getByText("Sign in with SAML SSO")).toBeVisible();
-  await expect(page.getByLabel("Password")).not.toBeVisible();
-  await expect(page.getByText("Back")).toBeVisible();
-}
+    return null;
+  };
 
-export async function verifyNormalModeActive(page: Page) {
-  await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Password")).toBeVisible();
-}
+  // Find the provider row
+  const targetRow = await findProviderRow();
 
-export async function logout(page: Page) {
-  await page.getByRole("button", { name: "Sign out" }).click();
-}
+  if (!targetRow) {
+    // Provider not found, nothing to delete
+    // Navigate back to providers page to ensure clean state
+    await page.goto();
+    await expect(page.providersTable).toBeVisible({ timeout: 10000 });
+    return;
+  }
 
-export async function verifyLogoutSuccess(page: Page) {
-  await expect(page).toHaveURL("/sign-in");
-  await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
-}
+  // Find and click the action button (last cell = actions column)
+  const actionButton = targetRow
+    .locator("td")
+    .last()
+    .locator("button")
+    .first();
 
-export async function verifyLoadingState(page: Page) {
-  const submitButton = page.getByRole("button", { name: "Log in" });
-  await expect(submitButton).toHaveAttribute("aria-disabled", "true");
-  await expect(page.getByText("Loading")).toBeVisible();
-}
+  // Ensure the button is in view before clicking (handles horizontal scroll)
+  await actionButton.scrollIntoViewIfNeeded();
+  // Verify the button is visible
+  await expect(actionButton).toBeVisible({ timeout: 5000 });
+  await actionButton.click();
 
-export async function verifyLoginFormElements(page: Page) {
-  await expect(page).toHaveTitle(/Prowler/);
-  await expect(page.locator('svg[width="300"]')).toBeVisible();
+  // Wait for dropdown menu to appear and find delete option
+  const deleteMenuItem = page.page.getByRole("menuitem", {
+    name: /delete.*provider/i,
+  });
 
-  // Verify form elements
-  await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Email")).toBeVisible();
-  await expect(page.getByLabel("Password")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Log in" })).toBeVisible();
+  await expect(deleteMenuItem).toBeVisible({ timeout: 5000 });
+  await deleteMenuItem.click();
 
-  // Verify OAuth buttons
-  await expect(page.getByText("Continue with Google")).toBeVisible();
-  await expect(page.getByText("Continue with Github")).toBeVisible();
-  await expect(page.getByText("Continue with SAML SSO")).toBeVisible();
+  // Wait for confirmation modal to appear
+  const modal = page.page
+    .locator('[role="dialog"], .modal, [data-testid*="modal"]')
+    .first();
 
-  // Verify navigation links
-  await expect(page.getByText("Need to create an account?")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Sign up" })).toBeVisible();
-}
+  await expect(modal).toBeVisible({ timeout: 10000 });
 
-export async function waitForPageLoad(page: Page) {
-  await page.waitForLoadState("networkidle");
-}
+  // Find and click the delete confirmation button
+  await expect(page.deleteProviderConfirmationButton).toBeVisible({
+    timeout: 5000,
+  });
+  await page.deleteProviderConfirmationButton.click();
 
-export async function verifyDashboardRoute(page: Page) {
-  await expect(page).toHaveURL("/");
+  // Wait for modal to close (this indicates deletion was initiated)
+  await expect(modal).not.toBeVisible({ timeout: 10000 });
+
+  // Navigate back to providers page to ensure clean state
+  await page.goto();
+  await expect(page.providersTable).toBeVisible({ timeout: 10000 });
 }

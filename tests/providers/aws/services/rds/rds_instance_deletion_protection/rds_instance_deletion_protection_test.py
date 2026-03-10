@@ -18,7 +18,7 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "DBEngineVersions": [
                 {
-                    "Engine": "mysql",
+                    "Engine": "postgres",
                     "EngineVersion": "8.0.32",
                     "DBEngineDescription": "description",
                     "DBEngineVersionDescription": "description",
@@ -149,7 +149,7 @@ class Test_rds_instance_deletion_protection:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
-            DBParameterGroupFamily="default.mysql8.0",
+            DBParameterGroupFamily="default.postgres8.0",
             Description="test parameter group",
         )
         conn.create_db_cluster(
@@ -213,7 +213,7 @@ class Test_rds_instance_deletion_protection:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
-            DBParameterGroupFamily="default.mysql8.0",
+            DBParameterGroupFamily="default.postgres8.0",
             Description="test parameter group",
         )
         conn.create_db_cluster(

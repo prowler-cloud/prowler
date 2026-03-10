@@ -135,8 +135,8 @@ class Test_EC2_Service:
         assert re.match(r"ami-[0-9a-z]{8}", ec2.instances[0].image_id)
         assert ec2.instances[0].launch_time == MOCK_DATETIME
         assert not ec2.instances[0].user_data
-        assert not ec2.instances[0].http_tokens
-        assert not ec2.instances[0].http_endpoint
+        assert ec2.instances[0].http_tokens == "optional"
+        assert ec2.instances[0].http_endpoint == "enabled"
         assert not ec2.instances[0].instance_profile
         assert ipaddress.ip_address(ec2.instances[0].private_ip).is_private
         assert (
@@ -610,22 +610,31 @@ class Test_EC2_Service:
         )
         ec2 = EC2(aws_provider)
 
-        assert len(ec2.images) == 1
-        assert ec2.images[0].id == image_id
-        assert re.match(r"ami-[0-9a-z]{8}", ec2.images[0].id)
+        # Filter for user-created images (owner="self")
+        user_images = [img for img in ec2.images if img.owner == "self"]
+        assert len(user_images) == 1
+
+        user_image = user_images[0]
+        assert user_image.id == image_id
+        assert re.match(r"ami-[0-9a-z]{8}", user_image.id)
         assert (
-            ec2.images[0].arn
-            == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:image/{ec2.images[0].id}"
+            user_image.arn
+            == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:image/{user_image.id}"
         )
-        assert not ec2.images[0].public
-        assert ec2.images[0].region == AWS_REGION_US_EAST_1
-        assert ec2.images[0].tags == [
+        assert user_image.deprecation_time == instance.image.deprecation_time
+        assert not user_image.public
+        assert user_image.region == AWS_REGION_US_EAST_1
+        assert user_image.tags == [
             {
                 "Key": "Base_AMI_Name",
                 "Value": "Deep Learning Base AMI (Amazon Linux 2) Version 31.0",
             },
             {"Key": "OS_Version", "Value": "AWS Linux 2"},
         ]
+
+        # Verify that Amazon images are also present
+        amazon_images = [img for img in ec2.images if img.owner == "amazon"]
+        assert len(amazon_images) > 0  # Should have Amazon AMIs
 
     # Test EC2 Describe Volumes
     @mock_aws

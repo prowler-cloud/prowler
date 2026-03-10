@@ -6,10 +6,9 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateScan } from "@/actions/scans";
-import { SaveIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomInput } from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
+import { CustomInput } from "@/components/ui/custom";
+import { Form, FormButtons } from "@/components/ui/form";
 import { editScanFormSchema } from "@/types";
 
 export const EditScanForm = ({
@@ -27,7 +26,7 @@ export const EditScanForm = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       scanId: scanId,
-      scanName: scanName,
+      scanName: scanName || "",
     },
   });
 
@@ -66,10 +65,11 @@ export const EditScanForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
         <div className="text-md">
-          Current name: <span className="font-bold">{scanName}</span>
+          Current name:{" "}
+          <span className="font-bold">{scanName || "Unnamed"}</span>
         </div>
         <div>
           <CustomInput
@@ -78,41 +78,14 @@ export const EditScanForm = ({
             type="text"
             label="Name"
             labelPlacement="outside"
-            placeholder={scanName}
+            placeholder={scanName || "Enter scan name"}
             variant="bordered"
             isRequired={false}
-            isInvalid={!!form.formState.errors.scanName}
           />
         </div>
         <input type="hidden" name="scanId" value={scanId} />
 
-        <div className="flex w-full justify-center sm:space-x-6">
-          <CustomButton
-            type="button"
-            ariaLabel="Cancel"
-            className="w-full bg-transparent"
-            variant="faded"
-            size="lg"
-            radius="lg"
-            onPress={() => setIsOpen(false)}
-            isDisabled={isLoading}
-          >
-            <span>Cancel</span>
-          </CustomButton>
-
-          <CustomButton
-            type="submit"
-            ariaLabel="Save"
-            className="w-full"
-            variant="solid"
-            color="action"
-            size="lg"
-            isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
-          >
-            {isLoading ? <>Loading</> : <span>Save</span>}
-          </CustomButton>
-        </div>
+        <FormButtons setIsOpen={setIsOpen} isDisabled={isLoading} />
       </form>
     </Form>
   );

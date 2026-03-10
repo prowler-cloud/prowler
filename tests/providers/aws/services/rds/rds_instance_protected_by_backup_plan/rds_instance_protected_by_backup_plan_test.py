@@ -51,6 +51,7 @@ class Test_rds_instance_protected_by_backup_plan:
             Engine="postgres",
             DBName="staging-postgres",
             DBInstanceClass="db.m1.small",
+            PubliclyAccessible=False,
         )
 
         from prowler.providers.aws.services.backup.backup_service import Backup

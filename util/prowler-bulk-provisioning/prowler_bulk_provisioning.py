@@ -132,12 +132,14 @@ def load_items(path: Path) -> List[Dict[str, Any]]:
     sys.exit(f"Unsupported input file type: {ext}")
 
 
-def env_or_arg(token_arg: Optional[str]) -> str:
-    """Get API token from argument or environment variable."""
-    token = token_arg or os.getenv("PROWLER_API_TOKEN")
-    if not token:
-        sys.exit("Missing API token. Set --token or PROWLER_API_TOKEN.")
-    return token
+def env_or_arg(api_key_arg: Optional[str]) -> str:
+    """Get API key from argument or environment variable."""
+    api_key = api_key_arg or os.getenv("PROWLER_API_KEY")
+    if not api_key:
+        sys.exit(
+            "Missing API key. Set --api-key or PROWLER_API_KEY environment variable."
+        )
+    return api_key
 
 
 def normalize_base_url(url: str) -> str:
@@ -395,14 +397,14 @@ class ApiClient:
     """HTTP client for Prowler API."""
 
     base_url: str
-    token: str
+    api_key: str
     verify_ssl: bool = True
     timeout: int = 60
 
     def _headers(self) -> Dict[str, str]:
         """Generate HTTP headers for API requests."""
         return {
-            "Authorization": f"Bearer {self.token}",
+            "Authorization": f"Api-Key {self.api_key}",
             "Content-Type": "application/vnd.api+json",
             "Accept": "application/vnd.api+json",
         }
@@ -564,7 +566,9 @@ def main():
         help="API base URL (default: env PROWLER_API_BASE or Prowler Cloud SaaS).",
     )
     parser.add_argument(
-        "--token", default=None, help="Bearer token (default: PROWLER_API_TOKEN)."
+        "--api-key",
+        default=None,
+        help="Prowler API key (default: PROWLER_API_KEY env variable).",
     )
     parser.add_argument(
         "--providers-endpoint",
@@ -600,7 +604,7 @@ def main():
     )
     args = parser.parse_args()
 
-    token = env_or_arg(args.token)
+    api_key = env_or_arg(args.api_key)
     base_url = normalize_base_url(args.base_url)
 
     items = load_items(Path(args.input_file))
@@ -610,7 +614,7 @@ def main():
 
     client = ApiClient(
         base_url=base_url,
-        token=token,
+        api_key=api_key,
         verify_ssl=not args.insecure,
         timeout=args.timeout,
     )

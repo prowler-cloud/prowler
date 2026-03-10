@@ -1,0 +1,201 @@
+---
+title: 'Troubleshooting'
+---
+
+## Running `prowler` I get `[File: utils.py:15] [Module: utils] CRITICAL: path/redacted: OSError[13]`
+
+That is an error related to file descriptors or opened files allowed by your operating system.
+
+In macOS Ventura, the default value for the `file descriptors` is `256`. With the following command `ulimit -n 1000` you'll increase that value and solve the issue.
+
+If you have a different OS and you are experiencing the same, please increase the value of your `file descriptors`. You can check it running `ulimit -a | grep "file descriptors"`.
+
+This error is also related with a lack of system requirements. To improve performance, Prowler stores information in memory so it may need to be run in a system with more than 1GB of memory.
+
+See section [Logging](/user-guide/cli/tutorials/logging) for further information or [contact us](/contact).
+
+## Common Issues with Docker Compose Installation
+
+### Problem adding AWS Provider using "Connect assuming IAM Role" in Docker
+
+See [GitHub Issue #7745](https://github.com/prowler-cloud/prowler/issues/7745) for more details.
+
+When running Prowler App via Docker, you may encounter errors such as `Provider not set`, `AWS assume role error - Unable to locate credentials`, or `Provider has no secret` when trying to add an AWS Provider using the "Connect assuming IAM Role" option. This typically happens because the container does not have access to the necessary AWS credentials or profiles.
+
+**Workaround:**
+
+- Ensure your AWS credentials and configuration are available to the Docker container. You can do this by mounting your local `.aws` directory into the container. For example, in your `docker-compose.yaml`, add the following volume to the relevant services:
+
+```yaml
+volumes:
+  - "${HOME}/.aws:/home/prowler/.aws:ro"
+```
+
+This should be added to the `api`, `worker`, and `worker-beat` services.
+
+- Create or update your `~/.aws/config` and `~/.aws/credentials` files with the appropriate profiles and roles. For example:
+
+```ini
+[profile prowler-profile]
+role_arn = arn:aws:iam::<account-id>:role/ProwlerScan
+source_profile = default
+```
+
+And set the environment variable in your `.env` file:
+
+```env
+AWS_PROFILE=prowler-profile
+```
+
+- If you are scanning multiple AWS accounts, you may need to add multiple profiles to your AWS config. Note that this workaround is mainly for local testing; for production or multi-account setups, follow the [CloudFormation Template guide](https://github.com/prowler-cloud/prowler/issues/7745) and ensure the correct IAM roles and permissions are set up in each account.
+
+### Scans Complete but Reports Are Missing or Compliance Data Is Empty (`Too many open files` Error)
+
+When running Prowler App via Docker Compose, scans may complete successfully but reports are not available for download, compliance data shows as empty, or 404 errors appear when trying to access scan reports. Checking the `worker` container logs may reveal errors like `[Errno 24] Too many open files`.
+
+This issue occurs because the default file descriptor limits in Docker containers are too low for Prowler's operations. The default `docker-compose.yml` already includes `ulimits` configuration with `nofile` set to `65536` for the `worker` and `worker-beat` services to prevent this issue.
+
+If a custom `docker-compose.yml` is being used or the default configuration has been modified, ensure the `ulimits` configuration is present in both the `worker` and `worker-beat` services:
+
+```yaml
+services:
+  worker:
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    # ... rest of service configuration
+
+  worker-beat:
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    # ... rest of service configuration
+```
+
+After making these changes, restart the Docker Compose stack:
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+### API Container Fails to Start with JWT Key Permission Error
+
+See [GitHub Issue #8897](https://github.com/prowler-cloud/prowler/issues/8897) for more details.
+
+When deploying Prowler via Docker Compose on a fresh installation, the API container may fail to start with permission errors related to JWT RSA key file generation. This issue is commonly observed on Linux systems (Ubuntu, Debian, cloud VMs) and Windows with Docker Desktop, but not typically on macOS.
+
+**Error Message:**
+
+Checking the API container logs reveals:
+
+```bash
+PermissionError: [Errno 13] Permission denied: '/home/prowler/.config/prowler-api/jwt_private.pem'
+```
+
+Or:
+
+```bash
+Token generation failed due to invalid key configuration. Provide valid DJANGO_TOKEN_SIGNING_KEY and DJANGO_TOKEN_VERIFYING_KEY in the environment.
+```
+
+**Root Cause:**
+
+This permission mismatch occurs due to UID (User ID) mapping between the host system and Docker containers:
+
+* The API container runs as user `prowler` with UID/GID 1000
+* In environments like WSL2, the host user may have a different UID than the container user
+* Docker creates the mounted volume directory `./_data/api` on the host, often with the host user's UID or root ownership (UID 0)
+* When the application attempts to write JWT key files (`jwt_private.pem` and `jwt_public.pem`), the operation fails because the container's UID 1000 does not have write permissions to the host-owned directory
+
+**Solutions:**
+
+There are two approaches to resolve this issue:
+
+**Option 1: Fix Volume Ownership (Resolve UID Mapping)**
+
+Change the ownership of the volume directory to match the container user's UID (1000):
+
+```bash
+# The container user 'prowler' has UID 1000
+# This command changes the directory ownership to UID 1000
+sudo chown -R 1000:1000 ./_data/api
+```
+
+Then start Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+This solution directly addresses the UID mapping mismatch by ensuring the volume directory is owned by the same UID that the container process uses.
+
+**Option 2: Use Environment Variables (Skip File Storage)**
+
+Generate JWT RSA keys manually and provide them via environment variables to bypass file-based key storage entirely:
+
+```bash
+# Generate RSA keys
+openssl genrsa -out jwt_private.pem 4096
+openssl rsa -in jwt_private.pem -pubout -out jwt_public.pem
+
+# Extract key content (removes headers/footers and newlines)
+PRIVATE_KEY=$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' jwt_private.pem)
+PUBLIC_KEY=$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' jwt_public.pem)
+```
+
+Add the following to the `.env` file:
+
+```env
+DJANGO_TOKEN_SIGNING_KEY=<content of jwt_private.pem>
+DJANGO_TOKEN_VERIFYING_KEY=<content of jwt_public.pem>
+```
+
+When these environment variables are set, the API will use them directly instead of attempting to write key files to the mounted volume.
+
+<Note>
+A fix addressing this permission issue is being evaluated in [PR #9953](https://github.com/prowler-cloud/prowler/pull/9953).
+</Note>
+
+### SAML/OAuth ACS URL Incorrect When Running Behind a Proxy or Load Balancer
+
+See [GitHub Issue #9724](https://github.com/prowler-cloud/prowler/issues/9724) for more details.
+
+When running Prowler behind a reverse proxy (nginx, Traefik, etc.) or load balancer, the SAML ACS (Assertion Consumer Service) URL or OAuth callback URLs may be incorrectly generated using the internal container hostname (e.g., `http://prowler-api:8080/...`) instead of your external domain URL (e.g., `https://prowler.example.com/...`).
+
+**Root Cause:**
+
+Next.js environment variables prefixed with `NEXT_PUBLIC_` are **bundled at build time**, not runtime. The pre-built Docker images from Docker Hub (`prowlercloud/prowler-ui:stable`) are built with default internal URLs. Simply setting `NEXT_PUBLIC_API_BASE_URL` in your `.env` file or environment variables and restarting the container will **NOT** work because these values are already compiled into the JavaScript bundle.
+
+**Solution:**
+
+You must **rebuild** the UI Docker image with your external URL:
+
+```bash
+# Clone the repository (if you haven't already)
+git clone https://github.com/prowler-cloud/prowler.git
+cd prowler/ui
+
+# Build with your external URL as a build argument
+docker build \
+  --build-arg NEXT_PUBLIC_API_BASE_URL=https://prowler.example.com/api/v1 \
+  --build-arg NEXT_PUBLIC_API_DOCS_URL=https://prowler.example.com/api/v1/docs \
+  -t prowler-ui-custom:latest \
+  --target prod \
+  .
+```
+
+Then update your `docker-compose.yml` to use your custom image instead of the pre-built one:
+
+```yaml
+services:
+  ui:
+    image: prowler-ui-custom:latest  # Use your custom-built image
+    # ... rest of configuration
+```
+
+<Note>
+The `NEXT_PUBLIC_` prefix is a Next.js convention that exposes environment variables to the browser. Since the browser bundle is compiled during `docker build`, these variables must be provided as build arguments, not runtime environment variables.
+</Note>

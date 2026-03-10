@@ -18,8 +18,8 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "DBEngineVersions": [
                 {
-                    "Engine": "mysql",
-                    "EngineVersion": "8.0.32",
+                    "Engine": "aurora-mysql",
+                    "EngineVersion": "5.7.mysql_aurora.2.11.2",
                     "DBEngineDescription": "description",
                     "DBEngineVersionDescription": "description",
                 },
@@ -57,14 +57,13 @@ class Test_rds_cluster_backtrack_enabled:
     @mock_aws
     def test_rds_cluster_aurora_mysql_backtrack_disabled(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
-        conn.create_db_parameter_group(
-            DBParameterGroupName="test",
-            DBParameterGroupFamily="default.mysql8.0",
+        conn.create_db_cluster_parameter_group(
+            DBClusterParameterGroupName="test",
+            DBParameterGroupFamily="aurora-mysql5.7",
             Description="test parameter group",
         )
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
-            AllocatedStorage=10,
             Engine="aurora-mysql",
             DatabaseName="staging-mysql",
             DeletionProtection=True,
@@ -73,8 +72,8 @@ class Test_rds_cluster_backtrack_enabled:
             MasterUserPassword="password",
             Tags=[],
         )
-        conn.modify_db_parameter_group(
-            DBParameterGroupName="test",
+        conn.modify_db_cluster_parameter_group(
+            DBClusterParameterGroupName="test",
             Parameters=[
                 {
                     "ParameterName": "require_secure_transport",
@@ -119,14 +118,13 @@ class Test_rds_cluster_backtrack_enabled:
     @mock_aws
     def test_rds_cluster_aurora_mysql_backtrack_enabled(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
-        conn.create_db_parameter_group(
-            DBParameterGroupName="test",
-            DBParameterGroupFamily="default.mysql8.0",
+        conn.create_db_cluster_parameter_group(
+            DBClusterParameterGroupName="test",
+            DBParameterGroupFamily="aurora-mysql5.7",
             Description="test parameter group",
         )
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
-            AllocatedStorage=10,
             Engine="aurora-mysql",
             DatabaseName="staging-mysql",
             DeletionProtection=True,
@@ -135,8 +133,8 @@ class Test_rds_cluster_backtrack_enabled:
             MasterUserPassword="password",
             Tags=[],
         )
-        conn.modify_db_parameter_group(
-            DBParameterGroupName="test",
+        conn.modify_db_cluster_parameter_group(
+            DBClusterParameterGroupName="test",
             Parameters=[
                 {
                     "ParameterName": "require_secure_transport",

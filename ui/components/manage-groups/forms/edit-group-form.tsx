@@ -1,24 +1,22 @@
 "use client";
 
+import { Divider } from "@heroui/divider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Divider } from "@nextui-org/react";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateProviderGroup } from "@/actions/manage-groups/manage-groups";
+import { Button } from "@/components/shadcn";
+import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
-import {
-  CustomButton,
-  CustomDropdownSelection,
-  CustomInput,
-} from "@/components/ui/custom";
+import { CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { ApiError } from "@/types";
 
 const editGroupSchema = z.object({
-  name: z.string().nonempty("Provider group name is required"),
+  name: z.string().min(1, "Provider group name is required"),
   providers: z.array(z.object({ id: z.string(), name: z.string() })).optional(),
   roles: z.array(z.object({ id: z.string(), name: z.string() })).optional(),
 });
@@ -105,7 +103,8 @@ export const EditGroupForm = ({
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
-          switch (error.source.pointer) {
+          const pointer = error.source?.pointer;
+          switch (pointer) {
             case "/data/attributes/name":
               form.setError("name", {
                 type: "server",
@@ -133,7 +132,7 @@ export const EditGroupForm = ({
         });
         router.push("/manage-groups");
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -146,7 +145,7 @@ export const EditGroupForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
         {/* Field for the name */}
         <div className="flex flex-col gap-2">
@@ -157,9 +156,8 @@ export const EditGroupForm = ({
             label="Provider group name"
             labelPlacement="inside"
             placeholder="Enter the provider group name"
-            variant="bordered"
+            variant="flat"
             isRequired
-            isInvalid={!!form.formState.errors.name}
           />
         </div>
 
@@ -179,18 +177,29 @@ export const EditGroupForm = ({
             ];
 
             return (
-              <CustomDropdownSelection
-                label="Select Providers"
-                name="providers"
-                values={combinedProviders}
-                selectedKeys={field.value?.map((p) => p.id) || []}
-                onChange={(name, selectedValues) => {
-                  const selectedProviders = combinedProviders.filter(
-                    (provider) => selectedValues.includes(provider.id),
-                  );
-                  field.onChange(selectedProviders);
-                }}
-              />
+              <div className="flex flex-col gap-2">
+                <EnhancedMultiSelect
+                  options={combinedProviders.map((provider) => ({
+                    label: provider.name,
+                    value: provider.id,
+                  }))}
+                  onValueChange={(selectedValues) => {
+                    const selectedProviders = combinedProviders.filter(
+                      (provider) => selectedValues.includes(provider.id),
+                    );
+                    field.onChange(selectedProviders);
+                  }}
+                  defaultValue={
+                    field.value?.map((provider) => provider.id) || []
+                  }
+                  placeholder="Select providers"
+                  aria-label="Select providers"
+                  searchable={true}
+                  hideSelectAll={true}
+                  emptyIndicator="No results found"
+                  resetOnDefaultValueChange={true}
+                />
+              </div>
             );
           }}
         />
@@ -219,18 +228,27 @@ export const EditGroupForm = ({
             ];
 
             return (
-              <CustomDropdownSelection
-                label="Select Roles"
-                name="roles"
-                values={combinedRoles}
-                selectedKeys={field.value?.map((r) => r.id) || []}
-                onChange={(name, selectedValues) => {
-                  const selectedRoles = combinedRoles.filter((role) =>
-                    selectedValues.includes(role.id),
-                  );
-                  field.onChange(selectedRoles);
-                }}
-              />
+              <div className="flex flex-col gap-2">
+                <EnhancedMultiSelect
+                  options={combinedRoles.map((role) => ({
+                    label: role.name,
+                    value: role.id,
+                  }))}
+                  onValueChange={(selectedValues) => {
+                    const selectedRoles = combinedRoles.filter((role) =>
+                      selectedValues.includes(role.id),
+                    );
+                    field.onChange(selectedRoles);
+                  }}
+                  defaultValue={field.value?.map((role) => role.id) || []}
+                  placeholder="Select roles"
+                  aria-label="Select roles"
+                  searchable={true}
+                  hideSelectAll={true}
+                  emptyIndicator="No results found"
+                  resetOnDefaultValueChange={true}
+                />
+              </div>
             );
           }}
         />
@@ -240,32 +258,21 @@ export const EditGroupForm = ({
           </p>
         )}
 
-        <div className="flex w-full justify-end sm:space-x-6">
-          <CustomButton
+        <div className="flex w-full justify-end gap-4">
+          <Button
             type="button"
-            ariaLabel="Cancel"
-            className="w-fit bg-transparent"
-            variant="faded"
-            size="md"
-            onPress={() => {
+            variant="ghost"
+            onClick={() => {
               router.push("/manage-groups");
             }}
-            isDisabled={isLoading}
+            disabled={isLoading}
           >
-            <span>Cancel</span>
-          </CustomButton>
-          <CustomButton
-            type="submit"
-            ariaLabel="Update Group"
-            className="w-1/2"
-            variant="solid"
-            color="action"
-            size="md"
-            isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
-          >
-            {isLoading ? <>Loading</> : <span>Update Group</span>}
-          </CustomButton>
+            Cancel
+          </Button>
+          <Button type="submit" className="w-1/2" disabled={isLoading}>
+            {!isLoading && <SaveIcon size={24} />}
+            {isLoading ? "Loading" : "Update Group"}
+          </Button>
         </div>
       </form>
     </Form>

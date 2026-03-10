@@ -19,7 +19,7 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "DBEngineVersions": [
                 {
-                    "Engine": "mysql",
+                    "Engine": "postgres",
                     "EngineVersion": "8.0.32",
                     "DBEngineDescription": "description",
                     "DBEngineVersionDescription": "description",
@@ -61,10 +61,11 @@ class Test_rds_instance_deprecated_engine_version:
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
-            Engine="mysql",
+            Engine="postgres",
             EngineVersion="8.0.32",
-            DBName="staging-mysql",
+            DBName="staging-postgres",
             DBInstanceClass="db.m1.small",
+            PubliclyAccessible=False,
         )
 
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -91,7 +92,7 @@ class Test_rds_instance_deprecated_engine_version:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "RDS instance db-master-1 is not using a deprecated engine mysql with version 8.0.32."
+                    == "RDS instance db-master-1 is not using a deprecated engine postgres with version 8.0.32."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -107,10 +108,11 @@ class Test_rds_instance_deprecated_engine_version:
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-2",
             AllocatedStorage=10,
-            Engine="mysql",
+            Engine="postgres",
             EngineVersion="8.0.23",
-            DBName="staging-mysql",
+            DBName="staging-postgres",
             DBInstanceClass="db.m1.small",
+            PubliclyAccessible=False,
         )
 
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -137,7 +139,7 @@ class Test_rds_instance_deprecated_engine_version:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "RDS instance db-master-2 is using a deprecated engine mysql with version 8.0.23."
+                    == "RDS instance db-master-2 is using a deprecated engine postgres with version 8.0.23."
                 )
                 assert result[0].resource_id == "db-master-2"
                 assert result[0].region == AWS_REGION_US_EAST_1

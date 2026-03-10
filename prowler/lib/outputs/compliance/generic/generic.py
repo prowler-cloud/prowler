@@ -53,12 +53,15 @@ class GenericCompliance(ComplianceOutput):
                             Requirements_Attributes_SubGroup=attribute.SubGroup,
                             Requirements_Attributes_Service=attribute.Service,
                             Requirements_Attributes_Type=attribute.Type,
+                            Requirements_Attributes_Comment=attribute.Comment,
                             Status=finding.status,
                             StatusExtended=finding.status_extended,
                             ResourceId=finding.resource_uid,
                             ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                         )
                         self._data.append(compliance_row)
         # Add manual requirements to the compliance output
@@ -78,11 +81,14 @@ class GenericCompliance(ComplianceOutput):
                         Requirements_Attributes_SubGroup=attribute.SubGroup,
                         Requirements_Attributes_Service=attribute.Service,
                         Requirements_Attributes_Type=attribute.Type,
+                        Requirements_Attributes_Comment=attribute.Comment,
                         Status="MANUAL",
                         StatusExtended="Manual check",
                         ResourceId="manual_check",
                         ResourceName="Manual check",
                         CheckId="manual",
                         Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)

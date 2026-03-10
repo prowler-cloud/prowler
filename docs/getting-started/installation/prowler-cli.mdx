@@ -1,0 +1,190 @@
+---
+title: 'Installation'
+---
+
+## Installation
+
+To install Prowler as a Python package, use `Python >= 3.9, <= 3.12`. Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/):
+
+<Tabs>
+  <Tab title="pipx">
+    [pipx](https://pipx.pypa.io/stable/) installs Python applications in isolated environments. Use `pipx` for global installation.
+
+    _Requirements_:
+
+    * `Python >= 3.9, <= 3.12`
+    * `pipx` installed: [pipx installation](https://pipx.pypa.io/stable/installation/).
+    * AWS, GCP, Azure and/or Kubernetes credentials
+
+    _Commands_:
+
+    ``` bash
+    pipx install prowler
+    prowler -v
+    ```
+  </Tab>
+  <Tab title="pip">
+    <Warning>
+    This method modifies the chosen installation environment. Consider using [pipx](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) for global installation.
+    </Warning>
+
+    _Requirements_:
+
+    * `Python >= 3.9, <= 3.12`
+    * `Python pip >= 21.0.0`
+    * AWS, GCP, Azure, M365 and/or Kubernetes credentials
+
+    _Commands_:
+
+    ``` bash
+    pip install prowler
+    prowler -v
+    ```
+
+    To upgrade Prowler to the latest version:
+
+    ``` bash
+    pip install --upgrade prowler
+    ```
+  </Tab>
+  <Tab title="Docker">
+    _Requirements_:
+
+    * Have `docker` installed: https://docs.docker.com/get-docker/.
+    * In the command below, change `-v` to your local directory path in order to access the reports.
+    * AWS, GCP, Azure and/or Kubernetes credentials
+
+    _Commands_:
+
+    ``` bash
+    docker run -ti --rm -v /your/local/dir/prowler-output:/home/prowler/output \
+    --name prowler \
+    --env AWS_ACCESS_KEY_ID \
+    --env AWS_SECRET_ACCESS_KEY \
+    --env AWS_SESSION_TOKEN toniblyx/prowler:latest
+    ```
+  </Tab>
+  <Tab title="GitHub">
+    _Requirements for Developers_:
+
+    * `git`
+    * `poetry` installed: [poetry installation](https://python-poetry.org/docs/#installation).
+    * AWS, GCP, Azure and/or Kubernetes credentials
+
+    _Commands_:
+
+    ```bash
+    git clone https://github.com/prowler-cloud/prowler
+    cd prowler
+    poetry install
+    poetry run python prowler-cli.py -v
+    ```
+
+    <Note>
+    If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
+    </Note>
+  </Tab>
+  <Tab title="Amazon Linux 2">
+    _Requirements_:
+
+    * `Python >= 3.9, <= 3.12`
+    * AWS, GCP, Azure and/or Kubernetes credentials
+
+    _Commands_:
+
+    ```bash
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    pipx install prowler
+    prowler -v
+    ```
+  </Tab>
+  <Tab title="Ubuntu">
+    _Requirements_:
+
+    * `Ubuntu 23.04` or above. For older Ubuntu versions, check [pipx installation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) and ensure `Python >= 3.9, <= 3.12` is installed.
+    * `Python >= 3.9, <= 3.12`
+    * AWS, GCP, Azure and/or Kubernetes credentials
+
+    _Commands_:
+
+    ``` bash
+    sudo apt update
+    sudo apt install pipx
+    pipx ensurepath
+    pipx install prowler
+    prowler -v
+    ```
+  </Tab>
+  <Tab title="Brew">
+    _Requirements_:
+
+    * `Brew` installed on Mac or Linux
+    * AWS, GCP, Azure and/or Kubernetes credentials
+
+    _Commands_:
+
+    ``` bash
+    brew install prowler
+    prowler -v
+    ```
+  </Tab>
+  <Tab title="AWS CloudShell">
+    After the migration of AWS CloudShell from Amazon Linux 2 to Amazon Linux 2023 [[1]](https://aws.amazon.com/about-aws/whats-new/2023/12/aws-cloudshell-migrated-al2023/) [[2]](https://docs.aws.amazon.com/cloudshell/latest/userguide/cloudshell-AL2023-migration.html), there is no longer a need to manually compile Python 3.9 as it is already included in AL2023. Prowler can thus be easily installed following the generic method of installation via pip. Follow the steps below to successfully execute Prowler v4 in AWS CloudShell:
+
+    _Requirements_:
+
+    * Open AWS CloudShell `bash`.
+
+    _Commands_:
+
+    ```bash
+    sudo bash
+    adduser prowler
+    su prowler
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    pipx install prowler
+    cd /tmp
+    prowler aws
+    ```
+
+    <Note>
+    To download the results from AWS CloudShell, select Actions -> Download File and add the full path of each file. For the CSV file it will be something like `/tmp/output/prowler-output-123456789012-20221220191331.csv`
+    </Note>
+  </Tab>
+  <Tab title="Azure CloudShell">
+    _Requirements_:
+
+    * Open Azure CloudShell `bash`.
+
+    _Commands_:
+
+    ```bash
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    pipx install prowler
+    cd /tmp
+    prowler azure --az-cli-auth
+    ```
+  </Tab>
+</Tabs>
+
+## Container Versions
+
+The available versions of Prowler CLI are the following:
+
+- `latest`: in sync with `master` branch (please note that it is not a stable version)
+- `v4-latest`: in sync with `v4` branch (please note that it is not a stable version)
+- `v3-latest`: in sync with `v3` branch (please note that it is not a stable version)
+- `<x.y.z>` (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
+- `stable`: this tag always point to the latest release.
+- `v4-stable`: this tag always point to the latest release for v4.
+- `v3-stable`: this tag always point to the latest release for v3.
+
+The container images are available here:
+
+- Prowler CLI:
+
+    - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
+    - [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)

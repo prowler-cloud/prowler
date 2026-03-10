@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_instance_with_outdated_ami",
+  "CheckTitle": "EC2 instance uses a non-deprecated Amazon AMI",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Patch Management",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
+  "Description": "**EC2 instances** launched from **Amazon-owned AMIs** are evaluated for the AMI's `DeprecationTime`; instances tied to images with a deprecation date in the past are reported as using **deprecated AMIs**.",
+  "Risk": "Running on a **deprecated AMI** undermines security and availability:\n- Missing patches enable exploitation of known CVEs (confidentiality/integrity)\n- Unsupported components hinder hardening and forensics\n- AMI removal from catalogs complicates scale-out and recovery (availability)",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-deprecate.html",
+    "https://repost.aws/knowledge-center/ec2-find-deprecated-ami"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```yaml\n# Use a non-deprecated Amazon AMI for instances launched via this template\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::LaunchTemplate\n    Properties:\n      LaunchTemplateData:\n        ImageId: \"<non_deprecated_amazon_ami_id>\"  # Critical: Amazon-owned AMI with no DeprecationTime\n```",
+      "Other": "1. In the EC2 console, go to AMIs\n2. Set Owner to \"Amazon\" and ensure deprecated AMIs are not included; copy the AMI ID\n3. If using an Auto Scaling Group:\n   - Launch templates > select the one in use > Create new version with Image ID set to the copied AMI and set it as default\n   - Auto Scaling Groups > select the group > Start instance refresh\n4. If it is a standalone instance:\n   - Launch a new instance using the copied Amazon AMI\n   - Move workloads and terminate the old instance",
+      "Terraform": "```hcl\n# EC2 instance using a non-deprecated Amazon AMI\nresource \"aws_instance\" \"<example_resource_name>\" {\n  ami           = \"<non_deprecated_amazon_ami_id>\"  # Critical: Amazon-owned AMI with no DeprecationTime\n  instance_type = \"t3.micro\"\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Adopt **non-deprecated, maintained AMIs** and perform rolling replacements of affected instances. Standardize on hardened golden images with **regular AMI rotation** and `DeprecationTime` monitoring. Update launch templates/ASGs to reference current images. Automate patching via an image pipeline and apply **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_with_outdated_ami"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

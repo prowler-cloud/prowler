@@ -71,9 +71,12 @@ export const MITRECustomDetails = ({
 
       {cloudServices && cloudServices.length > 0 && (
         <ComplianceDetailSection title="Cloud Security Mappings">
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             {cloudServices.map((service, index) => (
-              <div key={index} className="space-y-3 rounded-lg border p-4">
+              <div
+                key={index}
+                className="flex flex-col gap-3 rounded-lg border p-4"
+              >
                 <div className="flex flex-wrap items-center gap-3">
                   <ComplianceBadge
                     label="Service"

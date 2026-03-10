@@ -1,5 +1,6 @@
 {
   "Framework": "NIST-800-53-Revision-4",
+  "Name": "National Institute of Standards and Technology (NIST) 800-53 Revision 4",
   "Version": "",
   "Provider": "AWS",
   "Description": "NIST 800-53 is a regulatory standard that defines the minimum baseline of security controls for all U.S. federal information systems except those related to national security. The controls defined in this standard are customizable and address a diverse set of security and privacy requirements.",

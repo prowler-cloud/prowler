@@ -36,15 +36,21 @@ def generate_finding_output(
     depends_on: list[str] = ["test-dependency"],
     related_to: list[str] = ["test-related-to"],
     notes: str = "test-notes",
+    additional_urls: list[str] = [
+        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html",
+        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/introduction.html",
+    ],
     service_name: str = "service",
     check_id: str = "service_test_check_id",
     check_title: str = "service_test_check_id",
     check_type: list[str] = ["test-type"],
+    provider_uid: str = None,
 ) -> Finding:
     return Finding(
         auth_method="profile: default",
         timestamp=timestamp if timestamp else datetime.now(),
         account_uid=account_uid,
+        provider_uid=provider_uid,
         account_name=account_name,
         account_email="",
         account_organization_uid="test-organization-id",
@@ -90,6 +96,7 @@ def generate_finding_output(
             RelatedTo=related_to,
             Categories=categories,
             Notes=notes,
+            AdditionalURLs=additional_urls,
         ),
         prowler_version=prowler_version,
     )

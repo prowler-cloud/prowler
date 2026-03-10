@@ -1,43 +1,45 @@
 "use client";
 
-import { Card, CardBody } from "@nextui-org/react";
-import React from "react";
+import { useState } from "react";
+
+import { ProviderWizardModal } from "@/components/providers/wizard";
+import { Button, Card, CardContent } from "@/components/shadcn";
 
 import { InfoIcon } from "../icons/Icons";
-import { CustomButton } from "../ui/custom";
 
 export const NoProvidersAdded = () => {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="mx-auto w-full max-w-7xl px-4">
-        <Card className="mx-auto w-full max-w-3xl rounded-lg dark:bg-prowler-blue-400">
-          <CardBody className="flex flex-col items-center space-y-4 p-6 text-center sm:p-8">
-            <div className="flex flex-col items-center space-y-4">
+    <>
+      <div className="flex min-h-screen items-center justify-center">
+        <Card variant="base" className="mx-auto w-full max-w-3xl">
+          <CardContent className="flex flex-col items-center gap-4 p-6 text-center sm:p-8">
+            <div className="flex flex-col items-center gap-4">
               <InfoIcon className="h-10 w-10 text-gray-800 dark:text-white" />
               <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
                 No Cloud Providers Configured
               </h2>
             </div>
-            <div className="flex flex-col items-center space-y-3">
+            <div className="flex flex-col items-center gap-3">
               <p className="text-md leading-relaxed text-gray-600 dark:text-gray-300">
                 No cloud providers have been configured. Start by setting up a
                 cloud provider.
               </p>
             </div>
 
-            <CustomButton
-              asLink="/providers/connect-account"
-              ariaLabel="Go to Add Cloud Provider page"
+            <Button
+              aria-label="Open Add Cloud Provider modal"
               className="w-full max-w-xs justify-center"
-              variant="solid"
-              color="action"
               size="lg"
+              onClick={() => setOpen(true)}
             >
               Get Started
-            </CustomButton>
-          </CardBody>
+            </Button>
+          </CardContent>
         </Card>
       </div>
-    </div>
+      <ProviderWizardModal open={open} onOpenChange={setOpen} />
+    </>
   );
 };

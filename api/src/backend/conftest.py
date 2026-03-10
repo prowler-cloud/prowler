@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -11,10 +12,20 @@ from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.test import APIClient
-from tasks.jobs.backfill import backfill_resource_scan_summaries
+from tasks.jobs.backfill import (
+    backfill_resource_scan_summaries,
+    backfill_scan_category_summaries,
+    backfill_scan_resource_group_summaries,
+)
 
+from api.attack_paths import (
+    AttackPathsQueryDefinition,
+    AttackPathsQueryParameterDefinition,
+)
 from api.db_utils import rls_transaction
 from api.models import (
+    AttackPathsScan,
+    AttackSurfaceOverview,
     ComplianceOverview,
     ComplianceRequirementOverview,
     Finding,
@@ -23,8 +34,10 @@ from api.models import (
     Invitation,
     LighthouseConfiguration,
     Membership,
+    MuteRule,
     Processor,
     Provider,
+    ProviderComplianceScore,
     ProviderGroup,
     ProviderSecret,
     Resource,
@@ -34,10 +47,14 @@ from api.models import (
     SAMLConfiguration,
     SAMLDomainIndex,
     Scan,
+    ScanCategorySummary,
+    ScanGroupSummary,
     ScanSummary,
     StateChoices,
     StatusChoices,
     Task,
+    TenantAPIKey,
+    TenantComplianceSummary,
     User,
     UserRoleRelationship,
 )
@@ -157,22 +174,20 @@ def create_test_user_rbac_no_roles(django_db_setup, django_db_blocker, tenants_f
 
 
 @pytest.fixture(scope="function")
-def create_test_user_rbac_limited(django_db_setup, django_db_blocker):
+def create_test_user_rbac_limited(django_db_setup, django_db_blocker, tenants_fixture):
     with django_db_blocker.unblock():
         user = User.objects.create_user(
             name="testing_limited",
             email="rbac_limited@rbac.com",
             password=TEST_PASSWORD,
         )
-        tenant = Tenant.objects.create(
-            name="Tenant Test",
-        )
+        tenant = tenants_fixture[0]
         Membership.objects.create(
             user=user,
             tenant=tenant,
             role=Membership.RoleChoices.OWNER,
         )
-        Role.objects.create(
+        role = Role.objects.create(
             name="limited",
             tenant_id=tenant.id,
             manage_users=False,
@@ -185,10 +200,112 @@ def create_test_user_rbac_limited(django_db_setup, django_db_blocker):
         )
         UserRoleRelationship.objects.create(
             user=user,
-            role=Role.objects.get(name="limited"),
+            role=role,
             tenant_id=tenant.id,
         )
     return user
+
+
+@pytest.fixture(scope="function")
+def create_test_user_rbac_manage_account(django_db_setup, django_db_blocker):
+    """User with only manage_account permission (no manage_users)."""
+    with django_db_blocker.unblock():
+        user = User.objects.create_user(
+            name="testing_manage_account",
+            email="rbac_manage_account@rbac.com",
+            password=TEST_PASSWORD,
+        )
+        tenant = Tenant.objects.create(
+            name="Tenant Test Manage Account",
+        )
+        Membership.objects.create(
+            user=user,
+            tenant=tenant,
+            role=Membership.RoleChoices.OWNER,
+        )
+        role = Role.objects.create(
+            name="manage_account",
+            tenant_id=tenant.id,
+            manage_users=False,
+            manage_account=True,
+            manage_billing=False,
+            manage_providers=False,
+            manage_integrations=False,
+            manage_scans=False,
+            unlimited_visibility=False,
+        )
+        UserRoleRelationship.objects.create(
+            user=user,
+            role=role,
+            tenant_id=tenant.id,
+        )
+    return user
+
+
+@pytest.fixture
+def authenticated_client_rbac_manage_account(
+    create_test_user_rbac_manage_account, tenants_fixture, client
+):
+    client.user = create_test_user_rbac_manage_account
+    serializer = TokenSerializer(
+        data={
+            "type": "tokens",
+            "email": "rbac_manage_account@rbac.com",
+            "password": TEST_PASSWORD,
+        }
+    )
+    serializer.is_valid()
+    access_token = serializer.validated_data["access"]
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
+    return client
+
+
+@pytest.fixture(scope="function")
+def create_test_user_rbac_manage_users_only(django_db_setup, django_db_blocker):
+    """User with only manage_users permission (no manage_account)."""
+    with django_db_blocker.unblock():
+        user = User.objects.create_user(
+            name="testing_manage_users_only",
+            email="rbac_manage_users_only@rbac.com",
+            password=TEST_PASSWORD,
+        )
+        tenant = Tenant.objects.create(name="Tenant Test Manage Users Only")
+        Membership.objects.create(
+            user=user,
+            tenant=tenant,
+            role=Membership.RoleChoices.OWNER,
+        )
+        role = Role.objects.create(
+            name="manage_users_only",
+            tenant_id=tenant.id,
+            manage_users=True,
+            manage_account=False,
+            manage_billing=False,
+            manage_providers=False,
+            manage_integrations=False,
+            manage_scans=False,
+            unlimited_visibility=False,
+        )
+        UserRoleRelationship.objects.create(user=user, role=role, tenant_id=tenant.id)
+    return user
+
+
+@pytest.fixture
+def authenticated_client_rbac_manage_users_only(
+    create_test_user_rbac_manage_users_only, client
+):
+    client.user = create_test_user_rbac_manage_users_only
+    serializer = TokenSerializer(
+        data={
+            "type": "tokens",
+            "email": "rbac_manage_users_only@rbac.com",
+            "password": TEST_PASSWORD,
+        }
+    )
+    serializer.is_valid()
+    access_token = serializer.validated_data["access"]
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
+    return client
 
 
 @pytest.fixture
@@ -396,8 +513,50 @@ def providers_fixture(tenants_fixture):
         alias="m365_testing",
         tenant_id=tenant.id,
     )
+    provider7 = Provider.objects.create(
+        provider="oraclecloud",
+        uid="ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+        alias="oci_testing",
+        tenant_id=tenant.id,
+    )
+    provider8 = Provider.objects.create(
+        provider="mongodbatlas",
+        uid="64b1d3c0e4b03b1234567890",
+        alias="mongodbatlas_testing",
+        tenant_id=tenant.id,
+    )
+    provider9 = Provider.objects.create(
+        provider="alibabacloud",
+        uid="1234567890123456",
+        alias="alibabacloud_testing",
+        tenant_id=tenant.id,
+    )
+    provider10 = Provider.objects.create(
+        provider="cloudflare",
+        uid="a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+        alias="cloudflare_testing",
+        tenant_id=tenant.id,
+    )
+    provider11 = Provider.objects.create(
+        provider="openstack",
+        uid="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        alias="openstack_testing",
+        tenant_id=tenant.id,
+    )
 
-    return provider1, provider2, provider3, provider4, provider5, provider6
+    return (
+        provider1,
+        provider2,
+        provider3,
+        provider4,
+        provider5,
+        provider6,
+        provider7,
+        provider8,
+        provider9,
+        provider10,
+        provider11,
+    )
 
 
 @pytest.fixture
@@ -519,21 +678,25 @@ def scans_fixture(tenants_fixture, providers_fixture):
     tenant, *_ = tenants_fixture
     provider, provider2, *_ = providers_fixture
 
+    now = datetime.now(timezone.utc)
+
     scan1 = Scan.objects.create(
         name="Scan 1",
         provider=provider,
         trigger=Scan.TriggerChoices.MANUAL,
         state=StateChoices.COMPLETED,
         tenant_id=tenant.id,
-        started_at="2024-01-02T00:00:00Z",
+        started_at=now,
+        completed_at=now,
     )
     scan2 = Scan.objects.create(
         name="Scan 2",
-        provider=provider,
+        provider=provider2,
         trigger=Scan.TriggerChoices.SCHEDULED,
-        state=StateChoices.FAILED,
+        state=StateChoices.COMPLETED,
         tenant_id=tenant.id,
-        started_at="2024-01-02T00:00:00Z",
+        started_at=now,
+        completed_at=now,
     )
     scan3 = Scan.objects.create(
         name="Scan 3",
@@ -600,6 +763,7 @@ def resources_fixture(providers_fixture):
         region="us-east-1",
         service="ec2",
         type="prowler-test",
+        groups=["compute"],
     )
 
     resource1.upsert_or_delete_tags(tags)
@@ -612,6 +776,7 @@ def resources_fixture(providers_fixture):
         region="eu-west-1",
         service="s3",
         type="prowler-test",
+        groups=["storage"],
     )
     resource2.upsert_or_delete_tags(tags)
 
@@ -623,6 +788,7 @@ def resources_fixture(providers_fixture):
         region="us-east-1",
         service="ec2",
         type="test",
+        groups=["compute"],
     )
 
     tags = [
@@ -983,8 +1149,8 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         region="region1",
         _pass=1,
         fail=0,
-        muted=0,
-        total=1,
+        muted=2,
+        total=3,
         new=1,
         changed=0,
         unchanged=0,
@@ -992,7 +1158,7 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         fail_changed=0,
         pass_new=1,
         pass_changed=0,
-        muted_new=0,
+        muted_new=2,
         muted_changed=0,
         scan=scan,
     )
@@ -1005,8 +1171,8 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         region="region2",
         _pass=0,
         fail=1,
-        muted=1,
-        total=2,
+        muted=3,
+        total=4,
         new=2,
         changed=0,
         unchanged=0,
@@ -1014,7 +1180,7 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         fail_changed=0,
         pass_new=0,
         pass_changed=0,
-        muted_new=1,
+        muted_new=3,
         muted_changed=0,
         scan=scan,
     )
@@ -1027,8 +1193,8 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         region="region1",
         _pass=1,
         fail=0,
-        muted=0,
-        total=1,
+        muted=1,
+        total=2,
         new=1,
         changed=0,
         unchanged=0,
@@ -1036,7 +1202,7 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         fail_changed=0,
         pass_new=1,
         pass_changed=0,
-        muted_new=0,
+        muted_new=1,
         muted_changed=0,
         scan=scan,
     )
@@ -1095,7 +1261,7 @@ def lighthouse_config_fixture(authenticated_client, tenants_fixture):
     return LighthouseConfiguration.objects.create(
         tenant_id=tenants_fixture[0].id,
         name="OpenAI",
-        api_key_decoded="sk-test1234567890T3BlbkFJtest1234567890",
+        api_key_decoded="sk-fake-test-key-for-unit-testing-only",
         model="gpt-4o",
         temperature=0,
         max_tokens=4000,
@@ -1142,6 +1308,115 @@ def latest_scan_finding(authenticated_client, providers_fixture, resources_fixtu
 
     finding.add_resources([resource])
     backfill_resource_scan_summaries(tenant_id, str(scan.id))
+    return finding
+
+
+@pytest.fixture(scope="function")
+def findings_with_categories(scans_fixture, resources_fixture):
+    scan = scans_fixture[0]
+    resource = resources_fixture[0]
+
+    finding = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        uid="finding_with_categories_1",
+        scan=scan,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="genai_check",
+        check_metadata={"CheckId": "genai_check"},
+        categories=["gen-ai", "security"],
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources([resource])
+    backfill_resource_scan_summaries(str(scan.tenant_id), str(scan.id))
+    return finding
+
+
+@pytest.fixture(scope="function")
+def findings_with_multiple_categories(scans_fixture, resources_fixture):
+    scan = scans_fixture[0]
+    resource1, resource2 = resources_fixture[:2]
+
+    finding1 = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        uid="finding_multi_cat_1",
+        scan=scan,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="genai_check",
+        check_metadata={"CheckId": "genai_check"},
+        categories=["gen-ai", "security"],
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding1.add_resources([resource1])
+
+    finding2 = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        uid="finding_multi_cat_2",
+        scan=scan,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="test status 2",
+        impact=Severity.high,
+        impact_extended="test impact 2",
+        severity=Severity.high,
+        raw_result={"status": Status.FAIL},
+        check_id="iam_check",
+        check_metadata={"CheckId": "iam_check"},
+        categories=["iam", "security"],
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding2.add_resources([resource2])
+
+    backfill_resource_scan_summaries(str(scan.tenant_id), str(scan.id))
+    return finding1, finding2
+
+
+@pytest.fixture(scope="function")
+def latest_scan_finding_with_categories(
+    authenticated_client, providers_fixture, resources_fixture
+):
+    provider = providers_fixture[0]
+    tenant_id = str(providers_fixture[0].tenant_id)
+    resource = resources_fixture[0]
+    scan = Scan.objects.create(
+        name="latest completed scan with categories",
+        provider=provider,
+        trigger=Scan.TriggerChoices.MANUAL,
+        state=StateChoices.COMPLETED,
+        tenant_id=tenant_id,
+    )
+    finding = Finding.objects.create(
+        tenant_id=tenant_id,
+        uid="latest_finding_with_categories",
+        scan=scan,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="genai_iam_check",
+        check_metadata={"CheckId": "genai_iam_check"},
+        categories=["gen-ai", "iam"],
+        resource_groups="ai_ml",
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources([resource])
+    backfill_resource_scan_summaries(tenant_id, str(scan.id))
+    backfill_scan_category_summaries(tenant_id, str(scan.id))
+    backfill_scan_resource_group_summaries(tenant_id, str(scan.id))
     return finding
 
 
@@ -1266,8 +1541,690 @@ def saml_sociallogin(users_fixture):
     return sociallogin
 
 
+@pytest.fixture
+def api_keys_fixture(tenants_fixture, create_test_user):
+    """Create test API keys for testing."""
+    tenant = tenants_fixture[0]
+    user = create_test_user
+
+    # Create and assign role to user for API key authentication
+    role = Role.objects.create(
+        tenant_id=tenant.id,
+        name="Test API Key Role",
+        unlimited_visibility=True,
+        manage_account=True,
+    )
+    UserRoleRelationship.objects.create(
+        user=user,
+        role=role,
+        tenant_id=tenant.id,
+    )
+
+    # Create API keys with different states
+    api_key1, raw_key1 = TenantAPIKey.objects.create_api_key(
+        name="Test API Key 1",
+        tenant_id=tenant.id,
+        entity=user,
+    )
+
+    api_key2, raw_key2 = TenantAPIKey.objects.create_api_key(
+        name="Test API Key 2",
+        tenant_id=tenant.id,
+        entity=user,
+        expiry_date=datetime.now(timezone.utc) + timedelta(days=60),
+    )
+
+    # Revoked API key
+    api_key3, raw_key3 = TenantAPIKey.objects.create_api_key(
+        name="Revoked API Key",
+        tenant_id=tenant.id,
+        entity=user,
+    )
+    api_key3.revoked = True
+    api_key3.save()
+
+    # Store raw keys on instances for testing
+    api_key1._raw_key = raw_key1
+    api_key2._raw_key = raw_key2
+    api_key3._raw_key = raw_key3
+
+    return [api_key1, api_key2, api_key3]
+
+
+@pytest.fixture
+def mute_rules_fixture(tenants_fixture, create_test_user, findings_fixture):
+    """Create test mute rules for testing."""
+    tenant = tenants_fixture[0]
+    user = create_test_user
+
+    # Create two mute rules: one enabled, one disabled
+    mute_rule1 = MuteRule.objects.create(
+        tenant_id=tenant.id,
+        name="Test Rule 1",
+        reason="Security exception for testing",
+        enabled=True,
+        created_by=user,
+        finding_uids=[findings_fixture[0].uid],
+    )
+
+    mute_rule2 = MuteRule.objects.create(
+        tenant_id=tenant.id,
+        name="Test Rule 2",
+        reason="Compliance exception approved",
+        enabled=False,
+        created_by=user,
+        finding_uids=[findings_fixture[1].uid],
+    )
+
+    return mute_rule1, mute_rule2
+
+
+@pytest.fixture
+def create_attack_paths_scan():
+    """Factory fixture to create Attack Paths scans for tests."""
+
+    def _create(
+        provider,
+        *,
+        scan=None,
+        state=StateChoices.COMPLETED,
+        progress=0,
+        **extra_fields,
+    ):
+        scan_instance = scan or Scan.objects.create(
+            name=extra_fields.pop("scan_name", "Attack Paths Supporting Scan"),
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=extra_fields.pop("scan_state", StateChoices.COMPLETED),
+            tenant_id=provider.tenant_id,
+        )
+
+        payload = {
+            "tenant_id": provider.tenant_id,
+            "provider": provider,
+            "scan": scan_instance,
+            "state": state,
+            "progress": progress,
+        }
+        payload.update(extra_fields)
+
+        return AttackPathsScan.objects.create(**payload)
+
+    return _create
+
+
+@pytest.fixture
+def attack_paths_query_definition_factory():
+    """Factory fixture for building Attack Paths query definitions."""
+
+    def _create(**overrides):
+        cast_type = overrides.pop("cast_type", str)
+        parameters = overrides.pop(
+            "parameters",
+            [
+                AttackPathsQueryParameterDefinition(
+                    name="limit",
+                    label="Limit",
+                    cast=cast_type,
+                )
+            ],
+        )
+        definition_payload = {
+            "id": "aws-test",
+            "name": "Attack Paths Test Query",
+            "short_description": "Synthetic short description for tests.",
+            "description": "Synthetic Attack Paths definition for tests.",
+            "provider": "aws",
+            "cypher": "RETURN 1",
+            "parameters": parameters,
+        }
+        definition_payload.update(overrides)
+        return AttackPathsQueryDefinition(**definition_payload)
+
+    return _create
+
+
+@pytest.fixture
+def attack_paths_graph_stub_classes():
+    """Provide lightweight graph element stubs for Attack Paths serialization tests."""
+
+    class AttackPathsNativeValue:
+        def __init__(self, value):
+            self._value = value
+
+        def to_native(self):
+            return self._value
+
+    class AttackPathsNode:
+        def __init__(self, element_id, labels, properties):
+            self.element_id = element_id
+            self.labels = labels
+            self._properties = properties
+
+    class AttackPathsRelationship:
+        def __init__(self, element_id, rel_type, start_node, end_node, properties):
+            self.element_id = element_id
+            self.type = rel_type
+            self.start_node = start_node
+            self.end_node = end_node
+            self._properties = properties
+
+    return SimpleNamespace(
+        NativeValue=AttackPathsNativeValue,
+        Node=AttackPathsNode,
+        Relationship=AttackPathsRelationship,
+    )
+
+
+@pytest.fixture
+def create_attack_surface_overview():
+    def _create(tenant, scan, attack_surface_type, total=10, failed=5, muted_failed=2):
+        return AttackSurfaceOverview.objects.create(
+            tenant=tenant,
+            scan=scan,
+            attack_surface_type=attack_surface_type,
+            total_findings=total,
+            failed_findings=failed,
+            muted_failed_findings=muted_failed,
+        )
+
+    return _create
+
+
+@pytest.fixture
+def create_scan_category_summary():
+    def _create(
+        tenant,
+        scan,
+        category,
+        severity,
+        total_findings=10,
+        failed_findings=5,
+        new_failed_findings=2,
+    ):
+        return ScanCategorySummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            category=category,
+            severity=severity,
+            total_findings=total_findings,
+            failed_findings=failed_findings,
+            new_failed_findings=new_failed_findings,
+        )
+
+    return _create
+
+
+@pytest.fixture(scope="function")
+def findings_with_group(scans_fixture, resources_fixture):
+    scan = scans_fixture[0]
+    resource = resources_fixture[0]
+
+    finding = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        uid="finding_with_group_1",
+        scan=scan,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="storage_check",
+        check_metadata={"CheckId": "storage_check"},
+        resource_groups="storage",
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources([resource])
+    backfill_resource_scan_summaries(str(scan.tenant_id), str(scan.id))
+    return finding
+
+
+@pytest.fixture(scope="function")
+def findings_with_multiple_groups(scans_fixture, resources_fixture):
+    scan = scans_fixture[0]
+    resource1, resource2 = resources_fixture[:2]
+
+    finding1 = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        uid="finding_multi_grp_1",
+        scan=scan,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="storage_check",
+        check_metadata={"CheckId": "storage_check"},
+        resource_groups="storage",
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding1.add_resources([resource1])
+
+    finding2 = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        uid="finding_multi_grp_2",
+        scan=scan,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="test status 2",
+        impact=Severity.high,
+        impact_extended="test impact 2",
+        severity=Severity.high,
+        raw_result={"status": Status.FAIL},
+        check_id="security_check",
+        check_metadata={"CheckId": "security_check"},
+        resource_groups="security",
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding2.add_resources([resource2])
+
+    backfill_resource_scan_summaries(str(scan.tenant_id), str(scan.id))
+    return finding1, finding2
+
+
+@pytest.fixture
+def create_scan_resource_group_summary():
+    def _create(
+        tenant,
+        scan,
+        resource_group,
+        severity,
+        total_findings=10,
+        failed_findings=5,
+        new_failed_findings=2,
+        resources_count=3,
+    ):
+        return ScanGroupSummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            resource_group=resource_group,
+            severity=severity,
+            total_findings=total_findings,
+            failed_findings=failed_findings,
+            new_failed_findings=new_failed_findings,
+            resources_count=resources_count,
+        )
+
+    return _create
+
+
 def get_authorization_header(access_token: str) -> dict:
     return {"Authorization": f"Bearer {access_token}"}
+
+
+@pytest.fixture
+def provider_compliance_scores_fixture(
+    tenants_fixture, providers_fixture, scans_fixture
+):
+    """Create ProviderComplianceScore entries for compliance watchlist tests."""
+    tenant = tenants_fixture[0]
+    provider1, provider2, *_ = providers_fixture
+    scan1, _, scan3 = scans_fixture
+
+    scan1.completed_at = datetime.now(timezone.utc) - timedelta(hours=1)
+    scan1.save()
+    scan3.state = StateChoices.COMPLETED
+    scan3.completed_at = datetime.now(timezone.utc)
+    scan3.save()
+
+    scores = [
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            provider=provider1,
+            scan=scan1,
+            compliance_id="aws_cis_2.0",
+            requirement_id="req_1",
+            requirement_status=StatusChoices.PASS,
+            scan_completed_at=scan1.completed_at,
+        ),
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            provider=provider1,
+            scan=scan1,
+            compliance_id="aws_cis_2.0",
+            requirement_id="req_2",
+            requirement_status=StatusChoices.FAIL,
+            scan_completed_at=scan1.completed_at,
+        ),
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            provider=provider1,
+            scan=scan1,
+            compliance_id="aws_cis_2.0",
+            requirement_id="req_3",
+            requirement_status=StatusChoices.MANUAL,
+            scan_completed_at=scan1.completed_at,
+        ),
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            provider=provider2,
+            scan=scan3,
+            compliance_id="aws_cis_2.0",
+            requirement_id="req_1",
+            requirement_status=StatusChoices.FAIL,
+            scan_completed_at=scan3.completed_at,
+        ),
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            provider=provider2,
+            scan=scan3,
+            compliance_id="aws_cis_2.0",
+            requirement_id="req_2",
+            requirement_status=StatusChoices.PASS,
+            scan_completed_at=scan3.completed_at,
+        ),
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            provider=provider1,
+            scan=scan1,
+            compliance_id="gdpr_aws",
+            requirement_id="gdpr_req_1",
+            requirement_status=StatusChoices.PASS,
+            scan_completed_at=scan1.completed_at,
+        ),
+    ]
+
+    return scores
+
+
+@pytest.fixture
+def tenant_compliance_summary_fixture(tenants_fixture):
+    """Create TenantComplianceSummary entries for compliance watchlist tests."""
+    tenant = tenants_fixture[0]
+
+    summaries = [
+        TenantComplianceSummary.objects.create(
+            tenant_id=tenant.id,
+            compliance_id="aws_cis_2.0",
+            requirements_passed=1,
+            requirements_failed=2,
+            requirements_manual=1,
+            total_requirements=4,
+        ),
+        TenantComplianceSummary.objects.create(
+            tenant_id=tenant.id,
+            compliance_id="gdpr_aws",
+            requirements_passed=5,
+            requirements_failed=0,
+            requirements_manual=2,
+            total_requirements=7,
+        ),
+    ]
+
+    return summaries
+
+
+@pytest.fixture
+def finding_groups_fixture(
+    tenants_fixture, providers_fixture, scans_fixture, resources_fixture
+):
+    """
+    Create a comprehensive set of findings for testing Finding Groups aggregation.
+
+    Creates findings for multiple check_ids with varying:
+    - Statuses (PASS, FAIL)
+    - Severities (critical, high, medium, low)
+    - Deltas (new, changed, None)
+    - Muted states (True, False)
+
+    This fixture tests aggregation logic for:
+    - Multiple findings per check_id
+    - Status aggregation (FAIL > PASS > MUTED)
+    - Severity aggregation (max severity)
+    - Provider aggregation (distinct list)
+    - Resource counts
+    - Finding counts (pass, fail, muted, new, changed)
+    """
+    tenant = tenants_fixture[0]
+    provider1, provider2, *_ = providers_fixture
+    scan1, scan2, *_ = scans_fixture
+    resource1, resource2, *_ = resources_fixture
+
+    findings = []
+
+    # Check 1: s3_bucket_public_access - Multiple FAIL findings (critical)
+    # Should aggregate to: status=FAIL, severity=critical, fail_count=2, pass_count=0
+    finding1a = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_s3_check_1a",
+        scan=scan1,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="S3 bucket allows public access",
+        impact=Severity.critical,
+        impact_extended="Critical security risk",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL, "severity": Severity.critical},
+        tags={"env": "prod"},
+        check_id="s3_bucket_public_access",
+        check_metadata={
+            "CheckId": "s3_bucket_public_access",
+            "checktitle": "Ensure S3 buckets do not allow public access",
+            "Description": "S3 buckets should be configured to restrict public access.",
+        },
+        first_seen_at="2024-01-02T00:00:00Z",
+        muted=False,
+    )
+    finding1a.add_resources([resource1])
+    findings.append(finding1a)
+
+    finding1b = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_s3_check_1b",
+        scan=scan1,
+        delta="changed",
+        status=Status.FAIL,
+        status_extended="S3 bucket allows public read",
+        impact=Severity.high,
+        impact_extended="High security risk",
+        severity=Severity.high,
+        raw_result={"status": Status.FAIL, "severity": Severity.high},
+        tags={"env": "staging"},
+        check_id="s3_bucket_public_access",
+        check_metadata={
+            "CheckId": "s3_bucket_public_access",
+            "checktitle": "Ensure S3 buckets do not allow public access",
+            "Description": "S3 buckets should be configured to restrict public access.",
+        },
+        first_seen_at="2024-01-03T00:00:00Z",
+        muted=False,
+    )
+    finding1b.add_resources([resource2])
+    findings.append(finding1b)
+
+    # Check 2: ec2_instance_public_ip - Mixed PASS/FAIL (high severity max)
+    # Should aggregate to: status=FAIL, severity=high, fail_count=1, pass_count=1
+    finding2a = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_ec2_check_2a",
+        scan=scan1,
+        delta=None,
+        status=Status.PASS,
+        status_extended="EC2 instance has no public IP",
+        impact=Severity.medium,
+        impact_extended="Medium risk",
+        severity=Severity.medium,
+        raw_result={"status": Status.PASS, "severity": Severity.medium},
+        tags={"env": "dev"},
+        check_id="ec2_instance_public_ip",
+        check_metadata={
+            "CheckId": "ec2_instance_public_ip",
+            "checktitle": "Ensure EC2 instances do not have public IPs",
+            "Description": "EC2 instances should use private IPs only.",
+        },
+        first_seen_at="2024-01-04T00:00:00Z",
+        muted=False,
+    )
+    finding2a.add_resources([resource1])
+    findings.append(finding2a)
+
+    finding2b = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_ec2_check_2b",
+        scan=scan1,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="EC2 instance has public IP assigned",
+        impact=Severity.high,
+        impact_extended="High risk",
+        severity=Severity.high,
+        raw_result={"status": Status.FAIL, "severity": Severity.high},
+        tags={"env": "prod"},
+        check_id="ec2_instance_public_ip",
+        check_metadata={
+            "CheckId": "ec2_instance_public_ip",
+            "checktitle": "Ensure EC2 instances do not have public IPs",
+            "Description": "EC2 instances should use private IPs only.",
+        },
+        first_seen_at="2024-01-05T00:00:00Z",
+        muted=False,
+    )
+    finding2b.add_resources([resource2])
+    findings.append(finding2b)
+
+    # Check 3: iam_password_policy - All PASS (low severity)
+    # Should aggregate to: status=PASS, severity=low, fail_count=0, pass_count=2
+    finding3a = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_iam_check_3a",
+        scan=scan1,
+        delta=None,
+        status=Status.PASS,
+        status_extended="Password policy is compliant",
+        impact=Severity.low,
+        impact_extended="Low risk",
+        severity=Severity.low,
+        raw_result={"status": Status.PASS, "severity": Severity.low},
+        tags={"env": "prod"},
+        check_id="iam_password_policy",
+        check_metadata={
+            "CheckId": "iam_password_policy",
+            "checktitle": "Ensure IAM password policy is strong",
+            "Description": "IAM password policy should enforce complexity.",
+        },
+        first_seen_at="2024-01-06T00:00:00Z",
+        muted=False,
+    )
+    finding3a.add_resources([resource1])
+    findings.append(finding3a)
+
+    finding3b = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_iam_check_3b",
+        scan=scan1,
+        delta=None,
+        status=Status.PASS,
+        status_extended="Password policy meets requirements",
+        impact=Severity.low,
+        impact_extended="Low risk",
+        severity=Severity.low,
+        raw_result={"status": Status.PASS, "severity": Severity.low},
+        tags={"env": "staging"},
+        check_id="iam_password_policy",
+        check_metadata={
+            "CheckId": "iam_password_policy",
+            "checktitle": "Ensure IAM password policy is strong",
+            "Description": "IAM password policy should enforce complexity.",
+        },
+        first_seen_at="2024-01-07T00:00:00Z",
+        muted=False,
+    )
+    finding3b.add_resources([resource2])
+    findings.append(finding3b)
+
+    # Check 4: rds_encryption - All muted (medium severity)
+    # Should aggregate to: status=MUTED, severity=medium, fail_count=0, pass_count=0, muted_count=2
+    finding4a = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_rds_check_4a",
+        scan=scan1,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="RDS instance not encrypted",
+        impact=Severity.medium,
+        impact_extended="Medium risk",
+        severity=Severity.medium,
+        raw_result={"status": Status.FAIL, "severity": Severity.medium},
+        tags={"env": "dev"},
+        check_id="rds_encryption",
+        check_metadata={
+            "CheckId": "rds_encryption",
+            "checktitle": "Ensure RDS instances are encrypted",
+            "Description": "RDS instances should use encryption at rest.",
+        },
+        first_seen_at="2024-01-08T00:00:00Z",
+        muted=True,
+    )
+    finding4a.add_resources([resource1])
+    findings.append(finding4a)
+
+    finding4b = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_rds_check_4b",
+        scan=scan1,
+        delta=None,
+        status=Status.FAIL,
+        status_extended="RDS encryption disabled",
+        impact=Severity.medium,
+        impact_extended="Medium risk",
+        severity=Severity.medium,
+        raw_result={"status": Status.FAIL, "severity": Severity.medium},
+        tags={"env": "test"},
+        check_id="rds_encryption",
+        check_metadata={
+            "CheckId": "rds_encryption",
+            "checktitle": "Ensure RDS instances are encrypted",
+            "Description": "RDS instances should use encryption at rest.",
+        },
+        first_seen_at="2024-01-09T00:00:00Z",
+        muted=True,
+    )
+    finding4b.add_resources([resource2])
+    findings.append(finding4b)
+
+    # Check 5: cloudtrail_enabled - Multiple providers (from scan2 which uses provider2)
+    # Should aggregate to: impacted_providers contains both provider types
+    finding5 = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_cloudtrail_check_5",
+        scan=scan2,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="CloudTrail not enabled",
+        impact=Severity.critical,
+        impact_extended="Critical risk",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL, "severity": Severity.critical},
+        tags={"env": "prod"},
+        check_id="cloudtrail_enabled",
+        check_metadata={
+            "CheckId": "cloudtrail_enabled",
+            "checktitle": "Ensure CloudTrail is enabled",
+            "Description": "CloudTrail should be enabled for audit logging.",
+        },
+        first_seen_at="2024-01-10T00:00:00Z",
+        muted=False,
+    )
+    finding5.add_resources([resource1])
+    findings.append(finding5)
+
+    # Aggregate findings into FindingGroupDailySummary for the endpoint to read
+    from tasks.jobs.scan import aggregate_finding_group_summaries
+
+    aggregate_finding_group_summaries(
+        tenant_id=str(tenant.id),
+        scan_id=str(scan1.id),
+    )
+    aggregate_finding_group_summaries(
+        tenant_id=str(tenant.id),
+        scan_id=str(scan2.id),
+    )
+
+    return findings
 
 
 def pytest_collection_modifyitems(items):

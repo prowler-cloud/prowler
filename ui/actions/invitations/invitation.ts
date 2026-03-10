@@ -3,12 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getErrorMessage,
-  parseStringify,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getInvitations = async ({
   page = 1,
@@ -36,15 +32,12 @@ export const getInvitations = async ({
   });
 
   try {
-    const invitations = await fetch(url.toString(), {
+    const response = await fetch(url.toString(), {
       headers,
     });
-    const data = await invitations.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/invitations");
-    return parsedData;
+
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching invitations:", error);
     return undefined;
   }
@@ -84,13 +77,10 @@ export const sendInvite = async (formData: FormData) => {
       headers,
       body,
     });
-    const data = await response.json();
 
-    return parseStringify(data);
+    return handleApiResponse(response);
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    handleApiError(error);
   }
 };
 
@@ -145,13 +135,9 @@ export const updateInvite = async (formData: FormData) => {
       return { error };
     }
 
-    const data = await response.json();
-    revalidatePath("/invitations");
-    return parseStringify(data);
+    return handleApiResponse(response, "/invitations");
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    handleApiError(error);
   }
 };
 
@@ -165,12 +151,9 @@ export const getInvitationInfoById = async (invitationId: string) => {
       headers,
     });
 
-    const data = await response.json();
-    return parseStringify(data);
+    return handleApiResponse(response);
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    handleApiError(error);
   }
 };
 
@@ -209,8 +192,6 @@ export const revokeInvite = async (formData: FormData) => {
     revalidatePath("/invitations");
     return data || { success: true };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error revoking invitation:", error);
-    return { error: getErrorMessage(error) };
+    handleApiError(error);
   }
 };

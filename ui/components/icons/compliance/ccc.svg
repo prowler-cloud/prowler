@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 170" fill="none">
+  <defs>
+    <linearGradient id="cccGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0586BF"/>
+      <stop offset="100%" style="stop-color:#00BCE7"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Left C -->
+  <g>
+    <circle cx="81" cy="85" r="75" fill="url(#cccGradient)"/>
+    <circle cx="81" cy="85" r="45" fill="white"/>
+  </g>
+
+  <!-- Connecting pill 1 -->
+  <ellipse cx="140" cy="85" rx="35" ry="16" fill="url(#cccGradient)"/>
+
+  <!-- Middle C -->
+  <g>
+    <circle cx="200" cy="85" r="75" fill="url(#cccGradient)"/>
+    <circle cx="200" cy="85" r="45" fill="white"/>
+  </g>
+
+  <!-- Connecting pill 2 -->
+  <ellipse cx="260" cy="85" rx="35" ry="16" fill="url(#cccGradient)"/>
+
+  <!-- Right C -->
+  <g>
+    <circle cx="319" cy="85" r="75" fill="url(#cccGradient)"/>
+    <circle cx="319" cy="85" r="45" fill="white"/>
+  </g>
+</svg>

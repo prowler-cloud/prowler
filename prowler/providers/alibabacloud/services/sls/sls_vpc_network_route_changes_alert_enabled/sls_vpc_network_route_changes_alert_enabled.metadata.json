@@ -1,0 +1,37 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_vpc_network_route_changes_alert_enabled",
+  "CheckTitle": "A log monitoring and alert is set up for VPC network route changes",
+  "CheckType": [],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "ALIYUN::SLS::Alert",
+  "ResourceGroup": "monitoring",
+  "Description": "**Alibaba Cloud Simple Log Service (SLS)** should have a metric filter and alarm configured for **VPC network route** changes. By directing **ActionTrail** logs to SLS and establishing corresponding alert rules, real-time monitoring of route table modifications can be achieved. This ensures that any creation, deletion, or modification of route entries is promptly detected, helping verify that all VPC traffic flows through the expected network paths.",
+  "Risk": "Without monitoring for **route table changes**, unauthorized modifications to network routes may go undetected. This could allow attackers to redirect traffic through **malicious intermediaries** for interception or manipulation. Undetected route changes increase the risk of **man-in-the-middle attacks**, **data exfiltration**, and **service disruption**, as traffic may be silently diverted away from intended destinations, compromising the **confidentiality** and **integrity** of data in transit.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/vpc-network-route-changes-alert.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun sls create-alert --project <project-name> --alert-name vpc-route-changes --alert-displayname 'VPC Network Route Changes Alert' --condition 'event.serviceName: Vpc and (event.eventName: CreateRouteEntry or event.eventName: DeleteRouteEntry or event.eventName: ModifyRouteEntry)' --dashboard <dashboard-name> --schedule '{\"type\":\"FixedRate\",\"interval\":\"1m\"}'",
+      "NativeIaC": "",
+      "Other": "1. Log on to the **SLS Console**.\n2. Ensure **ActionTrail** is enabled and delivering logs to a **Log Service** project.\n3. Navigate to the project receiving ActionTrail logs.\n4. Select **Alerts** and click **Create Alert Rule**.\n5. Configure the query to filter for VPC network route changes: `event.serviceName: Vpc and (event.eventName: CreateRouteEntry or event.eventName: DeleteRouteEntry or event.eventName: ModifyRouteEntry)`.\n6. Set the alert **schedule**, **notification method**, and **severity**.\n7. Save and enable the alert rule.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Log on to the **SLS Console**\n2. Ensure **ActionTrail** is enabled\n3. Select **Alerts**\n4. Ensure alert rule has been enabled for VPC network route changes",
+      "Url": "https://hub.prowler.com/check/sls_vpc_network_route_changes_alert_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

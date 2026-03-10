@@ -1,9 +1,18 @@
-import { Chip, Divider, Select, SelectItem, Switch } from "@nextui-org/react";
 import { useEffect, useState } from "react";
 import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 
 import { CredentialsRoleHelper } from "@/components/providers/workflow";
-import { CustomInput } from "@/components/ui/custom";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
+import { Badge } from "@/components/shadcn/badge/badge";
+import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcn/select/select";
+import { Separator } from "@/components/shadcn/separator/separator";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { AWSCredentialsRole } from "@/types";
 import { IntegrationType } from "@/types/integrations";
@@ -64,61 +73,56 @@ export const AWSRoleCredentialsForm = ({
     <>
       <div className="flex flex-col">
         {type === "providers" && (
-          <div className="text-md font-bold leading-9 text-default-foreground">
+          <div className="text-md text-default-foreground leading-9 font-bold">
             Connect assuming IAM Role
           </div>
         )}
       </div>
 
-      <span className="text-xs font-bold text-default-500">
+      <span className="text-default-500 text-xs font-bold">
         Specify which AWS credentials to use
       </span>
 
-      <Select
-        name={ProviderCredentialFields.CREDENTIALS_TYPE}
-        label="Authentication Method"
-        placeholder="Select credentials type"
-        selectedKeys={[credentialsType || defaultCredentialsType]}
-        className="mb-4"
-        variant="bordered"
-        onSelectionChange={(keys) =>
-          setValue(
-            ProviderCredentialFields.CREDENTIALS_TYPE,
-            Array.from(keys)[0] as "aws-sdk-default" | "access-secret-key",
-          )
-        }
-      >
-        <SelectItem
-          key="aws-sdk-default"
-          textValue={
-            isCloudEnv
-              ? "Prowler Cloud will assume your IAM role"
-              : "AWS SDK Default"
-          }
+      <div className="mb-4 flex flex-col gap-1.5">
+        <Select
+          value={credentialsType || defaultCredentialsType}
+          onValueChange={(value) => {
+            setValue(
+              ProviderCredentialFields.CREDENTIALS_TYPE,
+              value as "aws-sdk-default" | "access-secret-key",
+            );
+          }}
         >
-          <div className="flex w-full items-center justify-between">
-            <span>
-              {isCloudEnv
-                ? "Prowler Cloud will assume your IAM role"
-                : "AWS SDK Default"}
-            </span>
-            {isCloudEnv && (
-              <Chip size="sm" variant="flat" color="success" className="ml-2">
-                Recommended
-              </Chip>
-            )}
-          </div>
-        </SelectItem>
-        <SelectItem key="access-secret-key" textValue="Access & Secret Key">
-          <div className="flex w-full items-center justify-between">
-            <span>Access & Secret Key</span>
-          </div>
-        </SelectItem>
-      </Select>
+          <SelectTrigger>
+            <SelectValue placeholder="Select credentials type" />
+          </SelectTrigger>
+          <SelectContent className="z-[60]">
+            <SelectItem value="aws-sdk-default">
+              <div className="flex w-full items-center justify-between">
+                <span>
+                  {isCloudEnv
+                    ? "Prowler Cloud will assume your IAM role"
+                    : "AWS SDK Default"}
+                </span>
+                {isCloudEnv && (
+                  <Badge variant="tag" className="ml-2">
+                    Recommended
+                  </Badge>
+                )}
+              </div>
+            </SelectItem>
+            <SelectItem value="access-secret-key">
+              <div className="flex w-full items-center justify-between">
+                <span>Access & Secret Key</span>
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {credentialsType === "access-secret-key" && (
         <>
-          <CustomInput
+          <WizardInputField
             control={control}
             name={ProviderCredentialFields.AWS_ACCESS_KEY_ID}
             type="password"
@@ -127,13 +131,8 @@ export const AWSRoleCredentialsForm = ({
             placeholder="Enter the AWS Access Key ID"
             variant="bordered"
             isRequired
-            isInvalid={
-              !!control._formState.errors[
-                ProviderCredentialFields.AWS_ACCESS_KEY_ID
-              ]
-            }
           />
-          <CustomInput
+          <WizardInputField
             control={control}
             name={ProviderCredentialFields.AWS_SECRET_ACCESS_KEY}
             type="password"
@@ -142,13 +141,8 @@ export const AWSRoleCredentialsForm = ({
             placeholder="Enter the AWS Secret Access Key"
             variant="bordered"
             isRequired
-            isInvalid={
-              !!control._formState.errors[
-                ProviderCredentialFields.AWS_SECRET_ACCESS_KEY
-              ]
-            }
           />
-          <CustomInput
+          <WizardInputField
             control={control}
             name={ProviderCredentialFields.AWS_SESSION_TOKEN}
             type="password"
@@ -157,30 +151,25 @@ export const AWSRoleCredentialsForm = ({
             placeholder="Enter the AWS Session Token"
             variant="bordered"
             isRequired={false}
-            isInvalid={
-              !!control._formState.errors[
-                ProviderCredentialFields.AWS_SESSION_TOKEN
-              ]
-            }
           />
         </>
       )}
-      <Divider className="" />
+      <Separator />
 
       {type === "providers" ? (
-        <span className="text-xs font-bold text-default-500">Assume Role</span>
+        <span className="text-default-500 text-xs font-bold">Assume Role</span>
       ) : (
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-default-500">
+          <span className="text-default-500 text-xs font-bold">
             {isCloudEnv && credentialsType === "aws-sdk-default"
               ? "Adding a role is required"
               : "Optionally add a role"}
           </span>
-          <Switch
-            size="sm"
-            isSelected={showRoleSection}
-            onValueChange={setShowOptionalRole}
-            isDisabled={isCloudEnv && credentialsType === "aws-sdk-default"}
+          <Checkbox
+            checked={showRoleSection}
+            onCheckedChange={(checked) => setShowOptionalRole(Boolean(checked))}
+            disabled={isCloudEnv && credentialsType === "aws-sdk-default"}
+            aria-label="Optionally add a role"
           />
         </div>
       )}
@@ -193,9 +182,9 @@ export const AWSRoleCredentialsForm = ({
             integrationType={integrationType}
           />
 
-          <Divider />
+          <Separator />
 
-          <CustomInput
+          <WizardInputField
             control={control}
             name={ProviderCredentialFields.ROLE_ARN}
             type="text"
@@ -204,11 +193,8 @@ export const AWSRoleCredentialsForm = ({
             placeholder="Enter the Role ARN"
             variant="bordered"
             isRequired={showRoleSection}
-            isInvalid={
-              !!control._formState.errors[ProviderCredentialFields.ROLE_ARN]
-            }
           />
-          <CustomInput
+          <WizardInputField
             control={control}
             name={ProviderCredentialFields.EXTERNAL_ID}
             type="text"
@@ -219,14 +205,11 @@ export const AWSRoleCredentialsForm = ({
             defaultValue={externalId}
             isDisabled
             isRequired
-            isInvalid={
-              !!control._formState.errors[ProviderCredentialFields.EXTERNAL_ID]
-            }
           />
 
-          <span className="text-xs text-default-500">Optional fields</span>
+          <span className="text-default-500 text-xs">Optional fields</span>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <CustomInput
+            <WizardInputField
               control={control}
               name={ProviderCredentialFields.ROLE_SESSION_NAME}
               type="text"
@@ -235,13 +218,8 @@ export const AWSRoleCredentialsForm = ({
               placeholder="Enter the role session name"
               variant="bordered"
               isRequired={false}
-              isInvalid={
-                !!control._formState.errors[
-                  ProviderCredentialFields.ROLE_SESSION_NAME
-                ]
-              }
             />
-            <CustomInput
+            <WizardInputField
               control={control}
               name={ProviderCredentialFields.SESSION_DURATION}
               type="number"
@@ -250,11 +228,6 @@ export const AWSRoleCredentialsForm = ({
               placeholder="Enter the session duration (default: 3600 seconds)"
               variant="bordered"
               isRequired={false}
-              isInvalid={
-                !!control._formState.errors[
-                  ProviderCredentialFields.SESSION_DURATION
-                ]
-              }
             />
           </div>
         </>

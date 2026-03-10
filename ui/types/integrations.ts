@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { TaskState } from "@/types/tasks";
+
 export type IntegrationType = "amazon_s3" | "aws_security_hub" | "jira";
 
 export interface IntegrationProps {
@@ -24,12 +26,49 @@ export interface IntegrationProps {
         role_session_name?: string;
         session_duration?: number;
       };
-      [key: string]: any;
+      // Jira specific configuration
+      domain?: string;
+      projects?: { [key: string]: string };
+      issue_types?: string[];
+      [key: string]: unknown;
     };
     url?: string;
   };
   relationships?: { providers?: { data: { type: "providers"; id: string }[] } };
   links: { self: string };
+}
+
+// Jira dispatch types
+export interface JiraDispatchRequest {
+  data: {
+    type: "integrations-jira-dispatches";
+    attributes: {
+      project_key: string;
+      issue_type: string;
+    };
+  };
+}
+
+export interface JiraDispatchResponse {
+  data: {
+    type: "tasks";
+    id: string;
+    attributes: {
+      inserted_at: string;
+      completed_at: string | null;
+      name: string;
+      state: TaskState;
+      result: {
+        success?: boolean;
+        error?: string;
+        message?: string;
+        issue_url?: string;
+        issue_key?: string;
+      } | null;
+      task_args: Record<string, unknown> | null;
+      metadata: Record<string, unknown> | null;
+    };
+  };
 }
 
 // Shared AWS credential fields schema
@@ -46,8 +85,20 @@ const awsCredentialFields = {
 };
 
 // Shared validation helper for AWS credentials (create mode)
+type AwsCredentialsData = {
+  credentials_type?: "aws-sdk-default" | "access-secret-key";
+  aws_access_key_id?: string;
+  aws_secret_access_key?: string;
+  aws_session_token?: string;
+  role_arn?: string;
+  external_id?: string;
+  role_session_name?: string;
+  session_duration?: string;
+  show_role_section?: boolean;
+};
+
 const validateAwsCredentialsCreate = (
-  data: any,
+  data: AwsCredentialsData,
   ctx: z.RefinementCtx,
   requireCredentials: boolean = true,
 ) => {
@@ -55,14 +106,16 @@ const validateAwsCredentialsCreate = (
     if (!data.aws_access_key_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "AWS Access Key ID is required when using access and secret key",
+        message:
+          "AWS Access Key ID is required when using access and secret key",
         path: ["aws_access_key_id"],
       });
     }
     if (!data.aws_secret_access_key) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "AWS Secret Access Key is required when using access and secret key",
+        message:
+          "AWS Secret Access Key is required when using access and secret key",
         path: ["aws_secret_access_key"],
       });
     }
@@ -70,7 +123,10 @@ const validateAwsCredentialsCreate = (
 };
 
 // Shared validation helper for AWS credentials (edit mode)
-const validateAwsCredentialsEdit = (data: any, ctx: z.RefinementCtx) => {
+const validateAwsCredentialsEdit = (
+  data: AwsCredentialsData,
+  ctx: z.RefinementCtx,
+) => {
   if (data.credentials_type === "access-secret-key") {
     const hasAccessKey = !!data.aws_access_key_id;
     const hasSecretKey = !!data.aws_secret_access_key;
@@ -78,7 +134,8 @@ const validateAwsCredentialsEdit = (data: any, ctx: z.RefinementCtx) => {
     if (hasAccessKey && !hasSecretKey) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "AWS Secret Access Key is required when providing Access Key ID",
+        message:
+          "AWS Secret Access Key is required when providing Access Key ID",
         path: ["aws_secret_access_key"],
       });
     }
@@ -86,7 +143,8 @@ const validateAwsCredentialsEdit = (data: any, ctx: z.RefinementCtx) => {
     if (hasSecretKey && !hasAccessKey) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "AWS Access Key ID is required when providing Secret Access Key",
+        message:
+          "AWS Access Key ID is required when providing Secret Access Key",
         path: ["aws_access_key_id"],
       });
     }
@@ -95,12 +153,14 @@ const validateAwsCredentialsEdit = (data: any, ctx: z.RefinementCtx) => {
 
 // Shared validation helper for IAM Role fields
 const validateIamRole = (
-  data: any,
+  data: AwsCredentialsData,
   ctx: z.RefinementCtx,
   checkShowSection: boolean = true,
 ) => {
-  const shouldValidate = checkShowSection ? data.show_role_section === true : true;
-  
+  const shouldValidate = checkShowSection
+    ? data.show_role_section === true
+    : true;
+
   if (shouldValidate && data.role_arn) {
     if (data.role_arn.trim() === "") {
       ctx.addIssue({
@@ -160,9 +220,14 @@ export const s3IntegrationFormSchema = baseS3IntegrationSchema
 export const editS3IntegrationFormSchema = baseS3IntegrationSchema
   .extend({
     bucket_name: z.string().min(1, "Bucket name is required").optional(),
-    output_directory: z.string().min(1, "Output directory is required").optional(),
+    output_directory: z
+      .string()
+      .min(1, "Output directory is required")
+      .optional(),
     providers: z.array(z.string()).optional(),
-    credentials_type: z.enum(["aws-sdk-default", "access-secret-key"]).optional(),
+    credentials_type: z
+      .enum(["aws-sdk-default", "access-secret-key"])
+      .optional(),
   })
   .superRefine((data, ctx) => {
     validateAwsCredentialsEdit(data, ctx);
@@ -201,18 +266,47 @@ export const securityHubIntegrationFormSchema = baseSecurityHubIntegrationSchema
     }
   });
 
-export const editSecurityHubIntegrationFormSchema = baseSecurityHubIntegrationSchema
-  .extend({
-    provider_id: z.string().optional(),
-    send_only_fails: z.boolean().optional(),
-    archive_previous_findings: z.boolean().optional(),
-    use_custom_credentials: z.boolean().optional(),
-    credentials_type: z.enum(["aws-sdk-default", "access-secret-key"]).optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.use_custom_credentials !== false) {
-      validateAwsCredentialsEdit(data, ctx);
-    }
-    // Always validate role if role_arn is provided
-    validateIamRole(data, ctx, false);
-  });
+export const editSecurityHubIntegrationFormSchema =
+  baseSecurityHubIntegrationSchema
+    .extend({
+      provider_id: z.string().optional(),
+      send_only_fails: z.boolean().optional(),
+      archive_previous_findings: z.boolean().optional(),
+      use_custom_credentials: z.boolean().optional(),
+      credentials_type: z
+        .enum(["aws-sdk-default", "access-secret-key"])
+        .optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (data.use_custom_credentials !== false) {
+        validateAwsCredentialsEdit(data, ctx);
+      }
+      // Always validate role if role_arn is provided
+      validateIamRole(data, ctx, false);
+    });
+
+// Jira Integration Schemas
+export const jiraIntegrationFormSchema = z.object({
+  integration_type: z.literal("jira"),
+  domain: z.string().min(1, "Domain is required"),
+  user_mail: z.email({ error: "Invalid email format" }),
+  api_token: z.string().min(1, "API token is required"),
+  enabled: z.boolean().default(true),
+});
+
+export const editJiraIntegrationFormSchema = z.object({
+  integration_type: z.literal("jira"),
+  domain: z.string().min(1, "Domain is required").optional(),
+  user_mail: z.email({ error: "Invalid email format" }).optional(),
+  api_token: z.string().min(1, "API token is required").optional(),
+});
+
+export type CreateValues = z.infer<typeof jiraIntegrationFormSchema>;
+export type EditValues = z.infer<typeof editJiraIntegrationFormSchema>;
+export type FormValues = CreateValues | EditValues;
+
+export interface JiraCredentialsPayload {
+  domain?: string;
+  user_mail?: string;
+  api_token?: string;
+}

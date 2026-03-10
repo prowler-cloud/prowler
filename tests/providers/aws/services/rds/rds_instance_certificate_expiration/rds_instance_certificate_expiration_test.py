@@ -18,7 +18,7 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "DBEngineVersions": [
                 {
-                    "Engine": "mysql",
+                    "Engine": "postgres",
                     "EngineVersion": "8.0.32",
                     "DBEngineDescription": "description",
                     "DBEngineVersionDescription": "description",
@@ -70,7 +70,7 @@ class Test_rds_instance_certificate_expiration:
             instance_arn: DBInstance(
                 id="db-master-1",
                 arn=instance_arn,
-                engine="aurora-postgresql",
+                engine="postgres",
                 engine_version="aurora14",
                 status="available",
                 public=False,
@@ -146,7 +146,7 @@ class Test_rds_instance_certificate_expiration:
             instance_arn: DBInstance(
                 id="db-master-1",
                 arn=instance_arn,
-                engine="aurora-postgresql",
+                engine="postgres",
                 engine_version="aurora14",
                 status="available",
                 public=False,
@@ -221,7 +221,7 @@ class Test_rds_instance_certificate_expiration:
             instance_arn: DBInstance(
                 id="db-master-1",
                 arn=instance_arn,
-                engine="aurora-postgresql",
+                engine="postgres",
                 engine_version="aurora14",
                 status="available",
                 public=False,
@@ -296,7 +296,7 @@ class Test_rds_instance_certificate_expiration:
             instance_arn: DBInstance(
                 id="db-master-1",
                 arn=instance_arn,
-                engine="aurora-postgresql",
+                engine="postgres",
                 engine_version="aurora14",
                 status="available",
                 public=False,
@@ -371,7 +371,7 @@ class Test_rds_instance_certificate_expiration:
             instance_arn: DBInstance(
                 id="db-master-1",
                 arn=instance_arn,
-                engine="aurora-postgresql",
+                engine="postgres",
                 engine_version="aurora14",
                 status="available",
                 public=False,
@@ -446,7 +446,7 @@ class Test_rds_instance_certificate_expiration:
             instance_arn: DBInstance(
                 id="db-master-1",
                 arn=instance_arn,
-                engine="aurora-postgresql",
+                engine="postgres",
                 engine_version="aurora14",
                 status="available",
                 public=False,
@@ -521,7 +521,7 @@ class Test_rds_instance_certificate_expiration:
             instance_arn: DBInstance(
                 id="db-master-1",
                 arn=instance_arn,
-                engine="aurora-postgresql",
+                engine="postgres",
                 engine_version="aurora14",
                 status="available",
                 public=False,
@@ -596,7 +596,7 @@ class Test_rds_instance_certificate_expiration:
             instance_arn: DBInstance(
                 id="db-master-1",
                 arn=instance_arn,
-                engine="aurora-postgresql",
+                engine="postgres",
                 engine_version="aurora14",
                 status="available",
                 public=False,
@@ -671,7 +671,7 @@ class Test_rds_instance_certificate_expiration:
             instance_arn: DBInstance(
                 id="db-master-1",
                 arn=instance_arn,
-                engine="aurora-postgresql",
+                engine="postgres",
                 engine_version="aurora14",
                 status="available",
                 public=False,
@@ -746,7 +746,7 @@ class Test_rds_instance_certificate_expiration:
             instance_arn: DBInstance(
                 id="db-master-1",
                 arn=instance_arn,
-                engine="aurora-postgresql",
+                engine="postgres",
                 engine_version="aurora14",
                 status="available",
                 public=False,

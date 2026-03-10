@@ -19,11 +19,13 @@ export const DataCompliance = ({ scans }: DataComplianceProps) => {
 
   const selectedScanId = scanIdParam || (scans.length > 0 ? scans[0].id : "");
 
+  // Don't auto-push scanId to URL - the server already handles the default scan selection
+  // This avoids duplicate API calls caused by client-side navigation
   useEffect(() => {
     if (!scanIdParam && scans.length > 0) {
       const params = new URLSearchParams(searchParams);
       params.set("scanId", scans[0].id);
-      router.push(`?${params.toString()}`);
+      router.replace(`?${params.toString()}`, { scroll: false });
     }
   }, [scans, scanIdParam, searchParams, router]);
 

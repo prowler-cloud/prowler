@@ -1,4 +1,6 @@
-from unittest.mock import patch
+import asyncio
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 from prowler.providers.azure.models import AzureIdentityInfo
@@ -39,6 +41,7 @@ async def mock_entra_get_group_settings(_):
     return {
         DOMAIN: {
             "id-1": GroupSetting(
+                id="id-1",
                 name="Test",
                 template_id="id-group-setting",
                 settings=[],
@@ -143,10 +146,7 @@ class Test_Entra_Service:
         assert len(entra_client.users) == 1
         assert entra_client.users[DOMAIN]["user-1@tenant1.es"].id == "id-1"
         assert entra_client.users[DOMAIN]["user-1@tenant1.es"].name == "User 1"
-        assert (
-            len(entra_client.users[DOMAIN]["user-1@tenant1.es"].authentication_methods)
-            == 0
-        )
+        assert entra_client.users[DOMAIN]["user-1@tenant1.es"].is_mfa_capable is False
 
     def test_get_authorization_policy(self):
         entra_client = Entra(set_mocked_azure_provider())
@@ -223,3 +223,74 @@ class Test_Entra_Service:
             ]
             == []
         )
+
+
+def test_azure_entra__get_users_handles_pagination():
+    entra_service = Entra.__new__(Entra)
+
+    users_page_one = [
+        SimpleNamespace(id="user-1", display_name="User 1"),
+        SimpleNamespace(id="user-2", display_name="User 2"),
+    ]
+    users_page_two = [
+        SimpleNamespace(id="user-3", display_name="User 3"),
+    ]
+
+    users_response_page_one = SimpleNamespace(
+        value=users_page_one,
+        odata_next_link="next-link",
+    )
+    users_response_page_two = SimpleNamespace(
+        value=users_page_two, odata_next_link=None
+    )
+
+    users_with_url_builder = SimpleNamespace(
+        get=AsyncMock(return_value=users_response_page_two)
+    )
+    with_url_mock = MagicMock(return_value=users_with_url_builder)
+
+    users_builder = SimpleNamespace(
+        get=AsyncMock(return_value=users_response_page_one),
+        with_url=with_url_mock,
+    )
+
+    registration_details_response = SimpleNamespace(
+        value=[
+            SimpleNamespace(
+                id="user-1",
+                is_mfa_capable=True,
+            ),
+            SimpleNamespace(
+                id="user-2",
+                is_mfa_capable=True,
+            ),
+        ],
+        odata_next_link=None,
+    )
+
+    registration_details_builder = SimpleNamespace(
+        get=AsyncMock(return_value=registration_details_response),
+        with_url=MagicMock(),
+    )
+
+    entra_service.clients = {
+        "tenant-1": SimpleNamespace(
+            users=users_builder,
+            reports=SimpleNamespace(
+                authentication_methods=SimpleNamespace(
+                    user_registration_details=registration_details_builder
+                )
+            ),
+        )
+    }
+
+    users = asyncio.run(entra_service._get_users())
+
+    assert len(users["tenant-1"]) == 3
+    assert users_builder.get.await_count == 1
+    with_url_mock.assert_called_once_with("next-link")
+    registration_details_builder.get.assert_awaited()
+    registration_details_builder.with_url.assert_not_called()
+    assert users["tenant-1"]["user-1"].is_mfa_capable is True
+    assert users["tenant-1"]["user-2"].is_mfa_capable is True
+    assert users["tenant-1"]["user-3"].is_mfa_capable is False

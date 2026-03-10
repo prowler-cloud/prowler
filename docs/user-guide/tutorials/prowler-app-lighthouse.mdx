@@ -1,0 +1,62 @@
+---
+title: 'How It Works'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.8.0" />
+
+Prowler Lighthouse AI integrates Large Language Models (LLMs) with Prowler security findings data.
+
+Behind the scenes, Lighthouse AI works as follows:
+
+- Lighthouse AI runs as a [Langchain agent](https://docs.langchain.com/oss/javascript/langchain/agents) in NextJS
+- The agent connects to the configured LLM provider to understand the prompt and decide what data is needed
+- The agent accesses Prowler data through [Prowler MCP](https://docs.prowler.com/getting-started/products/prowler-mcp), which exposes tools from multiple sources, including:
+  - Prowler Hub
+  - Prowler Docs
+  - Prowler App
+- Instead of calling every tool directly, the agent uses two meta-tools:
+  - `describe_tool` to retrieve a tool schema and parameter requirements.
+  - `execute_tool` to run the selected tool with the required input.
+- Based on the user's query and the data necessary to answer it, Lighthouse agent will invoke necessary Prowler MCP tools using `discover_tool` and `execute_tool`
+
+<Note>
+Lighthouse AI supports multiple LLM providers including OpenAI, Amazon Bedrock, and OpenAI-compatible services. For configuration details, see [Using Multiple LLM Providers with Lighthouse](/user-guide/tutorials/prowler-app-lighthouse-multi-llm).
+</Note>
+
+<img className="block dark:hidden" src="/images/lighthouse-architecture-light.png" alt="Prowler Lighthouse Architecture" />
+<img className="hidden dark:block" src="/images/lighthouse-architecture-dark.png" alt="Prowler Lighthouse Architecture" />
+
+
+<Note>
+Lighthouse AI can only read relevant security data. It cannot modify data or access sensitive information such as configured secrets or tenant details.
+
+</Note>
+
+## Set Up
+
+Getting started with Prowler Lighthouse AI is easy:
+
+1. Navigate to **Configuration** → **Lighthouse AI**
+2. Click **Connect** under the desired provider (OpenAI, Amazon Bedrock, or OpenAI Compatible)
+3. Enter the required credentials
+4. Select a default model
+5. Click **Connect** to save
+
+<Note>
+For detailed configuration instructions for each provider, see [Using Multiple LLM Providers with Lighthouse](/user-guide/tutorials/prowler-app-lighthouse-multi-llm).
+</Note>
+
+<img src="/images/prowler-app/lighthouse-configuration.png" alt="Lighthouse AI Configuration" />
+
+### Adding Business Context
+
+The optional business context field lets teams provide additional information to help Lighthouse AI understand environment priorities, including:
+
+- Organization cloud security goals
+- Information about account owners or responsible teams
+- Compliance requirements
+- Current security initiatives or focus areas
+
+Better context leads to more relevant responses and prioritization that aligns with your needs.

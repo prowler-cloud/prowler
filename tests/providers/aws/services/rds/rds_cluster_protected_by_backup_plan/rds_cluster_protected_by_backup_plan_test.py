@@ -68,7 +68,7 @@ class Test_rds_cluster_protected_by_backup_plan:
                 name="db-cluster-1",
                 region="us-east-1",
                 cluster_class="db.m1.small",
-                engine="aurora-postgres",
+                engine="postgres",
                 allocated_storage=10,
                 tags=[],
             )
@@ -146,7 +146,7 @@ class Test_rds_cluster_protected_by_backup_plan:
                 name="db-cluster-1",
                 region="us-east-1",
                 cluster_class="db.m1.small",
-                engine="aurora-postgres",
+                engine="postgres",
                 allocated_storage=10,
                 tags=[],
             )
@@ -227,7 +227,7 @@ class Test_rds_cluster_protected_by_backup_plan:
                 name="db-cluster-1",
                 region="us-east-1",
                 cluster_class="db.m1.small",
-                engine="aurora-postgres",
+                engine="postgres",
                 allocated_storage=10,
                 tags=[],
             )
@@ -308,7 +308,7 @@ class Test_rds_cluster_protected_by_backup_plan:
                 name="db-cluster-1",
                 region="us-east-1",
                 cluster_class="db.m1.small",
-                engine="aurora-postgres",
+                engine="postgres",
                 allocated_storage=10,
                 tags=[],
             )
@@ -388,7 +388,7 @@ class Test_rds_cluster_protected_by_backup_plan:
                 name="db-cluster-1",
                 region="us-east-1",
                 cluster_class="db.m1.small",
-                engine="aurora-postgres",
+                engine="postgres",
                 allocated_storage=10,
                 tags=[],
             )

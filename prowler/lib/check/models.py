@@ -7,9 +7,10 @@ from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
 from typing import Any, Dict, Optional, Set
 
-from pydantic.v1 import BaseModel, ValidationError, validator
+from pydantic.v1 import BaseModel, Field, ValidationError, validator
+from pydantic.v1.error_wrappers import ErrorWrapper
 
-from prowler.config.config import Provider
+from prowler.config.config import EXTERNAL_TOOL_PROVIDERS, Provider
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
@@ -85,6 +86,7 @@ class CheckMetadata(BaseModel):
         Risk (str): The risk associated with the check.
         RelatedUrl (str): The URL related to the check.
         Remediation (Remediation): The remediation steps for the check.
+        AdditionalURLs (list[str]): Additional URLs related to the check. Defaults to an empty list.
         Categories (list[str]): The categories of the check.
         DependsOn (list[str]): The dependencies of the check.
         RelatedTo (list[str]): The related checks.
@@ -97,29 +99,32 @@ class CheckMetadata(BaseModel):
         valid_severity(severity): Validator function to validate the severity of the check.
         valid_cli_command(remediation): Validator function to validate the CLI command is not an URL.
         valid_resource_type(resource_type): Validator function to validate the resource type is not empty.
+        validate_additional_urls(additional_urls): Validator function to ensure AdditionalURLs contains no duplicates.
     """
 
     Provider: str
     CheckID: str
     CheckTitle: str
     CheckType: list[str]
-    CheckAliases: list[str] = []
+    CheckAliases: list[str] = Field(default_factory=list)
     ServiceName: str
     SubServiceName: str
     ResourceIdTemplate: str
     Severity: Severity
     ResourceType: str
+    ResourceGroup: str = Field(default="")
     Description: str
     Risk: str
     RelatedUrl: str
     Remediation: Remediation
+    AdditionalURLs: list[str] = Field(default_factory=list)
     Categories: list[str]
     DependsOn: list[str]
     RelatedTo: list[str]
     Notes: str
     # We set the compliance to None to
     # store the compliance later if supplied
-    Compliance: Optional[list[Any]] = []
+    Compliance: Optional[list[Any]] = Field(default_factory=list)
 
     @validator("Categories", each_item=True, pre=True, always=True)
     def valid_category(value):
@@ -154,7 +159,7 @@ class CheckMetadata(BaseModel):
             raise ValueError("ServiceName must be a non-empty string")
 
         check_id = values.get("CheckID")
-        if check_id and values.get("Provider") != "iac":
+        if check_id and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
             service_from_check_id = check_id.split("_")[0]
             if service_name != service_from_check_id:
                 raise ValueError(
@@ -170,13 +175,26 @@ class CheckMetadata(BaseModel):
         if not check_id:
             raise ValueError("CheckID must be a non-empty string")
 
-        if check_id and values.get("Provider") != "iac":
+        if check_id and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
             if "-" in check_id:
                 raise ValueError(
                     f"CheckID {check_id} contains a hyphen, which is not allowed"
                 )
 
         return check_id
+
+    @validator("AdditionalURLs", pre=True, always=True)
+    def validate_additional_urls(cls, additional_urls):
+        if not isinstance(additional_urls, list):
+            raise ValueError("AdditionalURLs must be a list")
+
+        if any(not url or not url.strip() for url in additional_urls):
+            raise ValueError("AdditionalURLs cannot contain empty items")
+
+        if len(additional_urls) != len(set(additional_urls)):
+            raise ValueError("AdditionalURLs cannot contain duplicate items")
+
+        return additional_urls
 
     @staticmethod
     def get_bulk(provider: str) -> dict[str, "CheckMetadata"]:
@@ -420,17 +438,32 @@ class Check(ABC, CheckMetadata):
 
     def __init__(self, **data):
         """Check's init function. Calls the CheckMetadataModel init."""
+        file_path = os.path.abspath(sys.modules[self.__module__].__file__)[:-3]
+
         # Parse the Check's metadata file
-        metadata_file = (
-            os.path.abspath(sys.modules[self.__module__].__file__)[:-3]
-            + ".metadata.json"
-        )
+        metadata_file = file_path + ".metadata.json"
         # Store it to validate them with Pydantic
         data = CheckMetadata.parse_file(metadata_file).dict()
         # Calls parents init function
         super().__init__(**data)
-        # TODO: verify that the CheckID is the same as the filename and classname
-        # to mimic the test done at test_<provider>_checks_metadata_is_valid
+
+        # Verify names consistency
+        check_id = self.CheckID
+        class_name = self.__class__.__name__
+        # os.path.basename handles Windows and POSIX paths reliably
+        file_name = os.path.basename(file_path)
+
+        errors = []
+        if check_id != class_name:
+            errors.append(f"CheckID '{check_id}' != class name '{class_name}'")
+        if check_id != file_name:
+            errors.append(f"CheckID '{check_id}' != file name '{file_name}'")
+
+        if errors:
+            formatted_errors = [
+                ErrorWrapper(ValueError(err), loc=("CheckID",)) for err in errors
+            ]
+            raise ValidationError(formatted_errors, model=CheckMetadata)
 
     def metadata(self) -> dict:
         """Return the JSON representation of the check's metadata"""
@@ -549,8 +582,17 @@ class Check_Report_GCP(Check_Report):
             or getattr(resource, "name", None)
             or ""
         )
+
+        # Prefer the explicit resource_name argument, otherwise look for a name attribute on the resource
+        resource_name_candidate = resource_name or getattr(resource, "name", None)
+        if not resource_name_candidate and isinstance(resource, dict):
+            # Some callers pass a dict, so fall back to the dict entry if available
+            resource_name_candidate = resource.get("name")
+        if isinstance(resource_name_candidate, str):
+            # Trim whitespace so empty strings collapse to the default
+            resource_name_candidate = resource_name_candidate.strip()
         self.resource_name = (
-            resource_name or getattr(resource, "name", "") or "GCP Project"
+            str(resource_name_candidate) if resource_name_candidate else "GCP Project"
         )
         self.project_id = project_id or getattr(resource, "project_id", "")
         self.location = (
@@ -558,6 +600,69 @@ class Check_Report_GCP(Check_Report):
             or getattr(resource, "location", "")
             or getattr(resource, "region", "")
         )
+
+
+@dataclass
+class Check_Report_OCI(Check_Report):
+    """Contains the OCI Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    compartment_id: str
+    region: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        region: str = None,
+        resource_name: str = None,
+        resource_id: str = None,
+        compartment_id: str = None,
+    ) -> None:
+        """Initialize the OCI Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+            region: The region of the resource.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The OCID of the resource related with the finding.
+            compartment_id: The compartment OCID of the resource.
+        """
+        super().__init__(metadata, resource)
+        self.resource_id = (
+            resource_id
+            or getattr(resource, "id", None)
+            or getattr(resource, "name", None)
+            or ""
+        )
+        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.compartment_id = compartment_id or getattr(resource, "compartment_id", "")
+        self.region = region or getattr(resource, "region", "")
+
+
+@dataclass
+class CheckReportAlibabaCloud(Check_Report):
+    """Contains the Alibaba Cloud Check's finding information."""
+
+    resource_id: str
+    resource_arn: str
+    region: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the Alibaba Cloud Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource.
+        """
+        super().__init__(metadata, resource)
+        self.resource_id = (
+            getattr(resource, "id", None) or getattr(resource, "name", None) or ""
+        )
+        self.resource_arn = getattr(resource, "arn", "")
+        self.region = getattr(resource, "region", "")
 
 
 @dataclass
@@ -613,6 +718,119 @@ class CheckReportGithub(Check_Report):
             or getattr(resource, "owner", "")  # For Repositories
             or getattr(resource, "name", "")  # For Organizations
         )
+
+
+@dataclass
+class CheckReportGoogleWorkspace(Check_Report):
+    """Contains the Google Workspace Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    customer_id: str
+    location: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        customer_id: str = None,
+        location: str = "global",
+    ) -> None:
+        """Initialize the Google Workspace Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            customer_id: The Google Workspace customer ID.
+            location: The location of the resource (default: "global").
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = (
+            resource_name
+            or getattr(resource, "email", "")
+            or getattr(resource, "name", "")
+        )
+        self.resource_id = resource_id or getattr(resource, "id", "")
+        self.customer_id = customer_id or getattr(resource, "customer_id", "")
+        self.location = location
+
+
+@dataclass
+class CheckReportCloudflare(Check_Report):
+    """Contains the Cloudflare Check's finding information.
+
+    Cloudflare is a global service - zones are resources, not regional contexts.
+    All zone-related attributes are derived from the zone object passed as resource.
+    """
+
+    resource_name: str
+    resource_id: str
+    _zone: Any  # CloudflareZone object
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+    ) -> None:
+        """Initialize the Cloudflare Check's finding information.
+
+        Args:
+            metadata: Check metadata dictionary
+            resource: The CloudflareZone resource being checked
+            resource_name: Override for resource name
+            resource_id: Override for resource ID
+        """
+        super().__init__(metadata, resource)
+
+        # Zone is the resource being checked
+        self._zone = resource
+
+        self.resource_name = resource_name or getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = resource_id or getattr(
+            resource, "id", getattr(resource, "resource_id", "")
+        )
+
+    @property
+    def zone(self) -> Any:
+        """The CloudflareZone object."""
+        return self._zone
+
+    @property
+    def zone_id(self) -> str:
+        """Zone ID."""
+        return getattr(self._zone, "id", "")
+
+    @property
+    def zone_name(self) -> str:
+        """Zone name - for DNS records use zone_name attribute, for zones use name."""
+        zone_name = getattr(self._zone, "zone_name", None)
+        if zone_name:
+            return zone_name
+        return getattr(self._zone, "name", "")
+
+    @property
+    def account_id(self) -> str:
+        """Account ID derived from resource's account object or flat account_id."""
+        zone_account = getattr(self._zone, "account", None)
+        if zone_account:
+            return getattr(zone_account, "id", "")
+        return getattr(self._zone, "account_id", "")
+
+    @property
+    def region(self) -> str:
+        """Return zone_name as region for zone-scoped resources, otherwise global."""
+        zone_name = getattr(self._zone, "zone_name", None)
+        if zone_name:
+            return zone_name
+        return "global"
 
 
 @dataclass
@@ -679,6 +897,74 @@ class CheckReportIAC(Check_Report):
 
 
 @dataclass
+class CheckReportImage(Check_Report):
+    """Contains the Container Image Check's finding information using Trivy."""
+
+    resource_name: str
+    resource_id: str
+    image_digest: str
+    package_name: str
+    installed_version: str
+    fixed_version: str
+
+    def __init__(
+        self,
+        metadata: Optional[dict] = None,
+        finding: Optional[dict] = None,
+        image_name: str = "",
+    ) -> None:
+        """
+        Initialize the Container Image Check's finding information from a Trivy vulnerability/secret dict.
+
+        Args:
+            metadata (Dict): Check metadata.
+            finding (dict): A single vulnerability/secret result from Trivy's JSON output.
+            image_name (str): The container image name being scanned.
+        """
+        if metadata is None:
+            metadata = {}
+        if finding is None:
+            finding = {}
+        super().__init__(metadata, finding)
+
+        self.resource_name = image_name
+        self.resource_id = (
+            finding.get("VulnerabilityID", "")
+            or finding.get("RuleID", "")
+            or finding.get("ID", "")
+        )
+        self.image_digest = finding.get("PkgID", "")
+        self.package_name = finding.get("PkgName", "")
+        self.installed_version = finding.get("InstalledVersion", "")
+        self.fixed_version = finding.get("FixedVersion", "")
+
+
+@dataclass
+class CheckReportLLM(Check_Report):
+    """Contains the LLM Check's finding information."""
+
+    prompt: str
+    response: str
+    model: str
+
+    def __init__(self, metadata: dict = {}, finding: dict = {}) -> None:
+        """
+        Initialize the LLM Check's finding information from a promptfoo finding dict.
+
+        Args:
+            metadata (Dict): Optional check metadata (can be None).
+            finding (dict): A single finding result from promptfoo's JSON output.
+        """
+        super().__init__(metadata, finding)
+
+        self.prompt = finding.get("prompt", {}).get("raw", "No prompt available.")
+        self.response = finding.get("response", {}).get(
+            "output", "No output available."
+        )
+        self.model = finding.get("provider", {}).get("id", "No model available.")
+
+
+@dataclass
 class CheckReportNHN(Check_Report):
     """Contains the NHN Check's finding information."""
 
@@ -699,6 +985,50 @@ class CheckReportNHN(Check_Report):
         )
         self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
         self.location = getattr(resource, "location", "kr1")
+
+
+@dataclass
+class CheckReportOpenStack(Check_Report):
+    """Contains the OpenStack Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    project_id: str
+    region: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "default")
+        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.project_id = getattr(resource, "project_id", "")
+        self.region = getattr(resource, "region", "global")
+
+
+@dataclass
+class CheckReportMongoDBAtlas(Check_Report):
+    """Contains the MongoDB Atlas Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    project_id: str
+    location: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the MongoDB Atlas Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.project_id = getattr(resource, "project_id", "")
+        self.location = getattr(resource, "location", self.project_id)
 
 
 # Testing Pending

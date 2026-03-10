@@ -1,0 +1,37 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudstorage_bucket_lifecycle_management_enabled",
+  "CheckTitle": "Cloud Storage bucket has lifecycle management enabled with at least one valid rule",
+  "CheckType": [],
+  "ServiceName": "cloudstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "storage.googleapis.com/Bucket",
+  "ResourceGroup": "storage",
+  "Description": "**Cloud Storage buckets** use **Object Lifecycle Management** with at least one valid rule (supported `action` and non-empty `condition`) to automatically transition storage class or delete objects.",
+  "Risk": "Without lifecycle rules, data and object versions persist indefinitely, expanding the attack surface and hindering mandated erasure. Stale data amplifies exfiltration impact (**confidentiality**) and complicates **integrity** controls, while also driving avoidable cost and retention noncompliance.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudStorage/enable-lifecycle-management.html",
+    "https://docs.cloud.google.com/storage/docs/managing-lifecycles",
+    "https://docs.cloud.google.com/storage/docs/lifecycle",
+    "https://docs.cloud.google.com/storage/docs/samples/storage-enable-bucket-lifecycle-management"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud storage buckets update gs://<BUCKET_NAME> --lifecycle-file=<PATH_TO_JSON>",
+      "NativeIaC": "",
+      "Other": "1. In Google Cloud Console, go to Storage > Buckets and open <BUCKET_NAME>\n2. Click the Lifecycle tab\n3. Click Add a rule\n4. Action: Delete\n5. Condition: Age = 1 day\n6. Click Create/Save",
+      "Terraform": "```hcl\nresource \"google_storage_bucket\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"US\"\n\n  # Critical: add at least one lifecycle rule with a condition to pass the check\n  lifecycle_rule {\n    action { type = \"Delete\" }      # Critical: defines a supported action\n    condition { age = 1 }            # Critical: ensures the rule has a valid condition\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Define lifecycle policies by data classification to enforce **least data retention**. Use `Delete` for TTL/age and `SetStorageClass` for archival, with version-aware conditions like `isLive=false` or `numNewerVersions`. Test on a limited dataset, review regularly, and align with **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/cloudstorage_bucket_lifecycle_management_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

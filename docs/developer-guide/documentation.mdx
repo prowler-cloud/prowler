@@ -1,0 +1,61 @@
+---
+title: 'Contributing to Documentation'
+---
+
+Prowler documentation is built using [Mintlify](https://www.mintlify.com/docs), allowing contributors to easily add or enhance documentation.
+
+## Documentation Structure
+
+The Prowler documentation is organized into several sections. The main ones are:
+
+- **Getting Started**: Provides an overview of the Prowler platform and its different solutions, including Prowler Cloud/App, Prowler CLI, Prowler MCP Server, Prowler Hub, and Prowler Lighthouse AI. This section helps new users understand which Prowler solution best fits their needs and includes product comparisons.
+
+- **Guides**: Contains practical tutorials and how-to guides organized by product (Prowler Cloud/App, CLI) and provider (AWS, Azure, GCP, Kubernetes, Microsoft 365, GitHub, etc.). This section covers authentication, integrations, compliance, and advanced usage scenarios.
+
+- **Developer Guide**: Documentation for contributors looking to extend Prowler functionality. This includes guides on creating providers, services, checks, output formats, integrations, and compliance frameworks. Provider-specific implementation details and testing strategies are also covered here.
+
+- **Troubleshooting**: Common issues, error messages, and their solutions. This section helps users resolve problems encountered during installation, configuration, or execution.
+
+
+## AI-Driven Documentation
+
+As mentioned in the [Introduction](/developer-guide/introduction#ai-driven-contributions), we have specialized resources to enhance AI-driven development.
+
+This includes the [AGENTS.md](https://github.com/prowler-cloud/prowler/blob/master/docs/AGENTS.md) file that contains the guidelines and style guide for the AI agents in the Prowler documentation.
+
+## Local Development
+
+<Steps>
+  <Step title="Install Mintlify CLI">
+    ```bash
+    npm i -g mint
+    ```
+    For detailed instructions, check the [Mintlify documentation](https://www.mintlify.com/docs/installation).
+  </Step>
+
+  <Step title="Preview Documentation Locally">
+    Start the local development server to preview changes in real-time.
+
+    ```bash
+    mint dev
+    ```
+
+    A local preview of your documentation will be available at http://localhost:3000
+  </Step>
+
+  <Step title="Make Documentation Changes">
+    Edit existing Markdown (.mdx) files inside the `docs` directory or add new documents.
+
+    For reference about formatting, check the [Mintlify documentation](https://www.mintlify.com/docs/create/text).
+
+    To add new sections or files, update the [`docs/docs.json`](https://github.com/prowler-cloud/prowler/blob/master/docs/docs.json) file to include them in the navigation.
+  </Step>
+
+  <Step title="Submit Changes">
+    Once documentation updates are complete, [submit a pull request for review](/developer-guide/introduction#sending-the-pull-request).
+
+    The Prowler team will assess and merge contributions.
+  </Step>
+</Steps>
+
+Your efforts help improve Prowler documentation. Thank you for contributing! 🤘

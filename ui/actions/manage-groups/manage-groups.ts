@@ -3,12 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getErrorMessage,
-  parseStringify,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { ManageGroupPayload, ProviderGroupsResponse } from "@/types/components";
 
 export const getProviderGroups = async ({
@@ -47,16 +43,8 @@ export const getProviderGroups = async ({
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(`Error fetching provider groups: ${response.statusText}`);
-    }
-
-    const data: ProviderGroupsResponse = await response.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/manage-groups");
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching provider groups:", error);
     return undefined;
   }
@@ -72,18 +60,9 @@ export const getProviderGroupInfoById = async (providerGroupId: string) => {
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch provider group info: ${response.statusText}`,
-      );
-    }
-
-    const data = await response.json();
-    return parseStringify(data);
+    return handleApiResponse(response);
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    handleApiError(error);
   }
 };
 
@@ -131,13 +110,10 @@ export const createProviderGroup = async (formData: FormData) => {
       headers,
       body,
     });
-    const data = await response.json();
-    revalidatePath("/manage-groups");
-    return parseStringify(data);
+
+    return handleApiResponse(response, "/manage-groups");
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    handleApiError(error);
   }
 };
 
@@ -180,19 +156,9 @@ export const updateProviderGroup = async (
       body: JSON.stringify(payload),
     });
 
-    if (!response.ok) {
-      throw new Error(
-        `Failed to update provider group: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    const data = await response.json();
-    revalidatePath("/manage-groups");
-    return parseStringify(data);
+    return handleApiResponse(response);
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    handleApiError(error);
   }
 };
 
@@ -233,9 +199,8 @@ export const deleteProviderGroup = async (formData: FormData) => {
     revalidatePath("/manage-groups");
     return data || { success: true };
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error deleting provider group:", error);
-    const message = await getErrorMessage(error);
+    const message = getErrorMessage(error);
     return { errors: [{ detail: message }] };
   }
 };

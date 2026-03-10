@@ -17,6 +17,7 @@ from prowler.providers.common.models import Audit_Metadata
 AWS_COMMERCIAL_PARTITION = "aws"
 AWS_GOV_CLOUD_PARTITION = "aws-us-gov"
 AWS_CHINA_PARTITION = "aws-cn"
+AWS_EUSC_PARTITION = "aws-eusc"
 AWS_ISO_PARTITION = "aws-iso"
 
 # Root AWS Account
@@ -51,6 +52,9 @@ AWS_REGION_GOV_CLOUD_US_EAST_1 = "us-gov-east-1"
 
 # Iso Regions
 AWS_REGION_ISO_GLOBAL = "aws-iso-global"
+
+# European Sovereign Cloud Regions
+AWS_REGION_EUSC_DE_EAST_1 = "eusc-de-east-1"
 
 # EC2
 EXAMPLE_AMI_ID = "ami-12c6146b"

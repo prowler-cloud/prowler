@@ -1,0 +1,34 @@
+/* Override Tailwind CSS reset for markdown content */
+.markdown-content ul {
+    list-style: disc !important;
+    margin-left: 20px !important;
+    padding-left: 10px !important;
+    margin-bottom: 8px !important;
+}
+
+.markdown-content ol {
+    list-style: decimal !important;
+    margin-left: 20px !important;
+    padding-left: 10px !important;
+    margin-bottom: 8px !important;
+}
+
+.markdown-content li {
+    margin-bottom: 4px !important;
+    display: list-item !important;
+}
+
+.markdown-content p {
+    margin-bottom: 8px !important;
+}
+
+/* Ensure nested lists work properly */
+.markdown-content ul ul {
+    margin-top: 4px !important;
+    margin-bottom: 4px !important;
+}
+
+.markdown-content ol ol {
+    margin-top: 4px !important;
+    margin-bottom: 4px !important;
+}

@@ -10,13 +10,14 @@ import { SearchParamsProps } from "@/types";
 export default async function EditRolePage({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
     <Suspense key={searchParamsKey} fallback={<SkeletonRoleForm />}>
-      <SSRDataRole searchParams={searchParams} />
+      <SSRDataRole searchParams={resolvedSearchParams} />
     </Suspense>
   );
 }

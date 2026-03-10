@@ -1,6 +1,7 @@
-import { Divider, Tooltip } from "@nextui-org/react";
+import { Divider } from "@heroui/divider";
+import { Tooltip } from "@heroui/tooltip";
 
-import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
+import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { ProviderType } from "@/types";
 
 interface ComplianceScanInfoProps {
@@ -19,22 +20,24 @@ interface ComplianceScanInfoProps {
 
 export const ComplianceScanInfo = ({ scan }: ComplianceScanInfoProps) => {
   return (
-    <div className="flex items-center gap-2">
-      <EntityInfoShort
-        cloudProvider={scan.providerInfo.provider}
-        entityAlias={scan.providerInfo.alias}
-        entityId={scan.providerInfo.uid}
-        hideCopyButton
-        snippetWidth="max-w-[100px]"
-      />
-      <Divider orientation="vertical" className="h-6" />
+    <div className="flex items-center gap-4">
+      <div className="flex shrink-0 items-center">
+        <EntityInfo
+          cloudProvider={scan.providerInfo.provider}
+          entityAlias={scan.providerInfo.alias}
+          entityId={scan.providerInfo.uid}
+          showCopyAction={false}
+          maxWidth="w-[80px]"
+        />
+      </div>
+      <Divider orientation="vertical" className="h-8" />
       <div className="flex flex-col items-start whitespace-nowrap">
         <Tooltip
           content={scan.attributes.name || "- -"}
           placement="top"
           size="sm"
         >
-          <p className="text-xs text-default-500">
+          <p className="text-default-500 text-xs">
             {scan.attributes.name || "- -"}
           </p>
         </Tooltip>
