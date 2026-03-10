@@ -163,7 +163,7 @@ export const WizardInputField = <T extends FieldValues>({
                 )}
               </div>
             </FormControl>
-            <FormMessage className="text-text-error max-w-full text-xs" />
+            <FormMessage className="text-text-error-primary max-w-full text-xs" />
           </div>
         );
       }}
