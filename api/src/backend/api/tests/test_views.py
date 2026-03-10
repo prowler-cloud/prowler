@@ -1343,6 +1343,10 @@ class TestProviderViewSet:
             reverse("provider-list"), data=provider_json_payload, format="json"
         )
         assert response.status_code == status.HTTP_409_CONFLICT
+        error = response.json()["errors"][0]
+        assert error["detail"] == "Provider already exists."
+        assert error["code"] == "conflict"
+        assert error["source"]["pointer"] == "/data/attributes/uid"
 
         mock_delete_task.reset_mock()
         mock_delete_task.return_value = task_mock
