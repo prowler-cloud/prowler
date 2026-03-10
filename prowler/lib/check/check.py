@@ -280,7 +280,7 @@ def print_compliance_requirements(
     for compliance_framework in compliance_frameworks:
         for key in bulk_compliance_frameworks.keys():
             framework = bulk_compliance_frameworks[key].Framework
-            provider = bulk_compliance_frameworks[key].Provider
+            provider = bulk_compliance_frameworks[key].Provider or "Multi-provider"
             version = bulk_compliance_frameworks[key].Version
             requirements = bulk_compliance_frameworks[key].Requirements
             # We can list the compliance requirements for a given framework using the
@@ -291,8 +291,14 @@ def print_compliance_requirements(
                 )
                 for requirement in requirements:
                     checks = ""
-                    for check in requirement.Checks:
-                        checks += f" {Fore.YELLOW}\t\t{check}\n{Style.RESET_ALL}"
+                    req_checks = requirement.Checks
+                    if isinstance(req_checks, dict):
+                        for prov, check_list in req_checks.items():
+                            for check in check_list:
+                                checks += f" {Fore.YELLOW}\t\t[{prov}] {check}\n{Style.RESET_ALL}"
+                    else:
+                        for check in req_checks:
+                            checks += f" {Fore.YELLOW}\t\t{check}\n{Style.RESET_ALL}"
                     print(
                         f"Requirement Id: {Fore.MAGENTA}{requirement.Id}{Style.RESET_ALL}\n\t- Description: {requirement.Description}\n\t- Checks:\n{checks}"
                     )

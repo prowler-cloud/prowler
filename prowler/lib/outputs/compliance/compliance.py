@@ -16,6 +16,77 @@ from prowler.lib.outputs.compliance.mitre_attack.mitre_attack import (
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore import (
     get_prowler_threatscore_table,
 )
+from prowler.lib.outputs.compliance.universal.universal_table import get_universal_table
+
+
+def process_universal_compliance_frameworks(
+    input_compliance_frameworks: set,
+    universal_frameworks: dict,
+    finding_outputs: list,
+    output_directory: str,
+    output_filename: str,
+    provider: str,
+    generated_outputs: dict,
+) -> set:
+    """Process universal compliance frameworks, generating CSV and OCSF outputs.
+
+    For each framework in *input_compliance_frameworks* that exists in
+    *universal_frameworks* and has an Outputs.Table_Config, this function
+    creates both a CSV (UniversalComplianceOutput) and an OCSF JSON
+    (OCSFComplianceOutput) file.  OCSF is always generated regardless of
+    the user's ``--output-formats`` flag.
+
+    Returns the set of framework names that were processed so the caller
+    can remove them before entering the legacy per-provider output loop.
+    """
+    from prowler.lib.outputs.compliance.universal.ocsf_compliance import (
+        OCSFComplianceOutput,
+    )
+    from prowler.lib.outputs.compliance.universal.universal_output import (
+        UniversalComplianceOutput,
+    )
+
+    processed = set()
+    for compliance_name in input_compliance_frameworks:
+        if not (
+            compliance_name in universal_frameworks
+            and universal_frameworks[compliance_name].Outputs
+            and universal_frameworks[compliance_name].Outputs.Table_Config
+        ):
+            continue
+
+        fw = universal_frameworks[compliance_name]
+
+        # CSV output
+        csv_path = (
+            f"{output_directory}/compliance/" f"{output_filename}_{compliance_name}.csv"
+        )
+        output = UniversalComplianceOutput(
+            findings=finding_outputs,
+            framework=fw,
+            file_path=csv_path,
+            provider=provider,
+        )
+        generated_outputs["compliance"].append(output)
+        output.batch_write_data_to_file()
+
+        # OCSF output (always generated for universal frameworks)
+        ocsf_path = (
+            f"{output_directory}/compliance/"
+            f"{output_filename}_{compliance_name}.ocsf.json"
+        )
+        ocsf_output = OCSFComplianceOutput(
+            findings=finding_outputs,
+            framework=fw,
+            file_path=ocsf_path,
+            provider=provider,
+        )
+        generated_outputs["compliance"].append(ocsf_output)
+        ocsf_output.batch_write_data_to_file()
+
+        processed.add(compliance_name)
+
+    return processed
 
 
 def display_compliance_table(
@@ -25,6 +96,9 @@ def display_compliance_table(
     output_filename: str,
     output_directory: str,
     compliance_overview: bool,
+    universal_frameworks: dict = None,
+    provider: str = None,
+    output_formats: list = None,
 ) -> None:
     """
     display_compliance_table generates the compliance table for the given compliance framework.
@@ -36,21 +110,32 @@ def display_compliance_table(
         output_filename (str): The output filename
         output_directory (str): The output directory
         compliance_overview (bool): The compliance
+        universal_frameworks (dict): Optional universal ComplianceFramework objects
+        provider (str): The current provider (e.g. "aws") for multi-provider filtering
+        output_formats (list): The output formats to generate
 
     Returns:
         None
     """
     try:
-        if "ens_" in compliance_framework:
-            get_ens_table(
-                findings,
-                bulk_checks_metadata,
-                compliance_framework,
-                output_filename,
-                output_directory,
-                compliance_overview,
-            )
-        elif "cis_" in compliance_framework:
+        # Universal path: if the framework has TableConfig, use the universal renderer
+        if universal_frameworks and compliance_framework in universal_frameworks:
+            fw = universal_frameworks[compliance_framework]
+            if fw.Outputs and fw.Outputs.Table_Config:
+                get_universal_table(
+                    findings,
+                    bulk_checks_metadata,
+                    compliance_framework,
+                    output_filename,
+                    output_directory,
+                    compliance_overview,
+                    framework=fw,
+                    provider=provider,
+                    output_formats=output_formats,
+                )
+                return
+
+        if compliance_framework.startswith("cis_"):
             get_cis_table(
                 findings,
                 bulk_checks_metadata,
@@ -59,7 +144,16 @@ def display_compliance_table(
                 output_directory,
                 compliance_overview,
             )
-        elif "mitre_attack" in compliance_framework:
+        elif compliance_framework.startswith("ens_"):
+            get_ens_table(
+                findings,
+                bulk_checks_metadata,
+                compliance_framework,
+                output_filename,
+                output_directory,
+                compliance_overview,
+            )
+        elif compliance_framework.startswith("mitre_attack"):
             get_mitre_attack_table(
                 findings,
                 bulk_checks_metadata,
@@ -68,7 +162,7 @@ def display_compliance_table(
                 output_directory,
                 compliance_overview,
             )
-        elif "kisa_isms_" in compliance_framework:
+        elif compliance_framework.startswith("kisa"):
             get_kisa_ismsp_table(
                 findings,
                 bulk_checks_metadata,
@@ -77,7 +171,7 @@ def display_compliance_table(
                 output_directory,
                 compliance_overview,
             )
-        elif "threatscore_" in compliance_framework:
+        elif compliance_framework.startswith("prowler_threatscore_"):
             get_prowler_threatscore_table(
                 findings,
                 bulk_checks_metadata,
@@ -86,7 +180,7 @@ def display_compliance_table(
                 output_directory,
                 compliance_overview,
             )
-        elif "csa_ccm_" in compliance_framework:
+        elif compliance_framework.startswith("csa_ccm_"):
             get_csa_table(
                 findings,
                 bulk_checks_metadata,
@@ -95,7 +189,7 @@ def display_compliance_table(
                 output_directory,
                 compliance_overview,
             )
-        elif "c5_" in compliance_framework:
+        elif compliance_framework.startswith("c5_"):
             get_c5_table(
                 findings,
                 bulk_checks_metadata,
