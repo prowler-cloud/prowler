@@ -209,10 +209,7 @@ export const ColumnProviders: ColumnDef<ProvidersTableRow>[] = [
       }
 
       return (
-        <DateWithTime
-          dateTime={row.original.attributes.inserted_at}
-          showTime
-        />
+        <DateWithTime dateTime={row.original.attributes.inserted_at} showTime />
       );
     },
   },
@@ -220,7 +217,15 @@ export const ColumnProviders: ColumnDef<ProvidersTableRow>[] = [
     id: "actions",
     size: 56,
     header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
-    cell: ({ row }) => <DataTableRowActions row={row} />,
+    cell: ({ row }) => (
+      <DataTableRowActions
+        row={row}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={() => {}}
+      />
+    ),
     enableSorting: false,
   },
 ];

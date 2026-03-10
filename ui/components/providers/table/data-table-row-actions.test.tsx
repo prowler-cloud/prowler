@@ -74,7 +74,15 @@ describe("DataTableRowActions", () => {
   it("renders the exact phase 1 menu actions for provider rows", async () => {
     // Given
     const user = userEvent.setup();
-    render(<DataTableRowActions row={createRow()} />);
+    render(
+      <DataTableRowActions
+        row={createRow()}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+      />,
+    );
 
     // When
     await user.click(screen.getByRole("button"));

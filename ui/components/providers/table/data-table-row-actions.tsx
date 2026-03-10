@@ -14,6 +14,7 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
+import { useToast } from "@/components/ui";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 import {
   isProvidersOrganizationRow,
@@ -25,13 +26,29 @@ import { DeleteForm } from "../forms/delete-form";
 
 interface DataTableRowActionsProps {
   row: Row<ProvidersTableRow>;
+  /** Whether any rows in the table are currently selected */
+  hasSelection: boolean;
+  /** Whether this specific row is selected */
+  isRowSelected: boolean;
+  /** IDs of all selected providers that have credentials (testable) */
+  testableProviderIds: string[];
+  /** Callback to clear the row selection after bulk operation */
+  onClearSelection: () => void;
 }
 
-export function DataTableRowActions({ row }: DataTableRowActionsProps) {
+export function DataTableRowActions({
+  row,
+  hasSelection,
+  isRowSelected,
+  testableProviderIds,
+  onClearSelection,
+}: DataTableRowActionsProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
   const rowData = row.original;
   const isOrganizationRow = isProvidersOrganizationRow(rowData);
   const provider = isOrganizationRow ? null : rowData;
@@ -40,21 +57,89 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const providerUid = provider?.attributes.uid ?? "";
   const providerAlias = provider?.attributes.alias ?? null;
   const providerSecretId = provider?.relationships.secret.data?.id ?? null;
-
-  const handleTestConnection = async () => {
-    if (!providerId) {
-      return;
-    }
-
-    setLoading(true);
-    const formData = new FormData();
-    formData.append("providerId", providerId);
-    await checkConnectionProvider(formData);
-    setLoading(false);
-  };
-
   const hasSecret = Boolean(provider?.relationships.secret.data);
 
+  const testSingleConnection = async (id: string) => {
+    const formData = new FormData();
+    formData.append("providerId", id);
+    return checkConnectionProvider(formData);
+  };
+
+  const handleTestConnection = async () => {
+    if (hasSelection && isRowSelected) {
+      // Bulk: test all selected providers
+      if (testableProviderIds.length === 0) return;
+      setLoading(true);
+
+      const results = await Promise.allSettled(
+        testableProviderIds.map(testSingleConnection),
+      );
+
+      const succeeded = results.filter(
+        (r) => r.status === "fulfilled" && !r.value?.error,
+      ).length;
+      const failed = results.length - succeeded;
+
+      if (failed === 0) {
+        toast({
+          title: "Connection test completed",
+          description: `${succeeded} ${succeeded === 1 ? "provider" : "providers"} tested successfully.`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Connection test completed",
+          description: `${succeeded} succeeded, ${failed} failed out of ${results.length} providers.`,
+        });
+      }
+
+      setLoading(false);
+      onClearSelection();
+    } else {
+      // Single: test only this provider
+      if (!providerId) return;
+      setLoading(true);
+      await testSingleConnection(providerId);
+      setLoading(false);
+    }
+  };
+
+  // When there's a selection, only show "Test Connection"
+  if (hasSelection) {
+    const bulkCount =
+      isRowSelected && testableProviderIds.length > 1
+        ? ` (${testableProviderIds.length})`
+        : "";
+
+    return (
+      <div className="relative flex items-center justify-end gap-2">
+        <ActionDropdown
+          trigger={
+            <Button variant="ghost" size="icon-sm" className="rounded-full">
+              <VerticalDotsIcon className="text-text-neutral-secondary" />
+            </Button>
+          }
+        >
+          <ActionDropdownItem
+            icon={<Rocket />}
+            label={loading ? "Testing..." : `Test Connection${bulkCount}`}
+            onSelect={(e) => {
+              e.preventDefault();
+              handleTestConnection();
+            }}
+            disabled={
+              isOrganizationRow ||
+              (!isRowSelected && !hasSecret) ||
+              (isRowSelected && testableProviderIds.length === 0) ||
+              loading
+            }
+          />
+        </ActionDropdown>
+      </div>
+    );
+  }
+
+  // Normal mode: all actions
   return (
     <>
       <Modal
