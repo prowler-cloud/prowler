@@ -8,6 +8,8 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - `POST /api/v1/providers` returns `409 Conflict` if already exists [(#10293)](https://github.com/prowler-cloud/prowler/pull/10293)
 
+---
+
 ## [1.20.1] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
