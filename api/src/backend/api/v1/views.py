@@ -2584,12 +2584,19 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         result_nodes = len(graph.get("nodes", []))
         result_relationships = len(graph.get("relationships", []))
         logger.info(
-            f"attack_paths_query_run query_id={query_definition.id} provider={query_definition.provider} "
-            f"scan_id={pk} provider_id={provider_id} result_nodes={result_nodes} "
-            f"result_relationships={result_relationships} query_duration={query_duration:.3f}s",
+            "attack_paths_query_run",
             extra={
                 "user_id": str(request.user.id),
                 "tenant_id": str(attack_paths_scan.provider.tenant_id),
+                "metadata": {
+                    "query_id": query_definition.id,
+                    "provider": query_definition.provider,
+                    "scan_id": pk,
+                    "provider_id": provider_id,
+                    "result_nodes": result_nodes,
+                    "result_relationships": result_relationships,
+                    "query_duration": round(query_duration, 3),
+                },
             },
         )
 
@@ -2646,13 +2653,19 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         result_nodes = len(graph.get("nodes", []))
         result_relationships = len(graph.get("relationships", []))
         logger.info(
-            f"attack_paths_custom_query_run provider={attack_paths_scan.provider.provider} "
-            f"scan_id={pk} provider_id={provider_id} query_length={query_length} "
-            f"result_nodes={result_nodes} result_relationships={result_relationships} "
-            f"query_duration={query_duration:.3f}s",
+            "attack_paths_custom_query_run",
             extra={
                 "user_id": str(request.user.id),
                 "tenant_id": str(attack_paths_scan.provider.tenant_id),
+                "metadata": {
+                    "provider": attack_paths_scan.provider.provider,
+                    "scan_id": pk,
+                    "provider_id": provider_id,
+                    "query_length": query_length,
+                    "result_nodes": result_nodes,
+                    "result_relationships": result_relationships,
+                    "query_duration": round(query_duration, 3),
+                },
             },
         )
 
