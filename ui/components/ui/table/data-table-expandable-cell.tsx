@@ -15,6 +15,8 @@ interface DataTableExpandableCellProps<TData> {
   showToggle?: boolean;
   /** Explicit expanded state — pass to break React Compiler memoization */
   isExpanded?: boolean;
+  /** Optional slot rendered after expand arrows and before children (e.g. checkbox) */
+  checkboxSlot?: React.ReactNode;
 }
 
 /**
@@ -46,6 +48,7 @@ export function DataTableExpandableCell<TData>({
   children,
   showToggle = true,
   isExpanded,
+  checkboxSlot,
 }: DataTableExpandableCellProps<TData>) {
   const isChildRow = row.depth > 0;
   const canExpand = row.getCanExpand();
@@ -57,14 +60,16 @@ export function DataTableExpandableCell<TData>({
     >
       {showToggle && (
         <>
+          {isChildRow && <CornerDownRightIcon className="h-4 w-4 shrink-0" />}
           {canExpand ? (
             <DataTableExpandToggle row={row} isExpanded={isExpanded} />
-          ) : isChildRow ? (
-            <CornerDownRightIcon className="h-4 w-4 shrink-0" />
-          ) : (
+          ) : !isChildRow ? (
             <div className="w-4" />
-          )}
+          ) : null}
         </>
+      )}
+      {checkboxSlot && (
+        <div className="flex items-center gap-4">{checkboxSlot}</div>
       )}
       {children}
     </div>
