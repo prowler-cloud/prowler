@@ -20,12 +20,6 @@ import {
   ProvidersApiResponse,
   SearchParamsProps,
 } from "@/types";
-import { SCAN_TRIGGER, ScanProps } from "@/types/scans";
-import {
-  PROVIDER_DISPLAY_NAMES,
-  PROVIDER_TYPES,
-  ProviderType,
-} from "@/types/providers";
 import {
   PROVIDERS_GROUP_KIND,
   PROVIDERS_PAGE_FILTER,
@@ -36,14 +30,7 @@ import {
   ProvidersTableRow,
   ProvidersTableRowsInput,
 } from "@/types/providers-table";
-
-const PROVIDER_TYPE_MAPPING = PROVIDER_TYPES.map((providerType) => ({
-  [providerType]: {
-    provider: providerType as ProviderType,
-    uid: "",
-    alias: PROVIDER_DISPLAY_NAMES[providerType],
-  },
-}));
+import { SCAN_TRIGGER, ScanProps } from "@/types/scans";
 
 const PROVIDERS_STATUS_MAPPING = [
   {
@@ -172,9 +159,7 @@ const createProviderGroupLookup = (
 
 const ACTIVE_SCAN_STATES = new Set(["scheduled", "available", "executing"]);
 
-const buildScheduledProviderIds = (
-  scans: ScanProps[],
-): Set<string> => {
+const buildScheduledProviderIds = (scans: ScanProps[]): Set<string> => {
   const scheduled = new Set<string>();
 
   for (const scan of scans) {

@@ -401,9 +401,7 @@ describe("buildProvidersTableRows", () => {
 
   it("nests providers under OUs using relationship-based parent IDs", () => {
     // Given — providers have no org/OU linkage; tree is built from OU relationships
-    const providers = [
-      toProviderRow(providersResponse.data[0]),
-    ];
+    const providers = [toProviderRow(providersResponse.data[0])];
 
     // When
     const rows = buildProvidersTableRows({

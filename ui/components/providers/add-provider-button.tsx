@@ -5,8 +5,6 @@ import { useState } from "react";
 import { ProviderWizardModal } from "@/components/providers/wizard";
 import { Button } from "@/components/shadcn";
 
-import { AddIcon } from "../icons";
-
 export const AddProviderButton = () => {
   const [open, setOpen] = useState(false);
 

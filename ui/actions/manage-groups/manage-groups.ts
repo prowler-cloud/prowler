@@ -22,7 +22,8 @@ export const getProviderGroups = async ({
 }): Promise<ProviderGroupsResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  if (isNaN(Number(page)) || page < 1) redirect("/providers?tab=account-groups");
+  if (isNaN(Number(page)) || page < 1)
+    redirect("/providers?tab=account-groups");
 
   const url = new URL(`${apiBaseUrl}/provider-groups`);
 

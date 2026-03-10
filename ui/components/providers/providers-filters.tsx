@@ -34,7 +34,8 @@ export const ProvidersFilters = ({
   const searchParams = useSearchParams();
 
   const sortedFilters = [...filters].sort((a, b) => {
-    if (a.index !== undefined && b.index !== undefined) return a.index - b.index;
+    if (a.index !== undefined && b.index !== undefined)
+      return a.index - b.index;
     if (a.index !== undefined) return -1;
     if (b.index !== undefined) return 1;
     return 0;
@@ -103,7 +104,7 @@ export const ProvidersFilters = ({
       {sortedFilters.map((filter) => {
         const selectedValues = getSelectedValues(filter);
         return (
-          <div key={filter.key} className="min-w-[180px] max-w-[240px] flex-1">
+          <div key={filter.key} className="max-w-[240px] min-w-[180px] flex-1">
             <MultiSelect
               values={selectedValues}
               onValuesChange={(values) => pushDropdownFilter(filter, values)}
@@ -135,9 +136,7 @@ export const ProvidersFilters = ({
         );
       })}
       <ClearFiltersButton showCount />
-      {actions && (
-        <div className="ml-auto flex flex-wrap gap-4">{actions}</div>
-      )}
+      {actions && <div className="ml-auto flex flex-wrap gap-4">{actions}</div>}
     </div>
   );
 };

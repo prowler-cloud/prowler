@@ -50,7 +50,9 @@ export function DataTableRowActions<ProviderProps>({
           <ActionDropdownItem
             icon={<Pencil />}
             label="Edit Account Group"
-            onSelect={() => router.push(`/providers?tab=account-groups&groupId=${groupId}`)}
+            onSelect={() =>
+              router.push(`/providers?tab=account-groups&groupId=${groupId}`)
+            }
           />
           <ActionDropdownDangerZone>
             <ActionDropdownItem
