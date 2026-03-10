@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
@@ -962,7 +963,7 @@ class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
     def create(self, validated_data):
         try:
             return super().create(validated_data)
-        except IntegrityError as e:
+        except DjangoValidationError as e:
             if "unique_provider_uids" in str(e):
                 raise ConflictException(
                     detail="Provider already exists.",
