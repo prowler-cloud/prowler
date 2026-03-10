@@ -69,10 +69,17 @@ const ProvidersTableFallback = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-4">
-        <Skeleton className="h-10 w-[280px] rounded-md" />
-        <Skeleton className="h-10 w-[200px] rounded-md" />
-        <Skeleton className="h-10 w-[200px] rounded-md" />
-        <Skeleton className="h-10 w-[180px] rounded-md" />
+        {/* ProviderTypeSelector */}
+        <Skeleton className="h-[52px] min-w-[200px] flex-1 rounded-lg md:max-w-[280px]" />
+        {/* Account filter */}
+        <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
+        {/* Connection Status filter */}
+        <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
+        {/* Action buttons */}
+        <div className="ml-auto flex flex-wrap gap-4">
+          <Skeleton className="h-9 w-[160px] rounded-md" />
+          <Skeleton className="h-9 w-[120px] rounded-md" />
+        </div>
       </div>
       <SkeletonTableProviders />
     </div>
