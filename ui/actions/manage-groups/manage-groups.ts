@@ -22,7 +22,7 @@ export const getProviderGroups = async ({
 }): Promise<ProviderGroupsResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  if (isNaN(Number(page)) || page < 1) redirect("/manage-groups");
+  if (isNaN(Number(page)) || page < 1) redirect("/providers?tab=account-groups");
 
   const url = new URL(`${apiBaseUrl}/provider-groups`);
 
@@ -111,7 +111,7 @@ export const createProviderGroup = async (formData: FormData) => {
       body,
     });
 
-    return handleApiResponse(response, "/manage-groups");
+    return handleApiResponse(response, "/providers?tab=account-groups");
   } catch (error) {
     handleApiError(error);
   }
@@ -196,7 +196,7 @@ export const deleteProviderGroup = async (formData: FormData) => {
       data = await response.json();
     }
 
-    revalidatePath("/manage-groups");
+    revalidatePath("/providers");
     return data || { success: true };
   } catch (error) {
     console.error("Error deleting provider group:", error);

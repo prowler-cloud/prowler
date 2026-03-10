@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 
-import { ManageGroupsButton } from "@/components/manage-groups";
 import {
   AddProviderButton,
   MutedFindingsConfigButton,
@@ -13,6 +12,9 @@ import { ContentLayout } from "@/components/ui";
 import { FilterTransitionWrapper } from "@/contexts";
 import { SearchParamsProps } from "@/types";
 
+import { AccountGroupsContent } from "./account-groups-content";
+import { PROVIDER_TAB, ProviderPageTabs } from "./provider-page-tabs";
+import type { ProviderTab } from "./provider-page-tabs";
 import { loadProvidersAccountsViewData } from "./providers-page.utils";
 
 export default async function Providers({
@@ -21,14 +23,35 @@ export default async function Providers({
   searchParams: Promise<SearchParamsProps>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
+  const activeTab =
+    (resolvedSearchParams.tab as ProviderTab) || PROVIDER_TAB.ACCOUNTS;
+
+  // Exclude `tab` from the Suspense key so switching tabs doesn't re-suspend
+  const { tab: _, ...paramsWithoutTab } = resolvedSearchParams || {};
+  const searchParamsKey = JSON.stringify(paramsWithoutTab);
 
   return (
     <ContentLayout title="Cloud Providers" icon="lucide:cloud-cog">
       <FilterTransitionWrapper>
-        <Suspense key={searchParamsKey} fallback={<ProvidersTableFallback />}>
-          <ProvidersTable searchParams={resolvedSearchParams} />
-        </Suspense>
+        <ProviderPageTabs
+          activeTab={activeTab}
+          accountsContent={
+            <Suspense
+              key={searchParamsKey}
+              fallback={<ProvidersTableFallback />}
+            >
+              <ProvidersAccountsContent searchParams={resolvedSearchParams} />
+            </Suspense>
+          }
+          accountGroupsContent={
+            <Suspense
+              key={searchParamsKey}
+              fallback={<AccountGroupsFallback />}
+            >
+              <AccountGroupsContent searchParams={resolvedSearchParams} />
+            </Suspense>
+          }
+        />
       </FilterTransitionWrapper>
     </ContentLayout>
   );
@@ -37,7 +60,6 @@ export default async function Providers({
 const ProvidersActions = () => {
   return (
     <div className="flex flex-wrap gap-4 md:justify-end">
-      <ManageGroupsButton />
       <MutedFindingsConfigButton />
       <AddProviderButton />
     </div>
@@ -47,30 +69,39 @@ const ProvidersActions = () => {
 const ProvidersTableFallback = () => {
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-6">
-            <Skeleton className="h-5 w-16 rounded" />
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Skeleton className="h-10 w-36 rounded-md" />
-            <Skeleton className="h-10 w-40 rounded-md" />
-            <Skeleton className="h-10 w-36 rounded-md" />
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-4">
-          <Skeleton className="h-10 w-[280px] rounded-md" />
-          <Skeleton className="h-10 w-[200px] rounded-md" />
-          <Skeleton className="h-10 w-[200px] rounded-md" />
-          <Skeleton className="h-10 w-[180px] rounded-md" />
-        </div>
+      <div className="flex flex-wrap items-center gap-4">
+        <Skeleton className="h-10 w-[280px] rounded-md" />
+        <Skeleton className="h-10 w-[200px] rounded-md" />
+        <Skeleton className="h-10 w-[200px] rounded-md" />
+        <Skeleton className="h-10 w-[180px] rounded-md" />
       </div>
       <SkeletonTableProviders />
     </div>
   );
 };
 
-const ProvidersTable = async ({
+const AccountGroupsFallback = () => {
+  return (
+    <div className="grid min-h-[50vh] grid-cols-1 items-start gap-8 md:grid-cols-12">
+      <div className="col-span-1 md:col-span-4">
+        <div className="flex flex-col gap-4">
+          <Skeleton className="h-7 w-48 rounded" />
+          <Skeleton className="h-4 w-64 rounded" />
+          <Skeleton className="h-10 w-full rounded-md" />
+          <Skeleton className="h-10 w-full rounded-md" />
+          <Skeleton className="h-10 w-full rounded-md" />
+          <Skeleton className="h-10 w-32 rounded-md" />
+        </div>
+      </div>
+      <div className="col-span-1 md:col-span-1" />
+      <div className="col-span-1 md:col-span-6">
+        <SkeletonTableProviders />
+      </div>
+    </div>
+  );
+};
+
+const ProvidersAccountsContent = async ({
   searchParams,
 }: {
   searchParams: SearchParamsProps;
@@ -82,30 +113,16 @@ const ProvidersTable = async ({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-6">
-          <button
-            type="button"
-            className="border-button-primary text-text-neutral-primary border-b-2 pb-2 text-sm font-medium"
-          >
-            Accounts
-          </button>
-        </div>
-        <ProvidersActions />
-      </div>
       <ProvidersFilters
         filters={providersView.filters}
         providers={providersView.providers}
+        actions={<ProvidersActions />}
       />
-      <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-12">
-          <ProvidersAccountsTable
-            isCloud={process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"}
-            metadata={providersView.metadata}
-            rows={providersView.rows}
-          />
-        </div>
-      </div>
+      <ProvidersAccountsTable
+        isCloud={process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"}
+        metadata={providersView.metadata}
+        rows={providersView.rows}
+      />
     </div>
   );
 };

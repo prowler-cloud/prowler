@@ -22,11 +22,13 @@ import { ProviderConnectionStatus, ProviderProps } from "@/types/providers";
 interface ProvidersFiltersProps {
   filters: FilterOption[];
   providers: ProviderProps[];
+  actions?: React.ReactNode;
 }
 
 export const ProvidersFilters = ({
   filters,
   providers,
+  actions,
 }: ProvidersFiltersProps) => {
   const { updateFilter } = useUrlFilters();
   const searchParams = useSearchParams();
@@ -133,6 +135,9 @@ export const ProvidersFilters = ({
         );
       })}
       <ClearFiltersButton showCount />
+      {actions && (
+        <div className="ml-auto flex flex-wrap gap-4">{actions}</div>
+      )}
     </div>
   );
 };
