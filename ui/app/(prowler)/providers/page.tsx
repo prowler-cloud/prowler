@@ -58,11 +58,11 @@ const ProvidersTableFallback = () => {
             <Skeleton className="h-10 w-36 rounded-md" />
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Skeleton className="h-10 rounded-md" />
-          <Skeleton className="h-10 rounded-md" />
-          <Skeleton className="h-10 rounded-md" />
-          <Skeleton className="h-10 rounded-md" />
+        <div className="flex flex-wrap items-center gap-4">
+          <Skeleton className="h-10 w-[280px] rounded-md" />
+          <Skeleton className="h-10 w-[200px] rounded-md" />
+          <Skeleton className="h-10 w-[200px] rounded-md" />
+          <Skeleton className="h-10 w-[180px] rounded-md" />
         </div>
       </div>
       <SkeletonTableProviders />
