@@ -5,7 +5,11 @@ import { CornerDownRightIcon } from "lucide-react";
 
 import { DataTableExpandToggle } from "./data-table-expand-toggle";
 
-/** Indentation per nesting level in rem units */
+/**
+ * Indentation per nesting level in rem units.
+ * Matches the parent's icon (w-4 = 1rem) + gap-2 (0.5rem) = 1.5rem,
+ * so the child's first icon aligns horizontally with the parent's checkbox.
+ */
 const INDENT_PER_LEVEL_REM = 1.5;
 
 interface DataTableExpandableCellProps<TData> {
@@ -15,6 +19,8 @@ interface DataTableExpandableCellProps<TData> {
   showToggle?: boolean;
   /** Explicit expanded state — pass to break React Compiler memoization */
   isExpanded?: boolean;
+  /** Hide the CornerDownRight icon even for child rows (e.g. OUs that can expand) */
+  hideChildIcon?: boolean;
   /** Optional slot rendered after expand arrows and before children (e.g. checkbox) */
   checkboxSlot?: React.ReactNode;
 }
@@ -48,6 +54,7 @@ export function DataTableExpandableCell<TData>({
   children,
   showToggle = true,
   isExpanded,
+  hideChildIcon = false,
   checkboxSlot,
 }: DataTableExpandableCellProps<TData>) {
   const isChildRow = row.depth > 0;
@@ -60,7 +67,7 @@ export function DataTableExpandableCell<TData>({
     >
       {showToggle && (
         <>
-          {isChildRow && <CornerDownRightIcon className="h-4 w-4 shrink-0" />}
+          {isChildRow && !hideChildIcon && <CornerDownRightIcon className="h-4 w-4 shrink-0 text-text-neutral-tertiary" />}
           {canExpand ? (
             <DataTableExpandToggle row={row} isExpanded={isExpanded} />
           ) : !isChildRow ? (
@@ -69,7 +76,7 @@ export function DataTableExpandableCell<TData>({
         </>
       )}
       {checkboxSlot && (
-        <div className="flex items-center gap-4">{checkboxSlot}</div>
+        <div className="mr-2 flex items-center">{checkboxSlot}</div>
       )}
       {children}
     </div>

@@ -51,7 +51,7 @@ export function DataTableExpandToggle<TData>({
     <button
       onClick={row.getToggleExpandedHandler()}
       className={cn(
-        "rounded p-1 transition-colors",
+        "rounded transition-colors",
         "hover:bg-prowler-white/10",
         "focus-visible:ring-border-input-primary-press focus-visible:ring-2 focus-visible:outline-none",
       )}
@@ -60,7 +60,7 @@ export function DataTableExpandToggle<TData>({
     >
       <ChevronRightIcon
         className={cn(
-          "h-4 w-4 shrink-0 transition-transform duration-200",
+          "h-4 w-4 shrink-0 text-text-neutral-tertiary transition-transform duration-200",
           isExpanded && "rotate-90",
         )}
       />
