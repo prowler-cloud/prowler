@@ -1,11 +1,12 @@
 "use client";
 
-import { ExternalLink, Link, X } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
-import type { ReactNode } from "react";
+import { ExternalLink, Link, VolumeX, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { type ReactNode, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 import {
+  Button,
   Drawer,
   DrawerClose,
   DrawerContent,
@@ -35,6 +36,7 @@ import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/iac-utils";
 import { cn } from "@/lib/utils";
 import { FindingProps, ProviderType } from "@/types";
 
+import { MuteFindingsModal } from "../mute-findings-modal";
 import { Muted } from "../muted";
 import { DeltaIndicator } from "./delta-indicator";
 
@@ -85,8 +87,10 @@ export const FindingDetail = ({
   const resource = finding.relationships.resource.attributes;
   const scan = finding.relationships.scan.attributes;
   const providerDetails = finding.relationships.provider.attributes;
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
 
   const copyFindingUrl = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -108,6 +112,13 @@ export const FindingDetail = ({
 
   const content = (
     <div className="flex min-w-0 flex-col gap-4 rounded-lg">
+      <MuteFindingsModal
+        isOpen={isMuteModalOpen}
+        onOpenChange={setIsMuteModalOpen}
+        findingIds={[findingDetails.id]}
+        onComplete={() => router.refresh()}
+      />
+
       {/* Header */}
       <div className="flex flex-col gap-2">
         {/* Row 1: Status badges */}
@@ -154,11 +165,24 @@ export const FindingDetail = ({
 
       {/* Tabs */}
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="resources">Resources</TabsTrigger>
-          <TabsTrigger value="scans">Scans</TabsTrigger>
-        </TabsList>
+        <div className="mb-4 flex items-center justify-between">
+          <TabsList>
+            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="resources">Resources</TabsTrigger>
+            <TabsTrigger value="scans">Scans</TabsTrigger>
+          </TabsList>
+
+          {!attributes.muted && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsMuteModalOpen(true)}
+            >
+              <VolumeX className="size-4" />
+              Mute
+            </Button>
+          )}
+        </div>
 
         <p className="text-text-neutral-primary mb-4 text-sm">
           Here is an overview of this finding:
