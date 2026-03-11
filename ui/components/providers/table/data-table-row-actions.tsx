@@ -15,6 +15,7 @@ import {
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
+import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 import {
   isProvidersOrganizationRow,
@@ -71,13 +72,20 @@ export function DataTableRowActions({
       if (testableProviderIds.length === 0) return;
       setLoading(true);
 
-      const results = await Promise.allSettled(
-        testableProviderIds.map(testSingleConnection),
+      const results = await runWithConcurrencyLimit(
+        testableProviderIds,
+        10,
+        async (id) => {
+          try {
+            const result = await testSingleConnection(id);
+            return { ok: !result?.error };
+          } catch {
+            return { ok: false };
+          }
+        },
       );
 
-      const succeeded = results.filter(
-        (r) => r.status === "fulfilled" && !r.value?.error,
-      ).length;
+      const succeeded = results.filter((r) => r.ok).length;
       const failed = results.length - succeeded;
 
       if (failed === 0) {
