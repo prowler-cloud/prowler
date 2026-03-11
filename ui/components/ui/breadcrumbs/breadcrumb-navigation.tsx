@@ -107,7 +107,7 @@ export function BreadcrumbNavigation({
   };
 
   const renderTitleWithIcon = (titleText: string, isLink: boolean = false) => (
-    <>
+    <div className="flex items-center gap-2">
       {typeof icon === "string" ? (
         <Icon
           className="text-text-neutral-primary"
@@ -125,7 +125,7 @@ export function BreadcrumbNavigation({
       >
         {titleText}
       </h1>
-    </>
+    </div>
   );
 
   // Determine which breadcrumbs to use
