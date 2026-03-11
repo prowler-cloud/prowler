@@ -12,7 +12,6 @@ All notable changes to the **Prowler API** are documented in this file.
 - `image` provider support for container image scanning [(#10128)](https://github.com/prowler-cloud/prowler/pull/10128)
 - Attack Paths: Custom query and Cartography schema endpoints [(#10149)](https://github.com/prowler-cloud/prowler/pull/10149)
 - `googleworkspace` provider support [(#10247)](https://github.com/prowler-cloud/prowler/pull/10247)
-- Attack Paths: Custom query and Cartography schema endpoints (temporarily blocked) [(#10149)](https://github.com/prowler-cloud/prowler/pull/10149)
 
 ### 🔄 Changed
 

@@ -21,6 +21,7 @@ from prowler.providers.googleworkspace.exceptions.exceptions import (
     GoogleWorkspaceImpersonationError,
     GoogleWorkspaceInsufficientScopesError,
     GoogleWorkspaceInvalidCredentialsError,
+    GoogleWorkspaceInvalidProviderIdError,
     GoogleWorkspaceMissingDelegatedUserError,
     GoogleWorkspaceNoCredentialsError,
     GoogleWorkspaceSetUpIdentityError,
@@ -517,7 +518,16 @@ class GoogleworkspaceProvider(Provider):
             )
 
             # Set up the identity to test the connection
-            GoogleworkspaceProvider.setup_identity(session, resolved_delegated_user)
+            identity = GoogleworkspaceProvider.setup_identity(
+                session, resolved_delegated_user
+            )
+
+            # Validate provider_id matches the customer_id from credentials
+            if provider_id and provider_id != identity.customer_id:
+                raise GoogleWorkspaceInvalidProviderIdError(
+                    file=os.path.basename(__file__),
+                    message=f"The provider ID {provider_id} does not match the credentials customer ID {identity.customer_id}",
+                )
 
             return Connection(is_connected=True)
         except Exception as error:

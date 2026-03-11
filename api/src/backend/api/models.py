@@ -345,9 +345,9 @@ class Provider(RowLevelSecurityProtectedModel):
 
     @staticmethod
     def validate_googleworkspace_uid(value):
-        if not re.match(r"^C[0-9a-z]{8}$", value):
+        if not re.match(r"^C[0-9a-zA-Z]+$", value):
             raise ModelValidationError(
-                detail="Google Workspace Customer ID must start with 'C' followed by 8 alphanumeric characters (e.g., C01234abc).",
+                detail="Google Workspace Customer ID must start with 'C' followed by one or more alphanumeric characters (e.g., C01234abc, C12345678).",
                 code="googleworkspace-uid",
                 pointer="/data/attributes/uid",
             )
