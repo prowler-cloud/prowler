@@ -214,7 +214,7 @@ export default function AttackPathsPage() {
         graphState.resetGraph();
 
         if (apiError.status === 404) {
-          graphState.setError("No data found");
+          graphState.resetGraph();
           showErrorToast("No data found", "The query returned no data");
         } else if (apiError.status === 403) {
           graphState.setError("Not enough permissions to execute this query");
