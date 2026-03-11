@@ -27,6 +27,10 @@ vi.mock("@/components/ui", () => ({
   useToast: () => ({ toast: vi.fn() }),
 }));
 
+vi.mock("@/lib/provider-helpers", () => ({
+  testProviderConnection: vi.fn(),
+}));
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 const createRow = () =>
