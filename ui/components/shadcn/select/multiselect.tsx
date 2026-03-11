@@ -1,5 +1,6 @@
 "use client";
 
+// CI test: trigger ui-shadcn module to validate targeted E2E path resolution
 import { CheckIcon, ChevronDown, XIcon } from "lucide-react";
 import {
   type ComponentPropsWithoutRef,
