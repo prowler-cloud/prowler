@@ -12,7 +12,11 @@ from api.attack_paths.queries.schema import (
     RAW_SCHEMA_URL,
 )
 from config.custom_logging import BackendLogger
-from tasks.jobs.attack_paths.config import INTERNAL_LABELS, INTERNAL_PROPERTIES
+from tasks.jobs.attack_paths.config import (
+    INTERNAL_LABELS,
+    INTERNAL_PROPERTIES,
+    is_dynamic_isolation_label,
+)
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -257,7 +261,11 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
 
 
 def _filter_labels(labels: Iterable[str]) -> list[str]:
-    return [label for label in labels if label not in INTERNAL_LABELS]
+    return [
+        label
+        for label in labels
+        if label not in INTERNAL_LABELS and not is_dynamic_isolation_label(label)
+    ]
 
 
 def _serialize_properties(properties: dict[str, Any]) -> dict[str, Any]:

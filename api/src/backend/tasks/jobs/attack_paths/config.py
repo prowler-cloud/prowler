@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Callable
+from uuid import UUID
 
 from config.env import env
 
@@ -20,6 +21,12 @@ INTERNET_NODE_LABEL = "Internet"
 # Phase 1 dual-write: deprecated label kept for drop_subgraph and infrastructure queries
 # Remove in Phase 2 once all nodes use the private label exclusively
 DEPRECATED_PROVIDER_RESOURCE_LABEL = "ProviderResource"
+
+# Dynamic isolation labels that contain entity UUIDs and are added to every synced node during sync
+# Format: _Tenant_{uuid_no_hyphens}, _Provider_{uuid_no_hyphens}
+TENANT_LABEL_PREFIX = "_Tenant_"
+PROVIDER_LABEL_PREFIX = "_Provider_"
+DYNAMIC_ISOLATION_PREFIXES = [TENANT_LABEL_PREFIX, PROVIDER_LABEL_PREFIX]
 
 
 @dataclass(frozen=True)
@@ -121,3 +128,27 @@ def get_deprecated_provider_resource_label(provider_type: str) -> str:
     """Get the deprecated resource label for a provider type (e.g., `AWSResource`)."""
     config = PROVIDER_CONFIGS.get(provider_type)
     return config.deprecated_resource_label if config else "UnknownProviderResource"
+
+
+# Dynamic Isolation Label Helpers
+# --------------------------------
+
+
+def _normalize_uuid(value: str | UUID) -> str:
+    """Strip hyphens from a UUID string for use in Neo4j labels."""
+    return str(value).replace("-", "")
+
+
+def get_tenant_label(tenant_id: str | UUID) -> str:
+    """Get the Neo4j label for a tenant (e.g., `_Tenant_019c41ee7df37deca684d839f95619f8`)."""
+    return f"{TENANT_LABEL_PREFIX}{_normalize_uuid(tenant_id)}"
+
+
+def get_provider_label(provider_id: str | UUID) -> str:
+    """Get the Neo4j label for a provider (e.g., `_Provider_019c41ee7df37deca684d839f95619f8`)."""
+    return f"{PROVIDER_LABEL_PREFIX}{_normalize_uuid(provider_id)}"
+
+
+def is_dynamic_isolation_label(label: str) -> bool:
+    """Check if a label is a dynamic tenant/provider isolation label."""
+    return any(label.startswith(prefix) for prefix in DYNAMIC_ISOLATION_PREFIXES)

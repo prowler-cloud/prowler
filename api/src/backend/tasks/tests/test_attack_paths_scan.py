@@ -154,6 +154,7 @@ class TestAttackPathsRun:
         mock_sync.assert_called_once_with(
             source_database="db-scan-id",
             target_database="tenant-db",
+            tenant_id=str(provider.tenant_id),
             provider_id=str(provider.id),
         )
         mock_get_ingestion.assert_called_once_with(provider.provider)
@@ -1132,7 +1133,9 @@ class TestSyncNodes:
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
             side_effect=[source_ctx, target_ctx],
         ):
-            total = sync_module.sync_nodes("source-db", "target-db", "prov-1")
+            total = sync_module.sync_nodes(
+                "source-db", "target-db", "tenant-1", "prov-1"
+            )
 
         assert total == 1
         query = mock_target_session.run.call_args.args[0]
