@@ -1195,6 +1195,21 @@ class TestProviderViewSet:
                     "uid": "C01234abc",
                     "alias": "Google Workspace Customer",
                 },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C12345678",
+                    "alias": "Google Workspace All Digits",
+                },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "CABCDEF123",
+                    "alias": "Google Workspace Uppercase",
+                },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C1",
+                    "alias": "Google Workspace Short",
+                },
             ]
         ),
     )
@@ -1649,21 +1664,21 @@ class TestProviderViewSet:
                     "googleworkspace-uid",
                     "uid",
                 ),
-                # Google Workspace UID validation - empty after 'C'
-                (
-                    {
-                        "provider": "googleworkspace",
-                        "uid": "C",
-                        "alias": "test",
-                    },
-                    "googleworkspace-uid",
-                    "uid",
-                ),
                 # Google Workspace UID validation - contains special characters
                 (
                     {
                         "provider": "googleworkspace",
                         "uid": "C0123-abc",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - lowercase 'c' prefix
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "c12345678",
                         "alias": "test",
                     },
                     "googleworkspace-uid",
