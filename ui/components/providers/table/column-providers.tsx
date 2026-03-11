@@ -1,7 +1,13 @@
 "use client";
 
 import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
-import { Building2, FolderTree, ShieldCheck, ShieldOff } from "lucide-react";
+import {
+  Building2,
+  FolderTree,
+  ShieldAlert,
+  ShieldCheck,
+  ShieldOff,
+} from "lucide-react";
 
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
@@ -64,18 +70,27 @@ const OrganizationCell = ({
 };
 
 const ProviderStatusCell = ({ connected }: { connected: boolean | null }) => {
-  if (connected) {
+  if (connected === true) {
     return (
-      <div className="text-system-success flex items-center gap-2 text-sm">
-        <ShieldCheck className="size-4" />
+      <div className="text-system-success flex items-center gap-2 text-sm whitespace-nowrap">
+        <ShieldCheck className="size-4 shrink-0" />
         <span>Connected</span>
       </div>
     );
   }
 
+  if (connected === false) {
+    return (
+      <div className="text-text-error-primary flex items-center gap-2 text-sm whitespace-nowrap">
+        <ShieldAlert className="size-4 shrink-0" />
+        <span>Connection failed</span>
+      </div>
+    );
+  }
+
   return (
-    <div className="text-text-neutral-secondary flex items-center gap-2 text-sm">
-      <ShieldOff className="size-4" />
+    <div className="text-text-neutral-secondary flex items-center gap-2 text-sm whitespace-nowrap">
+      <ShieldOff className="size-4 shrink-0" />
       <span>Not connected</span>
     </div>
   );
@@ -145,11 +160,13 @@ export function getColumnProviders(
             onClick={(e) => e.stopPropagation()}
             aria-label="Select all"
           />
-          <DataTableColumnHeader
-            column={column}
-            title="Account"
-            param="alias"
-          />
+          <div className="ml-2">
+            <DataTableColumnHeader
+              column={column}
+              title="Account"
+              param="alias"
+            />
+          </div>
         </div>
       ),
       cell: ({ row }) => {
@@ -171,6 +188,7 @@ export function getColumnProviders(
             <DataTableExpandableCell
               row={row}
               isExpanded={isExpanded}
+              hideChildIcon
               checkboxSlot={checkboxSlot}
             >
               <OrganizationCell
@@ -190,7 +208,6 @@ export function getColumnProviders(
             checkboxSlot={checkboxSlot}
           >
             <ProviderInfo
-              connected={provider.attributes.connection.connected}
               provider={provider.attributes.provider}
               providerAlias={provider.attributes.alias}
               providerUID={provider.attributes.uid}
@@ -270,7 +287,7 @@ export function getColumnProviders(
     },
     {
       id: "status",
-      size: 140,
+      size: 170,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
