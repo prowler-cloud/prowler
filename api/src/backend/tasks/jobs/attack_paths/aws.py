@@ -43,6 +43,7 @@ def start_aws_ingestion(
         "aws_guardduty_severity_threshold": cartography_config.aws_guardduty_severity_threshold,
         "aws_cloudtrail_management_events_lookback_hours": cartography_config.aws_cloudtrail_management_events_lookback_hours,
         "experimental_aws_inspector_batch": cartography_config.experimental_aws_inspector_batch,
+        "aws_tagging_api_cleanup_batch": cartography_config.aws_tagging_api_cleanup_batch,
     }
 
     boto3_session = get_boto3_session(prowler_api_provider, prowler_sdk_provider)
@@ -116,6 +117,30 @@ def start_aws_ingestion(
         neo4j_session,
         common_job_parameters,
     )
+
+    if all(
+        s in requested_syncs
+        for s in ["ecs", "ec2:load_balancer_v2", "ec2:load_balancer_v2:expose"]
+    ):
+        logger.info(
+            f"Syncing lb_container_exposure scoped analysis for AWS account {prowler_api_provider.uid}"
+        )
+        cartography_aws.run_scoped_analysis_job(
+            "aws_lb_container_exposure.json",
+            neo4j_session,
+            common_job_parameters,
+        )
+
+    if all(s in requested_syncs for s in ["ec2:network_acls", "ec2:load_balancer_v2"]):
+        logger.info(
+            f"Syncing lb_nacl_direct scoped analysis for AWS account {prowler_api_provider.uid}"
+        )
+        cartography_aws.run_scoped_analysis_job(
+            "aws_lb_nacl_direct.json",
+            neo4j_session,
+            common_job_parameters,
+        )
+
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 91)
 
     logger.info(f"Syncing metadata for AWS account {prowler_api_provider.uid}")

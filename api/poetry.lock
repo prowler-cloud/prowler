@@ -1922,15 +1922,15 @@ crt = ["awscrt (==0.27.6)"]
 
 [[package]]
 name = "cartography"
-version = "0.129.0"
+version = "0.132.0"
 description = "Explore assets and their relationships across your technical infrastructure."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "platform_system == \"Windows\" or platform_system == \"Darwin\" or platform_system == \"Linux\" or platform_system != \"Windows\" and platform_system != \"Darwin\" and platform_system != \"Linux\" or sys_platform != \"win32\""
 files = [
-    {file = "cartography-0.129.0-py3-none-any.whl", hash = "sha256:d42c840369be9e4d0ac4d024074e3732416e40bab3d9a3023b6a247918daed4c"},
-    {file = "cartography-0.129.0.tar.gz", hash = "sha256:cb47d603e652554a4cbcc1a868c96014eb02b3d5cc1affea0428b2ed7fa61699"},
+    {file = "cartography-0.132.0-py3-none-any.whl", hash = "sha256:c070aa51d0ab4479cb043cae70b35e7df49f2fb5f1fa95ccf10000bbeb952262"},
+    {file = "cartography-0.132.0.tar.gz", hash = "sha256:7c6332bc57fd2629d7b83aee7bd95a7b2edb0d51ef746efa0461399e0b66625c"},
 ]
 
 [package.dependencies]
@@ -1965,8 +1965,8 @@ boto3 = ">=1.15.1"
 botocore = ">=1.18.1"
 cloudflare = ">=4.1.0,<5.0.0"
 crowdstrike-falconpy = ">=0.5.1"
+cryptography = "*"
 dnspython = ">=1.15.0"
-dockerfile = ">=3.0.0"
 duo-client = "*"
 google-api-python-client = ">=1.7.8"
 google-auth = ">=2.37.0"
@@ -3252,6 +3252,7 @@ ssh = ["paramiko (>=2.4.3)"]
 websockets = ["websocket-client (>=1.3.0)"]
 
 [[package]]
+<<<<<<< HEAD
 name = "dockerfile"
 version = "3.4.0"
 description = "Parse a dockerfile into a high-level representation using the official go parser."
@@ -3268,6 +3269,8 @@ files = [
 ]
 
 [[package]]
+=======
+>>>>>>> 57bcb74d0 (fix(api): upgrade Cartography to 0.132.0 to fix exposed_internet on ELB/ELBv2 nodes (#10272))
 name = "dogpile-cache"
 version = "1.5.0"
 description = "A caching front-end based on the Dogpile lock."
@@ -9768,4 +9771,8 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
+<<<<<<< HEAD
 content-hash = "6fa061207bde7c009f116c9cc85ca4b8807210e83407fdaa6319f61e168fc24b"
+=======
+content-hash = "6e38c38b1f8dc05b881f49703fa445eec299527e6697992b18e4613534fbcdb6"
+>>>>>>> 57bcb74d0 (fix(api): upgrade Cartography to 0.132.0 to fix exposed_internet on ELB/ELBv2 nodes (#10272))
