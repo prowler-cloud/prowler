@@ -1,6 +1,6 @@
 "use client";
 
-import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
+import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
 
 /**
  * Loading skeleton for graph visualization
@@ -8,17 +8,14 @@ import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
  */
 export const GraphLoading = () => {
   return (
-    <div className="dark:bg-prowler-blue-400 flex h-96 items-center justify-center rounded-lg bg-gray-50">
-      <div className="flex flex-col items-center gap-3">
-        <div className="flex gap-2">
-          <Skeleton className="h-3 w-3 rounded-full" />
-          <Skeleton className="h-3 w-3 rounded-full" />
-          <Skeleton className="h-3 w-3 rounded-full" />
-        </div>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Loading Attack Paths graph...
-        </p>
-      </div>
+    <div
+      data-testid="graph-loading"
+      className="flex min-h-[320px] flex-col items-center justify-center gap-4 text-center"
+    >
+      <TreeSpinner className="size-6" />
+      <p className="text-muted-foreground text-sm">
+        Loading Attack Paths graph...
+      </p>
     </div>
   );
 };
