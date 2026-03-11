@@ -29,6 +29,8 @@ class CSV(Output):
                 finding_dict["ACCOUNT_ORGANIZATION_NAME"] = (
                     finding.account_organization_name
                 )
+                finding_dict["ACCOUNT_OU_UID"] = finding.account_ou_uid
+                finding_dict["ACCOUNT_OU_NAME"] = finding.account_ou_name
                 finding_dict["ACCOUNT_TAGS"] = unroll_dict(
                     finding.account_tags, separator=":"
                 )
