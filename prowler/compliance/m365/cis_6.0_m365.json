@@ -1403,7 +1403,7 @@
       "Id": "5.2.2.3",
       "Description": "Entra ID supports the most widely used authentication and authorization protocols including legacy authentication. This authentication pattern includes basic authentication, a widely used industry-standard method for collecting username and password information. Enable Conditional Access policies to block legacy authentication.",
       "Checks": [
-        "entra_device_code_flow_blocked",
+        "entra_conditional_access_policy_device_code_flow_blocked",
         "entra_legacy_authentication_blocked"
       ],
       "Attributes": [
@@ -1608,7 +1608,7 @@
       "Id": "5.2.2.12",
       "Description": "The Microsoft identity platform supports the device authorization grant, which allows users to sign in to input-constrained devices such as a smart TV, IoT device, or a printer. Ensure the device code sign-in flow is blocked.",
       "Checks": [
-        "entra_device_code_flow_blocked"
+        "entra_conditional_access_policy_device_code_flow_blocked"
       ],
       "Attributes": [
         {

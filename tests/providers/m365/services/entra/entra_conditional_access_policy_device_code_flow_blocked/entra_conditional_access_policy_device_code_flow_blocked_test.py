@@ -20,7 +20,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
-class Test_entra_device_code_flow_blocked:
+class Test_entra_conditional_access_policy_device_code_flow_blocked:
     def test_no_conditional_access_policies(self):
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
@@ -31,17 +31,17 @@ class Test_entra_device_code_flow_blocked:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked import (
-                entra_device_code_flow_blocked,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked import (
+                entra_conditional_access_policy_device_code_flow_blocked,
             )
 
             entra_client.conditional_access_policies = {}
 
-            check = entra_device_code_flow_blocked()
+            check = entra_conditional_access_policy_device_code_flow_blocked()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -67,12 +67,12 @@ class Test_entra_device_code_flow_blocked:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked import (
-                entra_device_code_flow_blocked,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked import (
+                entra_conditional_access_policy_device_code_flow_blocked,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -127,7 +127,7 @@ class Test_entra_device_code_flow_blocked:
                 )
             }
 
-            check = entra_device_code_flow_blocked()
+            check = entra_conditional_access_policy_device_code_flow_blocked()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -153,12 +153,12 @@ class Test_entra_device_code_flow_blocked:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked import (
-                entra_device_code_flow_blocked,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked import (
+                entra_conditional_access_policy_device_code_flow_blocked,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -210,7 +210,7 @@ class Test_entra_device_code_flow_blocked:
                 )
             }
 
-            check = entra_device_code_flow_blocked()
+            check = entra_conditional_access_policy_device_code_flow_blocked()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -236,12 +236,12 @@ class Test_entra_device_code_flow_blocked:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked import (
-                entra_device_code_flow_blocked,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked import (
+                entra_conditional_access_policy_device_code_flow_blocked,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -296,7 +296,7 @@ class Test_entra_device_code_flow_blocked:
                 )
             }
 
-            check = entra_device_code_flow_blocked()
+            check = entra_conditional_access_policy_device_code_flow_blocked()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -325,12 +325,12 @@ class Test_entra_device_code_flow_blocked:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked import (
-                entra_device_code_flow_blocked,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked import (
+                entra_conditional_access_policy_device_code_flow_blocked,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -385,7 +385,7 @@ class Test_entra_device_code_flow_blocked:
                 )
             }
 
-            check = entra_device_code_flow_blocked()
+            check = entra_conditional_access_policy_device_code_flow_blocked()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -414,12 +414,12 @@ class Test_entra_device_code_flow_blocked:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked import (
-                entra_device_code_flow_blocked,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked import (
+                entra_conditional_access_policy_device_code_flow_blocked,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -476,7 +476,7 @@ class Test_entra_device_code_flow_blocked:
                 )
             }
 
-            check = entra_device_code_flow_blocked()
+            check = entra_conditional_access_policy_device_code_flow_blocked()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -503,12 +503,12 @@ class Test_entra_device_code_flow_blocked:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked import (
-                entra_device_code_flow_blocked,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked import (
+                entra_conditional_access_policy_device_code_flow_blocked,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -609,7 +609,7 @@ class Test_entra_device_code_flow_blocked:
                 ),
             }
 
-            check = entra_device_code_flow_blocked()
+            check = entra_conditional_access_policy_device_code_flow_blocked()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -638,12 +638,12 @@ class Test_entra_device_code_flow_blocked:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked import (
-                entra_device_code_flow_blocked,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked import (
+                entra_conditional_access_policy_device_code_flow_blocked,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -698,7 +698,7 @@ class Test_entra_device_code_flow_blocked:
                 )
             }
 
-            check = entra_device_code_flow_blocked()
+            check = entra_conditional_access_policy_device_code_flow_blocked()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -724,12 +724,12 @@ class Test_entra_device_code_flow_blocked:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked import (
-                entra_device_code_flow_blocked,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked import (
+                entra_conditional_access_policy_device_code_flow_blocked,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -784,7 +784,7 @@ class Test_entra_device_code_flow_blocked:
                 )
             }
 
-            check = entra_device_code_flow_blocked()
+            check = entra_conditional_access_policy_device_code_flow_blocked()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -810,12 +810,12 @@ class Test_entra_device_code_flow_blocked:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_device_code_flow_blocked.entra_device_code_flow_blocked import (
-                entra_device_code_flow_blocked,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_code_flow_blocked.entra_conditional_access_policy_device_code_flow_blocked import (
+                entra_conditional_access_policy_device_code_flow_blocked,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -870,7 +870,7 @@ class Test_entra_device_code_flow_blocked:
                 )
             }
 
-            check = entra_device_code_flow_blocked()
+            check = entra_conditional_access_policy_device_code_flow_blocked()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
