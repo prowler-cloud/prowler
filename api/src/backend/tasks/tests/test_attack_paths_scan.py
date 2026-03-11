@@ -1141,6 +1141,8 @@ class TestSyncNodes:
         query = mock_target_session.run.call_args.args[0]
         assert "_ProviderResource" in query
         assert "ProviderResource" in query
+        assert "_Tenant_tenant1" in query
+        assert "_Provider_prov1" in query
 
 
 class TestInternetAnalysis:
