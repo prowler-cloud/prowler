@@ -36,7 +36,8 @@ export const EntityInfo = ({
   showCopyAction = true,
 }: EntityInfoProps) => {
   const canCopy = Boolean(entityId && showCopyAction);
-  const renderedIcon = icon ?? (cloudProvider ? getProviderLogo(cloudProvider) : null);
+  const renderedIcon =
+    icon ?? (cloudProvider ? getProviderLogo(cloudProvider) : null);
 
   return (
     <div className="flex min-w-0 items-center text-sm">
@@ -65,7 +66,7 @@ export const EntityInfo = ({
               <span className="text-text-neutral-tertiary shrink-0 text-xs font-medium">
                 UID:
               </span>
-              <div className="bg-bg-neutral-tertiary border-border-neutral-tertiary flex min-w-0 max-w-[160px] items-center gap-2 rounded-full border-2 px-3 py-1">
+              <div className="bg-bg-neutral-tertiary border-border-neutral-tertiary flex max-w-[160px] min-w-0 items-center gap-2 rounded-full border-2 px-3 py-1">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className="text-text-neutral-secondary min-w-0 truncate text-xs">
@@ -75,11 +76,7 @@ export const EntityInfo = ({
                   <TooltipContent side="top">{entityId}</TooltipContent>
                 </Tooltip>
                 {canCopy && (
-                  <CodeSnippet
-                    value={entityId}
-                    hideCode
-                    className="shrink-0"
-                  />
+                  <CodeSnippet value={entityId} hideCode className="shrink-0" />
                 )}
               </div>
             </div>

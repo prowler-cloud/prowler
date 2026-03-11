@@ -18,7 +18,6 @@ import { DataTableExpandableCell } from "@/components/ui/table/data-table-expand
 import {
   isProvidersOrganizationRow,
   PROVIDERS_GROUP_KIND,
-  ProvidersOrganizationRow,
   ProvidersProviderRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
@@ -30,11 +29,7 @@ interface GroupNameChipsProps {
   groupNames?: string[];
 }
 
-const OrganizationIcon = ({
-  groupKind,
-}: {
-  groupKind: string;
-}) => {
+const OrganizationIcon = ({ groupKind }: { groupKind: string }) => {
   const Icon =
     groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION ? Building2 : FolderTree;
 
@@ -168,11 +163,7 @@ export function getColumnProviders(
               checkboxSlot={checkboxSlot}
             >
               <EntityInfo
-                icon={
-                  <OrganizationIcon
-                    groupKind={row.original.groupKind}
-                  />
-                }
+                icon={<OrganizationIcon groupKind={row.original.groupKind} />}
                 entityAlias={row.original.name}
                 entityId={row.original.externalId ?? undefined}
                 badge={getSelectionLabel(row)}
