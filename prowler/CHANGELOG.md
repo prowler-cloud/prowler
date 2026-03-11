@@ -8,6 +8,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `entra_conditional_access_policy_approved_client_app_required_for_mobile` check for m365 provider [(#10216)](https://github.com/prowler-cloud/prowler/pull/10216)
 - `entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required` check for M365 provider [(#10197)](https://github.com/prowler-cloud/prowler/pull/10197)
+- Add `trusted_ips` configurable option to `opensearch_service_domains_not_publicly_accessible` check to reduce false positives on IP-restricted policies [(#8631)](https://github.com/prowler-cloud/prowler/pull/8631)
+- `guardduty_delegated_admin_enabled_all_regions` check for AWS provider [(#9867)](https://github.com/prowler-cloud/prowler/pull/9867)
 - OpenStack object storage service with 7 checks [(#10258)](https://github.com/prowler-cloud/prowler/pull/10258)
 
 ### 🔄 Changed
@@ -31,6 +33,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Oracle Cloud Object Storage service metadata to new format [(#9379)](https://github.com/prowler-cloud/prowler/pull/9379)
 - Update Oracle Cloud Events service metadata to new format [(#9373)](https://github.com/prowler-cloud/prowler/pull/9373)
 - Update Oracle Cloud Identity service metadata to new format [(#9375)](https://github.com/prowler-cloud/prowler/pull/9375)
+- Update Alibaba Cloud services metadata to new format [(#10289)](https://github.com/prowler-cloud/prowler/pull/10289)
+- Update M365 Admin Center service metadata to new format [(#9680)](https://github.com/prowler-cloud/prowler/pull/9680)
+- Update M365 Defender service metadata to new format [(#9681)](https://github.com/prowler-cloud/prowler/pull/9681)
+- Update M365 Purview service metadata to new format [(#9092)](https://github.com/prowler-cloud/prowler/pull/9092)
 
 ---
 

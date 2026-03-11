@@ -212,18 +212,20 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         try:
             graph_database.drop_database(tmp_cartography_config.neo4j_database)
 
-        except Exception:
+        except Exception as e:
             logger.error(
-                f"Failed to drop temporary Neo4j database {tmp_cartography_config.neo4j_database} during cleanup"
+                f"Failed to drop temporary Neo4j database {tmp_cartography_config.neo4j_database} during cleanup: {e}",
+                exc_info=True,
             )
 
         try:
             db_utils.finish_attack_paths_scan(
                 attack_paths_scan, StateChoices.FAILED, ingestion_exceptions
             )
-        except Exception:
-            logger.warning(
-                f"Could not mark attack paths scan {attack_paths_scan.id} as FAILED (row may have been deleted)"
+        except Exception as e:
+            logger.error(
+                f"Could not mark attack paths scan {attack_paths_scan.id} as FAILED (row may have been deleted): {e}",
+                exc_info=True,
             )
 
         raise
