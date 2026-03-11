@@ -39,7 +39,7 @@ export const ScanSelector = ({
         }
       }}
     >
-      <SelectTrigger className="w-full min-w-[365px]">
+      <SelectTrigger className="w-full max-w-[360px]">
         <SelectValue placeholder="Select a scan">
           {selectedScan ? (
             <ComplianceScanInfo scan={selectedScan} />
@@ -48,9 +48,13 @@ export const ScanSelector = ({
           )}
         </SelectValue>
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="max-w-[360px]">
         {scans.map((scan) => (
-          <SelectItem key={scan.id} value={scan.id}>
+          <SelectItem
+            key={scan.id}
+            value={scan.id}
+            className="data-[state=checked]:bg-bg-neutral-tertiary"
+          >
             <ComplianceScanInfo scan={scan} />
           </SelectItem>
         ))}
