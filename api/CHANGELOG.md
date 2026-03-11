@@ -2,6 +2,23 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.21.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Attack Paths: Migrate network exposure queries from APOC to standard openCypher for Neo4j and Neptune compatibility [(#10266)](https://github.com/prowler-cloud/prowler/pull/10266)
+- `POST /api/v1/providers` returns `409 Conflict` if already exists [(#10293)](https://github.com/prowler-cloud/prowler/pull/10293)
+
+---
+
+## [1.20.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Attack Paths: Add missing logging for query execution and exception details in scan error handling [(#10269)](https://github.com/prowler-cloud/prowler/pull/10269)
+
+---
+
 ## [1.20.0] (Prowler v5.19.0)
 
 ### 🚀 Added
@@ -11,6 +28,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - PDF report for the CSA CCM compliance framework [(#10088)](https://github.com/prowler-cloud/prowler/pull/10088)
 - `image` provider support for container image scanning [(#10128)](https://github.com/prowler-cloud/prowler/pull/10128)
 - Attack Paths: Custom query and Cartography schema endpoints (temporarily blocked) [(#10149)](https://github.com/prowler-cloud/prowler/pull/10149)
+- `googleworkspace` provider support [(#10247)](https://github.com/prowler-cloud/prowler/pull/10247)
 
 ### 🔄 Changed
 

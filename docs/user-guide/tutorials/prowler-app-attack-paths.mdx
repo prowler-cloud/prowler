@@ -201,3 +201,20 @@ To expand the graph for detailed exploration, click the fullscreen icon in the g
   alt="Attack Paths fullscreen mode with graph and node detail side panel"
   width="700"
 />
+
+## Using Attack Paths with the MCP Server
+
+Attack Paths capabilities are also available through the [Prowler MCP Server](/getting-started/products/prowler-mcp), enabling interaction with Attack Paths data via AI assistants like Claude Desktop, Cursor, and other MCP clients.
+
+The following MCP tools are available for Attack Paths:
+
+- **`prowler_app_list_attack_paths_scans`** - List and filter Attack Paths scans
+- **`prowler_app_list_attack_paths_queries`** - Discover available queries for a completed scan
+- **`prowler_app_run_attack_paths_query`** - Execute a query and retrieve graph results with nodes and relationships
+
+These tools enable workflows such as:
+- Asking an AI assistant to identify privilege escalation paths in a specific AWS account
+- Automating attack path analysis across multiple scans
+- Combining attack path data with findings and compliance information for comprehensive security reports
+
+For the complete list of MCP tools, see the [Tools Reference](/getting-started/basic-usage/prowler-mcp-tools#attack-paths-analysis).

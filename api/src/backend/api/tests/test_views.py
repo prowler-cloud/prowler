@@ -1190,6 +1190,26 @@ class TestProviderViewSet:
                     "uid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                     "alias": "OpenStack Project",
                 },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C01234abc",
+                    "alias": "Google Workspace Customer",
+                },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C12345678",
+                    "alias": "Google Workspace All Digits",
+                },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "CABCDEF123",
+                    "alias": "Google Workspace Uppercase",
+                },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C12",
+                    "alias": "Google Workspace Minimum Length",
+                },
             ]
         ),
     )
@@ -1342,7 +1362,11 @@ class TestProviderViewSet:
         response = authenticated_client.post(
             reverse("provider-list"), data=provider_json_payload, format="json"
         )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_409_CONFLICT
+        error = response.json()["errors"][0]
+        assert error["detail"] == "Provider already exists."
+        assert error["code"] == "conflict"
+        assert error["source"]["pointer"] == "/data/attributes/uid"
 
         mock_delete_task.reset_mock()
         mock_delete_task.return_value = task_mock
@@ -1634,6 +1658,36 @@ class TestProviderViewSet:
                     "min_length",
                     "uid",
                 ),
+                # Google Workspace UID validation - missing 'C' prefix
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "01234abc",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - contains special characters
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "C0123-abc",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - lowercase 'c' prefix
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "c12345678",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -1807,21 +1861,21 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    10,
+                    11,
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 11),
+                ("inserted_at", TODAY, 12),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    11,
+                    12,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    11,
+                    12,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2435,6 +2489,15 @@ class TestProviderSecretViewSet:
                 {
                     "clouds_yaml_content": "clouds:\n  mycloud:\n    auth:\n      auth_url: https://openstack.example.com:5000/v3\n",
                     "clouds_yaml_cloud": "mycloud",
+                },
+            ),
+            # Google Workspace with service account credentials
+            (
+                Provider.ProviderChoices.GOOGLEWORKSPACE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "credentials_content": '{"type": "service_account", "project_id": "test-project", "private_key_id": "key123", "private_key": "-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----\\n", "client_email": "test@test-project.iam.gserviceaccount.com", "client_id": "123456789"}',
+                    "delegated_user": "admin@example.com",
                 },
             ),
         ],
