@@ -1207,8 +1207,8 @@ class TestProviderViewSet:
                 },
                 {
                     "provider": "googleworkspace",
-                    "uid": "C1",
-                    "alias": "Google Workspace Short",
+                    "uid": "C12",
+                    "alias": "Google Workspace Minimum Length",
                 },
             ]
         ),
