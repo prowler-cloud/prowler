@@ -3252,25 +3252,6 @@ ssh = ["paramiko (>=2.4.3)"]
 websockets = ["websocket-client (>=1.3.0)"]
 
 [[package]]
-<<<<<<< HEAD
-name = "dockerfile"
-version = "3.4.0"
-description = "Parse a dockerfile into a high-level representation using the official go parser."
-optional = false
-python-versions = ">=3.9"
-groups = ["main"]
-markers = "platform_system == \"Windows\" or platform_system == \"Darwin\" or platform_system == \"Linux\" or platform_system != \"Windows\" and platform_system != \"Darwin\" and platform_system != \"Linux\" or sys_platform != \"win32\""
-files = [
-    {file = "dockerfile-3.4.0-cp39-abi3-macosx_13_0_x86_64.whl", hash = "sha256:ed33446a76007cbb3f28c247f189cc06db34667d4f59a398a5c44912d7c13f36"},
-    {file = "dockerfile-3.4.0-cp39-abi3-macosx_14_0_arm64.whl", hash = "sha256:a4549d4f038483c25906d4fec56bb6ffe82ae26e0f80a15f2c0fedbb50712053"},
-    {file = "dockerfile-3.4.0-cp39-abi3-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:b95102bd82e6f67c836186b51c13114aa586a20e8cb6441bde24d4070542009d"},
-    {file = "dockerfile-3.4.0-cp39-abi3-win_amd64.whl", hash = "sha256:30202187f1885f99ac839fd41ca8150b2fd0a66fac12db0166361d0c4622e71a"},
-    {file = "dockerfile-3.4.0.tar.gz", hash = "sha256:238bb950985c55a525daef8bbfe994a0230aa0978c419f4caa4d9ce0a37343f1"},
-]
-
-[[package]]
-=======
->>>>>>> 57bcb74d0 (fix(api): upgrade Cartography to 0.132.0 to fix exposed_internet on ELB/ELBv2 nodes (#10272))
 name = "dogpile-cache"
 version = "1.5.0"
 description = "A caching front-end based on the Dogpile lock."
@@ -9771,8 +9752,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-<<<<<<< HEAD
-content-hash = "6fa061207bde7c009f116c9cc85ca4b8807210e83407fdaa6319f61e168fc24b"
-=======
 content-hash = "6e38c38b1f8dc05b881f49703fa445eec299527e6697992b18e4613534fbcdb6"
->>>>>>> 57bcb74d0 (fix(api): upgrade Cartography to 0.132.0 to fix exposed_internet on ELB/ELBv2 nodes (#10272))
