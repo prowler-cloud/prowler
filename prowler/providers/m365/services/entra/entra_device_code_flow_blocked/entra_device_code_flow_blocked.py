@@ -40,6 +40,15 @@ class entra_device_code_flow_blocked(Check):
             if policy.state == ConditionalAccessPolicyState.DISABLED:
                 continue
 
+            if "All" not in policy.conditions.user_conditions.included_users:
+                continue
+
+            if (
+                "All"
+                not in policy.conditions.application_conditions.included_applications
+            ):
+                continue
+
             if not policy.conditions.authentication_flows:
                 continue
 

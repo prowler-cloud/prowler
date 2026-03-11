@@ -30,6 +30,7 @@
   },
   "Categories": [
     "identity-access",
+    "trust-boundaries",
     "e3"
   ],
   "DependsOn": [],
