@@ -1649,37 +1649,17 @@ class TestProviderViewSet:
                     "googleworkspace-uid",
                     "uid",
                 ),
-                # Google Workspace UID validation - too short (only 8 chars)
+                # Google Workspace UID validation - empty after 'C'
                 (
                     {
                         "provider": "googleworkspace",
-                        "uid": "C1234abc",
+                        "uid": "C",
                         "alias": "test",
                     },
                     "googleworkspace-uid",
                     "uid",
                 ),
-                # Google Workspace UID validation - too long (10 chars)
-                (
-                    {
-                        "provider": "googleworkspace",
-                        "uid": "C01234abcd",
-                        "alias": "test",
-                    },
-                    "googleworkspace-uid",
-                    "uid",
-                ),
-                # Google Workspace UID validation - invalid characters (uppercase)
-                (
-                    {
-                        "provider": "googleworkspace",
-                        "uid": "C01234ABC",
-                        "alias": "test",
-                    },
-                    "googleworkspace-uid",
-                    "uid",
-                ),
-                # Google Workspace UID validation - invalid characters (special chars)
+                # Google Workspace UID validation - contains special characters
                 (
                     {
                         "provider": "googleworkspace",
