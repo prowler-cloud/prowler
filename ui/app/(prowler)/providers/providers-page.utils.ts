@@ -445,14 +445,6 @@ export function buildProvidersTableRows({
 
   const organizationRows = organizations
     .map((organization) => {
-      const organizationProvidersFromRelationships = getProviderRowsByIds({
-        providerIds: getRelationshipProviderIds(organization.relationships),
-        providerLookup,
-      }).filter((provider) => !providersAssignedToOu.has(provider.id));
-      const organizationProviders =
-        organizationProvidersFromRelationships.length > 0
-          ? organizationProvidersFromRelationships
-          : (providersByOrganizationId.get(organization.id) ?? []);
       const organizationUnitRows = buildOrganizationUnitRows({
         organizationId: organization.id,
         organizationUnits,
@@ -462,6 +454,35 @@ export function buildProvidersTableRows({
         providersByOrganizationUnitId,
         useParentIdRelationships,
       });
+
+      // Collect all provider IDs already placed inside OUs to avoid duplication
+      // at the org level. This covers both relationship-based and fallback assignments.
+      const providersInOus = new Set<string>();
+      function collectOuProviderIds(rows: ProvidersTableRow[]) {
+        for (const row of rows) {
+          if (row.rowType === PROVIDERS_ROW_TYPE.PROVIDER) {
+            providersInOus.add(row.id);
+          } else {
+            collectOuProviderIds(row.subRows);
+          }
+        }
+      }
+      collectOuProviderIds(organizationUnitRows);
+
+      const organizationProvidersFromRelationships = getProviderRowsByIds({
+        providerIds: getRelationshipProviderIds(organization.relationships),
+        providerLookup,
+      }).filter(
+        (provider) =>
+          !providersAssignedToOu.has(provider.id) &&
+          !providersInOus.has(provider.id),
+      );
+      const organizationProviders =
+        organizationProvidersFromRelationships.length > 0
+          ? organizationProvidersFromRelationships
+          : (providersByOrganizationId.get(organization.id) ?? []).filter(
+              (provider) => !providersInOus.has(provider.id),
+            );
       const subRows = [...organizationProviders, ...organizationUnitRows];
 
       return createOrganizationRow({
@@ -589,6 +610,13 @@ export async function loadProvidersAccountsViewData({
     providers: enrichProviders(providersResponse, scheduledProviderIds),
   });
 
+  const rows = buildProvidersTableRows({
+    isCloud,
+    organizations: organizationsResponse?.data ?? [],
+    organizationUnits: organizationUnitsResponse?.data ?? [],
+    providers,
+  });
+
   return {
     filters: createProvidersFilters({
       isCloud,
@@ -597,12 +625,7 @@ export async function loadProvidersAccountsViewData({
     }),
     metadata: providersResponse?.meta,
     providers: allProvidersResponse?.data ?? [],
-    rows: buildProvidersTableRows({
-      isCloud,
-      organizations: organizationsResponse?.data ?? [],
-      organizationUnits: organizationUnitsResponse?.data ?? [],
-      providers,
-    }),
+    rows,
   };
 }
 
