@@ -105,7 +105,7 @@ const TableCell = forwardRef<
   <td
     ref={ref}
     className={cn(
-      "overflow-hidden px-1.5 py-2 align-middle first:pl-3 last:pr-3 [&:has([role=checkbox])]:pr-0",
+      "px-1.5 py-2 align-middle first:pl-3 last:pr-3 [&:has([role=checkbox])]:pr-0",
       className,
     )}
     {...props}
