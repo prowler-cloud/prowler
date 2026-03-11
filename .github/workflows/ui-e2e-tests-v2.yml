@@ -214,6 +214,20 @@ jobs:
             TEST_PATHS=$(echo "$TEST_PATHS" | sed 's|ui/||g' | sed 's|\*\*||g' | tr ' ' '\n' | sort -u)
             # Drop auth setup helpers (not runnable test suites)
             TEST_PATHS=$(echo "$TEST_PATHS" | grep -v '^tests/setups/')
+            # Safety net: if bare "tests/" appears (from broad patterns like ui/tests/**),
+            # expand to specific subdirs to avoid Playwright discovering setup files
+            if echo "$TEST_PATHS" | grep -qx 'tests/'; then
+              echo "Expanding bare 'tests/' to specific subdirs (excluding setups)..."
+              SPECIFIC_DIRS=""
+              for dir in tests/*/; do
+                [[ "$dir" == "tests/setups/" ]] && continue
+                SPECIFIC_DIRS="${SPECIFIC_DIRS}${dir}"$'\n'
+              done
+              # Replace "tests/" with specific dirs, keep other paths
+              TEST_PATHS=$(echo "$TEST_PATHS" | grep -vx 'tests/')
+              TEST_PATHS="${TEST_PATHS}"$'\n'"${SPECIFIC_DIRS}"
+              TEST_PATHS=$(echo "$TEST_PATHS" | grep -v '^$' | sort -u)
+            fi
             if [[ -z "$TEST_PATHS" ]]; then
               echo "No runnable E2E test paths after filtering setups"
               exit 0
