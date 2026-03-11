@@ -67,7 +67,9 @@ export function DataTableExpandableCell<TData>({
     >
       {showToggle && (
         <>
-          {isChildRow && !hideChildIcon && <CornerDownRightIcon className="h-4 w-4 shrink-0 text-text-neutral-tertiary" />}
+          {isChildRow && !hideChildIcon && (
+            <CornerDownRightIcon className="text-text-neutral-tertiary h-4 w-4 shrink-0" />
+          )}
           {canExpand ? (
             <DataTableExpandToggle row={row} isExpanded={isExpanded} />
           ) : !isChildRow ? (
