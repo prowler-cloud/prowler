@@ -7,7 +7,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 
 
-class entra_device_code_flow_blocked(Check):
+class entra_conditional_access_policy_device_code_flow_blocked(Check):
     """Check if at least one Conditional Access policy blocks device code flow.
 
     This check ensures that at least one enabled Conditional Access policy

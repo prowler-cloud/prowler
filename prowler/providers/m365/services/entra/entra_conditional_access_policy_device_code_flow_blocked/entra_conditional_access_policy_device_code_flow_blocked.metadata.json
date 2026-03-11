@@ -1,6 +1,6 @@
 {
   "Provider": "m365",
-  "CheckID": "entra_device_code_flow_blocked",
+  "CheckID": "entra_conditional_access_policy_device_code_flow_blocked",
   "CheckTitle": "Conditional Access policy blocks device code flow to prevent phishing attacks",
   "CheckType": [],
   "ServiceName": "entra",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Block device code flow via Conditional Access to mitigate phishing attacks that abuse this authentication method. Exclude only break-glass accounts and legitimate service accounts that require device code flow. Regularly review exceptions to minimize the attack surface.",
-      "Url": "https://hub.prowler.com/check/entra_device_code_flow_blocked"
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_device_code_flow_blocked"
     }
   },
   "Categories": [
