@@ -3,7 +3,7 @@
 import { ArrowLeft, Info, Maximize2, X } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 
 import {
@@ -27,8 +27,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  useToast,
-} from "@/components/ui";
+} from "@/components/shadcn/dialog";
+import { useToast } from "@/components/ui";
 import type {
   AttackPathQuery,
   AttackPathQueryError,
@@ -116,7 +116,7 @@ export default function AttackPathsPage() {
   );
 
   // Callback to refresh scans (used by AutoRefresh component)
-  const refreshScans = useCallback(async () => {
+  const refreshScans = async () => {
     try {
       const scansData = await getAttackPathScans();
       if (scansData?.data) {
@@ -125,7 +125,7 @@ export default function AttackPathsPage() {
     } catch (error) {
       console.error("Failed to refresh scans:", error);
     }
-  }, []);
+  };
 
   // Load available queries on mount
   useEffect(() => {
@@ -534,11 +534,9 @@ export default function AttackPathsPage() {
                               <Maximize2 size={18} />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="flex h-full max-h-screen w-full max-w-full flex-col gap-0 p-0">
-                            <DialogHeader className="px-4 pt-4 sm:px-6 sm:pt-6">
-                              <DialogTitle className="text-lg">
-                                Graph Fullscreen View
-                              </DialogTitle>
+                          <DialogContent className="flex h-full max-h-screen w-full max-w-full flex-col gap-0 rounded-none border-0 p-0 sm:max-w-full">
+                            <DialogHeader className="sr-only">
+                              <DialogTitle>Fullscreen graph view</DialogTitle>
                             </DialogHeader>
                             <div className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
                               <GraphControls
