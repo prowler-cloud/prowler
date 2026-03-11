@@ -16,9 +16,13 @@ import {
 } from "@/components/shadcn/select/multiselect";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { useUrlFilters } from "@/hooks/use-url-filters";
-import { isConnectionStatus } from "@/lib/helper-filters";
+import { isConnectionStatus, isGroupFilterEntity } from "@/lib/helper-filters";
 import { FilterEntity, FilterOption, ProviderEntity } from "@/types";
-import { ProviderConnectionStatus, ProviderProps } from "@/types/providers";
+import {
+  GroupFilterEntity,
+  ProviderConnectionStatus,
+  ProviderProps,
+} from "@/types/providers";
 
 interface ProvidersFiltersProps {
   filters: FilterOption[];
@@ -78,6 +82,9 @@ export const ProvidersFilters = ({
     if (isConnectionStatus(entity)) {
       return (entity as ProviderConnectionStatus).label;
     }
+    if (isGroupFilterEntity(entity)) {
+      return (entity as GroupFilterEntity).name || value;
+    }
     const providerEntity = entity as ProviderEntity;
     return providerEntity.alias || providerEntity.uid || value;
   };
@@ -85,6 +92,9 @@ export const ProvidersFilters = ({
   const renderEntityContent = (entity: FilterEntity) => {
     if (isConnectionStatus(entity)) {
       return <span>{(entity as ProviderConnectionStatus).label}</span>;
+    }
+    if (isGroupFilterEntity(entity)) {
+      return <span>{(entity as GroupFilterEntity).name}</span>;
     }
     const providerEntity = entity as ProviderEntity;
     return (

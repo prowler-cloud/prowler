@@ -107,9 +107,8 @@ const createProvidersFilters = ({
       index: 0,
       valueLabelMapping: organizations.map((organization) => ({
         [organization.id]: {
-          provider: "aws",
+          name: organization.attributes.name,
           uid: organization.attributes.external_id,
-          alias: organization.attributes.name,
         },
       })),
     });
@@ -122,9 +121,8 @@ const createProvidersFilters = ({
     index: 1,
     valueLabelMapping: providerGroups.map((providerGroup) => ({
       [providerGroup.id]: {
-        provider: "aws",
+        name: providerGroup.attributes.name,
         uid: providerGroup.id,
-        alias: providerGroup.attributes.name,
       },
     })),
   });
@@ -330,6 +328,7 @@ function buildOrganizationUnitRows({
   useParentIdRelationships,
   parentExternalId,
   parentOrganizationUnitId,
+  maxDepth = 10,
 }: {
   organizationId: string;
   organizationUnits: OrganizationUnitResource[];
@@ -338,7 +337,12 @@ function buildOrganizationUnitRows({
   providerLookup: Map<string, ProvidersProviderRow>;
   providersByOrganizationUnitId: Map<string, ProvidersProviderRow[]>;
   useParentIdRelationships: boolean;
+  maxDepth?: number;
 }): ProvidersOrganizationRow[] {
+  if (maxDepth <= 0) {
+    return [];
+  }
+
   return organizationUnits
     .filter(
       (organizationUnit) =>
@@ -359,6 +363,7 @@ function buildOrganizationUnitRows({
         providerLookup,
         providersByOrganizationUnitId,
         useParentIdRelationships,
+        maxDepth: maxDepth - 1,
       });
       const providerRowsFromRelationships = getProviderRowsByIds({
         providerIds: getRelationshipProviderIds(organizationUnit.relationships),
