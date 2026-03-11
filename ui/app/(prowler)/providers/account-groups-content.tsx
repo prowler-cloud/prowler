@@ -59,7 +59,7 @@ export const AccountGroupsContent = async ({
             <h1 className="mb-2 text-xl font-medium">
               Create a new account group
             </h1>
-            <p className="text-small text-default-500 mb-5">
+            <p className="text-text-neutral-tertiary mb-5 text-sm">
               Create a new account group to manage the providers and roles.
             </p>
             <AddGroupForm providers={providersList} roles={rolesList} />
@@ -128,7 +128,7 @@ const EditGroupSection = ({
   return (
     <div className="flex flex-col">
       <h1 className="mb-2 text-xl font-medium">Edit account group</h1>
-      <p className="text-small text-default-500 mb-5">
+      <p className="text-text-neutral-tertiary mb-5 text-sm">
         Edit the account group to manage the providers and roles.
       </p>
       <EditGroupForm
