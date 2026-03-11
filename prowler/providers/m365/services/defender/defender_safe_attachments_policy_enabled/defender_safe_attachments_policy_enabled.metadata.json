@@ -7,9 +7,9 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Defender Safe Attachments Policy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "Safe Attachments provides an additional layer of protection by scanning email attachments in a secure environment before delivering them to recipients.\n\nThe Built-In Protection Policy should have **Enable=True**, **Action=Block**, and **QuarantineTag=AdminOnlyAccessPolicy** to ensure malicious attachments are blocked and quarantined with admin-only access.",
+  "Description": "**Microsoft Defender for Office 365 Safe Attachments** provides an additional layer of protection by scanning email attachments in a secure environment before delivering them to recipients.\n\nThe Built-In Protection Policy should have **Enable=True**, **Action=Block**, and **QuarantineTag=AdminOnlyAccessPolicy** to ensure malicious attachments are blocked and quarantined with admin-only access.",
   "Risk": "Without properly configured Safe Attachments policies, malicious email attachments could reach users' mailboxes and potentially compromise the organization through:\n\n- **Malware delivery** via infected documents\n- **Ransomware attacks** through weaponized attachments\n- **Data exfiltration** using malicious scripts",
   "RelatedUrl": "",
   "AdditionalURLs": [

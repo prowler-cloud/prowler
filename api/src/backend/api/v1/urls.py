@@ -1,5 +1,7 @@
 from allauth.socialaccount.providers.saml.views import ACSView, MetadataView, SLSView
+from django.http import JsonResponse
 from django.urls import include, path
+from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.views import SpectacularRedocView
 from rest_framework_nested import routers
 
@@ -10,6 +12,7 @@ from api.v1.views import (
     CustomTokenObtainView,
     CustomTokenRefreshView,
     CustomTokenSwitchTenantView,
+    FindingGroupViewSet,
     FindingViewSet,
     GithubSocialLoginView,
     GoogleSocialLoginView,
@@ -47,6 +50,16 @@ from api.v1.views import (
     UserViewSet,
 )
 
+
+@csrf_exempt
+def _blocked_endpoint(request, *args, **kwargs):
+    return JsonResponse(
+        {"errors": [{"detail": "This endpoint is not available."}]},
+        status=405,
+        content_type="application/vnd.api+json",
+    )
+
+
 router = routers.DefaultRouter(trailing_slash=False)
 
 router.register(r"users", UserViewSet, basename="user")
@@ -60,6 +73,7 @@ router.register(
 router.register(r"tasks", TaskViewSet, basename="task")
 router.register(r"resources", ResourceViewSet, basename="resource")
 router.register(r"findings", FindingViewSet, basename="finding")
+router.register(r"finding-groups", FindingGroupViewSet, basename="finding-group")
 router.register(r"roles", RoleViewSet, basename="role")
 router.register(
     r"compliance-overviews", ComplianceOverviewViewSet, basename="complianceoverview"
@@ -195,6 +209,17 @@ urlpatterns = [
     path("tokens/saml", SAMLTokenValidateView.as_view(), name="token-saml"),
     path("tokens/google", GoogleSocialLoginView.as_view(), name="token-google"),
     path("tokens/github", GithubSocialLoginView.as_view(), name="token-github"),
+    # TODO: Remove these blocked endpoints once they are properly tested
+    path(
+        "attack-paths-scans/<uuid:pk>/queries/custom",
+        _blocked_endpoint,
+        name="attack-paths-scans-queries-custom-blocked",
+    ),
+    path(
+        "attack-paths-scans/<uuid:pk>/schema",
+        _blocked_endpoint,
+        name="attack-paths-scans-schema-blocked",
+    ),
     path("", include(router.urls)),
     path("", include(tenants_router.urls)),
     path("", include(users_router.urls)),

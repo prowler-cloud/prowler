@@ -396,3 +396,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Override vaul's injected user-select: none to allow text selection in drawers */
+@media (hover: hover) and (pointer: fine) {
+  [data-vaul-drawer][data-vaul-drawer] {
+    user-select: text;
+  }
+}

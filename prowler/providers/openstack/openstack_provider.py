@@ -18,11 +18,14 @@ from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.openstack.exceptions.exceptions import (
+    OpenStackAmbiguousRegionError,
     OpenStackAuthenticationError,
     OpenStackCloudNotFoundError,
     OpenStackConfigFileNotFoundError,
     OpenStackCredentialsError,
     OpenStackInvalidConfigError,
+    OpenStackInvalidProviderIdError,
+    OpenStackNoRegionError,
     OpenStackSessionError,
 )
 from prowler.providers.openstack.lib.mutelist.mutelist import OpenStackMutelist
@@ -81,7 +84,22 @@ class OpenstackProvider(Provider):
             user_domain_name=user_domain_name,
             project_domain_name=project_domain_name,
         )
-        self._connection = OpenstackProvider._create_connection(self._session)
+
+        # Build per-region connections.  When ``regions`` is configured
+        # (multi-region clouds.yaml) we create one connection per region;
+        # otherwise a single connection is created.
+        if self._session.regions:
+            self._regional_connections: dict[str, OpenStackConnection] = {}
+            for region in self._session.regions:
+                self._regional_connections[region] = (
+                    OpenstackProvider._create_connection(self._session, region=region)
+                )
+            # Default connection = first region (used for identity setup, etc.)
+            self._connection = next(iter(self._regional_connections.values()))
+        else:
+            self._connection = OpenstackProvider._create_connection(self._session)
+            self._regional_connections = {self._session.region_name: self._connection}
+
         self._identity = OpenstackProvider.setup_identity(
             self._connection, self._session
         )
@@ -131,6 +149,10 @@ class OpenstackProvider(Provider):
     @property
     def connection(self) -> OpenStackConnection:
         return self._connection
+
+    @property
+    def regional_connections(self) -> dict[str, OpenStackConnection]:
+        return self._regional_connections
 
     @staticmethod
     def setup_session(
@@ -269,13 +291,27 @@ class OpenstackProvider(Provider):
                 message=f"Missing required fields in clouds.yaml for cloud '{clouds_yaml_cloud}': {', '.join(missing_fields)}",
             )
 
+        # Validate region configuration: must have region_name XOR regions
+        region_name = cloud_config.get("region_name")
+        regions = cloud_config.get("regions")
+
+        if region_name and regions:
+            raise OpenStackAmbiguousRegionError(
+                message=f"Cloud '{clouds_yaml_cloud}' has both 'region_name' and 'regions' configured. Use one or the other.",
+            )
+        if not region_name and not regions:
+            raise OpenStackNoRegionError(
+                message=f"Cloud '{clouds_yaml_cloud}' has neither 'region_name' nor 'regions' configured. Add one to your clouds.yaml.",
+            )
+
         return OpenStackSession(
             auth_url=auth_dict.get("auth_url"),
             identity_api_version=str(cloud_config.get("identity_api_version", "3")),
             username=auth_dict.get("username"),
             password=auth_dict.get("password"),
             project_id=auth_dict.get("project_id") or auth_dict.get("project_name"),
-            region_name=cloud_config.get("region_name"),
+            region_name=region_name,
+            regions=regions,
             user_domain_name=auth_dict.get("user_domain_name", "Default"),
             project_domain_name=auth_dict.get("project_domain_name", "Default"),
         )
@@ -360,6 +396,28 @@ class OpenstackProvider(Provider):
                     message=f"Missing required fields in clouds.yaml for cloud '{clouds_yaml_cloud}': {', '.join(missing_fields)}",
                 )
 
+            # Get raw cloud config to validate region configuration.
+            # cloud_config.config is the SDK-processed config (CloudRegion),
+            # which may not preserve the 'regions' key. os_config.cloud_config
+            # holds the original parsed YAML before SDK processing.
+            raw_cloud_config = os_config.cloud_config.get("clouds", {}).get(
+                clouds_yaml_cloud, {}
+            )
+
+            region_name = raw_cloud_config.get("region_name")
+            regions = raw_cloud_config.get("regions")
+
+            if region_name and regions:
+                raise OpenStackAmbiguousRegionError(
+                    file=clouds_yaml_file,
+                    message=f"Cloud '{clouds_yaml_cloud}' has both 'region_name' and 'regions' configured. Use one or the other.",
+                )
+            if not region_name and not regions:
+                raise OpenStackNoRegionError(
+                    file=clouds_yaml_file,
+                    message=f"Cloud '{clouds_yaml_cloud}' has neither 'region_name' nor 'regions' configured. Add one to your clouds.yaml.",
+                )
+
             # Build OpenStackSession from cloud config
             return OpenStackSession(
                 auth_url=auth_dict.get("auth_url"),
@@ -369,7 +427,8 @@ class OpenstackProvider(Provider):
                 username=auth_dict.get("username"),
                 password=auth_dict.get("password"),
                 project_id=auth_dict.get("project_id") or auth_dict.get("project_name"),
-                region_name=cloud_config.config.get("region_name"),
+                region_name=region_name,
+                regions=regions,
                 user_domain_name=auth_dict.get("user_domain_name", "Default"),
                 project_domain_name=auth_dict.get("project_domain_name", "Default"),
             )
@@ -378,6 +437,8 @@ class OpenstackProvider(Provider):
             OpenStackConfigFileNotFoundError,
             OpenStackCloudNotFoundError,
             OpenStackInvalidConfigError,
+            OpenStackNoRegionError,
+            OpenStackAmbiguousRegionError,
         ):
             # Re-raise our custom exceptions
             raise
@@ -395,6 +456,7 @@ class OpenstackProvider(Provider):
     @staticmethod
     def _create_connection(
         session: OpenStackSession,
+        region: str | None = None,
     ) -> OpenStackConnection:
         """Initialize the OpenStack SDK connection.
 
@@ -402,13 +464,18 @@ class OpenstackProvider(Provider):
         and environment variables to ensure Prowler uses only the credentials
         provided through its own configuration mechanisms (CLI args, config file,
         or environment variables read by Prowler itself in setup_session()).
+
+        Args:
+            session: The OpenStack session configuration.
+            region: Optional region override — when given, the connection is
+                scoped to this specific region instead of the session default.
         """
         try:
             # Don't load from clouds.yaml or environment variables, we configure this in setup_session()
             conn = connect(
                 load_yaml_config=False,
                 load_envvars=False,
-                **session.as_sdk_config(),
+                **session.as_sdk_config(region_override=region),
             )
             conn.authorize()
             return conn
@@ -463,7 +530,7 @@ class OpenstackProvider(Provider):
             username=user_name,
             project_id=project_id,
             project_name=project_name,
-            region_name=session.region_name,
+            region_name=session.region_name or ", ".join(session.regions or []),
             user_domain_name=session.user_domain_name,
             project_domain_name=session.project_domain_name,
         )
@@ -481,6 +548,7 @@ class OpenstackProvider(Provider):
         region_name: Optional[str] = None,
         user_domain_name: Optional[str] = None,
         project_domain_name: Optional[str] = None,
+        provider_id: Optional[str] = None,
         raise_on_exception: bool = True,
     ) -> Connection:
         """Test connection to OpenStack without creating a full provider instance.
@@ -500,6 +568,7 @@ class OpenstackProvider(Provider):
             region_name: OpenStack region name
             user_domain_name: User domain name (default: "Default")
             project_domain_name: Project domain name (default: "Default")
+            provider_id: OpenStack provider ID for validation (optional)
             raise_on_exception: Whether to raise exception on failure (default: True)
 
         Returns:
@@ -547,8 +616,18 @@ class OpenstackProvider(Provider):
                 project_domain_name=project_domain_name,
             )
 
-            # Create and test connection
-            OpenstackProvider._create_connection(session)
+            # Validate provider_id matches project_id from config
+            if provider_id and session.project_id != provider_id:
+                raise OpenStackInvalidProviderIdError(
+                    message=f"Provider ID '{provider_id}' does not match project_id '{session.project_id}' from clouds.yaml",
+                )
+
+            # Create and test connection(s) — one per region when multi-region
+            if session.regions:
+                for region in session.regions:
+                    OpenstackProvider._create_connection(session, region=region)
+            else:
+                OpenstackProvider._create_connection(session)
 
             logger.info("OpenStack provider: Connection test successful")
             return Connection(is_connected=True)
@@ -560,6 +639,9 @@ class OpenstackProvider(Provider):
             OpenStackConfigFileNotFoundError,
             OpenStackCloudNotFoundError,
             OpenStackInvalidConfigError,
+            OpenStackInvalidProviderIdError,
+            OpenStackNoRegionError,
+            OpenStackAmbiguousRegionError,
         ) as error:
             logger.error(f"OpenStack connection test failed: {error}")
             if raise_on_exception:
@@ -578,18 +660,23 @@ class OpenstackProvider(Provider):
 
     def print_credentials(self) -> None:
         """Output sanitized credential summary."""
-        region = self._session.region_name
         auth_url = self._session.auth_url
         project_id = self._session.project_id
         username = self._identity.username
+
+        if self._session.regions:
+            region_display = ", ".join(self._session.regions)
+        else:
+            region_display = self._session.region_name
+
         messages = [
             f"Auth URL: {auth_url}",
             f"Project ID: {project_id}",
             f"Username: {username}",
-            f"Region: {region}",
+            f"Region: {region_display}",
         ]
         print_boxes(messages, "OpenStack Credentials")
         logger.info(
             f"Using OpenStack endpoint {Fore.YELLOW}{auth_url}{Style.RESET_ALL} "
-            f"in region {Fore.YELLOW}{region}{Style.RESET_ALL}"
+            f"in region {Fore.YELLOW}{region_display}{Style.RESET_ALL}"
         )

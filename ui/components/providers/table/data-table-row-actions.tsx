@@ -2,11 +2,11 @@
 
 import { Row } from "@tanstack/react-table";
 import { Pencil, PlugZap, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { checkConnectionProvider } from "@/actions/providers/providers";
 import { VerticalDotsIcon } from "@/components/icons";
+import { ProviderWizardModal } from "@/components/providers/wizard";
 import { Button } from "@/components/shadcn";
 import {
   ActionDropdown,
@@ -14,26 +14,27 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
+import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
+import { ProviderProps } from "@/types/providers";
 
 import { EditForm } from "../forms";
 import { DeleteForm } from "../forms/delete-form";
 
-interface DataTableRowActionsProps<ProviderProps> {
+interface DataTableRowActionsProps {
   row: Row<ProviderProps>;
 }
 
-export function DataTableRowActions<ProviderProps>({
-  row,
-}: DataTableRowActionsProps<ProviderProps>) {
-  const router = useRouter();
+export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const providerId = (row.original as { id: string }).id;
-  const providerType = (row.original as any).attributes?.provider;
-  const providerAlias = (row.original as any).attributes?.alias;
-  const providerSecretId =
-    (row.original as any).relationships?.secret?.data?.id || null;
+  const provider = row.original;
+  const providerId = provider.id;
+  const providerType = provider.attributes.provider;
+  const providerUid = provider.attributes.uid;
+  const providerAlias = provider.attributes.alias ?? null;
+  const providerSecretId = provider.relationships.secret.data?.id ?? null;
 
   const handleTestConnection = async () => {
     setLoading(true);
@@ -43,7 +44,7 @@ export function DataTableRowActions<ProviderProps>({
     setLoading(false);
   };
 
-  const hasSecret = (row.original as any).relationships?.secret?.data;
+  const hasSecret = Boolean(provider.relationships.secret.data);
 
   return (
     <>
@@ -66,6 +67,20 @@ export function DataTableRowActions<ProviderProps>({
       >
         <DeleteForm providerId={providerId} setIsOpen={setIsDeleteOpen} />
       </Modal>
+      <ProviderWizardModal
+        open={isWizardOpen}
+        onOpenChange={setIsWizardOpen}
+        initialData={{
+          providerId,
+          providerType,
+          providerUid,
+          providerAlias,
+          secretId: providerSecretId,
+          mode: providerSecretId
+            ? PROVIDER_WIZARD_MODE.UPDATE
+            : PROVIDER_WIZARD_MODE.ADD,
+        }}
+      />
 
       <div className="relative flex items-center justify-end gap-2">
         <ActionDropdown
@@ -78,11 +93,7 @@ export function DataTableRowActions<ProviderProps>({
           <ActionDropdownItem
             icon={<Pencil />}
             label={hasSecret ? "Update Credentials" : "Add Credentials"}
-            onSelect={() =>
-              router.push(
-                `/providers/${hasSecret ? "update" : "add"}-credentials?type=${providerType}&id=${providerId}${providerSecretId ? `&secretId=${providerSecretId}` : ""}`,
-              )
-            }
+            onSelect={() => setIsWizardOpen(true)}
           />
           <ActionDropdownItem
             icon={<PlugZap />}

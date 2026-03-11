@@ -46,9 +46,9 @@ function Checkbox({
         // Default state
         "bg-bg-input-primary border-border-input-primary shadow-[0_1px_2px_0_rgba(0,0,0,0.1)]",
         // Checked state
-        "data-[state=checked]:bg-button-primary data-[state=checked]:border-button-primary data-[state=checked]:text-white",
+        "data-[state=checked]:bg-button-tertiary-active data-[state=checked]:border-button-tertiary-active data-[state=checked]:text-white",
         // Indeterminate state
-        "data-[state=indeterminate]:bg-button-primary data-[state=indeterminate]:border-button-primary data-[state=indeterminate]:text-white",
+        "data-[state=indeterminate]:bg-button-tertiary-active data-[state=indeterminate]:border-button-tertiary-active data-[state=indeterminate]:text-white",
         // Focus state
         "focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press/50 focus-visible:ring-2",
         // Disabled state

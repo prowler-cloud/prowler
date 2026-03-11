@@ -62,6 +62,9 @@ def set_mocked_openstack_provider(
     # Mock connection
     provider.connection = MagicMock()
 
+    # Mock regional connections (single-region default)
+    provider.regional_connections = {region_name: provider.connection}
+
     # Mock audit config
     provider.audit_config = audit_config or {}
     provider.fixer_config = {}

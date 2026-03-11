@@ -248,6 +248,12 @@ class Provider(ABC):
                         repositories=arguments.repository,
                         organizations=arguments.organization,
                     )
+                elif "googleworkspace" in provider_class_name.lower():
+                    provider_class(
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
                 elif "cloudflare" in provider_class_name.lower():
                     provider_class(
                         filter_zones=arguments.region,
@@ -267,6 +273,7 @@ class Provider(ABC):
                         github_username=arguments.github_username,
                         personal_access_token=arguments.personal_access_token,
                         oauth_app_token=arguments.oauth_app_token,
+                        provider_uid=arguments.provider_uid,
                     )
                 elif "llm" in provider_class_name.lower():
                     provider_class(

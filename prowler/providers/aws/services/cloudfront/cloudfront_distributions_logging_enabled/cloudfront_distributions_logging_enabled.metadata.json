@@ -19,7 +19,7 @@
     "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html",
     "https://repost.aws/knowledge-center/cloudfront-logging-requests",
     "https://aws.amazon.com/awstv/watch/e895e7811ac/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/enable-real-time-logging.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudFront/enable-real-time-logging.html",
     "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/real-time-logs.html"
   ],
   "Remediation": {

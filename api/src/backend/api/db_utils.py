@@ -74,6 +74,7 @@ def rls_transaction(
     value: str,
     parameter: str = POSTGRES_TENANT_VAR,
     using: str | None = None,
+    retry_on_replica: bool = True,
 ):
     """
     Creates a new database transaction setting the given configuration value for Postgres RLS. It validates the
@@ -92,10 +93,11 @@ def rls_transaction(
 
     alias = db_alias
     is_replica = READ_REPLICA_ALIAS and alias == READ_REPLICA_ALIAS
-    max_attempts = REPLICA_MAX_ATTEMPTS if is_replica else 1
+    max_attempts = REPLICA_MAX_ATTEMPTS if is_replica and retry_on_replica else 1
 
     for attempt in range(1, max_attempts + 1):
         router_token = None
+        yielded_cursor = False
 
         # On final attempt, fallback to primary
         if attempt == max_attempts and is_replica:
@@ -118,9 +120,12 @@ def rls_transaction(
                     except ValueError:
                         raise ValidationError("Must be a valid UUID")
                     cursor.execute(SET_CONFIG_QUERY, [parameter, value])
+                    yielded_cursor = True
                     yield cursor
             return
         except OperationalError as e:
+            if yielded_cursor:
+                raise
             # If on primary or max attempts reached, raise
             if not is_replica or attempt == max_attempts:
                 raise
