@@ -11,7 +11,7 @@ import {
 
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
-import { DateWithTime } from "@/components/ui/entities";
+import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { DataTableExpandAllToggle } from "@/components/ui/table/data-table-expand-all-toggle";
 import { DataTableExpandableCell } from "@/components/ui/table/data-table-expandable-cell";
@@ -24,47 +24,23 @@ import {
 } from "@/types/providers-table";
 
 import { LinkToScans } from "../link-to-scans";
-import { ProviderInfo } from "../provider-info";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 interface GroupNameChipsProps {
   groupNames?: string[];
 }
 
-interface OrganizationCellProps {
-  organization: ProvidersOrganizationRow;
-  selectionLabel?: string;
-}
-
-const OrganizationCell = ({
-  organization,
-  selectionLabel,
-}: OrganizationCellProps) => {
+const OrganizationIcon = ({
+  groupKind,
+}: {
+  groupKind: string;
+}) => {
   const Icon =
-    organization.groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION
-      ? Building2
-      : FolderTree;
+    groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION ? Building2 : FolderTree;
 
   return (
-    <div className="flex min-w-0 items-center gap-3">
-      <div className="bg-bg-neutral-tertiary text-text-neutral-primary flex size-9 shrink-0 items-center justify-center rounded-xl">
-        <Icon className="size-4" />
-      </div>
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <span className="truncate font-medium">{organization.name}</span>
-          {selectionLabel && (
-            <span className="text-text-neutral-tertiary shrink-0 text-xs">
-              ({selectionLabel})
-            </span>
-          )}
-        </div>
-        {organization.externalId && (
-          <span className="text-text-neutral-tertiary truncate text-xs">
-            UID: {organization.externalId}
-          </span>
-        )}
-      </div>
+    <div className="bg-bg-neutral-tertiary text-text-neutral-primary flex size-9 items-center justify-center rounded-xl">
+      <Icon className="size-4" />
     </div>
   );
 };
@@ -191,9 +167,16 @@ export function getColumnProviders(
               hideChildIcon
               checkboxSlot={checkboxSlot}
             >
-              <OrganizationCell
-                organization={row.original}
-                selectionLabel={getSelectionLabel(row)}
+              <EntityInfo
+                icon={
+                  <OrganizationIcon
+                    groupKind={row.original.groupKind}
+                  />
+                }
+                entityAlias={row.original.name}
+                entityId={row.original.externalId ?? undefined}
+                badge={getSelectionLabel(row)}
+                showCopyAction={false}
               />
             </DataTableExpandableCell>
           );
@@ -207,10 +190,10 @@ export function getColumnProviders(
             isExpanded={isExpanded}
             checkboxSlot={checkboxSlot}
           >
-            <ProviderInfo
-              provider={provider.attributes.provider}
-              providerAlias={provider.attributes.alias}
-              providerUID={provider.attributes.uid}
+            <EntityInfo
+              cloudProvider={provider.attributes.provider}
+              entityAlias={provider.attributes.alias}
+              entityId={provider.attributes.uid}
             />
           </DataTableExpandableCell>
         );
