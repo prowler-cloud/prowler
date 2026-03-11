@@ -4,7 +4,6 @@ import { Row } from "@tanstack/react-table";
 import { KeyRound, Pencil, Rocket, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-import { checkConnectionProvider } from "@/actions/providers/providers";
 import { VerticalDotsIcon } from "@/components/icons";
 import { ProviderWizardModal } from "@/components/providers/wizard";
 import { Button } from "@/components/shadcn";
@@ -16,6 +15,7 @@ import {
 import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
+import { testProviderConnection } from "@/lib/provider-helpers";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 import {
   isProvidersOrganizationRow,
@@ -60,12 +60,6 @@ export function DataTableRowActions({
   const providerSecretId = provider?.relationships.secret.data?.id ?? null;
   const hasSecret = Boolean(provider?.relationships.secret.data);
 
-  const testSingleConnection = async (id: string) => {
-    const formData = new FormData();
-    formData.append("providerId", id);
-    return checkConnectionProvider(formData);
-  };
-
   const handleTestConnection = async () => {
     if (hasSelection && isRowSelected) {
       // Bulk: test all selected providers
@@ -77,15 +71,14 @@ export function DataTableRowActions({
         10,
         async (id) => {
           try {
-            const result = await testSingleConnection(id);
-            return { ok: !result?.error };
+            return await testProviderConnection(id);
           } catch {
-            return { ok: false };
+            return { connected: false, error: "Unexpected error" };
           }
         },
       );
 
-      const succeeded = results.filter((r) => r.ok).length;
+      const succeeded = results.filter((r) => r.connected).length;
       const failed = results.length - succeeded;
 
       if (failed === 0) {
@@ -107,14 +100,14 @@ export function DataTableRowActions({
       // Single: test only this provider
       if (!providerId) return;
       setLoading(true);
-      const result = await testSingleConnection(providerId);
+      const result = await testProviderConnection(providerId);
       setLoading(false);
 
-      if (result?.error) {
+      if (!result.connected) {
         toast({
           variant: "destructive",
           title: "Connection test failed",
-          description: result.error,
+          description: result.error ?? "Unknown error",
         });
       } else {
         toast({
