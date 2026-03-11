@@ -1541,6 +1541,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = AzureProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GCP.value:
                 serializer = GCPProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
+                serializer = GoogleWorkspaceProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GITHUB.value:
                 serializer = GithubProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.IAC.value:
@@ -1671,6 +1673,14 @@ class GCPProviderSecret(serializers.Serializer):
 
 class GCPServiceAccountProviderSecret(serializers.Serializer):
     service_account_key = serializers.JSONField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class GoogleWorkspaceProviderSecret(serializers.Serializer):
+    credentials_content = serializers.CharField()
+    delegated_user = serializers.EmailField()
 
     class Meta:
         resource_name = "provider-secrets"
