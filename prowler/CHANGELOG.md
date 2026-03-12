@@ -2,6 +2,15 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [Unreleased]
+
+### 🐛 Fixed
+
+- Fix shared report object bug in 6 Azure Key Vault checks causing duplicate/incorrect findings when a vault contains multiple keys, secrets, or diagnostic settings: `keyvault_key_rotation_enabled`, `keyvault_key_expiration_set_in_non_rbac`, `keyvault_rbac_key_expiration_set`, `keyvault_non_rbac_secret_expiration_set`, `keyvault_rbac_secret_expiration_set`, `keyvault_logging_enabled`
+- Fix `keyvault_key_rotation_enabled` only checking the first lifetime action instead of all actions for a `Rotate` policy
+
+---
+
 ## [5.20.0] (Prowler v5.20.0)
 
 ### 🚀 Added
