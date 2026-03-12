@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "NotDefined",
-  "ResourceGroup": "collaboration",
+  "ResourceGroup": "IAM",
   "Description": "**Microsoft 365 Exchange Online role assignment policies** are assessed for roles that permit installing or managing **Outlook add-ins** (such as `My Marketplace Apps`, `My Custom Apps`, `My ReadWriteMailbox Apps`, `Org Marketplace Apps`, `Org Custom Apps`). Presence of these roles indicates users or admins can deploy add-ins from the store or custom sources.",
   "Risk": "Allowing add-in installation exposes mailboxes to **malicious or vulnerable add-ins**. With `ReadWriteMailbox`, an add-in can read, copy, or alter messages, auto-forward mail, and access tokens, enabling **data exfiltration**, message tampering, and **lateral movement**, impacting confidentiality and integrity.",
   "RelatedUrl": "",

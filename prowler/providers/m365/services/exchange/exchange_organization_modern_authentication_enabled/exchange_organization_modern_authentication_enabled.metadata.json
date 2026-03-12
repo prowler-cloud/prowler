@@ -6,7 +6,7 @@
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "critical",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
   "Description": "**Microsoft 365 Exchange Online** organization setting determines if **Modern Authentication** (`OAuth 2.0`) is enabled for client connections.\n\nThis evaluates whether clients use token-based sign-in rather than `Basic` credentials.",
