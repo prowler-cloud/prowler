@@ -163,7 +163,7 @@ export const EventsTimeline = ({
             onChange={(e) => setIncludeReadEvents(e.target.checked)}
             className="accent-bg-data-info h-4 w-4 rounded"
           />
-          <span className="text-text-neutral-tertiary text-sm">
+          <span className="text-text-neutral-tertiary text-xs">
             Include read events
           </span>
         </label>
@@ -301,10 +301,10 @@ export const EventsTimeline = ({
                             label="Who"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-text-neutral-primary text-sm">
+                              <span className="text-text-neutral-primary text-xs">
                                 {attrs.actor}
                               </span>
-                              <span className="bg-bg-neutral-tertiary text-text-neutral-tertiary rounded px-1.5 py-0.5 text-xs">
+                              <span className="bg-bg-neutral-tertiary text-text-neutral-tertiary rounded px-1.5 py-0.5 text-[11px]">
                                 {attrs.actor_type}
                               </span>
                             </div>
@@ -315,26 +315,19 @@ export const EventsTimeline = ({
                             value={attrs.source_ip_address}
                             mono
                           />
-                          {attrs.user_agent && attrs.user_agent !== "-" && (
-                            <DetailRow label="Agent">
-                              <span className="text-text-neutral-secondary truncate text-xs">
-                                {attrs.user_agent}
-                              </span>
-                            </DetailRow>
-                          )}
                         </div>
 
                         {/* Error banner */}
                         {hasError && (
                           <div className="border-border-error-primary/20 bg-bg-fail-secondary/30 flex items-center gap-2 border-t px-5 py-2.5">
                             <AlertTriangle className="text-text-error h-3.5 w-3.5 shrink-0" />
-                            <span className="text-text-error text-sm font-medium">
+                            <span className="text-text-error text-xs font-medium">
                               {attrs.error_code}
                             </span>
                             {attrs.error_message && (
                               <>
                                 <span className="text-text-error/30">|</span>
-                                <span className="text-text-error/70 truncate text-sm">
+                                <span className="text-text-error/70 truncate text-xs">
                                   {attrs.error_message}
                                 </span>
                               </>
@@ -395,7 +388,7 @@ const DetailRow = ({
     {children || (
       <span
         className={cn(
-          "text-text-neutral-primary truncate text-sm",
+          "text-text-neutral-primary truncate text-xs",
           mono && "font-mono",
         )}
       >

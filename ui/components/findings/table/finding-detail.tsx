@@ -164,10 +164,6 @@ export const FindingDetail = ({
           <TabsTrigger value="events">Events</TabsTrigger>
         </TabsList>
 
-        <p className="text-text-neutral-primary mb-4 text-sm">
-          Here is an overview of this finding:
-        </p>
-
         {/* General Tab */}
         <TabsContent value="general" className="flex flex-col gap-4">
           <div className="flex flex-wrap gap-4">

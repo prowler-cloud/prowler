@@ -197,7 +197,6 @@ describe("EventsTimeline", () => {
     // Then - detail card should show expanded info
     expect(screen.getByText("192.168.1.1")).toBeInTheDocument();
     expect(screen.getByText("AssumedRole")).toBeInTheDocument();
-    expect(screen.getByText("aws-cli/2.0")).toBeInTheDocument();
     expect(screen.getByText("Request")).toBeInTheDocument();
     expect(screen.getByText("Response")).toBeInTheDocument();
   });
