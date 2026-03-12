@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.21.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `entra_conditional_access_policy_device_code_flow_blocked` check for M365 provider
+
+---
+
 ## [5.20.0] (Prowler v5.20.0)
 
 ### 🚀 Added
