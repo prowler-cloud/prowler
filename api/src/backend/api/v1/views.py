@@ -2452,6 +2452,11 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_SCANS]
 
+    def get_throttles(self):
+        if self.action == "run_custom_attack_paths_query":
+            self.throttle_scope = "attack-paths-custom-query"
+        return super().get_throttles()
+
     def set_required_permissions(self):
         if self.request.method in SAFE_METHODS:
             self.required_permissions = []

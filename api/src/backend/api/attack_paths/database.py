@@ -35,6 +35,7 @@ READ_EXCEPTION_CODES = [
     "Neo.ClientError.Statement.AccessMode",
     "Neo.ClientError.Procedure.ProcedureNotFound",
 ]
+CLIENT_STATEMENT_EXCEPTION_PREFIX = "Neo.ClientError.Statement."
 
 # Module-level process-wide driver singleton
 _driver: neo4j.Driver | None = None
@@ -108,6 +109,7 @@ def get_session(
     except neo4j.exceptions.Neo4jError as exc:
         if (
             default_access_mode == neo4j.READ_ACCESS
+            and exc.code
             and exc.code in READ_EXCEPTION_CODES
         ):
             message = "Read query not allowed"
@@ -115,6 +117,10 @@ def get_session(
             raise WriteQueryNotAllowedException(message=message, code=code)
 
         message = exc.message if exc.message is not None else str(exc)
+
+        if exc.code and exc.code.startswith(CLIENT_STATEMENT_EXCEPTION_PREFIX):
+            raise ClientStatementException(message=message, code=exc.code)
+
         raise GraphDatabaseQueryException(message=message, code=exc.code)
 
     finally:
@@ -226,4 +232,8 @@ class GraphDatabaseQueryException(Exception):
 
 
 class WriteQueryNotAllowedException(GraphDatabaseQueryException):
+    pass
+
+
+class ClientStatementException(GraphDatabaseQueryException):
     pass
