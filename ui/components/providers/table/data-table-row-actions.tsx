@@ -6,6 +6,10 @@ import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
 import { ProviderWizardModal } from "@/components/providers/wizard";
+import {
+  ORG_WIZARD_INTENT,
+  OrgWizardInitialData,
+} from "@/components/providers/wizard/types";
 import { Button } from "@/components/shadcn";
 import {
   ActionDropdown,
@@ -16,14 +20,18 @@ import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { testProviderConnection } from "@/lib/provider-helpers";
+import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 import {
   isProvidersOrganizationRow,
+  PROVIDERS_GROUP_KIND,
+  PROVIDERS_ROW_TYPE,
   ProvidersTableRow,
 } from "@/types/providers-table";
 
 import { EditForm } from "../forms";
 import { DeleteForm } from "../forms/delete-form";
+import { DeleteOrganizationForm } from "../forms/delete-organization-form";
 
 interface DataTableRowActionsProps {
   row: Row<ProvidersTableRow>;
@@ -37,6 +45,20 @@ interface DataTableRowActionsProps {
   onClearSelection: () => void;
 }
 
+function collectTestableChildProviderIds(rows: ProvidersTableRow[]): string[] {
+  const ids: string[] = [];
+  for (const row of rows) {
+    if (row.rowType === PROVIDERS_ROW_TYPE.PROVIDER) {
+      if (row.relationships.secret.data) {
+        ids.push(row.id);
+      }
+    } else if (row.subRows) {
+      ids.push(...collectTestableChildProviderIds(row.subRows));
+    }
+  }
+  return ids;
+}
+
 export function DataTableRowActions({
   row,
   hasSelection,
@@ -47,6 +69,10 @@ export function DataTableRowActions({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [isOrgWizardOpen, setIsOrgWizardOpen] = useState(false);
+  const [orgWizardData, setOrgWizardData] =
+    useState<OrgWizardInitialData | null>(null);
+  const [isDeleteOrgOpen, setIsDeleteOrgOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -59,6 +85,11 @@ export function DataTableRowActions({
   const providerAlias = provider?.attributes.alias ?? null;
   const providerSecretId = provider?.relationships.secret.data?.id ?? null;
   const hasSecret = Boolean(provider?.relationships.secret.data);
+
+  const orgGroupKind = isOrganizationRow ? rowData.groupKind : null;
+  const childTestableIds = isOrganizationRow
+    ? collectTestableChildProviderIds(rowData.subRows)
+    : [];
 
   const handleTestConnection = async () => {
     if (hasSelection && isRowSelected) {
@@ -118,6 +149,58 @@ export function DataTableRowActions({
     }
   };
 
+  const handleTestChildConnections = async () => {
+    if (childTestableIds.length === 0) return;
+    setLoading(true);
+
+    const results = await runWithConcurrencyLimit(
+      childTestableIds,
+      10,
+      async (id) => {
+        try {
+          return await testProviderConnection(id);
+        } catch {
+          return { connected: false, error: "Unexpected error" };
+        }
+      },
+    );
+
+    const succeeded = results.filter((r) => r.connected).length;
+    const failed = results.length - succeeded;
+
+    if (failed === 0) {
+      toast({
+        title: "Connection test completed",
+        description: `${succeeded} ${succeeded === 1 ? "provider" : "providers"} tested successfully.`,
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Connection test completed",
+        description: `${succeeded} succeeded, ${failed} failed out of ${results.length} providers.`,
+      });
+    }
+
+    setLoading(false);
+  };
+
+  const openOrgWizardAt = (
+    targetStep: OrgWizardInitialData["targetStep"],
+    targetPhase: OrgWizardInitialData["targetPhase"],
+    intent?: OrgWizardInitialData["intent"],
+  ) => {
+    if (!isOrganizationRow) return;
+    setOrgWizardData({
+      organizationId: rowData.id,
+      organizationName: rowData.name,
+      externalId: rowData.externalId ?? "",
+      targetStep,
+      targetPhase,
+      intent,
+    });
+    setIsOrgWizardOpen(true);
+  };
+
   // When this row is part of the selection, only show "Test Connection"
   if (hasSelection && isRowSelected) {
     const bulkCount =
@@ -148,7 +231,139 @@ export function DataTableRowActions({
     );
   }
 
-  // Normal mode: all actions
+  // Organization row actions
+  if (isOrganizationRow && orgGroupKind === PROVIDERS_GROUP_KIND.ORGANIZATION) {
+    const testCount = childTestableIds.length;
+
+    return (
+      <>
+        <ProviderWizardModal
+          open={isOrgWizardOpen}
+          onOpenChange={setIsOrgWizardOpen}
+          orgInitialData={orgWizardData ?? undefined}
+        />
+        <Modal
+          open={isDeleteOrgOpen}
+          onOpenChange={setIsDeleteOrgOpen}
+          title="Are you absolutely sure?"
+          description="This action cannot be undone. This will permanently delete this organization and all associated data."
+        >
+          <DeleteOrganizationForm
+            id={rowData.id}
+            name={rowData.name}
+            variant={PROVIDERS_GROUP_KIND.ORGANIZATION}
+            setIsOpen={setIsDeleteOrgOpen}
+          />
+        </Modal>
+
+        <div className="relative flex items-center justify-end gap-2">
+          <ActionDropdown
+            trigger={
+              <Button variant="ghost" size="icon-sm" className="rounded-full">
+                <VerticalDotsIcon className="text-text-neutral-secondary" />
+              </Button>
+            }
+          >
+            <ActionDropdownItem
+              icon={<Pencil />}
+              label="Edit Organization Name"
+              onSelect={() =>
+                openOrgWizardAt(
+                  ORG_WIZARD_STEP.SETUP,
+                  ORG_SETUP_PHASE.DETAILS,
+                  ORG_WIZARD_INTENT.EDIT_NAME,
+                )
+              }
+            />
+            <ActionDropdownItem
+              icon={<KeyRound />}
+              label="Update Credentials"
+              onSelect={() =>
+                openOrgWizardAt(
+                  ORG_WIZARD_STEP.SETUP,
+                  ORG_SETUP_PHASE.ACCESS,
+                  ORG_WIZARD_INTENT.EDIT_CREDENTIALS,
+                )
+              }
+            />
+            <ActionDropdownItem
+              icon={<Rocket />}
+              label={loading ? "Testing..." : `Test Connections (${testCount})`}
+              onSelect={(e) => {
+                e.preventDefault();
+                handleTestChildConnections();
+              }}
+              disabled={testCount === 0 || loading}
+            />
+            <ActionDropdownDangerZone>
+              <ActionDropdownItem
+                icon={<Trash2 />}
+                label="Delete Organization"
+                destructive
+                onSelect={() => setIsDeleteOrgOpen(true)}
+              />
+            </ActionDropdownDangerZone>
+          </ActionDropdown>
+        </div>
+      </>
+    );
+  }
+
+  // Organization Unit row actions
+  if (
+    isOrganizationRow &&
+    orgGroupKind === PROVIDERS_GROUP_KIND.ORGANIZATION_UNIT
+  ) {
+    const testCount = childTestableIds.length;
+
+    return (
+      <>
+        <Modal
+          open={isDeleteOrgOpen}
+          onOpenChange={setIsDeleteOrgOpen}
+          title="Are you absolutely sure?"
+          description="This action cannot be undone. This will permanently delete this organizational unit and all associated data."
+        >
+          <DeleteOrganizationForm
+            id={rowData.id}
+            name={rowData.name}
+            variant={PROVIDERS_GROUP_KIND.ORGANIZATION_UNIT}
+            setIsOpen={setIsDeleteOrgOpen}
+          />
+        </Modal>
+
+        <div className="relative flex items-center justify-end gap-2">
+          <ActionDropdown
+            trigger={
+              <Button variant="ghost" size="icon-sm" className="rounded-full">
+                <VerticalDotsIcon className="text-text-neutral-secondary" />
+              </Button>
+            }
+          >
+            <ActionDropdownItem
+              icon={<Rocket />}
+              label={loading ? "Testing..." : `Test Connections (${testCount})`}
+              onSelect={(e) => {
+                e.preventDefault();
+                handleTestChildConnections();
+              }}
+              disabled={testCount === 0 || loading}
+            />
+            <ActionDropdownDangerZone>
+              <ActionDropdownItem
+                icon={<Trash2 />}
+                label="Delete Organization Unit"
+                destructive
+                onSelect={() => setIsDeleteOrgOpen(true)}
+              />
+            </ActionDropdownDangerZone>
+          </ActionDropdown>
+        </div>
+      </>
+    );
+  }
+
+  // Provider row actions (unchanged)
   return (
     <>
       <Modal
@@ -201,13 +416,11 @@ export function DataTableRowActions({
             icon={<Pencil />}
             label="Edit Provider Alias"
             onSelect={() => setIsEditOpen(true)}
-            disabled={isOrganizationRow}
           />
           <ActionDropdownItem
             icon={<KeyRound />}
             label="Update Credentials"
             onSelect={() => setIsWizardOpen(true)}
-            disabled={isOrganizationRow}
           />
           <ActionDropdownItem
             icon={<Rocket />}
@@ -216,7 +429,7 @@ export function DataTableRowActions({
               e.preventDefault();
               handleTestConnection();
             }}
-            disabled={isOrganizationRow || !hasSecret || loading}
+            disabled={!hasSecret || loading}
           />
           <ActionDropdownDangerZone>
             <ActionDropdownItem
@@ -224,7 +437,6 @@ export function DataTableRowActions({
               label="Delete Provider"
               destructive
               onSelect={() => setIsDeleteOpen(true)}
-              disabled={isOrganizationRow}
             />
           </ActionDropdownDangerZone>
         </ActionDropdown>
