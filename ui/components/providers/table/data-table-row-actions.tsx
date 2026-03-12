@@ -26,6 +26,7 @@ import {
   isProvidersOrganizationRow,
   PROVIDERS_GROUP_KIND,
   PROVIDERS_ROW_TYPE,
+  ProvidersOrganizationRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
 
@@ -59,6 +60,140 @@ function collectTestableChildProviderIds(rows: ProvidersTableRow[]): string[] {
   return ids;
 }
 
+interface OrgGroupDropdownActionsProps {
+  rowData: ProvidersOrganizationRow;
+  loading: boolean;
+  hasSelection: boolean;
+  testableProviderIds: string[];
+  childTestableIds: string[];
+  onClearSelection: () => void;
+  onBulkTest: (ids: string[]) => Promise<void>;
+  onTestChildConnections: () => Promise<void>;
+}
+
+function OrgGroupDropdownActions({
+  rowData,
+  loading,
+  hasSelection,
+  testableProviderIds,
+  childTestableIds,
+  onClearSelection,
+  onBulkTest,
+  onTestChildConnections,
+}: OrgGroupDropdownActionsProps) {
+  const [isDeleteOrgOpen, setIsDeleteOrgOpen] = useState(false);
+  const [isOrgWizardOpen, setIsOrgWizardOpen] = useState(false);
+  const [orgWizardData, setOrgWizardData] =
+    useState<OrgWizardInitialData | null>(null);
+
+  const isOrgKind = rowData.groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION;
+  const testIds = hasSelection ? testableProviderIds : childTestableIds;
+  const testCount = testIds.length;
+  const entityLabel = isOrgKind ? "organization" : "organizational unit";
+
+  const openOrgWizardAt = (
+    targetStep: OrgWizardInitialData["targetStep"],
+    targetPhase: OrgWizardInitialData["targetPhase"],
+    intent?: OrgWizardInitialData["intent"],
+  ) => {
+    setOrgWizardData({
+      organizationId: rowData.id,
+      organizationName: rowData.name,
+      externalId: rowData.externalId ?? "",
+      targetStep,
+      targetPhase,
+      intent,
+    });
+    setIsOrgWizardOpen(true);
+  };
+
+  return (
+    <>
+      {isOrgKind && (
+        <ProviderWizardModal
+          open={isOrgWizardOpen}
+          onOpenChange={setIsOrgWizardOpen}
+          orgInitialData={orgWizardData ?? undefined}
+        />
+      )}
+      <Modal
+        open={isDeleteOrgOpen}
+        onOpenChange={setIsDeleteOrgOpen}
+        title="Are you absolutely sure?"
+        description={`This action cannot be undone. This will permanently delete this ${entityLabel} and all associated data.`}
+      >
+        <DeleteOrganizationForm
+          id={rowData.id}
+          name={rowData.name}
+          variant={rowData.groupKind}
+          setIsOpen={setIsDeleteOrgOpen}
+        />
+      </Modal>
+
+      <div className="relative flex items-center justify-end gap-2">
+        <ActionDropdown
+          trigger={
+            <Button variant="ghost" size="icon-sm" className="rounded-full">
+              <VerticalDotsIcon className="text-text-neutral-secondary" />
+            </Button>
+          }
+        >
+          {isOrgKind && (
+            <>
+              <ActionDropdownItem
+                icon={<Pencil />}
+                label="Edit Organization Name"
+                onSelect={() =>
+                  openOrgWizardAt(
+                    ORG_WIZARD_STEP.SETUP,
+                    ORG_SETUP_PHASE.DETAILS,
+                    ORG_WIZARD_INTENT.EDIT_NAME,
+                  )
+                }
+              />
+              <ActionDropdownItem
+                icon={<KeyRound />}
+                label="Update Credentials"
+                onSelect={() =>
+                  openOrgWizardAt(
+                    ORG_WIZARD_STEP.SETUP,
+                    ORG_SETUP_PHASE.ACCESS,
+                    ORG_WIZARD_INTENT.EDIT_CREDENTIALS,
+                  )
+                }
+              />
+            </>
+          )}
+          <ActionDropdownItem
+            icon={<Rocket />}
+            label={loading ? "Testing..." : `Test Connections (${testCount})`}
+            onSelect={(e) => {
+              e.preventDefault();
+              if (hasSelection) {
+                onBulkTest(testableProviderIds);
+                onClearSelection();
+              } else {
+                onTestChildConnections();
+              }
+            }}
+            disabled={testCount === 0 || loading}
+          />
+          <ActionDropdownDangerZone>
+            <ActionDropdownItem
+              icon={<Trash2 />}
+              label={
+                isOrgKind ? "Delete Organization" : "Delete Organization Unit"
+              }
+              destructive
+              onSelect={() => setIsDeleteOrgOpen(true)}
+            />
+          </ActionDropdownDangerZone>
+        </ActionDropdown>
+      </div>
+    </>
+  );
+}
+
 export function DataTableRowActions({
   row,
   hasSelection,
@@ -69,10 +204,6 @@ export function DataTableRowActions({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
-  const [isOrgWizardOpen, setIsOrgWizardOpen] = useState(false);
-  const [orgWizardData, setOrgWizardData] =
-    useState<OrgWizardInitialData | null>(null);
-  const [isDeleteOrgOpen, setIsDeleteOrgOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -95,17 +226,13 @@ export function DataTableRowActions({
     if (ids.length === 0) return;
     setLoading(true);
 
-    const results = await runWithConcurrencyLimit(
-      ids,
-      10,
-      async (id) => {
-        try {
-          return await testProviderConnection(id);
-        } catch {
-          return { connected: false, error: "Unexpected error" };
-        }
-      },
-    );
+    const results = await runWithConcurrencyLimit(ids, 10, async (id) => {
+      try {
+        return await testProviderConnection(id);
+      } catch {
+        return { connected: false, error: "Unexpected error" };
+      }
+    });
 
     const succeeded = results.filter((r) => r.connected).length;
     const failed = results.length - succeeded;
@@ -157,23 +284,6 @@ export function DataTableRowActions({
     await handleBulkTest(childTestableIds);
   };
 
-  const openOrgWizardAt = (
-    targetStep: OrgWizardInitialData["targetStep"],
-    targetPhase: OrgWizardInitialData["targetPhase"],
-    intent?: OrgWizardInitialData["intent"],
-  ) => {
-    if (!isOrganizationRow) return;
-    setOrgWizardData({
-      organizationId: rowData.id,
-      organizationName: rowData.name,
-      externalId: rowData.externalId ?? "",
-      targetStep,
-      targetPhase,
-      intent,
-    });
-    setIsOrgWizardOpen(true);
-  };
-
   // When this row is part of the selection, only show "Test Connection"
   if (hasSelection && isRowSelected) {
     const bulkCount =
@@ -202,147 +312,19 @@ export function DataTableRowActions({
     );
   }
 
-  // Organization row actions
-  if (isOrganizationRow && orgGroupKind === PROVIDERS_GROUP_KIND.ORGANIZATION) {
-    const testIds = hasSelection ? testableProviderIds : childTestableIds;
-    const testCount = testIds.length;
-
+  // Organization / Organization Unit row actions
+  if (isProvidersOrganizationRow(rowData) && orgGroupKind) {
     return (
-      <>
-        <ProviderWizardModal
-          open={isOrgWizardOpen}
-          onOpenChange={setIsOrgWizardOpen}
-          orgInitialData={orgWizardData ?? undefined}
-        />
-        <Modal
-          open={isDeleteOrgOpen}
-          onOpenChange={setIsDeleteOrgOpen}
-          title="Are you absolutely sure?"
-          description="This action cannot be undone. This will permanently delete this organization and all associated data."
-        >
-          <DeleteOrganizationForm
-            id={rowData.id}
-            name={rowData.name}
-            variant={PROVIDERS_GROUP_KIND.ORGANIZATION}
-            setIsOpen={setIsDeleteOrgOpen}
-          />
-        </Modal>
-
-        <div className="relative flex items-center justify-end gap-2">
-          <ActionDropdown
-            trigger={
-              <Button variant="ghost" size="icon-sm" className="rounded-full">
-                <VerticalDotsIcon className="text-text-neutral-secondary" />
-              </Button>
-            }
-          >
-            <ActionDropdownItem
-              icon={<Pencil />}
-              label="Edit Organization Name"
-              onSelect={() =>
-                openOrgWizardAt(
-                  ORG_WIZARD_STEP.SETUP,
-                  ORG_SETUP_PHASE.DETAILS,
-                  ORG_WIZARD_INTENT.EDIT_NAME,
-                )
-              }
-            />
-            <ActionDropdownItem
-              icon={<KeyRound />}
-              label="Update Credentials"
-              onSelect={() =>
-                openOrgWizardAt(
-                  ORG_WIZARD_STEP.SETUP,
-                  ORG_SETUP_PHASE.ACCESS,
-                  ORG_WIZARD_INTENT.EDIT_CREDENTIALS,
-                )
-              }
-            />
-            <ActionDropdownItem
-              icon={<Rocket />}
-              label={loading ? "Testing..." : `Test Connections (${testCount})`}
-              onSelect={(e) => {
-                e.preventDefault();
-                if (hasSelection) {
-                  handleBulkTest(testableProviderIds);
-                  onClearSelection();
-                } else {
-                  handleTestChildConnections();
-                }
-              }}
-              disabled={testCount === 0 || loading}
-            />
-            <ActionDropdownDangerZone>
-              <ActionDropdownItem
-                icon={<Trash2 />}
-                label="Delete Organization"
-                destructive
-                onSelect={() => setIsDeleteOrgOpen(true)}
-              />
-            </ActionDropdownDangerZone>
-          </ActionDropdown>
-        </div>
-      </>
-    );
-  }
-
-  // Organization Unit row actions
-  if (
-    isOrganizationRow &&
-    orgGroupKind === PROVIDERS_GROUP_KIND.ORGANIZATION_UNIT
-  ) {
-    const testIds = hasSelection ? testableProviderIds : childTestableIds;
-    const testCount = testIds.length;
-
-    return (
-      <>
-        <Modal
-          open={isDeleteOrgOpen}
-          onOpenChange={setIsDeleteOrgOpen}
-          title="Are you absolutely sure?"
-          description="This action cannot be undone. This will permanently delete this organizational unit and all associated data."
-        >
-          <DeleteOrganizationForm
-            id={rowData.id}
-            name={rowData.name}
-            variant={PROVIDERS_GROUP_KIND.ORGANIZATION_UNIT}
-            setIsOpen={setIsDeleteOrgOpen}
-          />
-        </Modal>
-
-        <div className="relative flex items-center justify-end gap-2">
-          <ActionDropdown
-            trigger={
-              <Button variant="ghost" size="icon-sm" className="rounded-full">
-                <VerticalDotsIcon className="text-text-neutral-secondary" />
-              </Button>
-            }
-          >
-            <ActionDropdownItem
-              icon={<Rocket />}
-              label={loading ? "Testing..." : `Test Connections (${testCount})`}
-              onSelect={(e) => {
-                e.preventDefault();
-                if (hasSelection) {
-                  handleBulkTest(testableProviderIds);
-                  onClearSelection();
-                } else {
-                  handleTestChildConnections();
-                }
-              }}
-              disabled={testCount === 0 || loading}
-            />
-            <ActionDropdownDangerZone>
-              <ActionDropdownItem
-                icon={<Trash2 />}
-                label="Delete Organization Unit"
-                destructive
-                onSelect={() => setIsDeleteOrgOpen(true)}
-              />
-            </ActionDropdownDangerZone>
-          </ActionDropdown>
-        </div>
-      </>
+      <OrgGroupDropdownActions
+        rowData={rowData}
+        loading={loading}
+        hasSelection={hasSelection}
+        testableProviderIds={testableProviderIds}
+        childTestableIds={childTestableIds}
+        onClearSelection={onClearSelection}
+        onBulkTest={handleBulkTest}
+        onTestChildConnections={handleTestChildConnections}
+      />
     );
   }
 
