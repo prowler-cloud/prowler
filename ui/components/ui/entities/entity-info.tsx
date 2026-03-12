@@ -66,19 +66,11 @@ export const EntityInfo = ({
               <span className="text-text-neutral-tertiary shrink-0 text-xs font-medium">
                 UID:
               </span>
-              <div className="bg-bg-neutral-tertiary border-border-neutral-tertiary flex max-w-[160px] min-w-0 items-center gap-2 rounded-full border-2 px-3 py-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="text-text-neutral-secondary min-w-0 truncate text-xs">
-                      {entityId}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">{entityId}</TooltipContent>
-                </Tooltip>
-                {canCopy && (
-                  <CodeSnippet value={entityId} hideCode className="shrink-0" />
-                )}
-              </div>
+              <CodeSnippet
+                value={entityId}
+                className="max-w-[160px]"
+                hideCopyButton={!canCopy}
+              />
             </div>
           )}
         </div>

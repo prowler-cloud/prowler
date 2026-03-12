@@ -9,7 +9,7 @@ import {
   ShieldOff,
 } from "lucide-react";
 
-import { Badge } from "@/components/shadcn/badge/badge";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
 import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
@@ -167,7 +167,7 @@ export function getColumnProviders(
                 entityAlias={row.original.name}
                 entityId={row.original.externalId ?? undefined}
                 badge={getSelectionLabel(row)}
-                showCopyAction={false}
+                showCopyAction
               />
             </DataTableExpandableCell>
           );
@@ -338,9 +338,7 @@ export function GroupNameChips({ groupNames }: GroupNameChipsProps) {
   return (
     <div className="flex max-w-[260px] flex-wrap gap-1">
       {groupNames.map((name, index) => (
-        <Badge key={index} variant="tag">
-          {name}
-        </Badge>
+        <CodeSnippet key={index} value={name} />
       ))}
     </div>
   );
