@@ -347,24 +347,7 @@ export const deleteOrganization = async (organizationId: string) => {
       headers,
     });
 
-    if (!response.ok) {
-      try {
-        const errorData = await response.json();
-        throw new Error(
-          errorData?.message || "Failed to delete the organization",
-        );
-      } catch {
-        throw new Error("Failed to delete the organization");
-      }
-    }
-
-    let data = null;
-    if (response.status !== 204) {
-      data = await response.json();
-    }
-
-    revalidatePath("/providers");
-    return data || { success: true };
+    return handleApiResponse(response, "/providers");
   } catch (error) {
     return handleApiError(error);
   }
@@ -398,24 +381,7 @@ export const deleteOrganizationalUnit = async (
       headers,
     });
 
-    if (!response.ok) {
-      try {
-        const errorData = await response.json();
-        throw new Error(
-          errorData?.message || "Failed to delete the organizational unit",
-        );
-      } catch {
-        throw new Error("Failed to delete the organizational unit");
-      }
-    }
-
-    let data = null;
-    if (response.status !== 204) {
-      data = await response.json();
-    }
-
-    revalidatePath("/providers");
-    return data || { success: true };
+    return handleApiResponse(response, "/providers");
   } catch (error) {
     return handleApiError(error);
   }
