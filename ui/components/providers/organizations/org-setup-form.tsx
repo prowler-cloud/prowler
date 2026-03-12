@@ -97,6 +97,7 @@ export function OrgSetupForm({
     timeout: 1500,
   });
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
+  const [isSaving, setIsSaving] = useState(false);
   const formId = "org-wizard-setup-form";
 
   const isReadOnlyOrgId = Boolean(initialValues?.awsOrgId);
@@ -149,7 +150,7 @@ export function OrgSetupForm({
         onBack,
         showAction: true,
         actionLabel: isEditName ? "Save" : "Next",
-        actionDisabled: isEditName ? isSubmitting : !isOrgIdValid,
+        actionDisabled: isEditName ? isSaving : !isOrgIdValid,
         actionType: WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
         actionFormId: formId,
       });
@@ -172,6 +173,7 @@ export function OrgSetupForm({
     formId,
     intent,
     isOrgIdValid,
+    isSaving,
     isSubmitting,
     isValid,
     onBack,
@@ -197,9 +199,12 @@ export function OrgSetupForm({
 
   const handleSaveNameOnly = async () => {
     if (!organizationId) return;
+    setIsSaving(true);
     const name = form.getValues("organizationName")?.trim() || "";
 
     const result = await updateOrganizationName(organizationId, name);
+
+    setIsSaving(false);
 
     if (result?.error || result?.errors) {
       const errorMsg =
