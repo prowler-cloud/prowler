@@ -172,6 +172,18 @@ class Entra(M365Service):
             conditional_access_policies_list = (
                 await self.client.identity.conditional_access.policies.get()
             )
+
+            # TODO: Remove this workaround once microsoft/kiota-python#515 is
+            # fixed and a new version of microsoft-kiota-serialization-json is
+            # released (see PR microsoft/kiota-python#516). At that point, use
+            # the SDK's native deserialization for authentication_flows instead.
+            #
+            # The SDK deserializer uses get_collection_of_enum_values for
+            # transferMethods, but the Graph API returns it as a single string
+            # (e.g., "deviceCodeFlow"), causing the SDK to return an empty list.
+            # We fetch the raw JSON to correctly parse transferMethods.
+            raw_auth_flows_map = await self._get_raw_authentication_flows()
+
             for policy in conditional_access_policies_list.value:
                 conditional_access_policies[policy.id] = ConditionalAccessPolicy(
                     id=policy.id,
@@ -302,11 +314,7 @@ class Entra(M365Service):
                             ],
                         ),
                         authentication_flows=self._parse_authentication_flows(
-                            getattr(
-                                policy.conditions,
-                                "authentication_flows",
-                                None,
-                            )
+                            raw_auth_flows_map.get(policy.id)
                         ),
                     ),
                     grant_controls=GrantControls(
@@ -453,12 +461,55 @@ class Entra(M365Service):
             )
         return default_app_management_policy
 
+    async def _get_raw_authentication_flows(self) -> dict:
+        """Fetch authentication flows from the Graph API using a raw JSON request.
+
+        TODO: Remove this method once microsoft/kiota-python#515 is fixed and
+        a new version of microsoft-kiota-serialization-json is released
+        (see PR microsoft/kiota-python#516). At that point, revert to using
+        the SDK's native deserialization via policy.conditions.authentication_flows.
+
+        The SDK deserializer incorrectly handles the transferMethods field
+        (uses get_collection_of_enum_values for a single string value),
+        so we fetch the raw JSON to correctly parse it.
+
+        Returns:
+            A dict mapping policy ID to the raw authenticationFlows dict.
+        """
+        auth_flows_map = {}
+        try:
+            request_info = (
+                self.client.identity.conditional_access.policies.to_get_request_information()
+            )
+            request_info.headers.try_add("Prefer", "include-unknown-enum-members")
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+            if response:
+                data = json.loads(response)
+                for policy in data.get("value", []):
+                    policy_id = policy.get("id")
+                    auth_flows = (
+                        policy.get("conditions", {}).get("authenticationFlows")
+                    )
+                    if policy_id and auth_flows:
+                        auth_flows_map[policy_id] = auth_flows
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return auth_flows_map
+
     @staticmethod
     def _parse_authentication_flows(auth_flows) -> "AuthenticationFlows | None":
-        """Parse authentication flows conditions from the Graph API response.
+        """Parse authentication flows from a raw JSON dict.
+
+        TODO: Remove this method once microsoft/kiota-python#515 is fixed and
+        revert to parsing the SDK's ConditionalAccessAuthenticationFlows object
+        directly (see PR microsoft/kiota-python#516).
 
         Args:
-            auth_flows: The authentication flows object from the Graph API.
+            auth_flows: A dict from the raw JSON response (e.g., {"transferMethods": "deviceCodeFlow"}).
 
         Returns:
             AuthenticationFlows object or None if not present.
@@ -467,15 +518,18 @@ class Entra(M365Service):
             return None
 
         transfer_methods = []
-        raw_methods = getattr(auth_flows, "transfer_methods", None) or []
-        for method in raw_methods:
-            method_value = method.value if hasattr(method, "value") else str(method)
-            try:
-                transfer_methods.append(TransferMethod(method_value))
-            except ValueError:
-                logger.warning(
-                    f"Unknown authentication flow transfer method: {method_value}"
-                )
+        raw_value = auth_flows.get("transferMethods")
+        if raw_value:
+            # The API may return a single string or a comma-separated value
+            methods = raw_value.split(",") if isinstance(raw_value, str) else raw_value
+            for method_str in methods:
+                method_str = method_str.strip()
+                try:
+                    transfer_methods.append(TransferMethod(method_str))
+                except ValueError:
+                    logger.warning(
+                        f"Unknown authentication flow transfer method: {method_str}"
+                    )
 
         return AuthenticationFlows(transfer_methods=transfer_methods)
 
