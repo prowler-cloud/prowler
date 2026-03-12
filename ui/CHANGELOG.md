@@ -8,6 +8,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Provider wizard now closes after updating credentials instead of incorrectly advancing to the Launch Scan step, which caused API errors for providers with existing scheduled scans [(#10278)](https://github.com/prowler-cloud/prowler/pull/10278)
+- Attack Paths query builder sending stale parameters from previous query selections due to validation schema and default values being recreated on every render [(#10306)](https://github.com/prowler-cloud/prowler/pull/10306)
 
 ### 🔐 Security
 
