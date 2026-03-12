@@ -80,7 +80,7 @@ def init_parser(self):
         "--security-hub",
         "-S",
         action="store_true",
-        help="Send check output to AWS Security Hub and save json-asff outuput.",
+        help="Send check output to AWS Security Hub and save json-asff output.",
     )
     aws_security_hub_subparser.add_argument(
         "--skip-sh-update",

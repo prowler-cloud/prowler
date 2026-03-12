@@ -1,20 +1,20 @@
 {
   "Provider": "m365",
   "CheckID": "sharepoint_external_sharing_restricted",
-  "CheckTitle": "SharePoint organization external sharing is set to Existing guests only, New and existing guests, or Disabled",
+  "CheckTitle": "Organization external sharing is set to Existing guests only, New and existing guests, or Disabled",
   "CheckType": [],
   "ServiceName": "sharepoint",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**SharePoint Online** org-wide external sharing is evaluated to ensure it excludes anonymous 'Anyone' links and is restricted to **authenticated guests** via `ExternalUserSharingOnly`, `ExistingExternalUserSharingOnly`, or fully `Disabled`.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 SharePoint** org-wide external sharing is evaluated to ensure it excludes anonymous 'Anyone' links and is restricted to **authenticated guests** via `ExternalUserSharingOnly`, `ExistingExternalUserSharingOnly`, or fully `Disabled`.",
   "Risk": "Anonymous or overly permissive sharing enables uncontrolled link access, eroding **confidentiality** and accountability. With edit links, **integrity** can be altered by unknown parties. Forwarded links and caching complicate revocation, increasing **data exfiltration** and long-lived exposure.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/sharepoint/turn-external-sharing-on-or-off",
-    "https://learn.microsoft.com/en-us/powershell/module/sharepoint-online/set-spotenant?view=sharepoint-ps",
-    "https://admin.microsoft.com/sharepoint."
+    "https://learn.microsoft.com/en-us/powershell/module/sharepoint-online/set-spotenant?view=sharepoint-ps"
   ],
   "Remediation": {
     "Code": {

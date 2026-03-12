@@ -14,8 +14,8 @@ import {
 import { DeleteLLMProviderForm } from "@/components/lighthouse/forms/delete-llm-provider-form";
 import { WorkflowConnectLLM } from "@/components/lighthouse/workflow";
 import { Button } from "@/components/shadcn";
+import { Modal } from "@/components/shadcn/modal";
 import { NavigationHeader } from "@/components/ui";
-import { CustomAlertModal } from "@/components/ui/custom";
 import type { LighthouseProvider } from "@/types/lighthouse";
 
 interface ConnectLLMLayoutProps {
@@ -63,8 +63,8 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
 
   return (
     <>
-      <CustomAlertModal
-        isOpen={isDeleteOpen}
+      <Modal
+        open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Are you absolutely sure?"
         description="This action cannot be undone. This will permanently delete your LLM provider configuration and remove your data from the server."
@@ -73,7 +73,7 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
           providerType={provider}
           setIsOpen={setIsDeleteOpen}
         />
-      </CustomAlertModal>
+      </Modal>
 
       <NavigationHeader
         title={isEditMode ? "Configure LLM Provider" : "Connect LLM Provider"}

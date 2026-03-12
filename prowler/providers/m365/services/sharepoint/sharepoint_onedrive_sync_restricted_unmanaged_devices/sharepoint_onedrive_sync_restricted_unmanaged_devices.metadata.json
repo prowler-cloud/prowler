@@ -1,20 +1,20 @@
 {
   "Provider": "m365",
   "CheckID": "sharepoint_onedrive_sync_restricted_unmanaged_devices",
-  "CheckTitle": "Microsoft 365 SharePoint blocks OneDrive sync from unmanaged devices",
+  "CheckTitle": "OneDrive sync from unmanaged devices is blocked",
   "CheckType": [],
   "ServiceName": "sharepoint",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "SharePoint tenant settings for **OneDrive sync** enforce that only **managed, domain-joined devices** can sync. The evaluation looks for a configured list of approved `domain GUIDs` that limits syncing to specific Active Directory domains.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 SharePoint** tenant settings for **OneDrive sync** enforce that only **managed, domain-joined devices** can sync. The evaluation looks for a configured list of approved `domain GUIDs` that limits syncing to specific Active Directory domains.",
   "Risk": "Without this restriction, users can sync SharePoint/OneDrive files to **unmanaged devices**, undermining:\n- **Confidentiality**: data copied to personal or lost endpoints, outside DLP.\n- **Integrity**: malicious edits synced back to sites.\n- **Availability**: mass deletion or ransomware can propagate via sync clients.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/graph/api/resources/sharepoint?view=graph-rest-1.0",
-    "https://learn.microsoft.com/en-us/sharepoint/allow-syncing-only-on-specific-domains",
-    "https://admin.microsoft.com/sharepoint"
+    "https://learn.microsoft.com/en-us/sharepoint/allow-syncing-only-on-specific-domains"
   ],
   "Remediation": {
     "Code": {

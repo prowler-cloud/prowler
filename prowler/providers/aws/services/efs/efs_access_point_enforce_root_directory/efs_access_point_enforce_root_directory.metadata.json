@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEfsAccessPoint",
+  "ResourceGroup": "storage",
   "Description": "**Amazon EFS access points** are evaluated to ensure they enforce a non-root directory. The check identifies access points whose configured root directory `Path` is `/`, meaning clients would mount the file system's root instead of a scoped subdirectory.",
   "Risk": "Exposing the file system root via an access point undermines **confidentiality** and **integrity** by allowing traversal beyond intended datasets. Attackers or misconfigured apps could:\n- Read sensitive directories\n- Modify or delete shared data\n- Pivot across tenants, impacting **availability**",
   "RelatedUrl": "",

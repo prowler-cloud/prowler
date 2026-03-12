@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Teams Settings",
+  "ResourceGroup": "collaboration",
   "Description": "Ensure external domains are restricted from being used in Teams admin center.",
   "Risk": "Allowing unrestricted communication with external domains in Microsoft Teams increases the risk of exposure to social engineering attacks, phishing, malware delivery (e.g., DarkGate), and exploitation tactics such as GIFShell or username enumeration.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-cstenantfederationconfiguration?view=teams-ps",

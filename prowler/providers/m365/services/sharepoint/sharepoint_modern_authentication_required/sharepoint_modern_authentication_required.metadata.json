@@ -1,19 +1,19 @@
 {
   "Provider": "m365",
   "CheckID": "sharepoint_modern_authentication_required",
-  "CheckTitle": "Microsoft 365 SharePoint requires modern authentication for applications",
+  "CheckTitle": "Requires modern authentication for applications",
   "CheckType": [],
   "ServiceName": "sharepoint",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "SharePoint Online tenant settings require **modern authentication** for applications and block access for apps using legacy protocols.\n\nThe assessment determines whether legacy authentication is disabled so only OAuth-based sign-ins with advanced controls are allowed.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 SharePoint** tenant settings require **modern authentication** for applications and block access for apps using legacy protocols.\n\nThe assessment determines whether legacy authentication is disabled so only OAuth-based sign-ins with advanced controls are allowed.",
   "Risk": "Without modern authentication, SharePoint is exposed to:\n- Password spraying and credential stuffing (no MFA)\n- Session/token capture and replay from basic auth\n- Unauthorized access leading to data exfiltration and tampering\n\nThis undermines data **confidentiality** and **integrity**, enabling lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/graph/api/resources/sharepoint?view=graph-rest-1.0",
-    "https://admin.microsoft.com/sharepoint.",
     "https://learn.microsoft.com/en-us/powershell/module/sharepoint-online/set-spotenant?view=sharepoint-ps"
   ],
   "Remediation": {

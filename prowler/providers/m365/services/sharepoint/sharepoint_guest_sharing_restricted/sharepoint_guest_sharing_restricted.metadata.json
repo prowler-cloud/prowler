@@ -1,19 +1,19 @@
 {
   "Provider": "m365",
   "CheckID": "sharepoint_guest_sharing_restricted",
-  "CheckTitle": "SharePoint guest users cannot share items they do not own",
+  "CheckTitle": "Guest users cannot share items they do not own",
   "CheckType": [],
   "ServiceName": "sharepoint",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**SharePoint** tenant sharing settings evaluate whether **guest resharing** is disabled (`resharingEnabled=false`).\n\nFocus is the org-level option that blocks guests from sharing items they don't own.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 SharePoint** tenant sharing settings evaluate whether **guest resharing** is disabled (`resharingEnabled=false`).\n\nFocus is the org-level option that blocks guests from sharing items they don't own.",
   "Risk": "Allowing **guest resharing** threatens confidentiality and integrity:\n- External users can extend access beyond oversight\n- Edit permissions enable unauthorized changes or deletion\n- Link sprawl reduces accountability and control\n\nSensitive data can spread across sites, hindering revocation and response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/sharepoint/turn-external-sharing-on-or-off",
-    "https://admin.microsoft.com/sharepoint.",
     "https://learn.microsoft.com/en-us/sharepoint/external-sharing-overview"
   ],
   "Remediation": {

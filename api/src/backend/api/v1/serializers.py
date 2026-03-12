@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
@@ -21,6 +22,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from api.db_router import MainRouter
 from api.exceptions import ConflictException
 from api.models import (
+    AttackPathsScan,
     Finding,
     Integration,
     IntegrationProviderRelationship,
@@ -958,6 +960,26 @@ class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
             },
         }
 
+    def create(self, validated_data):
+        try:
+            return super().create(validated_data)
+        except DjangoValidationError as e:
+            if "unique_provider_uids" in str(e):
+                raise ConflictException(
+                    detail="Provider already exists.",
+                    pointer="/data/attributes/uid",
+                )
+            raise
+        except IntegrityError as e:
+            # Handle race conditions where the unique constraint is enforced at the DB level
+            # after validation has already passed.
+            if "unique_provider_uids" in str(e):
+                raise ConflictException(
+                    detail="Provider already exists.",
+                    pointer="/data/attributes/uid",
+                )
+            raise
+
 
 class ProviderUpdateSerializer(BaseWriteSerializer):
     """
@@ -1132,6 +1154,140 @@ class ScanComplianceReportSerializer(BaseSerializerV1):
         fields = ["id", "name"]
 
 
+class AttackPathsScanSerializer(RLSSerializer):
+    state = StateEnumSerializerField(read_only=True)
+    provider_alias = serializers.SerializerMethodField(read_only=True)
+    provider_type = serializers.SerializerMethodField(read_only=True)
+    provider_uid = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = AttackPathsScan
+        fields = [
+            "id",
+            "state",
+            "progress",
+            "graph_data_ready",
+            "provider",
+            "provider_alias",
+            "provider_type",
+            "provider_uid",
+            "scan",
+            "task",
+            "inserted_at",
+            "started_at",
+            "completed_at",
+            "duration",
+        ]
+
+    included_serializers = {
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
+        "scan": "api.v1.serializers.ScanIncludeSerializer",
+        "task": "api.v1.serializers.TaskSerializer",
+    }
+
+    def get_provider_alias(self, obj):
+        provider = getattr(obj, "provider", None)
+        return provider.alias if provider else None
+
+    def get_provider_type(self, obj):
+        provider = getattr(obj, "provider", None)
+        return provider.provider if provider else None
+
+    def get_provider_uid(self, obj):
+        provider = getattr(obj, "provider", None)
+        return provider.uid if provider else None
+
+
+class AttackPathsQueryAttributionSerializer(BaseSerializerV1):
+    text = serializers.CharField()
+    link = serializers.CharField()
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-attributions"
+
+
+class AttackPathsQueryParameterSerializer(BaseSerializerV1):
+    name = serializers.CharField()
+    label = serializers.CharField()
+    data_type = serializers.CharField(default="string")
+    description = serializers.CharField(allow_null=True, required=False)
+    placeholder = serializers.CharField(allow_null=True, required=False)
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-parameters"
+
+
+class AttackPathsQuerySerializer(BaseSerializerV1):
+    id = serializers.CharField()
+    name = serializers.CharField()
+    short_description = serializers.CharField()
+    description = serializers.CharField()
+    attribution = AttackPathsQueryAttributionSerializer(allow_null=True, required=False)
+    provider = serializers.CharField()
+    parameters = AttackPathsQueryParameterSerializer(many=True)
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-queries"
+
+
+class AttackPathsQueryRunRequestSerializer(BaseSerializerV1):
+    id = serializers.CharField()
+    parameters = serializers.DictField(
+        child=serializers.JSONField(), allow_empty=True, required=False
+    )
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-run-requests"
+
+
+class AttackPathsCustomQueryRunRequestSerializer(BaseSerializerV1):
+    query = serializers.CharField(max_length=10000, min_length=1, trim_whitespace=True)
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-custom-query-run-requests"
+
+
+class AttackPathsNodeSerializer(BaseSerializerV1):
+    id = serializers.CharField()
+    labels = serializers.ListField(child=serializers.CharField())
+    properties = serializers.DictField(child=serializers.JSONField())
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-result-nodes"
+
+
+class AttackPathsRelationshipSerializer(BaseSerializerV1):
+    id = serializers.CharField()
+    label = serializers.CharField()
+    source = serializers.CharField()
+    target = serializers.CharField()
+    properties = serializers.DictField(child=serializers.JSONField())
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-result-relationships"
+
+
+class AttackPathsQueryResultSerializer(BaseSerializerV1):
+    nodes = AttackPathsNodeSerializer(many=True)
+    relationships = AttackPathsRelationshipSerializer(many=True)
+    total_nodes = serializers.IntegerField()
+    truncated = serializers.BooleanField()
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-results"
+
+
+class AttackPathsCartographySchemaSerializer(BaseSerializerV1):
+    id = serializers.CharField()
+    provider = serializers.CharField()
+    cartography_version = serializers.CharField()
+    schema_url = serializers.URLField()
+    raw_schema_url = serializers.URLField()
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-cartography-schemas"
+
+
 class ResourceTagSerializer(RLSSerializer):
     """
     Serializer for the ResourceTag model
@@ -1175,6 +1331,7 @@ class ResourceSerializer(RLSSerializer):
             "metadata",
             "details",
             "partition",
+            "groups",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -1183,6 +1340,7 @@ class ResourceSerializer(RLSSerializer):
             "metadata": {"read_only": True},
             "details": {"read_only": True},
             "partition": {"read_only": True},
+            "groups": {"read_only": True},
         }
 
     included_serializers = {
@@ -1276,6 +1434,7 @@ class ResourceMetadataSerializer(BaseSerializerV1):
     services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     types = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    groups = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
 
@@ -1302,6 +1461,7 @@ class FindingSerializer(RLSSerializer):
             "check_id",
             "check_metadata",
             "categories",
+            "resource_groups",
             "raw_result",
             "inserted_at",
             "updated_at",
@@ -1358,6 +1518,9 @@ class FindingMetadataSerializer(BaseSerializerV1):
         child=serializers.CharField(), allow_empty=True
     )
     categories = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    groups = serializers.ListField(
+        child=serializers.CharField(), allow_empty=True, required=False, default=list
+    )
     # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
 
@@ -1378,6 +1541,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = AzureProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GCP.value:
                 serializer = GCPProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
+                serializer = GoogleWorkspaceProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GITHUB.value:
                 serializer = GithubProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.IAC.value:
@@ -1392,6 +1557,22 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = MongoDBAtlasProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
                 serializer = AlibabaCloudProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.CLOUDFLARE.value:
+                if "api_token" in secret:
+                    serializer = CloudflareTokenProviderSecret(data=secret)
+                elif "api_key" in secret and "api_email" in secret:
+                    serializer = CloudflareApiKeyProviderSecret(data=secret)
+                else:
+                    raise serializers.ValidationError(
+                        {
+                            "secret": "Cloudflare credentials must include either 'api_token' "
+                            "or both 'api_key' and 'api_email'."
+                        }
+                    )
+            elif provider_type == Provider.ProviderChoices.OPENSTACK.value:
+                serializer = OpenStackCloudsYamlProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.IMAGE.value:
+                serializer = ImageProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1497,6 +1678,14 @@ class GCPServiceAccountProviderSecret(serializers.Serializer):
         resource_name = "provider-secrets"
 
 
+class GoogleWorkspaceProviderSecret(serializers.Serializer):
+    credentials_content = serializers.CharField()
+    delegated_user = serializers.EmailField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
 class MongoDBAtlasProviderSecret(serializers.Serializer):
     atlas_public_key = serializers.CharField()
     atlas_private_key = serializers.CharField()
@@ -1541,6 +1730,53 @@ class OracleCloudProviderSecret(serializers.Serializer):
 
     class Meta:
         resource_name = "provider-secrets"
+
+
+class CloudflareTokenProviderSecret(serializers.Serializer):
+    api_token = serializers.CharField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class CloudflareApiKeyProviderSecret(serializers.Serializer):
+    api_key = serializers.CharField()
+    api_email = serializers.EmailField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class OpenStackCloudsYamlProviderSecret(serializers.Serializer):
+    clouds_yaml_content = serializers.CharField()
+    clouds_yaml_cloud = serializers.CharField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class ImageProviderSecret(serializers.Serializer):
+    registry_username = serializers.CharField(required=False)
+    registry_password = serializers.CharField(required=False)
+    registry_token = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+    def validate(self, attrs):
+        token = attrs.get("registry_token")
+        username = attrs.get("registry_username")
+        password = attrs.get("registry_password")
+        if not token:
+            if username and not password:
+                raise serializers.ValidationError(
+                    "registry_password is required when registry_username is provided."
+                )
+            if password and not username:
+                raise serializers.ValidationError(
+                    "registry_username is required when registry_password is provided."
+                )
+        return attrs
 
 
 class AlibabaCloudProviderSecret(serializers.Serializer):
@@ -2301,6 +2537,36 @@ class CategoryOverviewSerializer(BaseSerializerV1):
 
     class JSONAPIMeta:
         resource_name = "category-overviews"
+
+
+class ResourceGroupOverviewSerializer(BaseSerializerV1):
+    """Serializer for resource group overview aggregations."""
+
+    id = serializers.CharField(source="resource_group")
+    total_findings = serializers.IntegerField()
+    failed_findings = serializers.IntegerField()
+    new_failed_findings = serializers.IntegerField()
+    resources_count = serializers.IntegerField()
+    severity = serializers.JSONField(
+        help_text="Severity breakdown: {informational, low, medium, high, critical}"
+    )
+
+    class JSONAPIMeta:
+        resource_name = "resource-group-overviews"
+
+
+class ComplianceWatchlistOverviewSerializer(BaseSerializerV1):
+    """Serializer for compliance watchlist overview with FAIL-dominant aggregation."""
+
+    id = serializers.CharField(source="compliance_id")
+    compliance_id = serializers.CharField()
+    requirements_passed = serializers.IntegerField()
+    requirements_failed = serializers.IntegerField()
+    requirements_manual = serializers.IntegerField()
+    total_requirements = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "compliance-watchlist-overviews"
 
 
 class OverviewRegionSerializer(serializers.Serializer):
@@ -3834,3 +4100,126 @@ class ThreatScoreSnapshotSerializer(RLSSerializer):
         if getattr(obj, "_aggregated", False):
             return "n/a"
         return str(obj.id)
+
+
+# Resource Events Serializers
+
+
+class ResourceEventSerializer(BaseSerializerV1):
+    """Serializer for resource events (CloudTrail modification history).
+
+    NOTE: drf-spectacular auto-generates fields[resource-events] sparse fieldsets
+    parameter in the OpenAPI schema. This endpoint does not support sparse fieldsets.
+    """
+
+    id = serializers.CharField(source="event_id")
+    event_time = serializers.DateTimeField()
+    event_name = serializers.CharField()
+    event_source = serializers.CharField()
+    actor = serializers.CharField()
+    actor_uid = serializers.CharField(allow_null=True, required=False)
+    actor_type = serializers.CharField(allow_null=True, required=False)
+    source_ip_address = serializers.CharField(allow_null=True, required=False)
+    user_agent = serializers.CharField(allow_null=True, required=False)
+    request_data = serializers.JSONField(allow_null=True, required=False)
+    response_data = serializers.JSONField(allow_null=True, required=False)
+    error_code = serializers.CharField(allow_null=True, required=False)
+    error_message = serializers.CharField(allow_null=True, required=False)
+
+    class Meta:
+        resource_name = "resource-events"
+
+
+# Finding Groups - Virtual aggregation entities
+
+
+class FindingGroupSerializer(BaseSerializerV1):
+    """
+    Serializer for Finding Groups - aggregated findings by check_id.
+
+    This is a non-model serializer since FindingGroup is a virtual entity
+    created by aggregating the Finding model.
+    """
+
+    id = serializers.CharField(source="check_id")
+    check_id = serializers.CharField()
+    check_title = serializers.CharField(required=False, allow_null=True)
+    check_description = serializers.CharField(required=False, allow_null=True)
+    severity = serializers.CharField()
+    status = serializers.CharField()
+    impacted_providers = serializers.ListField(
+        child=serializers.CharField(), required=False
+    )
+    resources_fail = serializers.IntegerField()
+    resources_total = serializers.IntegerField()
+    pass_count = serializers.IntegerField()
+    fail_count = serializers.IntegerField()
+    muted_count = serializers.IntegerField()
+    new_count = serializers.IntegerField()
+    changed_count = serializers.IntegerField()
+    first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
+    last_seen_at = serializers.DateTimeField(required=False, allow_null=True)
+    failing_since = serializers.DateTimeField(required=False, allow_null=True)
+
+    class JSONAPIMeta:
+        resource_name = "finding-groups"
+
+
+class FindingGroupResourceSerializer(BaseSerializerV1):
+    """
+    Serializer for Finding Group Resources - resources within a finding group.
+
+    Returns individual resources with their current status, severity,
+    and timing information.
+    """
+
+    id = serializers.UUIDField(source="resource_id")
+    resource = serializers.SerializerMethodField()
+    provider = serializers.SerializerMethodField()
+    status = serializers.CharField()
+    severity = serializers.CharField()
+    first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
+    last_seen_at = serializers.DateTimeField(required=False, allow_null=True)
+
+    class JSONAPIMeta:
+        resource_name = "finding-group-resources"
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "properties": {
+                "uid": {"type": "string"},
+                "name": {"type": "string"},
+                "service": {"type": "string"},
+                "region": {"type": "string"},
+                "type": {"type": "string"},
+            },
+        }
+    )
+    def get_resource(self, obj):
+        """Return nested resource object."""
+        return {
+            "uid": obj.get("resource_uid", ""),
+            "name": obj.get("resource_name", ""),
+            "service": obj.get("resource_service", ""),
+            "region": obj.get("resource_region", ""),
+            "type": obj.get("resource_type", ""),
+        }
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "properties": {
+                "type": {"type": "string"},
+                "uid": {"type": "string"},
+                "alias": {"type": "string"},
+            },
+        }
+    )
+    def get_provider(self, obj):
+        """Return nested provider object."""
+        return {
+            "type": obj.get("provider_type", ""),
+            "uid": obj.get("provider_uid", ""),
+            "alias": obj.get("provider_alias", ""),
+        }

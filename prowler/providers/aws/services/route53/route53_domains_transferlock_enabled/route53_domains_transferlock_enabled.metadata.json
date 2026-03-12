@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "network",
   "Description": "**Route 53 registered domains** are assessed for a transfer-lock state, indicated by the `clientTransferProhibited` status on the domain.",
   "Risk": "Without **transfer lock**, a domain can be illicitly moved to another registrar, enabling **domain hijacking**. Attackers could alter DNS, redirect traffic, harvest credentials, and disrupt email and apps-compromising **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",

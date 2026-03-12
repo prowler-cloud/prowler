@@ -1,0 +1,37 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_hsts_enabled",
+  "CheckTitle": "HSTS is enabled with recommended max-age and includes subdomains",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **HTTP Strict Transport Security (HSTS)** by checking if it is enabled with a `max-age` of at least **6 months** (15768000 seconds) and **includes subdomains** to instruct browsers to always use HTTPS across the entire domain.",
+  "Risk": "Without **HSTS**, browsers may initially connect over HTTP before redirecting to HTTPS.\n- **Confidentiality**: creates a window for SSL stripping attacks where attackers downgrade connections to unencrypted HTTP\n- **Integrity**: first request can be intercepted and modified before HTTPS redirect\n- **Session hijacking**: cookies and credentials may be captured during initial HTTP request",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/http-strict-transport-security/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to SSL/TLS > Edge Certificates\n3. Scroll to HTTP Strict Transport Security (HSTS)\n4. Click Enable HSTS\n5. Set Max Age Header to at least 6 months\n6. Enable Include subdomains and Preload if appropriate\n7. Acknowledge the warning and click Save",
+      "Terraform": "```hcl\n# Enable HSTS with recommended settings\nresource \"cloudflare_zone_setting\" \"security_header\" {\n  zone_id    = \"<ZONE_ID>\"\n  setting_id = \"security_header\"\n  value = {\n    strict_transport_security = {\n      enabled            = true\n      max_age            = 31536000  # Critical: 1 year in seconds\n      include_subdomains = true      # Recommended: apply to all subdomains\n      preload            = true      # Recommended: submit to browser preload lists\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **HSTS** with at least a **6-month max-age** (12 months recommended).\n- Verify all resources work over HTTPS before enabling\n- Enable **include_subdomains** to protect all subdomains\n- Consider **HSTS preloading** for maximum protection against SSL stripping attacks\n- Test thoroughly as HSTS cannot be easily disabled once deployed",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_hsts_enabled"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "HSTS requires HTTPS to be properly configured. Ensure all resources are accessible via HTTPS before enabling HSTS with a long max-age."
+}
