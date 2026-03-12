@@ -160,6 +160,8 @@ export const getLatestMetadataInfo = async ({
   }
 };
 
+const SAFE_RESOURCE_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
 export const getResourceEvents = async (
   resourceId: string,
   {
@@ -172,6 +174,10 @@ export const getResourceEvents = async (
     pageSize?: number;
   } = {},
 ) => {
+  if (!SAFE_RESOURCE_ID_PATTERN.test(resourceId)) {
+    return { error: "Invalid resource ID format." };
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/resources/${resourceId}/events`);
@@ -184,19 +190,23 @@ export const getResourceEvents = async (
 
     if (!response.ok) {
       const rawText = await response.text().catch(() => "");
-      let errorDetail = "An error occurred while fetching events.";
+      const defaultError = "An error occurred while fetching events.";
       try {
         const errorData = rawText ? JSON.parse(rawText) : null;
-        errorDetail =
+        const errorDetail =
           errorData?.errors?.[0]?.detail ||
           errorData?.error ||
           errorData?.message ||
           rawText ||
-          response.statusText;
+          response.statusText ||
+          defaultError;
+        return { error: errorDetail, status: response.status };
       } catch {
-        errorDetail = rawText || response.statusText;
+        return {
+          error: rawText || response.statusText || defaultError,
+          status: response.status,
+        };
       }
-      return { error: errorDetail, status: response.status };
     }
 
     return handleApiResponse(response);
