@@ -2,7 +2,15 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.20.0] (Prowler v5.20.0 UNRELEASED)
+## [1.21.0] (Prowler v5.21.0 UNRELEASED)
+
+### 🚀 Added
+
+- Events tab in Findings and Resource detail cards showing an AWS CloudTrail timeline with expandable event rows, actor info, request/response JSON payloads, and error details [(#10320)](https://github.com/prowler-cloud/prowler/pull/10320)
+
+---
+
+## [1.20.0] (Prowler v5.20.0)
 
 ### 🔄 Changed
 
