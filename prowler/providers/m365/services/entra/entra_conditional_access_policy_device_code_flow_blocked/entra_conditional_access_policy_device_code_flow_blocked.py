@@ -32,9 +32,7 @@ class entra_conditional_access_policy_device_code_flow_blocked(Check):
             resource_id="conditionalAccessPolicies",
         )
         report.status = "FAIL"
-        report.status_extended = (
-            "No Conditional Access Policy blocks device code flow."
-        )
+        report.status_extended = "No Conditional Access Policy blocks device code flow."
 
         for policy in entra_client.conditional_access_policies.values():
             if policy.state == ConditionalAccessPolicyState.DISABLED:

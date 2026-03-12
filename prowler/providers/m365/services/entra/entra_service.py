@@ -489,9 +489,7 @@ class Entra(M365Service):
                 data = json.loads(response)
                 for policy in data.get("value", []):
                     policy_id = policy.get("id")
-                    auth_flows = (
-                        policy.get("conditions", {}).get("authenticationFlows")
-                    )
+                    auth_flows = policy.get("conditions", {}).get("authenticationFlows")
                     if policy_id and auth_flows:
                         auth_flows_map[policy_id] = auth_flows
         except Exception as error:

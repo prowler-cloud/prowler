@@ -446,9 +446,7 @@ class Test_entra_conditional_access_policy_device_code_flow_blocked:
                         client_app_types=[],
                         user_risk_levels=[],
                         authentication_flows=AuthenticationFlows(
-                            transfer_methods=[
-                                TransferMethod.AUTHENTICATION_TRANSFER
-                            ]
+                            transfer_methods=[TransferMethod.AUTHENTICATION_TRANSFER]
                         ),
                     ),
                     grant_controls=GrantControls(
