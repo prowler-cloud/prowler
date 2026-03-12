@@ -11,6 +11,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add `trusted_ips` configurable option to `opensearch_service_domains_not_publicly_accessible` check to reduce false positives on IP-restricted policies [(#8631)](https://github.com/prowler-cloud/prowler/pull/8631)
 - `guardduty_delegated_admin_enabled_all_regions` check for AWS provider [(#9867)](https://github.com/prowler-cloud/prowler/pull/9867)
 - OpenStack object storage service with 7 checks [(#10258)](https://github.com/prowler-cloud/prowler/pull/10258)
+- Add AWS Organizations OU metadata (OU ID, OU path) to ASFF, OCSF and CSV outputs [(#10283)](https://github.com/prowler-cloud/prowler/pull/10283)
 
 ### 🔄 Changed
 

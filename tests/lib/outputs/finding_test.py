@@ -151,6 +151,8 @@ class TestFinding:
         provider.organizations_metadata.organization_arn = "mock_account_org_uid"
         provider.organizations_metadata.organization_id = "mock_account_org_name"
         provider.organizations_metadata.account_tags = {"tag1": "value1"}
+        provider.organizations_metadata.account_ou_id = "ou-test-12345678"
+        provider.organizations_metadata.account_ou_name = "TestOU/SubOU"
 
         # Mock check result
         check_output = MagicMock()
@@ -204,6 +206,8 @@ class TestFinding:
         assert finding_output.account_email == "mock_account_email"
         assert finding_output.account_organization_uid == "mock_account_org_uid"
         assert finding_output.account_organization_name == "mock_account_org_name"
+        assert finding_output.account_ou_uid == "ou-test-12345678"
+        assert finding_output.account_ou_name == "TestOU/SubOU"
         assert finding_output.account_tags == {"tag1": "value1"}
 
         # Metadata
@@ -240,6 +244,45 @@ class TestFinding:
         assert finding_output.resource_type == "mock_resource_type"
         assert finding_output.service_name == "service"
         assert finding_output.raw == {}
+
+    def test_generate_output_aws_without_organizations_metadata(self):
+        # Simulates running without --organizations-role
+        provider = MagicMock()
+        provider.type = "aws"
+        provider.identity.profile = "mock_auth"
+        provider.identity.account = "mock_account_uid"
+        provider.identity.partition = "aws"
+        provider.organizations_metadata = None
+
+        check_output = MagicMock()
+        check_output.resource_id = "test_resource_id"
+        check_output.resource_arn = "test_resource_arn"
+        check_output.resource_details = "test_resource_details"
+        check_output.resource_tags = {}
+        check_output.region = "us-east-1"
+        check_output.partition = "aws"
+        check_output.status = Status.PASS
+        check_output.status_extended = "mock_status_extended"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="aws")
+        check_output.resource = {}
+        check_output.compliance = {}
+
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert isinstance(finding_output, Finding)
+        assert finding_output.account_uid == "mock_account_uid"
+        # get_nested_attribute returns empty string when the attribute chain
+        # is None, so the Finding fields are "" not None
+        assert finding_output.account_name == ""
+        assert finding_output.account_email == ""
+        assert finding_output.account_organization_uid == ""
+        assert finding_output.account_organization_name == ""
+        assert finding_output.account_ou_uid == ""
+        assert finding_output.account_ou_name == ""
 
     def test_generate_output_azure(self):
         # Mock provider
@@ -799,6 +842,8 @@ class TestFinding:
         provider.organizations_metadata.organization_arn = "mock_account_org_uid"
         provider.organizations_metadata.organization_id = "mock_account_org_name"
         provider.organizations_metadata.account_tags = {"tag1": "value1"}
+        provider.organizations_metadata.account_ou_id = ""
+        provider.organizations_metadata.account_ou_name = ""
 
         # Mock check result
         check_output = MagicMock()
