@@ -14,9 +14,9 @@ import { createSamlConfig, updateSamlConfig } from "@/actions/integrations";
 import { AddIcon } from "@/components/icons";
 import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomServerInput } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { SnippetChip } from "@/components/ui/entities";
 import { FormButtons } from "@/components/ui/form";
 import { apiBaseUrl } from "@/lib";
 
@@ -304,22 +304,14 @@ export const SamlConfigForm = ({
               <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 ACS URL:
               </span>
-              <SnippetChip
-                value={acsUrl}
-                ariaLabel="Copy ACS URL to clipboard"
-                className="h-10 w-full"
-              />
+              <CodeSnippet value={acsUrl} className="h-10 w-full" />
             </div>
 
             <div>
               <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Audience:
               </span>
-              <SnippetChip
-                value="urn:prowler.com:sp"
-                ariaLabel="Copy Audience to clipboard"
-                className="h-10 w-full"
-              />
+              <CodeSnippet value="urn:prowler.com:sp" className="h-10 w-full" />
             </div>
 
             <div>

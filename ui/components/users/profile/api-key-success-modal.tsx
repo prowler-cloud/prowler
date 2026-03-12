@@ -1,10 +1,9 @@
 "use client";
 
-import { Snippet } from "@heroui/snippet";
-
 import { Button } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 
 interface ApiKeySuccessModalProps {
   isOpen: boolean;
@@ -36,18 +35,10 @@ export const ApiKeySuccessModal = ({
           <p className="text-text-neutral-primary text-sm font-medium">
             Your API Key
           </p>
-          <Snippet
-            hideSymbol
-            classNames={{
-              pre: "font-mono text-sm break-all whitespace-pre-wrap p-2 text-text-neutral-primary",
-            }}
-            tooltipProps={{
-              content: "Copy API key",
-              color: "default",
-            }}
-          >
-            {apiKey}
-          </Snippet>
+          <CodeSnippet
+            value={apiKey}
+            className="h-auto w-full rounded-lg px-3 py-2 font-mono text-sm [&_code]:break-all [&_code]:whitespace-pre-wrap"
+          />
         </div>
       </div>
 
