@@ -93,6 +93,54 @@ export const createOrganization = async (formData: FormData) => {
 };
 
 /**
+ * Updates an AWS Organization's name.
+ * PATCH /api/v1/organizations/{id}
+ */
+export const updateOrganizationName = async (
+  organizationId: string,
+  name: string,
+) => {
+  const headers = await getAuthHeaders({ contentType: true });
+
+  const idValidation = validatePathIdentifier(
+    organizationId,
+    "Organization ID is required",
+    "Invalid organization ID",
+  );
+  if ("error" in idValidation) {
+    return idValidation;
+  }
+
+  const url = new URL(
+    `${apiBaseUrl}/organizations/${encodeURIComponent(idValidation.value)}`,
+  );
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({
+        data: {
+          type: "organizations",
+          id: idValidation.value,
+          attributes: {
+            name,
+          },
+        },
+      }),
+    });
+
+    const result = await handleApiResponse(response);
+    if (!hasActionError(result)) {
+      revalidatePath("/providers");
+    }
+    return result;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+/**
  * Lists AWS Organizations filtered by external ID.
  * GET /api/v1/organizations?filter[external_id]={externalId}&filter[org_type]=aws
  */
@@ -268,6 +316,106 @@ export const listOrganizationSecretsByOrganizationId = async (
   try {
     const response = await fetch(url.toString(), { headers });
     return handleApiResponse(response);
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+/**
+ * Deletes an AWS Organization resource.
+ * DELETE /api/v1/organizations/{id}
+ */
+export const deleteOrganization = async (organizationId: string) => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const organizationIdValidation = validatePathIdentifier(
+    organizationId,
+    "Organization ID is required",
+    "Invalid organization ID",
+  );
+  if ("error" in organizationIdValidation) {
+    return organizationIdValidation;
+  }
+
+  const url = new URL(
+    `${apiBaseUrl}/organizations/${encodeURIComponent(organizationIdValidation.value)}`,
+  );
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "DELETE",
+      headers,
+    });
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(
+          errorData?.message || "Failed to delete the organization",
+        );
+      } catch {
+        throw new Error("Failed to delete the organization");
+      }
+    }
+
+    let data = null;
+    if (response.status !== 204) {
+      data = await response.json();
+    }
+
+    revalidatePath("/providers");
+    return data || { success: true };
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+/**
+ * Deletes an organizational unit.
+ * DELETE /api/v1/organizational-units/{id}
+ */
+export const deleteOrganizationalUnit = async (
+  organizationalUnitId: string,
+) => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const idValidation = validatePathIdentifier(
+    organizationalUnitId,
+    "Organizational unit ID is required",
+    "Invalid organizational unit ID",
+  );
+  if ("error" in idValidation) {
+    return idValidation;
+  }
+
+  const url = new URL(
+    `${apiBaseUrl}/organizational-units/${encodeURIComponent(idValidation.value)}`,
+  );
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "DELETE",
+      headers,
+    });
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(
+          errorData?.message || "Failed to delete the organizational unit",
+        );
+      } catch {
+        throw new Error("Failed to delete the organizational unit");
+      }
+    }
+
+    let data = null;
+    if (response.status !== 204) {
+      data = await response.json();
+    }
+
+    revalidatePath("/providers");
+    return data || { success: true };
   } catch (error) {
     return handleApiError(error);
   }
