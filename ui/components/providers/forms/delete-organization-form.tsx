@@ -60,9 +60,8 @@ export function DeleteOrganizationForm({
         title: "Success!",
         description: `The ${entityLabel} "${name}" was removed successfully.`,
       });
+      setIsOpen(false);
     }
-
-    setIsOpen(false);
   };
 
   return (
