@@ -4,6 +4,8 @@ import { Row } from "@tanstack/react-table";
 import { KeyRound, Pencil, Rocket, Trash2 } from "lucide-react";
 import { useState } from "react";
 
+import { updateOrganizationName } from "@/actions/organizations/organizations";
+import { updateProvider } from "@/actions/providers";
 import { VerticalDotsIcon } from "@/components/icons";
 import { ProviderWizardModal } from "@/components/providers/wizard";
 import {
@@ -30,9 +32,9 @@ import {
   ProvidersTableRow,
 } from "@/types/providers-table";
 
-import { EditForm } from "../forms";
 import { DeleteForm } from "../forms/delete-form";
 import { DeleteOrganizationForm } from "../forms/delete-organization-form";
+import { EditNameForm } from "../forms/edit-name-form";
 
 interface DataTableRowActionsProps {
   row: Row<ProvidersTableRow>;
@@ -82,6 +84,7 @@ function OrgGroupDropdownActions({
   onTestChildConnections,
 }: OrgGroupDropdownActionsProps) {
   const [isDeleteOrgOpen, setIsDeleteOrgOpen] = useState(false);
+  const [isEditNameOpen, setIsEditNameOpen] = useState(false);
   const [isOrgWizardOpen, setIsOrgWizardOpen] = useState(false);
   const [orgWizardData, setOrgWizardData] =
     useState<OrgWizardInitialData | null>(null);
@@ -110,11 +113,27 @@ function OrgGroupDropdownActions({
   return (
     <>
       {isOrgKind && (
-        <ProviderWizardModal
-          open={isOrgWizardOpen}
-          onOpenChange={setIsOrgWizardOpen}
-          orgInitialData={orgWizardData ?? undefined}
-        />
+        <>
+          <Modal
+            open={isEditNameOpen}
+            onOpenChange={setIsEditNameOpen}
+            title="Edit Organization Name"
+          >
+            <EditNameForm
+              currentValue={rowData.name}
+              label="Name"
+              successMessage="The organization name was updated successfully."
+              helperText="If left blank, Prowler will use the name stored in AWS."
+              setIsOpen={setIsEditNameOpen}
+              onSave={(name) => updateOrganizationName(rowData.id, name)}
+            />
+          </Modal>
+          <ProviderWizardModal
+            open={isOrgWizardOpen}
+            onOpenChange={setIsOrgWizardOpen}
+            orgInitialData={orgWizardData ?? undefined}
+          />
+        </>
       )}
       <Modal
         open={isDeleteOrgOpen}
@@ -143,13 +162,7 @@ function OrgGroupDropdownActions({
               <ActionDropdownItem
                 icon={<Pencil />}
                 label="Edit Organization Name"
-                onSelect={() =>
-                  openOrgWizardAt(
-                    ORG_WIZARD_STEP.SETUP,
-                    ORG_SETUP_PHASE.DETAILS,
-                    ORG_WIZARD_INTENT.EDIT_NAME,
-                  )
-                }
+                onSelect={() => setIsEditNameOpen(true)}
               />
               <ActionDropdownItem
                 icon={<KeyRound />}
@@ -337,10 +350,17 @@ export function DataTableRowActions({
         title="Edit Provider Alias"
       >
         {provider && (
-          <EditForm
-            providerId={providerId}
-            providerAlias={providerAlias ?? undefined}
+          <EditNameForm
+            currentValue={providerAlias ?? ""}
+            label="Alias"
+            successMessage="The provider was updated successfully."
             setIsOpen={setIsEditOpen}
+            onSave={async (alias) => {
+              const formData = new FormData();
+              formData.append("providerId", providerId);
+              formData.append("providerAlias", alias);
+              return updateProvider(formData);
+            }}
           />
         )}
       </Modal>

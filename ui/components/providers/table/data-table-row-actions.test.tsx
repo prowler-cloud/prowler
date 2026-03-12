@@ -10,6 +10,10 @@ import {
 
 const checkConnectionProviderMock = vi.hoisted(() => vi.fn());
 
+vi.mock("@/actions/organizations/organizations", () => ({
+  updateOrganizationName: vi.fn(),
+}));
+
 vi.mock("@/actions/providers/providers", () => ({
   checkConnectionProvider: checkConnectionProviderMock,
 }));
@@ -18,16 +22,16 @@ vi.mock("@/components/providers/wizard", () => ({
   ProviderWizardModal: () => null,
 }));
 
-vi.mock("../forms", () => ({
-  EditForm: () => null,
-}));
-
 vi.mock("../forms/delete-form", () => ({
   DeleteForm: () => null,
 }));
 
 vi.mock("../forms/delete-organization-form", () => ({
   DeleteOrganizationForm: () => null,
+}));
+
+vi.mock("../forms/edit-name-form", () => ({
+  EditNameForm: () => null,
 }));
 
 vi.mock("@/components/ui", () => ({
