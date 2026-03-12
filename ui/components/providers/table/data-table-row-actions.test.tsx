@@ -225,6 +225,44 @@ describe("DataTableRowActions", () => {
     expect(screen.getByText("Delete Organization Unit")).toBeInTheDocument();
   });
 
+  it("shows selected provider count in Test Connections when org row has active selection", async () => {
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={createOrgRow()}
+        hasSelection={true}
+        isRowSelected={false}
+        testableProviderIds={["provider-child-1", "provider-standalone"]}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button"));
+
+    // Should show count of selected testable providers (2), not all org children (1)
+    expect(screen.getByText("Test Connections (2)")).toBeInTheDocument();
+    expect(screen.queryByText("Test Connections (1)")).not.toBeInTheDocument();
+  });
+
+  it("shows selected provider count in Test Connections when OU row has active selection", async () => {
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={createOuRow()}
+        hasSelection={true}
+        isRowSelected={false}
+        testableProviderIds={["provider-ou-child-1", "provider-standalone"]}
+        onClearSelection={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button"));
+
+    // Should show count of selected testable providers (2), not all OU children (1)
+    expect(screen.getByText("Test Connections (2)")).toBeInTheDocument();
+    expect(screen.queryByText("Test Connections (1)")).not.toBeInTheDocument();
+  });
+
   it("does NOT render Edit Organization Name or Update Credentials for OU rows", async () => {
     const user = userEvent.setup();
     render(

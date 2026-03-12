@@ -91,70 +91,12 @@ export function DataTableRowActions({
     ? collectTestableChildProviderIds(rowData.subRows)
     : [];
 
-  const handleTestConnection = async () => {
-    if (hasSelection && isRowSelected) {
-      // Bulk: test all selected providers
-      if (testableProviderIds.length === 0) return;
-      setLoading(true);
-
-      const results = await runWithConcurrencyLimit(
-        testableProviderIds,
-        10,
-        async (id) => {
-          try {
-            return await testProviderConnection(id);
-          } catch {
-            return { connected: false, error: "Unexpected error" };
-          }
-        },
-      );
-
-      const succeeded = results.filter((r) => r.connected).length;
-      const failed = results.length - succeeded;
-
-      if (failed === 0) {
-        toast({
-          title: "Connection test completed",
-          description: `${succeeded} ${succeeded === 1 ? "provider" : "providers"} tested successfully.`,
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Connection test completed",
-          description: `${succeeded} succeeded, ${failed} failed out of ${results.length} providers.`,
-        });
-      }
-
-      setLoading(false);
-      onClearSelection();
-    } else {
-      // Single: test only this provider
-      if (!providerId) return;
-      setLoading(true);
-      const result = await testProviderConnection(providerId);
-      setLoading(false);
-
-      if (!result.connected) {
-        toast({
-          variant: "destructive",
-          title: "Connection test failed",
-          description: result.error ?? "Unknown error",
-        });
-      } else {
-        toast({
-          title: "Connection test completed",
-          description: "Provider tested successfully.",
-        });
-      }
-    }
-  };
-
-  const handleTestChildConnections = async () => {
-    if (childTestableIds.length === 0) return;
+  const handleBulkTest = async (ids: string[]) => {
+    if (ids.length === 0) return;
     setLoading(true);
 
     const results = await runWithConcurrencyLimit(
-      childTestableIds,
+      ids,
       10,
       async (id) => {
         try {
@@ -182,6 +124,37 @@ export function DataTableRowActions({
     }
 
     setLoading(false);
+  };
+
+  const handleTestConnection = async () => {
+    if (hasSelection && isRowSelected) {
+      // Bulk: test all selected providers
+      await handleBulkTest(testableProviderIds);
+      onClearSelection();
+    } else {
+      // Single: test only this provider
+      if (!providerId) return;
+      setLoading(true);
+      const result = await testProviderConnection(providerId);
+      setLoading(false);
+
+      if (!result.connected) {
+        toast({
+          variant: "destructive",
+          title: "Connection test failed",
+          description: result.error ?? "Unknown error",
+        });
+      } else {
+        toast({
+          title: "Connection test completed",
+          description: "Provider tested successfully.",
+        });
+      }
+    }
+  };
+
+  const handleTestChildConnections = async () => {
+    await handleBulkTest(childTestableIds);
   };
 
   const openOrgWizardAt = (
@@ -222,9 +195,7 @@ export function DataTableRowActions({
               e.preventDefault();
               handleTestConnection();
             }}
-            disabled={
-              isOrganizationRow || testableProviderIds.length === 0 || loading
-            }
+            disabled={testableProviderIds.length === 0 || loading}
           />
         </ActionDropdown>
       </div>
@@ -233,7 +204,8 @@ export function DataTableRowActions({
 
   // Organization row actions
   if (isOrganizationRow && orgGroupKind === PROVIDERS_GROUP_KIND.ORGANIZATION) {
-    const testCount = childTestableIds.length;
+    const testIds = hasSelection ? testableProviderIds : childTestableIds;
+    const testCount = testIds.length;
 
     return (
       <>
@@ -291,7 +263,12 @@ export function DataTableRowActions({
               label={loading ? "Testing..." : `Test Connections (${testCount})`}
               onSelect={(e) => {
                 e.preventDefault();
-                handleTestChildConnections();
+                if (hasSelection) {
+                  handleBulkTest(testableProviderIds);
+                  onClearSelection();
+                } else {
+                  handleTestChildConnections();
+                }
               }}
               disabled={testCount === 0 || loading}
             />
@@ -314,7 +291,8 @@ export function DataTableRowActions({
     isOrganizationRow &&
     orgGroupKind === PROVIDERS_GROUP_KIND.ORGANIZATION_UNIT
   ) {
-    const testCount = childTestableIds.length;
+    const testIds = hasSelection ? testableProviderIds : childTestableIds;
+    const testCount = testIds.length;
 
     return (
       <>
@@ -345,7 +323,12 @@ export function DataTableRowActions({
               label={loading ? "Testing..." : `Test Connections (${testCount})`}
               onSelect={(e) => {
                 e.preventDefault();
-                handleTestChildConnections();
+                if (hasSelection) {
+                  handleBulkTest(testableProviderIds);
+                  onClearSelection();
+                } else {
+                  handleTestChildConnections();
+                }
               }}
               disabled={testCount === 0 || loading}
             />
