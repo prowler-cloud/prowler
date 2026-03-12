@@ -70,6 +70,11 @@ export function getChainOfThoughtStepLabel(
     return `Executing ${tool}`;
   }
 
+  if (metaTool === META_TOOLS.LOAD_SKILL && tool) {
+    const skillId = tool.startsWith("skill:") ? tool.slice(6) : tool;
+    return `Loading ${skillId} skill`;
+  }
+
   return tool || "Completed";
 }
 
@@ -80,7 +85,11 @@ export function getChainOfThoughtStepLabel(
  * @returns True if it's a meta-tool, false otherwise
  */
 export function isMetaTool(metaTool: string): boolean {
-  return metaTool === META_TOOLS.DESCRIBE || metaTool === META_TOOLS.EXECUTE;
+  return (
+    metaTool === META_TOOLS.DESCRIBE ||
+    metaTool === META_TOOLS.EXECUTE ||
+    metaTool === META_TOOLS.LOAD_SKILL
+  );
 }
 
 /**

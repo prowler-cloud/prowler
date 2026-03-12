@@ -6,6 +6,7 @@
 export const META_TOOLS = {
   DESCRIBE: "describe_tool",
   EXECUTE: "execute_tool",
+  LOAD_SKILL: "load_skill",
 } as const;
 
 export type MetaTool = (typeof META_TOOLS)[keyof typeof META_TOOLS];
