@@ -242,7 +242,7 @@ jobs:
                 echo "Skipping empty test directory: $p"
               fi
             done <<< "$TEST_PATHS"
-            VALID_PATHS=$(echo "$VALID_PATHS" | grep -v '^$')
+            VALID_PATHS=$(echo "$VALID_PATHS" | grep -v '^$' || true)
             if [[ -z "$VALID_PATHS" ]]; then
               echo "No test files found in any resolved paths — skipping E2E"
               exit 0
