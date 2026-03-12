@@ -33,18 +33,14 @@ const getResourceData = (
   row: { original: FindingProps },
   field: keyof FindingProps["relationships"]["resource"]["attributes"],
 ) => {
-  return (
-    row.original.relationships?.resource?.attributes?.[field] || "-"
-  );
+  return row.original.relationships?.resource?.attributes?.[field] || "-";
 };
 
 const getProviderData = (
   row: { original: FindingProps },
   field: keyof FindingProps["relationships"]["provider"]["attributes"],
 ) => {
-  return (
-    row.original.relationships?.provider?.attributes?.[field] || "-"
-  );
+  return row.original.relationships?.provider?.attributes?.[field] || "-";
 };
 
 // Component for finding title that opens the detail drawer
@@ -185,9 +181,7 @@ export function getColumnFindings(
         const resourceName = getResourceData(row, "name");
 
         if (resourceName === "-") {
-          return (
-            <p className="text-text-neutral-primary text-sm">-</p>
-          );
+          return <p className="text-text-neutral-primary text-sm">-</p>;
         }
 
         return (
