@@ -113,8 +113,11 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.ScopedRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "token-obtain": env("DJANGO_THROTTLE_TOKEN_OBTAIN", default=None),
         "dj_rest_auth": None,
+        "token-obtain": env("DJANGO_THROTTLE_TOKEN_OBTAIN", default=None),
+        "attack-paths-custom-query": env(
+            "DJANGO_THROTTLE_ATTACK_PATHS_CUSTOM_QUERY", default="10/min"
+        ),
     },
 }
 
@@ -276,7 +279,7 @@ FINDINGS_MAX_DAYS_IN_RANGE = env.int("DJANGO_FINDINGS_MAX_DAYS_IN_RANGE", 7)
 DJANGO_TMP_OUTPUT_DIRECTORY = env.str(
     "DJANGO_TMP_OUTPUT_DIRECTORY", "/tmp/prowler_api_output"
 )
-DJANGO_FINDINGS_BATCH_SIZE = env.str("DJANGO_FINDINGS_BATCH_SIZE", 1000)
+DJANGO_FINDINGS_BATCH_SIZE = env.int("DJANGO_FINDINGS_BATCH_SIZE", 1000)
 
 DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
 DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID = env.str("DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID", "")

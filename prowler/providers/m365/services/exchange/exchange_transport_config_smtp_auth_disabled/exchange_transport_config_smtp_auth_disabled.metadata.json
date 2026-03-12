@@ -7,13 +7,13 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Exchange Online transport configuration** disables **authenticated SMTP submission** (`SMTP AUTH`) at the organization level",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Exchange Online transport configuration** disables **authenticated SMTP submission** (`SMTP AUTH`) at the organization level",
   "Risk": "With **SMTP AUTH enabled**, attackers can:\n- Launch **password spraying** against mailboxes\n- Bypass **MFA** on SMTP submissions\n- Send **unauthorized email**, enabling internal spoofing and phishing\n\nThis undermines message **integrity**, aids **lateral movement**, and harms tenant reputation and deliverability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission",
-    "https://admin.exchange.microsoft.com."
+    "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission"
   ],
   "Remediation": {
     "Code": {

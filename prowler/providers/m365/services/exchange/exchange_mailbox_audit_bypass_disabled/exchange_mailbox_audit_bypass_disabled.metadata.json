@@ -1,18 +1,18 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_mailbox_audit_bypass_disabled",
-  "CheckTitle": "Exchange mailbox has AuditBypassEnabled disabled",
+  "CheckTitle": "Mailbox has AuditBypassEnabled disabled",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Exchange mailboxes** are evaluated for **audit logging bypass** by reviewing the `AuditBypassEnabled` setting and identifying mailboxes where auditing can be circumvented.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Exchange Online mailboxes** are evaluated for **audit logging bypass** by reviewing the `AuditBypassEnabled` setting and identifying mailboxes where auditing can be circumvented.",
   "Risk": "**Bypassed mailbox auditing** removes visibility into access and actions, weakening detective controls. Covert data exfiltration, inbox-rule abuse, and persistence become harder to spot, harming **confidentiality** and **integrity** and impeding **forensics**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/powershell/module/exchange/get-mailboxauditbypassassociation?view=exchange-ps",
     "https://learn.microsoft.com/en-us/powershell/module/exchange/set-mailboxauditbypassassociation?view=exchange-ps"
   ],
   "Remediation": {

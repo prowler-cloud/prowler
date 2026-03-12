@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "database",
   "Description": "**ElastiCache resources** (Redis nodes and Memcached clusters) are assessed for placement in **public subnets**.\n\nThe finding identifies cache subnet groups that include subnets configured with Internet routing instead of private-only subnets.",
   "Risk": "Hosting caches in **public subnets** can permit direct or misconfigured Internet access, impacting CIA:\n- Confidentiality: unauthorized reads and key dumps\n- Integrity: cache poisoning or key tampering\n- Availability: scanning and DDoS\n\nAttackers may pivot from the cache to **lateral movement** within the VPC.",
   "RelatedUrl": "",

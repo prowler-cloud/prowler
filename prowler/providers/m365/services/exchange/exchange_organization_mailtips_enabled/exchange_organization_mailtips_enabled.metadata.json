@@ -1,22 +1,19 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_organization_mailtips_enabled",
-  "CheckTitle": "Exchange Online organization has MailTips fully enabled",
+  "CheckTitle": "Organization has MailTips fully enabled",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "",
-  "Description": "**Exchange Online** organization has **MailTips** fully configured: `MailTipsAllTipsEnabled`, `MailTipsExternalRecipientsTipsEnabled`, `MailTipsGroupMetricsEnabled`, and `MailTipsLargeAudienceThreshold`  `25`.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Exchange Online** organization has **MailTips** fully configured: `MailTipsAllTipsEnabled`, `MailTipsExternalRecipientsTipsEnabled`, `MailTipsGroupMetricsEnabled`, and `MailTipsLargeAudienceThreshold`  `25`.",
   "Risk": "Absent or lax **MailTips** reduces user cues, increasing unintended external sends and large-audience blasts, harming **confidentiality**. Missing group metrics or high thresholds hide risky recipient counts; no OOF/full-mailbox tips cause misdelivery that enables phishing loops and data exfiltration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://cloudrun.co.uk/office365/enabling-the-external-recipient-mailtip-in-office-365/",
     "https://learn.microsoft.com/en-us/powershell/module/exchangepowershell/set-organizationconfig?view=exchange-ps",
-    "https://blog.securesky.com/part-3-configuration-of-office-365-to-protect-against-bec-attacks",
-    "https://ezcloudinfo.com/2014/07/23/overview-and-troubleshooting-mailtips-in-exchange-2010-2013/",
-    "https://learn.microsoft.com/en-us/powershell/module/exchange/set-organizationconfig?view=exchange-ps",
     "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/mailtips/mailtips"
   ],
   "Remediation": {

@@ -1,26 +1,21 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_transport_rules_whitelist_disabled",
-  "CheckTitle": "Exchange transport rule does not whitelist any domains",
+  "CheckTitle": "Transport rule does not whitelist any domains",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Exchange Online mail flow rules** that whitelist specific sender domains by forcing `SCL` to `-1` (skip spam filtering) on matching messages",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Exchange Online mail flow rules** that whitelist specific sender domains by forcing `SCL` to `-1` (skip spam filtering) on matching messages",
   "Risk": "**Domain-based whitelisting** skips **anti-spam/phish** analysis, allowing spoofed or compromised senders to reach the Inbox. This increases targeted phishing, BEC, and credential theft, enabling unauthorized access and data exfiltration, degrading **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/use-rules-to-set-scl",
     "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/configuration-best-practices",
-    "https://admin.exchange.microsoft.com..",
-    "https://theinformationstore.com.au/transport-rules-spam-bypass/",
-    "https://video2.skills-academy.com/en-us/answers/questions/1330347/how-to-handle-email-campaign-to-not-tag-as-spam-or",
-    "https://cheapwindowsvps.com/blog/step-by-step-guide-how-to-whitelist-a-domain-in-microsoft-365/",
-    "https://adamtheautomator.com/office-365-whitelist-domain/",
-    "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/mail-flow-rules",
-    "https://office365concepts.com/whitelist-a-domain-in-office-365/"
+    "https://learn.microsoft.com/en-us/exchange/security-and-compliance/mail-flow-rules/mail-flow-rules"
   ],
   "Remediation": {
     "Code": {

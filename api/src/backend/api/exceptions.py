@@ -107,3 +107,105 @@ class ConflictException(APIException):
             error_detail["source"] = {"pointer": pointer}
 
         super().__init__(detail=[error_detail])
+
+
+# Upstream Provider Errors (for external API calls like CloudTrail)
+# These indicate issues with the provider, not with the user's API authentication
+
+
+class UpstreamAuthenticationError(APIException):
+    """Provider credentials are invalid or expired (502 Bad Gateway).
+
+    Used when AWS/Azure/GCP credentials fail to authenticate with the upstream
+    provider. This is NOT the user's API authentication failing.
+    """
+
+    status_code = status.HTTP_502_BAD_GATEWAY
+    default_detail = (
+        "Provider credentials are invalid or expired. Please reconnect the provider."
+    )
+    default_code = "upstream_auth_failed"
+
+    def __init__(self, detail=None):
+        super().__init__(
+            detail=[
+                {
+                    "detail": detail or self.default_detail,
+                    "status": str(self.status_code),
+                    "code": self.default_code,
+                }
+            ]
+        )
+
+
+class UpstreamAccessDeniedError(APIException):
+    """Provider credentials lack required permissions (502 Bad Gateway).
+
+    Used when credentials are valid but don't have the IAM permissions
+    needed for the requested operation (e.g., cloudtrail:LookupEvents).
+    This is 502 (not 403) because it's an upstream/gateway error - the USER
+    authenticated fine, but the PROVIDER's credentials are misconfigured.
+    """
+
+    status_code = status.HTTP_502_BAD_GATEWAY
+    default_detail = (
+        "Access denied. The provider credentials do not have the required permissions."
+    )
+    default_code = "upstream_access_denied"
+
+    def __init__(self, detail=None):
+        super().__init__(
+            detail=[
+                {
+                    "detail": detail or self.default_detail,
+                    "status": str(self.status_code),
+                    "code": self.default_code,
+                }
+            ]
+        )
+
+
+class UpstreamServiceUnavailableError(APIException):
+    """Provider service is unavailable (503 Service Unavailable).
+
+    Used when the upstream provider API returns an error or is unreachable.
+    """
+
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    default_detail = "Unable to communicate with the provider. Please try again later."
+    default_code = "service_unavailable"
+
+    def __init__(self, detail=None):
+        super().__init__(
+            detail=[
+                {
+                    "detail": detail or self.default_detail,
+                    "status": str(self.status_code),
+                    "code": self.default_code,
+                }
+            ]
+        )
+
+
+class UpstreamInternalError(APIException):
+    """Unexpected error communicating with provider (500 Internal Server Error).
+
+    Used as a catch-all for unexpected errors during provider communication.
+    """
+
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    default_detail = (
+        "An unexpected error occurred while communicating with the provider."
+    )
+    default_code = "internal_error"
+
+    def __init__(self, detail=None):
+        super().__init__(
+            detail=[
+                {
+                    "detail": detail or self.default_detail,
+                    "status": str(self.status_code),
+                    "code": self.default_code,
+                }
+            ]
+        )

@@ -1,0 +1,220 @@
+---
+title: "Attack Paths"
+description: "Identify privilege escalation chains and security misconfigurations across cloud environments using graph-based analysis."
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.17.0" />
+
+Attack Paths analyzes relationships between cloud resources, permissions, and security findings to detect how privileges can be escalated and how misconfigurations can be exploited by threat actors.
+
+By mapping these relationships as a graph, Attack Paths reveals risks that individual security checks cannot detect on their own — such as an IAM role that can escalate its own permissions, or a chain of policies that grants unintended access to sensitive resources.
+
+<Note>
+  Attack Paths is currently available for **AWS** providers. Support for
+  additional providers is planned.
+</Note>
+
+## Prerequisites
+
+The following prerequisites are required for Attack Paths:
+
+- **An AWS provider is configured** with valid credentials in Prowler App. For setup instructions, see [Getting Started with AWS](/user-guide/providers/aws/getting-started-aws).
+- **At least one scan has completed** on the configured AWS provider. Attack Paths scans run automatically alongside regular security scans — no separate configuration is required.
+
+## How Attack Paths Scans Work
+
+Attack Paths scans are generated automatically when a security scan runs on an AWS provider. Each completed scan produces graph data that maps relationships between IAM principals, policies, trust configurations, and other resources.
+
+Once the scan finishes and the graph data is ready, the scan appears in the Attack Paths scan table with a **Completed** status. Scans that are still processing display as **Executing** or **Scheduled**.
+
+<Note>
+  Since Prowler scans all configured providers every **24 hours** by default,
+  Attack Paths data stays up to date automatically.
+</Note>
+
+## Accessing Attack Paths
+
+To open Attack Paths, click **Attack Paths** in the left navigation menu.
+
+<img
+  src="/images/prowler-app/attack-paths/navigation.png"
+  alt="Attack Paths navigation menu entry"
+  width="700"
+/>
+
+The main interface is divided into two areas:
+
+- **Left panel:** A table listing all available Attack Paths scans
+- **Right panel:** The query selector, parameter form, and execute controls
+
+## Selecting a Scan
+
+The scans table displays all Attack Paths scans with the following columns:
+
+- **Provider / Account:** The AWS provider alias and account identifier
+- **Last scan date:** When the scan completed
+- **Status:** Current state of the scan (Completed, Executing, Scheduled, or Failed)
+- **Progress:** Completion percentage for in-progress scans
+- **Duration:** Total scan time
+
+To select a scan for analysis, click **Select** on any row with a **Completed** status.
+
+<img
+  src="/images/prowler-app/attack-paths/scan-list-table.png"
+  alt="Attack Paths scan list table showing completed scans"
+  width="700"
+/>
+
+<Note>
+  Only scans with a **Completed** status and ready graph data can be selected.
+  Scans that are still executing or have failed appear with disabled action
+  buttons.
+</Note>
+
+## Choosing a Query
+
+After selecting a scan, the right panel activates a query dropdown. Each query targets a specific type of privilege escalation or misconfiguration pattern.
+
+To choose a query, click the dropdown and select from the available options. Each option displays:
+
+- **Query name:** A descriptive title (e.g., "IAM Privilege Escalation via AssumeRole")
+- **Short description:** A brief summary of what the query detects
+
+<img
+  src="/images/prowler-app/attack-paths/query-selector.png"
+  alt="Attack Paths query selector dropdown showing available queries"
+  width="700"
+/>
+
+Once selected, a description card appears below the dropdown with additional context about the query, including attribution links to external references when available.
+
+## Configuring Query Parameters
+
+Some queries accept optional or required parameters to narrow the scope of the analysis. When a query has parameters, a dynamic form appears below the query description.
+
+- **Required fields** are marked with an asterisk (\*) and must be filled before executing
+- **Optional fields** refine the query results but are not mandatory
+
+If a query requires no parameters, the form displays a message confirming that the query is ready to execute.
+
+<img
+  src="/images/prowler-app/attack-paths/query-parameters.png"
+  alt="Attack Paths query parameter form with fields"
+  width="700"
+/>
+
+## Executing a Query
+
+To run the selected query against the scan data, click **Execute Query**. The button displays a loading state while the query processes.
+
+If the query returns no results, an informational message appears. Common reasons include:
+
+- **No matching patterns found:** The scanned environment does not contain the privilege escalation chain the query targets
+- **Insufficient permissions:** The scan credentials may not have captured all the data the query needs
+
+<img
+  src="/images/prowler-app/attack-paths/execute-query.png"
+  alt="Attack Paths right panel with query selected and execute button"
+  width="700"
+/>
+
+## Exploring the Graph
+
+After a successful execution, the graph visualization renders below the query builder in a full-width panel. The graph maps relationships between cloud resources, IAM entities, and security findings.
+
+### Node Types
+
+- **Resource nodes** (rounded pills): Represent cloud resources such as IAM roles, policies, EC2 instances, and S3 buckets. Each resource type has a distinct color.
+- **Finding nodes** (hexagons): Represent Prowler security findings linked to resources in the graph. Colors indicate severity level (critical, high, medium, low).
+
+### Edge Types
+
+- **Solid lines:** Direct relationships between resources (e.g., a role attached to a policy)
+- **Dashed lines:** Connections between resources and their associated findings
+
+A **legend** at the bottom of the graph lists all node types and edge types present in the current view.
+
+<img
+  src="/images/prowler-app/attack-paths/graph-visualization.png"
+  alt="Attack Paths graph showing nodes, edges, and legend"
+  width="700"
+/>
+
+## Interacting with the Graph
+
+### Filtering by Node
+
+Click any node in the graph to filter the view and display only paths that pass through that node. When a filter is active:
+
+- An information banner shows which node is selected
+- Click **Back to Full View** to restore the complete graph
+
+<img
+  src="/images/prowler-app/attack-paths/graph-filtered.png"
+  alt="Attack Paths graph filtered to show paths through a selected node"
+  width="700"
+/>
+
+### Graph Controls
+
+The toolbar in the top-right corner of the graph provides:
+
+- **Zoom in / Zoom out:** Adjust the zoom level
+- **Fit to screen:** Reset the view to fit all nodes
+- **Export:** Download the current graph as an SVG file
+- **Fullscreen:** Open the graph in a full-screen modal with a side-by-side node detail panel
+
+<Note>
+  Use **Ctrl + Scroll** (or **Cmd + Scroll** on macOS) to zoom directly within
+  the graph area.
+</Note>
+
+## Viewing Node Details
+
+Click any node to open the **Node Details** panel below the graph. This panel displays:
+
+- **Node type:** The resource category (e.g., "IAM Role," "EC2 Instance")
+- **Properties:** All attributes of the selected node, including identifiers, timestamps, and configuration details
+- **Related findings** (for resource nodes): A list of Prowler findings linked to the resource, with severity, title, and status
+- **Affected resources** (for finding nodes): A list of resources associated with the finding
+
+For finding nodes, a "View Finding" button links directly to the finding detail page for further investigation.
+
+<img
+  src="/images/prowler-app/attack-paths/node-details.png"
+  alt="Attack Paths node detail panel showing properties and related findings"
+  width="700"
+/>
+
+## Fullscreen Mode
+
+To expand the graph for detailed exploration, click the fullscreen icon in the graph toolbar. The fullscreen modal provides:
+
+- The full graph visualization with all zoom and export controls
+- A side panel for node details that appears when a node is selected
+- All filtering and interaction capabilities available in the standard view
+
+<img
+  src="/images/prowler-app/attack-paths/fullscreen-mode.png"
+  alt="Attack Paths fullscreen mode with graph and node detail side panel"
+  width="700"
+/>
+
+## Using Attack Paths with the MCP Server
+
+Attack Paths capabilities are also available through the [Prowler MCP Server](/getting-started/products/prowler-mcp), enabling interaction with Attack Paths data via AI assistants like Claude Desktop, Cursor, and other MCP clients.
+
+The following MCP tools are available for Attack Paths:
+
+- **`prowler_app_list_attack_paths_scans`** - List and filter Attack Paths scans
+- **`prowler_app_list_attack_paths_queries`** - Discover available queries for a completed scan
+- **`prowler_app_run_attack_paths_query`** - Execute a query and retrieve graph results with nodes and relationships
+
+These tools enable workflows such as:
+- Asking an AI assistant to identify privilege escalation paths in a specific AWS account
+- Automating attack path analysis across multiple scans
+- Combining attack path data with findings and compliance information for comprehensive security reports
+
+For the complete list of MCP tools, see the [Tools Reference](/getting-started/basic-usage/prowler-mcp-tools#attack-paths-analysis).

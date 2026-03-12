@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Volume",
+  "ResourceGroup": "storage",
   "Description": "**OCI block volumes** use **Customer-Managed Keys** (`CMK`) from Vault for at-rest encryption instead of Oracle-managed keys.\n\nIdentifies whether a block volume has a customer-managed key associated for its encryption.",
   "Risk": "Without **CMK**, encryption key control is limited, impacting confidentiality and auditability:\n- No rapid key disable/rotation to contain breaches\n- Weaker restrictions and visibility on decrypt operations\nThis can prolong unauthorized data access and hinder incident response and compliance.",
   "RelatedUrl": "",

@@ -41,9 +41,8 @@ const nextConfig = {
       output: "standalone",
       outputFileTracingRoot: __dirname,
     }),
-  experimental: {
-    reactCompiler: true,
-  },
+  // React Compiler is now stable in Next.js 16
+  reactCompiler: true,
   turbopack: {
     root: __dirname,
   },

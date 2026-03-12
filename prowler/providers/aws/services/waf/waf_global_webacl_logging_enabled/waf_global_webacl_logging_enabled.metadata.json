@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsWafWebAcl",
+  "ResourceGroup": "security",
   "Description": "**AWS WAF Classic global Web ACLs** have **logging** enabled to capture evaluated web requests and rule actions for each ACL",
   "Risk": "Without **WAF logging**, you lose **visibility** into attacks (SQLi/XSS probes, bots, brute-force) and into allow/block decisions, limiting detection and forensics. This degrades **confidentiality**, **integrity**, and **availability**, and slows incident response and tuning.",
   "RelatedUrl": "",

@@ -1,20 +1,20 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_roles_assignment_policy_addins_disabled",
-  "CheckTitle": "Exchange role assignment policy does not allow Outlook add-ins",
+  "CheckTitle": "Role assignment policy does not allow Outlook add-ins",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Exchange Online role assignment policies** are assessed for roles that permit installing or managing **Outlook add-ins** (such as `My Marketplace Apps`, `My Custom Apps`, `My ReadWriteMailbox Apps`, `Org Marketplace Apps`, `Org Custom Apps`). Presence of these roles indicates users or admins can deploy add-ins from the store or custom sources.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Exchange Online role assignment policies** are assessed for roles that permit installing or managing **Outlook add-ins** (such as `My Marketplace Apps`, `My Custom Apps`, `My ReadWriteMailbox Apps`, `Org Marketplace Apps`, `Org Custom Apps`). Presence of these roles indicates users or admins can deploy add-ins from the store or custom sources.",
   "Risk": "Allowing add-in installation exposes mailboxes to **malicious or vulnerable add-ins**. With `ReadWriteMailbox`, an add-in can read, copy, or alter messages, auto-forward mail, and access tokens, enabling **data exfiltration**, message tampering, and **lateral movement**, impacting confidentiality and integrity.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/add-ins-for-outlook/specify-who-can-install-and-manage-add-ins",
-    "https://learn.microsoft.com/en-us/exchange/permissions-exo/role-assignment-policies",
-    "https://admin.exchange.microsoft.com."
+    "https://learn.microsoft.com/en-us/exchange/permissions-exo/role-assignment-policies"
   ],
   "Remediation": {
     "Code": {

@@ -1,14 +1,15 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_transport_rules_mail_forwarding_disabled",
-  "CheckTitle": "Exchange transport rule does not allow forwarding mail to external domains",
+  "CheckTitle": "Transport rule does not allow forwarding mail to external domains",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Exchange Online mail flow rules** are assessed for actions that **forward or redirect messages to external domains**. The finding highlights rules that add external recipients during transport.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Exchange Online mail flow rules** are assessed for actions that **forward or redirect messages to external domains**. The finding highlights rules that add external recipients during transport.",
   "Risk": "External auto-forwarding enables silent **data exfiltration**, bypassing **DLP** and retention, reducing **confidentiality**.\n\nA compromised mailbox can use forwarding for **persistence** and **lateral movement**, leaking sensitive content to untrusted domains and undermining communication **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
   "Description": "CloudWatch uses a metric filter and alarm to track **IAM policy changes** recorded by CloudTrail (e.g., `CreatePolicy`, `DeletePolicy`, version changes, inline policy edits, policy attach/detach). This finding reflects whether that filter and an associated alarm are present on the trail's log group.",
   "Risk": "Absent alerting on **IAM policy changes**, privilege modifications can go unnoticed, enabling **privilege escalation**, hidden backdoors, or permission revocations. This threatens **confidentiality** and **integrity**, and may impact **availability** if critical access is removed or misconfigured.",
   "RelatedUrl": "",

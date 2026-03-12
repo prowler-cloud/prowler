@@ -10,7 +10,7 @@ export const ManageGroupsButton = () => {
     <Button asChild variant="outline">
       <Link href="/manage-groups">
         <SettingsIcon size={20} />
-        Manage Groups
+        Account Groups
       </Link>
     </Button>
   );

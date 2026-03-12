@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEcsService",
+  "ResourceGroup": "container",
   "Description": "**ECS task sets** are assessed for **automatic public IP assignment** via `AssignPublicIP`. When set to `ENABLED`, tasks are given public addresses in their network configuration.",
   "Risk": "Public IPs make tasks directly reachable from the Internet, enabling scanning, brute force, and exploit attempts.\n\nImpacts: **confidentiality** (data exposure), **integrity** (unauthorized actions), **availability** (DoS). Attackers can bypass internal controls and pivot for lateral movement.",
   "RelatedUrl": "",

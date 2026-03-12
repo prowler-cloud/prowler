@@ -1,10 +1,15 @@
-import { ProviderConnectionStatus, ProviderEntity } from "./providers";
+import {
+  GroupFilterEntity,
+  ProviderConnectionStatus,
+  ProviderEntity,
+} from "./providers";
 import { ScanEntity } from "./scans";
 
 export type FilterEntity =
   | ProviderEntity
   | ScanEntity
-  | ProviderConnectionStatus;
+  | ProviderConnectionStatus
+  | GroupFilterEntity;
 
 export interface FilterOption {
   key: string;
@@ -35,4 +40,5 @@ export enum FilterType {
   STATUS = "status__in",
   DELTA = "delta__in",
   CATEGORY = "category__in",
+  RESOURCE_GROUPS = "resource_groups__in",
 }

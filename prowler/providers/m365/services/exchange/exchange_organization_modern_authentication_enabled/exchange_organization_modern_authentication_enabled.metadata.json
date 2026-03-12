@@ -1,21 +1,20 @@
 {
   "Provider": "m365",
   "CheckID": "exchange_organization_modern_authentication_enabled",
-  "CheckTitle": "Exchange Online organization has Modern Authentication enabled",
+  "CheckTitle": "Organization has Modern Authentication enabled",
   "CheckType": [],
   "ServiceName": "exchange",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Exchange Online** organization setting determines if **Modern Authentication** (`OAuth 2.0`) is enabled for client connections.\n\nThis evaluates whether clients use token-based sign-in rather than `Basic` credentials.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Exchange Online** organization setting determines if **Modern Authentication** (`OAuth 2.0`) is enabled for client connections.\n\nThis evaluates whether clients use token-based sign-in rather than `Basic` credentials.",
   "Risk": "Without **Modern Authentication**, clients may fall back to `Basic`, disabling **MFA** and enabling **password spraying** and **credential stuffing**. Account takeover can expose mailboxes, alter rules, and send fraudulent emails, harming confidentiality and integrity.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.thewindowsclub.com/how-to-configure-exchange-server-authentication-in-outlook",
     "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/enable-or-disable-modern-authentication-in-exchange-online",
-    "https://profadmins.com/2020/03/27/enabling-modern-authentication-and-mfa/",
-    "https://jumpcloud.com/support/enable-modern-authentication-for-m365"
+    "https://profadmins.com/2020/03/27/enabling-modern-authentication-and-mfa/"
   ],
   "Remediation": {
     "Code": {

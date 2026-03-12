@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
+  "ResourceGroup": "database",
   "Description": "Neptune cluster is associated with one or more **public subnets**.",
   "Risk": "A Neptune cluster in a **public subnet** increases exposure across the CIA triad:\n\n- **Confidentiality**: Direct access enables credential attacks and data exfiltration\n- **Integrity**: Attackers may modify or inject graph data\n- **Availability**: Public reachability allows DDoS or remote exploitation, causing downtime",
   "RelatedUrl": "",
