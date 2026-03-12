@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "#microsoft.graph.conditionalAccess",
+  "ResourceType": "microsoft.aadiam/tenants",
   "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra Conditional Access** is evaluated for a policy that requires **multifactor authentication** when accessing the **Windows Azure Service Management API** (Azure PowerShell, Azure CLI, Azure Resource Manager API, etc.). The check confirms an enabled policy targets **All users**, includes the Service Management API app, and enforces an **MFA** grant control.",
   "Risk": "Without **MFA** on the Service Management API, attackers with stolen credentials can use **Azure CLI**, **PowerShell**, or the **Resource Manager API** to modify infrastructure, escalate privileges, and exfiltrate data. This directly impacts **confidentiality**, **integrity**, and **availability** of all Azure resources managed through the API.",
