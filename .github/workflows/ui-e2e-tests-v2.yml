@@ -232,7 +232,22 @@ jobs:
               echo "No runnable E2E test paths after filtering setups"
               exit 0
             fi
-            TEST_PATHS=$(echo "$TEST_PATHS" | tr '\n' ' ')
+            # Filter out directories that don't contain any test files
+            VALID_PATHS=""
+            while IFS= read -r p; do
+              [[ -z "$p" ]] && continue
+              if find "$p" -name '*.spec.ts' -o -name '*.test.ts' 2>/dev/null | head -1 | grep -q .; then
+                VALID_PATHS="${VALID_PATHS}${p}"$'\n'
+              else
+                echo "Skipping empty test directory: $p"
+              fi
+            done <<< "$TEST_PATHS"
+            VALID_PATHS=$(echo "$VALID_PATHS" | grep -v '^$')
+            if [[ -z "$VALID_PATHS" ]]; then
+              echo "No test files found in any resolved paths — skipping E2E"
+              exit 0
+            fi
+            TEST_PATHS=$(echo "$VALID_PATHS" | tr '\n' ' ')
             echo "Resolved test paths: $TEST_PATHS"
             pnpm exec playwright test $TEST_PATHS
           fi
