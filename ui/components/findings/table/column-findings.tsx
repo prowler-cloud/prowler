@@ -34,8 +34,7 @@ const getResourceData = (
   field: keyof FindingProps["relationships"]["resource"]["attributes"],
 ) => {
   return (
-    row.original.relationships?.resource?.attributes?.[field] ||
-    `No ${field} found in resource`
+    row.original.relationships?.resource?.attributes?.[field] || "-"
   );
 };
 
@@ -44,8 +43,7 @@ const getProviderData = (
   field: keyof FindingProps["relationships"]["provider"]["attributes"],
 ) => {
   return (
-    row.original.relationships?.provider?.attributes?.[field] ||
-    `No ${field} found in provider`
+    row.original.relationships?.provider?.attributes?.[field] || "-"
   );
 };
 
@@ -185,6 +183,12 @@ export function getColumnFindings(
       ),
       cell: ({ row }) => {
         const resourceName = getResourceData(row, "name");
+
+        if (resourceName === "-") {
+          return (
+            <p className="text-text-neutral-primary text-sm">-</p>
+          );
+        }
 
         return (
           <CodeSnippet
