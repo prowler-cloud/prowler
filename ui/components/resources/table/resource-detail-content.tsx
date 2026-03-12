@@ -25,6 +25,7 @@ import {
   getProviderLogo,
   InfoField,
 } from "@/components/ui/entities";
+import { EventsTimeline } from "@/components/ui/events-timeline/events-timeline";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib";
 import { getGroupLabel } from "@/lib/categories";
@@ -409,6 +410,7 @@ export const ResourceDetailContent = ({
           <TabsTrigger value="findings">
             Findings {totalFindings > 0 && `(${totalFindings})`}
           </TabsTrigger>
+          <TabsTrigger value="events">Events</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -534,6 +536,14 @@ export const ResourceDetailContent = ({
               )}
             </>
           )}
+        </TabsContent>
+
+        {/* Events Tab */}
+        <TabsContent value="events" className="flex flex-col gap-4">
+          <EventsTimeline
+            resourceId={resourceId}
+            isAwsProvider={providerData.provider === "aws"}
+          />
         </TabsContent>
       </Tabs>
     </div>

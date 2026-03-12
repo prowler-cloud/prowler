@@ -2,7 +2,7 @@
 
 import { ExternalLink, Link, X } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 import {
@@ -26,6 +26,7 @@ import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { EntityInfo } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
+import { EventsTimeline } from "@/components/ui/events-timeline/events-timeline";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import {
   FindingStatus,
@@ -87,6 +88,8 @@ export const FindingDetail = ({
   const providerDetails = finding.relationships.provider.attributes;
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const [activeTab, setActiveTab] = useState("general");
 
   const copyFindingUrl = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -153,11 +156,12 @@ export const FindingDetail = ({
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="general" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="resources">Resources</TabsTrigger>
           <TabsTrigger value="scans">Scans</TabsTrigger>
+          <TabsTrigger value="events">Events</TabsTrigger>
         </TabsList>
 
         <p className="text-text-neutral-primary mb-4 text-sm">
@@ -418,6 +422,14 @@ export const FindingDetail = ({
               </InfoField>
             )}
           </div>
+        </TabsContent>
+
+        {/* Events Tab */}
+        <TabsContent value="events" className="flex flex-col gap-4">
+          <EventsTimeline
+            resourceId={finding.relationships.resource.id}
+            isAwsProvider={providerDetails.provider === "aws"}
+          />
         </TabsContent>
       </Tabs>
     </div>

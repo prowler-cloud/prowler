@@ -160,6 +160,52 @@ export const getLatestMetadataInfo = async ({
   }
 };
 
+export const getResourceEvents = async (
+  resourceId: string,
+  {
+    includeReadEvents = false,
+    lookbackDays = 90,
+    pageSize = 50,
+  }: {
+    includeReadEvents?: boolean;
+    lookbackDays?: number;
+    pageSize?: number;
+  } = {},
+) => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const url = new URL(`${apiBaseUrl}/resources/${resourceId}/events`);
+  url.searchParams.append("include_read_events", String(includeReadEvents));
+  url.searchParams.append("lookback_days", String(lookbackDays));
+  url.searchParams.append("page[size]", String(pageSize));
+
+  try {
+    const response = await fetch(url.toString(), { headers });
+
+    if (!response.ok) {
+      const rawText = await response.text().catch(() => "");
+      let errorDetail = "An error occurred while fetching events.";
+      try {
+        const errorData = rawText ? JSON.parse(rawText) : null;
+        errorDetail =
+          errorData?.errors?.[0]?.detail ||
+          errorData?.error ||
+          errorData?.message ||
+          rawText ||
+          response.statusText;
+      } catch {
+        errorDetail = rawText || response.statusText;
+      }
+      return { error: errorDetail, status: response.status };
+    }
+
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error("Error fetching resource events:", error);
+    return { error: "An unexpected error occurred." };
+  }
+};
+
 export const getResourceById = async (
   id: string,
   {
