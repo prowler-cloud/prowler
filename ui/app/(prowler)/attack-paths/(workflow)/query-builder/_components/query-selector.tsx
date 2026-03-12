@@ -27,7 +27,7 @@ export const QuerySelector = ({
   return (
     <Select value={selectedQueryId || ""} onValueChange={onQueryChange}>
       <SelectTrigger className="w-full text-left">
-        <SelectValue placeholder="Choose a query..." />
+        <SelectValue placeholder="Choose a query" />
       </SelectTrigger>
       <SelectContent>
         {queries.map((query) => (
