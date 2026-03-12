@@ -110,15 +110,23 @@ export const FindingDetail = ({
         )
       : null;
 
+  const handleMuteComplete = () => {
+    setIsMuteModalOpen(false);
+    onOpenChange?.(false);
+    router.refresh();
+  };
+
+  const muteModal = !attributes.muted && (
+    <MuteFindingsModal
+      isOpen={isMuteModalOpen}
+      onOpenChange={setIsMuteModalOpen}
+      findingIds={[findingDetails.id]}
+      onComplete={handleMuteComplete}
+    />
+  );
+
   const content = (
     <div className="flex min-w-0 flex-col gap-4 rounded-lg">
-      <MuteFindingsModal
-        isOpen={isMuteModalOpen}
-        onOpenChange={setIsMuteModalOpen}
-        findingIds={[findingDetails.id]}
-        onComplete={() => router.refresh()}
-      />
-
       {/* Header */}
       <div className="flex flex-col gap-2">
         {/* Row 1: Status badges */}
@@ -449,29 +457,37 @@ export const FindingDetail = ({
 
   // If no trigger, render content directly (inline mode)
   if (!trigger) {
-    return content;
+    return (
+      <>
+        {muteModal}
+        {content}
+      </>
+    );
   }
 
-  // With trigger, wrap in Drawer
+  // With trigger, wrap in Drawer — modal rendered outside to avoid nested overlay issues
   return (
-    <Drawer
-      direction="right"
-      open={open}
-      defaultOpen={defaultOpen}
-      onOpenChange={onOpenChange}
-    >
-      <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-      <DrawerContent className="minimal-scrollbar 3xl:w-1/3 h-full w-full overflow-x-hidden overflow-y-auto p-6 md:w-1/2 md:max-w-none">
-        <DrawerHeader className="sr-only">
-          <DrawerTitle>Finding Details</DrawerTitle>
-          <DrawerDescription>View the finding details</DrawerDescription>
-        </DrawerHeader>
-        <DrawerClose className="ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none">
-          <X className="size-4" />
-          <span className="sr-only">Close</span>
-        </DrawerClose>
-        {content}
-      </DrawerContent>
-    </Drawer>
+    <>
+      {muteModal}
+      <Drawer
+        direction="right"
+        open={open}
+        defaultOpen={defaultOpen}
+        onOpenChange={onOpenChange}
+      >
+        <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+        <DrawerContent className="minimal-scrollbar 3xl:w-1/3 h-full w-full overflow-x-hidden overflow-y-auto p-6 md:w-1/2 md:max-w-none">
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>Finding Details</DrawerTitle>
+            <DrawerDescription>View the finding details</DrawerDescription>
+          </DrawerHeader>
+          <DrawerClose className="ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none">
+            <X className="size-4" />
+            <span className="sr-only">Close</span>
+          </DrawerClose>
+          {content}
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 };
