@@ -1,23 +1,20 @@
 {
   "Provider": "m365",
   "CheckID": "teams_meeting_external_control_disabled",
-  "CheckTitle": "Teams Meetings Global policy prevents external participants from giving or requesting control",
+  "CheckTitle": "Meetings global policy prevents external participants from giving or requesting control",
   "CheckType": [],
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Teams meeting policies** govern whether **external participants** can give, be given, or request control during screen sharing via `allowExternalParticipantGiveRequestControl`.\n\nEvaluation targets the org-wide default policy to confirm external control actions are blocked.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Teams meeting policies** govern whether **external participants** can give, be given, or request control during screen sharing via `allowExternalParticipantGiveRequestControl`.\n\nEvaluation targets the org-wide default policy to confirm external control actions are blocked.",
   "Risk": "External control during sharing enables remote input on the presenter's device, impacting:\n- Confidentiality: viewing/copying sensitive data\n- Integrity: unauthorized changes, keystroke injection, malware launch\n- Availability: session disruption or app termination",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/powershell/module/microsoftteams/set-csteamsmeetingpolicy?view=teams-ps",
-    "https://admin.teams.microsoft.com.",
-    "https://www.powershellgallery.com/packages/Microsoft365DSC/1.20.716.1/Content/DSCResources\\MSFT_TeamsMeetingPolicy\\MSFT_TeamsMeetingPolicy.psm1",
     "https://learn.microsoft.com/en-us/microsoftteams/meeting-who-present-request-control",
-    "https://alyaconsulting.ch/Solutions/MicrosoftTeams/Set-CsTeamsMeetingPolicy",
-    "https://web.archive.org/web/20200628083544/https://docs.microsoft.com/en-us/microsoftteams/meeting-policies-in-teams",
     "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
   ],
   "Remediation": {

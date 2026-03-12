@@ -1,18 +1,18 @@
 {
   "Provider": "m365",
   "CheckID": "teams_meeting_chat_anonymous_users_disabled",
-  "CheckTitle": "Teams Meetings global policy does not allow anonymous users in meeting chat",
+  "CheckTitle": "Meetings global policy does not allow anonymous users in meeting chat",
   "CheckType": [],
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Microsoft Teams meeting policies** restrict chat so **anonymous participants** cannot send or read messages.\n\nAccepted configurations include `EnabledExceptAnonymous` or `EnabledInMeetingOnlyForAllExceptAnonymous`.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Teams meeting policies** restrict chat so **anonymous participants** cannot send or read messages.\n\nAccepted configurations include `EnabledExceptAnonymous` or `EnabledInMeetingOnlyForAllExceptAnonymous`.",
   "Risk": "**Anonymous chat** enables unverified users to leak sensitive content, post **phishing/malware links**, and impersonate others.\n\nThis undermines **confidentiality** and accountability, and can disrupt meetings through spam, affecting **availability** and auditability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://admin.teams.microsoft.com.",
     "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
   ],
   "Remediation": {

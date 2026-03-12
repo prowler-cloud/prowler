@@ -1,22 +1,21 @@
 {
   "Provider": "m365",
   "CheckID": "teams_security_reporting_enabled",
-  "CheckTitle": "Teams messaging policy has security reporting enabled",
+  "CheckTitle": "Messaging policy has security reporting enabled",
   "CheckType": [],
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
   "Description": "**Teams messaging policies** enable **end-user security reporting** via `AllowSecurityEndUserReporting`, letting users report messages from chats, channels, and meetings for security review.",
   "Risk": "**Disabled reporting** hides **phishing, malicious links, and social engineering** in Teams.\n\nThis delays detection and response, enabling **lateral movement** and **data exfiltration**, and degrading **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/powershell/module/microsoftteams/set-csteamsmessagingpolicy?view=teams-ps",
     "https://blog.hametbenoit.info/2023/03/30/teams-you-can-now-enable-quarantine-for-teams-preview/",
-    "https://github.com/MicrosoftDocs/office-docs-powershell/issues/10141",
-    "https://learn.microsoft.com/en-us/defender-office-365/submissions-teams?view=o365-worldwide",
-    "https://admin.teams.microsoft.com)."
+    "https://learn.microsoft.com/en-us/defender-office-365/submissions-teams?view=o365-worldwide"
   ],
   "Remediation": {
     "Code": {

@@ -1,25 +1,20 @@
 {
   "Provider": "m365",
   "CheckID": "teams_unmanaged_communication_disabled",
-  "CheckTitle": "Teams users cannot communicate with unmanaged users",
+  "CheckTitle": "Users cannot communicate with unmanaged users",
   "CheckType": [],
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "Teams external access configuration for **unmanaged Teams accounts** is reviewed, expecting the \"Teams accounts not managed by an organization\" option to be `Off`, preventing chats with personal Microsoft accounts.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Teams** external access configuration for **unmanaged Teams accounts** is reviewed, expecting the \"Teams accounts not managed by an organization\" option to be `Off`, preventing chats with personal Microsoft accounts.",
   "Risk": "Allowing unmanaged accounts enables unsolicited contact that undermines **confidentiality** and **integrity**: attackers can enumerate users, deliver phishing or malware links, and run social-engineering leading to data exfiltration and unauthorized changes. It also fuels spam and alert fatigue.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/powershell/module/teams/set-cstenantfederationconfiguration?view=teams-ps",
-    "https://admin.teams.microsoft.com/.",
-    "https://www.edtechirl.com/p/teams-security-baselines-unmanaged",
-    "https://github.com/microsoftgraph/msgraph-sdk-go/issues/935",
-    "https://bhargavs.com/index.php/2024/03/29/combat-spam-in-microsoft-teams/",
-    "https://learn.microsoft.com/en-us/microsoftteams/trusted-organizations-external-meetings-chat",
-    "https://helpdesk.sherweb.com/en-us/knowledge-base/articles/KA-02943",
-    "https://docs.tminus365.com/security/teams/unmanaged-user-access-shall-be-restricted"
+    "https://learn.microsoft.com/en-us/microsoftteams/trusted-organizations-external-meetings-chat"
   ],
   "Remediation": {
     "Code": {

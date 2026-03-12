@@ -6,14 +6,14 @@
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "",
-  "Description": "**Microsoft Teams meeting policies** disable `AllowAnonymousUsersToStartMeeting` so **anonymous users** and **dial-in callers** cannot start meetings and must wait in the lobby until an authenticated participant joins",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Teams meeting policies** disable `AllowAnonymousUsersToStartMeeting` so **anonymous users** and **dial-in callers** cannot start meetings and must wait in the lobby until an authenticated participant joins",
   "Risk": "Without this control, outsiders can launch **hostless meetings**, enabling:\n- social engineering before staff join\n- malicious link sharing and meeting hijack\nIt also allows **PSTN toll abuse** by dial-in callers.\nImpacts: confidentiality, integrity, and availability/cost.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/microsoftteams/settings-policies-reference",
-    "https://admin.teams.microsoft.com.",
     "https://docs.tminus365.com/security/teams/anonymous-users-shall-not-be-enabled-to-start-meetings",
     "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
   ],

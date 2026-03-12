@@ -7,18 +7,14 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Microsoft Teams** tenant external access configuration is assessed. The expected posture is **federation with external domains** disabled, so users cannot chat, call, or meet with accounts in other domains.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Teams** tenant external access configuration is assessed. The expected posture is **federation with external domains** disabled, so users cannot chat, call, or meet with accounts in other domains.",
   "Risk": "**Unrestricted external federation** enables delivery of phishing links and malware via chats/calls, user enumeration, and data leakage through messages or file shares. This directly threatens **confidentiality** and **integrity**, and can aid social engineering-driven lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/powershell/module/teams/set-cstenantfederationconfiguration?view=teams-ps",
-    "https://admin.teams.microsoft.com/.",
-    "https://learn.microsoft.com/ar-sa/entra/architecture/5-secure-access-b2b",
-    "https://vmwaretroubleshooter.com/breaking-down-information-barriers-for-external-users-in-teams-microsoft-community-hub/",
-    "https://www.solutions2share.com/microsoft-teams-security-collaboration/",
-    "https://www.thatlazyadmin.com/2019/03/28/microsoft-teams-cant-chat-external-domains/",
-    "https://cybersecuritynews.com/microsoft-teams-defender-portal/"
+    "https://learn.microsoft.com/ar-sa/entra/architecture/5-secure-access-b2b"
   ],
   "Remediation": {
     "Code": {

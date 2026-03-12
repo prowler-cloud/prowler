@@ -7,12 +7,12 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "Microsoft Teams tenant configuration for **channel email addresses** determines if channels can receive messages via email. This evaluates the `allow_email_into_channel` setting.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Teams** tenant configuration for **channel email addresses** determines if channels can receive messages via email. This evaluates the `allow_email_into_channel` setting.",
   "Risk": "Allowing email into channels lets outsiders inject content, links, and attachments into Teams. Leaked addresses enable **phishing**, **malware delivery**, and spam, undermining **confidentiality** and **integrity**, and adding noise that affects **availability**; posts may bypass user-authenticated context.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://admin.teams.microsoft.com.",
     "https://learn.microsoft.com/en-us/powershell/module/teams/get-csteamsclientconfiguration?view=teams-ps"
   ],
   "Remediation": {
@@ -29,7 +29,8 @@
   },
   "Categories": [
     "email-security",
-    "internet-exposed"
+    "internet-exposed",
+    "e3"
   ],
   "DependsOn": [],
   "RelatedTo": [],

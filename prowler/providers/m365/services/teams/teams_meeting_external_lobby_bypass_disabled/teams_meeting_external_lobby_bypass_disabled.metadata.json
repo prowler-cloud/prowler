@@ -1,18 +1,18 @@
 {
   "Provider": "m365",
   "CheckID": "teams_meeting_external_lobby_bypass_disabled",
-  "CheckTitle": "Teams Meetings global policy allows only people in the organization to bypass the lobby",
+  "CheckTitle": "Meetings global policy allows only people in the organization to bypass the lobby",
   "CheckType": [],
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "",
+  "Severity": "critical",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
   "Description": "Teams Meetings global policy restricts **lobby bypass** so only `EveryoneInCompanyExcludingGuests`, `OrganizerOnly`, or `InvitedUsers` are auto-admitted; all others wait in the lobby.",
   "Risk": "Auto-admitting external or anonymous users undermines **confidentiality** via covert listening and access to chat/files, and **integrity** through meeting hijacks, malicious screen sharing, and phishing. It also impacts **availability** by enabling disruptions and unsanctioned sessions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://admin.teams.microsoft.com.",
     "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
   ],
   "Remediation": {

@@ -6,13 +6,13 @@
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Microsoft Teams** org-wide meeting policy is evaluated to ensure **anonymous meeting join** is disabled, preventing non-authenticated participants from joining.",
+  "Severity": "critical",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Teams** org-wide meeting policy is evaluated to ensure **anonymous meeting join** is disabled, preventing non-authenticated participants from joining.",
   "Risk": "Anonymous meeting access allows unaccountable attendees to join, eavesdrop, capture shared content, and impersonate others.\n\nThis undermines **confidentiality** and **integrity**, and threatens **availability** via meeting hijacking, spam, and disruption.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://admin.teams.microsoft.com.",
     "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
   ],
   "Remediation": {

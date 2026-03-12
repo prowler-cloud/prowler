@@ -121,7 +121,7 @@ export function MultiSelectTrigger({
         data-slot="multiselect-trigger"
         data-size={size}
         className={cn(
-          "border-border-input-primary bg-bg-input-primary text-bg-button-secondary data-[placeholder]:text-bg-button-secondary [&_svg:not([class*='text-'])]:text-bg-button-secondary aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex w-full items-center justify-between gap-2 rounded-lg border px-4 py-3 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-1 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-[52px] data-[size=sm]:h-10 *:data-[slot=multiselect-value]:line-clamp-1 *:data-[slot=multiselect-value]:flex *:data-[slot=multiselect-value]:items-center *:data-[slot=multiselect-value]:gap-2 dark:focus-visible:ring-slate-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6",
+          "border-border-input-primary bg-bg-input-primary text-bg-button-secondary data-[placeholder]:text-bg-button-secondary [&_svg:not([class*='text-'])]:text-bg-button-secondary aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex w-full items-center justify-between gap-2 overflow-hidden rounded-lg border px-4 py-3 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-1 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-[52px] data-[size=sm]:h-10 *:data-[slot=multiselect-value]:line-clamp-1 *:data-[slot=multiselect-value]:flex *:data-[slot=multiselect-value]:items-center *:data-[slot=multiselect-value]:gap-2 dark:focus-visible:ring-slate-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6",
           className,
         )}
       >
@@ -224,9 +224,9 @@ export function MultiSelectValue({
         .filter((value) => items.has(value))
         .map((value) => (
           <Badge
-            variant="outline"
+            variant="tag"
             data-selected-item
-            className="text-bg-button-secondary group flex items-center gap-1.5 border-slate-300 bg-slate-100 px-2 py-1 text-xs font-medium dark:border-slate-600 dark:bg-slate-800"
+            className="group flex items-center gap-1.5 px-2 py-1 text-xs font-medium"
             key={value}
             onClick={
               clickToRemove
@@ -239,7 +239,7 @@ export function MultiSelectValue({
           >
             {items.get(value)}
             {clickToRemove && (
-              <XIcon className="text-bg-button-secondary group-hover:text-destructive size-3 transition-colors" />
+              <XIcon className="text-text-neutral-primary group-hover:text-destructive size-3 transition-colors" />
             )}
           </Badge>
         ))}
@@ -247,9 +247,9 @@ export function MultiSelectValue({
         style={{
           display: overflowAmount > 0 && !shouldWrap ? "block" : "none",
         }}
-        variant="outline"
+        variant="tag"
         ref={overflowRef}
-        className="text-bg-button-secondary border-slate-300 bg-slate-100 px-2 py-1 text-xs font-medium dark:border-slate-600 dark:bg-slate-800"
+        className="px-2 py-1 text-xs font-medium"
       >
         +{overflowAmount}
       </Badge>

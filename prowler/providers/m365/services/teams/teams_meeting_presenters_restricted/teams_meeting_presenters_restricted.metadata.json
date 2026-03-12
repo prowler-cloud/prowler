@@ -1,19 +1,19 @@
 {
   "Provider": "m365",
   "CheckID": "teams_meeting_presenters_restricted",
-  "CheckTitle": "Teams Meetings org-wide default policy allows only organizers and co-organizers to present",
+  "CheckTitle": "Meetings org-wide default policy allows only organizers and co-organizers to present",
   "CheckType": [],
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
   "Description": "**Teams meeting policy** sets the default `Who can present` to **only organizers and co-organizers** in the org-wide policy.\n\nThis evaluates whether attendees are limited to the attendee role by default rather than joining as presenters.",
   "Risk": "Allowing everyone to present enables unsolicited screen sharing and content uploads, causing data exposure (confidentiality), misleading or altered information during sessions (integrity), and meeting takeovers or disruptions (availability). External participants can exploit this to distribute phishing links or malware.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/microsoftteams/meeting-who-present-request-control",
-    "https://admin.teams.microsoft.com."
+    "https://learn.microsoft.com/en-us/microsoftteams/meeting-who-present-request-control"
   ],
   "Remediation": {
     "Code": {

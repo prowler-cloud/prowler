@@ -2,41 +2,42 @@ import { Page, Locator, expect } from "@playwright/test";
 import { BasePage } from "../base-page";
 
 export class HomePage extends BasePage {
-  
+
   // Main content elements
   readonly mainContent: Locator;
   readonly breadcrumbs: Locator;
   readonly overviewHeading: Locator;
-  
+
   // Navigation elements
   readonly navigationMenu: Locator;
   readonly userMenu: Locator;
   readonly signOutButton: Locator;
-  
+
   // Dashboard elements
   readonly dashboardCards: Locator;
   readonly overviewSection: Locator;
-  
+
   // UI elements
   readonly logo: Locator;
 
   constructor(page: Page) {
     super(page);
-    
+
     // Main content elements
     this.mainContent = page.locator("main");
     this.breadcrumbs = page.getByRole("navigation", { name: "Breadcrumbs" });
     this.overviewHeading = page.getByRole("heading", { name: "Overview", exact: true });
-    
+
     // Navigation elements
     this.navigationMenu = page.locator("nav");
-    this.userMenu = page.getByRole("button", { name: /user menu/i });
+    // Sign out is a direct button, not inside a menu
+    this.userMenu = page.getByRole("button", { name: "Sign out" });
     this.signOutButton = page.getByRole("button", { name: "Sign out" });
-    
+
     // Dashboard elements
     this.dashboardCards = page.locator('[data-testid="dashboard-card"]');
     this.overviewSection = page.locator('[data-testid="overview-section"]');
-    
+
     // UI elements
     this.logo = page.locator('svg[width="300"]');
   }
@@ -67,12 +68,10 @@ export class HomePage extends BasePage {
     await this.overviewHeading.click();
   }
 
-  async openUserMenu(): Promise<void> {
-    await this.userMenu.click();
-  }
-
   async signOut(): Promise<void> {
-    await this.openUserMenu();
+    // Wait for navbar to be visible before clicking sign out
+    const navbar = this.page.locator("header");
+    await navbar.waitFor({ state: "visible" });
     await this.signOutButton.click();
   }
 
