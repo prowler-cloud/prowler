@@ -9,8 +9,8 @@ import {
   ShieldOff,
 } from "lucide-react";
 
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { DataTableExpandAllToggle } from "@/components/ui/table/data-table-expand-all-toggle";
