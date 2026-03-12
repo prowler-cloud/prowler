@@ -59,8 +59,6 @@ class TestCSV:
         assert output_data["ACCOUNT_EMAIL"] == ""
         assert output_data["ACCOUNT_ORGANIZATION_UID"] == "test-organization-id"
         assert output_data["ACCOUNT_ORGANIZATION_NAME"] == "test-organization"
-        assert output_data["ACCOUNT_OU_UID"] == "ou-abc1-12345678"
-        assert output_data["ACCOUNT_OU_NAME"] == "Production/WebServices"
         assert isinstance(output_data["ACCOUNT_TAGS"], str)
         assert output_data["ACCOUNT_TAGS"] == "test-tag:test-value"
         assert output_data["FINDING_UID"] == "test-unique-finding"
@@ -109,6 +107,8 @@ class TestCSV:
         )
         assert output_data["NOTES"] == "Notes about the finding"
         assert output_data["PROWLER_VERSION"] == prowler_version
+        assert output_data["ACCOUNT_OU_UID"] == "ou-abc1-12345678"
+        assert output_data["ACCOUNT_OU_NAME"] == "Production/WebServices"
 
     @freeze_time(datetime.now())
     def test_csv_write_to_file(self):
@@ -123,7 +123,7 @@ class TestCSV:
             output.batch_write_data_to_file()
 
         mock_file.seek(0)
-        expected_csv = f"AUTH_METHOD;TIMESTAMP;ACCOUNT_UID;ACCOUNT_NAME;ACCOUNT_EMAIL;ACCOUNT_ORGANIZATION_UID;ACCOUNT_ORGANIZATION_NAME;ACCOUNT_OU_UID;ACCOUNT_OU_NAME;ACCOUNT_TAGS;FINDING_UID;PROVIDER;CHECK_ID;CHECK_TITLE;CHECK_TYPE;STATUS;STATUS_EXTENDED;MUTED;SERVICE_NAME;SUBSERVICE_NAME;SEVERITY;RESOURCE_TYPE;RESOURCE_UID;RESOURCE_NAME;RESOURCE_DETAILS;RESOURCE_TAGS;PARTITION;REGION;DESCRIPTION;RISK;RELATED_URL;REMEDIATION_RECOMMENDATION_TEXT;REMEDIATION_RECOMMENDATION_URL;REMEDIATION_CODE_NATIVEIAC;REMEDIATION_CODE_TERRAFORM;REMEDIATION_CODE_CLI;REMEDIATION_CODE_OTHER;COMPLIANCE;CATEGORIES;DEPENDS_ON;RELATED_TO;NOTES;PROWLER_VERSION;ADDITIONAL_URLS\r\nprofile: default;{datetime.now()};123456789012;123456789012;;test-organization-id;test-organization;ou-abc1-12345678;Production/WebServices;test-tag:test-value;test-unique-finding;aws;service_test_check_id;service_test_check_id;test-type;PASS;;False;service;;high;test-resource;;;;;aws;eu-west-1;check description;test-risk;test-url;;;;;;;test-compliance: test-compliance;test-category;test-dependency;test-related-to;test-notes;{prowler_version};https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html | https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/introduction.html\r\n"
+        expected_csv = f"AUTH_METHOD;TIMESTAMP;ACCOUNT_UID;ACCOUNT_NAME;ACCOUNT_EMAIL;ACCOUNT_ORGANIZATION_UID;ACCOUNT_ORGANIZATION_NAME;ACCOUNT_TAGS;FINDING_UID;PROVIDER;CHECK_ID;CHECK_TITLE;CHECK_TYPE;STATUS;STATUS_EXTENDED;MUTED;SERVICE_NAME;SUBSERVICE_NAME;SEVERITY;RESOURCE_TYPE;RESOURCE_UID;RESOURCE_NAME;RESOURCE_DETAILS;RESOURCE_TAGS;PARTITION;REGION;DESCRIPTION;RISK;RELATED_URL;REMEDIATION_RECOMMENDATION_TEXT;REMEDIATION_RECOMMENDATION_URL;REMEDIATION_CODE_NATIVEIAC;REMEDIATION_CODE_TERRAFORM;REMEDIATION_CODE_CLI;REMEDIATION_CODE_OTHER;COMPLIANCE;CATEGORIES;DEPENDS_ON;RELATED_TO;NOTES;PROWLER_VERSION;ADDITIONAL_URLS;ACCOUNT_OU_UID;ACCOUNT_OU_NAME\r\nprofile: default;{datetime.now()};123456789012;123456789012;;test-organization-id;test-organization;test-tag:test-value;test-unique-finding;aws;service_test_check_id;service_test_check_id;test-type;PASS;;False;service;;high;test-resource;;;;;aws;eu-west-1;check description;test-risk;test-url;;;;;;;test-compliance: test-compliance;test-category;test-dependency;test-related-to;test-notes;{prowler_version};https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html | https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/introduction.html;ou-abc1-12345678;Production/WebServices\r\n"
         content = mock_file.read()
 
         assert content == expected_csv
@@ -201,7 +201,7 @@ class TestCSV:
             with patch.object(temp_file, "close", return_value=None):
                 csv.batch_write_data_to_file()
 
-            expected_csv = f"AUTH_METHOD;TIMESTAMP;ACCOUNT_UID;ACCOUNT_NAME;ACCOUNT_EMAIL;ACCOUNT_ORGANIZATION_UID;ACCOUNT_ORGANIZATION_NAME;ACCOUNT_OU_UID;ACCOUNT_OU_NAME;ACCOUNT_TAGS;FINDING_UID;PROVIDER;CHECK_ID;CHECK_TITLE;CHECK_TYPE;STATUS;STATUS_EXTENDED;MUTED;SERVICE_NAME;SUBSERVICE_NAME;SEVERITY;RESOURCE_TYPE;RESOURCE_UID;RESOURCE_NAME;RESOURCE_DETAILS;RESOURCE_TAGS;PARTITION;REGION;DESCRIPTION;RISK;RELATED_URL;REMEDIATION_RECOMMENDATION_TEXT;REMEDIATION_RECOMMENDATION_URL;REMEDIATION_CODE_NATIVEIAC;REMEDIATION_CODE_TERRAFORM;REMEDIATION_CODE_CLI;REMEDIATION_CODE_OTHER;COMPLIANCE;CATEGORIES;DEPENDS_ON;RELATED_TO;NOTES;PROWLER_VERSION;ADDITIONAL_URLS\nprofile: default;{datetime.now()};123456789012;123456789012;;test-organization-id;test-organization;ou-abc1-12345678;Production/WebServices;test-tag:test-value;test-unique-finding;aws;service_test_check_id;service_test_check_id;test-type;PASS;;False;service;;high;test-resource;;;;;aws;eu-west-1;check description;test-risk;test-url;;;;;;;test-compliance: test-compliance;test-category;test-dependency;test-related-to;test-notes;{prowler_version};https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html | https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/introduction.html\n"
+            expected_csv = f"AUTH_METHOD;TIMESTAMP;ACCOUNT_UID;ACCOUNT_NAME;ACCOUNT_EMAIL;ACCOUNT_ORGANIZATION_UID;ACCOUNT_ORGANIZATION_NAME;ACCOUNT_TAGS;FINDING_UID;PROVIDER;CHECK_ID;CHECK_TITLE;CHECK_TYPE;STATUS;STATUS_EXTENDED;MUTED;SERVICE_NAME;SUBSERVICE_NAME;SEVERITY;RESOURCE_TYPE;RESOURCE_UID;RESOURCE_NAME;RESOURCE_DETAILS;RESOURCE_TAGS;PARTITION;REGION;DESCRIPTION;RISK;RELATED_URL;REMEDIATION_RECOMMENDATION_TEXT;REMEDIATION_RECOMMENDATION_URL;REMEDIATION_CODE_NATIVEIAC;REMEDIATION_CODE_TERRAFORM;REMEDIATION_CODE_CLI;REMEDIATION_CODE_OTHER;COMPLIANCE;CATEGORIES;DEPENDS_ON;RELATED_TO;NOTES;PROWLER_VERSION;ADDITIONAL_URLS;ACCOUNT_OU_UID;ACCOUNT_OU_NAME\nprofile: default;{datetime.now()};123456789012;123456789012;;test-organization-id;test-organization;test-tag:test-value;test-unique-finding;aws;service_test_check_id;service_test_check_id;test-type;PASS;;False;service;;high;test-resource;;;;;aws;eu-west-1;check description;test-risk;test-url;;;;;;;test-compliance: test-compliance;test-category;test-dependency;test-related-to;test-notes;{prowler_version};https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html | https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/introduction.html;ou-abc1-12345678;Production/WebServices\n"
 
             temp_file.seek(0)
 
