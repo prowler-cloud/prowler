@@ -9,14 +9,18 @@ class keyvault_logging_enabled(Check):
         for subscription_name, key_vaults in keyvault_client.key_vaults.items():
             for keyvault in key_vaults:
                 if not keyvault.monitor_diagnostic_settings:
-                    report = Check_Report_Azure(metadata=self.metadata(), resource=keyvault)
+                    report = Check_Report_Azure(
+                        metadata=self.metadata(), resource=keyvault
+                    )
                     report.subscription = subscription_name
                     report.status = "FAIL"
                     report.status_extended = f"There are no diagnostic settings capturing audit logs for Key Vault {keyvault.name} in subscription {subscription_name}."
                     findings.append(report)
                 else:
                     for diagnostic_setting in keyvault.monitor_diagnostic_settings:
-                        report = Check_Report_Azure(metadata=self.metadata(), resource=keyvault)
+                        report = Check_Report_Azure(
+                            metadata=self.metadata(), resource=keyvault
+                        )
                         report.subscription = subscription_name
                         report.resource_name = diagnostic_setting.name
                         report.resource_id = diagnostic_setting.id
