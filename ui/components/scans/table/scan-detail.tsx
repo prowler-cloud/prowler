@@ -89,6 +89,7 @@ export const ScanDetail = ({
                 <InfoField label="Error Message" variant="simple">
                   <CodeSnippet
                     value={taskDetails.attributes.result.exc_message.join("\n")}
+                    multiline
                   />
                 </InfoField>
               )}

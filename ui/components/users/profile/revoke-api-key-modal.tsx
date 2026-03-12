@@ -70,7 +70,8 @@ export const RevokeApiKeyModal = ({
           <CodeSnippet
             value={`${apiKey?.attributes.name || FALLBACK_VALUES.UNNAMED_KEY}\nPrefix: ${apiKey?.attributes.prefix}`}
             hideCopyButton
-            className="h-auto w-full rounded-lg px-3 py-2 font-mono text-sm [&_code]:break-all [&_code]:whitespace-pre-wrap"
+            multiline
+            className="w-full px-3 py-2 text-sm"
           />
         </div>
 

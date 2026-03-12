@@ -37,7 +37,9 @@ export const ApiKeySuccessModal = ({
           </p>
           <CodeSnippet
             value={apiKey}
-            className="h-auto w-full rounded-lg px-3 py-2 font-mono text-sm [&_code]:break-all [&_code]:whitespace-pre-wrap"
+            multiline
+            ariaLabel="Copy API key"
+            className="w-full px-3 py-2 text-sm"
           />
         </div>
       </div>
