@@ -1,10 +1,10 @@
-import { Chip } from "@heroui/chip";
-import { Divider } from "@heroui/divider";
-import { Switch } from "@heroui/switch";
 import { useEffect, useState } from "react";
 import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 
 import { CredentialsRoleHelper } from "@/components/providers/workflow";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
+import { Badge } from "@/components/shadcn/badge/badge";
+import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
 import {
   Select,
   SelectContent,
@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn/select/select";
-import { CustomInput } from "@/components/ui/custom";
+import { Separator } from "@/components/shadcn/separator/separator";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { AWSCredentialsRole } from "@/types";
 import { IntegrationType } from "@/types/integrations";
@@ -105,14 +105,9 @@ export const AWSRoleCredentialsForm = ({
                     : "AWS SDK Default"}
                 </span>
                 {isCloudEnv && (
-                  <Chip
-                    size="sm"
-                    variant="flat"
-                    color="success"
-                    className="ml-2"
-                  >
+                  <Badge variant="tag" className="ml-2">
                     Recommended
-                  </Chip>
+                  </Badge>
                 )}
               </div>
             </SelectItem>
@@ -127,7 +122,7 @@ export const AWSRoleCredentialsForm = ({
 
       {credentialsType === "access-secret-key" && (
         <>
-          <CustomInput
+          <WizardInputField
             control={control}
             name={ProviderCredentialFields.AWS_ACCESS_KEY_ID}
             type="password"
@@ -137,7 +132,7 @@ export const AWSRoleCredentialsForm = ({
             variant="bordered"
             isRequired
           />
-          <CustomInput
+          <WizardInputField
             control={control}
             name={ProviderCredentialFields.AWS_SECRET_ACCESS_KEY}
             type="password"
@@ -147,7 +142,7 @@ export const AWSRoleCredentialsForm = ({
             variant="bordered"
             isRequired
           />
-          <CustomInput
+          <WizardInputField
             control={control}
             name={ProviderCredentialFields.AWS_SESSION_TOKEN}
             type="password"
@@ -159,7 +154,7 @@ export const AWSRoleCredentialsForm = ({
           />
         </>
       )}
-      <Divider className="" />
+      <Separator />
 
       {type === "providers" ? (
         <span className="text-default-500 text-xs font-bold">Assume Role</span>
@@ -170,11 +165,11 @@ export const AWSRoleCredentialsForm = ({
               ? "Adding a role is required"
               : "Optionally add a role"}
           </span>
-          <Switch
-            size="sm"
-            isSelected={showRoleSection}
-            onValueChange={setShowOptionalRole}
-            isDisabled={isCloudEnv && credentialsType === "aws-sdk-default"}
+          <Checkbox
+            checked={showRoleSection}
+            onCheckedChange={(checked) => setShowOptionalRole(Boolean(checked))}
+            disabled={isCloudEnv && credentialsType === "aws-sdk-default"}
+            aria-label="Optionally add a role"
           />
         </div>
       )}
@@ -187,9 +182,9 @@ export const AWSRoleCredentialsForm = ({
             integrationType={integrationType}
           />
 
-          <Divider />
+          <Separator />
 
-          <CustomInput
+          <WizardInputField
             control={control}
             name={ProviderCredentialFields.ROLE_ARN}
             type="text"
@@ -199,7 +194,7 @@ export const AWSRoleCredentialsForm = ({
             variant="bordered"
             isRequired={showRoleSection}
           />
-          <CustomInput
+          <WizardInputField
             control={control}
             name={ProviderCredentialFields.EXTERNAL_ID}
             type="text"
@@ -214,7 +209,7 @@ export const AWSRoleCredentialsForm = ({
 
           <span className="text-default-500 text-xs">Optional fields</span>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <CustomInput
+            <WizardInputField
               control={control}
               name={ProviderCredentialFields.ROLE_SESSION_NAME}
               type="text"
@@ -224,7 +219,7 @@ export const AWSRoleCredentialsForm = ({
               variant="bordered"
               isRequired={false}
             />
-            <CustomInput
+            <WizardInputField
               control={control}
               name={ProviderCredentialFields.SESSION_DURATION}
               type="number"
