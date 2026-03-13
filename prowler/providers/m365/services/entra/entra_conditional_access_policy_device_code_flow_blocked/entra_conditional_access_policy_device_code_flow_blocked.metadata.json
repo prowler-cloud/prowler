@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Conditional Access Policy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "Conditional Access policies restrict the **device code authentication flow**, which is commonly abused in phishing campaigns to hijack user sessions. A policy targeting `deviceCodeFlow` in authentication flow conditions with a block grant control prevents this attack vector.",
   "Risk": "Device code flow is heavily exploited in phishing attacks such as **Storm-2372**, where attackers trick users into entering device codes on legitimate Microsoft login pages. Without a blocking policy, attackers can obtain tokens and gain persistent access to organizational resources.",
