@@ -43,6 +43,7 @@ export const EventsTimeline = ({
 
     setError(null);
     setErrorStatus(null);
+    setHasFetched(false);
 
     startTransition(async () => {
       try {

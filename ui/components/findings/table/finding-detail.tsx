@@ -2,7 +2,7 @@
 
 import { ExternalLink, Link, X } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 import {
@@ -90,6 +90,10 @@ export const FindingDetail = ({
   const searchParams = useSearchParams();
 
   const [activeTab, setActiveTab] = useState("general");
+
+  useEffect(() => {
+    setActiveTab("general");
+  }, [findingDetails.id]);
 
   const copyFindingUrl = () => {
     const params = new URLSearchParams(searchParams.toString());
