@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra** users with Azure roles that grant VM sign-in or management access-such as `Owner`, `Contributor`, `Virtual Machine * Login`, and `Virtual Machine Contributor`-are evaluated for **multi-factor authentication** enrollment. The finding highlights accounts with VM access that lack more than one authentication factor.",
   "Risk": "Without **MFA**, accounts with VM access are vulnerable to phishing, password spraying, and credential stuffing. Compromise can enable remote VM login, abuse of the VM's managed identity, privilege escalation, and lateral movement-impacting confidentiality, integrity, and availability of workloads.",
@@ -30,7 +30,8 @@
     }
   },
   "Categories": [
-    "identity-access"
+    "identity-access",
+    "e3"
   ],
   "DependsOn": [],
   "RelatedTo": [],
