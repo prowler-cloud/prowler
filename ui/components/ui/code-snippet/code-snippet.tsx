@@ -87,9 +87,7 @@ export const CodeSnippet = ({
     <div
       className={cn(
         "bg-bg-neutral-tertiary text-text-neutral-primary border-border-neutral-tertiary flex w-fit min-w-0 items-center gap-1.5 border-2 px-2 py-0.5 text-xs",
-        multiline
-          ? "h-auto rounded-lg"
-          : "h-6 rounded-full",
+        multiline ? "h-auto rounded-lg" : "h-6 rounded-full",
         className,
       )}
     >
@@ -97,7 +95,7 @@ export const CodeSnippet = ({
         <span className="text-text-neutral-secondary shrink-0">{icon}</span>
       )}
       {multiline ? (
-        <span className="min-w-0 flex-1 whitespace-pre-wrap break-all">
+        <span className="min-w-0 flex-1 break-all whitespace-pre-wrap">
           {displayValue}
         </span>
       ) : (

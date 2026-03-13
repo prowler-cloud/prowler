@@ -304,14 +304,22 @@ export const SamlConfigForm = ({
               <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 ACS URL:
               </span>
-              <CodeSnippet value={acsUrl} ariaLabel="Copy ACS URL" className="h-10 w-full" />
+              <CodeSnippet
+                value={acsUrl}
+                ariaLabel="Copy ACS URL"
+                className="h-10 w-full"
+              />
             </div>
 
             <div>
               <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Audience:
               </span>
-              <CodeSnippet value="urn:prowler.com:sp" ariaLabel="Copy Audience" className="h-10 w-full" />
+              <CodeSnippet
+                value="urn:prowler.com:sp"
+                ariaLabel="Copy Audience"
+                className="h-10 w-full"
+              />
             </div>
 
             <div>
