@@ -44,21 +44,21 @@ export const useWizardState = () => {
   // Derive current step from URL path
   const currentStep: 1 | 2 =
     typeof window !== "undefined"
-      ? window.location.pathname.includes("query-builder")
+      ? window.location.pathname.includes("attack-paths")
         ? 2
         : 1
       : 1;
 
   const goToSelectScan = useCallback(() => {
     store.setCurrentStep(1);
-    router.push("/attack-paths/select-scan");
+    router.push("/attack-paths");
   }, [router, store]);
 
   const goToQueryBuilder = useCallback(
     (scanId: string) => {
       store.setSelectedScanId(scanId);
       store.setCurrentStep(2);
-      router.push(`/attack-paths/query-builder?scanId=${scanId}`);
+      router.push(`/attack-paths?scanId=${scanId}`);
     },
     [router, store],
   );
