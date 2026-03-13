@@ -64,7 +64,6 @@
       "Id": "1.1.4",
       "Description": "Enable Conditional Access policies to block legacy authentication",
       "Checks": [
-        "entra_conditional_access_policy_device_code_flow_blocked",
         "entra_legacy_authentication_blocked"
       ],
       "Attributes": [
