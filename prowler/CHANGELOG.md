@@ -4,6 +4,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ## [5.21.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- `entra_conditional_access_policy_device_code_flow_blocked` check for M365 provider [(#10218)](https://github.com/prowler-cloud/prowler/pull/10218)
+
 ### 🔄 Changed
 
 - Update M365 SharePoint service metadata to new format [(#9684)](https://github.com/prowler-cloud/prowler/pull/9684)
@@ -11,7 +15,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update M365 Teams service metadata to new format [(#9685)](https://github.com/prowler-cloud/prowler/pull/9685)
 - Fix shared report object bug in 6 Azure Key Vault checks causing duplicate/incorrect findings when a vault contains multiple keys, secrets, or diagnostic settings: `keyvault_key_rotation_enabled`, `keyvault_key_expiration_set_in_non_rbac`, `keyvault_rbac_key_expiration_set`, `keyvault_non_rbac_secret_expiration_set`, `keyvault_rbac_secret_expiration_set`, `keyvault_logging_enabled` [(#10332)](https://github.com/prowler-cloud/prowler/pull/10332)
 - Fix `keyvault_key_rotation_enabled` only checking the first lifetime action instead of all actions for a `Rotate` policy [(#10332)](https://github.com/prowler-cloud/prowler/pull/10332)
+- Update M365 Entra ID service metadata to new format [(#9682)](https://github.com/prowler-cloud/prowler/pull/9682)
+- Update ResourceType and Categories for Azure Entra ID service metadata [(#10334)](https://github.com/prowler-cloud/prowler/pull/10334)
 
+### 🔐 Security
+
+- Bump `multipart` to 1.3.1 to fix [GHSA-p2m9-wcp5-6qw3](https://github.com/defnull/multipart/security/advisories/GHSA-p2m9-wcp5-6qw3) [(#10331)](https://github.com/prowler-cloud/prowler/pull/10331)
 
 ---
 
