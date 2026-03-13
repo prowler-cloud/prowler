@@ -4,6 +4,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ## [5.21.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- `entra_conditional_access_policy_device_code_flow_blocked` check for M365 provider [(#10218)](https://github.com/prowler-cloud/prowler/pull/10218)
+
 ### 🔄 Changed
 
 - Update M365 SharePoint service metadata to new format [(#9684)](https://github.com/prowler-cloud/prowler/pull/9684)
