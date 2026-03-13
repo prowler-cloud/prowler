@@ -179,6 +179,7 @@ class OCSF(Output):
                         "compliance": finding.compliance,
                         "scan_id": str(scan_id),
                         "provider_uid": finding.provider_uid or finding.account_uid,
+                        "provider": finding.provider,
                     },
                 )
                 if finding.provider != "kubernetes":
@@ -193,7 +194,8 @@ class OCSF(Output):
                         org=Organization(
                             uid=finding.account_organization_uid,
                             name=finding.account_organization_name,
-                            # TODO: add the org unit id and name
+                            ou_uid=finding.account_ou_uid,
+                            ou_name=finding.account_ou_name,
                         ),
                         provider=finding.provider,
                         region=finding.region,

@@ -7,9 +7,9 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Conditional Access Policy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "This check verifies that at least one **emergency access** (break glass) account or group is excluded from all **Conditional Access policies**. Emergency access accounts provide a fallback mechanism when normal administrative access is blocked due to misconfigured policies.",
+  "Description": "Microsoft Entra **Conditional Access** is verified to have at least one **emergency access** (break glass) account or group excluded from all policies. Emergency access accounts provide a fallback mechanism when normal administrative access is blocked due to misconfigured policies.",
   "Risk": "Without emergency access accounts excluded from Conditional Access policies, a misconfiguration could lock out all administrators from the tenant. This creates a **critical availability risk** where legitimate administrators cannot access or remediate issues in the environment.",
   "RelatedUrl": "",
   "AdditionalURLs": [

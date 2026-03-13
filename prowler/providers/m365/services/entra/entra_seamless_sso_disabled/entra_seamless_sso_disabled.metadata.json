@@ -1,15 +1,15 @@
 {
   "Provider": "m365",
   "CheckID": "entra_seamless_sso_disabled",
-  "CheckTitle": "Entra hybrid deployment does not have Seamless SSO enabled",
+  "CheckTitle": "Hybrid deployment does not have Seamless SSO enabled",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Directory Sync Settings",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "**Seamless Single Sign-On (SSO)** in hybrid Microsoft Entra deployments allows automatic authentication for domain-joined devices on the corporate network.\n\nThis check verifies the actual Seamless SSO configuration in directory synchronization settings. Modern devices with **Primary Refresh Token** (PRT) support no longer require Seamless SSO.",
+  "Description": "Microsoft Entra hybrid deployments use **Seamless Single Sign-On (SSO)** to allow automatic authentication for domain-joined devices on the corporate network.\n\nThis check verifies the actual Seamless SSO configuration in directory synchronization settings. Modern devices with **Primary Refresh Token** (PRT) support no longer require Seamless SSO.",
   "Risk": "Seamless SSO can be exploited for **lateral movement** between on-premises domains and Entra ID when an Entra Connect server is compromised. It can also be used to perform **brute force attacks** against Entra ID, as authentication through the AZUREADSSOACC account bypasses standard protections.",
   "RelatedUrl": "",
   "AdditionalURLs": [

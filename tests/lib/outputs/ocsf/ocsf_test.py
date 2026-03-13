@@ -114,6 +114,7 @@ class TestOCSF:
             "notes": findings[0].metadata.Notes,
             "compliance": findings[0].compliance,
             "provider_uid": findings[0].account_uid,
+            "provider": findings[0].provider,
         }
 
         # Test with int timestamp (UNIX timestamp)
@@ -221,6 +222,7 @@ class TestOCSF:
                     "notes": "test-notes",
                     "compliance": {"test-compliance": "test-compliance"},
                     "provider_uid": "123456789012",
+                    "provider": "aws",
                 },
                 "activity_name": "Create",
                 "activity_id": 1,
@@ -262,6 +264,8 @@ class TestOCSF:
                     "org": {
                         "name": "test-organization",
                         "uid": "test-organization-id",
+                        "ou_uid": "ou-abc1-12345678",
+                        "ou_name": "Production/WebServices",
                     },
                     "provider": "aws",
                     "region": "eu-west-1",
@@ -357,6 +361,7 @@ class TestOCSF:
             "notes": finding_output.metadata.Notes,
             "compliance": finding_output.compliance,
             "provider_uid": finding_output.account_uid,
+            "provider": finding_output.provider,
         }
 
         # ResourceDetails
@@ -419,6 +424,8 @@ class TestOCSF:
         assert isinstance(cloud_organization, Organization)
         assert cloud_organization.uid == finding_output.account_organization_uid
         assert cloud_organization.name == finding_output.account_organization_name
+        assert cloud_organization.ou_uid == finding_output.account_ou_uid
+        assert cloud_organization.ou_name == finding_output.account_ou_name
 
     def test_finding_output_kubernetes(self):
         finding_output = generate_finding_output(
@@ -438,6 +445,7 @@ class TestOCSF:
             "namespace: ", ""
         )
         assert finding_ocsf.unmapped["provider_uid"] == "test-k8s-context"
+        assert finding_ocsf.unmapped["provider"] == "kubernetes"
 
     def test_finding_output_cloud_fail_low_not_muted(self):
         finding_output = generate_finding_output(

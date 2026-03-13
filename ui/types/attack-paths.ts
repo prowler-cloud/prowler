@@ -175,6 +175,11 @@ export interface AttackPathQueryResult {
   data: QueryResultData;
 }
 
+export interface AttackPathQueryError {
+  error: string;
+  status: number;
+}
+
 // Finding severity and status constants
 export const FINDING_SEVERITIES = {
   CRITICAL: "critical",

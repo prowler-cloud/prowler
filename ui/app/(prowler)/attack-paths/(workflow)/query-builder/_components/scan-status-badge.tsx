@@ -38,7 +38,7 @@ const BADGE_CONFIG: Record<
   [SCAN_STATES.FAILED]: {
     className: "bg-bg-fail-secondary text-text-error-primary",
     label: "Failed",
-    showGraphDot: true,
+    showGraphDot: false,
   },
 };
 
