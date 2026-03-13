@@ -70,6 +70,11 @@ export const getProviderHelpText = (provider: string) => {
         text: "Need help connecting your OpenStack cloud?",
         link: "https://goto.prowler.com/provider-openstack",
       };
+    case "googleworkspace":
+      return {
+        text: "Need help connecting your Google Workspace account?",
+        link: "https://goto.prowler.com/provider-googleworkspace",
+      };
     default:
       return {
         text: "How to setup a provider?",

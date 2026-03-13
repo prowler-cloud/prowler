@@ -140,6 +140,17 @@ export const addProviderFormSchema = z
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
       }),
+      z.object({
+        providerType: z.literal("googleworkspace"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z
+          .string()
+          .trim()
+          .regex(
+            /^C[0-9a-zA-Z]+$/,
+            "Customer ID must start with 'C' followed by alphanumeric characters (e.g., C01234abc)",
+          ),
+      }),
     ]),
   );
 
@@ -306,7 +317,45 @@ export const addCredentialsFormSchema = (
                                   [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]:
                                     z.string().min(1, "Cloud name is required"),
                                 }
-                              : {}),
+                              : providerType === "googleworkspace"
+                                ? {
+                                    [ProviderCredentialFields.GOOGLEWORKSPACE_CUSTOMER_ID]:
+                                      z
+                                        .string()
+                                        .trim()
+                                        .regex(
+                                          /^C[0-9a-zA-Z]+$/,
+                                          "Customer ID must start with 'C' followed by alphanumeric characters (e.g., C01234abc)",
+                                        ),
+                                    [ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT]:
+                                      z.string().refine(
+                                        (val) => {
+                                          try {
+                                            const parsed = JSON.parse(val);
+                                            return (
+                                              typeof parsed === "object" &&
+                                              parsed !== null &&
+                                              !Array.isArray(parsed)
+                                            );
+                                          } catch {
+                                            return false;
+                                          }
+                                        },
+                                        {
+                                          message:
+                                            "Invalid JSON format. Please provide a valid Service Account JSON.",
+                                        },
+                                      ),
+                                    [ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER]:
+                                      z
+                                        .string()
+                                        .trim()
+                                        .min(1, "Delegated user email is required")
+                                        .email(
+                                          "Please enter a valid email address",
+                                        ),
+                                  }
+                                : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {

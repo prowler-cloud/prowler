@@ -355,6 +355,13 @@ export type OpenStackCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type GoogleWorkspaceCredentials = {
+  [ProviderCredentialFields.GOOGLEWORKSPACE_CUSTOMER_ID]: string;
+  [ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT]: string;
+  [ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AWSCredentialsRole
@@ -369,7 +376,8 @@ export type CredentialsFormSchema =
   | AlibabaCloudCredentials
   | AlibabaCloudCredentialsRole
   | CloudflareCredentials
-  | OpenStackCredentials;
+  | OpenStackCredentials
+  | GoogleWorkspaceCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;

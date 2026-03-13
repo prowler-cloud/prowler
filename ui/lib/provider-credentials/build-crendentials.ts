@@ -264,6 +264,32 @@ export const buildOpenStackSecret = (formData: FormData) => {
   return filterEmptyValues(secret);
 };
 
+export const buildGoogleWorkspaceSecret = (formData: FormData) => {
+  const credentialsContentRaw = getFormValue(
+    formData,
+    ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT,
+  ) as string;
+
+  // Validate that it's valid JSON (will throw if invalid)
+  try {
+    JSON.parse(credentialsContentRaw);
+  } catch (error) {
+    console.error("Invalid Service Account JSON:", error);
+    throw new Error("Invalid Service Account JSON format");
+  }
+
+  // Return the JSON as a string (not parsed object) because the API expects a string
+  const secret = {
+    [ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT]:
+      credentialsContentRaw,
+    [ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER]: getFormValue(
+      formData,
+      ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 export const buildIacSecret = (formData: FormData) => {
   const secret = {
     [ProviderCredentialFields.REPOSITORY_URL]: getFormValue(
@@ -449,6 +475,10 @@ export const buildSecretConfig = (
     openstack: () => ({
       secretType: "static",
       secret: buildOpenStackSecret(formData),
+    }),
+    googleworkspace: () => ({
+      secretType: "static",
+      secret: buildGoogleWorkspaceSecret(formData),
     }),
   };
 

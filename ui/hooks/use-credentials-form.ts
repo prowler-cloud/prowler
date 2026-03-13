@@ -226,6 +226,14 @@ export const useCredentialsForm = ({
           [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]: "",
           [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]: "",
         };
+      case "googleworkspace":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.GOOGLEWORKSPACE_CUSTOMER_ID]:
+            providerUid || "",
+          [ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT]: "",
+          [ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER]: "",
+        };
       default:
         return baseDefaults;
     }

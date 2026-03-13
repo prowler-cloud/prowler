@@ -73,6 +73,11 @@ const OpenStackProviderBadge = lazy(() =>
     default: m.OpenStackProviderBadge,
   })),
 );
+const GoogleWorkspaceProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.GoogleWorkspaceProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -107,6 +112,10 @@ const PROVIDER_DATA: Record<
   github: {
     label: "GitHub",
     icon: GitHubProviderBadge,
+  },
+  googleworkspace: {
+    label: "Google Workspace",
+    icon: GoogleWorkspaceProviderBadge,
   },
   iac: {
     label: "Infrastructure as Code",
