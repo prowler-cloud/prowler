@@ -1403,7 +1403,6 @@
       "Id": "5.2.2.3",
       "Description": "Entra ID supports the most widely used authentication and authorization protocols including legacy authentication. This authentication pattern includes basic authentication, a widely used industry-standard method for collecting username and password information. Enable Conditional Access policies to block legacy authentication.",
       "Checks": [
-        "entra_conditional_access_policy_device_code_flow_blocked",
         "entra_legacy_authentication_blocked"
       ],
       "Attributes": [
