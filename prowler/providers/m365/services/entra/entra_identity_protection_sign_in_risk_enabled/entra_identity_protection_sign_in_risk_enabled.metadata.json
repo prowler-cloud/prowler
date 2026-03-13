@@ -7,19 +7,15 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Microsoft Entra Conditional Access** has a sign-in risk-based Identity Protection policy that targets `All users` and `All cloud apps`, evaluates `Medium` and `High` sign-in risk, requires **MFA**, sets `sign-in frequency: every time`, and is actively enforced *not report-only*.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** has a sign-in risk-based Identity Protection policy that targets `All users` and `All cloud apps`, evaluates `Medium` and `High` sign-in risk, requires **MFA**, sets `sign-in frequency: every time`, and is actively enforced *not report-only*.",
   "Risk": "Without this policy, risky authentications using stolen or replayed credentials may proceed without step-up verification, enabling account takeover. Attackers can establish persistent sessions, exfiltrate data, change configurations, and move laterally-eroding confidentiality and integrity and potentially impacting availability through privilege abuse.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.sikich.com/insight/how-to-use-microsoft-entra-to-identify-risky-user-sign-ins/",
-    "https://www.plexhosted.com/post/how-to-configure-microsoft-entra-id-protection-risk-based-access-policies",
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
     "https://azure.microsofts.workers.dev/en-us/entra/identity/authentication/tutorial-risk-based-sspr-mfa",
-    "https://learn.microsoft.com/en-us/entra/id-protection/howto-identity-protection-configure-risk-policies",
-    "https://blog.admindroid.com/risk-based-conditional-access-policies-in-microsoft-entra-id/",
-    "https://redcanary.com/blog/security-operations/getting-started-with-conditional-access/",
-    "https://entra.microsoft.com."
+    "https://learn.microsoft.com/en-us/entra/id-protection/howto-identity-protection-configure-risk-policies"
   ],
   "Remediation": {
     "Code": {

@@ -2,6 +2,7 @@ import json
 import logging
 from enum import StrEnum
 
+
 from config.env import env
 from django_guid.log_filters import CorrelationId
 
@@ -62,6 +63,8 @@ class NDJSONFormatter(logging.Formatter):
             log_record["duration"] = record.duration
         if hasattr(record, "status_code"):
             log_record["status_code"] = record.status_code
+        if hasattr(record, "metadata"):
+            log_record["metadata"] = record.metadata
 
         if record.exc_info:
             log_record["exc_info"] = self.formatException(record.exc_info)
@@ -107,6 +110,8 @@ class HumanReadableFormatter(logging.Formatter):
             log_components.append(f"done in {record.duration}s:")
         if hasattr(record, "status_code"):
             log_components.append(f"{record.status_code}")
+        if hasattr(record, "metadata"):
+            log_components.append(f"metadata={record.metadata}")
 
         if record.exc_info:
             log_components.append(self.formatException(record.exc_info))

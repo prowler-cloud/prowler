@@ -91,11 +91,7 @@ export const createMuteRulesColumns = (
   },
   {
     id: "actions",
-    header: () => (
-      <div className="flex items-center justify-center px-2">
-        <span className="text-sm font-semibold">Actions</span>
-      </div>
-    ),
+    header: () => null,
     cell: ({ row }) => {
       return (
         <MuteRuleRowActions

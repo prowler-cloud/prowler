@@ -7,19 +7,15 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "",
-  "Description": "**Microsoft Entra Conditional Access** has an enforced policy requiring **multifactor authentication** for `All users` across `All cloud apps` *(not just report-only)*.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** has an enforced policy requiring **multifactor authentication** for `All users` across `All cloud apps` *(not just report-only)*.",
   "Risk": "Lacking an enforced, tenant-wide **MFA** mandate enables single-factor sign-ins to M365 apps. Stolen or sprayed passwords can yield access, leading to data exfiltration, unauthorized changes, and outages. Report-only or scoped policies leave gaps that undermine confidentiality, integrity, and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.linkedin.com/posts/rafa\u0142-fitt_conditions-in-conditional-access-policy-activity-7328448540760850432-6ker",
     "https://learn.microsoft.com/en-us/entra/identity/authentication/tutorial-enable-azure-mfa",
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-mfa-strength",
-    "https://docs.azure.cn/en-us/entra/identity/conditional-access/policy-guests-mfa-strength",
-    "https://blog.admindroid.com/microsoft-security-defaults-vs-conditional-access-policies/",
-    "https://covene.com/microsoft-entra-id-conditional-access-configuration/",
-    "https://github.com/MicrosoftDocs/entra-docs/blob/main/docs/identity/conditional-access/policy-all-users-mfa-strength.md",
-    "https://entra.microsoft.com."
+    "https://docs.azure.cn/en-us/entra/identity/conditional-access/policy-guests-mfa-strength"
   ],
   "Remediation": {
     "Code": {

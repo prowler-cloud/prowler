@@ -7,13 +7,13 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "",
-  "Description": "**Microsoft Entra Conditional Access** has an active policy that blocks **legacy authentication** for `All users` and `All cloud apps` by targeting legacy client app types (e.g., Exchange ActiveSync, other basic-auth clients) and enforcing `Block` access.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** has an active policy that blocks **legacy authentication** for `All users` and `All cloud apps` by targeting legacy client app types (e.g., Exchange ActiveSync, other basic-auth clients) and enforcing `Block` access.",
   "Risk": "Allowing legacy authentication enables password spray and credential stuffing that bypass **MFA**, leading to account takeover. Compromised sessions threaten **confidentiality** (mail, files), **integrity** (settings, data changes), and **availability**, and enable **lateral movement** across Microsoft 365.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-block-legacy-authentication",
-    "https://entra.microsoft.com."
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-block-legacy-authentication"
   ],
   "Remediation": {
     "Code": {

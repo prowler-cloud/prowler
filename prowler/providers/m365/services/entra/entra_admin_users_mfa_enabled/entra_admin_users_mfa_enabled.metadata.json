@@ -7,19 +7,18 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
   "Description": "Microsoft Entra Conditional Access policies that enforce **multifactor authentication** for users in **administrative roles** across all resources.\n\nThe assessment identifies at least one active policy that targets admin roles (or all users), includes all applications, and grants access only when `Require multifactor authentication` is satisfied.",
   "Risk": "Without enforced **MFA** on privileged accounts, stolen or phished passwords can grant admin access, enabling tenant takeover. Attackers may exfiltrate data, change configurations, consent malicious apps, and disable protections, impacting confidentiality, integrity, and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://janbakker.tech/all-you-need-to-know-about-the-mandatory-multifactor-authentication-for-azure-and-other-administration-portals/",
     "https://learn.microsoft.com/en-us/entra/identity/authentication/howto-mfa-getstarted",
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-alt-all-users-compliant-hybrid-or-mfa",
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-admin-mfa",
     "https://learn.microsoft.com/en-us/entra/identity/authentication/tutorial-enable-azure-mfa",
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-alt-admin-device-compliand-hybrid",
-    "https://learn.microsoft.com/en-us/entra/identity/authentication/howto-mfa-userstates",
-    "https://entra.microsoft.com."
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/howto-mfa-userstates"
   ],
   "Remediation": {
     "Code": {

@@ -1,18 +1,18 @@
 {
   "Provider": "m365",
   "CheckID": "entra_dynamic_group_for_guests_created",
-  "CheckTitle": "A dynamic membership group for guest users exists in Microsoft Entra",
+  "CheckTitle": "A dynamic membership group for guest users exists",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",
-  "ResourceType": "",
-  "Description": "**Microsoft Entra groups** are evaluated for **dynamic membership** that includes only users with `userType -eq \"Guest\"`.\n\nThe finding indicates whether a guest-targeted dynamic group exists to centrally scope policies and governance.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "Microsoft Entra **groups** are evaluated for **dynamic membership** that includes only users with `userType -eq \"Guest\"`.\n\nThe finding indicates whether a guest-targeted dynamic group exists to centrally scope policies and governance.",
   "Risk": "Without a dedicated dynamic guest group, guests may evade consistent **Conditional Access** and least-privilege controls. This threatens **confidentiality** via excess data access, weakens **integrity** through unauthorized changes, and leaves stale external accounts that enable lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://entra.microsoft.com/.",
     "https://learn.microsoft.com/en-us/entra/identity/users/groups-create-rule"
   ],
   "Remediation": {

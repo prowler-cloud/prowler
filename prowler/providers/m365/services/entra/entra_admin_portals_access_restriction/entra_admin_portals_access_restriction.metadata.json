@@ -1,24 +1,21 @@
 {
   "Provider": "m365",
   "CheckID": "entra_admin_portals_access_restriction",
-  "CheckTitle": "Microsoft admin portals are accessible only to administrative roles",
+  "CheckTitle": "Admin portals are accessible only to administrative roles",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "",
-  "Description": "Conditional Access restricts `MicrosoftAdminPortals` by targeting admin portals, including all users, excluding administrative roles, and applying a **block** decision. The assessment determines whether an active policy enforces this restriction rather than only reporting.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** restricts `MicrosoftAdminPortals` by targeting admin portals, including all users, excluding administrative roles, and applying a **block** decision. The assessment determines whether an active policy enforces this restriction rather than only reporting.",
   "Risk": "Absent this control, non-admin identities can reach admin portals, jeopardizing **integrity** (unauthorized tenant changes), **confidentiality** (exposure of settings and data), and **availability** (disabling services). Threats include privilege escalation, weakening policies, and creating persistence.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.triskelelabs.com/blog/microsoft-entra-conditional-access-policies",
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
-    "https://feedback.azure.com/d365community/idea/215d9249-99a9-ee11-92bc-000d3ae54955",
-    "https://github.com/MicrosoftDocs/entra-docs/blob/main/docs/identity/conditional-access/concept-conditional-access-policy-common.md",
     "https://learn.microsoft.com/en-us/microsoft-365/admin/add-users/about-admin-roles?view=o365-worldwide",
-    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps",
-    "https://entra.microsoft.com."
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps"
   ],
   "Remediation": {
     "Code": {

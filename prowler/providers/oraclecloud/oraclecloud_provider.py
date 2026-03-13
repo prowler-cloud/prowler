@@ -266,7 +266,6 @@ class OraclecloudProvider(Provider):
             # If API key credentials are provided directly, create config from them
             if user and fingerprint and tenancy and region:
                 import base64
-                import tempfile
 
                 logger.info("Using API key credentials from direct parameters")
 
@@ -280,21 +279,19 @@ class OraclecloudProvider(Provider):
 
                 # Handle private key
                 if key_content:
-                    # Decode base64 key content and write to temp file
+                    # Decode base64 key content
                     try:
                         key_data = base64.b64decode(key_content)
-                        temp_key_file = tempfile.NamedTemporaryFile(
-                            mode="wb", delete=False, suffix=".pem"
-                        )
-                        temp_key_file.write(key_data)
-                        temp_key_file.close()
-                        config["key_file"] = temp_key_file.name
+                        decoded_key = key_data.decode("utf-8")
                     except Exception as decode_error:
                         logger.error(f"Failed to decode key_content: {decode_error}")
                         raise OCIInvalidConfigError(
                             file=pathlib.Path(__file__).name,
                             message="Failed to decode key_content. Ensure it is base64 encoded.",
                         )
+
+                    # Use OCI SDK's native key_content support
+                    config["key_content"] = decoded_key
                 elif key_file:
                     config["key_file"] = os.path.expanduser(key_file)
                 else:
@@ -428,78 +425,85 @@ class OraclecloudProvider(Provider):
         Raises:
             - OCIAuthenticationError: If authentication fails.
         """
-        try:
-            # Get tenancy from config
-            tenancy_id = session.config.get("tenancy")
+        # Get tenancy from config
+        tenancy_id = session.config.get("tenancy")
 
-            if not tenancy_id:
-                raise OCINoCredentialsError(
-                    file=pathlib.Path(__file__).name,
-                    message="Tenancy ID not found in configuration",
-                )
-
-            # Validate tenancy OCID format
-            if not OraclecloudProvider.validate_ocid(tenancy_id, "tenancy"):
-                raise OCIInvalidTenancyError(
-                    file=pathlib.Path(__file__).name,
-                    message=f"Invalid tenancy OCID format: {tenancy_id}",
-                )
-
-            # Get user from config (not available in instance principal)
-            user_id = session.config.get("user", "instance-principal")
-
-            # Get region from config or use provided region
-            if not region:
-                region = session.config.get("region", "us-ashburn-1")
-
-            # Validate region
-            if region not in OCI_REGIONS:
-                raise OCIInvalidRegionError(
-                    file=pathlib.Path(__file__).name,
-                    message=f"Invalid region: {region}",
-                )
-
-            # Get tenancy name using Identity service
-            tenancy_name = "unknown"
-            try:
-                # Create identity client with proper authentication handling
-                if session.signer:
-                    identity_client = oci.identity.IdentityClient(
-                        config=session.config, signer=session.signer
-                    )
-                else:
-                    identity_client = oci.identity.IdentityClient(config=session.config)
-
-                tenancy = identity_client.get_tenancy(tenancy_id).data
-                tenancy_name = tenancy.name
-                logger.info(f"Tenancy Name: {tenancy_name}")
-            except Exception as error:
-                logger.warning(
-                    f"Could not retrieve tenancy name: {error}. Using 'unknown'"
-                )
-
-            logger.info(f"OCI Tenancy ID: {tenancy_id}")
-            logger.info(f"OCI User ID: {user_id}")
-            logger.info(f"OCI Region: {region}")
-
-            return OCIIdentityInfo(
-                tenancy_id=tenancy_id,
-                tenancy_name=tenancy_name,
-                user_id=user_id,
-                region=region,
-                profile=session.profile,
-                audited_regions=set([region]) if region else set(),
-                audited_compartments=compartment_ids if compartment_ids else [],
+        if not tenancy_id:
+            raise OCINoCredentialsError(
+                file=pathlib.Path(__file__).name,
+                message="Tenancy ID not found in configuration",
             )
 
-        except Exception as error:
+        # Validate tenancy OCID format
+        if not OraclecloudProvider.validate_ocid(tenancy_id, "tenancy"):
+            raise OCIInvalidTenancyError(
+                file=pathlib.Path(__file__).name,
+                message=f"Invalid tenancy OCID format: {tenancy_id}",
+            )
+
+        # Get user from config (not available in instance principal)
+        user_id = session.config.get("user", "instance-principal")
+
+        # Get region from config or use provided region
+        if not region:
+            region = session.config.get("region", "us-ashburn-1")
+
+        # Validate region
+        if region not in OCI_REGIONS:
+            raise OCIInvalidRegionError(
+                file=pathlib.Path(__file__).name,
+                message=f"Invalid region: {region}",
+            )
+
+        # Validate credentials by calling OCI Identity service
+        try:
+            if session.signer:
+                identity_client = oci.identity.IdentityClient(
+                    config=session.config, signer=session.signer
+                )
+            else:
+                identity_client = oci.identity.IdentityClient(config=session.config)
+
+            tenancy = identity_client.get_tenancy(tenancy_id).data
+            tenancy_name = tenancy.name
+            logger.info(f"Tenancy Name: {tenancy_name}")
+        except oci.exceptions.ServiceError as error:
             logger.critical(
-                f"OCIAuthenticationError[{error.__traceback__.tb_lineno}]: {error}"
+                f"OCI credential validation failed (HTTP {error.status}): {error.message}"
             )
             raise OCIAuthenticationError(
-                original_exception=error,
                 file=pathlib.Path(__file__).name,
+                message=f"OCI credential validation failed: {error.message}. Please verify your credentials and try again.",
+                original_exception=error,
             )
+        except oci.exceptions.InvalidPrivateKey as error:
+            logger.critical(f"Invalid OCI private key: {error}")
+            raise OCIAuthenticationError(
+                file=pathlib.Path(__file__).name,
+                message="Invalid OCI private key format. Ensure the key is a valid PEM-encoded private key.",
+                original_exception=error,
+            )
+        except Exception as error:
+            logger.critical(f"OCI authentication error: {error}")
+            raise OCIAuthenticationError(
+                file=pathlib.Path(__file__).name,
+                message=f"Failed to authenticate with OCI: {error}",
+                original_exception=error,
+            )
+
+        logger.info(f"OCI Tenancy ID: {tenancy_id}")
+        logger.info(f"OCI User ID: {user_id}")
+        logger.info(f"OCI Region: {region}")
+
+        return OCIIdentityInfo(
+            tenancy_id=tenancy_id,
+            tenancy_name=tenancy_name,
+            user_id=user_id,
+            region=region,
+            profile=session.profile,
+            audited_regions=set([region]) if region else set(),
+            audited_compartments=compartment_ids if compartment_ids else [],
+        )
 
     @staticmethod
     def validate_ocid(ocid: str, resource_type: str = None) -> bool:
@@ -838,7 +842,6 @@ class OraclecloudProvider(Provider):
             # If API key credentials are provided directly, create config from them
             if user and fingerprint and tenancy and region:
                 import base64
-                import tempfile
 
                 logger.info("Using API key credentials from direct parameters")
 
@@ -852,21 +855,19 @@ class OraclecloudProvider(Provider):
 
                 # Handle private key
                 if key_content:
-                    # Decode base64 key content and write to temp file
+                    # Decode base64 key content
                     try:
                         key_data = base64.b64decode(key_content)
-                        temp_key_file = tempfile.NamedTemporaryFile(
-                            mode="wb", delete=False, suffix=".pem"
-                        )
-                        temp_key_file.write(key_data)
-                        temp_key_file.close()
-                        config["key_file"] = temp_key_file.name
+                        decoded_key = key_data.decode("utf-8")
                     except Exception as decode_error:
                         logger.error(f"Failed to decode key_content: {decode_error}")
                         raise OCIInvalidConfigError(
                             file=pathlib.Path(__file__).name,
                             message="Failed to decode key_content. Ensure it is base64 encoded.",
                         )
+
+                    # Use OCI SDK's native key_content support
+                    config["key_content"] = decoded_key
                 elif key_file:
                     config["key_file"] = os.path.expanduser(key_file)
                 else:

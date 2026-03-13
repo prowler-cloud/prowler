@@ -54,6 +54,7 @@ export function BreadcrumbNavigation({
       "/manage-groups": "lucide:users-2",
       "/services": "lucide:server",
       "/workloads": "lucide:layers",
+      "/attack-paths": "lucide:git-branch",
     };
 
     const pathSegments = pathname
@@ -106,7 +107,7 @@ export function BreadcrumbNavigation({
   };
 
   const renderTitleWithIcon = (titleText: string, isLink: boolean = false) => (
-    <>
+    <div className="flex items-center gap-2">
       {typeof icon === "string" ? (
         <Icon
           className="text-text-neutral-primary"
@@ -124,7 +125,7 @@ export function BreadcrumbNavigation({
       >
         {titleText}
       </h1>
-    </>
+    </div>
   );
 
   // Determine which breadcrumbs to use
@@ -156,6 +157,7 @@ export function BreadcrumbNavigation({
               >
                 {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
                   <Icon
+                    aria-hidden="true"
                     className="text-text-neutral-primary"
                     height={24}
                     icon={breadcrumb.icon}
@@ -177,6 +179,7 @@ export function BreadcrumbNavigation({
               >
                 {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
                   <Icon
+                    aria-hidden="true"
                     className="text-text-neutral-primary"
                     height={24}
                     icon={breadcrumb.icon}
@@ -195,6 +198,7 @@ export function BreadcrumbNavigation({
               <div className="flex items-center gap-2">
                 {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
                   <Icon
+                    aria-hidden="true"
                     className="text-default-500"
                     height={24}
                     icon={breadcrumb.icon}

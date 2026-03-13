@@ -7,12 +7,12 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
   "Description": "Microsoft Entra authorization policy defines default user permissions, including whether **non-admin users** are `allowed_to_create_tenants`. This evaluates if tenant creation is disabled for default users via `default_user_role_permissions`.",
   "Risk": "Allowing default users to create tenants spawns unmanaged shadow tenants. Creators become **Global Administrator**, enabling escalation from compromised accounts and sidestepping governance. This degrades **confidentiality** and **integrity**, widens the **attack surface**, and introduces hidden costs.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://entra.microsoft.com",
     "https://learn.microsoft.com/en-us/entra/fundamentals/users-default-permissions",
     "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#tenant-creator"
   ],

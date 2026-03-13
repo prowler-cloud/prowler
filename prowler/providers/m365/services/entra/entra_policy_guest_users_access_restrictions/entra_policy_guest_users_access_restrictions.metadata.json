@@ -1,25 +1,21 @@
 {
   "Provider": "m365",
   "CheckID": "entra_policy_guest_users_access_restrictions",
-  "CheckTitle": "Entra authorization policy restricts guest user access to properties and memberships of their own directory objects",
+  "CheckTitle": "Authorization policy restricts guest user access to properties and memberships of their own directory objects",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "",
-  "Description": "**Microsoft Entra** authorization policy evaluates **guest user access restrictions** being set to the most restrictive level, where guests can view only their own directory object and related memberships (`Guest user access is restricted to properties and memberships of their own directory objects`).",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **authorization policy** evaluates **guest user access restrictions** being set to the most restrictive level, where guests can view only their own directory object and related memberships (`Guest user access is restricted to properties and memberships of their own directory objects`).",
   "Risk": "Without this restriction, guests can read broader directory metadata and group memberships, enabling reconnaissance that harms **confidentiality**. A compromised guest gains context for phishing and privilege escalation, risking unauthorized changes (**integrity**) and disruption of collaboration spaces (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/fundamentals/users-default-permissions#member-and-guest-users",
-    "https://www.manageengine.com/microsoft-365-management-reporting/kb/how-to-restrict-guest-access-permissions-in-entra-id.html",
-    "https://entra.microsoft.com/.",
-    "https://blog.admindroid.com/guest-user-access-restrictions-in-microsoft-entra-id/",
-    "https://pizagame.com/api/game-proxy?url=https://learn.microsoft.com/en-us/microsoftteams/guest-experience",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/restrict-guest-user-access.html",
-    "https://learn.microsoft.com/en-us/entra/identity/users/users-restrict-guest-permissions",
-    "https://github.com/MicrosoftDocs/entra-docs/blob/main/docs/fundamentals/users-default-permissions.md?context=/active-directory/roles/context/ugr-context"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/azure/ActiveDirectory/restrict-guest-user-access.html",
+    "https://learn.microsoft.com/en-us/entra/identity/users/users-restrict-guest-permissions"
   ],
   "Remediation": {
     "Code": {
@@ -34,7 +30,8 @@
     }
   },
   "Categories": [
-    "identity-access"
+    "identity-access",
+    "e3"
   ],
   "DependsOn": [],
   "RelatedTo": [],

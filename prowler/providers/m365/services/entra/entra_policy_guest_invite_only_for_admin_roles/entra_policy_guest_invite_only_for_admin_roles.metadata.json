@@ -1,20 +1,19 @@
 {
   "Provider": "m365",
   "CheckID": "entra_policy_guest_invite_only_for_admin_roles",
-  "CheckTitle": "Entra tenant guest invitations are restricted to specific admin roles or disabled",
+  "CheckTitle": "Tenant guest invitations are restricted to specific admin roles or disabled",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
   "Description": "Microsoft Entra authorization policy controls **guest invitations** via `guest_invite_settings`. It should be `adminsAndGuestInviters` or `none`, so only specific **administrative roles** can invite guests-or invitations are disabled.",
   "Risk": "Unrestricted invites allow broad creation of external identities. A compromised user can onboard attacker-controlled guests, gaining ongoing access to teams, sites, and apps. This erodes **confidentiality**, enables **privilege abuse**, and complicates revocation and audit.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#guest-inviter",
-    "https://learn.microsoft.com/en-gb/answers/questions/2007215/entra-id-external-collaboration-setting-guest-nvit",
-    "https://entra.microsoft.com/.",
     "https://learn.microsoft.com/en-us/entra/external-id/external-collaboration-settings-configure",
     "https://learn.microsoft.com/nb-no/Azure/active-directory/external-identities/external-collaboration-settings-configure",
     "https://learn.microsoft.com/en-us/microsoft-365/solutions/limit-who-can-invite-guests?view=o365-worldwide"

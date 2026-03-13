@@ -1,25 +1,22 @@
 {
   "Provider": "m365",
   "CheckID": "entra_admin_consent_workflow_enabled",
-  "CheckTitle": "Microsoft Entra admin consent workflow is enabled",
+  "CheckTitle": "Admin consent workflow is enabled",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
   "Description": "Microsoft Entra **admin consent workflow** is evaluated to confirm an approval path exists for app permission requests. The check looks for the workflow being enabled and, when present, whether **reviewer notifications** are configured.",
   "Risk": "Without an approval workflow, app access decisions lack controlled review. This can force permissive settings or push users to shadow IT, enabling **consent phishing** and excessive Graph permissions that jeopardize **confidentiality** and **integrity**, or block required apps, affecting **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.plexhosted.com/post/complete-setup-how-to-enable-admin-consent-workflow-and-stop-unapproved-app-access-in-microsoft-ent",
     "https://learn.microsoft.com/en-NZ/entra/identity/enterprise-apps/user-admin-consent-overview",
-    "https://entra.microsoft.com/.",
     "https://www.cloudcoffee.ch/microsoft-azure/microsoft-entra-id-admin-consent-workflow/",
-    "https://support.atlassian.com/jira/kb/need-admin-approval-message-when-trying-to-connect-email-accounts-in-jsm-cloud/",
     "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-admin-consent-workflow",
-    "https://global-sharepoint.com/sharepoint/admin-consent-approval-workflow/",
-    "https://www.linkedin.com/pulse/how-manage-users-consent-applications-within-azure-ad-entra-id-alcpf"
+    "https://global-sharepoint.com/sharepoint/admin-consent-approval-workflow/"
   ],
   "Remediation": {
     "Code": {

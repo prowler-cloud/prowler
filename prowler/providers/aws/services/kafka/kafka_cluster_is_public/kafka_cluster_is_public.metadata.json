@@ -12,12 +12,13 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsMskCluster",
+  "ResourceGroup": "messaging",
   "Description": "**Amazon MSK clusters** with broker endpoints **exposed to the public Internet**.\n\nServerless clusters are private by default; provisioned clusters are evaluated for their `public access` configuration.",
   "Risk": "Public brokers erode **CIA**:\n- **Confidentiality**: unauthorized consumers can read topics\n- **Integrity**: rogue producers inject or alter events\n- **Availability**: floods or scans strain brokers\n\nThis enables metadata enumeration, data exfiltration, stream poisoning, and costly egress.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/msk/latest/developerguide/public-access.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/public-access-msk-cluster.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/MSK/public-access-msk-cluster.html",
     "https://docs.aws.amazon.com/msk/latest/developerguide/client-access.html"
   ],
   "Remediation": {

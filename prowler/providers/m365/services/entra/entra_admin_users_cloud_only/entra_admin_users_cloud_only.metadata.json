@@ -1,14 +1,15 @@
 {
   "Provider": "m365",
   "CheckID": "entra_admin_users_cloud_only",
-  "CheckTitle": "All Microsoft 365 users with administrative roles are cloud-only accounts",
+  "CheckTitle": "All users with administrative roles are cloud-only accounts",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Microsoft Entra administrative users** are evaluated to confirm they are **cloud-only accounts**, with no on-premises directory synchronization for any user holding privileged roles.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **administrative users** are evaluated to confirm they are **cloud-only accounts**, with no on-premises directory synchronization for any user holding privileged roles.",
   "Risk": "**On-premises-synced privileged accounts** extend the cloud trust boundary to AD. If AD or the sync channel is compromised, attackers can:\n- **Escalate** into Entra roles\n- Alter tenant settings and access data\n- Maintain **persistence** via on-prem credentials\n\nThis harms **confidentiality** and **integrity** and complicates recovery.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -28,7 +29,8 @@
   },
   "Categories": [
     "identity-access",
-    "trust-boundaries"
+    "trust-boundaries",
+    "e3"
   ],
   "DependsOn": [],
   "RelatedTo": [],

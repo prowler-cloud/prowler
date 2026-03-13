@@ -1,7 +1,7 @@
 import {
   CloudCog,
   Cog,
-  Group,
+  GitBranch,
   Mail,
   MessageCircleQuestion,
   Puzzle,
@@ -70,6 +70,19 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
       groupLabel: "",
       menus: [
         {
+          href: "/attack-paths",
+          label: "Attack Paths",
+          icon: GitBranch,
+          active: pathname.startsWith("/attack-paths"),
+          highlight: true,
+        },
+      ],
+    },
+
+    {
+      groupLabel: "",
+      menus: [
+        {
           href: "/findings?filter[muted]=false",
           label: "Findings",
           icon: Tag,
@@ -101,7 +114,6 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
               icon: VolumeX,
               active: pathname === "/mutelist",
             },
-            { href: "/manage-groups", label: "Provider Groups", icon: Group },
             { href: "/scans", label: "Scan Jobs", icon: Timer },
             { href: "/integrations", label: "Integrations", icon: Puzzle },
             { href: "/roles", label: "Roles", icon: UserCog },

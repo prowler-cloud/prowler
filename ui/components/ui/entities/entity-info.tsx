@@ -1,109 +1,79 @@
 "use client";
 
-import { Tooltip } from "@heroui/tooltip";
-import { useEffect, useState } from "react";
+import { ReactNode } from "react";
 
-import { CopyIcon, DoneIcon } from "@/components/icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import type { ProviderType } from "@/types";
 
 import { getProviderLogo } from "./get-provider-logo";
 
 interface EntityInfoProps {
-  cloudProvider: ProviderType;
+  cloudProvider?: ProviderType;
+  icon?: ReactNode;
   entityAlias?: string;
   entityId?: string;
-  snippetWidth?: string;
-  showConnectionStatus?: boolean;
-  maxWidth?: string;
+  badge?: string;
   showCopyAction?: boolean;
+  /** @deprecated No longer used — layout handles overflow naturally */
+  maxWidth?: string;
+  /** @deprecated No longer used */
+  showConnectionStatus?: boolean;
+  /** @deprecated No longer used */
+  snippetWidth?: string;
 }
 
 export const EntityInfo = ({
   cloudProvider,
+  icon,
   entityAlias,
   entityId,
-  showConnectionStatus = false,
-  maxWidth = "w-[120px]",
+  badge,
   showCopyAction = true,
 }: EntityInfoProps) => {
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!copied) return undefined;
-
-    const timer = setTimeout(() => setCopied(false), 1400);
-    return () => clearTimeout(timer);
-  }, [copied]);
-
-  const handleCopyEntityId = async () => {
-    if (!entityId) return;
-
-    try {
-      await navigator.clipboard.writeText(entityId);
-      setCopied(true);
-    } catch (_error) {
-      setCopied(false);
-    }
-  };
-
   const canCopy = Boolean(entityId && showCopyAction);
+  const renderedIcon =
+    icon ?? (cloudProvider ? getProviderLogo(cloudProvider) : null);
 
   return (
-    <div className="flex items-center gap-2">
-      <div className="relative shrink-0">
-        {getProviderLogo(cloudProvider)}
-        {showConnectionStatus && (
-          <Tooltip
-            size="sm"
-            content={showConnectionStatus ? "Connected" : "Not Connected"}
-          >
-            <span
-              className={`absolute top-[-0.1rem] right-[-0.2rem] h-2 w-2 cursor-pointer rounded-full ${
-                showConnectionStatus ? "bg-green-500" : "bg-red-500"
-              }`}
-            />
-          </Tooltip>
-        )}
-      </div>
-      <div className={`flex ${maxWidth} flex-col gap-1`}>
-        {entityAlias ? (
-          <Tooltip content={entityAlias} placement="top-start" size="sm">
-            <p className="text-text-neutral-primary truncate text-left text-xs font-medium">
-              {entityAlias}
-            </p>
-          </Tooltip>
-        ) : (
-          <Tooltip content="No alias" placement="top-start" size="sm">
-            <p className="text-text-neutral-secondary truncate text-left text-xs">
-              -
-            </p>
-          </Tooltip>
-        )}
-        {entityId && (
-          <div className="flex min-w-0 items-center gap-1">
-            <Tooltip content={entityId} placement="top-start" size="sm">
-              <p className="text-text-neutral-secondary min-w-0 truncate text-left text-xs">
-                {entityId}
-              </p>
+    <div className="flex min-w-0 items-center text-sm">
+      <div className="flex min-w-0 items-center gap-4">
+        {renderedIcon && <div className="shrink-0">{renderedIcon}</div>}
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="truncate font-medium">
+                  {entityAlias || entityId || "-"}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                {entityAlias || entityId || "No alias"}
+              </TooltipContent>
             </Tooltip>
-            {canCopy && (
-              <Tooltip
-                content={copied ? "Copied" : "Copy to clipboard"}
-                placement="top"
-                size="sm"
-              >
-                <button
-                  type="button"
-                  onClick={handleCopyEntityId}
-                  aria-label="Copiar ID de la entidad"
-                  className="hover:bg-bg-neutral-tertiary focus-visible:ring-bg-data-info text-text-neutral-secondary hover:text-text-neutral-primary rounded-md p-1 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                >
-                  {copied ? <DoneIcon size={14} /> : <CopyIcon size={14} />}
-                </button>
-              </Tooltip>
+            {badge && (
+              <span className="text-text-neutral-tertiary shrink-0 text-xs">
+                ({badge})
+              </span>
             )}
           </div>
-        )}
+          {entityId && (
+            <div className="flex min-w-0 items-center gap-1">
+              <span className="text-text-neutral-tertiary shrink-0 text-xs font-medium">
+                UID:
+              </span>
+              <CodeSnippet
+                value={entityId}
+                className="max-w-[160px]"
+                hideCopyButton={!canCopy}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

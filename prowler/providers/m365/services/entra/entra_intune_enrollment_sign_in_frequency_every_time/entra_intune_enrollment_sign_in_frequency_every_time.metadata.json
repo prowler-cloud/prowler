@@ -7,19 +7,14 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Conditional Access** for **Microsoft Intune Enrollment** enforces the session control **sign-in frequency** set to `Every time` for all users.\n\nThis evaluates whether an active policy targets the Intune Enrollment app and requires reauthentication on each enrollment attempt.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** for **Microsoft Intune Enrollment** enforces the session control **sign-in frequency** set to `Every time` for all users.\n\nThis evaluates whether an active policy targets the Intune Enrollment app and requires reauthentication on each enrollment attempt.",
   "Risk": "Absent `Every time` reauth at enrollment, attackers with stolen or replayed credentials can enroll rogue devices and obtain compliant access.\n\nImpacts:\n- Confidentiality: data exposure from unauthorized devices\n- Integrity: untrusted endpoints modifying resources\n- Availability: persistence via device-based access paths",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/intune/intune-service/fundamentals/deployment-guide-enrollment",
-    "https://mobile-jon.com/2024/09/09/the-magnificent-8-conditional-access-policies-of-microsoft-entra/",
-    "https://redmondmag.com/Articles/2024/02/27/Microsoft-Conditional-Access-Reauthentications.aspx",
-    "https://petri.com/microsoft-conditional-access-policy-reauthentication/",
-    "https://github.com/MicrosoftDocs/entra-docs/blob/main/docs/identity/conditional-access/concept-session-lifetime.md",
-    "https://www.tbone.se/2022/05/13/conditional-access-can-now-require-reauthentication-every-time/",
-    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-session#sign-in-frequency",
-    "https://entra.microsoft.com."
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-session#sign-in-frequency"
   ],
   "Remediation": {
     "Code": {
@@ -35,8 +30,7 @@
   },
   "Categories": [
     "identity-access",
-    "e3",
-    "e5"
+    "e3"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -7,19 +7,16 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "Conditional Access for administrator roles requires **phishing-resistant MFA** authentication strength on `All` applications. Disabled policies are ignored; report-only policies aren't considered. Policies with custom strengths require review to confirm they are truly **phishing-resistant**.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** for administrator roles requires **phishing-resistant MFA** authentication strength on `All` applications. Disabled policies are ignored; report-only policies aren't considered. Policies with custom strengths require review to confirm they are truly **phishing-resistant**.",
   "Risk": "Without phishing-resistant MFA on admin accounts, attackers can:\n- Bypass OTP/push via **AiTM phishing**\n- Abuse **MFA fatigue** to gain sessions\n- Perform **tenant takeover**, alter policies, and exfiltrate data\n\nThis harms confidentiality, configuration integrity, and service availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://oxfordcomputergroup.com/resources/microsoft-conditional-access-authentication-strength/",
     "https://blog.admindroid.com/use-phishing-resistant-mfa-to-implement-stronger-mfa-authentication/",
-    "https://blog.nviso.eu/2024/03/18/top-things-that-you-might-not-be-doing-yet-in-entra-conditional-access-advanced-edition/comment-page-1/",
-    "https://entra.microsoft.com.",
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-admin-phish-resistant-mfa#create-a-conditional-access-policy",
     "https://docs.azure.cn/en-us/entra/identity/conditional-access/policy-guests-mfa-strength",
-    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-admin-phish-resistant-mfa",
-    "https://mobile-jon.com/2024/09/09/the-magnificent-8-conditional-access-policies-of-microsoft-entra/"
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-admin-phish-resistant-mfa"
   ],
   "Remediation": {
     "Code": {

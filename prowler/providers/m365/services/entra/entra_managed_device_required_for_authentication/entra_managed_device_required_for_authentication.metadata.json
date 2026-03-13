@@ -7,14 +7,14 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Microsoft Entra Conditional Access** evaluates whether an enabled policy targeting `all users` and `all applications` includes grant controls that require a **managed device** (hybrid domain-joined) with **multifactor authentication** during sign-in.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** evaluates whether an enabled policy targeting `all users` and `all applications` includes grant controls that require a **managed device** (hybrid domain-joined) with **multifactor authentication** during sign-in.",
   "Risk": "Sign-ins from **unmanaged devices** erode confidentiality and integrity: compromised hosts can steal tokens, hijack sessions, and exfiltrate data. With leaked credentials, attackers bypass endpoint controls, gain persistent access, and move laterally to alter resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
-    "https://learn.microsoft.com/en-us/mem/intune/protect/create-conditional-access-intune",
-    "https://entra.microsoft.com."
+    "https://learn.microsoft.com/en-us/mem/intune/protect/create-conditional-access-intune"
   ],
   "Remediation": {
     "Code": {

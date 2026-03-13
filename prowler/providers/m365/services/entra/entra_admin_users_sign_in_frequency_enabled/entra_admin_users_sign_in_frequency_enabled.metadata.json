@@ -7,12 +7,12 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Conditional Access** evaluates whether admin roles are covered by policies that enforce a defined **sign-in frequency** and **non-persistent browser sessions** across *all cloud apps*. It looks for reauthentication set to a time interval or `Every time`, persistent browser set to `never`, and policies that are enforced rather than report-only or disabled.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** evaluates whether admin roles are covered by policies that enforce a defined **sign-in frequency** and **non-persistent browser sessions** across *all cloud apps*. It looks for reauthentication set to a time interval or `Every time`, persistent browser set to `never`, and policies that are enforced rather than report-only or disabled.",
   "Risk": "Lax reauthentication and persistent sessions let admin tokens live too long, enabling **session hijacking**, **token replay**, and access after **credential theft**. Attackers can modify configurations, elevate privileges, and exfiltrate data, threatening **confidentiality** and **integrity** and increasing risk of **tenant takeover**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://entra.microsoft.com/.",
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime#user-sign-in-frequency",
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-session#sign-in-frequency"
   ],

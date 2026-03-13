@@ -7,19 +7,15 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Microsoft Entra Conditional Access** has a **user risk-based policy** that targets `All` users and `All` applications, evaluates `High` user risk, and actively enforces controls requiring both **multifactor authentication** and a **secure password change** with an `AND` condition.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** has a **user risk-based policy** that targets `All` users and `All` applications, evaluates `High` user risk, and actively enforces controls requiring both **multifactor authentication** and a **secure password change** with an `AND` condition.",
   "Risk": "Without an active `High` user-risk policy that forces **MFA** and secure password reset, compromised identities can persist, enabling data exfiltration, tampering, and privilege escalation. Report-only mode or narrow scope leaves gaps, undermining confidentiality and integrity across resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/authentication/tutorial-risk-based-sspr-mfa?WT.mc_id=M365-MVP-6771",
-    "https://derkvanderwoude.medium.com/microsoft-managed-risk-remediation-93dc55c9fa47",
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
-    "https://www.linkedin.com/pulse/safeguarding-your-digital-identity-mitigating-risky-users-nosrati-1j1rf",
-    "https://learn.microsoft.com/en-us/entra/id-protection/howto-identity-protection-configure-risk-policies",
-    "https://github.com/MicrosoftLearning/AZ500-AzureSecurityTechnologies/blob/master/Instructions/Archived_Labs/LAB_02_MFAConditionalAccessandMicrosoftEntraIDProtection.md",
-    "https://blog.admindroid.com/top-5-microsoft-entra-id-secure-score-recommendations-to-boost-your-security/",
-    "https://entra.microsoft.com."
+    "https://learn.microsoft.com/en-us/entra/id-protection/howto-identity-protection-configure-risk-policies"
   ],
   "Remediation": {
     "Code": {

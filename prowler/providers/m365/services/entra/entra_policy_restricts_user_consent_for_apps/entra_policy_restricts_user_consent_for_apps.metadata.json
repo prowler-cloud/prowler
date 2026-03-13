@@ -1,25 +1,20 @@
 {
   "Provider": "m365",
   "CheckID": "entra_policy_restricts_user_consent_for_apps",
-  "CheckTitle": "'User consent for applications' is set to 'Do not allow user consent'",
+  "CheckTitle": "User consent for applications is set to 'Do not allow user consent'",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Microsoft Entra** tenant settings restrict **user consent to applications**, preventing end users from granting delegated permissions to apps on their behalf. Only **administrator-approved** or policy-allowed consents are permitted.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **tenant settings** restrict **user consent to applications**, preventing end users from granting delegated permissions to apps on their behalf. Only **administrator-approved** or policy-allowed consents are permitted.",
   "Risk": "Allowing end users to grant consent enables **consent phishing** and stealth access to mail, files, and directory data, impacting **confidentiality** and **integrity**. Attackers can obtain long-lived refresh tokens via `offline_access`, persist, and act as the user, evading detection.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-gb/entra/identity/enterprise-apps/configure-user-consent?pivots=portal",
-    "https://help.otter.ai/hc/en-us/articles/25641965784343-Microsoft-Need-admin-approval-sign-in-issue",
-    "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-user-consent",
-    "https://stackoverflow.com/questions/78023687/azure-entra-id-authentication-requiring-admin-consent",
-    "https://www.codetwo.com/kb/resolving-need-admin-approval-error/",
-    "https://entra.microsoft.com/);",
-    "https://github.com/MicrosoftDocs/entra-docs/blob/main/docs/identity/enterprise-apps/user-admin-consent-overview.md",
-    "https://www.linkedin.com/pulse/how-manage-users-consent-applications-within-azure-ad-entra-id-alcpf"
+    "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-user-consent"
   ],
   "Remediation": {
     "Code": {

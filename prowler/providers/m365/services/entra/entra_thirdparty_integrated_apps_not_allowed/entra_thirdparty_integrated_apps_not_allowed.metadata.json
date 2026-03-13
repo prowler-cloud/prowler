@@ -7,8 +7,9 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "**Microsoft Entra authorization policy** restricts registration of **third-party applications**, verifying that **non-admin users** cannot create app registrations and that only administrators or explicitly delegated roles can add integrated apps.",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **authorization policy** restricts registration of **third-party applications**, verifying that **non-admin users** cannot create app registrations and that only administrators or explicitly delegated roles can add integrated apps.",
   "Risk": "Allowing users to create apps enables **consent phishing** and uncontrolled **service principals** with long-lived secrets, risking **data exfiltration** via over-privileged API access, **privilege escalation** through abused app permissions, and tenant **persistence**. This degrades confidentiality, integrity, and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
