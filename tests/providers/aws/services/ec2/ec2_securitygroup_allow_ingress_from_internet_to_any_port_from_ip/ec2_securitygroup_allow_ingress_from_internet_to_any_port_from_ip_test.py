@@ -255,14 +255,15 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip:
                     )
 
     @mock_aws
-    def test_sg_skipped_when_all_ports_already_failed(self):
-        """SG already flagged by the all_ports check should be skipped."""
+    def test_sg_pass_when_all_ports_already_failed(self):
+        """SG already flagged by the all_ports check should PASS with explanation."""
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
         default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
             "SecurityGroups"
         ][0]
         default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
 
         # Add 0.0.0.0/0 all protocols (triggers all_ports check)
         ec2_client.authorize_security_group_ingress(
@@ -330,9 +331,14 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip:
                 )
                 result = check.execute()
 
-                # The SG with 0.0.0.0/0 should be skipped, not reported again
+                # The SG with 0.0.0.0/0 should PASS with explanation
                 for sg in result:
-                    assert sg.resource_id != default_sg_id
+                    if sg.resource_id == default_sg_id:
+                        assert sg.status == "PASS"
+                        assert (
+                            sg.status_extended
+                            == f"Security group {default_sg_name} ({default_sg_id}) has all ports open to the Internet and therefore was not checked against specific public IP ingress rules."
+                        )
 
     @mock_aws
     def test_ec2_default_sgs_ignoring_unused(self):
@@ -396,7 +402,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip:
                 {
                     "IpProtocol": "-1",
                     "IpRanges": [],
-                    "Ipv6Ranges": [{"CidrIpv6": "2001:db8::/32"}],
+                    "Ipv6Ranges": [{"CidrIpv6": "2600:1f18::/32"}],
                 }
             ],
         )

@@ -11,13 +11,6 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip(Check):
     def execute(self):
         findings = []
         for security_group_arn, security_group in ec2_client.security_groups.items():
-            # Skip if already flagged by the all_ports check to avoid duplicate reporting
-            if ec2_client.is_failed_check(
-                ec2_securitygroup_allow_ingress_from_internet_to_all_ports.__name__,
-                security_group_arn,
-            ):
-                continue
-
             # Check if ignoring flag is set and if the VPC and the SG is in use
             if ec2_client.provider.scan_unused_services or (
                 security_group.vpc_id in vpc_client.vpcs
@@ -31,15 +24,22 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip(Check):
                 report.status = "PASS"
                 report.status_extended = f"Security group {security_group.name} ({security_group.id}) does not have any port open to a public IP address."
 
-                for ingress_rule in security_group.ingress_rules:
-                    # any_address=False means any globally routable IP triggers it,
-                    # not just 0.0.0.0/0 or ::/0
-                    if check_security_group(
-                        ingress_rule, "-1", any_address=False, all_ports=True
-                    ):
-                        report.status = "FAIL"
-                        report.status_extended = f"Security group {security_group.name} ({security_group.id}) has a port open to a public IP address in ingress rule."
-                        break
+                # only proceed if check "..._to_all_ports" did not run or did not FAIL to avoid reporting twice
+                if not ec2_client.is_failed_check(
+                    ec2_securitygroup_allow_ingress_from_internet_to_all_ports.__name__,
+                    security_group_arn,
+                ):
+                    for ingress_rule in security_group.ingress_rules:
+                        # any_address=False means any globally routable IP triggers it,
+                        # not just 0.0.0.0/0 or ::/0
+                        if check_security_group(
+                            ingress_rule, "-1", any_address=False, all_ports=True
+                        ):
+                            report.status = "FAIL"
+                            report.status_extended = f"Security group {security_group.name} ({security_group.id}) has a port open to a public IP address in ingress rule."
+                            break
+                else:
+                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) has all ports open to the Internet and therefore was not checked against specific public IP ingress rules."
 
                 findings.append(report)
 
