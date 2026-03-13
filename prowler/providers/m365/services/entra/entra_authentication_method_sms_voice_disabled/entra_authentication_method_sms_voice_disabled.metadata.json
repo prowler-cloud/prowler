@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "SMS and Voice authentication methods should be disabled in the tenant's authentication methods policy. These methods are vulnerable to **SIM-swapping**, **interception**, and **social engineering** attacks, and are deprecated by NIST SP 800-63B as out-of-band authenticators.",
+  "Description": "Microsoft Entra tenant's authentication methods policy should have **SMS and Voice** authentication methods disabled. These methods are vulnerable to **SIM-swapping**, **interception**, and **social engineering** attacks, and are deprecated by NIST SP 800-63B as out-of-band authenticators.",
   "Risk": "Enabled SMS or Voice authentication allows attackers to bypass MFA through **SIM-swapping** or **SS7 protocol interception**, gaining unauthorized access to accounts. These methods lack cryptographic binding to the device, making them significantly weaker than phishing-resistant alternatives.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -29,7 +29,8 @@
     }
   },
   "Categories": [
-    "identity-access"
+    "identity-access",
+    "e3"
   ],
   "DependsOn": [],
   "RelatedTo": [],

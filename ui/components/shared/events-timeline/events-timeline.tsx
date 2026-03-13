@@ -2,26 +2,31 @@
 
 import {
   AlertTriangle,
-  Check,
   ChevronRight,
   Clock,
-  Copy,
   Download,
-  Globe,
+  Loader2,
   Server,
   Shield,
-  User,
 } from "lucide-react";
-import type { MouseEvent, ReactNode } from "react";
 import { useEffect, useState, useTransition } from "react";
 
 import { getResourceEvents } from "@/actions/resources";
-import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
+import {
+  Alert,
+  AlertDescription,
+  Badge,
+  Button,
+  Card,
+  Checkbox,
+  InfoField,
+} from "@/components/shadcn";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { cn } from "@/lib/utils";
 import { ResourceEventProps } from "@/types";
 
 interface EventsTimelineProps {
-  resourceId: string;
+  resourceId?: string;
   isAwsProvider: boolean;
 }
 
@@ -39,7 +44,7 @@ export const EventsTimeline = ({
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    if (!isAwsProvider) return;
+    if (!isAwsProvider || !resourceId) return;
 
     setError(null);
     setErrorStatus(null);
@@ -114,7 +119,7 @@ export const EventsTimeline = ({
   if (isPending && !hasFetched) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-12">
-        <TreeSpinner className="size-6" />
+        <Loader2 className="size-6 animate-spin" />
         <p className="text-text-neutral-secondary text-sm">
           Fetching CloudTrail events...
         </p>
@@ -125,23 +130,27 @@ export const EventsTimeline = ({
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-12">
-        <div className="bg-bg-fail-secondary/50 rounded-full p-3">
-          <AlertTriangle className="text-text-error h-6 w-6" />
-        </div>
-        <p className="text-text-neutral-secondary max-w-sm text-center text-sm">
-          {errorStatus === 502
-            ? "Provider credentials are invalid or expired. Please reconnect your AWS provider."
-            : errorStatus === 503
-              ? "AWS CloudTrail is temporarily unavailable. Please try again later."
-              : error}
-        </p>
-        <button
-          onClick={() => setRetryCount((c) => c + 1)}
-          aria-label="Retry fetching CloudTrail events"
-          className="text-bg-data-info hover:text-bg-data-info/80 text-xs font-medium"
-        >
-          Try again
-        </button>
+        <Alert variant="error" className="max-w-sm">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <p>
+              {errorStatus === 502
+                ? "Provider credentials are invalid or expired. Please reconnect your AWS provider."
+                : errorStatus === 503
+                  ? "AWS CloudTrail is temporarily unavailable. Please try again later."
+                  : error}
+            </p>
+            <Button
+              variant="link"
+              size="link-sm"
+              onClick={() => setRetryCount((c) => c + 1)}
+              aria-label="Retry fetching CloudTrail events"
+              className="mt-1"
+            >
+              Try again
+            </Button>
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -151,18 +160,19 @@ export const EventsTimeline = ({
       {/* Controls bar */}
       <div className="flex items-center justify-between">
         <label className="flex cursor-pointer items-center gap-2">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={includeReadEvents}
-            onChange={(e) => setIncludeReadEvents(e.target.checked)}
-            className="accent-bg-data-info h-4 w-4 rounded"
+            onCheckedChange={(checked) =>
+              setIncludeReadEvents(checked === true)
+            }
+            size="sm"
           />
           <span className="text-text-neutral-tertiary text-xs">
             Include read events
           </span>
         </label>
         <div className="flex items-center gap-2">
-          {isPending && <TreeSpinner className="size-4" />}
+          {isPending && <Loader2 className="size-4 animate-spin" />}
           <span className="text-text-neutral-tertiary text-xs">
             {events.length} event{events.length !== 1 && "s"}
           </span>
@@ -259,8 +269,11 @@ export const EventsTimeline = ({
                   {/* Expanded detail card */}
                   {isExpanded && (
                     <div className="relative mt-1 mb-2 ml-6">
-                      {/* Card */}
-                      <div className="border-border-neutral-tertiary bg-bg-neutral-primary overflow-hidden rounded-lg border shadow-sm">
+                      <Card
+                        variant="inner"
+                        padding="none"
+                        className="gap-0 overflow-hidden"
+                      >
                         {/* Header bar */}
                         <div className="bg-bg-neutral-tertiary/40 flex items-center justify-between px-5 py-3">
                           <div className="flex items-center gap-2.5">
@@ -272,63 +285,70 @@ export const EventsTimeline = ({
                               via {attrs.event_source}
                             </span>
                           </div>
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
                               downloadEventJson(event);
                             }}
                             aria-label={`Download ${attrs.event_name} event as JSON`}
-                            className="text-text-neutral-tertiary hover:text-text-neutral-secondary flex items-center gap-1.5 text-xs transition-colors"
                           >
                             <Download className="h-3.5 w-3.5" />
                             JSON
-                          </button>
+                          </Button>
                         </div>
 
                         {/* Detail rows */}
                         <div className="divide-border-neutral-tertiary/50 divide-y px-5">
-                          <DetailRow
-                            icon={<Clock className="h-3.5 w-3.5" />}
-                            label="When"
-                            value={new Date(attrs.event_time).toLocaleString()}
-                          />
-                          <DetailRow
-                            icon={<User className="h-3.5 w-3.5" />}
-                            label="Who"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="text-text-neutral-primary text-xs">
-                                {attrs.actor}
+                          <div className="py-2.5">
+                            <InfoField label="When" inline>
+                              {new Date(attrs.event_time).toLocaleString()}
+                            </InfoField>
+                          </div>
+                          <div className="py-2.5">
+                            <InfoField label="Who" inline>
+                              <div className="flex items-center gap-2">
+                                <span className="text-text-neutral-primary text-xs">
+                                  {attrs.actor}
+                                </span>
+                                <Badge variant="tag">{attrs.actor_type}</Badge>
+                              </div>
+                            </InfoField>
+                          </div>
+                          <div className="py-2.5">
+                            <InfoField label="From" inline>
+                              <span className="font-mono">
+                                {attrs.source_ip_address}
                               </span>
-                              <span className="bg-bg-neutral-tertiary text-text-neutral-tertiary rounded px-1.5 py-0.5 text-[11px]">
-                                {attrs.actor_type}
-                              </span>
-                            </div>
-                          </DetailRow>
-                          <DetailRow
-                            icon={<Globe className="h-3.5 w-3.5" />}
-                            label="From"
-                            value={attrs.source_ip_address}
-                            mono
-                          />
+                            </InfoField>
+                          </div>
                         </div>
 
                         {/* Error banner */}
                         {hasError && (
-                          <div className="border-border-error-primary/20 bg-bg-fail-secondary/30 flex items-center gap-2 border-t px-5 py-2.5">
-                            <AlertTriangle className="text-text-error h-3.5 w-3.5 shrink-0" />
-                            <span className="text-text-error text-xs font-medium">
-                              {attrs.error_code}
-                            </span>
-                            {attrs.error_message && (
-                              <>
-                                <span className="text-text-error/30">|</span>
-                                <span className="text-text-error/70 truncate text-xs">
-                                  {attrs.error_message}
-                                </span>
-                              </>
-                            )}
-                          </div>
+                          <Alert
+                            variant="error"
+                            className="rounded-none border-x-0 border-b-0"
+                          >
+                            <AlertTriangle className="h-3.5 w-3.5" />
+                            <AlertDescription>
+                              <span className="text-xs font-medium">
+                                {attrs.error_code}
+                              </span>
+                              {attrs.error_message && (
+                                <>
+                                  <span className="text-text-error/30">
+                                    {" "}
+                                    |{" "}
+                                  </span>
+                                  <span className="text-text-error/70 text-xs">
+                                    {attrs.error_message}
+                                  </span>
+                                </>
+                              )}
+                            </AlertDescription>
+                          </Alert>
                         )}
 
                         {/* JSON payloads */}
@@ -348,7 +368,7 @@ export const EventsTimeline = ({
                             )}
                           </div>
                         )}
-                      </div>
+                      </Card>
                     </div>
                   )}
                 </div>
@@ -363,37 +383,6 @@ export const EventsTimeline = ({
 
 // --- Sub-components ---
 
-const DetailRow = ({
-  icon,
-  label,
-  value,
-  mono,
-  children,
-}: {
-  icon?: ReactNode;
-  label: string;
-  value?: string;
-  mono?: boolean;
-  children?: ReactNode;
-}) => (
-  <div className="flex items-center gap-3 py-2.5">
-    <span className="text-text-neutral-tertiary flex w-16 shrink-0 items-center gap-1.5 text-xs">
-      {icon}
-      {label}
-    </span>
-    {children || (
-      <span
-        className={cn(
-          "text-text-neutral-primary truncate text-xs",
-          mono && "font-mono",
-        )}
-      >
-        {value}
-      </span>
-    )}
-  </div>
-);
-
 const JsonBlock = ({
   label,
   data,
@@ -401,18 +390,10 @@ const JsonBlock = ({
   label: string;
   data: Record<string, unknown>;
 }) => {
-  const [copied, setCopied] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
   const json = JSON.stringify(data, null, 2);
   const lineCount = json.split("\n").length;
   const isLong = lineCount > 8;
-
-  const handleCopy = async (e: MouseEvent) => {
-    e.stopPropagation();
-    await navigator.clipboard.writeText(json);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div>
@@ -420,18 +401,7 @@ const JsonBlock = ({
         <span className="text-text-neutral-tertiary text-xs font-medium">
           {label}
         </span>
-        <button
-          onClick={handleCopy}
-          aria-label={`Copy ${label} JSON to clipboard`}
-          className="text-text-neutral-tertiary hover:text-text-neutral-secondary flex items-center gap-1.5 text-xs transition-colors"
-        >
-          {copied ? (
-            <Check className="h-3.5 w-3.5" />
-          ) : (
-            <Copy className="h-3.5 w-3.5" />
-          )}
-          {copied ? "Copied" : "Copy"}
-        </button>
+        <CodeSnippet value={json} hideCode />
       </div>
       <div className="bg-bg-neutral-tertiary border-border-neutral-tertiary relative overflow-hidden rounded-md border">
         <pre
@@ -444,15 +414,16 @@ const JsonBlock = ({
         </pre>
         {isLong && collapsed && (
           <div className="from-bg-neutral-tertiary/0 via-bg-neutral-tertiary to-bg-neutral-tertiary absolute inset-x-0 bottom-0 flex items-end justify-center bg-gradient-to-b pt-8 pb-2">
-            <button
+            <Button
+              variant="link"
+              size="link-sm"
               onClick={(e) => {
                 e.stopPropagation();
                 setCollapsed(false);
               }}
-              className="text-bg-data-info bg-bg-neutral-tertiary hover:text-bg-data-info/80 rounded-full px-3 py-1 text-xs font-medium shadow-sm"
             >
               Show all ({lineCount} lines)
-            </button>
+            </Button>
           </div>
         )}
       </div>
