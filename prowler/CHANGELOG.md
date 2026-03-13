@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.21.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Update M365 SharePoint service metadata to new format [(#9684)](https://github.com/prowler-cloud/prowler/pull/9684)
+
+---
+
 ## [5.20.0] (Prowler v5.20.0)
 
 ### 🚀 Added
