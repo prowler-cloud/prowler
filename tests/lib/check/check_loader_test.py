@@ -42,7 +42,7 @@ class TestCheckLoader:
             ResourceType="AwsS3Bucket",
             Description="Check S3 Bucket Level Public Access Block.",
             Risk="Public access policies may be applied to sensitive data buckets.",
-            RelatedUrl="https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+            RelatedUrl="",
             Remediation=Remediation(
                 Code=Code(
                     NativeIaC="",
@@ -52,7 +52,7 @@ class TestCheckLoader:
                 ),
                 Recommendation=Recommendation(
                     Text="You can enable Public Access Block at the bucket level to prevent the exposure of your data stored in S3.",
-                    Url="https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+                    Url="https://hub.prowler.com/check/s3_bucket_level_public_access_block",
                 ),
             ),
             Categories=["internet-exposed"],
@@ -78,7 +78,7 @@ class TestCheckLoader:
             ResourceType="AwsIamUser",
             Description="Check IAM User No MFA.",
             Risk="IAM users should have Multi-Factor Authentication (MFA) enabled.",
-            RelatedUrl="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html",
+            RelatedUrl="",
             Remediation=Remediation(
                 Code=Code(
                     NativeIaC="",
@@ -88,7 +88,7 @@ class TestCheckLoader:
                 ),
                 Recommendation=Recommendation(
                     Text="You can enable MFA for your IAM user to prevent unauthorized access to your AWS account.",
-                    Url="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html",
+                    Url="https://hub.prowler.com/check/iam_user_no_mfa",
                 ),
             ),
             Categories=[],
@@ -102,7 +102,7 @@ class TestCheckLoader:
         return CheckMetadata(
             Provider="aws",
             CheckID=CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME,
-            CheckTitle="Ensure there are no potential enumeration threats in CloudTrail",
+            CheckTitle="CloudTrail should not have potential enumeration threats",
             CheckType=["TTPs/Discovery"],
             ServiceName="cloudtrail",
             SubServiceName="",
@@ -116,7 +116,7 @@ class TestCheckLoader:
                 Code=Code(CLI="", NativeIaC="", Other="", Terraform=""),
                 Recommendation=Recommendation(
                     Text="To remediate this issue, ensure that there are no potential enumeration threats in CloudTrail.",
-                    Url="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-concepts.html#cloudtrail-concepts-logging-data-events",
+                    Url="https://hub.prowler.com/check/cloudtrail_threat_detection_enumeration",
                 ),
             ),
             Categories=["threat-detection"],

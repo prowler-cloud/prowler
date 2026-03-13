@@ -412,7 +412,7 @@ class TestCheck:
                 },
                 "expected": {
                     "CheckID": "iam_user_accesskey_unused",
-                    "CheckTitle": "Ensure Access Keys unused are disabled",
+                    "CheckTitle": "Access Keys unused should be disabled",
                     "ServiceName": "iam",
                     "Severity": "low",
                 },
@@ -502,7 +502,7 @@ class TestCheck:
             "ResourceType": "AwsCustomResource",
             "Description": "A test custom check",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
                 "Recommendation": {"Text": "", "Url": ""},
@@ -614,7 +614,7 @@ class TestCheck:
             "forensics-ready",
             "encryption",
             "internet-exposed",
-            "trustboundaries",
+            "trust-boundaries",
         }
         listed_categories = list_categories(test_bulk_checks_metadata)
         assert listed_categories == expected_categories

@@ -205,7 +205,7 @@ class TestCompliance:
                 ResourceType="resource1",
                 Description="Description 1",
                 Risk="risk1",
-                RelatedUrl="url1",
+                RelatedUrl="",
                 Remediation={
                     "Code": {
                         "CLI": "cli1",
@@ -213,7 +213,10 @@ class TestCompliance:
                         "Other": "other1",
                         "Terraform": "terraform1",
                     },
-                    "Recommendation": {"Text": "text1", "Url": "url1"},
+                    "Recommendation": {
+                        "Text": "text1",
+                        "Url": "https://hub.prowler.com/check/accessanalyzer_enabled",
+                    },
                 },
                 Categories=["encryption"],
                 DependsOn=["dependency1"],
@@ -233,7 +236,7 @@ class TestCompliance:
                 ResourceType="resource2",
                 Description="Description 2",
                 Risk="risk2",
-                RelatedUrl="url2",
+                RelatedUrl="",
                 Remediation={
                     "Code": {
                         "CLI": "cli2",
@@ -241,7 +244,10 @@ class TestCompliance:
                         "Other": "other2",
                         "Terraform": "terraform2",
                     },
-                    "Recommendation": {"Text": "text2", "Url": "url2"},
+                    "Recommendation": {
+                        "Text": "text2",
+                        "Url": "https://hub.prowler.com/check/iam_user_mfa_enabled_console_access",
+                    },
                 },
                 Categories=["logging"],
                 DependsOn=["dependency2"],

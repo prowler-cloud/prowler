@@ -210,8 +210,10 @@ class CheckMetadata(BaseModel):
         valid_resource_type(resource_type): Validator function to validate the resource type is not empty.
         validate_service_name(service_name, values): Validator function to validate the service name matches CheckID.
         valid_check_id(check_id): Validator function to validate the CheckID format.
-        validate_check_title(check_title): Validator function to validate CheckTitle max length (150 chars).
-        validate_check_type(check_type, values): Validator function to validate CheckType - no empty strings for all providers, plus predefined types validation for AWS (loaded from config file).
+        validate_check_title(check_title): Validator function to validate CheckTitle max length (150 chars) and not starting with 'Ensure'.
+        validate_related_url(related_url): Validator function to validate RelatedUrl is empty (deprecated field).
+        validate_recommendation_url(remediation): Validator function to validate Recommendation URL points to Prowler Hub.
+        validate_check_type(check_type, values): Validator function to validate CheckType - must be empty for non-AWS providers, no empty strings and predefined types validation for AWS.
         validate_description(description): Validator function to validate Description max length (400 chars).
         validate_risk(risk): Validator function to validate Risk max length (400 chars).
         validate_resource_group(resource_group): Validator function to validate ResourceGroup against predefined values.
@@ -309,20 +311,47 @@ class CheckMetadata(BaseModel):
             raise ValueError(
                 f"CheckTitle must not exceed 150 characters, got {len(check_title)} characters"
             )
+        if check_title.startswith("Ensure"):
+            raise ValueError(
+                "CheckTitle must not start with 'Ensure'. Use a descriptive title that focuses on the security state."
+            )
         return check_title
+
+    @validator("RelatedUrl", pre=True, always=True)
+    def validate_related_url(cls, related_url):
+        if related_url:
+            raise ValueError("RelatedUrl must be empty. This field is deprecated.")
+        return related_url
+
+    @validator("Remediation")
+    def validate_recommendation_url(remediation):
+        url = remediation.Recommendation.Url
+        if url and not url.startswith("https://hub.prowler.com/"):
+            raise ValueError(
+                f"Remediation Recommendation URL must point to Prowler Hub (https://hub.prowler.com/...), got '{url}'."
+            )
+        return remediation
 
     @validator("CheckType", pre=True, always=True)
     def validate_check_type(cls, check_type, values):
-        # Check for empty strings in the list - applies to ALL providers
+        provider = values.get("Provider", "").lower()
+
+        # Non-AWS providers must have an empty CheckType list
+        if provider != "aws" and provider not in EXTERNAL_TOOL_PROVIDERS:
+            if check_type:
+                raise ValueError(
+                    f"CheckType must be empty for non-AWS providers. Got {check_type} for provider '{provider}'."
+                )
+            return check_type
+
+        # Check for empty strings in the list - applies to AWS
         for i, check_type_item in enumerate(check_type):
             if not check_type_item or check_type_item.strip() == "":
                 raise ValueError(
                     f"CheckType list cannot contain empty strings. Found empty string at index {i}."
                 )
 
-        provider = values.get("Provider", "").lower()
-
-        # For AWS provider, also validate against config hierarchy (like custom checks)
+        # For AWS provider, validate against config hierarchy
         if provider == "aws":
             for check_type_item in check_type:
                 if not _validate_aws_check_type_in_config(check_type_item):

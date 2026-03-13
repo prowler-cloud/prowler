@@ -213,7 +213,7 @@ class TestOCSF:
                 "status_detail": "status extended",
                 "status_id": 1,
                 "unmapped": {
-                    "related_url": "test-url",
+                    "related_url": "",
                     "categories": ["encryption"],
                     "depends_on": ["test-dependency"],
                     "related_to": ["test-related-to"],

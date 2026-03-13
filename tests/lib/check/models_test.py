@@ -19,7 +19,7 @@ mock_metadata = CheckMetadata(
     ResourceType="resource1",
     Description="Description 1",
     Risk="risk1",
-    RelatedUrl="url1",
+    RelatedUrl="",
     Remediation={
         "Code": {
             "CLI": "cli1",
@@ -27,7 +27,10 @@ mock_metadata = CheckMetadata(
             "Other": "other1",
             "Terraform": "terraform1",
         },
-        "Recommendation": {"Text": "text1", "Url": "url1"},
+        "Recommendation": {
+            "Text": "text1",
+            "Url": "https://hub.prowler.com/check/accessanalyzer_enabled",
+        },
     },
     Categories=["encryption"],
     DependsOn=["dependency1"],
@@ -48,7 +51,7 @@ mock_metadata_lambda = CheckMetadata(
     ResourceType="resource1",
     Description="Description 1",
     Risk="risk1",
-    RelatedUrl="url1",
+    RelatedUrl="",
     Remediation={
         "Code": {
             "CLI": "cli1",
@@ -56,7 +59,10 @@ mock_metadata_lambda = CheckMetadata(
             "Other": "other1",
             "Terraform": "terraform1",
         },
-        "Recommendation": {"Text": "text1", "Url": "url1"},
+        "Recommendation": {
+            "Text": "text1",
+            "Url": "https://hub.prowler.com/check/awslambda_function_url_public",
+        },
     },
     Categories=["encryption"],
     DependsOn=["dependency1"],
@@ -340,9 +346,7 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": [
-                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
-            ],
+            "CheckType": [],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -350,7 +354,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -360,7 +364,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption", "logging", "secrets"],
@@ -389,7 +393,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -399,7 +403,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": [123],  # Invalid: number instead of string
@@ -428,7 +432,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -438,7 +442,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["invalid_category!"],  # Invalid: contains special character
@@ -470,7 +474,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -480,7 +484,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["not-a-real-category"],  # Invalid: not in predefined list
@@ -504,7 +508,7 @@ class TestCheckMetadataValidators:
                 "Provider": "azure",
                 "CheckID": "test_check",
                 "CheckTitle": "Test Check",
-                "CheckType": ["Security"],
+                "CheckType": [],
                 "ServiceName": "test",
                 "SubServiceName": "subtest",
                 "ResourceIdTemplate": "template",
@@ -512,7 +516,7 @@ class TestCheckMetadataValidators:
                 "ResourceType": "TestResource",
                 "Description": "Test description",
                 "Risk": "Test risk",
-                "RelatedUrl": "https://example.com",
+                "RelatedUrl": "",
                 "Remediation": {
                     "Code": {
                         "CLI": "test command",
@@ -522,7 +526,7 @@ class TestCheckMetadataValidators:
                     },
                     "Recommendation": {
                         "Text": "test recommendation",
-                        "Url": "https://example.com",
+                        "Url": "https://hub.prowler.com/check/test_check",
                     },
                 },
                 "Categories": [category],
@@ -539,9 +543,7 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": [
-                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
-            ],
+            "CheckType": [],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -549,7 +551,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -559,7 +561,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -577,9 +579,7 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": [
-                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
-            ],
+            "CheckType": [],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -587,7 +587,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "aws iam create-role --role-name test",  # Valid CLI command
@@ -597,7 +597,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -626,7 +626,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "https://example.com/command",  # Invalid: URL instead of command
@@ -636,7 +636,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -655,9 +655,7 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": [
-                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
-            ],
+            "CheckType": [],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -665,7 +663,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "AWS::IAM::Role",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -675,7 +673,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -703,7 +701,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "",  # Invalid: empty string
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -713,7 +711,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -732,9 +730,7 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "s3_bucket_public_read",
             "CheckTitle": "Test Check",
-            "CheckType": [
-                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
-            ],
+            "CheckType": [],
             "ServiceName": "s3",  # Matches first part of CheckID
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -742,7 +738,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "AWS::S3::Bucket",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -752,7 +748,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -780,7 +776,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "AWS::S3::Bucket",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -790,7 +786,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -820,7 +816,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "AWS::S3::Bucket",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -830,7 +826,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -859,7 +855,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -869,7 +865,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -887,9 +883,7 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "s3_bucket_public_read_check",
             "CheckTitle": "Test Check",
-            "CheckType": [
-                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
-            ],
+            "CheckType": [],
             "ServiceName": "s3",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -897,7 +891,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "AWS::S3::Bucket",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -907,7 +901,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -935,7 +929,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -945,7 +939,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -974,7 +968,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "AWS::S3::Bucket",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -984,7 +978,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -1006,9 +1000,7 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "test_check",
             "CheckTitle": "A" * 150,  # Exactly 150 characters
-            "CheckType": [
-                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
-            ],
+            "CheckType": [],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -1016,7 +1008,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -1026,7 +1018,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -1054,7 +1046,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -1064,7 +1056,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -1079,13 +1071,15 @@ class TestCheckMetadataValidators:
             exc_info.value
         )
 
-    def test_validate_check_type_success(self):
-        """Test CheckType validation with valid check types"""
-        valid_metadata = {
-            "Provider": "azure",  # Using non-AWS provider to avoid config validation
+    def test_validate_check_title_failure_starts_with_ensure(self):
+        """Test CheckTitle validation fails when starting with 'Ensure'"""
+        invalid_metadata = {
+            "Provider": "aws",
             "CheckID": "test_check",
-            "CheckTitle": "Test Check",
-            "CheckType": ["Security", "Network"],
+            "CheckTitle": "Ensure S3 buckets have encryption enabled",
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -1093,7 +1087,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -1103,7 +1097,85 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
+                },
+            },
+            "Categories": ["encryption"],
+            "DependsOn": [],
+            "RelatedTo": [],
+            "Notes": "Test notes",
+        }
+
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(**invalid_metadata)
+        assert "CheckTitle must not start with 'Ensure'" in str(exc_info.value)
+
+    def test_validate_related_url_must_be_empty(self):
+        """Test RelatedUrl validation fails when not empty"""
+        invalid_metadata = {
+            "Provider": "aws",
+            "CheckID": "test_check",
+            "CheckTitle": "Test Check",
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices"
+            ],
+            "ServiceName": "test",
+            "SubServiceName": "subtest",
+            "ResourceIdTemplate": "template",
+            "Severity": "high",
+            "ResourceType": "TestResource",
+            "Description": "Test description",
+            "Risk": "Test risk",
+            "RelatedUrl": "https://example.com",  # Invalid: must be empty
+            "Remediation": {
+                "Code": {
+                    "CLI": "test command",
+                    "NativeIaC": "test native",
+                    "Other": "test other",
+                    "Terraform": "test terraform",
+                },
+                "Recommendation": {
+                    "Text": "test recommendation",
+                    "Url": "https://hub.prowler.com/check/test_check",
+                },
+            },
+            "Categories": ["encryption"],
+            "DependsOn": [],
+            "RelatedTo": [],
+            "Notes": "Test notes",
+        }
+
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(**invalid_metadata)
+        assert "RelatedUrl must be empty" in str(exc_info.value)
+
+    def test_validate_related_url_empty_is_valid(self):
+        """Test RelatedUrl validation passes when empty"""
+        valid_metadata = {
+            "Provider": "aws",
+            "CheckID": "test_check",
+            "CheckTitle": "Test Check",
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices"
+            ],
+            "ServiceName": "test",
+            "SubServiceName": "subtest",
+            "ResourceIdTemplate": "template",
+            "Severity": "high",
+            "ResourceType": "TestResource",
+            "Description": "Test description",
+            "Risk": "Test risk",
+            "RelatedUrl": "",
+            "Remediation": {
+                "Code": {
+                    "CLI": "test command",
+                    "NativeIaC": "test native",
+                    "Other": "test other",
+                    "Terraform": "test terraform",
+                },
+                "Recommendation": {
+                    "Text": "test recommendation",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -1113,15 +1185,17 @@ class TestCheckMetadataValidators:
         }
 
         check_metadata = CheckMetadata(**valid_metadata)
-        assert check_metadata.CheckType == ["Security", "Network"]
+        assert check_metadata.RelatedUrl == ""
 
-    def test_validate_check_type_failure_empty_string(self):
-        """Test CheckType validation fails with empty string in list"""
+    def test_validate_recommendation_url_must_be_hub(self):
+        """Test Recommendation URL validation fails when not pointing to Prowler Hub"""
         invalid_metadata = {
-            "Provider": "azure",
+            "Provider": "aws",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security", ""],  # Invalid: empty string in list
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -1129,7 +1203,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -1139,7 +1213,198 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://docs.aws.amazon.com/some-page",  # Invalid: not HUB
+                },
+            },
+            "Categories": ["encryption"],
+            "DependsOn": [],
+            "RelatedTo": [],
+            "Notes": "Test notes",
+        }
+
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(**invalid_metadata)
+        assert "Remediation Recommendation URL must point to Prowler Hub" in str(
+            exc_info.value
+        )
+
+    def test_validate_recommendation_url_hub_is_valid(self):
+        """Test Recommendation URL validation passes with Prowler Hub URL"""
+        valid_metadata = {
+            "Provider": "aws",
+            "CheckID": "test_check",
+            "CheckTitle": "Test Check",
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices"
+            ],
+            "ServiceName": "test",
+            "SubServiceName": "subtest",
+            "ResourceIdTemplate": "template",
+            "Severity": "high",
+            "ResourceType": "TestResource",
+            "Description": "Test description",
+            "Risk": "Test risk",
+            "RelatedUrl": "",
+            "Remediation": {
+                "Code": {
+                    "CLI": "test command",
+                    "NativeIaC": "test native",
+                    "Other": "test other",
+                    "Terraform": "test terraform",
+                },
+                "Recommendation": {
+                    "Text": "test recommendation",
+                    "Url": "https://hub.prowler.com/check/test_check",
+                },
+            },
+            "Categories": ["encryption"],
+            "DependsOn": [],
+            "RelatedTo": [],
+            "Notes": "Test notes",
+        }
+
+        check_metadata = CheckMetadata(**valid_metadata)
+        assert (
+            check_metadata.Remediation.Recommendation.Url
+            == "https://hub.prowler.com/check/test_check"
+        )
+
+    def test_validate_recommendation_url_empty_is_valid(self):
+        """Test Recommendation URL validation passes when empty"""
+        valid_metadata = {
+            "Provider": "aws",
+            "CheckID": "test_check",
+            "CheckTitle": "Test Check",
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices"
+            ],
+            "ServiceName": "test",
+            "SubServiceName": "subtest",
+            "ResourceIdTemplate": "template",
+            "Severity": "high",
+            "ResourceType": "TestResource",
+            "Description": "Test description",
+            "Risk": "Test risk",
+            "RelatedUrl": "",
+            "Remediation": {
+                "Code": {
+                    "CLI": "test command",
+                    "NativeIaC": "test native",
+                    "Other": "test other",
+                    "Terraform": "test terraform",
+                },
+                "Recommendation": {
+                    "Text": "test recommendation",
+                    "Url": "",
+                },
+            },
+            "Categories": ["encryption"],
+            "DependsOn": [],
+            "RelatedTo": [],
+            "Notes": "Test notes",
+        }
+
+        check_metadata = CheckMetadata(**valid_metadata)
+        assert check_metadata.Remediation.Recommendation.Url == ""
+
+    def test_validate_check_type_non_aws_must_be_empty(self):
+        """Test CheckType must be empty for non-AWS providers"""
+        invalid_metadata = {
+            "Provider": "azure",
+            "CheckID": "test_check",
+            "CheckTitle": "Test Check",
+            "CheckType": ["SomeType"],  # Invalid: non-AWS must be empty
+            "ServiceName": "test",
+            "SubServiceName": "subtest",
+            "ResourceIdTemplate": "template",
+            "Severity": "high",
+            "ResourceType": "TestResource",
+            "Description": "Test description",
+            "Risk": "Test risk",
+            "RelatedUrl": "",
+            "Remediation": {
+                "Code": {
+                    "CLI": "test command",
+                    "NativeIaC": "test native",
+                    "Other": "test other",
+                    "Terraform": "test terraform",
+                },
+                "Recommendation": {
+                    "Text": "test recommendation",
+                    "Url": "https://hub.prowler.com/check/test_check",
+                },
+            },
+            "Categories": ["encryption"],
+            "DependsOn": [],
+            "RelatedTo": [],
+            "Notes": "Test notes",
+        }
+
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(**invalid_metadata)
+        assert "CheckType must be empty for non-AWS providers" in str(exc_info.value)
+
+    def test_validate_check_type_success(self):
+        """Test CheckType validation with valid check types"""
+        valid_metadata = {
+            "Provider": "azure",  # Using non-AWS provider to avoid config validation
+            "CheckID": "test_check",
+            "CheckTitle": "Test Check",
+            "CheckType": [],
+            "ServiceName": "test",
+            "SubServiceName": "subtest",
+            "ResourceIdTemplate": "template",
+            "Severity": "high",
+            "ResourceType": "TestResource",
+            "Description": "Test description",
+            "Risk": "Test risk",
+            "RelatedUrl": "",
+            "Remediation": {
+                "Code": {
+                    "CLI": "test command",
+                    "NativeIaC": "test native",
+                    "Other": "test other",
+                    "Terraform": "test terraform",
+                },
+                "Recommendation": {
+                    "Text": "test recommendation",
+                    "Url": "https://hub.prowler.com/check/test_check",
+                },
+            },
+            "Categories": ["encryption"],
+            "DependsOn": [],
+            "RelatedTo": [],
+            "Notes": "Test notes",
+        }
+
+        check_metadata = CheckMetadata(**valid_metadata)
+        assert check_metadata.CheckType == []
+
+    def test_validate_check_type_failure_empty_string(self):
+        """Test CheckType validation fails with empty string in list"""
+        invalid_metadata = {
+            "Provider": "aws",
+            "CheckID": "test_check",
+            "CheckTitle": "Test Check",
+            "CheckType": ["TTPs/Discovery", ""],  # Invalid: empty string in list
+            "ServiceName": "test",
+            "SubServiceName": "subtest",
+            "ResourceIdTemplate": "template",
+            "Severity": "high",
+            "ResourceType": "TestResource",
+            "Description": "Test description",
+            "Risk": "Test risk",
+            "RelatedUrl": "",
+            "Remediation": {
+                "Code": {
+                    "CLI": "test command",
+                    "NativeIaC": "test native",
+                    "Other": "test other",
+                    "Terraform": "test terraform",
+                },
+                "Recommendation": {
+                    "Text": "test recommendation",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -1158,9 +1423,7 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": [
-                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
-            ],
+            "CheckType": [],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -1168,7 +1431,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "A" * 400,  # Exactly 400 characters
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -1178,7 +1441,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -1206,7 +1469,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "A" * 401,  # Too long: 401 characters
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -1216,7 +1479,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -1237,9 +1500,7 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": [
-                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
-            ],
+            "CheckType": [],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -1247,7 +1508,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "A" * 400,  # Exactly 400 characters
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -1257,7 +1518,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -1285,7 +1546,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "A" * 401,  # Too long: 401 characters
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -1295,7 +1556,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -1325,7 +1586,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -1335,7 +1596,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -1363,7 +1624,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -1373,7 +1634,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -1386,12 +1647,12 @@ class TestCheckMetadataValidators:
         assert check_metadata.CheckType == ["TTPs/Initial Access"]
 
     def test_validate_check_type_non_aws_provider(self):
-        """Test CheckType validation doesn't apply AWS rules to non-AWS providers"""
+        """Test CheckType validation requires empty list for non-AWS providers"""
         valid_metadata = {
             "Provider": "azure",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["CustomType"],  # Valid for non-AWS provider
+            "CheckType": [],  # Non-AWS providers must have empty CheckType
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -1399,7 +1660,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -1409,7 +1670,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -1419,7 +1680,7 @@ class TestCheckMetadataValidators:
         }
 
         check_metadata = CheckMetadata(**valid_metadata)
-        assert check_metadata.CheckType == ["CustomType"]
+        assert check_metadata.CheckType == []
 
     def test_validate_check_type_aws_validation_called(self):
         """Test that AWS CheckType validation function works for AWS provider"""
@@ -1436,7 +1697,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -1446,7 +1707,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -1459,12 +1720,15 @@ class TestCheckMetadataValidators:
         assert check_metadata.CheckType == ["Effects/Data Exposure"]
 
     def test_validate_check_type_multiple_types_all_valid(self):
-        """Test CheckType validation with multiple valid types for non-AWS provider"""
+        """Test CheckType validation with multiple valid types for AWS provider"""
         valid_metadata = {
-            "Provider": "azure",
+            "Provider": "aws",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security", "Network", "Compliance"],  # Multiple valid types
+            "CheckType": [
+                "TTPs/Discovery",
+                "Effects/Data Exposure",
+            ],  # Multiple valid AWS types
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -1472,7 +1736,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -1482,7 +1746,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -1492,7 +1756,7 @@ class TestCheckMetadataValidators:
         }
 
         check_metadata = CheckMetadata(**valid_metadata)
-        assert check_metadata.CheckType == ["Security", "Network", "Compliance"]
+        assert check_metadata.CheckType == ["TTPs/Discovery", "Effects/Data Exposure"]
 
     def test_validate_check_type_aws_multiple_types_mixed_validity(self):
         """Test CheckType validation with multiple types where one is invalid for AWS"""
@@ -1509,7 +1773,7 @@ class TestCheckMetadataValidators:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -1519,7 +1783,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
@@ -1546,7 +1810,7 @@ class TestCheckMetadataValidators:
             ResourceType="resource1",
             Description="Description 1",
             Risk="risk1",
-            RelatedUrl="url1",
+            RelatedUrl="",
             Remediation={
                 "Code": {
                     "CLI": "cli1",
@@ -1554,7 +1818,10 @@ class TestCheckMetadataValidators:
                     "Other": "other1",
                     "Terraform": "terraform1",
                 },
-                "Recommendation": {"Text": "text1", "Url": "url1"},
+                "Recommendation": {
+                    "Text": "text1",
+                    "Url": "https://hub.prowler.com/check/test_check",
+                },
             },
             Categories=["encryption"],
             DependsOn=["dependency1"],
@@ -1584,7 +1851,7 @@ class TestCheckMetadataValidators:
             ResourceType="resource1",
             Description="Description 1",
             Risk="risk1",
-            RelatedUrl="url1",
+            RelatedUrl="",
             Remediation={
                 "Code": {
                     "CLI": "cli1",
@@ -1592,7 +1859,10 @@ class TestCheckMetadataValidators:
                     "Other": "other1",
                     "Terraform": "terraform1",
                 },
-                "Recommendation": {"Text": "text1", "Url": "url1"},
+                "Recommendation": {
+                    "Text": "text1",
+                    "Url": "https://hub.prowler.com/check/test_check",
+                },
             },
             Categories=["encryption"],
             DependsOn=["dependency1"],
@@ -1620,7 +1890,7 @@ class TestCheckMetadataValidators:
                 ResourceType="resource1",
                 Description="Description 1",
                 Risk="risk1",
-                RelatedUrl="url1",
+                RelatedUrl="",
                 Remediation={
                     "Code": {
                         "CLI": "cli1",
@@ -1628,7 +1898,10 @@ class TestCheckMetadataValidators:
                         "Other": "other1",
                         "Terraform": "terraform1",
                     },
-                    "Recommendation": {"Text": "text1", "Url": "url1"},
+                    "Recommendation": {
+                        "Text": "text1",
+                        "Url": "https://hub.prowler.com/check/test_check",
+                    },
                 },
                 Categories=["encryption"],
                 DependsOn=["dependency1"],
@@ -1656,7 +1929,7 @@ class TestCheckMetadataValidators:
                 ResourceType="resource1",
                 Description="Description 1",
                 Risk="risk1",
-                RelatedUrl="url1",
+                RelatedUrl="",
                 Remediation={
                     "Code": {
                         "CLI": "cli1",
@@ -1664,7 +1937,10 @@ class TestCheckMetadataValidators:
                         "Other": "other1",
                         "Terraform": "terraform1",
                     },
-                    "Recommendation": {"Text": "text1", "Url": "url1"},
+                    "Recommendation": {
+                        "Text": "text1",
+                        "Url": "https://hub.prowler.com/check/test_check",
+                    },
                 },
                 Categories=["encryption"],
                 DependsOn=["dependency1"],
@@ -1692,7 +1968,7 @@ class TestCheckMetadataValidators:
                 ResourceType="resource1",
                 Description="Description 1",
                 Risk="risk1",
-                RelatedUrl="url1",
+                RelatedUrl="",
                 Remediation={
                     "Code": {
                         "CLI": "cli1",
@@ -1700,7 +1976,10 @@ class TestCheckMetadataValidators:
                         "Other": "other1",
                         "Terraform": "terraform1",
                     },
-                    "Recommendation": {"Text": "text1", "Url": "url1"},
+                    "Recommendation": {
+                        "Text": "text1",
+                        "Url": "https://hub.prowler.com/check/test_check",
+                    },
                 },
                 Categories=["encryption"],
                 DependsOn=["dependency1"],
@@ -1728,7 +2007,7 @@ class TestCheckMetadataValidators:
                 ResourceType="resource1",
                 Description="Description 1",
                 Risk="risk1",
-                RelatedUrl="url1",
+                RelatedUrl="",
                 Remediation={
                     "Code": {
                         "CLI": "cli1",
@@ -1736,7 +2015,10 @@ class TestCheckMetadataValidators:
                         "Other": "other1",
                         "Terraform": "terraform1",
                     },
-                    "Recommendation": {"Text": "text1", "Url": "url1"},
+                    "Recommendation": {
+                        "Text": "text1",
+                        "Url": "https://hub.prowler.com/check/test_check",
+                    },
                 },
                 Categories=["encryption"],
                 DependsOn=["dependency1"],
@@ -1773,7 +2055,10 @@ class TestCheckMetadataValidators:
                     "Other": "other1",
                     "Terraform": "terraform1",
                 },
-                "Recommendation": {"Text": "text1", "Url": "url1"},
+                "Recommendation": {
+                    "Text": "text1",
+                    "Url": "https://hub.prowler.com/check/test_check",
+                },
             },
             Categories=["encryption"],
             DependsOn=["dependency1"],
@@ -1809,7 +2094,10 @@ class TestCheckMetadataValidators:
                     "Other": "other1",
                     "Terraform": "terraform1",
                 },
-                "Recommendation": {"Text": "text1", "Url": "url1"},
+                "Recommendation": {
+                    "Text": "text1",
+                    "Url": "https://hub.prowler.com/check/test_check",
+                },
             },
             Categories=["encryption"],
             DependsOn=["dependency1"],
@@ -1848,7 +2136,10 @@ class TestCheckMetadataValidators:
                         "Other": "other1",
                         "Terraform": "terraform1",
                     },
-                    "Recommendation": {"Text": "text1", "Url": "url1"},
+                    "Recommendation": {
+                        "Text": "text1",
+                        "Url": "https://hub.prowler.com/check/test_check",
+                    },
                 },
                 Categories=["encryption"],
                 DependsOn=["dependency1"],
@@ -1877,7 +2168,7 @@ class TestCheckMetadataValidators:
                 ResourceType="resource1",
                 Description="Description 1",
                 Risk="risk1",
-                RelatedUrl="https://example.com",
+                RelatedUrl="",
                 Remediation={
                     "Code": {
                         "CLI": "cli1",
@@ -1885,7 +2176,10 @@ class TestCheckMetadataValidators:
                         "Other": "other1",
                         "Terraform": "terraform1",
                     },
-                    "Recommendation": {"Text": "text1", "Url": "url1"},
+                    "Recommendation": {
+                        "Text": "text1",
+                        "Url": "https://hub.prowler.com/check/test_check",
+                    },
                 },
                 Categories=["encryption"],
                 DependsOn=["dependency1"],
@@ -1914,7 +2208,7 @@ class TestCheckMetadataValidators:
                 ResourceType="resource1",
                 Description="Description 1",
                 Risk="risk1",
-                RelatedUrl="https://example.com",
+                RelatedUrl="",
                 Remediation={
                     "Code": {
                         "CLI": "cli1",
@@ -1922,7 +2216,10 @@ class TestCheckMetadataValidators:
                         "Other": "other1",
                         "Terraform": "terraform1",
                     },
-                    "Recommendation": {"Text": "text1", "Url": "url1"},
+                    "Recommendation": {
+                        "Text": "text1",
+                        "Url": "https://hub.prowler.com/check/test_check",
+                    },
                 },
                 Categories=["encryption"],
                 DependsOn=["dependency1"],
@@ -1954,7 +2251,7 @@ class TestResourceGroupValidator:
             "ResourceType": "TestResource",
             "Description": "Test description",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {
                     "CLI": "test command",
@@ -1964,7 +2261,7 @@ class TestResourceGroupValidator:
                 },
                 "Recommendation": {
                     "Text": "test recommendation",
-                    "Url": "https://example.com",
+                    "Url": "https://hub.prowler.com/check/test_check",
                 },
             },
             "Categories": ["encryption"],
