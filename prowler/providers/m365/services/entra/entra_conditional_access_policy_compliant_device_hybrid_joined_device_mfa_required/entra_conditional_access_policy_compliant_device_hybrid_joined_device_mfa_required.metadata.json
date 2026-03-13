@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "A **Conditional Access policy** enforces one of the following grant controls for admin roles or all users across all cloud apps: - 'Require device to be marked as compliant' - 'Require Microsoft Entra hybrid joined device' - 'Require multifactor authentication' This ensures that access is provided only under strong authentication or trusted device conditions.",
+  "Description": "Microsoft Entra **Conditional Access** policy enforces one of the following grant controls for admin roles or all users across all cloud apps: - 'Require device to be marked as compliant' - 'Require Microsoft Entra hybrid joined device' - 'Require multifactor authentication' This ensures that access is provided only under strong authentication or trusted device conditions.",
   "Risk": "If this policy is not implemented, attackers with compromised credentials may gain access from unmanaged devices or without strong authentication, increasing the likelihood of **unauthorized access and data breaches**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
