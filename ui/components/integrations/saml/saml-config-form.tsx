@@ -258,7 +258,11 @@ export const SamlConfigForm = ({
     : `${apiBaseUrl}/accounts/saml/your-domain.com/acs/`;
 
   return (
-    <form ref={formRef} action={formAction} className="flex flex-col gap-2">
+    <form
+      ref={formRef}
+      action={formAction}
+      className="flex min-w-0 flex-col gap-2"
+    >
       <div className="py-1 text-xs">
         Need help configuring SAML SSO?{" "}
         <CustomLink
