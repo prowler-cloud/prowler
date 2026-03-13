@@ -8,10 +8,10 @@ from prowler.lib.check.models import Check, CheckMetadata
 from tests.lib.check.compliance_check_test import custom_compliance_metadata
 
 mock_metadata = CheckMetadata(
-    Provider="azure",  # Using non-AWS provider to avoid config validation issues
+    Provider="aws",
     CheckID="accessanalyzer_enabled",
     CheckTitle="Check 1",
-    CheckType=["Security"],
+    CheckType=["Software and Configuration Checks/AWS Security Best Practices"],
     ServiceName="accessanalyzer",
     SubServiceName="subservice1",
     ResourceIdTemplate="template1",
@@ -29,7 +29,7 @@ mock_metadata = CheckMetadata(
         },
         "Recommendation": {"Text": "text1", "Url": "url1"},
     },
-    Categories=["categoryone"],
+    Categories=["encryption"],
     DependsOn=["dependency1"],
     RelatedTo=["related1"],
     Notes="notes1",
@@ -37,10 +37,10 @@ mock_metadata = CheckMetadata(
 )
 
 mock_metadata_lambda = CheckMetadata(
-    Provider="azure",  # Using non-AWS provider to avoid config validation issues
+    Provider="aws",
     CheckID="awslambda_function_url_public",
     CheckTitle="Check 1",
-    CheckType=["Security"],
+    CheckType=["Software and Configuration Checks/AWS Security Best Practices"],
     ServiceName="awslambda",
     SubServiceName="subservice1",
     ResourceIdTemplate="template1",
@@ -58,7 +58,7 @@ mock_metadata_lambda = CheckMetadata(
         },
         "Recommendation": {"Text": "text1", "Url": "url1"},
     },
-    Categories=["categoryone"],
+    Categories=["encryption"],
     DependsOn=["dependency1"],
     RelatedTo=["related1"],
     Notes="notes1",
@@ -175,7 +175,7 @@ class TestCheckMetada:
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
         result = CheckMetadata.list(
-            bulk_checks_metadata=bulk_metadata, category="categoryone"
+            bulk_checks_metadata=bulk_metadata, category="encryption"
         )
 
         # Assertions
@@ -363,7 +363,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security", "network", "data-protection"],
+            "Categories": ["encryption", "logging", "secrets"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -371,7 +371,7 @@ class TestCheckMetadataValidators:
 
         # Should not raise any validation error
         check_metadata = CheckMetadata(**valid_metadata)
-        assert check_metadata.Categories == ["security", "network", "data-protection"]
+        assert check_metadata.Categories == ["encryption", "logging", "secrets"]
 
     def test_valid_category_failure_non_string(self):
         """Test valid category validation fails with non-string category"""
@@ -454,6 +454,85 @@ class TestCheckMetadataValidators:
             in str(exc_info.value)
         )
 
+    def test_valid_category_failure_not_predefined(self):
+        """Test valid category validation fails with non-predefined category"""
+        invalid_metadata = {
+            "Provider": "aws",
+            "CheckID": "test_check",
+            "CheckTitle": "Test Check",
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
+            "ServiceName": "test",
+            "SubServiceName": "subtest",
+            "ResourceIdTemplate": "template",
+            "Severity": "high",
+            "ResourceType": "TestResource",
+            "Description": "Test description",
+            "Risk": "Test risk",
+            "RelatedUrl": "https://example.com",
+            "Remediation": {
+                "Code": {
+                    "CLI": "test command",
+                    "NativeIaC": "test native",
+                    "Other": "test other",
+                    "Terraform": "test terraform",
+                },
+                "Recommendation": {
+                    "Text": "test recommendation",
+                    "Url": "https://example.com",
+                },
+            },
+            "Categories": ["not-a-real-category"],  # Invalid: not in predefined list
+            "DependsOn": [],
+            "RelatedTo": [],
+            "Notes": "Test notes",
+        }
+
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(**invalid_metadata)
+        assert "Invalid category: 'not-a-real-category'. Must be one of:" in str(
+            exc_info.value
+        )
+
+    def test_valid_category_all_predefined_values(self):
+        """Test that all predefined categories are accepted"""
+        from prowler.lib.check.models import VALID_CATEGORIES
+
+        for category in VALID_CATEGORIES:
+            valid_metadata = {
+                "Provider": "azure",
+                "CheckID": "test_check",
+                "CheckTitle": "Test Check",
+                "CheckType": ["Security"],
+                "ServiceName": "test",
+                "SubServiceName": "subtest",
+                "ResourceIdTemplate": "template",
+                "Severity": "high",
+                "ResourceType": "TestResource",
+                "Description": "Test description",
+                "Risk": "Test risk",
+                "RelatedUrl": "https://example.com",
+                "Remediation": {
+                    "Code": {
+                        "CLI": "test command",
+                        "NativeIaC": "test native",
+                        "Other": "test other",
+                        "Terraform": "test terraform",
+                    },
+                    "Recommendation": {
+                        "Text": "test recommendation",
+                        "Url": "https://example.com",
+                    },
+                },
+                "Categories": [category],
+                "DependsOn": [],
+                "RelatedTo": [],
+                "Notes": "Test notes",
+            }
+            check_metadata = CheckMetadata(**valid_metadata)
+            assert category in check_metadata.Categories
+
     def test_severity_to_lower_success(self):
         """Test severity validation converts to lowercase"""
         valid_metadata = {
@@ -483,7 +562,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -521,7 +600,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -560,7 +639,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -599,7 +678,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -637,7 +716,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -676,7 +755,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -714,7 +793,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -754,7 +833,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -793,7 +872,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -831,7 +910,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -869,7 +948,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -908,7 +987,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -950,7 +1029,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -988,7 +1067,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -1027,7 +1106,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -1063,7 +1142,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -1102,7 +1181,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -1140,7 +1219,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -1181,7 +1260,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -1219,7 +1298,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -1259,7 +1338,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -1297,7 +1376,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -1333,7 +1412,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -1370,7 +1449,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -1406,7 +1485,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -1443,7 +1522,7 @@ class TestCheckMetadataValidators:
                     "Url": "https://example.com",
                 },
             },
-            "Categories": ["security"],
+            "Categories": ["encryption"],
             "DependsOn": [],
             "RelatedTo": [],
             "Notes": "Test notes",
@@ -1459,7 +1538,7 @@ class TestCheckMetadataValidators:
             Provider="aws",
             CheckID="test_check",
             CheckTitle="Test Check",
-            CheckType=["type1"],
+            CheckType=["Software and Configuration Checks/AWS Security Best Practices"],
             ServiceName="test",
             SubServiceName="subservice1",
             ResourceIdTemplate="template1",
@@ -1477,7 +1556,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {"Text": "text1", "Url": "url1"},
             },
-            Categories=["categoryone"],
+            Categories=["encryption"],
             DependsOn=["dependency1"],
             RelatedTo=["related1"],
             Notes="notes1",
@@ -1497,7 +1576,7 @@ class TestCheckMetadataValidators:
             Provider="aws",
             CheckID="test_check",
             CheckTitle="Test Check",
-            CheckType=["type1"],
+            CheckType=["Software and Configuration Checks/AWS Security Best Practices"],
             ServiceName="test",
             SubServiceName="subservice1",
             ResourceIdTemplate="template1",
@@ -1515,7 +1594,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {"Text": "text1", "Url": "url1"},
             },
-            Categories=["categoryone"],
+            Categories=["encryption"],
             DependsOn=["dependency1"],
             RelatedTo=["related1"],
             Notes="notes1",
@@ -1531,7 +1610,9 @@ class TestCheckMetadataValidators:
                 Provider="aws",
                 CheckID="test_check",
                 CheckTitle="Test Check",
-                CheckType=["type1"],
+                CheckType=[
+                    "Software and Configuration Checks/AWS Security Best Practices"
+                ],
                 ServiceName="test",
                 SubServiceName="subservice1",
                 ResourceIdTemplate="template1",
@@ -1549,7 +1630,7 @@ class TestCheckMetadataValidators:
                     },
                     "Recommendation": {"Text": "text1", "Url": "url1"},
                 },
-                Categories=["categoryone"],
+                Categories=["encryption"],
                 DependsOn=["dependency1"],
                 RelatedTo=["related1"],
                 Notes="notes1",
@@ -1565,7 +1646,9 @@ class TestCheckMetadataValidators:
                 Provider="aws",
                 CheckID="test_check",
                 CheckTitle="Test Check",
-                CheckType=["type1"],
+                CheckType=[
+                    "Software and Configuration Checks/AWS Security Best Practices"
+                ],
                 ServiceName="test",
                 SubServiceName="subservice1",
                 ResourceIdTemplate="template1",
@@ -1583,7 +1666,7 @@ class TestCheckMetadataValidators:
                     },
                     "Recommendation": {"Text": "text1", "Url": "url1"},
                 },
-                Categories=["categoryone"],
+                Categories=["encryption"],
                 DependsOn=["dependency1"],
                 RelatedTo=["related1"],
                 Notes="notes1",
@@ -1599,7 +1682,9 @@ class TestCheckMetadataValidators:
                 Provider="aws",
                 CheckID="test_check",
                 CheckTitle="Test Check",
-                CheckType=["type1"],
+                CheckType=[
+                    "Software and Configuration Checks/AWS Security Best Practices"
+                ],
                 ServiceName="test",
                 SubServiceName="subservice1",
                 ResourceIdTemplate="template1",
@@ -1617,7 +1702,7 @@ class TestCheckMetadataValidators:
                     },
                     "Recommendation": {"Text": "text1", "Url": "url1"},
                 },
-                Categories=["categoryone"],
+                Categories=["encryption"],
                 DependsOn=["dependency1"],
                 RelatedTo=["related1"],
                 Notes="notes1",
@@ -1633,7 +1718,9 @@ class TestCheckMetadataValidators:
                 Provider="aws",
                 CheckID="test_check",
                 CheckTitle="Test Check",
-                CheckType=["type1"],
+                CheckType=[
+                    "Software and Configuration Checks/AWS Security Best Practices"
+                ],
                 ServiceName="test",
                 SubServiceName="subservice1",
                 ResourceIdTemplate="template1",
@@ -1651,7 +1738,7 @@ class TestCheckMetadataValidators:
                     },
                     "Recommendation": {"Text": "text1", "Url": "url1"},
                 },
-                Categories=["categoryone"],
+                Categories=["encryption"],
                 DependsOn=["dependency1"],
                 RelatedTo=["related1"],
                 Notes="notes1",
@@ -1670,7 +1757,7 @@ class TestCheckMetadataValidators:
             Provider="aws",
             CheckID="test_check_empty_fields",
             CheckTitle="Test Check with Empty Fields",
-            CheckType=["type1"],
+            CheckType=["Software and Configuration Checks/AWS Security Best Practices"],
             ServiceName="test",
             SubServiceName="subservice1",
             ResourceIdTemplate="template1",
@@ -1688,7 +1775,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {"Text": "text1", "Url": "url1"},
             },
-            Categories=["categoryone"],
+            Categories=["encryption"],
             DependsOn=["dependency1"],
             RelatedTo=["related1"],
             Notes="notes1",
@@ -1706,7 +1793,7 @@ class TestCheckMetadataValidators:
             Provider="aws",
             CheckID="test_check_defaults",
             CheckTitle="Test Check with Default Fields",
-            CheckType=["type1"],
+            CheckType=["Software and Configuration Checks/AWS Security Best Practices"],
             ServiceName="test",
             SubServiceName="subservice1",
             ResourceIdTemplate="template1",
@@ -1724,7 +1811,7 @@ class TestCheckMetadataValidators:
                 },
                 "Recommendation": {"Text": "text1", "Url": "url1"},
             },
-            Categories=["categoryone"],
+            Categories=["encryption"],
             DependsOn=["dependency1"],
             RelatedTo=["related1"],
             Notes="notes1",
@@ -1743,7 +1830,9 @@ class TestCheckMetadataValidators:
                 Provider="aws",
                 CheckID="test_check_none_related_url",
                 CheckTitle="Test Check with None RelatedUrl",
-                CheckType=["type1"],
+                CheckType=[
+                    "Software and Configuration Checks/AWS Security Best Practices"
+                ],
                 ServiceName="test",
                 SubServiceName="subservice1",
                 ResourceIdTemplate="template1",
@@ -1761,7 +1850,7 @@ class TestCheckMetadataValidators:
                     },
                     "Recommendation": {"Text": "text1", "Url": "url1"},
                 },
-                Categories=["categoryone"],
+                Categories=["encryption"],
                 DependsOn=["dependency1"],
                 RelatedTo=["related1"],
                 Notes="notes1",
@@ -1778,7 +1867,9 @@ class TestCheckMetadataValidators:
                 Provider="aws",
                 CheckID="test_check_none_additional_urls",
                 CheckTitle="Test Check with None AdditionalURLs",
-                CheckType=["type1"],
+                CheckType=[
+                    "Software and Configuration Checks/AWS Security Best Practices"
+                ],
                 ServiceName="test",
                 SubServiceName="subservice1",
                 ResourceIdTemplate="template1",
@@ -1796,7 +1887,7 @@ class TestCheckMetadataValidators:
                     },
                     "Recommendation": {"Text": "text1", "Url": "url1"},
                 },
-                Categories=["categoryone"],
+                Categories=["encryption"],
                 DependsOn=["dependency1"],
                 RelatedTo=["related1"],
                 Notes="notes1",
@@ -1813,7 +1904,9 @@ class TestCheckMetadataValidators:
                 Provider="aws",
                 CheckID="test_check_invalid_additional_urls",
                 CheckTitle="Test Check with Invalid AdditionalURLs",
-                CheckType=["type1"],
+                CheckType=[
+                    "Software and Configuration Checks/AWS Security Best Practices"
+                ],
                 ServiceName="test",
                 SubServiceName="subservice1",
                 ResourceIdTemplate="template1",
@@ -1831,7 +1924,7 @@ class TestCheckMetadataValidators:
                     },
                     "Recommendation": {"Text": "text1", "Url": "url1"},
                 },
-                Categories=["categoryone"],
+                Categories=["encryption"],
                 DependsOn=["dependency1"],
                 RelatedTo=["related1"],
                 Notes="notes1",
@@ -1840,6 +1933,101 @@ class TestCheckMetadataValidators:
             )
         # Should contain the validation error we set in the validator
         assert "AdditionalURLs must be a list" in str(exc_info.value)
+
+
+class TestResourceGroupValidator:
+    """Test class for ResourceGroup validator"""
+
+    def _base_metadata(self, **overrides):
+        """Helper to build valid metadata with overrides"""
+        base = {
+            "Provider": "aws",
+            "CheckID": "test_check",
+            "CheckTitle": "Test Check",
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices"
+            ],
+            "ServiceName": "test",
+            "SubServiceName": "subtest",
+            "ResourceIdTemplate": "template",
+            "Severity": "high",
+            "ResourceType": "TestResource",
+            "Description": "Test description",
+            "Risk": "Test risk",
+            "RelatedUrl": "https://example.com",
+            "Remediation": {
+                "Code": {
+                    "CLI": "test command",
+                    "NativeIaC": "test native",
+                    "Other": "test other",
+                    "Terraform": "test terraform",
+                },
+                "Recommendation": {
+                    "Text": "test recommendation",
+                    "Url": "https://example.com",
+                },
+            },
+            "Categories": ["encryption"],
+            "DependsOn": [],
+            "RelatedTo": [],
+            "Notes": "Test notes",
+        }
+        base.update(overrides)
+        return base
+
+    @pytest.mark.parametrize(
+        "resource_group",
+        [
+            "compute",
+            "container",
+            "serverless",
+            "database",
+            "storage",
+            "network",
+            "IAM",
+            "messaging",
+            "security",
+            "monitoring",
+            "api_gateway",
+            "ai_ml",
+            "governance",
+            "collaboration",
+            "devops",
+            "analytics",
+        ],
+    )
+    def test_valid_resource_group(self, resource_group):
+        """Test all valid ResourceGroup values are accepted"""
+        metadata = CheckMetadata(**self._base_metadata(ResourceGroup=resource_group))
+        assert metadata.ResourceGroup == resource_group
+
+    def test_resource_group_empty_string_allowed(self):
+        """Test that empty string (default) is allowed for ResourceGroup"""
+        metadata = CheckMetadata(**self._base_metadata(ResourceGroup=""))
+        assert metadata.ResourceGroup == ""
+
+    def test_resource_group_default_is_empty(self):
+        """Test that ResourceGroup defaults to empty string when not provided"""
+        metadata = CheckMetadata(**self._base_metadata())
+        assert metadata.ResourceGroup == ""
+
+    def test_resource_group_invalid_value(self):
+        """Test that invalid ResourceGroup value raises ValidationError"""
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(**self._base_metadata(ResourceGroup="invalid_group"))
+        assert "Invalid ResourceGroup: 'invalid_group'" in str(exc_info.value)
+
+    def test_resource_group_case_sensitive(self):
+        """Test that ResourceGroup validation is case-sensitive (IAM, not iam)"""
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(**self._base_metadata(ResourceGroup="iam"))
+        assert "Invalid ResourceGroup: 'iam'" in str(exc_info.value)
+
+    def test_resource_group_typo(self):
+        """Test that typos in ResourceGroup are rejected"""
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(**self._base_metadata(ResourceGroup="computee"))
+        assert "Invalid ResourceGroup: 'computee'" in str(exc_info.value)
 
 
 class TestCheck:

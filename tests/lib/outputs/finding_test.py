@@ -910,7 +910,7 @@ class TestFinding:
             "provider": "test_provider",
             "checkid": "service_check_001",
             "checktitle": "Test Check",
-            "checktype": [],
+            "checktype": ["Security"],
             "servicename": "service",
             "subservicename": "SubService",
             "severity": "high",
@@ -928,7 +928,7 @@ class TestFinding:
                 },
             },
             "resourceidtemplate": "template",
-            "categories": ["cat-one", "cat-two"],
+            "categories": ["encryption", "logging"],
             "dependson": ["dep1"],
             "relatedto": ["rel1"],
             "notes": "Some notes",
@@ -953,7 +953,7 @@ class TestFinding:
         assert meta.Provider == "test_provider"
         assert meta.CheckID == "service_check_001"
         assert meta.CheckTitle == "Test Check"
-        assert meta.CheckType == []
+        assert meta.CheckType == ["Security"]
         assert meta.ServiceName == "service"
         assert meta.SubServiceName == "SubService"
         assert meta.Severity == "high"
@@ -968,7 +968,7 @@ class TestFinding:
         assert meta.Remediation.Code.CLI == "cli_code"
         assert meta.Remediation.Code.Other == "other_code"
         assert meta.ResourceIdTemplate == "template"
-        assert meta.Categories == ["cat-one", "cat-two"]
+        assert meta.Categories == ["encryption", "logging"]
         assert meta.DependsOn == ["dep1"]
         assert meta.RelatedTo == ["rel1"]
         assert meta.Notes == "Some notes"
@@ -1167,7 +1167,7 @@ class TestFinding:
                 "recommendation": {"text": "Fix it", "url": "http://fix-gcp.com"},
             },
             "resourceidtemplate": "template",
-            "categories": ["cat-one", "cat-two"],
+            "categories": ["encryption", "logging"],
             "dependson": ["dep1"],
             "relatedto": ["rel1"],
             "notes": "Some notes",
@@ -1247,7 +1247,7 @@ class TestFinding:
                 "recommendation": {"text": "Fix it", "url": "http://fix-k8s.com"},
             },
             "resourceidtemplate": "template",
-            "categories": ["cat-one"],
+            "categories": ["encryption"],
             "dependson": [],
             "relatedto": [],
             "notes": "K8s notes",
@@ -1313,7 +1313,7 @@ class TestFinding:
                 "recommendation": {"text": "Fix it", "url": "http://fix-m365.com"},
             },
             "resourceidtemplate": "template",
-            "categories": ["cat-one"],
+            "categories": ["encryption"],
             "dependson": [],
             "relatedto": [],
             "notes": "M365 notes",

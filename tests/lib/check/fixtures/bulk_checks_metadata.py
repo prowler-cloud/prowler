@@ -87,7 +87,7 @@ test_bulk_checks_metadata = {
                 Text="Ensure all vpc has public and private subnets defined", Url=""
             ),
         ),
-        Categories=["internet-exposed", "trustboundaries"],
+        Categories=["internet-exposed", "trust-boundaries"],
         DependsOn=[],
         RelatedTo=[],
         Notes="",

@@ -1,4 +1,5 @@
 import functools
+import json
 import os
 import re
 import sys
@@ -15,6 +16,87 @@ from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 
+# Valid ResourceGroup values as defined in the RFC
+VALID_RESOURCE_GROUPS = frozenset(
+    {
+        "compute",
+        "container",
+        "serverless",
+        "database",
+        "storage",
+        "network",
+        "IAM",
+        "messaging",
+        "security",
+        "monitoring",
+        "api_gateway",
+        "ai_ml",
+        "governance",
+        "collaboration",
+        "devops",
+        "analytics",
+    }
+)
+
+# Valid Categories as defined in the RFC
+VALID_CATEGORIES = frozenset(
+    {
+        "encryption",
+        "internet-exposed",
+        "logging",
+        "secrets",
+        "resilience",
+        "threat-detection",
+        "trust-boundaries",
+        "vulnerabilities",
+        "cluster-security",
+        "container-security",
+        "node-security",
+        "gen-ai",
+        "ci-cd",
+        "identity-access",
+        "email-security",
+        "forensics-ready",
+        "software-supply-chain",
+        "e3",
+        "e5",
+        "privilege-escalation",
+        "ec2-imdsv1",
+    }
+)
+
+
+@functools.lru_cache(maxsize=1)
+def _load_aws_check_types_hierarchy() -> dict:
+    """
+    Load and cache the AWS CheckTypes hierarchy from the JSON config file.
+
+    Returns:
+        dict: The CheckTypes hierarchy, or empty dict if file not found.
+    """
+    try:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        check_types_file = os.path.normpath(
+            os.path.join(
+                current_dir,
+                "..",
+                "..",
+                "providers",
+                "aws",
+                "config",
+                "check_types.json",
+            )
+        )
+
+        if not os.path.exists(check_types_file):
+            return {}
+
+        with open(check_types_file, "r") as f:
+            return json.load(f)
+
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
 
 def _validate_aws_check_type_in_config(check_type: str) -> bool:
     """
@@ -27,41 +109,21 @@ def _validate_aws_check_type_in_config(check_type: str) -> bool:
     Returns:
         bool: True if the CheckType path exists in the config hierarchy
     """
-    try:
-        import json
-        import os
-
-        if not check_type:
-            return False
-
-        # Get the path to the AWS CheckTypes configuration
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        check_types_file = os.path.join(
-            current_dir, "..", "..", "providers", "aws", "config", "check_types.json"
-        )
-        check_types_file = os.path.normpath(check_types_file)
-
-        # Load the CheckTypes hierarchy from JSON file
-        if not os.path.exists(check_types_file):
-            return False
-
-        with open(check_types_file, "r") as f:
-            hierarchy = json.load(f)
-
-        # Split the path by '/' to get each level
-        path_parts = check_type.split("/")
-
-        # Navigate through the hierarchy using direct lookups
-        current_level = hierarchy
-        for part in path_parts:
-            if not isinstance(current_level, dict) or part not in current_level:
-                return False
-            current_level = current_level[part]
-
-        return True
-
-    except (KeyError, AttributeError, FileNotFoundError, json.JSONDecodeError):
+    if not check_type:
         return False
+
+    hierarchy = _load_aws_check_types_hierarchy()
+    if not hierarchy:
+        return False
+
+    path_parts = check_type.split("/")
+    current_level = hierarchy
+    for part in path_parts:
+        if not isinstance(current_level, dict) or part not in current_level:
+            return False
+        current_level = current_level[part]
+
+    return True
 
 
 class Code(BaseModel):
@@ -142,7 +204,7 @@ class CheckMetadata(BaseModel):
         Compliance (list, optional): The compliance information for the check. Defaults to None.
 
     Validators:
-        valid_category(value): Validator function to validate the categories of the check.
+        valid_category(value): Validator function to validate the categories of the check against predefined values.
         severity_to_lower(severity): Validator function to convert the severity to lowercase.
         valid_cli_command(remediation): Validator function to validate the CLI command is not an URL.
         valid_resource_type(resource_type): Validator function to validate the resource type is not empty.
@@ -152,6 +214,7 @@ class CheckMetadata(BaseModel):
         validate_check_type(check_type, values): Validator function to validate CheckType - no empty strings for all providers, plus predefined types validation for AWS (loaded from config file).
         validate_description(description): Validator function to validate Description max length (400 chars).
         validate_risk(risk): Validator function to validate Risk max length (400 chars).
+        validate_resource_group(resource_group): Validator function to validate ResourceGroup against predefined values.
         validate_additional_urls(additional_urls): Validator function to ensure AdditionalURLs contains no duplicates.
     """
 
@@ -187,6 +250,10 @@ class CheckMetadata(BaseModel):
         if not re.match("^[a-z0-9-]+$", value_lower):
             raise ValueError(
                 f"Invalid category: {value}. Categories can only contain lowercase letters, numbers and hyphen '-'"
+            )
+        if value_lower not in VALID_CATEGORIES:
+            raise ValueError(
+                f"Invalid category: '{value_lower}'. Must be one of: {', '.join(sorted(VALID_CATEGORIES))}."
             )
         return value_lower
 
@@ -280,6 +347,14 @@ class CheckMetadata(BaseModel):
                 f"Risk must not exceed 400 characters, got {len(risk)} characters"
             )
         return risk
+
+    @validator("ResourceGroup", pre=True, always=True)
+    def validate_resource_group(cls, resource_group):
+        if resource_group and resource_group not in VALID_RESOURCE_GROUPS:
+            raise ValueError(
+                f"Invalid ResourceGroup: '{resource_group}'. Must be one of: {', '.join(sorted(VALID_RESOURCE_GROUPS))} or empty string."
+            )
+        return resource_group
 
     @validator("AdditionalURLs", pre=True, always=True)
     def validate_additional_urls(cls, additional_urls):

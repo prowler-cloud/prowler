@@ -214,7 +214,7 @@ class TestOCSF:
                 "status_id": 1,
                 "unmapped": {
                     "related_url": "test-url",
-                    "categories": ["test-category"],
+                    "categories": ["encryption"],
                     "depends_on": ["test-dependency"],
                     "related_to": ["test-related-to"],
                     "additional_urls": [

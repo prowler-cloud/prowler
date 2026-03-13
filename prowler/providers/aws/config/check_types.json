@@ -5,7 +5,11 @@
     },
     "AWS Security Best Practices": {
       "Network Reachability": {},
-      "Runtime Behavior Analysis": {}
+      "Network Security": {},
+      "Runtime Behavior Analysis": {},
+      "Data Encryption": {},
+      "Encryption at Rest": {},
+      "Encryption in Transit": {}
     },
     "Industry and Regulatory Standards": {
       "AWS Foundational Security Best Practices": {},
@@ -20,6 +24,7 @@
       "SOC 1": {},
       "SOC 2": {},
       "HIPAA Controls (USA)": {},
+      "NIST 800-53 Controls": {},
       "NIST 800-53 Controls (USA)": {},
       "NIST CSF Controls (USA)": {},
       "IRAP Controls (Australia)": {},
@@ -38,7 +43,11 @@
     "Patch Management": {}
   },
   "TTPs": {
-    "Initial Access": {},
+    "Initial Access": {
+      "Unauthorized Access": {},
+      "External Remote Services": {},
+      "Valid Accounts": {}
+    },
     "Execution": {},
     "Persistence": {},
     "Privilege Escalation": {},

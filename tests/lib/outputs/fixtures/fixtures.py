@@ -32,7 +32,7 @@ def generate_finding_output(
     remediation_code_terraform: str = "",
     remediation_code_cli: str = "",
     remediation_code_other: str = "",
-    categories: list[str] = ["test-category"],
+    categories: list[str] = ["encryption"],
     depends_on: list[str] = ["test-dependency"],
     related_to: list[str] = ["test-related-to"],
     notes: str = "test-notes",

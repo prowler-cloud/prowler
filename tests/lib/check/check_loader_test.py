@@ -268,12 +268,17 @@ class TestCheckLoader:
         }
         compliance_frameworks = ["soc2_aws"]
 
-        assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
-            bulk_checks_metadata=bulk_checks_metadata,
-            bulk_compliance_frameworks=bulk_compliance_frameworks,
-            compliance_frameworks=compliance_frameworks,
-            provider=self.provider,
-        )
+        # Mock get_bulk to prevent loading real metadata files that may fail validation
+        with patch(
+            "prowler.lib.check.checks_loader.CheckMetadata.get_bulk",
+            return_value=bulk_checks_metadata,
+        ):
+            assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metadata,
+                bulk_compliance_frameworks=bulk_compliance_frameworks,
+                compliance_frameworks=compliance_frameworks,
+                provider=self.provider,
+            )
 
     def test_load_checks_to_execute_with_categories(
         self,
