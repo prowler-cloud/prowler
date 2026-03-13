@@ -6,7 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- `entra_conditional_access_policy_device_code_flow_blocked` check for M365 provider
+- `entra_conditional_access_policy_device_code_flow_blocked` check for M365 provider [(#10218)](https://github.com/prowler-cloud/prowler/pull/10218)
 
 ### 🔄 Changed
 
