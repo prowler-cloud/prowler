@@ -12,13 +12,8 @@ import {
   Shield,
   User,
 } from "lucide-react";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useTransition,
-} from "react";
+import type { ReactNode, MouseEvent } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { getResourceEvents } from "@/actions/resources";
 import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
@@ -40,9 +35,12 @@ export const EventsTimeline = ({
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [includeReadEvents, setIncludeReadEvents] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [isPending, startTransition] = useTransition();
 
-  const fetchEvents = useCallback(() => {
+  useEffect(() => {
+    if (!isAwsProvider) return;
+
     setError(null);
     setErrorStatus(null);
 
@@ -72,13 +70,7 @@ export const EventsTimeline = ({
         setHasFetched(true);
       }
     });
-  }, [resourceId, includeReadEvents]);
-
-  useEffect(() => {
-    if (isAwsProvider) {
-      fetchEvents();
-    }
-  }, [fetchEvents, isAwsProvider]);
+  }, [resourceId, includeReadEvents, isAwsProvider, retryCount]);
 
   const toggleRow = (eventId: string) => {
     setExpandedRows((prev) => {
@@ -143,7 +135,8 @@ export const EventsTimeline = ({
               : error}
         </p>
         <button
-          onClick={fetchEvents}
+          onClick={() => setRetryCount((c) => c + 1)}
+          aria-label="Retry fetching CloudTrail events"
           className="text-bg-data-info hover:text-bg-data-info/80 text-xs font-medium"
         >
           Try again
@@ -206,6 +199,7 @@ export const EventsTimeline = ({
                   {/* Timeline node + row */}
                   <button
                     onClick={() => toggleRow(event.id)}
+                    aria-expanded={isExpanded}
                     className={cn(
                       "group relative flex w-full items-start gap-4 py-2.5 pr-3 pl-6 text-left transition-colors",
                       "hover:bg-bg-neutral-tertiary/30 rounded-r-lg",
@@ -282,6 +276,7 @@ export const EventsTimeline = ({
                               e.stopPropagation();
                               downloadEventJson(event);
                             }}
+                            aria-label={`Download ${attrs.event_name} event as JSON`}
                             className="text-text-neutral-tertiary hover:text-text-neutral-secondary flex items-center gap-1.5 text-xs transition-colors"
                           >
                             <Download className="h-3.5 w-3.5" />
@@ -374,11 +369,11 @@ const DetailRow = ({
   mono,
   children,
 }: {
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   label: string;
   value?: string;
   mono?: boolean;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }) => (
   <div className="flex items-center gap-3 py-2.5">
     <span className="text-text-neutral-tertiary flex w-16 shrink-0 items-center gap-1.5 text-xs">
@@ -407,11 +402,11 @@ const JsonBlock = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
-  const json = useMemo(() => JSON.stringify(data, null, 2), [data]);
-  const lineCount = useMemo(() => json.split("\n").length, [json]);
+  const json = JSON.stringify(data, null, 2);
+  const lineCount = json.split("\n").length;
   const isLong = lineCount > 8;
 
-  const handleCopy = async (e: React.MouseEvent) => {
+  const handleCopy = async (e: MouseEvent) => {
     e.stopPropagation();
     await navigator.clipboard.writeText(json);
     setCopied(true);
@@ -426,6 +421,7 @@ const JsonBlock = ({
         </span>
         <button
           onClick={handleCopy}
+          aria-label={`Copy ${label} JSON to clipboard`}
           className="text-text-neutral-tertiary hover:text-text-neutral-secondary flex items-center gap-1.5 text-xs transition-colors"
         >
           {copied ? (

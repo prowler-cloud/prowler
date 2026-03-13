@@ -25,7 +25,7 @@ import {
   getProviderLogo,
   InfoField,
 } from "@/components/ui/entities";
-import { EventsTimeline } from "@/components/ui/events-timeline/events-timeline";
+import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib";
 import { getGroupLabel } from "@/lib/categories";

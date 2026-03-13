@@ -193,14 +193,16 @@ export const getResourceEvents = async (
       const defaultError = "An error occurred while fetching events.";
       try {
         const errorData = rawText ? JSON.parse(rawText) : null;
-        const errorDetail =
-          errorData?.errors?.[0]?.detail ||
-          errorData?.error ||
-          errorData?.message ||
-          rawText ||
-          response.statusText ||
-          defaultError;
-        return { error: errorDetail, status: response.status };
+          return {
+          error:
+            errorData?.errors?.[0]?.detail ||
+            errorData?.error ||
+            errorData?.message ||
+            rawText ||
+            response.statusText ||
+            defaultError,
+          status: response.status,
+        };
       } catch {
         return {
           error: rawText || response.statusText || defaultError,

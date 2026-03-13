@@ -166,10 +166,3 @@ export interface ResourceEventProps {
   id: string;
   attributes: ResourceEventAttributes;
 }
-
-export interface ResourceEventsResponse {
-  data: ResourceEventProps[];
-  meta: Meta;
-  error?: string;
-  status?: number;
-}

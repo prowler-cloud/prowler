@@ -153,4 +153,24 @@ describe("getResourceEvents", () => {
     // Then
     expect(result).toEqual({ error: "An unexpected error occurred." });
   });
+
+  it.each([
+    "../../../etc/passwd",
+    "resource/../../secret",
+    "id with spaces",
+    "id;rm -rf /",
+    "<script>alert(1)</script>",
+    "resource%00id",
+    "",
+  ])(
+    "rejects malicious or invalid resourceId: %s",
+    async (maliciousId) => {
+      // When
+      const result = await getResourceEvents(maliciousId);
+
+      // Then
+      expect(result).toEqual({ error: "Invalid resource ID format." });
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
 });
