@@ -131,7 +131,8 @@ export const ErrorPointers = {
   OPENSTACK_CLOUDS_YAML_CONTENT: "/data/attributes/secret/clouds_yaml_content",
   OPENSTACK_CLOUDS_YAML_CLOUD: "/data/attributes/secret/clouds_yaml_cloud",
   GOOGLEWORKSPACE_CUSTOMER_ID: "/data/attributes/secret/customer_id",
-  GOOGLEWORKSPACE_CREDENTIALS_CONTENT: "/data/attributes/secret/credentials_content",
+  GOOGLEWORKSPACE_CREDENTIALS_CONTENT:
+    "/data/attributes/secret/credentials_content",
   GOOGLEWORKSPACE_DELEGATED_USER: "/data/attributes/secret/delegated_user",
 } as const;
 

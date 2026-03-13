@@ -350,7 +350,10 @@ export const addCredentialsFormSchema = (
                                       z
                                         .string()
                                         .trim()
-                                        .min(1, "Delegated user email is required")
+                                        .min(
+                                          1,
+                                          "Delegated user email is required",
+                                        )
                                         .email(
                                           "Please enter a valid email address",
                                         ),

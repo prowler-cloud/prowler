@@ -19,16 +19,16 @@ export const GoogleWorkspaceCredentialsForm = ({
           the admin email to impersonate.
         </div>
       </div>
-      <div className="bg-default-50 text-default-600 rounded-lg border border-default-200 p-3 text-xs">
-        <div className="font-semibold mb-1">How to find your Customer ID:</div>
-        <ol className="ml-4 space-y-1 list-decimal">
+      <div className="border-default-200 rounded-lg border bg-default-50 p-3 text-xs text-default-600">
+        <div className="mb-1 font-semibold">How to find your Customer ID:</div>
+        <ol className="ml-4 list-decimal space-y-1">
           <li>
             Sign in to your{" "}
             <a
               href="https://admin.google.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary underline hover:text-primary-600"
+              className="text-primary hover:text-primary-600 underline"
             >
               Google Admin console
             </a>

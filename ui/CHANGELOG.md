@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.21.0] (Prowler v5.21.0 UNRELEASED)
+
+### 🚀 Added
+
+- Google Workspace provider support [(#10333)](https://github.com/prowler-cloud/prowler/pull/10333)
+
+---
+
 ## [1.19.0] (Prowler v5.19.0)
 
 ### 🚀 Added
