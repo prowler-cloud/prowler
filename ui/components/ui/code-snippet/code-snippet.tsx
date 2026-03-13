@@ -80,7 +80,7 @@ export const CodeSnippet = ({
   return (
     <div
       className={cn(
-        "bg-bg-neutral-tertiary text-text-neutral-primary border-border-neutral-tertiary flex h-6 w-fit items-center gap-2 rounded-lg border px-2 py-1 text-xs",
+        "bg-bg-neutral-tertiary text-text-neutral-primary border-border-neutral-tertiary flex h-6 w-fit min-w-0 items-center gap-1.5 rounded-full border-2 px-2 py-0.5 text-xs",
         className,
       )}
     >
