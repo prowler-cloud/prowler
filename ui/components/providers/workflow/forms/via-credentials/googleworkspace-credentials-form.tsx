@@ -19,7 +19,7 @@ export const GoogleWorkspaceCredentialsForm = ({
           the admin email to impersonate.
         </div>
       </div>
-      <div className="border-default-200 rounded-lg border bg-default-50 p-3 text-xs text-default-600">
+      <div className="border-default-200 bg-default-50 text-default-600 rounded-lg border p-3 text-xs">
         <div className="mb-1 font-semibold">How to find your Customer ID:</div>
         <ol className="ml-4 list-decimal space-y-1">
           <li>
