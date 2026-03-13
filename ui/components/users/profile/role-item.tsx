@@ -68,6 +68,7 @@ export const RoleItem = ({
           variant="ghost"
           size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
+          className="px-0"
         >
           {isExpanded ? "Hide details" : "Show details"}
         </Button>
