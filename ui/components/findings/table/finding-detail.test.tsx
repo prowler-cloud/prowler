@@ -59,9 +59,7 @@ vi.mock("@/components/shadcn", () => {
     TabsContent: ({ children }: { children: React.ReactNode }) => (
       <>{children}</>
     ),
-    TabsList: ({ children }: { children: React.ReactNode }) => (
-      <>{children}</>
-    ),
+    TabsList: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     TabsTrigger: ({ children }: { children: React.ReactNode }) => (
       <>{children}</>
     ),
@@ -88,9 +86,7 @@ vi.mock("@/components/ui/entities", () => ({
 }));
 
 vi.mock("@/components/ui/entities/date-with-time", () => ({
-  DateWithTime: ({ dateTime }: { dateTime: string }) => (
-    <span>{dateTime}</span>
-  ),
+  DateWithTime: ({ dateTime }: { dateTime: string }) => <span>{dateTime}</span>,
 }));
 
 vi.mock("@/components/ui/table/severity-badge", () => ({
@@ -101,9 +97,7 @@ vi.mock("@/components/ui/table/severity-badge", () => ({
 
 vi.mock("@/components/ui/table/status-finding-badge", () => ({
   FindingStatus: {},
-  StatusFindingBadge: ({ status }: { status: string }) => (
-    <span>{status}</span>
-  ),
+  StatusFindingBadge: ({ status }: { status: string }) => <span>{status}</span>,
 }));
 
 vi.mock("@/lib/iac-utils", () => ({
@@ -125,9 +119,7 @@ vi.mock("../mute-findings-modal", () => ({
     findingIds: string[];
   }) =>
     isOpen ? (
-      <div data-testid="mute-modal">
-        Muting {findingIds.length} finding(s)
-      </div>
+      <div data-testid="mute-modal">Muting {findingIds.length} finding(s)</div>
     ) : null,
 }));
 
@@ -233,7 +225,10 @@ const baseFinding: FindingProps = {
         provider: "aws",
         uid: "123456789012",
         alias: "my-account",
-        connection: { connected: true, last_checked_at: "2024-01-01T00:00:00Z" },
+        connection: {
+          connected: true,
+          last_checked_at: "2024-01-01T00:00:00Z",
+        },
         inserted_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z",
       },
@@ -250,9 +245,7 @@ describe("FindingDetail", () => {
   it("shows the Mute button for non-muted findings", () => {
     render(<FindingDetail findingDetails={baseFinding} />);
 
-    expect(
-      screen.getByRole("button", { name: /mute/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /mute/i })).toBeInTheDocument();
   });
 
   it("hides the Mute button for muted findings", () => {
