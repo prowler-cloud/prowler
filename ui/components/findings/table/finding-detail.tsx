@@ -1,11 +1,12 @@
 "use client";
 
-import { ExternalLink, Link, X } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
-import type { ReactNode } from "react";
+import { ExternalLink, Link, VolumeX, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { type ReactNode, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 import {
+  Button,
   Drawer,
   DrawerClose,
   DrawerContent,
@@ -35,6 +36,7 @@ import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/iac-utils";
 import { cn } from "@/lib/utils";
 import { FindingProps, ProviderType } from "@/types";
 
+import { MuteFindingsModal } from "../mute-findings-modal";
 import { Muted } from "../muted";
 import { DeltaIndicator } from "./delta-indicator";
 
@@ -85,8 +87,10 @@ export const FindingDetail = ({
   const resource = finding.relationships?.resource?.attributes;
   const scan = finding.relationships?.scan?.attributes;
   const providerDetails = finding.relationships?.provider?.attributes;
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
 
   const copyFindingUrl = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -105,6 +109,21 @@ export const FindingDetail = ({
           resource.region,
         )
       : null;
+
+  const handleMuteComplete = () => {
+    setIsMuteModalOpen(false);
+    onOpenChange?.(false);
+    router.refresh();
+  };
+
+  const muteModal = !attributes.muted && (
+    <MuteFindingsModal
+      isOpen={isMuteModalOpen}
+      onOpenChange={setIsMuteModalOpen}
+      findingIds={[findingDetails.id]}
+      onComplete={handleMuteComplete}
+    />
+  );
 
   const content = (
     <div className="flex min-w-0 flex-col gap-4 rounded-lg">
@@ -154,11 +173,24 @@ export const FindingDetail = ({
 
       {/* Tabs */}
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="resources">Resources</TabsTrigger>
-          <TabsTrigger value="scans">Scans</TabsTrigger>
-        </TabsList>
+        <div className="mb-4 flex items-center justify-between">
+          <TabsList>
+            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="resources">Resources</TabsTrigger>
+            <TabsTrigger value="scans">Scans</TabsTrigger>
+          </TabsList>
+
+          {!attributes.muted && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsMuteModalOpen(true)}
+            >
+              <VolumeX className="size-4" />
+              Mute
+            </Button>
+          )}
+        </div>
 
         {/* General Tab */}
         <TabsContent value="general" className="flex flex-col gap-4">
@@ -444,29 +476,37 @@ export const FindingDetail = ({
 
   // If no trigger, render content directly (inline mode)
   if (!trigger) {
-    return content;
+    return (
+      <>
+        {muteModal}
+        {content}
+      </>
+    );
   }
 
-  // With trigger, wrap in Drawer
+  // With trigger, wrap in Drawer — modal rendered outside to avoid nested overlay issues
   return (
-    <Drawer
-      direction="right"
-      open={open}
-      defaultOpen={defaultOpen}
-      onOpenChange={onOpenChange}
-    >
-      <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-      <DrawerContent className="minimal-scrollbar 3xl:w-1/3 h-full w-full overflow-x-hidden overflow-y-auto p-6 md:w-1/2 md:max-w-none">
-        <DrawerHeader className="sr-only">
-          <DrawerTitle>Finding Details</DrawerTitle>
-          <DrawerDescription>View the finding details</DrawerDescription>
-        </DrawerHeader>
-        <DrawerClose className="ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none">
-          <X className="size-4" />
-          <span className="sr-only">Close</span>
-        </DrawerClose>
-        {content}
-      </DrawerContent>
-    </Drawer>
+    <>
+      {muteModal}
+      <Drawer
+        direction="right"
+        open={open}
+        defaultOpen={defaultOpen}
+        onOpenChange={onOpenChange}
+      >
+        <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+        <DrawerContent className="minimal-scrollbar 3xl:w-1/3 h-full w-full overflow-x-hidden overflow-y-auto p-6 md:w-1/2 md:max-w-none">
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>Finding Details</DrawerTitle>
+            <DrawerDescription>View the finding details</DrawerDescription>
+          </DrawerHeader>
+          <DrawerClose className="ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none">
+            <X className="size-4" />
+            <span className="sr-only">Close</span>
+          </DrawerClose>
+          {content}
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 };
