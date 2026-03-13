@@ -20,6 +20,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🔄 Changed
 
 - Bump `pygithub` from 2.5.0 to 2.8.0 to use native Organization properties
+- Use `ipaddress.is_global` for public IP detection in `ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip` [(#10335)](https://github.com/prowler-cloud/prowler/pull/10335)
 - Update M365 SharePoint service metadata to new format [(#9684)](https://github.com/prowler-cloud/prowler/pull/9684)
 - Update M365 Exchange service metadata to new format [(#9683)](https://github.com/prowler-cloud/prowler/pull/9683)
 - Update M365 Teams service metadata to new format [(#9685)](https://github.com/prowler-cloud/prowler/pull/9685)

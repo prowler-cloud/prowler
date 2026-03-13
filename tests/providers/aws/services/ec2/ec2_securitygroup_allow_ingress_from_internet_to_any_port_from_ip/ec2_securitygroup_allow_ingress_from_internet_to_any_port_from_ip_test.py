@@ -75,7 +75,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip:
             IpPermissions=[
                 {
                     "IpProtocol": "-1",
-                    "IpRanges": [{"CidrIp": "203.0.113.5/32"}],
+                    "IpRanges": [{"CidrIp": "52.94.76.5/32"}],
                 }
             ],
         )
@@ -204,7 +204,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip:
                 {
                     "FromPort": 8080,
                     "IpProtocol": "tcp",
-                    "IpRanges": [{"CidrIp": "198.51.100.10/32"}],
+                    "IpRanges": [{"CidrIp": "52.94.76.10/32"}],
                     "Ipv6Ranges": [],
                     "ToPort": 8080,
                 }
