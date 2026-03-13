@@ -27,6 +27,7 @@ class rbac_minimize_webhook_config_access(Check):
 
         for _, (subject, role_names) in subjects_bound_roles.items():
             report = Check_Report_Kubernetes(metadata=self.metadata(), resource=subject)
+            report.resource_name = f"{subject.kind}:{subject.name}"
             report.resource_id = f"{subject.kind}/{subject.name}"
             report.status = "PASS"
             report.status_extended = f"User or group '{subject.name}' does not have access to create, update, or delete webhook configurations."
