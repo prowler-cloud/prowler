@@ -12,7 +12,7 @@ import {
   Shield,
   User,
 } from "lucide-react";
-import type { ReactNode, MouseEvent } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { useEffect, useState, useTransition } from "react";
 
 import { getResourceEvents } from "@/actions/resources";

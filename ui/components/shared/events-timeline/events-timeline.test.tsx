@@ -49,9 +49,7 @@ describe("EventsTimeline", () => {
 
   it("shows non-AWS message for non-AWS providers", () => {
     // When
-    render(
-      <EventsTimeline resourceId="resource-1" isAwsProvider={false} />,
-    );
+    render(<EventsTimeline resourceId="resource-1" isAwsProvider={false} />);
 
     // Then
     expect(
@@ -65,9 +63,7 @@ describe("EventsTimeline", () => {
     getResourceEventsMock.mockReturnValue(new Promise(() => {})); // never resolves
 
     // When
-    render(
-      <EventsTimeline resourceId="resource-1" isAwsProvider={true} />,
-    );
+    render(<EventsTimeline resourceId="resource-1" isAwsProvider={true} />);
 
     // Then
     await waitFor(() => {
@@ -84,9 +80,7 @@ describe("EventsTimeline", () => {
     });
 
     // When
-    render(
-      <EventsTimeline resourceId="resource-1" isAwsProvider={true} />,
-    );
+    render(<EventsTimeline resourceId="resource-1" isAwsProvider={true} />);
 
     // Then
     await waitFor(() => {
@@ -101,9 +95,7 @@ describe("EventsTimeline", () => {
     getResourceEventsMock.mockResolvedValue({ data: [] });
 
     // When
-    render(
-      <EventsTimeline resourceId="resource-1" isAwsProvider={true} />,
-    );
+    render(<EventsTimeline resourceId="resource-1" isAwsProvider={true} />);
 
     // Then
     await waitFor(() => {
@@ -121,9 +113,7 @@ describe("EventsTimeline", () => {
     });
 
     // When
-    render(
-      <EventsTimeline resourceId="resource-1" isAwsProvider={true} />,
-    );
+    render(<EventsTimeline resourceId="resource-1" isAwsProvider={true} />);
 
     // Then
     await waitFor(() => {
@@ -144,9 +134,7 @@ describe("EventsTimeline", () => {
     });
 
     // When
-    render(
-      <EventsTimeline resourceId="resource-1" isAwsProvider={true} />,
-    );
+    render(<EventsTimeline resourceId="resource-1" isAwsProvider={true} />);
 
     // Then
     await waitFor(() => {
@@ -166,9 +154,7 @@ describe("EventsTimeline", () => {
     });
 
     // When
-    render(
-      <EventsTimeline resourceId="resource-1" isAwsProvider={true} />,
-    );
+    render(<EventsTimeline resourceId="resource-1" isAwsProvider={true} />);
 
     // Then
     await waitFor(() => {
@@ -183,9 +169,7 @@ describe("EventsTimeline", () => {
     const user = userEvent.setup();
     getResourceEventsMock.mockResolvedValue({ data: [mockEvent] });
 
-    render(
-      <EventsTimeline resourceId="resource-1" isAwsProvider={true} />,
-    );
+    render(<EventsTimeline resourceId="resource-1" isAwsProvider={true} />);
 
     await waitFor(() => {
       expect(screen.getByText("CreateStack")).toBeInTheDocument();
@@ -206,9 +190,7 @@ describe("EventsTimeline", () => {
     const user = userEvent.setup();
     getResourceEventsMock.mockResolvedValue({ data: [mockEvent] });
 
-    render(
-      <EventsTimeline resourceId="resource-1" isAwsProvider={true} />,
-    );
+    render(<EventsTimeline resourceId="resource-1" isAwsProvider={true} />);
 
     await waitFor(() => {
       expect(screen.getByText("CreateStack")).toBeInTheDocument();
@@ -231,9 +213,7 @@ describe("EventsTimeline", () => {
       data: [mockErrorEvent],
     });
 
-    render(
-      <EventsTimeline resourceId="resource-1" isAwsProvider={true} />,
-    );
+    render(<EventsTimeline resourceId="resource-1" isAwsProvider={true} />);
 
     await waitFor(() => {
       expect(screen.getByText("DeleteStack")).toBeInTheDocument();
@@ -244,9 +224,7 @@ describe("EventsTimeline", () => {
 
     // Then
     expect(screen.getByText("AccessDenied")).toBeInTheDocument();
-    expect(
-      screen.getByText("User is not authorized"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("User is not authorized")).toBeInTheDocument();
   });
 
   it("refetches events when include read events checkbox is toggled", async () => {
@@ -254,9 +232,7 @@ describe("EventsTimeline", () => {
     const user = userEvent.setup();
     getResourceEventsMock.mockResolvedValue({ data: [mockEvent] });
 
-    render(
-      <EventsTimeline resourceId="resource-1" isAwsProvider={true} />,
-    );
+    render(<EventsTimeline resourceId="resource-1" isAwsProvider={true} />);
 
     await waitFor(() => {
       expect(screen.getByText("CreateStack")).toBeInTheDocument();
@@ -284,9 +260,7 @@ describe("EventsTimeline", () => {
       .mockResolvedValueOnce({ error: "Something went wrong", status: 500 })
       .mockResolvedValueOnce({ data: [mockEvent] });
 
-    render(
-      <EventsTimeline resourceId="resource-1" isAwsProvider={true} />,
-    );
+    render(<EventsTimeline resourceId="resource-1" isAwsProvider={true} />);
 
     await waitFor(() => {
       expect(screen.getByText("Try again")).toBeInTheDocument();
@@ -307,9 +281,7 @@ describe("EventsTimeline", () => {
     getResourceEventsMock.mockResolvedValue(null);
 
     // When
-    render(
-      <EventsTimeline resourceId="resource-1" isAwsProvider={true} />,
-    );
+    render(<EventsTimeline resourceId="resource-1" isAwsProvider={true} />);
 
     // Then
     await waitFor(() => {

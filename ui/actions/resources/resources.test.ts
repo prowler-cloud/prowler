@@ -46,9 +46,7 @@ describe("getResourceEvents", () => {
     // Then
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const calledUrl = new URL(fetchMock.mock.calls[0][0]);
-    expect(calledUrl.pathname).toBe(
-      "/api/v1/resources/resource-123/events",
-    );
+    expect(calledUrl.pathname).toBe("/api/v1/resources/resource-123/events");
     expect(calledUrl.searchParams.get("include_read_events")).toBe("false");
     expect(calledUrl.searchParams.get("lookback_days")).toBe("90");
     expect(calledUrl.searchParams.get("page[size]")).toBe("50");
@@ -162,15 +160,12 @@ describe("getResourceEvents", () => {
     "<script>alert(1)</script>",
     "resource%00id",
     "",
-  ])(
-    "rejects malicious or invalid resourceId: %s",
-    async (maliciousId) => {
-      // When
-      const result = await getResourceEvents(maliciousId);
+  ])("rejects malicious or invalid resourceId: %s", async (maliciousId) => {
+    // When
+    const result = await getResourceEvents(maliciousId);
 
-      // Then
-      expect(result).toEqual({ error: "Invalid resource ID format." });
-      expect(fetchMock).not.toHaveBeenCalled();
-    },
-  );
+    // Then
+    expect(result).toEqual({ error: "Invalid resource ID format." });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

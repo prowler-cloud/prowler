@@ -22,11 +22,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
+import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { EntityInfo } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import {
   FindingStatus,

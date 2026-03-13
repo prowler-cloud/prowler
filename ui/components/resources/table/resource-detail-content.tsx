@@ -18,6 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
+import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import {
@@ -25,7 +26,6 @@ import {
   getProviderLogo,
   InfoField,
 } from "@/components/ui/entities";
-import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib";
 import { getGroupLabel } from "@/lib/categories";
