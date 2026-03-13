@@ -100,6 +100,11 @@ export const updateOrganizationName = async (
   organizationId: string,
   name: string,
 ) => {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    return { error: "Organization name cannot be empty." };
+  }
+
   const headers = await getAuthHeaders({ contentType: true });
 
   const idValidation = validatePathIdentifier(
@@ -124,7 +129,7 @@ export const updateOrganizationName = async (
           type: "organizations",
           id: idValidation.value,
           attributes: {
-            name,
+            name: trimmed,
           },
         },
       }),

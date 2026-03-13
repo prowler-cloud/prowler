@@ -355,6 +355,15 @@ export function DataTableRowActions({
             label="Alias"
             successMessage="The provider was updated successfully."
             setIsOpen={setIsEditOpen}
+            validate={(alias) => {
+              if (alias !== "" && alias.length < 3) {
+                return "The alias must be empty or have at least 3 characters.";
+              }
+              if (alias === (providerAlias ?? "")) {
+                return "The new alias must be different from the current one.";
+              }
+              return null;
+            }}
             onSave={async (alias) => {
               const formData = new FormData();
               formData.append("providerId", providerId);

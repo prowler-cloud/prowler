@@ -1,6 +1,7 @@
 "use client";
 
-import { Dispatch, SetStateAction, useState } from "react";
+import type { Dispatch, FormEvent, SetStateAction } from "react";
+import { useState } from "react";
 
 import { SaveIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
@@ -13,6 +14,7 @@ interface EditNameFormProps {
   successMessage: string;
   placeholder?: string;
   helperText?: string;
+  validate?: (value: string) => string | null;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   onSave: (value: string) => Promise<unknown>;
 }
@@ -23,18 +25,31 @@ export function EditNameForm({
   successMessage,
   placeholder,
   helperText,
+  validate,
   setIsOpen,
   onSave,
 }: EditNameFormProps) {
   const [value, setValue] = useState(currentValue);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    const trimmed = value.trim();
+    if (validate) {
+      const validationError = validate(trimmed);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+    }
+
+    setError(null);
     setIsLoading(true);
 
-    const result = (await onSave(value.trim())) as Record<string, unknown>;
+    const result = (await onSave(trimmed)) as Record<string, unknown>;
 
     setIsLoading(false);
 
@@ -74,11 +89,18 @@ export function EditNameForm({
         <Input
           id="edit-name-input"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => {
+            setValue(e.target.value);
+            if (error) setError(null);
+          }}
           placeholder={placeholder ?? currentValue}
           disabled={isLoading}
+          aria-invalid={!!error}
         />
-        {helperText && (
+        {error && (
+          <p className="text-destructive text-xs">{error}</p>
+        )}
+        {helperText && !error && (
           <p className="text-muted-foreground text-xs">{helperText}</p>
         )}
       </div>
