@@ -4,7 +4,7 @@
   "CheckTitle": "Amazon SageMaker training job has inter-container traffic encryption enabled",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices/Network Security",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "Effects/Data Exposure"
   ],
   "ServiceName": "sagemaker",

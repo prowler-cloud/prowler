@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::CS::ManagedKubernetesCluster",
   "ResourceGroup": "container",
-  "Description": "**Alibaba Cloud Elastic Network Interface (ENI)** supports assigning multiple IP addresses to a single virtual machine's network interface. With **ENI multiple IP mode** provided by the **Terway** network plugin, Kubernetes Engine clusters can allocate pod IP addresses from the VPC CIDR block, enabling better scalability and native integration with other Alibaba Cloud services. This mode allows pods to have their own security group associations, providing granular network-level access control independently from their host nodes.",
-  "Risk": "Without **ENI multiple IP mode** (provided by the **Terway** network plugin), pods share the node's network interface in a less scalable manner and cannot have independent security group associations. This limits the ability to apply **granular firewall controls** at the pod level, increasing the risk of **lateral movement** if a pod is compromised. The inability to isolate pod networking from node networking weakens **network segmentation** and reduces the overall **security posture** of the cluster.",
+  "Description": "With **ENI multiple IP mode** provided by the **Terway** network plugin, Kubernetes Engine clusters allocate pod IPs from the VPC CIDR block, enabling better scalability and native integration with Alibaba Cloud services. This mode allows pods to have their own security group associations, providing granular network-level access control independently from host nodes.",
+  "Risk": "Without **ENI multiple IP mode** (**Terway** plugin), pods share the node's network interface and cannot have independent security group associations. This limits **granular firewall controls** at the pod level, increasing **lateral movement** risk if a pod is compromised. The inability to isolate pod from node networking weakens **network segmentation** and the cluster's **security posture**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/ack/ack-managed-and-ack-dedicated/user-guide/associate-multiple-security-groups-with-an-eni",

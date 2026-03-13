@@ -24,7 +24,7 @@ from prowler.lib.check.check import (
     remove_custom_checks_module,
     update_audit_metadata,
 )
-from prowler.lib.check.models import load_check_metadata
+from prowler.lib.check.models import CheckMetadata, load_check_metadata
 from prowler.lib.check.utils import (
     list_modules,
     recover_checks_from_provider,
@@ -958,7 +958,98 @@ class TestCheck:
         )
         self.verify_metadata_check_id(base_directory)
 
+    def test_alibabacloud_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/alibabacloud/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_cloudflare_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/cloudflare/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_github_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/github/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_googleworkspace_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/googleworkspace/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_m365_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/m365/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_mongodbatlas_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/mongodbatlas/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_nhn_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/nhn/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_openstack_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/openstack/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_oraclecloud_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/oraclecloud/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
     def verify_metadata_check_id(self, provider_path):
+        errors = []
         # Walk through the base directory to find all service directories
         for root, dirs, _ in os.walk(provider_path):
             # We only want to look at directories that are direct children of the base directory
@@ -984,9 +1075,20 @@ class TestCheck:
                                 check_id = data.get("CheckID", None)
 
                                 # Compare CheckID to the check name
-                                assert (
-                                    check_id == check_dir
-                                ), f"CheckID in metadata does not match the check name in {check_directory}. Found CheckID: {check_id}"
+                                if check_id != check_dir:
+                                    errors.append(
+                                        f"CheckID in metadata does not match the check name in {check_directory}. Found CheckID: {check_id}"
+                                    )
+
+                                # Validate metadata against Pydantic validators
+                                try:
+                                    CheckMetadata.parse_file(metadata_file_path)
+                                except Exception as e:
+                                    errors.append(
+                                        f"Metadata validation failed for {metadata_file_path}: {e}"
+                                    )
+
+        assert not errors, "\n\n".join(errors)
 
     def test_execute_check_exception_only_logs(self, caplog):
         caplog.set_level(ERROR)

@@ -10,7 +10,7 @@
   "ResourceType": "ALIYUN::SLS::Logstore",
   "ResourceGroup": "monitoring",
   "Description": "**Alibaba Cloud Simple Log Service (SLS)** Logstore data retention should be configured for at least **365 days**. The Logstore retention period controls how long activity logs are stored and available for analysis. Ensuring a minimum retention of `365` days provides sufficient time to investigate security incidents, perform forensic analysis, and meet regulatory compliance requirements.",
-  "Risk": "Insufficient log retention periods may result in the **loss of forensic evidence** needed for security investigations and incident response. If logs are deleted before an incident is detected, it becomes impossible to determine the scope, impact, and root cause of security breaches. Short retention periods may also lead to **compliance violations** with regulations that mandate specific log retention durations, affecting the organization's **integrity** and **accountability**.",
+  "Risk": "Insufficient log retention may result in **loss of forensic evidence** for security investigations. If logs are deleted before an incident is detected, determining the scope and root cause of breaches becomes impossible. Short retention may also cause **compliance violations** with regulations mandating specific durations, affecting **integrity** and **accountability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/doc-detail/48990.htm",
