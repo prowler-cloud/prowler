@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra Conditional Access** is evaluated for a policy that requires **multifactor authentication** when accessing **Microsoft Admin Portals** (Microsoft 365 Admin Center, Microsoft Entra Admin Center, Microsoft Exchange Admin Center, etc.). The check confirms an enabled policy targets **All users**, includes the Microsoft Admin Portals app, and enforces an **MFA** grant control.",
   "Risk": "Without **MFA** on admin portals, attackers with stolen credentials can access **Microsoft 365 Admin Center**, **Entra Admin Center**, or **Exchange Admin Center** to modify tenant settings, escalate privileges, and exfiltrate data. This directly impacts **confidentiality**, **integrity**, and **availability** of all services managed through those portals.",
@@ -29,7 +29,8 @@
     }
   },
   "Categories": [
-    "identity-access"
+    "identity-access",
+    "e3"
   ],
   "DependsOn": [],
   "RelatedTo": [],
