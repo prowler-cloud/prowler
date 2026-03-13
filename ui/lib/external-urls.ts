@@ -1,5 +1,25 @@
 import { IntegrationType } from "../types/integrations";
 
+// Documentation URLs
+export const DOCS_URLS = {
+  FINDINGS_ANALYSIS:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app#step-8:-analyze-the-findings",
+  AWS_ORGANIZATIONS:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
+} as const;
+
+// CloudFormation template URL for the ProwlerScan role.
+// Also used (URL-encoded) as the templateURL param in cloudformationQuickLink
+// and cloudformationOrgQuickLink below — keep both in sync.
+export const PROWLER_CF_TEMPLATE_URL =
+  "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml";
+
+// AWS Console URL for creating a new StackSet.
+// Hardcoded to us-east-1 — StackSets are typically managed from this region.
+// Users in AWS GovCloud or China partitions would need different URLs.
+export const STACKSET_CONSOLE_URL =
+  "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacksets/create";
+
 export const getProviderHelpText = (provider: string) => {
   switch (provider) {
     case "aws":
@@ -32,6 +52,36 @@ export const getProviderHelpText = (provider: string) => {
         text: "Need help connecting your GitHub account?",
         link: "https://goto.prowler.com/provider-github",
       };
+    case "iac":
+      return {
+        text: "Need help scanning your Infrastructure as Code repository?",
+        link: "https://goto.prowler.com/provider-iac",
+      };
+    case "oraclecloud":
+      return {
+        text: "Need help connecting your Oracle Cloud account?",
+        link: "https://goto.prowler.com/provider-oraclecloud",
+      };
+    case "mongodbatlas":
+      return {
+        text: "Need help connecting your MongoDB Atlas organization?",
+        link: "https://goto.prowler.com/provider-mongodbatlas",
+      };
+    case "alibabacloud":
+      return {
+        text: "Need help connecting your Alibaba Cloud account?",
+        link: "https://goto.prowler.com/provider-alibabacloud",
+      };
+    case "cloudflare":
+      return {
+        text: "Need help connecting your Cloudflare account?",
+        link: "https://goto.prowler.com/provider-cloudflare",
+      };
+    case "openstack":
+      return {
+        text: "Need help connecting your OpenStack cloud?",
+        link: "https://goto.prowler.com/provider-openstack",
+      };
     default:
       return {
         text: "How to setup a provider?",
@@ -48,24 +98,16 @@ export const getAWSCredentialsTemplateLinks = (
   cloudformation: string;
   terraform: string;
   cloudformationQuickLink: string;
+  cloudformationOrgQuickLink: string;
 } => {
   let links = {};
 
-  if (integrationType === undefined) {
+  if (integrationType === undefined || integrationType === "aws_security_hub") {
     links = {
       cloudformation:
         "https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml",
       terraform:
         "https://github.com/prowler-cloud/prowler/tree/master/permissions/templates/terraform",
-    };
-  }
-
-  if (integrationType === "aws_security_hub") {
-    links = {
-      cloudformation:
-        "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-s3-integration/",
-      terraform:
-        "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-s3-integration/#terraform",
     };
   }
 
@@ -78,11 +120,24 @@ export const getAWSCredentialsTemplateLinks = (
     };
   }
 
+  const encodedTemplateUrl = encodeURIComponent(PROWLER_CF_TEMPLATE_URL);
+  const cfBaseUrl =
+    "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate";
+  const s3Params = bucketName
+    ? `&param_EnableS3Integration=true&param_S3IntegrationBucketName=${bucketName}`
+    : "";
+
   return {
     ...(links as {
       cloudformation: string;
       terraform: string;
     }),
-    cloudformationQuickLink: `https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=Prowler&param_ExternalId=${externalId}${bucketName ? `&param_EnableS3Integration=true&param_S3IntegrationBucketName=${bucketName}` : ""}`,
+    cloudformationQuickLink:
+      `${cfBaseUrl}?templateURL=${encodedTemplateUrl}` +
+      `&stackName=Prowler&param_ExternalId=${externalId}${s3Params}`,
+    cloudformationOrgQuickLink:
+      `${cfBaseUrl}?templateURL=${encodedTemplateUrl}` +
+      `&stackName=Prowler&param_ExternalId=${externalId}` +
+      `&param_EnableOrganizations=true${s3Params}`,
   };
 };

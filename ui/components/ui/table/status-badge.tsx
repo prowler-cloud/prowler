@@ -1,22 +1,33 @@
-import { Chip } from "@nextui-org/react";
-import clsx from "clsx";
-import React from "react";
+import { Chip } from "@heroui/chip";
 
 import { SpinnerIcon } from "@/components/icons";
+import { cn } from "@/lib/utils";
 
 export type Status =
   | "available"
+  | "queued"
   | "scheduled"
   | "executing"
   | "completed"
   | "failed"
   | "cancelled";
 
+const statusDisplayMap: Record<Status, string> = {
+  available: "Queued",
+  queued: "Queued",
+  scheduled: "scheduled",
+  executing: "executing",
+  completed: "completed",
+  failed: "failed",
+  cancelled: "cancelled",
+};
+
 const statusColorMap: Record<
   Status,
   "danger" | "warning" | "success" | "default"
 > = {
   available: "default",
+  queued: "default",
   scheduled: "warning",
   executing: "default",
   completed: "success",
@@ -37,12 +48,13 @@ export const StatusBadge = ({
   className?: string;
 }) => {
   const color = statusColorMap[status as keyof typeof statusColorMap];
+  const displayLabel = statusDisplayMap[status] || status;
 
   return (
     <Chip
-      className={clsx(
-        "relative w-full max-w-full border-none text-xs capitalize text-default-600",
-        status === "executing" && "border-1 border-solid border-transparent",
+      className={cn(
+        "text-default-600 relative w-full max-w-full border-none text-xs capitalize",
+        status === "executing" && "border border-solid border-transparent",
         className,
       )}
       size={size}
@@ -52,14 +64,14 @@ export const StatusBadge = ({
     >
       {status === "executing" ? (
         <div className="relative flex items-center justify-center gap-1">
-          <SpinnerIcon size={16} className="animate-spin text-default-500" />
-          <span className="pointer-events-none text-[0.6rem] text-default-500">
+          <SpinnerIcon size={16} className="text-default-500 animate-spin" />
+          <span className="text-default-500 pointer-events-none text-[0.6rem]">
             {loadingProgress}%
           </span>
           <span>executing</span>
         </div>
       ) : (
-        <span className="flex items-center justify-center">{status}</span>
+        <span className="flex items-center justify-center">{displayLabel}</span>
       )}
     </Chip>
   );

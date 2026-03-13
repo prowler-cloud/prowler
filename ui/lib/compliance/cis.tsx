@@ -8,6 +8,7 @@ import {
   CISAttributesMetadata,
   Framework,
   Requirement,
+  REQUIREMENT_STATUS,
   RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
@@ -79,9 +80,9 @@ export const mapComplianceData = (
       description: attrs.Description,
       status: finalStatus,
       check_ids: checks,
-      pass: finalStatus === "PASS" ? 1 : 0,
-      fail: finalStatus === "FAIL" ? 1 : 0,
-      manual: finalStatus === "MANUAL" ? 1 : 0,
+      pass: finalStatus === REQUIREMENT_STATUS.PASS ? 1 : 0,
+      fail: finalStatus === REQUIREMENT_STATUS.FAIL ? 1 : 0,
+      manual: finalStatus === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
       profile: attrs.Profile,
       subsection: attrs.SubSection || "",
       assessment_status: attrs.AssessmentStatus,
@@ -141,6 +142,7 @@ export const toAccordionItems = (
             ),
             content: (
               <ClientAccordionContent
+                key={`content-${itemKey}`}
                 requirement={requirement}
                 scanId={scanId || ""}
                 framework={framework.name}

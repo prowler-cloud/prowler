@@ -36,22 +36,32 @@ def generate_finding_output(
     depends_on: list[str] = ["test-dependency"],
     related_to: list[str] = ["test-related-to"],
     notes: str = "test-notes",
+    additional_urls: list[str] = [
+        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html",
+        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/introduction.html",
+    ],
     service_name: str = "service",
     check_id: str = "service_test_check_id",
     check_title: str = "service_test_check_id",
     check_type: list[str] = [
         "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
     ],
+    provider_uid: str = None,
+    account_ou_uid: str = "ou-abc1-12345678",
+    account_ou_name: str = "Production/WebServices",
 ) -> Finding:
     return Finding(
         auth_method="profile: default",
         timestamp=timestamp if timestamp else datetime.now(),
         account_uid=account_uid,
+        provider_uid=provider_uid,
         account_name=account_name,
         account_email="",
         account_organization_uid="test-organization-id",
         account_organization_name="test-organization",
         account_tags={"test-tag": "test-value"},
+        account_ou_uid=account_ou_uid,
+        account_ou_name=account_ou_name,
         uid="test-unique-finding",
         status=status,
         status_extended=status_extended,
@@ -92,6 +102,7 @@ def generate_finding_output(
             RelatedTo=related_to,
             Categories=categories,
             Notes=notes,
+            AdditionalURLs=additional_urls,
         ),
         prowler_version=prowler_version,
     )

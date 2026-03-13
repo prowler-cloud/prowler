@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Organization Settings",
+  "ResourceGroup": "governance",
   "Description": "Ensure that the admin consent workflow is enabled in Microsoft Entra to allow users to request admin approval for applications requiring consent.",
   "Risk": "If the admin consent workflow is not enabled, users may be blocked from accessing applications that require admin consent, leading to potential work disruptions or unauthorized workarounds.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-admin-consent-workflow",

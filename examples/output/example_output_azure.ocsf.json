@@ -27,6 +27,7 @@
       "categories": [],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "Because Application Insights relies on a Log Analytics Workspace, an organization will incur additional expenses when using this service.",
       "compliance": {
         "CIS-2.1": [
@@ -131,6 +132,7 @@
       "categories": [],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "",
       "compliance": {
         "CIS-2.1": [
@@ -247,6 +249,7 @@
       "categories": [],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "",
       "compliance": {
         "CIS-2.1": [
@@ -360,6 +363,7 @@
       "categories": [],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "When using an Azure container registry, you might occasionally encounter problems. For example, you might not be able to pull a container image because of an issue with Docker in your local environment. Or, a network issue might prevent you from connecting to the registry.",
       "compliance": {
         "MITRE-ATTACK": [
@@ -460,6 +464,7 @@
       "categories": [],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "",
       "compliance": {
         "CIS-2.1": [

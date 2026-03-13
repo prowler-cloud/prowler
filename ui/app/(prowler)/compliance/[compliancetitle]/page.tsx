@@ -1,28 +1,36 @@
-import { Spacer } from "@nextui-org/react";
-import Image from "next/image";
-import React, { Suspense } from "react";
+import { Spacer } from "@heroui/spacer";
+import { Suspense } from "react";
 
 import {
   getComplianceAttributes,
   getComplianceOverviewMetadataInfo,
   getComplianceRequirements,
 } from "@/actions/compliances";
+import { getThreatScore } from "@/actions/overview";
 import {
-  BarChart,
-  BarChartSkeleton,
   ClientAccordionWrapper,
+  ComplianceDownloadContainer,
   ComplianceHeader,
-  ComplianceScanInfo,
-  HeatmapChart,
-  HeatmapChartSkeleton,
-  PieChart,
-  PieChartSkeleton,
+  RequirementsStatusCard,
+  RequirementsStatusCardSkeleton,
+  // SectionsFailureRateCard,
+  // SectionsFailureRateCardSkeleton,
   SkeletonAccordion,
+  ThreatScoreBreakdownCard,
+  ThreatScoreBreakdownCardSkeleton,
+  TopFailedSectionsCard,
+  TopFailedSectionsCardSkeleton,
 } from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
-import { Framework, RequirementsTotals } from "@/types/compliance";
+import { getReportTypeForFramework } from "@/lib/compliance/compliance-report-types";
+import { cn } from "@/lib/utils";
+import {
+  AttributesData,
+  Framework,
+  RequirementsTotals,
+} from "@/types/compliance";
 import { ScanEntity } from "@/types/scans";
 
 interface ComplianceDetailSearchParams {
@@ -36,54 +44,23 @@ interface ComplianceDetailSearchParams {
   pageSize?: string;
 }
 
-const ComplianceIconSmall = ({
-  logoPath,
-  title,
-}: {
-  logoPath: string;
-  title: string;
-}) => {
-  return (
-    <div className="relative h-6 w-6 flex-shrink-0">
-      <Image
-        src={logoPath}
-        alt={`${title} logo`}
-        fill
-        className="h-8 w-8 min-w-8 rounded-md border-1 border-gray-300 bg-white object-contain p-[2px]"
-      />
-    </div>
-  );
-};
-
-const ChartsWrapper = ({
-  children,
-}: {
-  children: React.ReactNode;
-  logoPath?: string;
-}) => {
-  return (
-    <div className="mb-8 flex w-full flex-wrap items-center justify-center gap-12 lg:justify-start lg:gap-24">
-      {children}
-    </div>
-  );
-};
-
 export default async function ComplianceDetail({
   params,
   searchParams,
 }: {
-  params: { compliancetitle: string };
-  searchParams: ComplianceDetailSearchParams;
+  params: Promise<{ compliancetitle: string }>;
+  searchParams: Promise<ComplianceDetailSearchParams>;
 }) {
-  const { compliancetitle } = params;
-  const { complianceId, version, scanId, scanData } = searchParams;
-  const regionFilter = searchParams["filter[region__in]"];
-  const cisProfileFilter = searchParams["filter[cis_profile_level]"];
+  const { compliancetitle } = await params;
+  const resolvedSearchParams = await searchParams;
+  const { complianceId, version, scanId, scanData } = resolvedSearchParams;
+  const regionFilter = resolvedSearchParams["filter[region__in]"];
+  const cisProfileFilter = resolvedSearchParams["filter[cis_profile_level]"];
   const logoPath = getComplianceIcon(compliancetitle);
 
   // Create a key that excludes pagination parameters to preserve accordion state avoiding reloads with pagination
   const paramsForKey = Object.fromEntries(
-    Object.entries(searchParams).filter(
+    Object.entries(resolvedSearchParams).filter(
       ([key]) => key !== "page" && key !== "pageSize",
     ),
   );
@@ -91,8 +68,8 @@ export default async function ComplianceDetail({
 
   const formattedTitle = compliancetitle.split("-").join(" ");
   const pageTitle = version
-    ? `Compliance Details: ${formattedTitle} - ${version}`
-    : `Compliance Details: ${formattedTitle}`;
+    ? `${formattedTitle} - ${version}`
+    : `${formattedTitle}`;
 
   let selectedScan: ScanEntity | null = null;
 
@@ -102,49 +79,89 @@ export default async function ComplianceDetail({
 
   const selectedScanId = scanId || selectedScan?.id || null;
 
-  const metadataInfoData = await getComplianceOverviewMetadataInfo({
-    filters: {
-      "filter[scan_id]": selectedScanId,
-    },
-  });
+  const [metadataInfoData, attributesData] = await Promise.all([
+    getComplianceOverviewMetadataInfo({
+      filters: {
+        "filter[scan_id]": selectedScanId,
+      },
+    }),
+    getComplianceAttributes(complianceId),
+  ]);
+
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
+  // Detect if this is a ThreatScore compliance view
+  const isThreatScore = complianceId?.includes("prowler_threatscore");
+
+  // Fetch ThreatScore data if applicable
+  let threatScoreData = null;
+  if (isThreatScore && selectedScanId) {
+    const threatScoreResponse = await getThreatScore({
+      filters: { "filter[scan_id]": selectedScanId },
+    });
+
+    if (threatScoreResponse?.data && threatScoreResponse.data.length > 0) {
+      const snapshot = threatScoreResponse.data[0];
+      threatScoreData = {
+        overallScore: parseFloat(snapshot.attributes.overall_score),
+        sectionScores: snapshot.attributes.section_scores,
+      };
+    }
+  }
+
+  // Use compliance_name from attributes if available, otherwise fallback to formatted title
+  const complianceName = attributesData?.data?.[0]?.attributes?.compliance_name;
+  const finalPageTitle = complianceName ? `${complianceName}` : pageTitle;
+
   return (
-    <ContentLayout
-      title={pageTitle}
-      icon={
-        logoPath ? (
-          <ComplianceIconSmall logoPath={logoPath} title={compliancetitle} />
-        ) : (
-          "fluent-mdl2:compliance-audit"
-        )
-      }
-    >
-      {selectedScanId && selectedScan && (
-        <div className="flex max-w-[328px] flex-col items-start">
-          <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
-            <ComplianceScanInfo scan={selectedScan} />
-          </div>
-          <Spacer y={8} />
+    <ContentLayout title={finalPageTitle}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0 flex-1">
+          <ComplianceHeader
+            scans={[]}
+            uniqueRegions={uniqueRegions}
+            showSearch={false}
+            framework={compliancetitle}
+            showProviders={false}
+            logoPath={logoPath}
+            complianceTitle={compliancetitle}
+            selectedScan={selectedScan}
+          />
         </div>
-      )}
-      <ComplianceHeader
-        scans={[]}
-        uniqueRegions={uniqueRegions}
-        showSearch={false}
-        framework={compliancetitle}
-        showProviders={false}
-      />
+        {selectedScanId && (
+          <div className="mb-4 flex-shrink-0 self-end sm:mb-0 sm:self-start sm:pt-1">
+            <ComplianceDownloadContainer
+              scanId={selectedScanId}
+              complianceId={complianceId}
+              reportType={getReportTypeForFramework(
+                attributesData?.data?.[0]?.attributes?.framework,
+              )}
+            />
+          </div>
+        )}
+      </div>
 
       <Suspense
         key={searchParamsKey}
         fallback={
-          <div className="space-y-8">
-            <ChartsWrapper logoPath={logoPath}>
-              <PieChartSkeleton />
-              <BarChartSkeleton />
-              <HeatmapChartSkeleton />
-            </ChartsWrapper>
+          <div className="flex flex-col gap-8">
+            {/* Mobile: each card on own row | Tablet: ThreatScore full row, others share row | Desktop: all 3 in one row */}
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]",
+                isThreatScore &&
+                  "xl:grid-cols-[minmax(280px,320px)_minmax(280px,400px)_1fr]",
+              )}
+            >
+              {isThreatScore && (
+                <div className="md:col-span-2 xl:col-span-1">
+                  <ThreatScoreBreakdownCardSkeleton />
+                </div>
+              )}
+              <RequirementsStatusCardSkeleton />
+              <TopFailedSectionsCardSkeleton />
+              {/* <SectionsFailureRateCardSkeleton /> */}
+            </div>
             <SkeletonAccordion />
           </div>
         }
@@ -154,7 +171,8 @@ export default async function ComplianceDetail({
           scanId={selectedScanId || ""}
           region={regionFilter}
           filter={cisProfileFilter}
-          logoPath={logoPath}
+          attributesData={attributesData}
+          threatScoreData={threatScoreData}
         />
       </Suspense>
     </ContentLayout>
@@ -166,32 +184,34 @@ const SSRComplianceContent = async ({
   scanId,
   region,
   filter,
-  logoPath,
+  attributesData,
+  threatScoreData,
 }: {
   complianceId: string;
   scanId: string;
   region?: string;
   filter?: string;
-  logoPath?: string;
+  attributesData: AttributesData;
+  threatScoreData: {
+    overallScore: number;
+    sectionScores: Record<string, number>;
+  } | null;
 }) => {
-  const [attributesData, requirementsData] = await Promise.all([
-    getComplianceAttributes(complianceId),
-    getComplianceRequirements({
-      complianceId,
-      scanId,
-      region,
-    }),
-  ]);
+  const requirementsData = await getComplianceRequirements({
+    complianceId,
+    scanId,
+    region,
+  });
   const type = requirementsData?.data?.[0]?.type;
 
   if (!scanId || type === "tasks") {
     return (
-      <div className="space-y-8">
-        <ChartsWrapper logoPath={logoPath}>
-          <PieChart pass={0} fail={0} manual={0} />
-          <BarChart sections={[]} />
-          <HeatmapChart categories={[]} />
-        </ChartsWrapper>
+      <div className="flex flex-col gap-8">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
+          <RequirementsStatusCard pass={0} fail={0} manual={0} />
+          <TopFailedSectionsCard sections={[]} />
+          {/* <SectionsFailureRateCard categories={[]} /> */}
+        </div>
         <ClientAccordionWrapper items={[]} defaultExpandedKeys={[]} />
       </div>
     );
@@ -204,7 +224,7 @@ const SSRComplianceContent = async ({
     requirementsData,
     filter,
   );
-  const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);
+  // const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);
   const totalRequirements: RequirementsTotals = data.reduce(
     (acc: RequirementsTotals, framework: Framework) => ({
       pass: acc.pass + framework.pass,
@@ -214,21 +234,40 @@ const SSRComplianceContent = async ({
     { pass: 0, fail: 0, manual: 0 },
   );
   const accordionItems = mapper.toAccordionItems(data, scanId);
-  const topFailedSections = mapper.getTopFailedSections(data);
+  const topFailedResult = mapper.getTopFailedSections(data);
 
   return (
-    <div className="space-y-8">
-      <ChartsWrapper logoPath={logoPath}>
-        <PieChart
+    <div className="flex flex-col gap-8">
+      {/* Charts section */}
+      {/* Mobile: each card on own row | Tablet: ThreatScore full row, others share row | Desktop: all 3 in one row */}
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]",
+          threatScoreData &&
+            "xl:grid-cols-[minmax(280px,320px)_minmax(280px,400px)_1fr]",
+        )}
+      >
+        {threatScoreData && (
+          <div className="md:col-span-2 xl:col-span-1">
+            <ThreatScoreBreakdownCard
+              overallScore={threatScoreData.overallScore}
+              sectionScores={threatScoreData.sectionScores}
+            />
+          </div>
+        )}
+        <RequirementsStatusCard
           pass={totalRequirements.pass}
           fail={totalRequirements.fail}
           manual={totalRequirements.manual}
         />
-        <BarChart sections={topFailedSections} />
-        <HeatmapChart categories={categoryHeatmapData} />
-      </ChartsWrapper>
+        <TopFailedSectionsCard
+          sections={topFailedResult.items}
+          dataType={topFailedResult.type}
+        />
+        {/* <SectionsFailureRateCard categories={categoryHeatmapData} /> */}
+      </div>
 
-      <Spacer className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-800" />
+      <Spacer className="bg-border-neutral-primary h-1 w-full rounded-full" />
       <ClientAccordionWrapper
         hideExpandButton={complianceId.includes("mitre_attack")}
         items={accordionItems}

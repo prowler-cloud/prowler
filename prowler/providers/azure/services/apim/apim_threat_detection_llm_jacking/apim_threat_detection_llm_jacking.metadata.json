@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "apim_threat_detection_llm_jacking",
+  "CheckTitle": "No potential LLM Jacking attacks detected across all Azure API Management instances",
+  "CheckType": [],
+  "ServiceName": "apim",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "microsoft.apimanagement/service",
+  "ResourceGroup": "api_gateway",
+  "Description": "**API Management** diagnostic logs in Log Analytics are analyzed for **LLM-related operations**. Requests are grouped by caller IP, the number of distinct monitored actions (e.g., `ChatCompletions_Create`, `ImageGenerations_Create`) within a configurable `minutes` window is measured, and that ratio is compared to a `threshold` to surface anomalous multi-action patterns.",
+  "Risk": "Concentrated LLM activity from one IP indicates **automation or leaked credentials**.\n- **Availability/cost**: rapid token burn and quota exhaustion\n- **Confidentiality**: exposure of prompts/completions and model details\n- **Integrity**: abuse of deployment/model actions enabling unauthorized changes or mass content generation",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/api-management/monitor-api-management"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```bicep\n// Blocks a specific IP at the global (service) policy level for APIM\nparam apimName string\nparam blockedIp string\n\nresource apim 'Microsoft.ApiManagement/service@2023-05-01-preview' existing = {\n  name: apimName\n}\n\nresource apimPolicy 'Microsoft.ApiManagement/service/policies@2023-05-01-preview' = {\n  parent: apim\n  name: 'policy'\n  properties: {\n    value: '<policies><inbound><base /><choose><!-- Critical: Block offending IP to stop LLM jacking -->\n      <when condition=\"@(context.Request.IpAddress == \"${blockedIp}\")\">\n        <return-response><set-status code=\"403\" reason=\"Forbidden\" /></return-response>\n      </when>\n    </choose></inbound><backend><base /></backend><outbound><base /></outbound><on-error><base /></on-error></policies>' // Critical: Policy XML that blocks the offending IP\n    format: 'xml' // Critical: Apply policy as XML\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open your API Management instance\n2. Go to APIs > All APIs\n3. Click Policies (Inbound processing)\n4. Add a when block to block the offending IP:\n   - Condition: @(context.Request.IpAddress == \"<OFFENDING_IP>\")\n   - Action: return-response with status 403 Forbidden\n5. Save the policy\n6. Re-run the scan after the detection window elapses to confirm PASS",
+      "Terraform": "```hcl\n# Global APIM policy that blocks a specific IP\nresource \"azurerm_api_management_policy\" \"<example_resource_name>\" {\n  api_management_id = \"<example_resource_id>\"\n\n  # Critical: Policy XML that blocks the offending IP by returning 403\n  xml_content = <<XML\n<policies>\n  <inbound>\n    <base />\n    <choose>\n      <!-- Critical: Block offending IP to stop LLM jacking -->\n      <when condition=\"@(context.Request.IpAddress == \\\"<OFFENDING_IP>\\\")\">\n        <return-response>\n          <set-status code=\"403\" reason=\"Forbidden\" />\n        </return-response>\n      </when>\n    </choose>\n  </inbound>\n  <backend><base /></backend>\n  <outbound><base /></outbound>\n  <on-error><base /></on-error>\n</policies>\nXML\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Adopt **defense in depth** for LLM APIs:\n- Enforce **least privilege**; isolate management from inference\n- Prefer **managed identities** over keys; rotate secrets\n- Apply **quotas**, rate limiting, and IP allowlisting; use private access\n- Alert on anomalous action diversity; review logs\n\n*Tune `threshold` and `minutes` for your environment.*",
+      "Url": "https://hub.prowler.com/check/apim_threat_detection_llm_jacking"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "logging",
+    "threat-detection"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check requires: 1. APIM diagnostic logging to be enabled and configured to send logs to Log Analytics workspace 2. Log Analytics workspace ID and key to be configured in the audit configuration 3. Appropriate permissions to query Log Analytics workspace"
+}

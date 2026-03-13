@@ -7,8 +7,8 @@ import * as z from "zod";
 
 import { revokeInvite } from "@/actions/invitations/invitation";
 import { DeleteIcon } from "@/components/icons";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 
 const formSchema = z.object({
@@ -62,32 +62,26 @@ export const DeleteForm = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitClient)}>
         <input type="hidden" name="id" value={invitationId} />
-        <div className="flex w-full justify-center sm:space-x-6">
-          <CustomButton
+        <div className="flex w-full justify-end gap-4">
+          <Button
             type="button"
-            ariaLabel="Cancel"
-            className="w-full bg-transparent"
-            variant="faded"
+            variant="ghost"
             size="lg"
-            radius="lg"
-            onPress={() => setIsOpen(false)}
-            isDisabled={isLoading}
+            onClick={() => setIsOpen(false)}
+            disabled={isLoading}
           >
-            <span>Cancel</span>
-          </CustomButton>
+            Cancel
+          </Button>
 
-          <CustomButton
+          <Button
             type="submit"
-            ariaLabel="Revoke"
-            className="w-full"
-            variant="solid"
-            color="danger"
+            variant="destructive"
             size="lg"
-            isLoading={isLoading}
-            startContent={!isLoading && <DeleteIcon size={24} />}
+            disabled={isLoading}
           >
-            {isLoading ? <>Loading</> : <span>Revoke</span>}
-          </CustomButton>
+            {!isLoading && <DeleteIcon size={24} />}
+            {isLoading ? "Loading" : "Revoke"}
+          </Button>
         </div>
       </form>
     </Form>

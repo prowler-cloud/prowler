@@ -18,7 +18,18 @@ DATABASES = {
 
 DATABASE_ROUTERS = []
 TESTING = True
+# Override page size for testing to a value only slightly above the current fixture count.
+# We explicitly set PAGE_SIZE to 15 (round number just above fixture) to avoid masking pagination bugs, while not setting it excessively high.
+# If you add more providers to the fixture, please review that the total value is below the current one and update this value if needed.
+REST_FRAMEWORK["PAGE_SIZE"] = 15  # noqa: F405
 SECRETS_ENCRYPTION_KEY = "ZMiYVo7m4Fbe2eXXPyrwxdJss2WSalXSv3xHBcJkPl0="
+
+# DRF Simple API Key settings
+DRF_API_KEY = {
+    "FERNET_SECRET": SECRETS_ENCRYPTION_KEY,
+    "API_KEY_LIFETIME": 365,
+    "AUTHENTICATION_KEYWORD_HEADER": "Api-Key",
+}
 
 # JWT
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Input } from "@nextui-org/react";
+import { Input } from "@heroui/input";
 import React from "react";
 
 interface CustomServerInputProps {
@@ -49,7 +49,7 @@ export const CustomServerInput = ({
         value={value}
         onChange={onChange}
         classNames={{
-          label: "tracking-tight font-light !text-default-500 text-xs !z-0",
+          label: "tracking-tight font-light !text-default-500 text-xs z-0!",
           input: "text-default-500 text-small",
         }}
       />

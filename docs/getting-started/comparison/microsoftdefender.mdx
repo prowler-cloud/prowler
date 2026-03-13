@@ -1,0 +1,101 @@
+---
+title: 'Microsoft Defender for Cloud'
+---
+
+**Use open-source scanning to validate and extend Microsoft Defender for Cloud**
+
+---
+
+## **Overview**
+
+If you're using Microsoft Defender for Cloud to monitor your Azure infrastructure, Prowler can complement it with fully transparent, customizable scans across Azure, AWS, GCP, and Kubernetes. Prowler helps you validate policies, automate compliance, and gain deeper visibility—all from the CLI, API or our Prowler UI.
+
+You can run Prowler alongside Defender for Cloud to:
+
+* Double-check security posture with open-source checks.
+* Customize rules for your organization’s policies.
+* Bring your own, or community contributed policies.
+* Automate multi-cloud scans in CI/CD or scheduled jobs.
+
+---
+
+## **Why use Prowler with Defender for Cloud**
+
+Microsoft Defender for Cloud offers centralized dashboards, alerting, and some cross-cloud coverage. Prowler provides full transparency and control over what’s being checked and how those checks work—no vendor lock-in, no surprises.
+
+Use them together to get:
+
+* More confidence in your security posture
+* Checks you can inspect, modify, and version
+* CLI-first, portable scanning across clouds
+* Open-source tooling that integrates easily into pipelines and audits
+
+---
+
+## **Quickstart**
+
+Here’s how to install Prowler and run a scan in your Azure account.
+
+### **1\. Install Prowler**
+
+```
+git clone https://github.com/prowler-cloud/prowler
+cd prowler
+./install.sh
+```
+
+### **2\. Authenticate with Azure**
+
+Make sure you're signed in and select your subscription:
+
+```
+az login
+export AZURE_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+```
+
+### **3\. Run a scan**
+
+```
+./prowler -p Azure -f az-aks -f az-general
+```
+
+This will run checks focused on Azure Kubernetes Service (AKS) and general Azure best practices.
+
+### **4\. Review results**
+
+```
+cat output/prowler-output-*.json
+open output/prowler-output-*.html
+```
+
+You can export findings in JSON, CSV, JUnit, HTML, or AWS Security Hub–compatible formats.
+
+---
+
+## **Compare capabilities**
+
+| Feature | Microsoft Defender for Cloud | Prowler |
+| ----- | ----- | ----- |
+| Azure-native posture management | ✅ | ✅ |
+| AWS, GCP, and Kubernetes support | ⚠️ (limited) | ✅ |
+| Custom policy creation | ❌ | ✅ |
+| CLI-first, scriptable | ❌ | ✅ |
+| Open source | ❌ | ✅ |
+| Compliance mappings (CIS, NIST, etc.) | ✅ (limited control) | ✅ (customizable) |
+| Exportable detections | ❌ | ✅ |
+
+---
+
+## **Common use cases**
+
+**✅ Validate policies**
+ Run Prowler to confirm your Azure policies are configured as expected and compliant with frameworks like CIS or NIST.
+
+**✅ Automate compliance scans**
+ Schedule regular Prowler scans in your CI/CD pipeline or infrastructure monitoring workflows. Generate reports for auditors or internal reviews.
+
+**✅ Extend detection coverage**
+ If Defender for Cloud doesn’t cover all the services or resources in your environment, Prowler’s checks fill in the gaps.
+
+**✅ Build custom checks**
+ Security is never one-size-fits-all. Prowler lets you write your own checks for organization-specific policies.

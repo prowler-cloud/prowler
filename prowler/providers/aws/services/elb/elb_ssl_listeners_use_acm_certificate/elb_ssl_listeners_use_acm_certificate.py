@@ -15,8 +15,14 @@ class elb_ssl_listeners_use_acm_certificate(Check):
                 if (
                     listener.certificate_arn
                     and listener.protocol in secure_protocols
-                    and acm_client.certificates[listener.certificate_arn].type
-                    != "AMAZON_ISSUED"
+                    and (
+                        listener.certificate_arn not in acm_client.certificates
+                        or (
+                            acm_client.certificates.get(listener.certificate_arn)
+                            and acm_client.certificates[listener.certificate_arn].type
+                            != "AMAZON_ISSUED"
+                        )
+                    )
                 ):
                     report.status = "FAIL"
                     report.status_extended = f"ELB {lb.name} has HTTPS/SSL listeners that are using certificates not managed by ACM."

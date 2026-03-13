@@ -1,1 +1,2 @@
-export * from "./feeds-detail";
+export * from "./feeds-client";
+export * from "./feeds-server";

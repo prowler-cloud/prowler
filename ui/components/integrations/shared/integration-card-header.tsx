@@ -1,7 +1,10 @@
 "use client";
 
-import { Chip } from "@nextui-org/react";
+import { ExternalLink } from "lucide-react";
 import { ReactNode } from "react";
+
+import { Badge } from "@/components/shadcn";
+import { cn } from "@/lib/utils";
 
 interface IntegrationCardHeaderProps {
   icon: ReactNode;
@@ -9,19 +12,13 @@ interface IntegrationCardHeaderProps {
   subtitle?: string;
   chips?: Array<{
     label: string;
-    color?:
-      | "default"
-      | "primary"
-      | "secondary"
-      | "success"
-      | "warning"
-      | "danger";
-    variant?: "solid" | "bordered" | "light" | "flat" | "faded" | "shadow";
+    className?: string;
   }>;
   connectionStatus?: {
     connected: boolean;
     label?: string;
   };
+  navigationUrl?: string;
 }
 
 export const IntegrationCardHeader = ({
@@ -30,13 +27,27 @@ export const IntegrationCardHeader = ({
   subtitle,
   chips = [],
   connectionStatus,
+  navigationUrl,
 }: IntegrationCardHeaderProps) => {
   return (
     <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3">
         {icon}
         <div>
-          <h4 className="text-md font-semibold">{title}</h4>
+          <div className="flex items-center gap-2">
+            <h4 className="text-md font-semibold">{title}</h4>
+            {navigationUrl && (
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-black dark:text-white"
+                href={navigationUrl}
+                aria-label="open bucket in new tab"
+              >
+                <ExternalLink size={16} />
+              </a>
+            )}
+          </div>
           {subtitle && (
             <p className="text-xs text-gray-500 dark:text-gray-300">
               {subtitle}
@@ -47,25 +58,30 @@ export const IntegrationCardHeader = ({
       {(chips.length > 0 || connectionStatus) && (
         <div className="flex flex-wrap items-center gap-2">
           {chips.map((chip, index) => (
-            <Chip
+            <Badge
               key={index}
-              size="sm"
-              variant={chip.variant || "flat"}
-              color={chip.color || "default"}
-              className="text-xs"
+              variant="outline"
+              className={cn(
+                "border-border-neutral-secondary bg-bg-neutral-secondary text-text-neutral-primary text-xs font-normal",
+                chip.className,
+              )}
             >
               {chip.label}
-            </Chip>
+            </Badge>
           ))}
           {connectionStatus && (
-            <Chip
-              size="sm"
-              color={connectionStatus.connected ? "success" : "danger"}
-              variant="flat"
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-xs font-normal",
+                connectionStatus.connected
+                  ? "bg-bg-pass-secondary text-text-success-primary border-transparent"
+                  : "bg-bg-danger-secondary text-text-danger border-transparent",
+              )}
             >
               {connectionStatus.label ||
                 (connectionStatus.connected ? "Connected" : "Disconnected")}
-            </Chip>
+            </Badge>
           )}
         </div>
       )}

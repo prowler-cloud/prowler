@@ -1,5 +1,6 @@
 {
   "Framework": "GxP-EU-Annex-11",
+  "Name": "GxP (Good Practices) EU Annex 11",
   "Version": "",
   "Provider": "AWS",
   "Description": "The GxP EU Annex 11 framework is the European equivalent to the FDA 21 CFR part 11 framework in the United States. This annex applies to all forms of computerized systems that are used as part of Good Manufacturing Practices (GMP) regulated activities. A computerized system is a set of software and hardware components that together fulfill certain functionalities. The application should be validated and IT infrastructure should be qualified. Where a computerized system replaces a manual operation, there should be no resultant decrease in product quality, process control, or quality assurance. There should be no increase in the overall risk of the process.",

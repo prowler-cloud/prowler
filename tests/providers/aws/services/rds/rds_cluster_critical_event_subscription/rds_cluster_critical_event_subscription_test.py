@@ -51,7 +51,7 @@ class Test_rds_cluster_critical_event_subscription:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
-            Engine="aurora-postgresql",
+            Engine="postgres",
             MasterUsername="admin",
             MasterUserPassword="password",
         )
@@ -101,7 +101,7 @@ class Test_rds_cluster_critical_event_subscription:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
-            Engine="aurora-postgresql",
+            Engine="postgres",
             MasterUsername="admin",
             MasterUserPassword="password",
         )
@@ -154,7 +154,7 @@ class Test_rds_cluster_critical_event_subscription:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
-            Engine="aurora-postgresql",
+            Engine="postgres",
             MasterUsername="admin",
             MasterUserPassword="password",
         )

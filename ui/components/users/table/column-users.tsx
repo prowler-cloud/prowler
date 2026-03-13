@@ -35,11 +35,14 @@ export const ColumnsUser: ColumnDef<UserProps>[] = [
   },
   {
     accessorKey: "role",
-    header: () => <div className="text-left">Role</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Role" />
+    ),
     cell: ({ row }) => {
       const { role } = getUserData(row);
       return <p className="font-semibold">{role?.name || "No Role"}</p>;
     },
+    enableSorting: false,
   },
   {
     accessorKey: "company_name",
@@ -72,11 +75,12 @@ export const ColumnsUser: ColumnDef<UserProps>[] = [
 
   {
     accessorKey: "actions",
-    header: () => <div className="text-right">Actions</div>,
+    header: () => null,
     id: "actions",
     cell: ({ row }) => {
       const roles = row.original.roles;
       return <DataTableRowActions row={row} roles={roles} />;
     },
+    enableSorting: false,
   },
 ];

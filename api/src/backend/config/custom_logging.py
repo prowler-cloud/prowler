@@ -2,6 +2,7 @@ import json
 import logging
 from enum import StrEnum
 
+
 from config.env import env
 from django_guid.log_filters import CorrelationId
 
@@ -48,6 +49,10 @@ class NDJSONFormatter(logging.Formatter):
             log_record["user_id"] = record.user_id
         if hasattr(record, "tenant_id"):
             log_record["tenant_id"] = record.tenant_id
+        if hasattr(record, "api_key_prefix"):
+            log_record["api_key_prefix"] = (
+                record.api_key_prefix if record.api_key_prefix != "N/A" else None
+            )
         if hasattr(record, "method"):
             log_record["method"] = record.method
         if hasattr(record, "path"):
@@ -58,6 +63,8 @@ class NDJSONFormatter(logging.Formatter):
             log_record["duration"] = record.duration
         if hasattr(record, "status_code"):
             log_record["status_code"] = record.status_code
+        if hasattr(record, "metadata"):
+            log_record["metadata"] = record.metadata
 
         if record.exc_info:
             log_record["exc_info"] = self.formatException(record.exc_info)
@@ -90,6 +97,9 @@ class HumanReadableFormatter(logging.Formatter):
         # Add REST API extra fields
         if hasattr(record, "user_id"):
             log_components.append(f"({record.user_id})")
+        if hasattr(record, "api_key_prefix"):
+            if record.api_key_prefix != "N/A":
+                log_components.append(f"(API-Key {record.api_key_prefix})")
         if hasattr(record, "tenant_id"):
             log_components.append(f"[{record.tenant_id}]")
         if hasattr(record, "method"):
@@ -100,6 +110,8 @@ class HumanReadableFormatter(logging.Formatter):
             log_components.append(f"done in {record.duration}s:")
         if hasattr(record, "status_code"):
             log_components.append(f"{record.status_code}")
+        if hasattr(record, "metadata"):
+            log_components.append(f"metadata={record.metadata}")
 
         if record.exc_info:
             log_components.append(self.formatException(record.exc_info))

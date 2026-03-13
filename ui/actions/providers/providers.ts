@@ -3,18 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getErrorMessage,
-  getFormValue,
-  handleApiError,
-  handleApiResponse,
-  parseStringify,
-  wait,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders, getFormValue, wait } from "@/lib";
 import { buildSecretConfig } from "@/lib/provider-credentials/build-crendentials";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { appendSanitizedProviderInFilters } from "@/lib/provider-filters";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { ProvidersApiResponse, ProviderType } from "@/types/providers";
 
 export const getProviders = async ({
@@ -23,6 +16,12 @@ export const getProviders = async ({
   sort = "",
   filters = {},
   pageSize = 10,
+}: {
+  page?: number;
+  query?: string;
+  sort?: string;
+  filters?: Record<string, string | string[] | undefined>;
+  pageSize?: number;
 }): Promise<ProvidersApiResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -35,24 +34,97 @@ export const getProviders = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  // Handle multiple filters
-  Object.entries(filters).forEach(([key, value]) => {
-    if (key !== "filter[search]") {
-      url.searchParams.append(key, String(value));
-    }
-  });
+  appendSanitizedProviderInFilters(url, filters);
 
   try {
-    const providers = await fetch(url.toString(), {
+    const response = await fetch(url.toString(), {
       headers,
     });
-    const data = await providers.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/providers");
-    return parsedData;
+
+    return (await handleApiResponse(response)) as
+      | ProvidersApiResponse
+      | undefined;
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching providers:", error);
+    return undefined;
+  }
+};
+
+/**
+ * Fetches all providers by iterating through all pages.
+ * This is useful when you need the complete list of providers without pagination limits,
+ * such as for dropdown menus or selection lists.
+ */
+export const getAllProviders = async ({
+  query = "",
+  sort = "",
+  filters = {},
+}: {
+  query?: string;
+  sort?: string;
+  filters?: Record<string, string | string[] | undefined>;
+} = {}): Promise<ProvidersApiResponse | undefined> => {
+  const headers = await getAuthHeaders({ contentType: false });
+  const pageSize = 100; // Use larger page size to minimize API calls
+  const maxPages = 50; // Safety limit: 50 pages × 100 = 5000 providers max
+  let currentPage = 1;
+  const allProviders: ProvidersApiResponse["data"] = [];
+  let lastResponse: ProvidersApiResponse | undefined;
+  let hasMorePages = true;
+
+  try {
+    while (hasMorePages && currentPage <= maxPages) {
+      const url = new URL(`${apiBaseUrl}/providers?include=provider_groups`);
+      url.searchParams.append("page[number]", currentPage.toString());
+      url.searchParams.append("page[size]", pageSize.toString());
+
+      if (query) url.searchParams.append("filter[search]", query);
+      if (sort) url.searchParams.append("sort", sort);
+
+      appendSanitizedProviderInFilters(url, filters);
+
+      const response = await fetch(url.toString(), { headers });
+      const data = (await handleApiResponse(response)) as
+        | ProvidersApiResponse
+        | undefined;
+
+      if (!data?.data || data.data.length === 0) {
+        hasMorePages = false;
+        continue;
+      }
+
+      allProviders.push(...data.data);
+      lastResponse = data;
+
+      // Check if we've fetched all pages
+      const totalPages = data.meta?.pagination?.pages || 1;
+      if (currentPage >= totalPages) {
+        hasMorePages = false;
+      } else {
+        currentPage++;
+      }
+    }
+
+    // Return combined response with all providers
+    if (lastResponse) {
+      return {
+        ...lastResponse,
+        data: allProviders,
+        meta: {
+          ...lastResponse.meta,
+          pagination: {
+            ...lastResponse.meta?.pagination,
+            page: 1,
+            pages: 1,
+            count: allProviders.length,
+          },
+        },
+      };
+    }
+
+    return undefined;
+  } catch (error) {
+    console.error("Error fetching all providers:", error);
     return undefined;
   }
 };
@@ -64,16 +136,13 @@ export const getProvider = async (formData: FormData) => {
   const url = new URL(`${apiBaseUrl}/providers/${providerId}`);
 
   try {
-    const providers = await fetch(url.toString(), {
+    const response = await fetch(url.toString(), {
       headers,
     });
-    const data = await providers.json();
-    const parsedData = parseStringify(data);
-    return parsedData;
+
+    return handleApiResponse(response);
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    return handleApiError(error);
   }
 };
 
@@ -129,15 +198,9 @@ export const addProvider = async (formData: FormData) => {
       body: JSON.stringify(bodyData),
     });
 
-    const data = await response.json();
-    revalidatePath("/providers");
-    return parseStringify(data);
+    return handleApiResponse(response, "/providers");
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error);
-    return {
-      error: getErrorMessage(error),
-    };
+    return handleApiError(error);
   }
 };
 
@@ -153,9 +216,35 @@ export const addCredentialsProvider = async (formData: FormData) => {
     formData,
     ProviderCredentialFields.PROVIDER_TYPE,
   ) as ProviderType;
+  const providerUid = getFormValue(
+    formData,
+    ProviderCredentialFields.PROVIDER_UID,
+  ) as string | undefined;
 
   try {
-    const { secretType, secret } = buildSecretConfig(formData, providerType);
+    // For IaC provider, fetch the provider data to get the repository URL from uid
+    if (providerType === "iac") {
+      const providerUrl = new URL(`${apiBaseUrl}/providers/${providerId}`);
+      const providerResponse = await fetch(providerUrl.toString(), {
+        headers: await getAuthHeaders({ contentType: false }),
+      });
+
+      if (providerResponse.ok) {
+        const providerData = await providerResponse.json();
+        const providerUid = providerData?.data?.attributes?.uid;
+
+        // Add the repository URL to formData using the provider's uid
+        if (providerUid) {
+          formData.append(ProviderCredentialFields.REPOSITORY_URL, providerUid);
+        }
+      }
+    }
+
+    const { secretType, secret } = buildSecretConfig(
+      formData,
+      providerType,
+      providerUid,
+    );
 
     const response = await fetch(url.toString(), {
       method: "POST",
@@ -204,11 +293,6 @@ export const updateCredentialsProvider = async (
       }),
     });
 
-    if (!response.ok) {
-      const data = await response.json();
-      return parseStringify(data); // Return API errors for UI handling
-    }
-
     return handleApiResponse(response, "/providers");
   } catch (error) {
     return handleApiError(error);
@@ -223,6 +307,7 @@ export const checkConnectionProvider = async (formData: FormData) => {
   try {
     const response = await fetch(url.toString(), { method: "POST", headers });
     await wait(2000);
+
     return handleApiResponse(response, "/providers");
   } catch (error) {
     return handleApiError(error);
@@ -263,9 +348,7 @@ export const deleteCredentials = async (secretId: string) => {
     revalidatePath("/providers");
     return data || { success: true };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error deleting credentials:", error);
-    return { error: getErrorMessage(error) };
+    handleApiError(error);
   }
 };
 
@@ -302,8 +385,6 @@ export const deleteProvider = async (formData: FormData) => {
     revalidatePath("/providers");
     return data || { success: true };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error deleting provider:", error);
-    return { error: getErrorMessage(error) };
+    handleApiError(error);
   }
 };

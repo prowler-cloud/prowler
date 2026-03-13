@@ -1,7 +1,6 @@
 "use client";
 
-import { Dispatch, SetStateAction, useEffect } from "react";
-import { useFormState } from "react-dom";
+import { Dispatch, SetStateAction, useActionState, useEffect } from "react";
 
 import { updateTenantName } from "@/actions/users/tenants";
 import { useToast } from "@/components/ui";
@@ -17,27 +16,27 @@ export const EditTenantForm = ({
   tenantName?: string;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const [state, formAction] = useFormState(updateTenantName, null);
+  const [state, formAction] = useActionState(updateTenantName, null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (state?.success) {
+    if (state && "success" in state) {
       toast({
         title: "Changed successfully",
         description: state.success,
       });
       setIsOpen(false);
-    } else if (state?.errors?.general) {
+    } else if (state && "error" in state) {
       toast({
         variant: "destructive",
         title: "Oops! Something went wrong",
-        description: state.errors.general,
+        description: state.error,
       });
     }
   }, [state, toast, setIsOpen]);
 
   return (
-    <form action={formAction} className="flex flex-col space-y-4">
+    <form action={formAction} className="flex flex-col gap-4">
       <div className="text-md">
         Current name: <span className="font-bold">{tenantName}</span>
       </div>
@@ -49,8 +48,8 @@ export const EditTenantForm = ({
         labelPlacement="outside"
         variant="bordered"
         isRequired={true}
-        isInvalid={!!state?.errors?.name}
-        errorMessage={state?.errors?.name}
+        isInvalid={!!(state && "error" in state)}
+        errorMessage={state && "error" in state ? state.error : undefined}
       />
 
       {/* Hidden inputs for Server Action */}

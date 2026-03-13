@@ -1,4 +1,18 @@
-name: "SDK - CodeQL Config"
+name: 'SDK: CodeQL Config'
+paths:
+  - 'prowler/'
+
 paths-ignore:
-  - "api/"
-  - "ui/"
+  - 'api/'
+  - 'ui/'
+  - 'dashboard/'
+  - 'mcp_server/'
+  - 'tests/**'
+  - 'util/**'
+  - 'contrib/**'
+  - 'examples/**'
+  - 'prowler/**/__pycache__/**'
+  - 'prowler/**/*.md'
+
+queries:
+  - uses: security-and-quality

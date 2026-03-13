@@ -14,8 +14,8 @@ def recover_checks_from_provider(
     Returns a list of tuples with the following format (check_name, check_path)
     """
     try:
-        # Bypass check loading for IAC provider since it uses Trivy directly
-        if provider == "iac":
+        # Bypass check loading for IAC, LLM, and Image providers since they use external tools directly
+        if provider in ("iac", "llm", "image"):
             return []
 
         checks = []
@@ -26,7 +26,7 @@ def recover_checks_from_provider(
             # We need to exclude common shared libraries in services
             if (
                 check_module_name.count(".") == 6
-                and "lib" not in check_module_name
+                and ".lib." not in check_module_name
                 and (not check_module_name.endswith("_fixer") or include_fixers)
             ):
                 check_path = module_name.module_finder.path

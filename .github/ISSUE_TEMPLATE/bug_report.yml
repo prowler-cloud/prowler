@@ -3,6 +3,41 @@ description: Create a report to help us improve
 labels: ["bug", "status/needs-triage"]
 
 body:
+  - type: checkboxes
+    id: search
+    attributes:
+      label: Issue search
+      options:
+        - label: I have searched the existing issues and this bug has not been reported yet
+          required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Which component is affected?
+      multiple: true
+      options:
+        - Prowler CLI/SDK
+        - Prowler API
+        - Prowler UI
+        - Prowler Dashboard
+        - Prowler MCP Server
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Cloud Provider (if applicable)
+      multiple: true
+      options:
+        - AWS
+        - Azure
+        - GCP
+        - Kubernetes
+        - GitHub
+        - Microsoft 365
+        - Not applicable
   - type: textarea
     id: reproduce
     attributes:
@@ -76,6 +111,15 @@ body:
       description: Which Prowler version are you using?
       placeholder: |-
         prowler --version
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      description: Which Python version are you using?
+      placeholder: |-
+        python --version
     validations:
       required: true
   - type: input

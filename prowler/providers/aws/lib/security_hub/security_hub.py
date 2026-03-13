@@ -1,7 +1,7 @@
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union
 
 from boto3 import Session
 from botocore.client import ClientError
@@ -55,7 +55,7 @@ class SecurityHubConnection(Connection):
     Attributes:
         enabled_regions (set): Set of regions where Security Hub is enabled.
         disabled_regions (set): Set of regions where Security Hub is disabled.
-        partition (str): AWS partition (e.g., aws, aws-cn, aws-us-gov) where SecurityHub is deployed.
+        partition (str): AWS partition (e.g., aws, aws-cn, aws-eusc, aws-us-gov) where SecurityHub is deployed.
     """
 
     enabled_regions: set = None
@@ -70,7 +70,7 @@ class SecurityHub:
     Attributes:
         _session (Session): AWS session object for authentication and communication with AWS services.
         _aws_account_id (str): AWS account ID associated with the SecurityHub instance.
-        _aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-us-gov) where SecurityHub is deployed.
+        _aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-eusc, aws-us-gov) where SecurityHub is deployed.
         _findings_per_region (dict): Dictionary containing findings per region.
         _enabled_regions (dict): Dictionary containing enabled regions with SecurityHub clients.
 
@@ -115,7 +115,7 @@ class SecurityHub:
         Args:
         - aws_session (Session): AWS session object for authentication and communication with AWS services.
         - aws_account_id (str): AWS account ID associated with the SecurityHub instance.
-        - aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-us-gov) where SecurityHub is deployed.
+        - aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-eusc, aws-us-gov) where SecurityHub is deployed.
         - findings (list[AWSSecurityFindingFormat]): List of findings to filter and send to Security Hub.
         - aws_security_hub_available_regions (list[str]): List of regions where Security Hub is available.
         - send_only_fails (bool): Flag indicating whether to send only findings with status 'FAIL'.
@@ -165,8 +165,11 @@ class SecurityHub:
                 aws_account_id,
                 aws_partition,
             )
-        if findings and self._enabled_regions:
-            self._findings_per_region = self.filter(findings, send_only_fails)
+        if findings:
+            if not self._enabled_regions:
+                logger.error("No enabled regions found in Security Hub.")
+            else:
+                self._findings_per_region = self.filter(findings, send_only_fails)
 
     def filter(
         self,
@@ -185,6 +188,7 @@ class SecurityHub:
         """
 
         findings_per_region = {}
+        disabled_regions_logged = set()
         try:
             # Create a key per audited region
             for region in self._enabled_regions.keys():
@@ -193,6 +197,12 @@ class SecurityHub:
             for finding in findings:
                 # We don't send findings to not enabled regions
                 if finding.Resources[0].Region not in findings_per_region:
+                    # Only log once per disabled region
+                    if finding.Resources[0].Region not in disabled_regions_logged:
+                        logger.warning(
+                            f"Skipping findings in region {finding.Resources[0].Region} because it is not enabled in Security Hub."
+                        )
+                        disabled_regions_logged.add(finding.Resources[0].Region)
                     continue
 
                 if (
@@ -219,7 +229,7 @@ class SecurityHub:
         session: Session,
         aws_account_id: str,
         aws_partition: str,
-    ) -> tuple[str, Session | None]:
+    ) -> tuple[str, Union[Session, None]]:
         """
         Check if Security Hub is enabled in a specific region and if Prowler integration is active.
 
@@ -246,7 +256,7 @@ class SecurityHub:
                 security_hub_client.list_enabled_products_for_import()
             ):
                 logger.warning(
-                    f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://docs.prowler.cloud/en/latest/tutorials/aws/securityhub/"
+                    f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://docs.prowler.com/user-guide/providers/aws/securityhub#aws-security-hub-integration-with-prowler"
                 )
                 return region, None
             else:
@@ -467,7 +477,7 @@ class SecurityHub:
 
         Args:
             aws_account_id (str): AWS account ID to check for Prowler integration.
-            aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-us-gov).
+            aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-eusc, aws-us-gov).
             regions (set): Set of regions to check for Security Hub integration.
             raise_on_exception (bool): Whether to raise an exception if an error occurs.
             profile (str): AWS profile name to use for authentication.

@@ -62,6 +62,7 @@ class Generic_Compliance_Requirement_Attribute(BaseModel):
     SubGroup: Optional[str] = None
     Service: Optional[str] = None
     Type: Optional[str] = None
+    Comment: Optional[str] = None
 
 
 class CIS_Requirement_Attribute_Profile(str, Enum):
@@ -200,6 +201,44 @@ class Prowler_ThreatScore_Requirement_Attribute(BaseModel):
     Weight: int
 
 
+# CCC Requirement Attribute
+class CCC_Requirement_Attribute(BaseModel):
+    """CCC Requirement Attribute"""
+
+    FamilyName: str
+    FamilyDescription: str
+    Section: str
+    SubSection: str
+    SubSectionObjective: str
+    Applicability: list[str]
+    Recommendation: str
+    SectionThreatMappings: list[dict]
+    SectionGuidelineMappings: list[dict]
+
+
+# C5 Germany Requirement Attribute
+class C5Germany_Requirement_Attribute(BaseModel):
+    """C5 Germany Requirement Attribute"""
+
+    Section: str
+    SubSection: str
+    Type: str
+    AboutCriteria: str
+    ComplementaryCriteria: str
+
+
+# CSA CCM v4 Requirement Attribute
+class CSA_CCM_Requirement_Attribute(BaseModel):
+    """CSA Cloud Controls Matrix (CCM) v4 Requirement Attribute"""
+
+    Section: str
+    CCMLite: str
+    IaaS: str
+    PaaS: str
+    SaaS: str
+    ScopeApplicability: list[dict]
+
+
 # Base Compliance Model
 # TODO: move this to compliance folder
 class Compliance_Requirement(BaseModel):
@@ -216,6 +255,9 @@ class Compliance_Requirement(BaseModel):
             AWS_Well_Architected_Requirement_Attribute,
             KISA_ISMSP_Requirement_Attribute,
             Prowler_ThreatScore_Requirement_Attribute,
+            CCC_Requirement_Attribute,
+            C5Germany_Requirement_Attribute,
+            CSA_CCM_Requirement_Attribute,
             # Generic_Compliance_Requirement_Attribute must be the last one since it is the fallback for generic compliance framework
             Generic_Compliance_Requirement_Attribute,
         ]
@@ -227,6 +269,7 @@ class Compliance(BaseModel):
     """Compliance holds the base model for every compliance framework"""
 
     Framework: str
+    Name: str
     Provider: str
     Version: Optional[str] = None
     Description: str
@@ -240,12 +283,13 @@ class Compliance(BaseModel):
     @root_validator(pre=True)
     # noqa: F841 - since vulture raises unused variable 'cls'
     def framework_and_provider_must_not_be_empty(cls, values):  # noqa: F841
-        framework, provider = (
+        framework, provider, name = (
             values.get("Framework"),
             values.get("Provider"),
+            values.get("Name"),
         )
-        if framework == "" or provider == "":
-            raise ValueError("Framework or Provider must not be empty")
+        if framework == "" or provider == "" or name == "":
+            raise ValueError("Framework, Provider or Name must not be empty")
         return values
 
     @staticmethod

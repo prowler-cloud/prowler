@@ -25,9 +25,6 @@ class M365RegionConfig(BaseModel):
 
 
 class M365Credentials(BaseModel):
-    user: Optional[str] = None
-    passwd: Optional[str] = None
-    encrypted_passwd: Optional[str] = None
     client_id: str = ""
     client_secret: Optional[str] = None
     tenant_id: str = ""

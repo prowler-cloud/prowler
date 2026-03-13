@@ -36,7 +36,7 @@ class MemoryDB(AWSService):
                                 region=regional_client.region,
                                 security_groups=[
                                     sg["SecurityGroupId"]
-                                    for sg in cluster["SecurityGroups"]
+                                    for sg in cluster.get("SecurityGroups", [])
                                     if sg["Status"] == "active"
                                 ],
                                 tls_enabled=cluster["TLSEnabled"],

@@ -1,0 +1,37 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudstorage_bucket_soft_delete_enabled",
+  "CheckTitle": "Cloud Storage bucket has Soft Delete enabled",
+  "CheckType": [],
+  "ServiceName": "cloudstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "storage.googleapis.com/Bucket",
+  "ResourceGroup": "storage",
+  "Description": "**Google Cloud Storage buckets** are assessed for **Soft Delete** being enabled with a non-zero retention window, meaning deleted objects are temporarily preserved and can be restored until the window expires.",
+  "Risk": "**No Soft Delete** makes object deletions **immediate and irreversible**, undermining data **availability** and **integrity**. Accidental removal, compromised credentials, wiper malware, or misconfigured lifecycle rules can erase datasets with no recovery path, breaking RPO/RTO and legal retention expectations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.cloud.google.com/storage/docs/soft-delete",
+    "https://docs.cloud.google.com/storage/docs/use-soft-delete"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud storage buckets update gs://<BUCKET_NAME> --soft-delete-duration=<SECONDS>",
+      "NativeIaC": "",
+      "Other": "1. In Google Cloud Console, go to Storage > Buckets and open <BUCKET_NAME>\n2. Click the Configuration tab\n3. In the Soft Delete section, click Enable Soft Delete\n4. Set a retention duration > 0 and click Save",
+      "Terraform": "```hcl\nresource \"google_storage_bucket\" \"<example_resource_name>\" {\n  name     = \"<example_resource_id>\"\n  location = \"<LOCATION>\"\n\n  soft_delete_policy {\n    retention_duration_seconds = 604800 # Critical: >0 enables Soft Delete (7 days)\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **Soft Delete** with a retention window aligned to your RPO/RTO. Apply **least privilege** for delete/undelete actions and use **defense in depth** with object versioning and retention policies. Monitor deletion events and regularly test restore procedures to ensure recoverability.",
+      "Url": "https://hub.prowler.com/check/cloudstorage_bucket_soft_delete_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

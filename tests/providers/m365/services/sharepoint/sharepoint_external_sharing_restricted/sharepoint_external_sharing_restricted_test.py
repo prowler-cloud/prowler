@@ -20,6 +20,7 @@ class Test_sharepoint_external_sharing_restricted:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.services.sharepoint.sharepoint_external_sharing_restricted.sharepoint_external_sharing_restricted.sharepoint_client",
                 new=sharepoint_client,
@@ -47,7 +48,7 @@ class Test_sharepoint_external_sharing_restricted:
             assert result[0].status_extended == (
                 "External sharing is restricted to external user sharing or more restrictive."
             )
-            assert result[0].resource_id == DOMAIN
+            assert result[0].resource_id == "sharepointSettings"
             assert result[0].location == "global"
             assert result[0].resource_name == "SharePoint Settings"
             assert result[0].resource == sharepoint_client.settings.dict()
@@ -64,6 +65,7 @@ class Test_sharepoint_external_sharing_restricted:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.services.sharepoint.sharepoint_external_sharing_restricted.sharepoint_external_sharing_restricted.sharepoint_client",
                 new=sharepoint_client,
@@ -91,7 +93,7 @@ class Test_sharepoint_external_sharing_restricted:
             assert result[0].status_extended == (
                 "External sharing is not restricted and guests users can access."
             )
-            assert result[0].resource_id == DOMAIN
+            assert result[0].resource_id == "sharepointSettings"
             assert result[0].location == "global"
             assert result[0].resource_name == "SharePoint Settings"
             assert result[0].resource == sharepoint_client.settings.dict()
@@ -110,6 +112,7 @@ class Test_sharepoint_external_sharing_restricted:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.services.sharepoint.sharepoint_external_sharing_restricted.sharepoint_external_sharing_restricted.sharepoint_client",
                 new=sharepoint_client,

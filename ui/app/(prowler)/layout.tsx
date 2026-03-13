@@ -1,10 +1,12 @@
 import "@/styles/globals.css";
 
+import * as Sentry from "@sentry/nextjs";
 import { Metadata, Viewport } from "next";
-import React from "react";
+import { ReactNode } from "react";
 
 import { getProviders } from "@/actions/providers";
 import MainLayout from "@/components/ui/main-layout/main-layout";
+import { NavigationProgress } from "@/components/ui/navigation-progress";
 import { Toaster } from "@/components/ui/toast";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
@@ -22,6 +24,9 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
   },
+  other: {
+    ...Sentry.getTraceData(),
+  },
 };
 
 export const viewport: Viewport = {
@@ -34,7 +39,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const providersData = await getProviders({ page: 1, pageSize: 1 });
   const hasProviders = !!(providersData?.data && providersData.data.length > 0);
@@ -45,11 +50,12 @@ export default async function RootLayout({
       <body
         suppressHydrationWarning
         className={cn(
-          "min-h-screen bg-background font-sans antialiased",
+          "bg-background min-h-screen font-sans antialiased",
           fontSans.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
+          <NavigationProgress />
           <StoreInitializer values={{ hasProviders }} />
           <MainLayout>{children}</MainLayout>
           <Toaster />

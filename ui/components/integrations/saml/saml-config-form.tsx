@@ -1,13 +1,20 @@
 "use client";
 
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import { useFormState } from "react-dom";
+import {
+  Dispatch,
+  SetStateAction,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { z } from "zod";
 
 import { createSamlConfig, updateSamlConfig } from "@/actions/integrations";
 import { AddIcon } from "@/components/icons";
+import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomServerInput } from "@/components/ui/custom";
+import { CustomServerInput } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { SnippetChip } from "@/components/ui/entities";
 import { FormButtons } from "@/components/ui/form";
@@ -110,7 +117,7 @@ export const SamlConfigForm = ({
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   samlConfig?: any;
 }) => {
-  const [state, formAction, isPending] = useFormState(
+  const [state, formAction, isPending] = useActionState(
     samlConfig?.id ? updateSamlConfig : createSamlConfig,
     null,
   );
@@ -251,7 +258,7 @@ export const SamlConfigForm = ({
     : `${apiBaseUrl}/accounts/saml/your-domain.com/acs/`;
 
   return (
-    <form ref={formRef} action={formAction} className="flex flex-col space-y-2">
+    <form ref={formRef} action={formAction} className="flex flex-col gap-2">
       <div className="py-1 text-xs">
         Need help configuring SAML SSO?{" "}
         <CustomLink
@@ -284,79 +291,79 @@ export const SamlConfigForm = ({
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           const newValue = e.target.value;
           setEmailDomain(newValue);
-          validateFields(newValue, !!uploadedFile);
         }}
       />
 
-      <div className="space-y-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
-        <h3 className="text-lg font-semibold">
+      <Card variant="inner">
+        <CardHeader className="mb-2">
           Identity Provider Configuration
-        </h3>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4">
+            <div>
+              <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                ACS URL:
+              </span>
+              <SnippetChip
+                value={acsUrl}
+                ariaLabel="Copy ACS URL to clipboard"
+                className="h-10 w-full"
+              />
+            </div>
 
-        <div className="space-y-4">
-          <div>
-            <span className="mb-2 block text-sm font-medium text-default-500">
-              ACS URL:
-            </span>
-            <SnippetChip
-              value={acsUrl}
-              ariaLabel="Copy ACS URL to clipboard"
-              className="w-full"
-            />
-          </div>
+            <div>
+              <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Audience:
+              </span>
+              <SnippetChip
+                value="urn:prowler.com:sp"
+                ariaLabel="Copy Audience to clipboard"
+                className="h-10 w-full"
+              />
+            </div>
 
-          <div>
-            <span className="mb-2 block text-sm font-medium text-default-500">
-              Audience:
-            </span>
-            <SnippetChip
-              value="urn:prowler.com:sp"
-              ariaLabel="Copy Audience to clipboard"
-              className="w-full"
-            />
-          </div>
+            <div>
+              <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Name ID Format:
+              </span>
+              <span className="w-full text-sm text-gray-600 dark:text-gray-400">
+                urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
+              </span>
+            </div>
 
-          <div>
-            <span className="mb-2 block text-sm font-medium text-default-500">
-              Name ID Format:
-            </span>
-            <span className="w-full text-sm text-default-600">
-              urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
-            </span>
+            <div>
+              <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Supported Assertion Attributes:
+              </span>
+              <ul className="ml-4 flex flex-col gap-1 text-sm text-gray-600 dark:text-gray-400">
+                <li>• firstName</li>
+                <li>• lastName</li>
+                <li>• userType</li>
+                <li>• organization</li>
+              </ul>
+              <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                <strong>Note:</strong> The userType attribute will be used to
+                assign the user&apos;s role. If the role does not exist, one
+                will be created with minimal permissions. You can assign
+                permissions to roles on the{" "}
+                <CustomLink href="/roles" target="_self">
+                  <span>Roles</span>
+                </CustomLink>{" "}
+                page.
+              </p>
+            </div>
           </div>
-
-          <div>
-            <span className="mb-2 block text-sm font-medium text-default-500">
-              Supported Assertion Attributes:
-            </span>
-            <ul className="ml-4 space-y-1 text-sm text-default-600">
-              <li>• firstName</li>
-              <li>• lastName</li>
-              <li>• userType</li>
-              <li>• organization</li>
-            </ul>
-            <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
-              <strong>Note:</strong> The userType attribute will be used to
-              assign the user&apos;s role. If the role does not exist, one will
-              be created with minimal permissions. You can assign permissions to
-              roles on the{" "}
-              <CustomLink href="/roles" target="_self">
-                <span>Roles</span>
-              </CustomLink>{" "}
-              page.
-            </p>
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-col items-start space-y-2">
-        <span className="text-xs text-default-500">
+        </CardContent>
+      </Card>
+      <div className="flex flex-col items-start gap-2">
+        <span className="text-xs text-gray-700 dark:text-gray-300">
           Metadata XML File <span className="text-red-500">*</span>
         </span>
-        <CustomButton
+        <Button
           type="button"
-          ariaLabel="Select Metadata XML File"
-          isDisabled={isPending}
-          onPress={() => {
+          variant="outline"
+          disabled={isPending}
+          onClick={() => {
             const fileInput = document.getElementById(
               "metadata_xml_file",
             ) as HTMLInputElement;
@@ -364,8 +371,7 @@ export const SamlConfigForm = ({
               fileInput.click();
             }
           }}
-          startContent={<AddIcon size={20} />}
-          className={`h-10 justify-start rounded-medium border-2 text-default-500 ${
+          className={`justify-start gap-2 ${
             (
               clientErrors.metadata_xml === null
                 ? undefined
@@ -374,19 +380,20 @@ export const SamlConfigForm = ({
               ? "border-red-500"
               : uploadedFile
                 ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                : "border-default-200"
+                : ""
           }`}
         >
-          <span className="text-small">
+          <AddIcon size={20} />
+          <span className="text-sm">
             {uploadedFile ? (
-              <span className="flex items-center space-x-2">
+              <span className="flex items-center gap-2">
                 <span className="max-w-36 truncate">{uploadedFile.name}</span>
               </span>
             ) : (
               "Choose File"
             )}
           </span>
-        </CustomButton>
+        </Button>
 
         <input
           type="file"

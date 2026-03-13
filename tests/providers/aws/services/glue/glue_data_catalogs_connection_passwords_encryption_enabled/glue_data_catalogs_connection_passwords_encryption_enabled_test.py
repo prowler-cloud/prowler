@@ -99,7 +99,14 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
             check = glue_data_catalogs_connection_passwords_encryption_enabled()
             result = check.execute()
 
-            assert len(result) == 0
+            # Moto 5.1.11 now returns default data catalog settings even when no explicit catalog exists
+            # The check should still run but with default settings (DISABLED encryption)
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "Glue data catalog connection password is not encrypted."
+            )
 
     @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)

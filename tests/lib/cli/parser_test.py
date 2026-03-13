@@ -17,11 +17,27 @@ prowler_command = "prowler"
 
 # capsys
 # https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
-prowler_default_usage_error = "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,dashboard,iac} ..."
+prowler_default_usage_error = "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,dashboard,iac,image} ..."
 
 
 def mock_get_available_providers():
-    return ["aws", "azure", "gcp", "kubernetes", "m365", "github", "iac", "nhn"]
+    return [
+        "aws",
+        "azure",
+        "gcp",
+        "kubernetes",
+        "m365",
+        "github",
+        "googleworkspace",
+        "iac",
+        "image",
+        "nhn",
+        "mongodbatlas",
+        "oraclecloud",
+        "alibabacloud",
+        "cloudflare",
+        "openstack",
+    ]
 
 
 @pytest.mark.arg_parser
@@ -67,6 +83,7 @@ class Test_Parser:
         assert len(parsed.category) == 0
         assert not parsed.excluded_check
         assert not parsed.excluded_service
+        assert not parsed.excluded_checks_file
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
@@ -116,6 +133,7 @@ class Test_Parser:
         assert len(parsed.category) == 0
         assert not parsed.excluded_check
         assert not parsed.excluded_service
+        assert not parsed.excluded_checks_file
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
@@ -157,6 +175,7 @@ class Test_Parser:
         assert len(parsed.category) == 0
         assert not parsed.excluded_check
         assert not parsed.excluded_service
+        assert not parsed.excluded_checks_file
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
@@ -193,6 +212,7 @@ class Test_Parser:
         assert len(parsed.category) == 0
         assert not parsed.excluded_check
         assert not parsed.excluded_service
+        assert not parsed.excluded_checks_file
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
@@ -461,6 +481,13 @@ class Test_Parser:
         assert len(parsed.excluded_check) == 2
         assert excluded_checks_1 in parsed.excluded_check
         assert excluded_checks_2 in parsed.excluded_check
+
+    def test_exclude_checks_parser_excluded_checks_file_long(self):
+        argument = "--excluded-checks-file"
+        filename = "excluded_checks.txt"
+        command = [prowler_command, argument, filename]
+        parsed = self.parser.parse(command)
+        assert parsed.excluded_checks_file == filename
 
     def test_exclude_checks_parser_excluded_services_long(self):
         excluded_service = "accessanalyzer"
@@ -1211,6 +1238,23 @@ class Test_Parser:
         assert (
             capsys.readouterr().err
             == f"{prowler_default_usage_error}\nprowler: error: unrecognized arguments: --subscription-ids\n"
+        )
+
+    def test_parser_non_aws_with_json_asff_output(self, capsys):
+        command = [
+            prowler_command,
+            "azure",
+            "--sp-env-auth",
+            "--output-formats",
+            "json-asff",
+        ]
+        with pytest.raises(SystemExit) as wrapped_exit:
+            _ = self.parser.parse(command)
+        assert wrapped_exit.type == SystemExit
+        assert wrapped_exit.value.code == 2
+        assert (
+            capsys.readouterr().err
+            == f"{prowler_default_usage_error}\nprowler: error: json-asff output format is only available for the aws provider, but azure was selected\n"
         )
 
     def test_parser_gcp_auth_credentials_file(self):

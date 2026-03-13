@@ -58,36 +58,35 @@ export const PasswordRequirementsMessage = ({
   return (
     <div className={className}>
       <div
-        className={`rounded-xl border p-3 ${
-          allRequirementsMet
-            ? "border-system-success bg-system-success/10"
-            : "border-red-200 bg-red-50"
-        }`}
+        className={`bg-bg-neutral-primary rounded-xl border p-3 ${allRequirementsMet ? "border-bg-pass" : "border-bg-fail"}`}
         role="region"
         aria-label="Password requirements status"
       >
         {allRequirementsMet ? (
           <div className="flex items-center gap-2">
             <CheckCircle
-              className="h-4 w-4 flex-shrink-0 text-system-success"
+              className="text-text-success-primary h-4 w-4 shrink-0"
               aria-hidden="true"
             />
-            <p className="text-xs font-medium leading-tight text-system-success">
+            <p className="text-text-neutral-primary text-xs leading-tight font-medium">
               Password meets all requirements
             </p>
           </div>
         ) : (
-          <div className="space-y-1">
+          <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <AlertCircle
-                className="h-4 w-4 flex-shrink-0 text-red-600"
+                className="text-text-error-primary h-4 w-4 shrink-0"
                 aria-hidden="true"
               />
-              <p className="text-xs font-medium leading-tight text-red-700">
+              <p className="text-text-neutral-primary text-xs leading-tight font-medium">
                 Password must include:
               </p>
             </div>
-            <ul className="ml-6 space-y-0.5" aria-label="Password requirements">
+            <ul
+              className="ml-6 flex flex-col gap-0.5"
+              aria-label="Password requirements"
+            >
               {results.map((req) => (
                 <li
                   key={req.key}
@@ -95,13 +94,13 @@ export const PasswordRequirementsMessage = ({
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className={`h-2 w-2 flex-shrink-0 rounded-full ${
-                        req.isMet ? "bg-system-success" : "bg-red-400"
+                      className={`h-2 w-2 shrink-0 rounded-full ${
+                        req.isMet ? "bg-bg-pass" : "bg-bg-fail"
                       }`}
                       aria-hidden="true"
                     />
                     <span
-                      className={`${req.isMet ? "text-system-success" : "text-red-700"}`}
+                      className="text-text-neutral-secondary"
                       aria-label={`${req.label} ${req.isMet ? "satisfied" : "required"}`}
                     >
                       {req.label}

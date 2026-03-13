@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -6,18 +9,36 @@ from django.db.models import Subquery
 from rest_framework.exceptions import NotFound, ValidationError
 
 from api.db_router import MainRouter
+from api.db_utils import rls_transaction
 from api.exceptions import InvitationTokenExpiredException
 from api.models import Integration, Invitation, Processor, Provider, Resource
 from api.v1.serializers import FindingMetadataSerializer
-from prowler.providers.aws.aws_provider import AwsProvider
+from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
-from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
-from prowler.providers.gcp.gcp_provider import GcpProvider
-from prowler.providers.github.github_provider import GithubProvider
-from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
-from prowler.providers.m365.m365_provider import M365Provider
+
+if TYPE_CHECKING:
+    from prowler.providers.alibabacloud.alibabacloud_provider import (
+        AlibabacloudProvider,
+    )
+    from prowler.providers.aws.aws_provider import AwsProvider
+    from prowler.providers.azure.azure_provider import AzureProvider
+    from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
+    from prowler.providers.gcp.gcp_provider import GcpProvider
+    from prowler.providers.github.github_provider import GithubProvider
+    from prowler.providers.googleworkspace.googleworkspace_provider import (
+        GoogleworkspaceProvider,
+    )
+    from prowler.providers.iac.iac_provider import IacProvider
+    from prowler.providers.image.image_provider import ImageProvider
+    from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
+    from prowler.providers.m365.m365_provider import M365Provider
+    from prowler.providers.mongodbatlas.mongodbatlas_provider import (
+        MongodbatlasProvider,
+    )
+    from prowler.providers.openstack.openstack_provider import OpenstackProvider
+    from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 
 
 class CustomOAuth2Client(OAuth2Client):
@@ -58,38 +79,102 @@ def merge_dicts(default_dict: dict, replacement_dict: dict) -> dict:
 
 def return_prowler_provider(
     provider: Provider,
-) -> [
-    AwsProvider
+) -> (
+    AlibabacloudProvider
+    | AwsProvider
     | AzureProvider
+    | CloudflareProvider
     | GcpProvider
     | GithubProvider
+    | GoogleworkspaceProvider
+    | IacProvider
+    | ImageProvider
     | KubernetesProvider
     | M365Provider
-]:
+    | MongodbatlasProvider
+    | OpenstackProvider
+    | OraclecloudProvider
+):
     """Return the Prowler provider class based on the given provider type.
 
     Args:
         provider (Provider): The provider object containing the provider type and associated secrets.
 
     Returns:
-        AwsProvider | AzureProvider | GcpProvider | GithubProvider | KubernetesProvider | M365Provider: The corresponding provider class.
+        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | GoogleworkspaceProvider | IacProvider | ImageProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OpenstackProvider | OraclecloudProvider: The corresponding provider class.
 
     Raises:
         ValueError: If the provider type specified in `provider.provider` is not supported.
     """
     match provider.provider:
         case Provider.ProviderChoices.AWS.value:
+            from prowler.providers.aws.aws_provider import AwsProvider
+
             prowler_provider = AwsProvider
         case Provider.ProviderChoices.GCP.value:
+            from prowler.providers.gcp.gcp_provider import GcpProvider
+
             prowler_provider = GcpProvider
+        case Provider.ProviderChoices.GOOGLEWORKSPACE.value:
+            from prowler.providers.googleworkspace.googleworkspace_provider import (
+                GoogleworkspaceProvider,
+            )
+
+            prowler_provider = GoogleworkspaceProvider
         case Provider.ProviderChoices.AZURE.value:
+            from prowler.providers.azure.azure_provider import AzureProvider
+
             prowler_provider = AzureProvider
         case Provider.ProviderChoices.KUBERNETES.value:
+            from prowler.providers.kubernetes.kubernetes_provider import (
+                KubernetesProvider,
+            )
+
             prowler_provider = KubernetesProvider
         case Provider.ProviderChoices.M365.value:
+            from prowler.providers.m365.m365_provider import M365Provider
+
             prowler_provider = M365Provider
         case Provider.ProviderChoices.GITHUB.value:
+            from prowler.providers.github.github_provider import GithubProvider
+
             prowler_provider = GithubProvider
+        case Provider.ProviderChoices.MONGODBATLAS.value:
+            from prowler.providers.mongodbatlas.mongodbatlas_provider import (
+                MongodbatlasProvider,
+            )
+
+            prowler_provider = MongodbatlasProvider
+        case Provider.ProviderChoices.IAC.value:
+            from prowler.providers.iac.iac_provider import IacProvider
+
+            prowler_provider = IacProvider
+        case Provider.ProviderChoices.ORACLECLOUD.value:
+            from prowler.providers.oraclecloud.oraclecloud_provider import (
+                OraclecloudProvider,
+            )
+
+            prowler_provider = OraclecloudProvider
+        case Provider.ProviderChoices.ALIBABACLOUD.value:
+            from prowler.providers.alibabacloud.alibabacloud_provider import (
+                AlibabacloudProvider,
+            )
+
+            prowler_provider = AlibabacloudProvider
+        case Provider.ProviderChoices.CLOUDFLARE.value:
+            from prowler.providers.cloudflare.cloudflare_provider import (
+                CloudflareProvider,
+            )
+
+            prowler_provider = CloudflareProvider
+        case Provider.ProviderChoices.OPENSTACK.value:
+            from prowler.providers.openstack.openstack_provider import OpenstackProvider
+
+            prowler_provider = OpenstackProvider
+        case Provider.ProviderChoices.IMAGE.value:
+            from prowler.providers.image.image_provider import ImageProvider
+
+            prowler_provider = ImageProvider
         case _:
             raise ValueError(f"Provider type {provider.provider} not supported")
     return prowler_provider
@@ -120,10 +205,59 @@ def get_prowler_provider_kwargs(
         }
     elif provider.provider == Provider.ProviderChoices.KUBERNETES.value:
         prowler_provider_kwargs = {**prowler_provider_kwargs, "context": provider.uid}
+    elif provider.provider == Provider.ProviderChoices.GITHUB.value:
+        if provider.uid:
+            prowler_provider_kwargs = {
+                **prowler_provider_kwargs,
+                "organizations": [provider.uid],
+            }
+    elif provider.provider == Provider.ProviderChoices.IAC.value:
+        # For IaC provider, uid contains the repository URL
+        # Extract the access token if present in the secret
+        prowler_provider_kwargs = {
+            "scan_repository_url": provider.uid,
+        }
+        if "access_token" in provider.secret.secret:
+            prowler_provider_kwargs["oauth_app_token"] = provider.secret.secret[
+                "access_token"
+            ]
+    elif provider.provider == Provider.ProviderChoices.MONGODBATLAS.value:
+        prowler_provider_kwargs = {
+            **prowler_provider_kwargs,
+            "atlas_organization_id": provider.uid,
+        }
+    elif provider.provider == Provider.ProviderChoices.CLOUDFLARE.value:
+        prowler_provider_kwargs = {
+            **prowler_provider_kwargs,
+            "filter_accounts": [provider.uid],
+        }
+    elif provider.provider == Provider.ProviderChoices.OPENSTACK.value:
+        # clouds_yaml_content, clouds_yaml_cloud and provider_id are validated
+        # in the provider itself, so it's not needed here.
+        pass
+    elif provider.provider == Provider.ProviderChoices.IMAGE.value:
+        # Detect whether uid is a registry URL (e.g. "docker.io/andoniaf") or
+        # a concrete image reference (e.g. "docker.io/andoniaf/myimage:latest").
+        from prowler.providers.image.image_provider import ImageProvider
+
+        if ImageProvider._is_registry_url(provider.uid):
+            prowler_provider_kwargs = {
+                "registry": provider.uid,
+                **{k: v for k, v in prowler_provider_kwargs.items() if v},
+            }
+        else:
+            prowler_provider_kwargs = {
+                "images": [provider.uid],
+                **{k: v for k, v in prowler_provider_kwargs.items() if v},
+            }
 
     if mutelist_processor:
         mutelist_content = mutelist_processor.configuration.get("Mutelist", {})
-        if mutelist_content:
+        # IaC and Image providers don't support mutelist (both use Trivy's built-in logic)
+        if mutelist_content and provider.provider not in (
+            Provider.ProviderChoices.IAC.value,
+            Provider.ProviderChoices.IMAGE.value,
+        ):
             prowler_provider_kwargs["mutelist_content"] = mutelist_content
 
     return prowler_provider_kwargs
@@ -133,12 +267,20 @@ def initialize_prowler_provider(
     provider: Provider,
     mutelist_processor: Processor | None = None,
 ) -> (
-    AwsProvider
+    AlibabacloudProvider
+    | AwsProvider
     | AzureProvider
+    | CloudflareProvider
     | GcpProvider
     | GithubProvider
+    | GoogleworkspaceProvider
+    | IacProvider
+    | ImageProvider
     | KubernetesProvider
     | M365Provider
+    | MongodbatlasProvider
+    | OpenstackProvider
+    | OraclecloudProvider
 ):
     """Initialize a Prowler provider instance based on the given provider type.
 
@@ -147,9 +289,8 @@ def initialize_prowler_provider(
         mutelist_processor (Processor): The mutelist processor object containing the mutelist configuration.
 
     Returns:
-        AwsProvider | AzureProvider | GcpProvider | GithubProvider | KubernetesProvider | M365Provider: An instance of the corresponding provider class
-            (`AwsProvider`, `AzureProvider`, `GcpProvider`, `GithubProvider`, `KubernetesProvider` or `M365Provider`) initialized with the
-            provider's secrets.
+        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | GoogleworkspaceProvider | IacProvider | ImageProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OpenstackProvider | OraclecloudProvider: An instance of the corresponding provider class
+            initialized with the provider's secrets.
     """
     prowler_provider = return_prowler_provider(provider)
     prowler_provider_kwargs = get_prowler_provider_kwargs(provider, mutelist_processor)
@@ -172,9 +313,47 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
     except Provider.secret.RelatedObjectDoesNotExist as secret_error:
         return Connection(is_connected=False, error=secret_error)
 
-    return prowler_provider.test_connection(
-        **prowler_provider_kwargs, provider_id=provider.uid, raise_on_exception=False
-    )
+    # For IaC provider, construct the kwargs properly for test_connection
+    if provider.provider == Provider.ProviderChoices.IAC.value:
+        # Don't pass repository_url from secret, use scan_repository_url with the UID
+        iac_test_kwargs = {
+            "scan_repository_url": provider.uid,
+            "raise_on_exception": False,
+        }
+        # Add access_token if present in the secret
+        if "access_token" in prowler_provider_kwargs:
+            iac_test_kwargs["access_token"] = prowler_provider_kwargs["access_token"]
+        return prowler_provider.test_connection(**iac_test_kwargs)
+    elif provider.provider == Provider.ProviderChoices.OPENSTACK.value:
+        openstack_kwargs = {
+            "clouds_yaml_content": prowler_provider_kwargs["clouds_yaml_content"],
+            "clouds_yaml_cloud": prowler_provider_kwargs["clouds_yaml_cloud"],
+            "provider_id": provider.uid,
+            "raise_on_exception": False,
+        }
+        return prowler_provider.test_connection(**openstack_kwargs)
+    elif provider.provider == Provider.ProviderChoices.IMAGE.value:
+        image_kwargs = {
+            "image": provider.uid,
+            "raise_on_exception": False,
+        }
+        if prowler_provider_kwargs.get("registry_username"):
+            image_kwargs["registry_username"] = prowler_provider_kwargs[
+                "registry_username"
+            ]
+        if prowler_provider_kwargs.get("registry_password"):
+            image_kwargs["registry_password"] = prowler_provider_kwargs[
+                "registry_password"
+            ]
+        if prowler_provider_kwargs.get("registry_token"):
+            image_kwargs["registry_token"] = prowler_provider_kwargs["registry_token"]
+        return prowler_provider.test_connection(**image_kwargs)
+    else:
+        return prowler_provider.test_connection(
+            **prowler_provider_kwargs,
+            provider_id=provider.uid,
+            raise_on_exception=False,
+        )
 
 
 def prowler_integration_connection_test(integration: Integration) -> Connection:
@@ -193,7 +372,8 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
             raise_on_exception=False,
         )
     # TODO: It is possible that we can unify the connection test for all integrations, but need refactoring
-    # to avoid code duplication. Actually the AWS integrations are similar, so SecurityHub and S3 can be unified making some changes in the SDK.
+    # to avoid code duplication. Actually the AWS integrations are similar, so SecurityHub and S3 can be unified
+    # making some changes in the SDK.
     elif (
         integration.integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
     ):
@@ -223,10 +403,22 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
             # Save regions information in the integration configuration
             integration.configuration["regions"] = regions_status
             integration.save()
+        else:
+            # Reset regions information if connection fails
+            integration.configuration["regions"] = {}
+            integration.save()
 
         return connection
     elif integration.integration_type == Integration.IntegrationChoices.JIRA:
-        pass
+        jira_connection = Jira.test_connection(
+            **integration.credentials,
+            raise_on_exception=False,
+        )
+        project_keys = jira_connection.projects if jira_connection.is_connected else {}
+        with rls_transaction(str(integration.tenant_id)):
+            integration.configuration["projects"] = project_keys
+            integration.save()
+        return jira_connection
     elif integration.integration_type == Integration.IntegrationChoices.SLACK:
         pass
     else:
@@ -316,13 +508,45 @@ def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
     regions = sorted({region for region in aggregation["regions"] or [] if region})
     resource_types = sorted(set(aggregation["resource_types"] or []))
 
+    # Aggregate categories from findings
+    categories_set = set()
+    for categories_list in filtered_queryset.values_list("categories", flat=True):
+        if categories_list:
+            categories_set.update(categories_list)
+    categories = sorted(categories_set)
+
+    # Aggregate groups from findings
+    groups = list(
+        filtered_queryset.exclude(resource_groups__isnull=True)
+        .exclude(resource_groups__exact="")
+        .values_list("resource_groups", flat=True)
+        .distinct()
+        .order_by("resource_groups")
+    )
+
     result = {
         "services": services,
         "regions": regions,
         "resource_types": resource_types,
+        "categories": categories,
+        "groups": groups,
     }
 
     serializer = FindingMetadataSerializer(data=result)
     serializer.is_valid(raise_exception=True)
 
     return serializer.data
+
+
+def initialize_prowler_integration(integration: Integration) -> Jira:
+    # TODO Refactor other integrations to use this function
+    if integration.integration_type == Integration.IntegrationChoices.JIRA:
+        try:
+            return Jira(**integration.credentials)
+        except JiraBasicAuthError as jira_auth_error:
+            with rls_transaction(str(integration.tenant_id)):
+                integration.configuration["projects"] = {}
+                integration.connected = False
+                integration.connection_last_checked_at = datetime.now(tz=timezone.utc)
+                integration.save()
+            raise jira_auth_error

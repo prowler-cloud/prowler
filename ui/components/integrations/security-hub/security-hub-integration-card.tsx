@@ -1,16 +1,18 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@nextui-org/react";
 import { SettingsIcon } from "lucide-react";
+import Link from "next/link";
 
 import { AWSSecurityHubIcon } from "@/components/icons/services/IconServices";
-import { CustomButton } from "@/components/ui/custom";
+import { Button } from "@/components/shadcn";
 import { CustomLink } from "@/components/ui/custom/custom-link";
+
+import { Card, CardContent, CardHeader } from "../../shadcn";
 
 export const SecurityHubIntegrationCard = () => {
   return (
-    <Card className="dark:bg-gray-800">
-      <CardHeader className="gap-2">
+    <Card variant="base" padding="lg">
+      <CardHeader>
         <div className="flex w-full flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <AWSSecurityHubIcon size={40} />
@@ -19,11 +21,11 @@ export const SecurityHubIntegrationCard = () => {
                 AWS Security Hub
               </h4>
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-                <p className="text-nowrap text-xs text-gray-500 dark:text-gray-300">
+                <p className="text-xs text-nowrap text-gray-500 dark:text-gray-300">
                   Send security findings to AWS Security Hub.
                 </p>
                 <CustomLink
-                  href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/security-hub/"
+                  href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-security-hub-integration/"
                   aria-label="Learn more about Security Hub integration"
                   size="xs"
                 >
@@ -33,26 +35,21 @@ export const SecurityHubIntegrationCard = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 self-end sm:self-center">
-            <CustomButton
-              size="sm"
-              variant="bordered"
-              startContent={<SettingsIcon size={14} />}
-              asLink="/integrations/aws-security-hub"
-              ariaLabel="Manage Security Hub integrations"
-            >
-              Manage
-            </CustomButton>
+            <Button asChild size="sm">
+              <Link href="/integrations/aws-security-hub">
+                <SettingsIcon size={14} />
+                Manage
+              </Link>
+            </Button>
           </div>
         </div>
       </CardHeader>
-      <CardBody>
-        <div className="flex flex-col gap-4">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Configure and manage your AWS Security Hub integrations to
-            automatically send security findings for centralized monitoring.
-          </p>
-        </div>
-      </CardBody>
+      <CardContent>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          Configure and manage your AWS Security Hub integrations to
+          automatically send security findings for centralized monitoring.
+        </p>
+      </CardContent>
     </Card>
   );
 };

@@ -1,0 +1,97 @@
+---
+title: 'GCP Cloud Security Command Center (Cloud SCC)'
+---
+
+Google Cloud Security Command Center (Cloud SCC) is a centralized security and risk management platform for Google Cloud Platform (GCP). It provides visibility into assets, vulnerabilities, and threats across GCP environments, helping organizations to manage and improve their security posture.
+
+## Key Features and Strengths
+
+- **Centralized Security Visibility:** Cloud SCC provides a single pane of glass to monitor the security and risk status across your GCP resources. It aggregates findings from various GCP security services, such as Security Health Analytics, Web Security Scanner, and Event Threat Detection.
+
+- **Asset Inventory and Classification:** Cloud SCC offers comprehensive asset discovery and classification across GCP, giving security teams a detailed inventory of their cloud resources, including their configurations and security states.
+
+- **Threat Detection and Monitoring:** The platform integrates with GCP’s threat detection tools, such as Google’s Event Threat Detection, which analyzes logs for suspicious activities and potential threats.
+
+- **Compliance Monitoring:** Cloud SCC helps monitor compliance with various regulatory standards by continuously assessing your GCP resources against best practices and security benchmarks.
+
+- **Automated Remediation:** Cloud SCC can trigger automated responses to security findings through integrations with Google Cloud Functions or other orchestration tools, helping to mitigate risks quickly.
+
+- **Native GCP Integration:** Cloud SCC is deeply integrated with the GCP ecosystem, offering seamless operation within Google Cloud environments and leveraging Google's extensive security expertise.
+
+## Limitations
+
+- **GCP-Centric:** While Cloud SCC is powerful within the GCP ecosystem, it is primarily focused on GCP and does not natively extend to multi-cloud environments without additional tools or connectors.
+
+- **Cost Considerations:** As a managed service within GCP, costs can scale with the amount of data ingested and the complexity of the environment, especially as additional features or higher volumes of data are utilized.
+
+- **Dependency on GCP Services:** Cloud SCC's capabilities depend on other GCP services being enabled, such as Security Health Analytics and Web Security Scanner, which may increase overall complexity and cost.
+
+## Prowler
+
+Prowler is an open-source, multi-cloud security tool designed to perform detailed security assessments and compliance checks across diverse cloud environments, including AWS, Azure, GCP, and Kubernetes. Here are the key advantages of Prowler when compared to GCP Cloud SCC:
+
+## Main Advantages of Prowler
+
+- **Multi-Region and Multi-Account Scanning by Default:**
+  - Prowler inherently supports multi-region and multi-account scanning across multiple cloud providers, including GCP, AWS, Azure, and Kubernetes. It does not require additional configuration to perform these scans, making it immediately useful for organizations operating in multiple cloud environments.
+
+- **Minimal Setup Requirements:**
+  - Prowler requires only appropriate roles and permissions to start scanning. It doesn’t necessitate enabling specific services within GCP, which can simplify the setup process and reduce dependencies.
+
+- **Versatile Execution Environment:**
+  - Prowler can be run from various environments, such as a local workstation, container, Google Cloud Shell, or even other cloud providers by assuming a role. This versatility allows for flexible deployment and integration into existing security operations.
+
+- **Flexible Results Storage and Sharing:**
+  - Prowler results can be stored in an S3 bucket for AWS, Google Cloud Storage (GCS) for GCP, or locally, allowing for quick analysis and easy sharing. This flexibility is particularly advantageous for multi-cloud security assessments and collaborative security processes.
+
+- **Customizable Reporting and Analysis:**
+  - Prowler supports exporting results in multiple formats, including JSON, CSV, OCSF format, and static HTML reports. These reports can be tailored to specific needs and easily integrated with other security tools or dashboards, providing comprehensive insights across all cloud environments.
+
+- **SIEM Integration and Cost Efficiency:**
+  - Prowler can be configured to send findings directly into SIEM systems, including those integrated with GCP or other platforms. By sending only failed findings or selected results, Prowler helps manage costs associated with data ingestion and analysis in SIEM platforms.
+
+- **Custom Checks and Compliance Frameworks:**
+  - Prowler allows for the creation of custom security checks, remediation actions, and compliance frameworks, providing flexibility that can be adapted to the unique security policies and regulatory requirements of an organization.
+
+- **Extensive Compliance Support:**
+  - Prowler supports over 27 compliance frameworks out of the box, with capabilities to extend these frameworks to GCP environments as well as other cloud platforms. This broad compliance coverage ensures that organizations can maintain adherence to various regulatory requirements.
+
+- **Kubernetes and Multi-Cloud Support:**
+  - Prowler is designed to support security assessments across cloud environments, including Kubernetes clusters and GCP. This multi-cloud capability is essential for organizations that operate across diverse cloud platforms and require consistent security posture management.
+
+- **All-Region Checks:**
+  - Prowler runs all checks in all regions by default, ensuring comprehensive coverage across an organization’s cloud resources, regardless of the region or cloud provider.
+
+## Comparison Summary
+
+### Scope and Environment
+
+- **GCP Cloud SCC** is ideal for organizations primarily using GCP, offering a centralized platform for managing security and compliance within the GCP ecosystem.
+- **Prowler** excels in multi-cloud environments, offering flexibility and comprehensive security checks across AWS, Azure, GCP, and Kubernetes without being confined to a single cloud provider.
+
+### Setup and Flexibility
+
+- **GCP Cloud SCC** requires enabling various GCP services and may involve more complex setup, especially for multi-region or multi-account scenarios within GCP.
+- **Prowler** requires minimal setup and can be deployed quickly across different cloud environments, offering a more straightforward approach to multi-cloud security management.
+
+### Customization and Compliance
+
+- **GCP Cloud SCC** provides predefined compliance checks within the GCP environment but may require additional tools or customization for broader or more specific requirements.
+- **Prowler** allows for extensive customization of security checks, compliance frameworks, and reporting, providing a flexible solution that can be tailored to an organization’s specific needs across various cloud platforms.
+
+### Cost Efficiency
+
+- **GCP Cloud SCC** costs can scale with the volume of data processed and the number of enabled services, which may be significant in large or complex environments. SCC pricing is confusing to understand, and starts at $0.071 per vCPU hour for some tiers and depending on the scan service. Take a look at the pricing model [here](https://cloud.google.com/security-command-center/pricing), godspeed.
+- **Prowler** helps manage costs by allowing selective reporting, such as sending only failed findings to SIEMs, and storing results in cost-effective ways, such as local storage or cloud buckets. Prowler is always $0.001 per resource per day - no per account charge.
+
+### Multi-Cloud and Multi-Region Support
+
+- **GCP Cloud SCC** is focused on GCP and may require additional tools for comprehensive multi-cloud support.
+- **Prowler** is inherently multi-cloud, supporting AWS, Azure, GCP, and Kubernetes out of the box, making it an ideal choice for organizations with diverse cloud footprints.
+
+## Conclusion
+
+For a CISO evaluating these tools, the decision between GCP Cloud Security Command Center (Cloud SCC) and Prowler hinges on the organization’s cloud strategy, security management needs, and the level of flexibility and multi-cloud support required:
+
+- If the organization is heavily invested in GCP and needs a centralized platform that integrates seamlessly with GCP services for asset management, threat detection, and compliance monitoring, **GCP Cloud SCC** is likely the better choice.
+- If the organization operates in a multi-cloud environment or requires a highly customizable tool for performing detailed security assessments across AWS, Azure, GCP, and Kubernetes, **Prowler** offers a more flexible and cost-effective solution, especially for those needing quick deployment, minimal setup, and the ability to manage security across diverse cloud environments.

@@ -1,5 +1,6 @@
 {
   "Framework": "NIST-800-171-Revision-2",
+  "Name": "National Institute of Standards and Technology (NIST) 800-171 Revision 2",
   "Version": "",
   "Provider": "AWS",
   "Description": "The cybersecurity controls within NIST 800-171 safeguard CUI in the IT networks of government contractors and subcontractors. It defines the practices and procedures that government contractors must adhere to when their networks process or store CUI. NIST 800-171 only applies to those parts of a contractor’s network where CUI is present.",

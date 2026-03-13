@@ -22,15 +22,12 @@ export function SheetMenu() {
           <MenuIcon size={20} />
         </Button>
       </SheetTrigger>
-      <SheetContent
-        className="flex h-full flex-col px-3 dark:bg-prowler-theme-midnight sm:w-72"
-        side="left"
-      >
+      <SheetContent className="flex h-full flex-col px-3 sm:w-72" side="left">
         <SheetHeader>
           <SheetTitle className="sr-only">Sidebar</SheetTitle>
           <SheetDescription className="sr-only" />
           <Button
-            className="flex items-center justify-center pb-2 pt-1"
+            className="flex items-center justify-center pt-1 pb-2"
             variant="link"
             asChild
           >

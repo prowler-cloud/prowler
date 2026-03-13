@@ -31,6 +31,7 @@ old_config_aws = {
     "ec2_allowed_interface_types": ["api_gateway_managed", "vpc_endpoint"],
     "ec2_allowed_instance_owners": ["amazon-elb"],
     "trusted_account_ids": [],
+    "trusted_ips": [],
     "log_group_retention_days": 365,
     "max_idle_disconnect_timeout_in_seconds": 600,
     "max_disconnect_timeout_in_seconds": 300,
@@ -95,6 +96,7 @@ config_aws = {
     "fargate_linux_latest_version": "1.4.0",
     "fargate_windows_latest_version": "1.0.0",
     "trusted_account_ids": [],
+    "trusted_ips": [],
     "log_group_retention_days": 365,
     "max_idle_disconnect_timeout_in_seconds": 600,
     "max_disconnect_timeout_in_seconds": 300,
@@ -329,7 +331,11 @@ config_azure = {
     "defender_attack_path_minimal_risk_level": "High",
 }
 
-config_gcp = {"shodan_api_key": None, "max_unused_account_days": 30}
+config_gcp = {
+    "shodan_api_key": None,
+    "mig_min_zones": 2,
+    "max_unused_account_days": 30,
+}
 
 config_kubernetes = {
     "audit_log_maxbackup": 10,

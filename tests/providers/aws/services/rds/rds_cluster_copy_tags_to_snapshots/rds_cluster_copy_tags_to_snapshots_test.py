@@ -38,8 +38,8 @@ class Test_rds_cluster_copy_tags_to_snapshots:
         conn.create_db_cluster(
             DBClusterIdentifier="test-cluster",
             AllocatedStorage=10,
-            Engine="mysql",
-            DatabaseName="staging-mysql",
+            Engine="postgres",
+            DatabaseName="staging-postgres",
             DeletionProtection=True,
             DBClusterParameterGroupName="test",
             MasterUsername="test",
@@ -85,8 +85,8 @@ class Test_rds_cluster_copy_tags_to_snapshots:
         conn.create_db_cluster(
             DBClusterIdentifier="test-cluster",
             AllocatedStorage=10,
-            Engine="mysql",
-            DatabaseName="staging-mysql",
+            Engine="postgres",
+            DatabaseName="staging-postgres",
             DeletionProtection=True,
             DBClusterParameterGroupName="test",
             MasterUsername="test",

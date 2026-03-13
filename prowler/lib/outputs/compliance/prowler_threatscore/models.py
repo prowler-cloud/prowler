@@ -28,6 +28,8 @@ class ProwlerThreatScoreAWSModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class ProwlerThreatScoreAzureModel(BaseModel):
@@ -55,6 +57,8 @@ class ProwlerThreatScoreAzureModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class ProwlerThreatScoreGCPModel(BaseModel):
@@ -82,6 +86,8 @@ class ProwlerThreatScoreGCPModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class ProwlerThreatScoreM365Model(BaseModel):
@@ -109,3 +115,60 @@ class ProwlerThreatScoreM365Model(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
+
+
+class ProwlerThreatScoreKubernetesModel(BaseModel):
+    """
+    ProwlerThreatScoreKubernetesModel generates a finding's output in Kubernetes Prowler ThreatScore Compliance format.
+    """
+
+    Provider: str
+    Description: str
+    Context: str
+    Namespace: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Description: str
+    Requirements_Attributes_Title: str
+    Requirements_Attributes_Section: str
+    Requirements_Attributes_SubSection: Optional[str] = None
+    Requirements_Attributes_AttributeDescription: str
+    Requirements_Attributes_AdditionalInformation: str
+    Requirements_Attributes_LevelOfRisk: int
+    Requirements_Attributes_Weight: int
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    ResourceName: str
+    CheckId: str
+    Muted: bool
+    Framework: str
+    Name: str
+
+
+class ProwlerThreatScoreAlibabaModel(BaseModel):
+    """
+    ProwlerThreatScoreAlibabaModel generates a finding's output in Alibaba Cloud Prowler ThreatScore Compliance format.
+    """
+
+    Provider: str
+    Description: str
+    AccountId: str
+    Region: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Description: str
+    Requirements_Attributes_Title: str
+    Requirements_Attributes_Section: str
+    Requirements_Attributes_SubSection: Optional[str] = None
+    Requirements_Attributes_AttributeDescription: str
+    Requirements_Attributes_AdditionalInformation: str
+    Requirements_Attributes_LevelOfRisk: int
+    Requirements_Attributes_Weight: int
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    ResourceName: str
+    CheckId: str

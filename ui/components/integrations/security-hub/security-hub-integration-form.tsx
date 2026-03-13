@@ -1,18 +1,26 @@
 "use client";
 
+import { Checkbox } from "@heroui/checkbox";
+import { Divider } from "@heroui/divider";
+import { Radio, RadioGroup } from "@heroui/radio";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox, Divider, Radio, RadioGroup } from "@nextui-org/react";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Control, useForm } from "react-hook-form";
 
 import { createIntegration, updateIntegration } from "@/actions/integrations";
-import { EnhancedProviderSelector } from "@/components/providers/enhanced-provider-selector";
+import { PROVIDER_ICONS } from "@/components/findings/table/provider-icon-cell";
 import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-form";
+import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { Form, FormControl, FormField } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormMessage,
+} from "@/components/ui/form";
 import { FormButtons } from "@/components/ui/form/form-buttons";
 import { getAWSCredentialsTemplateLinks } from "@/lib";
 import { AWSCredentialsRole } from "@/types";
@@ -50,7 +58,7 @@ export const SecurityHubIntegrationForm = ({
   const isEditingConfig = editMode === "configuration";
   const isEditingCredentials = editMode === "credentials";
 
-  const disabledProviderIds = useMemo(() => {
+  const disabledProviderIds = (() => {
     // When editing, no providers should be disabled since we're not changing it
     if (isEditing) {
       return [];
@@ -67,7 +75,7 @@ export const SecurityHubIntegrationForm = ({
     });
 
     return usedProviderIds;
-  }, [isEditing, existingIntegrations]);
+  })();
 
   const form = useForm({
     resolver: zodResolver(
@@ -79,10 +87,13 @@ export const SecurityHubIntegrationForm = ({
       integration_type: "aws_security_hub" as const,
       provider_id: integration?.relationships?.providers?.data?.[0]?.id || "",
       send_only_fails:
-        integration?.attributes.configuration.send_only_fails ?? true,
+        (integration?.attributes.configuration.send_only_fails as
+          | boolean
+          | undefined) ?? true,
       archive_previous_findings:
-        integration?.attributes.configuration.archive_previous_findings ??
-        false,
+        (integration?.attributes.configuration.archive_previous_findings as
+          | boolean
+          | undefined) ?? false,
       use_custom_credentials: false,
       enabled: integration?.attributes.enabled ?? true,
       credentials_type: "access-secret-key" as const,
@@ -101,6 +112,26 @@ export const SecurityHubIntegrationForm = ({
   const useCustomCredentials = form.watch("use_custom_credentials");
   const providerIdValue = form.watch("provider_id");
   const hasErrors = !!form.formState.errors.provider_id || !providerIdValue;
+
+  const providerOptions = providers
+    .filter((provider) => provider.attributes.provider === "aws")
+    .map((provider) => {
+      const isDisabled = disabledProviderIds.includes(provider.id);
+      const connectionLabel = provider.attributes.connection.connected
+        ? "Connected"
+        : "Disconnected";
+
+      const Icon = PROVIDER_ICONS[provider.attributes.provider];
+      return {
+        value: provider.id,
+        label: provider.attributes.alias || provider.attributes.uid,
+        icon: Icon ? <Icon width={20} height={20} /> : undefined,
+        description: isDisabled
+          ? `${connectionLabel} (Already in use)`
+          : connectionLabel,
+        disabled: isDisabled,
+      };
+    });
 
   useEffect(() => {
     if (!useCustomCredentials && isCreating) {
@@ -250,7 +281,7 @@ export const SecurityHubIntegrationForm = ({
     if (isEditingCredentials) {
       // When editing credentials, show the credential type selector first
       return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <RadioGroup
             size="sm"
             aria-label="Credential type"
@@ -285,6 +316,7 @@ export const SecurityHubIntegrationForm = ({
                   "aws_security_hub",
                 )}
                 type="integrations"
+                integrationType="aws_security_hub"
               />
             </>
           )}
@@ -308,6 +340,7 @@ export const SecurityHubIntegrationForm = ({
           externalId={externalId}
           templateLinks={templateLinks}
           type="integrations"
+          integrationType="aws_security_hub"
         />
       );
     }
@@ -317,18 +350,30 @@ export const SecurityHubIntegrationForm = ({
         <>
           {!isEditingConfig && (
             <>
-              <div className="space-y-4">
-                <EnhancedProviderSelector
+              <div className="flex flex-col gap-4">
+                <FormField
                   control={form.control}
                   name="provider_id"
-                  providers={providers}
-                  label="AWS Provider"
-                  placeholder="Search and select an AWS provider"
-                  isInvalid={!!form.formState.errors.provider_id}
-                  selectionMode="single"
-                  providerType="aws"
-                  enableSearch={true}
-                  disabledProviderIds={disabledProviderIds}
+                  render={({ field }) => (
+                    <>
+                      <FormControl>
+                        <EnhancedMultiSelect
+                          options={providerOptions}
+                          onValueChange={(values) => {
+                            field.onChange(values.at(-1) ?? "");
+                          }}
+                          defaultValue={field.value ? [field.value] : []}
+                          placeholder="Search and select an AWS provider"
+                          searchable={true}
+                          hideSelectAll={true}
+                          maxCount={1}
+                          closeOnSelect={true}
+                          resetOnDefaultValueChange={true}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-text-error max-w-full text-xs" />
+                    </>
+                  )}
                 />
               </div>
               <Divider />
@@ -342,11 +387,14 @@ export const SecurityHubIntegrationForm = ({
               render={({ field }) => (
                 <FormControl>
                   <Checkbox
-                    isSelected={field.value}
+                    isSelected={Boolean(field.value)}
                     onValueChange={field.onChange}
                     size="sm"
+                    color="default"
                   >
-                    <span className="text-sm">Send only Failed Findings</span>
+                    <span className="text-sm">
+                      Send only findings with status FAIL
+                    </span>
                   </Checkbox>
                 </FormControl>
               )}
@@ -358,9 +406,10 @@ export const SecurityHubIntegrationForm = ({
               render={({ field }) => (
                 <FormControl>
                   <Checkbox
-                    isSelected={field.value}
+                    isSelected={Boolean(field.value)}
                     onValueChange={field.onChange}
                     size="sm"
+                    color="default"
                   >
                     <span className="text-sm">Archive previous findings</span>
                   </Checkbox>
@@ -378,8 +427,12 @@ export const SecurityHubIntegrationForm = ({
                       isSelected={field.value}
                       onValueChange={field.onChange}
                       size="sm"
+                      color="default"
                     >
-                      <span className="text-sm">Use custom credentials</span>
+                      <span className="text-sm">
+                        Use custom credentials (By default, AWS account ones
+                        will be used)
+                      </span>
                     </Checkbox>
                   </FormControl>
                 )}
@@ -466,15 +519,15 @@ export const SecurityHubIntegrationForm = ({
               ? handleNext
               : form.handleSubmit(onSubmit)
         }
-        className="flex flex-col space-y-6"
+        className="flex flex-col gap-6"
       >
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-            <p className="flex items-center gap-2 text-sm text-default-500">
+            <p className="text-default-500 flex items-center gap-2 text-sm">
               Need help configuring your AWS Security Hub integration?
             </p>
             <CustomLink
-              href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/security-hub/"
+              href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-security-hub-integration/"
               target="_blank"
               size="sm"
             >

@@ -13,47 +13,67 @@ make_api_call = botocore.client.BaseClient._make_api_call
 
 
 def mock_make_api_call(self, operation_name, kwarg):
-    if operation_name == "ListClusters":
+    if operation_name == "ListClustersV2":
         return {
             "ClusterInfoList": [
                 {
-                    "BrokerNodeGroupInfo": {
-                        "BrokerAZDistribution": "DEFAULT",
-                        "ClientSubnets": ["subnet-cbfff283", "subnet-6746046b"],
-                        "InstanceType": "kafka.m5.large",
-                        "SecurityGroups": ["sg-f839b688"],
-                        "StorageInfo": {"EbsStorageInfo": {"VolumeSize": 100}},
-                    },
+                    "ClusterType": "PROVISIONED",
                     "ClusterArn": f"arn:aws:kafka:{AWS_REGION_US_EAST_1}:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5",
                     "ClusterName": "demo-cluster-1",
-                    "CreationTime": "2020-07-09T02:31:36.223000+00:00",
-                    "CurrentBrokerSoftwareInfo": {"KafkaVersion": "2.2.1"},
-                    "CurrentVersion": "K3AEGXETSR30VB",
-                    "EncryptionInfo": {
-                        "EncryptionAtRest": {
-                            "DataVolumeKMSKeyId": f"arn:aws:kms:{AWS_REGION_US_EAST_1}:123456789012:key/a7ca56d5-0768-4b64-a670-339a9fbef81c"
-                        },
-                        "EncryptionInTransit": {
-                            "ClientBroker": "TLS_PLAINTEXT",
-                            "InCluster": True,
-                        },
-                    },
-                    "ClientAuthentication": {
-                        "Tls": {"CertificateAuthorityArnList": [], "Enabled": True},
-                        "Unauthenticated": {"Enabled": False},
-                    },
-                    "EnhancedMonitoring": "DEFAULT",
-                    "OpenMonitoring": {
-                        "Prometheus": {
-                            "JmxExporter": {"EnabledInBroker": False},
-                            "NodeExporter": {"EnabledInBroker": False},
-                        }
-                    },
-                    "NumberOfBrokerNodes": 2,
                     "State": "ACTIVE",
                     "Tags": {},
-                    "ZookeeperConnectString": f"z-2.demo-cluster-1.xuy0sb.c5.kafka.{AWS_REGION_US_EAST_1}.amazonaws.com:2181,z-1.demo-cluster-1.xuy0sb.c5.kafka.{AWS_REGION_US_EAST_1}.amazonaws.com:2181,z-3.demo-cluster-1.xuy0sb.c5.kafka.{AWS_REGION_US_EAST_1}.amazonaws.com:2181",
-                }
+                    "Provisioned": {
+                        "BrokerNodeGroupInfo": {
+                            "BrokerAZDistribution": "DEFAULT",
+                            "ClientSubnets": ["subnet-cbfff283", "subnet-6746046b"],
+                            "InstanceType": "kafka.m5.large",
+                            "SecurityGroups": ["sg-f839b688"],
+                            "StorageInfo": {"EbsStorageInfo": {"VolumeSize": 100}},
+                            "ConnectivityInfo": {
+                                "PublicAccess": {"Type": "SERVICE_PROVIDED_EIPS"}
+                            },
+                        },
+                        "CurrentBrokerSoftwareInfo": {"KafkaVersion": "2.2.1"},
+                        "CurrentVersion": "K3AEGXETSR30VB",
+                        "EncryptionInfo": {
+                            "EncryptionAtRest": {
+                                "DataVolumeKMSKeyId": f"arn:aws:kms:{AWS_REGION_US_EAST_1}:123456789012:key/a7ca56d5-0768-4b64-a670-339a9fbef81c"
+                            },
+                            "EncryptionInTransit": {
+                                "ClientBroker": "TLS_PLAINTEXT",
+                                "InCluster": True,
+                            },
+                        },
+                        "ClientAuthentication": {
+                            "Tls": {"CertificateAuthorityArnList": [], "Enabled": True},
+                            "Unauthenticated": {"Enabled": False},
+                        },
+                        "EnhancedMonitoring": "DEFAULT",
+                        "OpenMonitoring": {
+                            "Prometheus": {
+                                "JmxExporter": {"EnabledInBroker": False},
+                                "NodeExporter": {"EnabledInBroker": False},
+                            }
+                        },
+                        "NumberOfBrokerNodes": 2,
+                        "ZookeeperConnectString": f"z-2.demo-cluster-1.xuy0sb.c5.kafka.{AWS_REGION_US_EAST_1}.amazonaws.com:2181,z-1.demo-cluster-1.xuy0sb.c5.kafka.{AWS_REGION_US_EAST_1}.amazonaws.com:2181,z-3.demo-cluster-1.xuy0sb.c5.kafka.{AWS_REGION_US_EAST_1}.amazonaws.com:2181",
+                    },
+                },
+                {
+                    "ClusterType": "SERVERLESS",
+                    "ClusterArn": f"arn:aws:kafka:{AWS_REGION_US_EAST_1}:123456789012:cluster/serverless-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-6",
+                    "ClusterName": "serverless-cluster-1",
+                    "State": "ACTIVE",
+                    "Tags": {},
+                    "Serverless": {
+                        "VpcConfigs": [
+                            {
+                                "SubnetIds": ["subnet-cbfff283", "subnet-6746046b"],
+                                "SecurityGroups": ["sg-f839b688"],
+                            }
+                        ],
+                    },
+                },
             ]
         }
     elif operation_name == "ListKafkaVersions":
@@ -86,32 +106,53 @@ class TestKafkaService:
         assert kafka.__class__.__name__ == "Kafka"
         assert kafka.session.__class__.__name__ == "Session"
         assert kafka.audited_account == AWS_ACCOUNT_NUMBER
-        # Clusters assertions
-        assert len(kafka.clusters) == 1
-        cluster_arn = f"arn:aws:kafka:{AWS_REGION_US_EAST_1}:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5"
-        assert cluster_arn in kafka.clusters
+
+        # Clusters assertions - should now include both provisioned and serverless
+        assert len(kafka.clusters) == 2
+
+        # Check provisioned cluster
+        provisioned_cluster_arn = f"arn:aws:kafka:{AWS_REGION_US_EAST_1}:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5"
+        assert provisioned_cluster_arn in kafka.clusters
+        provisioned_cluster = kafka.clusters[provisioned_cluster_arn]
+        assert provisioned_cluster.id == "6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5"
+        assert provisioned_cluster.arn == provisioned_cluster_arn
+        assert provisioned_cluster.name == "demo-cluster-1"
+        assert provisioned_cluster.region == AWS_REGION_US_EAST_1
+        assert provisioned_cluster.tags == []
+        assert provisioned_cluster.state == "ACTIVE"
+        assert provisioned_cluster.kafka_version == "2.2.1"
         assert (
-            kafka.clusters[cluster_arn].id == "6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5"
-        )
-        assert kafka.clusters[cluster_arn].arn == cluster_arn
-        assert kafka.clusters[cluster_arn].name == "demo-cluster-1"
-        assert kafka.clusters[cluster_arn].region == AWS_REGION_US_EAST_1
-        assert kafka.clusters[cluster_arn].tags == []
-        assert kafka.clusters[cluster_arn].state == "ACTIVE"
-        assert kafka.clusters[cluster_arn].kafka_version == "2.2.1"
-        assert (
-            kafka.clusters[cluster_arn].data_volume_kms_key_id
+            provisioned_cluster.data_volume_kms_key_id
             == f"arn:aws:kms:{AWS_REGION_US_EAST_1}:123456789012:key/a7ca56d5-0768-4b64-a670-339a9fbef81c"
         )
         assert (
-            kafka.clusters[cluster_arn].encryption_in_transit.client_broker
-            == "TLS_PLAINTEXT"
+            provisioned_cluster.encryption_in_transit.client_broker == "TLS_PLAINTEXT"
         )
-        assert kafka.clusters[cluster_arn].encryption_in_transit.in_cluster
-        assert kafka.clusters[cluster_arn].enhanced_monitoring == "DEFAULT"
-        assert kafka.clusters[cluster_arn].tls_authentication
-        assert kafka.clusters[cluster_arn].public_access
-        assert not kafka.clusters[cluster_arn].unauthentication_access
+        assert provisioned_cluster.encryption_in_transit.in_cluster
+        assert provisioned_cluster.enhanced_monitoring == "DEFAULT"
+        assert provisioned_cluster.tls_authentication
+        assert provisioned_cluster.public_access
+        assert not provisioned_cluster.unauthentication_access
+
+        # Check serverless cluster
+        serverless_cluster_arn = f"arn:aws:kafka:{AWS_REGION_US_EAST_1}:123456789012:cluster/serverless-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-6"
+        assert serverless_cluster_arn in kafka.clusters
+        serverless_cluster = kafka.clusters[serverless_cluster_arn]
+        assert serverless_cluster.id == "6357e0b2-0e6a-4b86-a0b4-70df934c2e31-6"
+        assert serverless_cluster.arn == serverless_cluster_arn
+        assert serverless_cluster.name == "serverless-cluster-1"
+        assert serverless_cluster.region == AWS_REGION_US_EAST_1
+        assert serverless_cluster.tags == []
+        assert serverless_cluster.state == "ACTIVE"
+        assert serverless_cluster.kafka_version == "SERVERLESS"
+        assert serverless_cluster.data_volume_kms_key_id == "AWS_MANAGED"
+        assert serverless_cluster.encryption_in_transit.client_broker == "TLS"
+        assert serverless_cluster.encryption_in_transit.in_cluster
+        assert serverless_cluster.enhanced_monitoring == "DEFAULT"
+        assert serverless_cluster.tls_authentication
+        assert not serverless_cluster.public_access
+        assert not serverless_cluster.unauthentication_access
+
         # Kafka versions assertions
         assert len(kafka.kafka_versions) == 2
         assert kafka.kafka_versions[0].version == "1.0.0"

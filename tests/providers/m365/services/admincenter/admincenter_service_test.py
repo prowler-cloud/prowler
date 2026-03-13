@@ -1,5 +1,7 @@
+import asyncio
+from types import SimpleNamespace
 from unittest import mock
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from prowler.providers.m365.models import M365IdentityInfo
 from prowler.providers.m365.services.admincenter.admincenter_service import (
@@ -161,3 +163,54 @@ class Test_AdminCenter_Service:
             assert admincenter_client.sharing_policy.name == "Test"
             assert admincenter_client.sharing_policy.enabled is False
             admincenter_client.powershell.close()
+
+
+def test_admincenter__get_users_handles_pagination():
+    admincenter_service = AdminCenter.__new__(AdminCenter)
+
+    users_page_one = [
+        SimpleNamespace(id="user-1", display_name="User 1"),
+        SimpleNamespace(id="user-2", display_name="User 2"),
+    ]
+    users_page_two = [
+        SimpleNamespace(id="user-3", display_name="User 3"),
+    ]
+
+    users_response_page_one = SimpleNamespace(
+        value=users_page_one,
+        odata_next_link="next-link",
+    )
+    users_response_page_two = SimpleNamespace(
+        value=users_page_two, odata_next_link=None
+    )
+
+    users_with_url_builder = SimpleNamespace(
+        get=AsyncMock(return_value=users_response_page_two)
+    )
+    with_url_mock = MagicMock(return_value=users_with_url_builder)
+
+    def by_user_id_side_effect(user_id):
+        license_details_response = SimpleNamespace(
+            value=[SimpleNamespace(sku_part_number=f"SKU-{user_id}")]
+        )
+        return SimpleNamespace(
+            license_details=SimpleNamespace(
+                get=AsyncMock(return_value=license_details_response)
+            )
+        )
+
+    users_builder = SimpleNamespace(
+        get=AsyncMock(return_value=users_response_page_one),
+        with_url=with_url_mock,
+        by_user_id=MagicMock(side_effect=by_user_id_side_effect),
+    )
+
+    admincenter_service.client = SimpleNamespace(users=users_builder)
+
+    users = asyncio.run(admincenter_service._get_users())
+
+    assert len(users) == 3
+    assert users_builder.get.await_count == 1
+    with_url_mock.assert_called_once_with("next-link")
+    assert users["user-1"].license == "SKU-user-1"
+    assert users["user-3"].license == "SKU-user-3"

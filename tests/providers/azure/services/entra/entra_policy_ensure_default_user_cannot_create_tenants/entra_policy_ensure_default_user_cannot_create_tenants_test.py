@@ -29,7 +29,7 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
 
     def test_entra_empty_tenant(self):
         entra_client = mock.MagicMock
-        entra_client.authorization_policy = {DOMAIN: {}}
+        id = str(uuid4())
 
         with (
             mock.patch(
@@ -44,6 +44,20 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
             from prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants import (
                 entra_policy_ensure_default_user_cannot_create_tenants,
             )
+            from prowler.providers.azure.services.entra.entra_service import (
+                AuthorizationPolicy,
+            )
+
+            # Policy with no default user role permissions
+            entra_client.authorization_policy = {
+                DOMAIN: AuthorizationPolicy(
+                    id=id,
+                    name="Authorization Policy",
+                    description="Default policy",
+                    guest_invite_settings="everyone",
+                    guest_user_role_id=uuid4(),
+                )
+            }
 
             check = entra_policy_ensure_default_user_cannot_create_tenants()
             result = check.execute()
@@ -51,7 +65,7 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
             assert result[0].status == "FAIL"
             assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Authorization Policy"
-            assert result[0].resource_id == "authorizationPolicy"
+            assert result[0].resource_id == id
             assert (
                 result[0].status_extended
                 == "Tenants creation is not disabled for non-admin users."

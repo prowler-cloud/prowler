@@ -3,9 +3,10 @@ import "@/styles/globals.css";
 import { GoogleTagManager } from "@next/third-parties/google";
 import { Metadata, Viewport } from "next";
 import { redirect } from "next/navigation";
+import { ReactNode } from "react";
 
 import { auth } from "@/auth.config";
-import { Toaster } from "@/components/ui";
+import { NavigationProgress, Toaster } from "@/components/ui";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib";
@@ -33,7 +34,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const session = await auth();
 
@@ -47,11 +48,12 @@ export default async function RootLayout({
       <body
         suppressHydrationWarning
         className={cn(
-          "min-h-screen bg-background font-sans antialiased",
+          "bg-background min-h-screen font-sans antialiased",
           fontSans.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
+          <NavigationProgress />
           {children}
           <Toaster />
           <GoogleTagManager

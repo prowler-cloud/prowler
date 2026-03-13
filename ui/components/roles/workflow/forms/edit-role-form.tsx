@@ -1,26 +1,25 @@
 "use client";
 
+import { Checkbox } from "@heroui/checkbox";
+import { Divider } from "@heroui/divider";
+import { Tooltip } from "@heroui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox, Divider, Tooltip } from "@nextui-org/react";
 import { clsx } from "clsx";
-import { InfoIcon, SaveIcon } from "lucide-react";
+import { InfoIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { updateRole } from "@/actions/roles/roles";
+import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
-import {
-  CustomButton,
-  CustomDropdownSelection,
-  CustomInput,
-} from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
-import { permissionFormFields } from "@/lib";
+import { CustomInput } from "@/components/ui/custom";
+import { Form, FormButtons } from "@/components/ui/form";
+import { getErrorMessage, permissionFormFields } from "@/lib";
 import { ApiError, editRoleFormSchema } from "@/types";
 
-type FormValues = z.infer<typeof editRoleFormSchema>;
+type FormValues = z.input<typeof editRoleFormSchema>;
 
 export const EditRoleForm = ({
   roleId,
@@ -133,7 +132,8 @@ export const EditRoleForm = ({
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
-          switch (error.source.pointer) {
+          const pointer = error.source?.pointer;
+          switch (pointer) {
             case "/data/attributes/name":
               form.setError("name", {
                 type: "server",
@@ -159,7 +159,7 @@ export const EditRoleForm = ({
       toast({
         variant: "destructive",
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: getErrorMessage(error),
       });
     }
   };
@@ -168,7 +168,7 @@ export const EditRoleForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-6"
+        className="flex flex-col gap-6"
       >
         <CustomInput
           control={form.control}
@@ -179,10 +179,9 @@ export const EditRoleForm = ({
           placeholder="Enter role name"
           variant="bordered"
           isRequired
-          isInvalid={!!form.formState.errors.name}
         />
 
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col gap-4">
           <span className="text-lg font-semibold">Admin Permissions</span>
 
           {/* Select All Checkbox */}
@@ -195,6 +194,7 @@ export const EditRoleForm = ({
               label: "text-small",
               wrapper: "checkbox-update",
             }}
+            color="default"
           >
             Grant all admin permissions
           </Checkbox>
@@ -216,6 +216,7 @@ export const EditRoleForm = ({
                       label: "text-small",
                       wrapper: "checkbox-update",
                     }}
+                    color="default"
                   >
                     {label}
                   </Checkbox>
@@ -223,7 +224,7 @@ export const EditRoleForm = ({
                     <div className="flex w-fit items-center justify-center">
                       <InfoIcon
                         className={clsx(
-                          "cursor-pointer text-default-400 group-data-[selected=true]:text-foreground",
+                          "text-default-400 group-data-[selected=true]:text-foreground cursor-pointer",
                         )}
                         aria-hidden={"true"}
                         width={16}
@@ -237,10 +238,10 @@ export const EditRoleForm = ({
         <Divider className="my-4" />
 
         {!unlimitedVisibility && (
-          <div className="flex flex-col space-y-4">
+          <div className="flex flex-col gap-4">
             <span className="text-lg font-semibold">Groups visibility</span>
 
-            <p className="text-small font-medium text-default-700">
+            <p className="text-small text-default-700 font-medium">
               Select the groups this role will have access to. If no groups are
               selected and unlimited visibility is not enabled, the role will
               not have access to any accounts.
@@ -250,15 +251,21 @@ export const EditRoleForm = ({
               name="groups"
               control={form.control}
               render={({ field }) => (
-                <CustomDropdownSelection
-                  label="Select Groups"
-                  name="groups"
-                  values={groups}
-                  selectedKeys={field.value}
-                  onChange={(name, selectedValues) => {
-                    field.onChange(selectedValues);
-                  }}
-                />
+                <div className="flex flex-col gap-2">
+                  <EnhancedMultiSelect
+                    options={groups.map((group) => ({
+                      label: group.name,
+                      value: group.id,
+                    }))}
+                    onValueChange={field.onChange}
+                    defaultValue={field.value || []}
+                    placeholder="Select groups"
+                    searchable={true}
+                    hideSelectAll={true}
+                    emptyIndicator="No results found"
+                    resetOnDefaultValueChange={true}
+                  />
+                </div>
               )}
             />
 
@@ -269,20 +276,7 @@ export const EditRoleForm = ({
             )}
           </div>
         )}
-        <div className="flex w-full justify-end sm:space-x-6">
-          <CustomButton
-            type="submit"
-            ariaLabel="Update Role"
-            className="w-1/2"
-            variant="solid"
-            color="action"
-            size="lg"
-            isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
-          >
-            {isLoading ? <>Loading</> : <span>Update Role</span>}
-          </CustomButton>
-        </div>
+        <FormButtons submitText="Update Role" isDisabled={isLoading} />
       </form>
     </Form>
   );

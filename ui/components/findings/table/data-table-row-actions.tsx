@@ -1,98 +1,145 @@
 "use client";
 
-import {
-  Button,
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownSection,
-  DropdownTrigger,
-} from "@nextui-org/react";
-import {
-  // AddNoteBulkIcon,
-  EditDocumentBulkIcon,
-} from "@nextui-org/shared-icons";
 import { Row } from "@tanstack/react-table";
+import { VolumeOff, VolumeX } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useContext, useState } from "react";
 
-// import { useState } from "react";
+import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
+import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { VerticalDotsIcon } from "@/components/icons";
-// import { CustomAlertModal } from "@/components/ui/custom";
+import { JiraIcon } from "@/components/icons/services/IconServices";
+import {
+  ActionDropdown,
+  ActionDropdownItem,
+} from "@/components/shadcn/dropdown";
 
-// import { EditForm } from "../forms";
-// import { DeleteForm } from "../forms/delete-form";
+import { FindingsSelectionContext } from "./findings-selection-context";
 
-interface DataTableRowActionsProps<FindingProps> {
-  row: Row<FindingProps>;
+export interface FindingRowData {
+  id: string;
+  attributes: {
+    muted?: boolean;
+    check_metadata?: {
+      checktitle?: string;
+    };
+  };
 }
-const iconClasses =
-  "text-2xl text-default-500 pointer-events-none flex-shrink-0";
 
-export function DataTableRowActions<FindingProps>({
+interface DataTableRowActionsProps<T extends FindingRowData> {
+  row: Row<T>;
+  onMuteComplete?: (findingIds: string[]) => void;
+}
+
+export function DataTableRowActions<T extends FindingRowData>({
   row,
-}: DataTableRowActionsProps<FindingProps>) {
-  const findingId = (row.original as { id: string }).id;
+  onMuteComplete,
+}: DataTableRowActionsProps<T>) {
+  const router = useRouter();
+  const finding = row.original;
+  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
+  const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
+
+  const isMuted = finding.attributes.muted;
+
+  // Get selection context - if there are other selected rows, include them
+  const selectionContext = useContext(FindingsSelectionContext);
+  const { selectedFindingIds, clearSelection } = selectionContext || {
+    selectedFindingIds: [],
+    clearSelection: () => {},
+  };
+
+  const findingTitle =
+    finding.attributes.check_metadata?.checktitle || "Security Finding";
+
+  // If current finding is selected and there are multiple selections, mute all
+  // Otherwise, just mute this single finding
+  const isCurrentSelected = selectedFindingIds.includes(finding.id);
+  const hasMultipleSelected = selectedFindingIds.length > 1;
+
+  const getMuteIds = (): string[] => {
+    if (isCurrentSelected && hasMultipleSelected) {
+      // Mute all selected including current
+      return selectedFindingIds;
+    }
+    // Just mute the current finding
+    return [finding.id];
+  };
+
+  const getMuteLabel = () => {
+    if (isMuted) return "Muted";
+    const ids = getMuteIds();
+    if (ids.length > 1) {
+      return `Mute ${ids.length} Findings`;
+    }
+    return "Mute Finding";
+  };
+
+  const handleMuteComplete = () => {
+    // Always clear selection when a finding is muted because:
+    // 1. If the muted finding was selected, its index now points to a different finding
+    // 2. rowSelection uses indices (0, 1, 2...) not IDs, so after refresh the wrong findings would appear selected
+    clearSelection();
+    if (onMuteComplete) {
+      onMuteComplete(getMuteIds());
+      return;
+    }
+
+    router.refresh();
+  };
+
   return (
     <>
-      {/* <CustomAlertModal
-        isOpen={isEditOpen}
-        onOpenChange={setIsEditOpen}
-        title="Edit Provider"
-        description={"Edit the provider details"}
-      >
-        <EditForm
-          providerId={providerId}
-          providerAlias={providerAlias}
-          setIsOpen={setIsEditOpen}
-        />
-      </CustomAlertModal>
-      <CustomAlertModal
-        isOpen={isDeleteOpen}
-        onOpenChange={setIsDeleteOpen}
-        title="Are you absolutely sure?"
-        description="This action cannot be undone. This will permanently delete your provider account and remove your data from the server."
-      >
-        <DeleteForm providerId={providerId} setIsOpen={setIsDeleteOpen} />
-      </CustomAlertModal> */}
+      <SendToJiraModal
+        isOpen={isJiraModalOpen}
+        onOpenChange={setIsJiraModalOpen}
+        findingId={finding.id}
+        findingTitle={findingTitle}
+      />
 
-      <div className="relative flex items-center justify-end gap-2">
-        <Dropdown
-          className="shadow-xl dark:bg-prowler-blue-800"
-          placement="bottom"
+      <MuteFindingsModal
+        isOpen={isMuteModalOpen}
+        onOpenChange={setIsMuteModalOpen}
+        findingIds={getMuteIds()}
+        onComplete={handleMuteComplete}
+      />
+
+      <div className="flex items-center justify-end">
+        <ActionDropdown
+          trigger={
+            <button
+              type="button"
+              aria-label="Finding actions"
+              className="hover:bg-bg-neutral-tertiary rounded-md p-1 transition-colors"
+            >
+              <VerticalDotsIcon
+                size={20}
+                className="text-text-neutral-secondary"
+              />
+            </button>
+          }
+          ariaLabel="Finding actions"
         >
-          <DropdownTrigger>
-            <Button isIconOnly radius="full" size="sm" variant="light">
-              <VerticalDotsIcon className="text-default-400" />
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            closeOnSelect
-            aria-label="Actions"
-            color="default"
-            variant="flat"
-          >
-            <DropdownSection title="Actions">
-              <DropdownItem
-                key="jira"
-                description="Allows you to send the finding to Jira"
-                textValue="Send to Jira"
-                startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                // onPress={() => setIsEditOpen(true)}
-              >
-                <span className="hidden text-sm">{findingId}</span>
-                Send to Jira
-              </DropdownItem>
-              <DropdownItem
-                key="slack"
-                description="Allows you to send the finding to Slack"
-                textValue="Send to Slack"
-                startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                // onPress={() => setIsEditOpen(true)}
-              >
-                Send to Slack
-              </DropdownItem>
-            </DropdownSection>
-          </DropdownMenu>
-        </Dropdown>
+          <ActionDropdownItem
+            icon={
+              isMuted ? (
+                <VolumeOff className="size-5" />
+              ) : (
+                <VolumeX className="size-5" />
+              )
+            }
+            label={getMuteLabel()}
+            disabled={isMuted}
+            onSelect={() => {
+              setIsMuteModalOpen(true);
+            }}
+          />
+          <ActionDropdownItem
+            icon={<JiraIcon size={20} />}
+            label="Send to Jira"
+            onSelect={() => setIsJiraModalOpen(true)}
+          />
+        </ActionDropdown>
       </div>
     </>
   );

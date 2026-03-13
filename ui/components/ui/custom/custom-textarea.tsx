@@ -1,6 +1,6 @@
 "use client";
 
-import { Textarea } from "@nextui-org/react";
+import { Textarea } from "@heroui/input";
 import React from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
@@ -16,7 +16,6 @@ interface CustomTextareaProps<T extends FieldValues> {
   placeholder?: string;
   defaultValue?: string;
   isRequired?: boolean;
-  isInvalid?: boolean;
   minRows?: number;
   maxRows?: number;
   fullWidth?: boolean;
@@ -34,7 +33,6 @@ export const CustomTextarea = <T extends FieldValues>({
   size = "md",
   defaultValue,
   isRequired = false,
-  isInvalid = false,
   minRows = 3,
   maxRows = 8,
   fullWidth = true,
@@ -55,7 +53,6 @@ export const CustomTextarea = <T extends FieldValues>({
               placeholder={placeholder}
               variant={variant}
               size={size}
-              isInvalid={isInvalid}
               isRequired={isRequired}
               defaultValue={defaultValue}
               minRows={minRows}
@@ -66,7 +63,7 @@ export const CustomTextarea = <T extends FieldValues>({
               {...field}
             />
           </FormControl>
-          <FormMessage className="text-system-error dark:text-system-error" />
+          <FormMessage className="text-text-error max-w-full text-xs" />
         </>
       )}
     />

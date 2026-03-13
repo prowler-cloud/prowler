@@ -1,22 +1,20 @@
 "use client";
+import { Divider } from "@heroui/divider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Divider } from "@nextui-org/react";
 import { SaveIcon } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { createProviderGroup } from "@/actions/manage-groups";
+import { Button } from "@/components/shadcn";
+import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
-import {
-  CustomButton,
-  CustomDropdownSelection,
-  CustomInput,
-} from "@/components/ui/custom";
+import { CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { ApiError } from "@/types";
 
 const addGroupSchema = z.object({
-  name: z.string().nonempty("Provider group name is required"),
+  name: z.string().min(1, "Provider group name is required"),
   providers: z.array(z.string()).optional(),
   roles: z.array(z.string()).optional(),
 });
@@ -42,6 +40,14 @@ export const AddGroupForm = ({
   });
 
   const isLoading = form.formState.isSubmitting;
+  const providerOptions = providers.map((provider) => ({
+    label: provider.name,
+    value: provider.id,
+  }));
+  const roleOptions = roles.map((role) => ({
+    label: role.name,
+    value: role.id,
+  }));
 
   const onSubmitClient = async (values: FormValues) => {
     try {
@@ -69,7 +75,8 @@ export const AddGroupForm = ({
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
-          switch (error.source.pointer) {
+          const pointer = error.source?.pointer;
+          switch (pointer) {
             case "/data/attributes/name":
               form.setError("name", {
                 type: "server",
@@ -97,7 +104,7 @@ export const AddGroupForm = ({
           description: "The group was created successfully.",
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -110,7 +117,7 @@ export const AddGroupForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
         <div className="flex flex-col gap-2">
           <CustomInput
@@ -120,9 +127,8 @@ export const AddGroupForm = ({
             label="Provider group name"
             labelPlacement="inside"
             placeholder="Enter the provider group name"
-            variant="bordered"
+            variant="flat"
             isRequired
-            isInvalid={!!form.formState.errors.name}
           />
         </div>
 
@@ -131,15 +137,19 @@ export const AddGroupForm = ({
           name="providers"
           control={form.control}
           render={({ field }) => (
-            <CustomDropdownSelection
-              label="Select Providers"
-              name="providers"
-              values={providers}
-              selectedKeys={field.value || []}
-              onChange={(name, selectedValues) =>
-                field.onChange(selectedValues)
-              }
-            />
+            <div className="flex flex-col gap-2">
+              <EnhancedMultiSelect
+                options={providerOptions}
+                onValueChange={field.onChange}
+                defaultValue={field.value || []}
+                placeholder="Select providers"
+                aria-label="Select providers"
+                searchable={true}
+                hideSelectAll={true}
+                emptyIndicator="No results found"
+                resetOnDefaultValueChange={true}
+              />
+            </div>
           )}
         />
         {form.formState.errors.providers && (
@@ -158,15 +168,19 @@ export const AddGroupForm = ({
           name="roles"
           control={form.control}
           render={({ field }) => (
-            <CustomDropdownSelection
-              label="Select Roles"
-              name="roles"
-              values={roles}
-              selectedKeys={field.value || []}
-              onChange={(name, selectedValues) =>
-                field.onChange(selectedValues)
-              }
-            />
+            <div className="flex flex-col gap-2">
+              <EnhancedMultiSelect
+                options={roleOptions}
+                onValueChange={field.onChange}
+                defaultValue={field.value || []}
+                placeholder="Select roles"
+                aria-label="Select roles"
+                searchable={true}
+                hideSelectAll={true}
+                emptyIndicator="No results found"
+                resetOnDefaultValueChange={true}
+              />
+            </div>
           )}
         />
         {form.formState.errors.roles && (
@@ -176,19 +190,11 @@ export const AddGroupForm = ({
         )}
 
         {/* Submit Button */}
-        <div className="flex w-full justify-end sm:space-x-6">
-          <CustomButton
-            type="submit"
-            ariaLabel="Create Group"
-            className="w-1/2"
-            variant="solid"
-            color="action"
-            size="md"
-            isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
-          >
-            {isLoading ? <>Loading</> : <span>Create Group</span>}
-          </CustomButton>
+        <div className="flex w-full justify-end sm:gap-6">
+          <Button type="submit" className="w-1/2" disabled={isLoading}>
+            {!isLoading && <SaveIcon size={24} />}
+            {isLoading ? "Loading" : "Create Group"}
+          </Button>
         </div>
       </form>
     </Form>

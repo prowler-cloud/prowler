@@ -50,8 +50,8 @@ class Test_ec2_ebs_public_snapshot:
             check = ec2_ebs_public_snapshot()
             result = check.execute()
 
-            # Default snapshots
-            assert len(result) == 561
+            # Default snapshots (moto 5.1.11 creates additional default snapshots)
+            assert len(result) == 565
 
     @mock_aws
     def test_ec2_public_snapshot(self):
@@ -91,8 +91,8 @@ class Test_ec2_ebs_public_snapshot:
             check = ec2_ebs_public_snapshot()
             results = check.execute()
 
-            # Default snapshots + 1 created
-            assert len(results) == 562
+            # Default snapshots + 1 created (moto 5.1.11 creates additional default snapshots)
+            assert len(results) == 566
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
@@ -141,8 +141,8 @@ class Test_ec2_ebs_public_snapshot:
             check = ec2_ebs_public_snapshot()
             results = check.execute()
 
-            # Default snapshots + 1 created
-            assert len(results) == 562
+            # Default snapshots + 1 created (moto 5.1.11 creates additional default snapshots)
+            assert len(results) == 566
 
             for snap in results:
                 if snap.resource_id == snapshot.id:

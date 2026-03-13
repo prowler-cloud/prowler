@@ -1,6 +1,6 @@
 import { Control } from "react-hook-form";
 
-import { CustomInput } from "@/components/ui/custom";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { AzureCredentials } from "@/types";
 
 export const AzureCredentialsForm = ({
@@ -11,14 +11,14 @@ export const AzureCredentialsForm = ({
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md font-bold leading-9 text-default-foreground">
+        <div className="text-md text-default-foreground leading-9 font-bold">
           Connect via Credentials
         </div>
-        <div className="text-sm text-default-500">
+        <div className="text-default-500 text-sm">
           Please provide the information for your Azure credentials.
         </div>
       </div>
-      <CustomInput
+      <WizardInputField
         control={control}
         name="client_id"
         type="text"
@@ -27,9 +27,8 @@ export const AzureCredentialsForm = ({
         placeholder="Enter the Client ID"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.client_id}
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name="client_secret"
         type="password"
@@ -38,9 +37,8 @@ export const AzureCredentialsForm = ({
         placeholder="Enter the Client Secret"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.client_secret}
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name="tenant_id"
         type="text"
@@ -49,7 +47,6 @@ export const AzureCredentialsForm = ({
         placeholder="Enter the Tenant ID"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.tenant_id}
       />
     </>
   );

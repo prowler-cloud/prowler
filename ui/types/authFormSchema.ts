@@ -64,49 +64,66 @@ export const validatePassword = () => {
     );
 };
 
+const baseAuthSchema = z.object({
+  email: z
+    .email({ message: "Please enter a valid email address." })
+    .trim()
+    .toLowerCase(),
+  password: z.string(),
+  isSamlMode: z.boolean().optional(),
+});
+
+export const signInSchema = baseAuthSchema
+  .extend({
+    password: z.string(),
+  })
+  .refine(
+    (data) => {
+      // If SAML mode, password is not required
+      if (data.isSamlMode) return true;
+      // Otherwise, password must be filled
+      return data.password.length > 0;
+    },
+    {
+      message: "Password is required.",
+      path: ["password"],
+    },
+  );
+
+export const signUpSchema = baseAuthSchema
+  .extend({
+    name: z
+      .string()
+      .min(3, {
+        message: "The name must be at least 3 characters.",
+      })
+      .max(20),
+    password: validatePassword(),
+    confirmPassword: z.string().min(1, {
+      message: "Please confirm your password.",
+    }),
+    company: z.string().optional(),
+    invitationToken: z.string().optional(),
+    termsAndConditions:
+      process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
+        ? z.boolean().refine((value) => value === true, {
+            message: "You must accept the terms and conditions.",
+          })
+        : z.boolean().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.isSamlMode) return true;
+      return data.password === data.confirmPassword;
+    },
+    {
+      message: "The password must match",
+      path: ["confirmPassword"],
+    },
+  );
+
 export const authFormSchema = (type: string) =>
-  z
-    .object({
-      // Sign Up
-      company:
-        type === "sign-in" ? z.string().optional() : z.string().optional(),
-      name:
-        type === "sign-in"
-          ? z.string().optional()
-          : z
-              .string()
-              .min(3, {
-                message: "The name must be at least 3 characters.",
-              })
-              .max(20),
-      confirmPassword:
-        type === "sign-in"
-          ? z.string().optional()
-          : z.string().min(1, {
-              message: "Please confirm your password.",
-            }),
-      invitationToken:
-        type === "sign-in" ? z.string().optional() : z.string().optional(),
+  type === "sign-in" ? signInSchema : signUpSchema;
 
-      termsAndConditions:
-        type === "sign-in" || process.env.NEXT_PUBLIC_IS_CLOUD_ENV !== "true"
-          ? z.boolean().optional()
-          : z.boolean().refine((value) => value === true, {
-              message: "You must accept the terms and conditions.",
-            }),
-
-      // Fields for Sign In and Sign Up
-      email: z.string().email(),
-      password: type === "sign-in" ? z.string() : validatePassword(),
-      isSamlMode: z.boolean().optional(),
-    })
-    .refine(
-      (data) => {
-        if (data.isSamlMode) return true;
-        return type === "sign-in" || data.password === data.confirmPassword;
-      },
-      {
-        message: "The password must match",
-        path: ["confirmPassword"],
-      },
-    );
+export type SignInFormData = z.infer<typeof signInSchema>;
+export type SignUpFormData = z.infer<typeof signUpSchema>;

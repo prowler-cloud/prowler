@@ -1,4 +1,5 @@
-from asyncio import gather, get_event_loop
+import asyncio
+from asyncio import gather
 from typing import List, Optional
 from uuid import UUID
 
@@ -15,7 +16,25 @@ class Entra(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(GraphServiceClient, provider)
 
-        loop = get_event_loop()
+        self.tenant_ids = provider.identity.tenant_ids
+
+        created_loop = False
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_running():
+            raise RuntimeError(
+                "Cannot initialize Entra service while event loop is running"
+            )
 
         # Get users first alone because it is a dependency for other attributes
         self.users = loop.run_until_complete(self._get_users())
@@ -38,54 +57,77 @@ class Entra(AzureService):
         self.directory_roles = attributes[4]
         self.conditional_access_policy = attributes[5]
 
+        if created_loop:
+            asyncio.set_event_loop(None)
+            loop.close()
+
     async def _get_users(self):
         logger.info("Entra - Getting users...")
         users = {}
         try:
             for tenant, client in self.clients.items():
-                users_list = await client.users.get()
                 users.update({tenant: {}})
+                users_response = await client.users.get()
+                registration_details = await self._get_user_registration_details(client)
+
                 try:
-                    for user in users_list.value:
-                        users[tenant].update(
-                            {
-                                user.id: User(
-                                    id=user.id,
-                                    name=user.display_name,
-                                    authentication_methods=[
-                                        AuthMethod(
-                                            id=auth_method.id,
-                                            type=getattr(
-                                                auth_method, "odata_type", None
-                                            ),
-                                        )
-                                        for auth_method in (
-                                            await client.users.by_user_id(
-                                                user.id
-                                            ).authentication.methods.get()
-                                        ).value
-                                    ],
-                                )
-                            }
-                        )
+                    while users_response:
+                        for user in getattr(users_response, "value", []) or []:
+                            users[tenant].update(
+                                {
+                                    user.id: User(
+                                        id=user.id,
+                                        name=user.display_name,
+                                        is_mfa_capable=registration_details.get(
+                                            user.id, False
+                                        ),
+                                    )
+                                }
+                            )
+
+                        next_link = getattr(users_response, "odata_next_link", None)
+                        if not next_link:
+                            break
+                        users_response = await client.users.with_url(next_link).get()
+
                 except Exception as error:
-                    if (
-                        error.__class__.__name__ == "ODataError"
-                        and error.__dict__.get("response_status_code", None) == 403
-                    ):
-                        logger.error(
-                            "You need 'UserAuthenticationMethod.Read.All' permission to access this information. It only can be granted through Service Principal authentication."
-                        )
-                    else:
-                        logger.error(
-                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
         return users
+
+    async def _get_user_registration_details(self, client):
+        registration_details = {}
+        try:
+            registration_builder = (
+                client.reports.authentication_methods.user_registration_details
+            )
+            registration_response = await registration_builder.get()
+
+            while registration_response:
+                for detail in getattr(registration_response, "value", []) or []:
+                    registration_details.update(
+                        {detail.id: getattr(detail, "is_mfa_capable", False)}
+                    )
+
+                next_link = getattr(registration_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                registration_response = await registration_builder.with_url(
+                    next_link
+                ).get()
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return registration_details
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
@@ -174,6 +216,7 @@ class Entra(AzureService):
                     group_settings[tenant].update(
                         {
                             group_setting.id: GroupSetting(
+                                id=group_setting.id,
                                 name=getattr(group_setting, "display_name", None),
                                 template_id=getattr(group_setting, "template_id", None),
                                 settings=[
@@ -362,15 +405,10 @@ class Entra(AzureService):
         return conditional_access_policy
 
 
-class AuthMethod(BaseModel):
-    id: str
-    type: str
-
-
 class User(BaseModel):
     id: str
     name: str
-    authentication_methods: List[AuthMethod] = []
+    is_mfa_capable: bool = False
 
 
 class DefaultUserRolePermissions(BaseModel):
@@ -399,6 +437,7 @@ class SettingValue(BaseModel):
 
 
 class GroupSetting(BaseModel):
+    id: str
     name: Optional[str] = None
     template_id: Optional[str] = None
     settings: List[SettingValue]

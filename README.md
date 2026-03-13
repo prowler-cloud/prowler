@@ -6,7 +6,7 @@
   <b><i>Prowler</b> is the Open Cloud Security platform trusted by thousands to automate security and compliance in any cloud environment. With hundreds of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
 </p>
 <p align="center">
-<b>Learn more at <a href="https://prowler.com">prowler.com</i></b>
+<b>Secure ANY cloud at AI Speed at <a href="https://prowler.com">prowler.com</i></b>
 </p>
 
 <p align="center">
@@ -19,51 +19,49 @@
   <a href="https://goto.prowler.com/slack"><img alt="Slack Shield" src="https://img.shields.io/badge/slack-prowler-brightgreen.svg?logo=slack"></a>
   <a href="https://pypi.org/project/prowler/"><img alt="Python Version" src="https://img.shields.io/pypi/v/prowler.svg"></a>
   <a href="https://pypi.python.org/pypi/prowler/"><img alt="Python Version" src="https://img.shields.io/pypi/pyversions/prowler.svg"></a>
-  <a href="https://pypistats.org/packages/prowler"><img alt="PyPI Prowler Downloads" src="https://img.shields.io/pypi/dw/prowler.svg?label=prowler%20downloads"></a>
+  <a href="https://pypistats.org/packages/prowler"><img alt="PyPI Downloads" src="https://img.shields.io/pypi/dw/prowler.svg?label=downloads"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/toniblyx/prowler"></a>
-  <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/cloud/build/toniblyx/prowler"></a>
-  <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/image-size/toniblyx/prowler"></a>
   <a href="https://gallery.ecr.aws/prowler-cloud/prowler"><img width="120" height=19" alt="AWS ECR Gallery" src="https://user-images.githubusercontent.com/3985464/151531396-b6535a68-c907-44eb-95a1-a09508178616.png"></a>
   <a href="https://codecov.io/gh/prowler-cloud/prowler"><img src="https://codecov.io/gh/prowler-cloud/prowler/graph/badge.svg?token=OflBGsdpDl"/></a>
+  <a href="https://insights.linuxfoundation.org/project/prowler-cloud-prowler"><img src="https://insights.linuxfoundation.org/api/badge/health-score?project=prowler-cloud-prowler"/></a>
 </p>
 <p align="center">
-  <a href="https://github.com/prowler-cloud/prowler"><img alt="Repo size" src="https://img.shields.io/github/repo-size/prowler-cloud/prowler"></a>
-  <a href="https://github.com/prowler-cloud/prowler/issues"><img alt="Issues" src="https://img.shields.io/github/issues/prowler-cloud/prowler"></a>
-  <a href="https://github.com/prowler-cloud/prowler/releases"><img alt="Version" src="https://img.shields.io/github/v/release/prowler-cloud/prowler"></a>
+    <a href="https://github.com/prowler-cloud/prowler/releases"><img alt="Version" src="https://img.shields.io/github/v/release/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler/releases"><img alt="Version" src="https://img.shields.io/github/release-date/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler"><img alt="Contributors" src="https://img.shields.io/github/contributors-anon/prowler-cloud/prowler"></a>
+  <a href="https://github.com/prowler-cloud/prowler/issues"><img alt="Issues" src="https://img.shields.io/github/issues/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler"><img alt="License" src="https://img.shields.io/github/license/prowler-cloud/prowler"></a>
   <a href="https://twitter.com/ToniBlyx"><img alt="Twitter" src="https://img.shields.io/twitter/follow/toniblyx?style=social"></a>
   <a href="https://twitter.com/prowlercloud"><img alt="Twitter" src="https://img.shields.io/twitter/follow/prowlercloud?style=social"></a>
 </p>
 <hr>
 <p align="center">
-  <img align="center" src="/docs/img/prowler-cli-quick.gif" width="100%" height="100%">
+  <img align="center" src="/docs/img/prowler-cloud.gif" width="100%" height="100%">
 </p>
 
 # Description
 
-**Prowler** is an open-source security tool designed to assess and enforce security best practices across AWS, Azure, Google Cloud, and Kubernetes. It supports tasks such as security audits, incident response, continuous monitoring, system hardening, forensic readiness, and remediation processes.
+**Prowler** is the world’s most widely used _open-source cloud security platform_ that automates security and compliance across **any cloud environment**. With hundreds of ready-to-use security checks, remediation guidance, and compliance frameworks, Prowler is built to _“Secure ANY cloud at AI Speed”_. Prowler delivers **AI-driven**, **customizable**, and **easy-to-use** assessments, dashboards, reports, and integrations, making cloud security **simple**, **scalable**, and **cost-effective** for organizations of any size.
 
 Prowler includes hundreds of built-in controls to ensure compliance with standards and frameworks, including:
 
-- **Industry Standards:** CIS, NIST 800, NIST CSF, and CISA
-- **Regulatory Compliance and Governance:** RBI, FedRAMP, and PCI-DSS
+- **Prowler ThreatScore:** Weighted risk prioritization scoring that helps you focus on the most critical security findings first
+- **Industry Standards:** CIS, NIST 800, NIST CSF, CISA, and MITRE ATT&CK
+- **Regulatory Compliance and Governance:** RBI, FedRAMP, PCI-DSS, and NIS2
 - **Frameworks for Sensitive Data and Privacy:** GDPR, HIPAA, and FFIEC
-- **Frameworks for Organizational Governance and Quality Control:** SOC2 and GXP
-- **AWS-Specific Frameworks:** AWS Foundational Technical Review (FTR) and AWS Well-Architected Framework (Security Pillar)
-- **National Security Standards:** ENS (Spanish National Security Scheme)
+- **Frameworks for Organizational Governance and Quality Control:** SOC2, GXP, and ISO 27001
+- **Cloud-Specific Frameworks:** AWS Foundational Technical Review (FTR), AWS Well-Architected Framework, and BSI C5
+- **National Security Standards:** ENS (Spanish National Security Scheme) and KISA ISMS-P (Korean)
 - **Custom Security Frameworks:** Tailored to your needs
 
-## Prowler CLI and Prowler Cloud
+## Prowler App / Prowler Cloud
 
-Prowler offers a Command Line Interface (CLI), known as Prowler Open Source, and an additional service built on top of it, called <a href="https://prowler.com">Prowler Cloud</a>.
+Prowler App / [Prowler Cloud](https://cloud.prowler.com/) is a web-based application that simplifies running Prowler across your cloud provider accounts. It provides a user-friendly interface to visualize the results and streamline your security assessments.
 
-## Prowler App
+![Prowler App](docs/images/products/overview.png)
+![Risk Pipeline](docs/images/products/risk-pipeline.png)
+![Threat Map](docs/images/products/threat-map.png)
 
-Prowler App is a web-based application that simplifies running Prowler across your cloud provider accounts. It provides a user-friendly interface to visualize the results and streamline your security assessments.
-
-![Prowler App](docs/img/overview.png)
 
 >For more details, refer to the [Prowler App Documentation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-app-installation)
 
@@ -80,28 +78,60 @@ prowler <provider>
 ```console
 prowler dashboard
 ```
-![Prowler Dashboard](docs/img/dashboard.png)
+![Prowler Dashboard](docs/images/products/dashboard.png)
+
+
+## Attack Paths
+
+Attack Paths automatically extends every completed AWS scan with a Neo4j graph that combines Cartography's cloud inventory with Prowler findings. The feature runs in the API worker after each scan and therefore requires:
+
+- An accessible Neo4j instance (the Docker Compose files already ships a `neo4j` service).
+- The following environment variables so Django and Celery can connect:
+
+  | Variable | Description | Default |
+  | --- | --- | --- |
+  | `NEO4J_HOST` | Hostname used by the API containers. | `neo4j` |
+  | `NEO4J_PORT` | Bolt port exposed by Neo4j. | `7687` |
+  | `NEO4J_USER` / `NEO4J_PASSWORD` | Credentials with rights to create per-tenant databases. | `neo4j` / `neo4j_password` |
+
+Every AWS provider scan will enqueue an Attack Paths ingestion job automatically. Other cloud providers will be added in future iterations.
+
 
 # Prowler at a Glance
+> [!Tip]
+> For the most accurate and up-to-date information about checks, services, frameworks, and categories, visit [**Prowler Hub**](https://hub.prowler.com).
 
-| Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
-|---|---|---|---|---|
-| AWS | 571 | 82 | 36 | 10 |
-| GCP | 79 | 13 | 10 | 3 |
-| Azure | 162 | 19 | 11 | 4 |
-| Kubernetes | 83 | 7 | 5 | 7 |
-| GitHub | 17 | 2 | 1 | 0 |
-| M365 | 70 | 7 | 3 | 2 |
-| NHN (Unofficial) | 6 | 2 | 1 | 0 |
+
+| Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) | Support | Interface |
+|---|---|---|---|---|---|---|
+| AWS | 572 | 83 | 41 | 17 | Official | UI, API, CLI |
+| Azure | 165 | 20 | 18 | 13 | Official | UI, API, CLI |
+| GCP | 100 | 13 | 15 | 11 | Official | UI, API, CLI |
+| Kubernetes | 83 | 7 | 7 | 9 | Official | UI, API, CLI |
+| GitHub | 21 | 2 | 1 | 2 | Official | UI, API, CLI |
+| M365 | 89 | 9 | 4 | 5 | Official | UI, API, CLI |
+| OCI | 48 | 13 | 3 | 10 | Official | UI, API, CLI |
+| Alibaba Cloud | 61 | 9 | 3 | 9 | Official | UI, API, CLI |
+| Cloudflare | 29 | 2 | 0 | 5 | Official | UI, API, CLI |
+| IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
+| MongoDB Atlas | 10 | 3 | 0 | 8 | Official | UI, API, CLI |
+| LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
+| Image | N/A | N/A | N/A | N/A | Official | CLI, API |
+| Google Workspace | 1 | 1 | 0 | 1 | Official | CLI |
+| OpenStack | 27 | 4 | 0 | 8 | Official | UI, API, CLI |
+| NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
 
 > [!Note]
 > The numbers in the table are updated periodically.
 
-> [!Tip]
-> For the most accurate and up-to-date information about checks, services, frameworks, and categories, visit [**Prowler Hub**](https://hub.prowler.com).
+
 
 > [!Note]
-> Use the following commands to list Prowler's available checks, services, compliance frameworks, and categories: `prowler <provider> --list-checks`, `prowler <provider> --list-services`, `prowler <provider> --list-compliance` and `prowler <provider> --list-categories`.
+> Use the following commands to list Prowler's available checks, services, compliance frameworks, and categories:
+> - `prowler <provider> --list-checks`
+> - `prowler <provider> --list-services`
+> - `prowler <provider> --list-compliance`
+> - `prowler <provider> --list-categories`
 
 # 💻 Installation
 
@@ -120,28 +150,24 @@ Prowler App offers flexible installation methods tailored to various environment
 **Commands**
 
 ``` console
-curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/docker-compose.yml
-curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/.env
+VERSION=$(curl -s https://api.github.com/repos/prowler-cloud/prowler/releases/latest | jq -r .tag_name)
+curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/docker-compose.yml"
+# Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
+curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/.env"
 docker compose up -d
 ```
 
-> Containers are built for `linux/amd64`.
+> [!WARNING]
+> 🔒 For a secure setup, the API auto-generates a unique key pair, `DJANGO_TOKEN_SIGNING_KEY` and `DJANGO_TOKEN_VERIFYING_KEY`, and stores it in `~/.config/prowler-api` (non-container) or the bound Docker volume in `_data/api` (container). Never commit or reuse static/default keys. To rotate keys, delete the stored key files and restart the API.
 
-### Configuring Your Workstation for Prowler App
-
-If your workstation's architecture is incompatible, you can resolve this by:
-
-- **Setting the environment variable**: `DOCKER_DEFAULT_PLATFORM=linux/amd64`
-- **Using the following flag in your Docker command**: `--platform linux/amd64`
-
-> Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
+Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
 
 ### Common Issues with Docker Pull Installation
 
 > [!Note]
-  If you want to use AWS role assumption (e.g., with the "Connect assuming IAM Role" option), you may need to mount your local `.aws` directory into the container as a volume (e.g., `- "${HOME}/.aws:/home/prowler/.aws:ro"`). There are several ways to configure credentials for Docker containers. See the [Troubleshooting](./docs/troubleshooting.md) section for more details and examples.
+  If you want to use AWS role assumption (e.g., with the "Connect assuming IAM Role" option), you may need to mount your local `.aws` directory into the container as a volume (e.g., `- "${HOME}/.aws:/home/prowler/.aws:ro"`). There are several ways to configure credentials for Docker containers. See the [Troubleshooting](./docs/troubleshooting.mdx) section for more details and examples.
 
-You can find more information in the [Troubleshooting](./docs/troubleshooting.md) section.
+You can find more information in the [Troubleshooting](./docs/troubleshooting.mdx) section.
 
 
 ### From GitHub
@@ -150,7 +176,7 @@ You can find more information in the [Troubleshooting](./docs/troubleshooting.md
 
 * `git` installed.
 * `poetry` v2 installed: [poetry installation](https://python-poetry.org/docs/#installation).
-* `npm` installed: [npm installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+* `pnpm` installed: [pnpm installation](https://pnpm.io/installation).
 * `Docker Compose` installed: https://docs.docker.com/compose/install/.
 
 **Commands to run the API**
@@ -206,9 +232,9 @@ python -m celery -A config.celery beat -l info --scheduler django_celery_beat.sc
 ``` console
 git clone https://github.com/prowler-cloud/prowler
 cd prowler/ui
-npm install
-npm run build
-npm start
+pnpm install
+pnpm run build
+pnpm start
 ```
 
 > Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
@@ -239,7 +265,7 @@ The following versions of Prowler CLI are available, depending on your requireme
 
 The container images are available here:
 - Prowler CLI:
-    - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
+    - [DockerHub](https://hub.docker.com/r/prowlercloud/prowler/tags)
     - [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
 - Prowler App:
     - [DockerHub - Prowler UI](https://hub.docker.com/r/prowlercloud/prowler-ui/tags)
@@ -268,13 +294,14 @@ python prowler-cli.py -v
 # ✏️ High level architecture
 
 ## Prowler App
-**Prowler App** is composed of three key components:
+**Prowler App** is composed of four key components:
 
 - **Prowler UI**: A web-based interface, built with Next.js, providing a user-friendly experience for executing Prowler scans and visualizing results.
 - **Prowler API**: A backend service, developed with Django REST Framework, responsible for running Prowler scans and storing the generated results.
 - **Prowler SDK**: A Python SDK designed to extend the functionality of the Prowler CLI for advanced capabilities.
+- **Prowler MCP Server**: A Model Context Protocol server that provides AI tools for Lighthouse, the AI-powered security assistant. This is a critical dependency for Lighthouse functionality.
 
-![Prowler App Architecture](docs/img/prowler-app-architecture.png)
+![Prowler App Architecture](docs/products/img/prowler-app-architecture.png)
 
 ## Prowler CLI
 
@@ -300,40 +327,51 @@ And many more environments.
 
 ![Architecture](docs/img/architecture.png)
 
-# Deprecations from v3
+# 🤖 AI Skills for Development
 
-## General
-- `Allowlist` now is called `Mutelist`.
-- The `--quiet` option has been deprecated. Use the `--status` flag to filter findings based on their status: PASS, FAIL, or MANUAL.
-- All findings with an `INFO` status have been reclassified as `MANUAL`.
-- The CSV output format is standardized across all providers.
+Prowler includes a comprehensive set of **AI Skills** that help AI coding assistants understand Prowler's codebase patterns and conventions.
 
-**Deprecated Output Formats**
+## What are AI Skills?
 
-The following formats are now deprecated:
-- Native JSON has been replaced with JSON in [OCSF] v1.1.0 format, which is standardized across all providers (https://schema.ocsf.io/).
+Skills are structured instructions that give AI assistants the context they need to write code that follows Prowler's standards. They include:
 
-## AWS
+- **Coding patterns** for each component (SDK, API, UI, MCP Server)
+- **Testing conventions** (pytest, Playwright)
+- **Architecture guidelines** (Clean Architecture, RLS patterns)
+- **Framework-specific rules** (React 19, Next.js 15, Django DRF, Tailwind 4)
 
-**AWS Flag Deprecation**
+## Available Skills
 
-The flag --sts-endpoint-region has been deprecated due to the adoption of AWS STS regional tokens.
+| Category | Skills |
+|----------|--------|
+| **Generic** | `typescript`, `react-19`, `nextjs-15`, `tailwind-4`, `playwright`, `pytest`, `django-drf`, `zod-4`, `zustand-5`, `ai-sdk-5` |
+| **Prowler** | `prowler`, `prowler-api`, `prowler-ui`, `prowler-mcp`, `prowler-sdk-check`, `prowler-test-ui`, `prowler-test-api`, `prowler-test-sdk`, `prowler-compliance`, `prowler-provider`, `prowler-pr`, `prowler-docs` |
 
-**Sending FAIL Results to AWS Security Hub**
+## Setup
 
-- To send only FAILS to AWS Security Hub, use one of the following options: `--send-sh-only-fails` or `--security-hub --status FAIL`.
+```bash
+./skills/setup.sh
+```
 
+This configures skills for AI coding assistants that follow the [agentskills.io](https://agentskills.io) standard:
+
+| Tool | Configuration |
+|------|---------------|
+| **Claude Code** | `.claude/skills/` (symlink) |
+| **OpenCode** | `.claude/skills/` (symlink) |
+| **Codex (OpenAI)** | `.codex/skills/` (symlink) |
+| **GitHub Copilot** | `.github/skills/` (symlink) |
+| **Gemini CLI** | `.gemini/skills/` (symlink) |
+
+> **Note:** Restart your AI coding assistant after running setup to load the skills.
+> Gemini CLI requires `experimental.skills` enabled in settings.
 
 # 📖 Documentation
-
-**Documentation Resources**
 
 For installation instructions, usage details, tutorials, and the Developer Guide, visit https://docs.prowler.com/
 
 # 📃 License
 
-**Prowler License Information**
-
-Prowler is licensed under the Apache License 2.0, as indicated in each file within the repository. Obtaining a Copy of the License
+Prowler is licensed under the Apache License 2.0.
 
 A copy of the License is available at <http://www.apache.org/licenses/LICENSE-2.0>

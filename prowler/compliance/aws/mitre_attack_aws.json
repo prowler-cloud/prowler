@@ -1,5 +1,6 @@
 {
   "Framework": "MITRE-ATTACK",
+  "Name": "MITRE ATT&CK compliance framework",
   "Version": "",
   "Provider": "AWS",
   "Description": "MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.",
@@ -107,8 +108,8 @@
         "ec2_networkacl_allow_ingress_tcp_port_22",
         "ec2_networkacl_allow_ingress_tcp_port_3389",
         "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
-        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
@@ -468,7 +469,32 @@
       "Description": "Adversaries may establish persistence and/or elevate privileges using system mechanisms that trigger execution based on specific events. Various operating systems have means to monitor and subscribe to events such as logons or other user activity such as running specific applications/binaries. Cloud environments may also support various functions and services that monitor and can be invoked in response to specific cloud events.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1546/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AWSService": "AWS CloudTrail",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "AWS CloudTrail can detect attempts to establish event-triggered execution mechanisms by monitoring API calls related to EventBridge rules, Lambda function triggers, and CloudWatch Events. CloudTrail logs API calls such as PutRule, PutTargets, and CreateFunction that could indicate adversaries setting up persistence mechanisms. This provides significant detection capability for identifying suspicious event-driven execution patterns."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Amazon GuardDuty can detect suspicious patterns related to event-triggered execution through findings like 'Stealth:IAMUser/CloudTrailLoggingDisabled' which may indicate attempts to hide event-driven persistence mechanisms. GuardDuty also monitors for unusual Lambda invocation patterns and suspicious EventBridge rule modifications. The coverage is partial as it focuses on known malicious patterns rather than all possible event-triggered execution methods."
+        },
+        {
+          "AWSService": "Amazon EventBridge",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Amazon EventBridge can be configured with resource-based policies to restrict who can create rules and targets, providing some protection against unauthorized event-triggered execution mechanisms. However, this is scored as Minimal because EventBridge itself is a common target for adversaries to establish persistence, and protection relies heavily on proper IAM configuration."
+        },
+        {
+          "AWSService": "AWS Lambda",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "AWS Lambda can be protected through resource-based policies and execution role restrictions to limit unauthorized function invocations and trigger associations. However, the protection is Minimal as adversaries with sufficient IAM permissions can still establish event-triggered Lambda executions for persistence. Proper IAM and least privilege principles are critical but not always enforced."
+        }
+      ]
     },
     {
       "Name": "Cloud Administration Command",
@@ -485,7 +511,32 @@
       "Description": "Adversaries may abuse cloud management services to execute commands within virtual machines or hybrid-joined devices. Resources such as AWS Systems Manager, Azure RunCommand, and Runbooks allow users to remotely run scripts in virtual machines by leveraging installed virtual machine agents. Similarly, in Azure AD environments, Microsoft Endpoint Manager allows Global or Intune Administrators to run scripts as SYSTEM on on-premises devices joined to the Azure AD.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1651/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AWSService": "AWS Systems Manager",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "AWS Systems Manager provides Session Manager and Run Command capabilities that can be protected through IAM policies and Session Manager logging. Organizations can restrict who can execute commands on EC2 instances and require session logging to S3 and CloudWatch. However, protection is Partial because authorized administrators with legitimate SSM access could potentially abuse these capabilities for malicious command execution."
+        },
+        {
+          "AWSService": "AWS CloudTrail",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "AWS CloudTrail logs all Systems Manager API calls including SendCommand, StartSession, and other remote execution commands. These logs provide detailed information about who executed commands, on which instances, and when. This enables significant detection capability for identifying suspicious or unauthorized remote command execution attempts through Systems Manager services."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Amazon GuardDuty provides limited direct detection for Systems Manager command abuse. While it can detect unusual API call patterns and compromised credentials that might be used to execute remote commands, it doesn't specifically focus on Systems Manager Run Command or Session Manager abuse patterns. Coverage is Minimal and relies more on detecting underlying credential compromise."
+        },
+        {
+          "AWSService": "AWS Config",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "AWS Config can monitor Systems Manager configuration settings and ensure that Session Manager logging is enabled through custom Config rules. However, it provides only Minimal protection against command execution abuse since it focuses on configuration compliance rather than preventing unauthorized command execution in real-time."
+        }
+      ]
     },
     {
       "Name": "Implant Internal Image",
@@ -650,7 +701,32 @@
       "Checks": [
         "organizations_scp_check_deny_regions"
       ],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AWSService": "AWS Organizations",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "AWS Organizations Service Control Policies (SCPs) can effectively prevent resource creation in unused or unsupported regions by explicitly denying API calls to specific regions. This provides Significant protection as SCPs are enforced at the organizational level and cannot be bypassed by individual account permissions. The 'organizations_scp_check_deny_regions' check verifies this protection is in place."
+        },
+        {
+          "AWSService": "AWS CloudTrail",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "AWS CloudTrail can be configured to log events across all regions, including unused ones, providing visibility into any resource creation or API activity in unexpected geographic regions. This enables Significant detection capability as CloudTrail captures the region information for all API calls, making it easy to identify and alert on activity in regions that should not be used."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Amazon GuardDuty can detect unusual API call patterns and resource creation in unexpected regions when enabled across all regions. GuardDuty's threat intelligence and machine learning models can identify anomalous behavior in regions where activity is not typical for the organization. Coverage is Partial as it requires GuardDuty to be enabled in all regions and depends on baseline behavior patterns."
+        },
+        {
+          "AWSService": "AWS Config",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "AWS Config can be used to detect resources created in unused regions by aggregating configuration data from all regions and creating rules to alert on resources in unexpected locations. However, this is reactive detection after resources are already created, providing only Partial coverage. Config must be enabled in all regions to be effective for this technique."
+        }
+      ]
     },
     {
       "Name": "Use Alternate Authentication Material",
@@ -842,7 +918,32 @@
       "Description": "Adversaries may attempt to bypass multi-factor authentication (MFA) mechanisms and gain access to accounts by generating MFA requests sent to users.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1621/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AWSService": "AWS CloudTrail",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "AWS CloudTrail logs authentication events including MFA challenges and responses, which can be analyzed to detect MFA fatigue attacks or unusual patterns of repeated MFA requests. CloudTrail captures events like ConsoleLogin with MFA details, but detection requires correlation and analysis of authentication patterns over time. Coverage is Partial as it provides raw data but requires additional tooling to identify MFA bombing attempts."
+        },
+        {
+          "AWSService": "AWS IAM",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "AWS IAM supports MFA enforcement for users and roles, but provides Minimal direct protection against MFA fatigue attacks. While IAM can require MFA for authentication, it cannot inherently prevent adversaries from generating repeated MFA requests if they have valid credentials. Protection depends heavily on user awareness and proper MFA device configuration."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Amazon GuardDuty provides Minimal specific detection for MFA request generation attacks. While GuardDuty can detect credential compromise and unusual authentication patterns, it does not specifically identify MFA fatigue or bombing attacks where adversaries generate excessive MFA requests to tire users into approving them."
+        },
+        {
+          "AWSService": "AWS Security Hub",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "AWS Security Hub can aggregate findings related to authentication anomalies from various sources, but provides only Minimal direct detection of MFA request generation attacks. Security Hub relies on integrated services to detect authentication issues and does not natively analyze MFA request patterns or frequency to identify potential MFA fatigue attacks."
+        }
+      ]
     },
     {
       "Name": "Network Sniffing",
@@ -1024,8 +1125,8 @@
         "ec2_networkacl_allow_ingress_tcp_port_22",
         "ec2_networkacl_allow_ingress_tcp_port_3389",
         "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
-        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
@@ -1236,7 +1337,32 @@
       "Description": "Adversaries may leverage information repositories to mine valuable information. Information repositories are tools that allow for storage of information, typically to facilitate collaboration or information sharing between users, and can store a wide variety of data that may aid adversaries in further objectives, or direct access to the target information. Adversaries may also abuse external sharing features to share sensitive documents with recipients outside of the organization.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1213/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AWSService": "AWS CloudTrail",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "AWS CloudTrail logs all API calls to information repository services like S3 (GetObject, ListBucket), DynamoDB (Scan, Query), and other data services. This provides Significant detection capability for identifying unusual data access patterns, bulk downloads, or unauthorized access to sensitive information repositories. CloudTrail captures who accessed what data and when, enabling forensic analysis and anomaly detection."
+        },
+        {
+          "AWSService": "Amazon S3",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Amazon S3 provides bucket policies, access control lists (ACLs), and S3 Block Public Access to restrict unauthorized access to stored data. S3 also supports server-side encryption and versioning to protect data integrity. However, protection is Partial because properly configured access controls depend on correct implementation, and authorized users with legitimate access could still exfiltrate data."
+        },
+        {
+          "AWSService": "Amazon Macie",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Amazon Macie uses machine learning to automatically discover, classify, and protect sensitive data in S3 buckets. Macie can detect unusual data access patterns, identify sensitive data exposure, and alert on potential data mining activities. This provides Significant detection capability specifically designed for protecting information repositories against unauthorized access and data collection."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Amazon GuardDuty can detect anomalous data access patterns through findings like 'Exfiltration:S3/AnomalousBehavior' and 'UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration'. GuardDuty monitors for unusual API call patterns that may indicate data collection from information repositories. Coverage is Partial as it focuses on known attack patterns and may not catch all forms of authorized but malicious data mining."
+        }
+      ]
     },
     {
       "Name": "Data from Cloud Storage",
@@ -1256,7 +1382,32 @@
       "Description": "Adversaries may stage collected data in a central location or directory prior to Exfiltration. Data may be kept in separate files or combined into one file through techniques such as Archive Collected Data. Interactive command shells may be used, and common functionality within cmd and bash may be used to copy data into a staging location.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1074/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AWSService": "Amazon S3",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Amazon S3 can be used to detect data staging activities through S3 Access Logs and CloudTrail data events. Monitoring for unusual patterns of PutObject, CopyObject, or bulk upload operations to S3 buckets can reveal data staging behavior. However, detection is Partial because adversaries may use legitimate S3 operations that are difficult to distinguish from normal business activities without additional context."
+        },
+        {
+          "AWSService": "AWS CloudTrail",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "AWS CloudTrail provides Significant detection capability for data staging activities by logging all S3 API calls, EBS snapshot creation, and other data movement operations. CloudTrail captures details about data being copied, archived, or staged in AWS services. Analysis of CloudTrail logs can reveal suspicious patterns of data collection and staging, such as unusual volumes of data being copied to staging locations."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Amazon GuardDuty can detect data staging activities through findings related to unusual data access patterns and suspicious S3 bucket activity. GuardDuty's 'Exfiltration:S3/AnomalousBehavior' finding can identify unusual data transfer patterns that may indicate staging. Coverage is Partial as GuardDuty focuses on known malicious patterns and may not detect all forms of data staging, especially if performed gradually."
+        },
+        {
+          "AWSService": "Amazon Macie",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Amazon Macie can help detect data staging by monitoring S3 for unusual data movement patterns and identifying when sensitive data is being aggregated in unexpected locations. Macie's data classification and anomaly detection can reveal when large amounts of sensitive data are being staged. However, coverage is Partial as Macie is S3-specific and may not detect staging in other AWS services or on EC2 instances."
+        }
+      ]
     },
     {
       "Name": "Data Destruction",
@@ -1470,8 +1621,8 @@
         "ec2_networkacl_allow_ingress_tcp_port_22",
         "ec2_networkacl_allow_ingress_tcp_port_3389",
         "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
-        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
@@ -1650,8 +1801,8 @@
         "ec2_networkacl_allow_ingress_tcp_port_22",
         "ec2_networkacl_allow_ingress_tcp_port_3389",
         "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
-        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
@@ -1902,8 +2053,8 @@
         "ec2_networkacl_allow_ingress_tcp_port_22",
         "ec2_networkacl_allow_ingress_tcp_port_3389",
         "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
-        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
@@ -2004,7 +2155,32 @@
       "Description": "Adversaries may attempt to get a listing of network connections to or from the compromised system they are currently accessing or from remote systems by querying for information over the network.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1049/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AWSService": "AWS CloudTrail",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "AWS CloudTrail can detect API calls related to network discovery such as DescribeNetworkInterfaces, DescribeVpcs, DescribeSubnets, and DescribeSecurityGroups. These API calls may indicate adversaries attempting to map network topology. However, detection is Partial because CloudTrail logs API-level activities but cannot monitor commands executed within EC2 instances (like netstat, ss, or lsof) without additional agents."
+        },
+        {
+          "AWSService": "Amazon VPC Flow Logs",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Amazon VPC Flow Logs capture information about IP traffic going to and from network interfaces in a VPC. While this can reveal network connection patterns, it provides only Minimal detection for network discovery activities as Flow Logs show actual network traffic rather than reconnaissance activities. Flow Logs are more useful for post-discovery analysis than detecting the discovery process itself."
+        },
+        {
+          "AWSService": "AWS Systems Manager",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "AWS Systems Manager Session Manager and Run Command can log commands executed on EC2 instances, potentially capturing network discovery commands like netstat or ss. However, this provides only Minimal detection as it requires proper configuration of session logging, and adversaries may use alternative methods to query network connections that bypass Systems Manager monitoring."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Amazon GuardDuty provides Minimal direct detection for network connection discovery activities. While GuardDuty can detect unusual API call patterns related to network enumeration, it focuses more on network-based threats and malicious traffic patterns rather than reconnaissance activities. Detection of network discovery requires correlation with other indicators of compromise."
+        }
+      ]
     },
     {
       "Name": "System Location Discovery",
@@ -2022,7 +2198,32 @@
       "Description": "Adversaries may gather information in an attempt to calculate the geographical location of a victim host. Adversaries may use the information from System Location Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1614/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AWSService": "AWS CloudTrail",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "AWS CloudTrail logs API calls that reveal location information, such as DescribeRegions, DescribeAvailabilityZones, and EC2 metadata service queries. These API calls can indicate adversaries attempting to determine the geographic location of AWS resources. However, detection is Partial because CloudTrail cannot monitor instance-level commands that query location information (like curl to EC2 metadata service) without additional logging mechanisms."
+        },
+        {
+          "AWSService": "AWS Systems Manager",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "AWS Systems Manager can detect system location discovery if Session Manager logging is enabled and commands are executed through Systems Manager. Commands querying region, availability zone, or geolocation information can be logged. However, this provides Minimal detection as it requires proper configuration and adversaries often use direct methods like EC2 metadata service that bypass Systems Manager."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Amazon GuardDuty provides Minimal direct detection for system location discovery activities. GuardDuty focuses on detecting malicious network activity and compromised instances rather than reconnaissance queries about geographic location. Detection of location discovery would be indirect, potentially through identifying compromised instances that may be performing reconnaissance activities."
+        },
+        {
+          "AWSService": "Amazon VPC",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Amazon VPC provides Minimal protection against system location discovery. While VPC configurations can restrict network access and limit exposure of metadata services through IMDSv2 requirements, adversaries with instance access can still query location information through AWS APIs and metadata services. VPC controls focus on network isolation rather than preventing location discovery."
+        }
+      ]
     },
     {
       "Name": "System Information Discovery",
@@ -2041,7 +2242,32 @@
       "Description": "An adversary may attempt to get detailed information about the operating system and hardware, including version, patches, hotfixes, service packs, and architecture. Adversaries may use the information from System Information Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1082/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AWSService": "AWS CloudTrail",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "AWS CloudTrail logs API calls related to system information discovery such as DescribeInstances, DescribeInstanceTypes, DescribeImages, and DescribeInstanceAttribute. These API calls can reveal adversaries gathering information about EC2 instances, their configurations, and capabilities. However, detection is Partial as CloudTrail cannot monitor commands executed within instances (like uname, systeminfo, or hostnamectl) without additional logging agents."
+        },
+        {
+          "AWSService": "AWS Systems Manager",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "AWS Systems Manager Inventory and Session Manager can detect system information discovery when properly configured. Systems Manager Inventory automatically collects metadata about instances including OS version, installed applications, and configurations. Session Manager logging can capture reconnaissance commands. However, coverage is Partial as it requires Systems Manager Agent installation and adversaries may use alternative discovery methods."
+        },
+        {
+          "AWSService": "Amazon Inspector",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Amazon Inspector assesses EC2 instances and container images for software vulnerabilities and network exposure, providing visibility into system configurations. While Inspector maintains an inventory of system information, it provides only Minimal protection against adversary discovery activities as Inspector focuses on vulnerability assessment rather than preventing reconnaissance. Inspector data could help defenders understand what information adversaries might discover."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Amazon GuardDuty provides Minimal direct detection for system information discovery activities. GuardDuty focuses on detecting malicious activities and compromised instances rather than reconnaissance commands. Detection would be indirect through identifying compromised instances that may be performing system enumeration as part of broader attack patterns."
+        }
+      ]
     },
     {
       "Name": "Software Discovery",
@@ -2065,7 +2291,32 @@
       "Description": "Adversaries may attempt to get a listing of software and software versions that are installed on a system or in a cloud environment. Adversaries may use the information from Software Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1518/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AWSService": "AWS Systems Manager",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "AWS Systems Manager Inventory provides Significant detection capability for software discovery activities by automatically collecting detailed information about installed applications, AWS components, and patches on managed instances. Systems Manager maintains a comprehensive inventory of software across EC2 instances and on-premises systems, making it possible to detect when adversaries query or enumerate installed software. Session Manager logging can also capture software enumeration commands."
+        },
+        {
+          "AWSService": "AWS CloudTrail",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "AWS CloudTrail logs API calls related to software and service discovery such as ListImages, DescribeImages, and GetInventory. These API calls can indicate adversaries attempting to enumerate software and configurations in the cloud environment. However, detection is Partial because CloudTrail cannot monitor instance-level software enumeration commands (like rpm, dpkg, or wmic) without additional agents or logging mechanisms."
+        },
+        {
+          "AWSService": "Amazon Inspector",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Amazon Inspector maintains an inventory of software packages and their versions as part of its vulnerability assessment process. This inventory can reveal what software adversaries might discover on systems. However, Inspector provides only Partial detection as it focuses on vulnerability scanning rather than detecting active software enumeration by adversaries. Inspector data is useful for understanding the software attack surface."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Amazon GuardDuty provides Minimal direct detection for software discovery activities. GuardDuty focuses on detecting malicious behavior and compromised resources rather than reconnaissance activities like software enumeration. Detection would be indirect, potentially identifying compromised instances that may be performing software discovery as part of broader attack patterns."
+        }
+      ]
     },
     {
       "Name": "Permission Groups Discovery",
@@ -2090,7 +2341,32 @@
       "Description": "Adversaries may attempt to discover group and permission settings. This information can help adversaries determine which user accounts and groups are available, the membership of users in particular groups, and which users and groups have elevated permissions.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1069/",
       "Checks": [],
-      "Attributes": []
+      "Attributes": [
+        {
+          "AWSService": "AWS CloudTrail",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "AWS CloudTrail provides Significant detection capability for permission and group discovery activities by logging all IAM API calls such as ListUsers, ListGroups, GetUser, GetGroup, ListGroupsForUser, GetPolicy, GetRolePolicy, and SimulatePrincipalPolicy. These API calls directly indicate adversaries enumerating users, groups, roles, and their permissions. CloudTrail captures comprehensive details about who performed the enumeration and when, enabling effective detection of reconnaissance activities."
+        },
+        {
+          "AWSService": "AWS IAM Access Analyzer",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "AWS IAM Access Analyzer can help detect unusual permission configurations and external access to resources, providing visibility into permissions that adversaries might discover. However, Access Analyzer provides only Partial detection for group discovery activities as it focuses on analyzing resource policies and external access rather than actively monitoring enumeration attempts. It's more useful for understanding what adversaries would find rather than detecting their discovery actions."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "Amazon GuardDuty can detect anomalous patterns of IAM enumeration through findings related to reconnaissance activities. GuardDuty identifies unusual API call patterns that may indicate permission and group discovery, particularly when performed by compromised credentials or from unusual locations. Coverage is Partial as GuardDuty focuses on anomalous behavior rather than all permission enumeration activities, which may be legitimate in many contexts."
+        },
+        {
+          "AWSService": "AWS IAM",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "AWS IAM provides Minimal protection against permission group discovery through permission boundaries and service control policies that can restrict enumeration capabilities. However, most users and roles require some level of permission to discover groups and permissions for legitimate operational purposes, making it difficult to prevent discovery without impacting normal operations. IAM focuses more on access control than preventing reconnaissance."
+        }
+      ]
     }
   ]
 }

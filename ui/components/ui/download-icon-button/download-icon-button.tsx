@@ -1,9 +1,9 @@
 "use client";
 
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@heroui/tooltip";
 import { DownloadIcon } from "lucide-react";
 
-import { CustomButton } from "../custom/custom-button";
+import { Button } from "@/components/shadcn/button/button";
 
 interface DownloadIconButtonProps {
   paramId: string;
@@ -25,20 +25,19 @@ export const DownloadIconButton = ({
   return (
     <div className="flex items-center justify-end">
       <Tooltip content={textTooltip} className="text-xs">
-        <CustomButton
+        <Button
           variant="ghost"
-          isDisabled={isDisabled || isDownloading}
-          onPress={() => onDownload(paramId)}
-          className="p-0 text-default-500 hover:text-primary disabled:opacity-30"
-          isIconOnly
-          ariaLabel={ariaLabel}
-          size="sm"
+          size="icon-sm"
+          disabled={isDisabled || isDownloading}
+          onClick={() => onDownload(paramId)}
+          aria-label={ariaLabel}
+          className="p-0 disabled:opacity-30"
         >
           <DownloadIcon
             className={isDownloading ? "animate-download-icon" : ""}
             size={16}
           />
-        </CustomButton>
+        </Button>
       </Tooltip>
     </div>
   );
