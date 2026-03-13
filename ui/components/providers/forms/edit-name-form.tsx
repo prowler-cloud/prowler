@@ -97,9 +97,7 @@ export function EditNameForm({
           disabled={isLoading}
           aria-invalid={!!error}
         />
-        {error && (
-          <p className="text-destructive text-xs">{error}</p>
-        )}
+        {error && <p className="text-destructive text-xs">{error}</p>}
         {helperText && !error && (
           <p className="text-muted-foreground text-xs">{helperText}</p>
         )}
