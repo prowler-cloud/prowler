@@ -83,9 +83,9 @@ export const FindingDetail = ({
 }: FindingDetailProps) => {
   const finding = findingDetails;
   const attributes = finding.attributes;
-  const resource = finding.relationships.resource.attributes;
-  const scan = finding.relationships.scan.attributes;
-  const providerDetails = finding.relationships.provider.attributes;
+  const resource = finding.relationships?.resource?.attributes;
+  const scan = finding.relationships?.scan?.attributes;
+  const providerDetails = finding.relationships?.provider?.attributes;
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -100,7 +100,7 @@ export const FindingDetail = ({
 
   // Build Git URL for IaC findings
   const gitUrl =
-    providerDetails.provider === "iac"
+    providerDetails?.provider === "iac" && resource
       ? buildGitFileUrl(
           providerDetails.uid,
           resource.name,
@@ -166,17 +166,22 @@ export const FindingDetail = ({
 
         {/* General Tab */}
         <TabsContent value="general" className="flex flex-col gap-4">
+          <p className="text-text-neutral-primary text-sm">
+            Here is an overview of this finding:
+          </p>
           <div className="flex flex-wrap gap-4">
-            <EntityInfo
-              cloudProvider={providerDetails.provider as ProviderType}
-              entityAlias={providerDetails.alias}
-              entityId={providerDetails.uid}
-              showConnectionStatus={providerDetails.connection.connected}
-            />
+            {providerDetails && (
+              <EntityInfo
+                cloudProvider={providerDetails.provider as ProviderType}
+                entityAlias={providerDetails.alias}
+                entityId={providerDetails.uid}
+                showConnectionStatus={providerDetails.connection.connected}
+              />
+            )}
             <InfoField label="Service">
               {attributes.check_metadata.servicename}
             </InfoField>
-            <InfoField label="Region">{resource.region}</InfoField>
+            <InfoField label="Region">{resource?.region ?? "-"}</InfoField>
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -305,119 +310,137 @@ export const FindingDetail = ({
 
         {/* Resources Tab */}
         <TabsContent value="resources" className="flex flex-col gap-4">
-          {providerDetails.provider === "iac" && gitUrl && (
-            <div className="flex justify-end">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a
-                    href={gitUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-bg-data-info inline-flex items-center gap-1 text-sm"
-                    aria-label="Open resource in repository"
-                  >
-                    <ExternalLink size={16} />
-                    View in Repository
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Go to Resource in the Repository
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          )}
+          {resource ? (
+            <>
+              {providerDetails?.provider === "iac" && gitUrl && (
+                <div className="flex justify-end">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={gitUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-bg-data-info inline-flex items-center gap-1 text-sm"
+                        aria-label="Open resource in repository"
+                      >
+                        <ExternalLink size={16} />
+                        View in Repository
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Go to Resource in the Repository
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              )}
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Resource Name">
-              {renderValue(resource.name)}
-            </InfoField>
-            <InfoField label="Resource Type">
-              {renderValue(resource.type)}
-            </InfoField>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Service">
-              {renderValue(resource.service)}
-            </InfoField>
-            <InfoField label="Region">{renderValue(resource.region)}</InfoField>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Partition">
-              {renderValue(resource.partition)}
-            </InfoField>
-            <InfoField label="Details">
-              {renderValue(resource.details)}
-            </InfoField>
-          </div>
-
-          <InfoField label="Resource ID" variant="simple">
-            <CodeSnippet value={resource.uid} />
-          </InfoField>
-
-          {resource.tags && Object.entries(resource.tags).length > 0 && (
-            <div className="flex flex-col gap-4">
-              <h4 className="text-text-neutral-secondary text-sm font-bold">
-                Tags
-              </h4>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {Object.entries(resource.tags).map(([key, value]) => (
-                  <InfoField key={key} label={key}>
-                    {renderValue(value)}
-                  </InfoField>
-                ))}
+                <InfoField label="Resource Name">
+                  {renderValue(resource.name)}
+                </InfoField>
+                <InfoField label="Resource Type">
+                  {renderValue(resource.type)}
+                </InfoField>
               </div>
-            </div>
-          )}
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Created At">
-              <DateWithTime inline dateTime={resource.inserted_at || "-"} />
-            </InfoField>
-            <InfoField label="Last Updated">
-              <DateWithTime inline dateTime={resource.updated_at || "-"} />
-            </InfoField>
-          </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <InfoField label="Service">
+                  {renderValue(resource.service)}
+                </InfoField>
+                <InfoField label="Region">
+                  {renderValue(resource.region)}
+                </InfoField>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <InfoField label="Partition">
+                  {renderValue(resource.partition)}
+                </InfoField>
+                <InfoField label="Details">
+                  {renderValue(resource.details)}
+                </InfoField>
+              </div>
+
+              <InfoField label="Resource ID" variant="simple">
+                <CodeSnippet value={resource.uid} />
+              </InfoField>
+
+              {resource.tags && Object.entries(resource.tags).length > 0 && (
+                <div className="flex flex-col gap-4">
+                  <h4 className="text-text-neutral-secondary text-sm font-bold">
+                    Tags
+                  </h4>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {Object.entries(resource.tags).map(([key, value]) => (
+                      <InfoField key={key} label={key}>
+                        {renderValue(value)}
+                      </InfoField>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <InfoField label="Created At">
+                  <DateWithTime inline dateTime={resource.inserted_at || "-"} />
+                </InfoField>
+                <InfoField label="Last Updated">
+                  <DateWithTime inline dateTime={resource.updated_at || "-"} />
+                </InfoField>
+              </div>
+            </>
+          ) : (
+            <p className="text-text-neutral-tertiary text-sm">
+              Resource information is not available.
+            </p>
+          )}
         </TabsContent>
 
         {/* Scans Tab */}
         <TabsContent value="scans" className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <InfoField label="Scan Name">{scan.name || "N/A"}</InfoField>
-            <InfoField label="Resources Scanned">
-              {scan.unique_resource_count}
-            </InfoField>
-            <InfoField label="Progress">{scan.progress}%</InfoField>
-          </div>
+          {scan ? (
+            <>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <InfoField label="Scan Name">{scan.name || "N/A"}</InfoField>
+                <InfoField label="Resources Scanned">
+                  {scan.unique_resource_count}
+                </InfoField>
+                <InfoField label="Progress">{scan.progress}%</InfoField>
+              </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <InfoField label="Trigger">{scan.trigger}</InfoField>
-            <InfoField label="State">{scan.state}</InfoField>
-            <InfoField label="Duration">
-              {formatDuration(scan.duration)}
-            </InfoField>
-          </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <InfoField label="Trigger">{scan.trigger}</InfoField>
+                <InfoField label="State">{scan.state}</InfoField>
+                <InfoField label="Duration">
+                  {formatDuration(scan.duration)}
+                </InfoField>
+              </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Started At">
-              <DateWithTime inline dateTime={scan.started_at || "-"} />
-            </InfoField>
-            <InfoField label="Completed At">
-              <DateWithTime inline dateTime={scan.completed_at || "-"} />
-            </InfoField>
-          </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <InfoField label="Started At">
+                  <DateWithTime inline dateTime={scan.started_at || "-"} />
+                </InfoField>
+                <InfoField label="Completed At">
+                  <DateWithTime inline dateTime={scan.completed_at || "-"} />
+                </InfoField>
+              </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Launched At">
-              <DateWithTime inline dateTime={scan.inserted_at || "-"} />
-            </InfoField>
-            {scan.scheduled_at && (
-              <InfoField label="Scheduled At">
-                <DateWithTime inline dateTime={scan.scheduled_at} />
-              </InfoField>
-            )}
-          </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <InfoField label="Launched At">
+                  <DateWithTime inline dateTime={scan.inserted_at || "-"} />
+                </InfoField>
+                {scan.scheduled_at && (
+                  <InfoField label="Scheduled At">
+                    <DateWithTime inline dateTime={scan.scheduled_at} />
+                  </InfoField>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="text-text-neutral-tertiary text-sm">
+              Scan information is not available.
+            </p>
+          )}
         </TabsContent>
 
         {/* Events Tab */}

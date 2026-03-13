@@ -88,6 +88,11 @@ export interface ProviderEntity {
   alias: string | null;
 }
 
+export interface GroupFilterEntity {
+  name: string;
+  uid: string;
+}
+
 export interface ProviderConnectionStatus {
   label: string;
   value: string;

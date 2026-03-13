@@ -264,6 +264,8 @@ class TestOCSF:
                     "org": {
                         "name": "test-organization",
                         "uid": "test-organization-id",
+                        "ou_uid": "ou-abc1-12345678",
+                        "ou_name": "Production/WebServices",
                     },
                     "provider": "aws",
                     "region": "eu-west-1",
@@ -422,6 +424,8 @@ class TestOCSF:
         assert isinstance(cloud_organization, Organization)
         assert cloud_organization.uid == finding_output.account_organization_uid
         assert cloud_organization.name == finding_output.account_organization_name
+        assert cloud_organization.ou_uid == finding_output.account_ou_uid
+        assert cloud_organization.ou_name == finding_output.account_ou_name
 
     def test_finding_output_kubernetes(self):
         finding_output = generate_finding_output(

@@ -45,6 +45,8 @@ def generate_finding_output(
     check_title: str = "service_test_check_id",
     check_type: list[str] = ["test-type"],
     provider_uid: str = None,
+    account_ou_uid: str = "ou-abc1-12345678",
+    account_ou_name: str = "Production/WebServices",
 ) -> Finding:
     return Finding(
         auth_method="profile: default",
@@ -56,6 +58,8 @@ def generate_finding_output(
         account_organization_uid="test-organization-id",
         account_organization_name="test-organization",
         account_tags={"test-tag": "test-value"},
+        account_ou_uid=account_ou_uid,
+        account_ou_name=account_ou_name,
         uid="test-unique-finding",
         status=status,
         status_extended=status_extended,
