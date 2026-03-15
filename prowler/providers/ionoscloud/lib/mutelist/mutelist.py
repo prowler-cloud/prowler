@@ -22,9 +22,9 @@ class IonosCloudMutelist(Mutelist):
     def is_finding_muted(
         self,
         finding: CheckReportIonosCloud,
-        account_id: str,
     ) -> bool:
         try:
+            account_id = self.account_id
             check_id = finding.check_metadata.CheckID
             location = getattr(finding, "location", "")
             resource_id = getattr(finding, "resource_id", "")

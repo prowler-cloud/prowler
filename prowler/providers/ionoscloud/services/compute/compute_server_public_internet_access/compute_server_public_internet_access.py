@@ -56,5 +56,6 @@ def _get_public_ips(server) -> list:
                 if not addr.is_private and not addr.is_loopback and not addr.is_link_local:
                     public_ips.append(ip)
             except ValueError:
-                pass
+                # Skip malformed or non-parseable IP strings
+                logger.debug(f"Skipping malformed IP address: {ip}")
     return public_ips

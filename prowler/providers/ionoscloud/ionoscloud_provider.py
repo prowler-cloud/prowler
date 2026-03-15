@@ -294,8 +294,10 @@ class IonoscloudProvider(Provider):
                     )
                 else:
                     raise
-            except Exception:
-                pass
+            except Exception as enrich_error:
+                logger.debug(
+                    f"Could not retrieve contract info: {enrich_error.__class__.__name__}: {enrich_error}"
+                )
 
             return IonosCloudIdentityInfo(
                 user_id=account_id,
