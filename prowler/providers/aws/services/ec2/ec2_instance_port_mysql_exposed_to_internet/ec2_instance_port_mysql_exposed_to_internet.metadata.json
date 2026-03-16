@@ -4,7 +4,7 @@
   "CheckTitle": "EC2 instance does not allow ingress from the Internet to TCP port 3306 (MySQL)",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "TTPs/Initial Access/Unauthorized Access",
     "Effects/Data Exposure"
   ],

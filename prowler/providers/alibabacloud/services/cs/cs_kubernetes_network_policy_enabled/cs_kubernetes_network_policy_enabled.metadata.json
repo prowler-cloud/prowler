@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::CS::ManagedKubernetesCluster",
   "ResourceGroup": "container",
-  "Description": "**Alibaba Cloud Kubernetes Engine** clusters should have **Network Policy** support enabled through the **Terway** network plugin. A `NetworkPolicy` is a Kubernetes specification that defines how groups of pods are allowed to communicate with each other and other network endpoints using label-based selection rules. By default, pods are non-isolated and accept traffic from any source; applying NetworkPolicy resources restricts traffic to only explicitly allowed connections, enforcing the principle of least privilege at the network level.",
-  "Risk": "Without **Network Policies**, all pods in a Kubernetes cluster can communicate with each other freely, creating an unrestricted flat network. This allows an attacker who compromises a single pod to move **laterally** within the cluster, accessing sensitive services, databases, and secrets without restriction. The absence of network segmentation undermines **defense in depth** and increases the blast radius of any compromise, directly impacting the **confidentiality** and **integrity** of workloads.",
+  "Description": "**Alibaba Cloud Kubernetes Engine** clusters should enable **Network Policy** via the **Terway** plugin. A `NetworkPolicy` defines how pods communicate using label-based rules. By default, pods accept traffic from any source; NetworkPolicy restricts traffic to explicitly allowed connections, enforcing least privilege at the network level.",
+  "Risk": "Without **Network Policies**, all pods communicate freely, creating an unrestricted flat network. An attacker who compromises a single pod can move **laterally**, accessing sensitive services, databases, and secrets. The absence of network segmentation undermines **defense in depth** and increases the blast radius of any compromise, impacting **confidentiality** and **integrity** of workloads.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/ack/",
