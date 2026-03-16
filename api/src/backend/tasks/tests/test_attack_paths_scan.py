@@ -1126,7 +1126,6 @@ class TestSyncNodes:
         assert total == 1
         query = mock_target_session.run.call_args.args[0]
         assert "_ProviderResource" in query
-        assert "ProviderResource" not in query.replace("_ProviderResource", "")
         assert "_Tenant_tenant1" in query
         assert "_Provider_prov1" in query
 

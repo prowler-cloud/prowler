@@ -116,7 +116,6 @@ def get_provider_resource_label(provider_type: str) -> str:
     return config.resource_label if config else "_UnknownProviderResource"
 
 
-
 # Dynamic Isolation Label Helpers
 # --------------------------------
 
