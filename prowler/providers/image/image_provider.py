@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -104,7 +103,10 @@ class ImageProvider(Provider):
         self._session = None
         self._identity = "prowler"
         self._listing_only = False
-        self._trivy_cache_dir = tempfile.mkdtemp(prefix="prowler-trivy-cache-")
+        self._trivy_cache_dir_obj = tempfile.TemporaryDirectory(
+            prefix="prowler-trivy-cache-"
+        )
+        self._trivy_cache_dir = self._trivy_cache_dir_obj.name
 
         # Registry authentication (follows IaC pattern: explicit params, env vars internal)
         self.registry_username = registry_username or os.environ.get(
@@ -351,8 +353,8 @@ class ImageProvider(Provider):
 
     def cleanup(self) -> None:
         """Clean up any resources after scanning."""
-        if hasattr(self, "_trivy_cache_dir") and os.path.isdir(self._trivy_cache_dir):
-            shutil.rmtree(self._trivy_cache_dir, ignore_errors=True)
+        if hasattr(self, "_trivy_cache_dir_obj"):
+            self._trivy_cache_dir_obj.cleanup()
 
     def _process_finding(
         self,
