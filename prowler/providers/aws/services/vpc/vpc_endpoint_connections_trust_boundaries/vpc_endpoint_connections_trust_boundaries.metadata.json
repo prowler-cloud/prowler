@@ -4,7 +4,7 @@
   "CheckTitle": "VPC endpoint policy allows access only from trusted AWS accounts",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "TTPs/Initial Access"
   ],
   "ServiceName": "vpc",

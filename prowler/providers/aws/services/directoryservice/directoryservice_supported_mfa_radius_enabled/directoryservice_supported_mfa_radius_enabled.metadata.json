@@ -4,7 +4,7 @@
   "CheckTitle": "AWS Directory Service directory has RADIUS-based MFA enabled",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "TTPs/Initial Access",
     "TTPs/Credential Access"
   ],

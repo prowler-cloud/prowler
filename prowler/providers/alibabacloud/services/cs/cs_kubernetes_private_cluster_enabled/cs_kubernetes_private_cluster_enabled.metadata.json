@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::CS::ManagedKubernetesCluster",
   "ResourceGroup": "container",
-  "Description": "**Alibaba Cloud Kubernetes Engine** clusters should be configured as **private clusters** to ensure that the API server endpoint is not accessible from the public internet. In a private cluster, nodes do not have public IP addresses and all communication between nodes and the master occurs privately through **VPC peering**. This significantly reduces the attack surface by eliminating direct internet exposure of the cluster's control plane and worker nodes.",
-  "Risk": "Exposing the **API server endpoint** to the public internet increases the attack surface of the cluster, allowing attackers to probe for vulnerabilities, perform **brute force attacks** against authentication, or exploit misconfigurations. A publicly accessible API server can be targeted by automated scanning tools and botnets, increasing the risk of unauthorized access. This directly impacts the **confidentiality** and **integrity** of the cluster by potentially allowing attackers to execute commands, deploy malicious workloads, or exfiltrate sensitive data.",
+  "Description": "**Alibaba Cloud Kubernetes Engine** clusters should be configured as **private clusters** so the API server endpoint is not publicly accessible. In a private cluster, nodes lack public IPs and all node-to-master communication occurs through **VPC peering**. This reduces the attack surface by eliminating direct internet exposure of the control plane and worker nodes.",
+  "Risk": "A public **API server endpoint** allows attackers to probe for vulnerabilities, perform **brute force attacks**, or exploit misconfigurations. Automated scanners and botnets can target it, increasing risk of unauthorized access. This impacts **confidentiality** and **integrity** by potentially allowing attackers to execute commands, deploy malicious workloads, or exfiltrate data.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/ack/",
