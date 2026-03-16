@@ -9,7 +9,7 @@
   "Severity": "critical",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Break glass (emergency access) accounts should have at least one **FIDO2 security key** registered as their authentication method. These accounts are identified as users excluded from all enabled Conditional Access policies.",
+  "Description": "Microsoft Entra break glass (emergency access) accounts should have at least one **FIDO2 security key** registered as their authentication method. These accounts are identified as users excluded from all enabled Conditional Access policies.",
   "Risk": "Without FIDO2 security keys, break glass accounts rely on weaker authentication methods vulnerable to **phishing, credential theft, and man-in-the-middle attacks**. Compromised emergency access accounts could grant an attacker unrestricted tenant access, bypassing all Conditional Access protections.",
   "RelatedUrl": "",
   "AdditionalURLs": [

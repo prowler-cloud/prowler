@@ -4,13 +4,14 @@ import { Divider } from "@heroui/divider";
 
 import { ProwlerShort } from "@/components/icons";
 import { Card, CardContent } from "@/components/shadcn";
-import { DateWithTime, InfoField, SnippetChip } from "@/components/ui/entities";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
+import { DateWithTime, InfoField } from "@/components/ui/entities";
 import { UserDataWithRoles } from "@/types/users";
 
 const TenantIdCopy = ({ id }: { id: string }) => {
   return (
     <div className="flex max-w-full min-w-0 items-center gap-2 md:flex-col md:items-start md:justify-start">
-      <SnippetChip value={id} className="max-w-full" />
+      <CodeSnippet value={id} className="max-w-full" />
     </div>
   );
 };
