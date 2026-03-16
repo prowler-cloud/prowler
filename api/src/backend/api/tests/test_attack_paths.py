@@ -363,6 +363,14 @@ def test_serialize_properties_filters_internal_fields():
     assert result == {"name": "prod"}
 
 
+def test_filter_labels_strips_dynamic_isolation_labels():
+    labels = ["AWSRole", "_Tenant_abc123", "_Provider_def456", "_ProviderResource"]
+
+    result = views_helpers._filter_labels(labels)
+
+    assert result == ["AWSRole"]
+
+
 def test_serialize_graph_as_text_node_without_properties():
     graph = {
         "nodes": [{"id": "n1", "labels": ["AWSAccount"], "properties": {}}],

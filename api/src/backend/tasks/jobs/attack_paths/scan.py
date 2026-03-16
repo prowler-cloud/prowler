@@ -237,6 +237,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         sync.sync_graph(
             source_database=tmp_database_name,
             target_database=tenant_database_name,
+            tenant_id=str(prowler_api_provider.tenant_id),
             provider_id=str(prowler_api_provider.id),
         )
         db_utils.set_graph_data_ready(attack_paths_scan, True)
