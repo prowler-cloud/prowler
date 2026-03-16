@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "**Alibaba Cloud Simple Log Service (SLS)** should have a query and alarm configured for **root account login** attempts. Real-time monitoring of API calls can be achieved by directing **ActionTrail** logs to SLS and establishing corresponding alert rules. This ensures that any usage of the fully privileged root account is detected promptly, supporting the principle of least privilege and enabling timely review of root-level operations.",
-  "Risk": "Without monitoring for **root account usage**, activities performed by the most privileged account may go unnoticed. The root account has unrestricted access to all resources and services, making it a high-value target for attackers. Failure to detect unauthorized root account usage increases the risk of **complete account takeover**, **data destruction**, and **irreversible configuration changes** that could compromise the **confidentiality**, **integrity**, and **availability** of all cloud resources.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for **root account login** attempts. By directing **ActionTrail** logs to SLS with alert rules, usage of the fully privileged root account is detected promptly, supporting least privilege and enabling timely review of root-level operations.",
+  "Risk": "Without monitoring for **root account usage**, activities by the most privileged account may go unnoticed. The root account has unrestricted access to all resources, making it a high-value target. Failure to detect unauthorized usage increases risk of **account takeover**, **data destruction**, and **irreversible changes** compromising **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",

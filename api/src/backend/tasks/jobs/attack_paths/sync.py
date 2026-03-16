@@ -13,7 +13,6 @@ from celery.utils.log import get_task_logger
 from api.attack_paths import database as graph_database
 from tasks.jobs.attack_paths.config import (
     BATCH_SIZE,
-    DEPRECATED_PROVIDER_RESOURCE_LABEL,
     PROVIDER_ISOLATION_PROPERTIES,
     PROVIDER_RESOURCE_LABEL,
     get_provider_label,
@@ -120,7 +119,6 @@ def sync_nodes(
             for labels, batch in grouped.items():
                 label_set = set(labels)
                 label_set.add(PROVIDER_RESOURCE_LABEL)
-                label_set.add(DEPRECATED_PROVIDER_RESOURCE_LABEL)
                 label_set.add(get_tenant_label(tenant_id))
                 label_set.add(get_provider_label(provider_id))
                 node_labels = ":".join(f"`{label}`" for label in sorted(label_set))

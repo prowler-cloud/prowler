@@ -4,7 +4,7 @@
   "CheckTitle": "Amazon Cognito user pool is associated with a WAF Web ACL",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "Effects/Denial of Service"
   ],
   "ServiceName": "cognito",

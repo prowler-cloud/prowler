@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "**Alibaba Cloud Simple Log Service (SLS)** should have a query and alarm configured for changes to **Security Groups**. Real-time monitoring of API calls can be achieved by directing **ActionTrail** logs to SLS and establishing corresponding alert rules. **Security Groups** are stateful packet filters that control ingress and egress traffic within a VPC, and monitoring their changes ensures that network access modifications are promptly detected and reviewed.",
-  "Risk": "Without monitoring for **security group changes**, unauthorized modifications to network access controls may go undetected. This could lead to resources and services being **unintentionally exposed** to the internet or untrusted networks. Unauthorized security group modifications increase the risk of **network exposure**, **unauthorized access**, and **lateral movement** within the cloud environment, potentially compromising the **confidentiality** and **availability** of critical services.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for **Security Group** changes. By directing **ActionTrail** logs to SLS with alert rules, real-time monitoring is achieved. **Security Groups** are stateful packet filters controlling VPC ingress and egress traffic; monitoring their changes ensures network access modifications are promptly detected.",
+  "Risk": "Without monitoring for **security group changes**, unauthorized modifications to network access controls may go undetected, leading to resources being **exposed** to untrusted networks. This increases risk of **network exposure**, **unauthorized access**, and **lateral movement**, potentially compromising **confidentiality** and **availability** of critical services.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",

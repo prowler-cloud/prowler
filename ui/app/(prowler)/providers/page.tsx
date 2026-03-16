@@ -71,9 +71,11 @@ const ProvidersTableFallback = () => {
       <div className="flex flex-wrap items-center gap-4">
         {/* ProviderTypeSelector */}
         <Skeleton className="h-[52px] min-w-[200px] flex-1 rounded-lg md:max-w-[280px]" />
-        {/* Account filter */}
+        {/* Organizations filter */}
         <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
-        {/* Connection Status filter */}
+        {/* Account Groups filter */}
+        <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
+        {/* Status filter */}
         <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
         {/* Action buttons */}
         <div className="ml-auto flex flex-wrap gap-4">
