@@ -162,6 +162,9 @@ class Organization(GithubService):
             """Return attribute value if it matches expected type and is not a mock placeholder."""
             try:
                 value = getattr(org, attribute, None)
+                # Fallback to raw_data for fields not exposed as PyGithub properties
+                if value is None and hasattr(org, "raw_data"):
+                    value = org.raw_data.get(attribute)
                 if hasattr(value, "_mock_parent"):
                     return None
                 if expected_type is bool and isinstance(value, bool):
