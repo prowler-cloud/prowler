@@ -378,8 +378,9 @@ class Test_entra_compliant_device_required_for_cloud_app_access:
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_compliant_device_not_all_users_fails(self):
+    def test_entra_compliant_device_specific_users_passes(self):
         id = str(uuid4())
+        display_name = "Test"
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
@@ -404,7 +405,7 @@ class Test_entra_compliant_device_required_for_cloud_app_access:
             entra_client.conditional_access_policies = {
                 id: ConditionalAccessPolicy(
                     id=id,
-                    display_name="Test",
+                    display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
                             included_applications=["All"],
@@ -447,14 +448,17 @@ class Test_entra_compliant_device_required_for_cloud_app_access:
             check = entra_compliant_device_required_for_cloud_app_access()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy requires an MDM-compliant device for all cloud app access."
+                == f"Conditional Access Policy '{display_name}' requires an MDM-compliant device for all cloud app access."
             )
-            assert result[0].resource == {}
-            assert result[0].resource_name == "Conditional Access Policies"
-            assert result[0].resource_id == "conditionalAccessPolicies"
+            assert (
+                result[0].resource
+                == entra_client.conditional_access_policies[id].dict()
+            )
+            assert result[0].resource_name == display_name
+            assert result[0].resource_id == id
             assert result[0].location == "global"
 
     def test_entra_compliant_device_not_all_apps_fails(self):

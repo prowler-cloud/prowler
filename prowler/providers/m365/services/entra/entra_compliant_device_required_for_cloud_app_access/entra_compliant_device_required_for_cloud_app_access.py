@@ -11,7 +11,7 @@ class entra_compliant_device_required_for_cloud_app_access(Check):
     """Ensure a Conditional Access policy requires an MDM-compliant device for all cloud app access.
 
     This check verifies that at least one enabled Conditional Access policy enforces
-    the compliant device grant control for all users and all cloud applications.
+    the compliant device grant control for all cloud applications.
     The requirement must be a hard requirement, not offered as an alternative to MFA.
 
     - PASS: An enabled policy requires a compliant device for all cloud app access.
@@ -37,9 +37,6 @@ class entra_compliant_device_required_for_cloud_app_access(Check):
 
         for policy in entra_client.conditional_access_policies.values():
             if policy.state == ConditionalAccessPolicyState.DISABLED:
-                continue
-
-            if "All" not in policy.conditions.user_conditions.included_users:
                 continue
 
             if (
