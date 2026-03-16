@@ -1,6 +1,10 @@
-import { Control } from "react-hook-form";
+import { Control, Controller } from "react-hook-form";
 
-import { CustomInput, CustomTextarea } from "@/components/ui/custom";
+import {
+  WizardInputField,
+  WizardTextareaField,
+} from "@/components/providers/workflow/forms/fields";
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { GoogleWorkspaceCredentials } from "@/types";
 
 export const GoogleWorkspaceCredentialsForm = ({
@@ -15,44 +19,18 @@ export const GoogleWorkspaceCredentialsForm = ({
           Connect via Service Account
         </div>
         <div className="text-default-500 text-sm">
-          Provide your Google Workspace Customer ID, Service Account JSON, and
-          the admin email to impersonate.
+          Provide your Service Account JSON and the admin email to impersonate.
         </div>
       </div>
-      <div className="border-default-200 bg-default-50 text-default-600 rounded-lg border p-3 text-xs">
-        <div className="mb-1 font-semibold">How to find your Customer ID:</div>
-        <ol className="ml-4 list-decimal space-y-1">
-          <li>
-            Sign in to your{" "}
-            <a
-              href="https://admin.google.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:text-primary-600 underline"
-            >
-              Google Admin console
-            </a>
-          </li>
-          <li>Go to Account → Account settings</li>
-          <li>
-            Find your Customer ID in the &quot;Profile&quot; section (starts
-            with &apos;C&apos;)
-          </li>
-        </ol>
-      </div>
-      <CustomInput
+      {/* Hidden input for customer_id - auto-populated from provider UID */}
+      <Controller
         control={control}
-        name="customer_id"
-        type="text"
-        label="Customer ID"
-        labelPlacement="inside"
-        placeholder="Customer ID starts with 'C' (e.g., C01234abc)"
-        variant="bordered"
-        isRequired
+        name={ProviderCredentialFields.GOOGLEWORKSPACE_CUSTOMER_ID}
+        render={({ field }) => <input type="hidden" {...field} />}
       />
-      <CustomTextarea
+      <WizardTextareaField
         control={control}
-        name="credentials_content"
+        name={ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT}
         label="Service Account JSON"
         labelPlacement="inside"
         placeholder="Paste your Service Account JSON here"
@@ -60,9 +38,9 @@ export const GoogleWorkspaceCredentialsForm = ({
         minRows={10}
         isRequired
       />
-      <CustomInput
+      <WizardInputField
         control={control}
-        name="delegated_user"
+        name={ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER}
         type="email"
         label="Delegated User Email"
         labelPlacement="inside"
