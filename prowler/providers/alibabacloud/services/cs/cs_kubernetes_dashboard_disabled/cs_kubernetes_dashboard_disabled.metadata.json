@@ -9,8 +9,8 @@
   "Severity": "high",
   "ResourceType": "ALIYUN::CS::ManagedKubernetesCluster",
   "ResourceGroup": "container",
-  "Description": "**Alibaba Cloud Kubernetes Engine** clusters should not have the **Kubernetes Dashboard** (web UI) enabled. The Dashboard is backed by a highly privileged Kubernetes Service Account that can perform administrative operations across the cluster. It is recommended to use the **ACK Console** instead, which provides fine-grained access control through RAM policies and RBAC integration, avoiding the risk of privilege escalation through a compromised dashboard.",
-  "Risk": "The **Kubernetes Dashboard** is backed by a highly privileged Service Account that grants broad access to cluster resources. If the Dashboard is compromised through a vulnerability or unauthorized access, an attacker could gain **full control** over the cluster, deploy malicious workloads, exfiltrate **secrets**, and **escalate privileges**. This directly impacts the **confidentiality**, **integrity**, and **availability** of all workloads and data within the cluster.",
+  "Description": "**Alibaba Cloud Kubernetes Engine** clusters should not have the **Kubernetes Dashboard** (web UI) enabled. The Dashboard uses a highly privileged Service Account that can perform administrative operations across the cluster. Use the **ACK Console** instead, which provides fine-grained access control through RAM policies and RBAC integration.",
+  "Risk": "The **Kubernetes Dashboard** uses a highly privileged Service Account with broad cluster access. If compromised through a vulnerability or unauthorized access, an attacker could gain **full control** over the cluster, deploy malicious workloads, exfiltrate **secrets**, and **escalate privileges**, impacting **confidentiality**, **integrity**, and **availability** of all workloads and data.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/doc-detail/86494.html",

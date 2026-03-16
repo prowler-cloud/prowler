@@ -9,8 +9,8 @@
   "Severity": "high",
   "ResourceType": "ALIYUN::RAM::User",
   "ResourceGroup": "IAM",
-  "Description": "**Alibaba Cloud RAM** supports **Multi-Factor Authentication (MFA)**, which adds an extra layer of protection on top of a username and password. With MFA enabled, when a user logs on to the console, they are prompted for their username and password followed by an authentication code from their virtual MFA device. It is recommended that MFA be enabled for all RAM users that have a console password to significantly strengthen account security.",
-  "Risk": "Without **MFA** enabled, RAM user accounts rely solely on passwords for authentication. If a password is compromised through phishing, credential stuffing, or other attacks, an attacker gains full access to the account. Enabling MFA requires an additional authentication factor, making it significantly harder for attackers to gain unauthorized access even with compromised credentials, thereby protecting the **confidentiality**, **integrity**, and **availability** of cloud resources.",
+  "Description": "**Alibaba Cloud RAM** supports **MFA**, adding protection on top of username and password. With MFA enabled, console logon requires an authentication code from a virtual MFA device after entering credentials. MFA should be enabled for all RAM users with console passwords to strengthen account security.",
+  "Risk": "Without **MFA**, RAM accounts rely solely on passwords. If compromised through phishing or credential stuffing, an attacker gains full account access. MFA requires an additional factor, making unauthorized access significantly harder even with compromised credentials, protecting **confidentiality**, **integrity**, and **availability** of cloud resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/doc-detail/119555.htm",

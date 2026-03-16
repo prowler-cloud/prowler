@@ -25,8 +25,6 @@ export type ProvidersGroupKind =
 export const PROVIDERS_PAGE_FILTER = {
   PROVIDER: "provider__in",
   PROVIDER_TYPE: "provider_type__in",
-  ORGANIZATION: "organization_id__in",
-  ACCOUNT_GROUP: "provider_group_id__in",
   STATUS: "connected",
 } as const;
 

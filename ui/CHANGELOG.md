@@ -8,6 +8,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Google Workspace provider support [(#10333)](https://github.com/prowler-cloud/prowler/pull/10333)
 
+- Organization and organizational unit row actions (Edit Name, Update Credentials, Test Connections, Delete) in providers table dropdown [(#10317)](https://github.com/prowler-cloud/prowler/pull/10317)
+
 ---
 
 ## [1.20.0] (Prowler v5.20.0)

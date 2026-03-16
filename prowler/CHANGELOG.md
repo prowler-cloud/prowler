@@ -7,6 +7,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - `entra_conditional_access_policy_device_code_flow_blocked` check for M365 provider [(#10218)](https://github.com/prowler-cloud/prowler/pull/10218)
+- CheckMetadata Pydantic validators [(#8584)](https://github.com/prowler-cloud/prowler/pull/8583)
+- `entra_conditional_access_policy_require_mfa_for_admin_portals` check for Azure provider and update CIS compliance [(#10330)](https://github.com/prowler-cloud/prowler/pull/10330)
 
 ### 🔄 Changed
 
@@ -14,6 +16,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update M365 Exchange service metadata to new format [(#9683)](https://github.com/prowler-cloud/prowler/pull/9683)
 - Update M365 Teams service metadata to new format [(#9685)](https://github.com/prowler-cloud/prowler/pull/9685)
 - Update M365 Entra ID service metadata to new format [(#9682)](https://github.com/prowler-cloud/prowler/pull/9682)
+- Update ResourceType and Categories for Azure Entra ID service metadata [(#10334)](https://github.com/prowler-cloud/prowler/pull/10334)
+
+### 🔐 Security
+
+- Bump `multipart` to 1.3.1 to fix [GHSA-p2m9-wcp5-6qw3](https://github.com/defnull/multipart/security/advisories/GHSA-p2m9-wcp5-6qw3) [(#10331)](https://github.com/prowler-cloud/prowler/pull/10331)
 
 ---
 

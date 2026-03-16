@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "**Alibaba Cloud Simple Log Service (SLS)** should have a query and alarm configured for changes to **OSS bucket policies**. Real-time monitoring of API calls can be achieved by directing **ActionTrail** logs to SLS and establishing corresponding alert rules. This ensures that any modifications to bucket access policies are detected promptly, enabling quick identification of potentially dangerous permission changes on sensitive storage resources.",
-  "Risk": "Without monitoring for **OSS bucket policy changes**, permissive or malicious policy modifications may go undetected. This could lead to **unintended data exposure**, allowing unauthorized users to access, modify, or delete sensitive objects stored in OSS buckets. Delayed detection of policy changes increases the risk of **data breaches**, **data exfiltration**, and **compliance violations**, as attackers could silently widen access to critical storage resources.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for **OSS bucket policy** changes. By directing **ActionTrail** logs to SLS with alert rules, modifications to bucket access policies are detected promptly, enabling quick identification of dangerous permission changes on sensitive storage resources.",
+  "Risk": "Without monitoring for **OSS bucket policy changes**, malicious modifications may go undetected, leading to **unintended data exposure**. Unauthorized users could access or delete sensitive objects. Delayed detection increases risk of **data breaches**, **data exfiltration**, and **compliance violations** as attackers silently widen access to storage resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
