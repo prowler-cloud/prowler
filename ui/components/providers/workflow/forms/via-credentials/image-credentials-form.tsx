@@ -1,6 +1,6 @@
 import { Control } from "react-hook-form";
 
-import { CustomInput } from "@/components/ui/custom";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ImageCredentials } from "@/types";
 
 export const ImageCredentialsForm = ({
@@ -19,7 +19,7 @@ export const ImageCredentialsForm = ({
           registry (all fields are optional).
         </div>
       </div>
-      <CustomInput
+      <WizardInputField
         control={control}
         name="registry_username"
         label="Registry Username (Optional)"
@@ -29,7 +29,7 @@ export const ImageCredentialsForm = ({
         type="text"
         isRequired={false}
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name="registry_password"
         label="Registry Password (Optional)"
@@ -39,7 +39,7 @@ export const ImageCredentialsForm = ({
         type="password"
         isRequired={false}
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name="registry_token"
         label="Registry Token (Optional)"
@@ -58,7 +58,7 @@ export const ImageCredentialsForm = ({
           Limit which repositories and tags are scanned using regex patterns.
         </div>
       </div>
-      <CustomInput
+      <WizardInputField
         control={control}
         name="image_filter"
         label="Image Filter (Optional)"
@@ -68,7 +68,7 @@ export const ImageCredentialsForm = ({
         type="text"
         isRequired={false}
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name="tag_filter"
         label="Tag Filter (Optional)"

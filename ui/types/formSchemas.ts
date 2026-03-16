@@ -118,7 +118,7 @@ export const addProviderFormSchema = z
       z.object({
         providerType: z.literal("image"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
       }),
       z.object({
         providerType: z.literal("oraclecloud"),
