@@ -1,25 +1,21 @@
 import atexit
 import logging
 import threading
-
-from typing import Any
-
 from contextlib import contextmanager
-from typing import Iterator
+from typing import Any, Iterator
 from uuid import UUID
 
 import neo4j
 import neo4j.exceptions
-
-from django.conf import settings
-
-from api.attack_paths.retryable_session import RetryableSession
 from config.env import env
+from django.conf import settings
 from tasks.jobs.attack_paths.config import (
     BATCH_SIZE,
     PROVIDER_ID_PROPERTY,
     PROVIDER_RESOURCE_LABEL,
 )
+
+from api.attack_paths.retryable_session import RetryableSession
 
 # Without this Celery goes crazy with Neo4j logging
 logging.getLogger("neo4j").setLevel(logging.ERROR)
@@ -206,11 +202,11 @@ def has_provider_data(database: str, provider_id: str) -> bool:
     query = (
         f"MATCH (n:{PROVIDER_RESOURCE_LABEL} "
         f"{{{PROVIDER_ID_PROPERTY}: $provider_id}}) "
-        "RETURN n LIMIT 1"
+        "RETURN 1 LIMIT 1"
     )
 
     try:
-        with get_session(database) as session:
+        with get_session(database, default_access_mode=neo4j.READ_ACCESS) as session:
             result = session.run(query, {"provider_id": provider_id})
             return result.single() is not None
 

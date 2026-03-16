@@ -277,6 +277,106 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
         side_effect=lambda fn, *a, **kw: fn(*a, **kw),
     )
+    @patch("tasks.jobs.attack_paths.scan.graph_database.drop_database")
+    @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
+    @patch("tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready")
+    @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
+    @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
+    @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.internet.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
+    @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
+    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
+    @patch(
+        "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
+        return_value="db-scan-id",
+    )
+    @patch("tasks.jobs.attack_paths.scan.graph_database.get_uri")
+    @patch(
+        "tasks.jobs.attack_paths.scan.initialize_prowler_provider",
+        return_value=MagicMock(_enabled_regions=["us-east-1"]),
+    )
+    @patch(
+        "tasks.jobs.attack_paths.scan.rls_transaction",
+        new=lambda *args, **kwargs: nullcontext(),
+    )
+    def test_failure_before_gate_does_not_flip_graph_data_ready_true(
+        self,
+        mock_init_provider,
+        mock_get_uri,
+        mock_get_db_name,
+        mock_create_db,
+        mock_cartography_indexes,
+        mock_cartography_analysis,
+        mock_findings_indexes,
+        mock_internet_analysis,
+        mock_findings_analysis,
+        mock_starting,
+        mock_update_progress,
+        mock_set_provider_graph_data_ready,
+        mock_set_graph_data_ready,
+        mock_finish,
+        mock_drop_db,
+        mock_event_loop,
+        mock_stringify,
+        tenants_fixture,
+        providers_fixture,
+        scans_fixture,
+    ):
+        """Failure during ingestion (before set_provider_graph_data_ready(False))
+        must NOT flip graph_data_ready to True for providers that never had data."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        attack_paths_scan = AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.SCHEDULED,
+        )
+
+        mock_session = MagicMock()
+        session_ctx = MagicMock()
+        session_ctx.__enter__.return_value = mock_session
+        session_ctx.__exit__.return_value = False
+        ingestion_fn = MagicMock(side_effect=RuntimeError("ingestion boom"))
+
+        with (
+            patch(
+                "tasks.jobs.attack_paths.scan.graph_database.get_session",
+                return_value=session_ctx,
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.db_utils.retrieve_attack_paths_scan",
+                return_value=attack_paths_scan,
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.get_cartography_ingestion_function",
+                return_value=ingestion_fn,
+            ),
+        ):
+            with pytest.raises(RuntimeError, match="ingestion boom"):
+                attack_paths_run(str(tenant.id), str(scan.id), "task-456")
+
+        # Gate was never applied, so recovery must not flip anything to True
+        mock_set_provider_graph_data_ready.assert_not_called()
+        mock_set_graph_data_ready.assert_not_called()
+
+    @patch(
+        "tasks.jobs.attack_paths.scan.utils.stringify_exception",
+        return_value="Cartography failed: ingestion boom",
+    )
+    @patch(
+        "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
+        side_effect=lambda fn, *a, **kw: fn(*a, **kw),
+    )
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.drop_database",
         side_effect=ConnectionError("neo4j down"),
@@ -878,9 +978,7 @@ class TestFailAttackPathsScan:
     def test_marks_executing_scan_as_failed(
         self, tenants_fixture, providers_fixture, scans_fixture
     ):
-        from tasks.jobs.attack_paths.db_utils import (
-            fail_attack_paths_scan,
-        )
+        from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
@@ -924,9 +1022,7 @@ class TestFailAttackPathsScan:
     def test_drops_temp_database_even_when_drop_fails(
         self, tenants_fixture, providers_fixture, scans_fixture
     ):
-        from tasks.jobs.attack_paths.db_utils import (
-            fail_attack_paths_scan,
-        )
+        from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
@@ -968,9 +1064,7 @@ class TestFailAttackPathsScan:
     def test_skips_already_failed_scan(
         self, tenants_fixture, providers_fixture, scans_fixture
     ):
-        from tasks.jobs.attack_paths.db_utils import (
-            fail_attack_paths_scan,
-        )
+        from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
@@ -1005,9 +1099,7 @@ class TestFailAttackPathsScan:
         mock_finish.assert_not_called()
 
     def test_skips_when_no_scan_found(self, tenants_fixture):
-        from tasks.jobs.attack_paths.db_utils import (
-            fail_attack_paths_scan,
-        )
+        from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
         tenant = tenants_fixture[0]
 
