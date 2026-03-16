@@ -57,8 +57,16 @@ class OCSF(Output):
             if not findings:
                 return
 
-            scan_id = _uuid7_from_timestamp(findings[0].timestamp)
+            scan_ids_by_provider_account = {}
             for finding in findings:
+                provider = finding.metadata.Provider
+                account_uid = finding.account_uid
+                scan_key = (provider, account_uid)
+                if scan_key not in scan_ids_by_provider_account:
+                    scan_ids_by_provider_account[scan_key] = _uuid7_from_timestamp(
+                        finding.timestamp
+                    )
+                scan_id = scan_ids_by_provider_account[scan_key]
                 finding_activity = ActivityID.Create
                 cloud_account_type = self.get_account_type_id_by_provider(
                     finding.metadata.Provider

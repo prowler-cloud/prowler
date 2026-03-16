@@ -1,3 +1,4 @@
+import ANSSILogo from "./anssi.png";
 import AWSLogo from "./aws.svg";
 import C5Logo from "./c5.svg";
 import CCCLogo from "./ccc.svg";
@@ -42,6 +43,7 @@ const COMPLIANCE_LOGOS = {
   c5: C5Logo,
   ccc: CCCLogo,
   csa: CSALogo,
+  secnumcloud: ANSSILogo,
 } as const;
 
 export const getComplianceIcon = (complianceTitle: string) => {

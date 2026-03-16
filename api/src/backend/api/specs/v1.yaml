@@ -356,7 +356,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -365,6 +365,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -383,13 +384,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -398,6 +400,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -418,6 +421,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -686,7 +690,7 @@ paths:
       description: Execute a raw openCypher query against the Attack Paths graph.
         Results are filtered to the scan's provider and truncated to a maximum node
         count.
-      summary: Execute a custom Cypher query
+      summary: Execute a custom openCypher query
       parameters:
       - in: path
         name: id
@@ -717,6 +721,9 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
+            text/plain:
+              schema:
+                type: string
           description: ''
         '403':
           description: Read-only queries are enforced
@@ -760,6 +767,9 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
+            text/plain:
+              schema:
+                type: string
           description: ''
         '400':
           description: Bad request (e.g., Unknown Attack Paths query for the selected
@@ -1321,7 +1331,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -1330,6 +1340,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -1348,6 +1359,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1793,7 +1805,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -1802,6 +1814,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -1820,13 +1833,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -1835,6 +1849,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -1855,6 +1870,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -2387,7 +2403,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -2396,6 +2412,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -2414,13 +2431,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -2429,6 +2447,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -2449,6 +2468,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -2889,7 +2909,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -2898,6 +2918,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -2916,13 +2937,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -2931,6 +2953,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -2951,6 +2974,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -3389,7 +3413,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -3398,6 +3422,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -3416,13 +3441,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -3431,6 +3457,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -3451,6 +3478,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -3877,7 +3905,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -3886,6 +3914,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -3904,13 +3933,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -3919,6 +3949,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -3939,6 +3970,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -5706,7 +5738,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -5715,6 +5747,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -5733,13 +5766,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -5748,6 +5782,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -5768,6 +5803,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - name: filter[search]
@@ -5873,7 +5909,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -5882,6 +5918,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -5900,13 +5937,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -5915,6 +5953,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -5935,6 +5974,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - name: filter[search]
@@ -6038,6 +6078,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -6056,6 +6097,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6070,6 +6112,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -6090,6 +6133,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - name: filter[search]
@@ -6216,7 +6260,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -6225,6 +6269,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -6243,13 +6288,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -6258,6 +6304,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -6278,6 +6325,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -6417,7 +6465,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -6426,6 +6474,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -6444,13 +6493,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -6459,6 +6509,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -6479,6 +6530,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -6621,6 +6673,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -6639,6 +6692,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6653,6 +6707,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -6673,6 +6728,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - name: filter[search]
@@ -6848,7 +6904,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -6857,6 +6913,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -6875,13 +6932,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -6890,6 +6948,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -6910,6 +6969,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -7014,7 +7074,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -7023,6 +7083,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -7041,13 +7102,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -7056,6 +7118,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -7076,6 +7139,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -7204,7 +7268,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -7213,6 +7277,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -7231,13 +7296,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -7246,6 +7312,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -7266,6 +7333,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -8035,7 +8103,7 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -8044,6 +8112,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -8062,13 +8131,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -8077,6 +8147,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -8097,13 +8168,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -8112,6 +8184,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -8130,13 +8203,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -8145,6 +8219,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -8165,6 +8240,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - name: filter[search]
@@ -8818,7 +8894,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -8827,6 +8903,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -8845,13 +8922,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -8860,6 +8938,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -8880,6 +8959,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -9357,7 +9437,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -9366,6 +9446,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -9384,13 +9465,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -9399,6 +9481,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -9419,6 +9502,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -9709,7 +9793,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -9718,6 +9802,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -9736,13 +9821,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -9751,6 +9837,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -9771,6 +9858,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -10067,7 +10155,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -10076,6 +10164,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -10094,13 +10183,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -10109,6 +10199,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -10129,6 +10220,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -10935,7 +11027,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4b8815b179aa7216
+          x-spec-enum-id: 7ae539a3796eb30a
           enum:
           - alibabacloud
           - aws
@@ -10944,6 +11036,7 @@ paths:
           - gcp
           - github
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -10962,13 +11055,14 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4b8815b179aa7216
+            x-spec-enum-id: 7ae539a3796eb30a
             enum:
             - alibabacloud
             - aws
@@ -10977,6 +11071,7 @@ paths:
             - gcp
             - github
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -10997,6 +11092,7 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
         explode: false
         style: form
       - in: query
@@ -13181,11 +13277,11 @@ components:
             attributes:
               type: object
               properties:
-                cypher:
+                query:
                   type: string
                   minLength: 1
               required:
-              - cypher
+              - query
       required:
       - data
     AttackPathsNode:
@@ -19261,6 +19357,7 @@ components:
               - alibabacloud
               - cloudflare
               - openstack
+              - image
               type: string
               description: |-
                 * `aws` - AWS
@@ -19275,7 +19372,8 @@ components:
                 * `alibabacloud` - Alibaba Cloud
                 * `cloudflare` - Cloudflare
                 * `openstack` - OpenStack
-              x-spec-enum-id: 4b8815b179aa7216
+                * `image` - Image
+              x-spec-enum-id: 7ae539a3796eb30a
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -19393,8 +19491,9 @@ components:
               - alibabacloud
               - cloudflare
               - openstack
+              - image
               type: string
-              x-spec-enum-id: 4b8815b179aa7216
+              x-spec-enum-id: 7ae539a3796eb30a
               description: |-
                 Type of provider to create.
 
@@ -19410,6 +19509,7 @@ components:
                 * `alibabacloud` - Alibaba Cloud
                 * `cloudflare` - Cloudflare
                 * `openstack` - OpenStack
+                * `image` - Image
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -19459,8 +19559,9 @@ components:
                   - alibabacloud
                   - cloudflare
                   - openstack
+                  - image
                   type: string
-                  x-spec-enum-id: 4b8815b179aa7216
+                  x-spec-enum-id: 7ae539a3796eb30a
                   description: |-
                     Type of provider to create.
 
@@ -19476,6 +19577,7 @@ components:
                     * `alibabacloud` - Alibaba Cloud
                     * `cloudflare` - Cloudflare
                     * `openstack` - OpenStack
+                    * `image` - Image
                 uid:
                   type: string
                   minLength: 3

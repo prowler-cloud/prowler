@@ -35,7 +35,9 @@ runs:
       shell: bash
       run: |
         python -m pip install --upgrade pip
-        pipx install poetry==${{ inputs.poetry-version }}
+        pipx install poetry==${INPUTS_POETRY_VERSION}
+      env:
+        INPUTS_POETRY_VERSION: ${{ inputs.poetry-version }}
 
     - name: Update poetry.lock with latest Prowler commit
       if: github.repository_owner == 'prowler-cloud' && github.repository != 'prowler-cloud/prowler'

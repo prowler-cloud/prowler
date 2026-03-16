@@ -218,12 +218,20 @@ Follow these steps to remove a role of your account:
 
 Assign administrative permissions by selecting from the following options:
 
-**Invite and Manage Users:** Invite new users and manage existing ones.<br />
-**Manage Account:** Adjust account settings, delete users and read/manage users permissions.<br />
-**Manage Scans:** Run and review scans.<br />
-**Manage Cloud Providers:** Add or modify connected cloud providers.<br />
-**Manage Integrations:** Add or modify the Prowler Integrations.
+| Permission | Scope | Description |
+|------------|-------|-------------|
+| Invite and Manage Users | All | Invite new users and manage existing ones. |
+| Manage Account | All | Adjust account settings, delete users and read/manage users permissions. |
+| Manage Scans | All | Run and review scans. |
+| Manage Cloud Providers | All | Add or modify connected cloud providers. |
+| Manage Integrations | All | Add or modify the Prowler Integrations. |
+| Manage Ingestions | Prowler Cloud | Allow or deny the ability to submit findings ingestion batches via the API. |
+| Manage Billing | Prowler Cloud | Access and manage billing settings and subscription information. |
 
+<Note>
+The **Scope** column indicates where each permission applies. **All** means the permission is available in both Prowler Cloud and Self-Managed deployments. **Prowler Cloud** indicates permissions that are specific to [Prowler Cloud](https://cloud.prowler.com/sign-in).
+
+</Note>
 To grant all administrative permissions, select the **Grant all admin permissions** option.
 
 ### Prowler Cloud exclusive permissions

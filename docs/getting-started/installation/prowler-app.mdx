@@ -23,9 +23,15 @@ Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detai
     ```bash
     VERSION=$(curl -s https://api.github.com/repos/prowler-cloud/prowler/releases/latest | jq -r .tag_name)
     curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/docker-compose.yml"
+    # Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
     curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/.env"
     docker compose up -d
     ```
+
+    <Callout icon="lock" iconType="regular" color="#e74c3c">
+      For a secure setup, the API auto-generates a unique key pair, `DJANGO_TOKEN_SIGNING_KEY` and `DJANGO_TOKEN_VERIFYING_KEY`, and stores it in `~/.config/prowler-api` (non-container) or the bound Docker volume in `_data/api` (container). Never commit or reuse static/default keys. To rotate keys, delete the stored key files and restart the API.
+    </Callout>
+
   </Tab>
   <Tab title="GitHub">
     _Requirements_:

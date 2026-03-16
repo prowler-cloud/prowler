@@ -1220,7 +1220,7 @@ class AttackPathsQueryRunRequestSerializer(BaseSerializerV1):
 
 
 class AttackPathsCustomQueryRunRequestSerializer(BaseSerializerV1):
-    cypher = serializers.CharField()
+    query = serializers.CharField()
 
     class JSONAPIMeta:
         resource_name = "attack-paths-custom-query-run-requests"

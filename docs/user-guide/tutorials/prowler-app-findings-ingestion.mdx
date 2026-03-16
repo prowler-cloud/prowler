@@ -379,6 +379,17 @@ prowler_scan:
     PROWLER_API_KEY: $PROWLER_API_KEY
 ```
 
+## Billing impact
+
+Each unique cloud account discovered in ingested OCSF findings counts as one **provider** in the Prowler Cloud subscription.
+
+- **Existing providers**: If a cloud account was already connected as a provider, findings ingested for that account do **not** incur additional billing. The existing provider is reused.
+- **New accounts**: Ingesting findings from accounts not yet connected to Prowler Cloud will result in new providers being created and counted toward the subscription.
+- **High-volume ingestion**: Importing findings from many different cloud accounts will create a provider for each account. Review plan limits before large-scale ingestion.
+- **Deleted providers**: Removing a provider no longer counts toward the subscription.
+
+For pricing details, see [Prowler Cloud Pricing](https://prowler.com/pricing).
+
 ## Troubleshooting
 
 ### HTTP 401 Unauthorized
