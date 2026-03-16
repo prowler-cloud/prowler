@@ -975,7 +975,10 @@ class ImageProvider(Provider):
 
             # Image reference → verify tag exists via registry API
             registry_host = ImageProvider._extract_registry(image)
-            is_dockerhub = registry_host is None
+            is_dockerhub = registry_host is None or registry_host in (
+                "docker.io",
+                "registry-1.docker.io",
+            )
 
             # Parse repository and tag from the image reference
             ref = image.rsplit("@", 1)[0] if "@" in image else image
