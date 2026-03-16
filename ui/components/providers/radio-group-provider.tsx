@@ -176,7 +176,7 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
           </div>
 
           {errorMessage && (
-            <FormMessage className="text-text-error">
+            <FormMessage className="text-text-error-primary">
               {errorMessage}
             </FormMessage>
           )}

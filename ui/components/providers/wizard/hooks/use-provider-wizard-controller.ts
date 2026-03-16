@@ -23,7 +23,7 @@ import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
 } from "../steps/footer-controls";
-import type { ProviderWizardInitialData } from "../types";
+import type { OrgWizardInitialData, ProviderWizardInitialData } from "../types";
 
 const WIZARD_VARIANT = {
   PROVIDER: "provider",
@@ -48,12 +48,14 @@ interface UseProviderWizardControllerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialData?: ProviderWizardInitialData;
+  orgInitialData?: OrgWizardInitialData;
 }
 
 export function useProviderWizardController({
   open,
   onOpenChange,
   initialData,
+  orgInitialData,
 }: UseProviderWizardControllerProps) {
   const initialProviderId = initialData?.providerId ?? null;
   const initialProviderType = initialData?.providerType ?? null;
@@ -90,7 +92,7 @@ export function useProviderWizardController({
     mode,
     providerType,
   } = useProviderWizardStore();
-  const { reset: resetOrgWizard } = useOrgSetupStore();
+  const { reset: resetOrgWizard, setOrganization } = useOrgSetupStore();
 
   useEffect(() => {
     if (!open) {
@@ -102,6 +104,21 @@ export function useProviderWizardController({
       return;
     }
     hasHydratedForCurrentOpenRef.current = true;
+
+    if (orgInitialData) {
+      setWizardVariant(WIZARD_VARIANT.ORGANIZATIONS);
+      resetOrgWizard();
+      setOrganization(
+        orgInitialData.organizationId,
+        orgInitialData.organizationName,
+        orgInitialData.externalId,
+      );
+      setOrgCurrentStep(orgInitialData.targetStep);
+      setOrgSetupPhase(orgInitialData.targetPhase);
+      setFooterConfig(EMPTY_FOOTER_CONFIG);
+      setProviderTypeHint(null);
+      return;
+    }
 
     if (initialProviderId && initialProviderType && initialProviderUid) {
       setWizardVariant(WIZARD_VARIANT.PROVIDER);
@@ -144,13 +161,17 @@ export function useProviderWizardController({
     initialSecretId,
     initialVia,
     open,
+    orgInitialData,
     resetOrgWizard,
     resetProviderWizard,
     setMode,
+    setOrganization,
     setProvider,
     setSecretId,
     setVia,
   ]);
+
+  const isOrgDirectEntry = Boolean(orgInitialData);
 
   const handleClose = () => {
     resetProviderWizard();
@@ -173,6 +194,10 @@ export function useProviderWizardController({
   };
 
   const handleTestSuccess = () => {
+    if (mode === PROVIDER_WIZARD_MODE.UPDATE) {
+      handleClose();
+      return;
+    }
     setCurrentStep(PROVIDER_WIZARD_STEP.LAUNCH);
   };
 
@@ -208,6 +233,7 @@ export function useProviderWizardController({
     handleClose,
     handleDialogOpenChange,
     handleTestSuccess,
+    isOrgDirectEntry,
     isProviderFlow,
     modalTitle,
     openOrganizationsFlow,

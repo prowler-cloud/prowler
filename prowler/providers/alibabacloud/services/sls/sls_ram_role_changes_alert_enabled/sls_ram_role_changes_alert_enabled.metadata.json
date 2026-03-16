@@ -2,28 +2,25 @@
   "Provider": "alibabacloud",
   "CheckID": "sls_ram_role_changes_alert_enabled",
   "CheckTitle": "Log monitoring and alerts are set up for RAM Role changes",
-  "CheckType": [
-    "Abnormal account",
-    "Cloud threat detection"
-  ],
+  "CheckType": [],
   "ServiceName": "sls",
   "SubServiceName": "",
-  "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "It is recommended that a query and alarm be established for **RAM Role** creation, deletion, and updating activities.",
-  "Risk": "Monitoring **role creation**, **deletion**, and **updating** activities will help in identifying potential **malicious actions** at an early stage.\n\nUnauthorized role changes could lead to privilege escalation.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for **RAM Role** creation, deletion, and update activities. By directing **ActionTrail** logs to SLS with alert rules, role changes are monitored in real time. This ensures RAM role modifications are detected promptly, enabling early identification of unauthorized privilege escalation.",
+  "Risk": "Without monitoring for **RAM role changes**, unauthorized creation, modification, or deletion of roles may go undetected, enabling **privilege escalation** where attackers gain elevated access. Undetected role changes compromise IAM **integrity** and may result in **unauthorized access** to sensitive data and services across the cloud environment.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/doc-detail/91784.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/ram-policy-changes-alert.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/ram-policy-changes-alert.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aliyun sls create-alert --project <project-name> --alert-name ram-role-changes --alert-displayname 'RAM Role Changes Alert' --condition 'event.serviceName: Ram and (event.eventName: CreateRole or event.eventName: DeleteRole or event.eventName: UpdateRole or event.eventName: AttachPolicyToRole or event.eventName: DetachPolicyFromRole)' --dashboard <dashboard-name> --schedule '{\"type\":\"FixedRate\",\"interval\":\"1m\"}'",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Log on to the **SLS Console**.\n2. Ensure **ActionTrail** is enabled and delivering logs to a **Log Service** project.\n3. Navigate to the project receiving ActionTrail logs.\n4. Select **Alerts** and click **Create Alert Rule**.\n5. Configure the query to filter for RAM role changes: `event.serviceName: Ram and (event.eventName: CreateRole or event.eventName: DeleteRole or event.eventName: UpdateRole or event.eventName: AttachPolicyToRole or event.eventName: DetachPolicyFromRole)`.\n6. Set the alert **schedule**, **notification method**, and **severity**.\n7. Save and enable the alert rule.",
       "Terraform": ""
     },
     "Recommendation": {

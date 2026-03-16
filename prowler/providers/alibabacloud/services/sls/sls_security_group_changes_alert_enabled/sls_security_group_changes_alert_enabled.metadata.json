@@ -1,29 +1,26 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "sls_security_group_changes_alert_enabled",
-  "CheckTitle": "A log monitoring and alerts are set up for security group changes",
-  "CheckType": [
-    "Suspicious network connection",
-    "Cloud threat detection"
-  ],
+  "CheckTitle": "A log monitoring and alert is set up for security group changes",
+  "CheckType": [],
   "ServiceName": "sls",
   "SubServiceName": "",
-  "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "Real-time monitoring of API calls can be achieved by directing **ActionTrail Logs** to Log Service and establishing corresponding query and alarms.\n\n**Security Groups** are a stateful packet filter that controls ingress and egress traffic within a VPC. It is recommended that a query and alarm be established for changes to Security Groups.",
-  "Risk": "Monitoring changes to **security groups** will help ensure that resources and services are not unintentionally exposed.\n\nUnauthorized security group modifications could lead to **network exposure** and **unauthorized access**.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for **Security Group** changes. By directing **ActionTrail** logs to SLS with alert rules, real-time monitoring is achieved. **Security Groups** are stateful packet filters controlling VPC ingress and egress traffic; monitoring their changes ensures network access modifications are promptly detected.",
+  "Risk": "Without monitoring for **security group changes**, unauthorized modifications to network access controls may go undetected, leading to resources being **exposed** to untrusted networks. This increases risk of **network exposure**, **unauthorized access**, and **lateral movement**, potentially compromising **confidentiality** and **availability** of critical services.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/security-group-config-changes-alert.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/security-group-config-changes-alert.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aliyun sls create-alert --project <project-name> --alert-name security-group-changes --alert-displayname 'Security Group Changes Alert' --condition 'event.serviceName: Ecs and (event.eventName: AuthorizeSecurityGroup or event.eventName: RevokeSecurityGroup or event.eventName: CreateSecurityGroup or event.eventName: DeleteSecurityGroup)' --dashboard <dashboard-name> --schedule '{\"type\":\"FixedRate\",\"interval\":\"1m\"}'",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Log on to the **SLS Console**.\n2. Ensure **ActionTrail** is enabled and delivering logs to a **Log Service** project.\n3. Navigate to the project receiving ActionTrail logs.\n4. Select **Alerts** and click **Create Alert Rule**.\n5. Configure the query to filter for security group changes: `event.serviceName: Ecs and (event.eventName: AuthorizeSecurityGroup or event.eventName: RevokeSecurityGroup or event.eventName: CreateSecurityGroup or event.eventName: DeleteSecurityGroup)`.\n6. Set the alert **schedule**, **notification method**, and **severity**.\n7. Save and enable the alert rule.",
       "Terraform": ""
     },
     "Recommendation": {

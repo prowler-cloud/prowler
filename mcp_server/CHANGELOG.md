@@ -6,7 +6,7 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 ### 🚀 Added
 
-- MCP Server tools for Prowler Attack Paths [(#10145)](https://github.com/prowler-cloud/prowler/pull/10145)
+- Attack Paths tools to list scans, discover queries, and run Cypher queries against Neo4j [(#10145)](https://github.com/prowler-cloud/prowler/pull/10145)
 
 ---
 

@@ -435,14 +435,16 @@ class AwsProvider(Provider):
                 f"Getting AWS Organizations metadata for account {aws_account_id}"
             )
 
-            organizations_metadata, list_tags_for_resource = get_organizations_metadata(
-                aws_account_id=aws_account_id,
-                session=organizations_session,
+            organizations_metadata, list_tags_for_resource, ou_metadata = (
+                get_organizations_metadata(
+                    aws_account_id=aws_account_id,
+                    session=organizations_session,
+                )
             )
 
             if organizations_metadata:
                 organizations_metadata = parse_organizations_metadata(
-                    organizations_metadata, list_tags_for_resource
+                    organizations_metadata, list_tags_for_resource, ou_metadata
                 )
                 logger.info(
                     f"AWS Organizations metadata retrieved for account {aws_account_id}"
@@ -1475,7 +1477,9 @@ class AwsProvider(Provider):
             sts_client = create_sts_session(session, 'us-west-2')
         """
         try:
-            if aws_region.startswith("cn-"):
+            if os.environ.get("AWS_ENDPOINT_URL"):
+                sts_endpoint_url = os.environ["AWS_ENDPOINT_URL"]
+            elif aws_region.startswith("cn-"):
                 sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.com.cn"
             elif aws_region.startswith("eusc-"):
                 sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.eu"
