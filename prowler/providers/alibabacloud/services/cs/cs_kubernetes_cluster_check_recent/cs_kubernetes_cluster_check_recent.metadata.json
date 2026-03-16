@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::CS::ManagedKubernetesCluster",
   "ResourceGroup": "container",
-  "Description": "**Alibaba Cloud Kubernetes Engine** provides a cluster health check feature that validates the health state of each node and verifies the cluster configuration, including `kubelet`, `docker daemon`, `kernel`, and network `iptables` settings. Running these checks regularly ensures that cloud resources such as **VPC/VSwitch**, **SLB**, and every **ECS node** are functioning correctly. If consecutive health check failures are detected, diagnostic reports are generated for administrators to take corrective action.",
-  "Risk": "Without regular cluster health checks within the configured period, potential issues such as **node failures**, **misconfigured network rules**, or **degraded system components** may go undetected. This increases the risk of **cluster instability**, **service outages**, and **security vulnerabilities** that could be exploited by attackers. Delayed detection of unhealthy nodes or misconfigured components can also impact the **integrity** and **availability** of workloads running on the cluster.",
+  "Description": "**Alibaba Cloud Kubernetes Engine** provides a cluster health check that validates node health and cluster configuration, including `kubelet`, `docker daemon`, `kernel`, and `iptables` settings. Running checks regularly ensures **VPC/VSwitch**, **SLB**, and **ECS nodes** function correctly. Consecutive failures generate diagnostic reports for corrective action.",
+  "Risk": "Without regular cluster health checks, **node failures**, **misconfigured network rules**, or **degraded components** may go undetected, increasing the risk of **cluster instability**, **service outages**, and exploitable **security vulnerabilities**. Delayed detection of unhealthy nodes can impact the **integrity** and **availability** of workloads running on the cluster.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/ack/",

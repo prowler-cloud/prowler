@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "ALIYUN::ECS::Disk",
   "ResourceGroup": "storage",
-  "Description": "**Alibaba Cloud ECS cloud disk encryption** protects data at rest by automatically encrypting data when it is transferred from ECS instances to disks and decrypting it when read. Ensuring that all attached disks are encrypted helps prevent unauthorized access to sensitive data stored on the disk. This check verifies that **disk encryption** is enabled on all ECS disks attached to instances, using **KMS** (Key Management Service) for key management.",
+  "Description": "**Alibaba Cloud ECS disk encryption** protects data at rest by automatically encrypting data transferred to disks and decrypting when read. Ensuring all attached disks are encrypted prevents unauthorized access to stored data. This check verifies **disk encryption** is enabled on all ECS disks attached to instances, using **KMS** for key management.",
   "Risk": "**Unencrypted disks** attached to ECS instances pose a significant security risk, as sensitive data could be exposed if the disk is compromised, improperly decommissioned, or accessed by unauthorized parties. Data at rest without encryption is vulnerable to **unauthorized access**, impacting **confidentiality** and potentially leading to **data breaches** or **regulatory non-compliance**.",
   "RelatedUrl": "",
   "AdditionalURLs": [

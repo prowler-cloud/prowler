@@ -10,7 +10,7 @@
   "ResourceType": "ALIYUN::RAM::User",
   "ResourceGroup": "IAM",
   "Description": "**Alibaba Cloud RAM** users can log on to the console by using their username and password. If a user has not logged on for **90 days or longer**, it is recommended to disable the console access of the user. Disabling unused console access reduces the attack surface by removing unnecessary logon capabilities from potentially abandoned or dormant accounts.",
-  "Risk": "Inactive accounts with console access enabled are common targets for attackers attempting **account takeover**. An abandoned user account or one with a **compromised password** that has not been used in over 90 days may go unmonitored, allowing unauthorized access to go undetected. This poses a significant risk to the **confidentiality** and **integrity** of cloud resources accessible through the compromised account.",
+  "Risk": "Inactive accounts with console access are common targets for **account takeover**. An abandoned account or one with a **compromised password** unused for over 90 days may go unmonitored, allowing undetected unauthorized access. This risks the **confidentiality** and **integrity** of cloud resources accessible through the account.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/doc-detail/116820.htm",
