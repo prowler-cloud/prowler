@@ -939,9 +939,9 @@ class TestPostgresEnumMigration:
 
         mock_cursor.execute.assert_called_once()
         query_arg = mock_cursor.execute.call_args[0][0]
-        assert isinstance(query_arg, psycopg2_sql.Composable), (
-            "create_enum_type must pass a psycopg2.sql.Composable, not a raw string."
-        )
+        assert isinstance(
+            query_arg, psycopg2_sql.Composable
+        ), "create_enum_type must pass a psycopg2.sql.Composable, not a raw string."
         # Verify the composed SQL structure: CREATE TYPE <Identifier> AS ENUM (<Literals>)
         parts = query_arg.seq
         assert parts[0] == psycopg2_sql.SQL("CREATE TYPE ")
@@ -949,9 +949,7 @@ class TestPostgresEnumMigration:
         assert parts[1].strings == ("my_enum",)
         assert parts[2] == psycopg2_sql.SQL(" AS ENUM (")
         # The enum values are a Composed of Literal items joined by ", "
-        enum_literals = [
-            p for p in parts[3].seq if isinstance(p, psycopg2_sql.Literal)
-        ]
+        enum_literals = [p for p in parts[3].seq if isinstance(p, psycopg2_sql.Literal)]
         assert [lit._wrapped for lit in enum_literals] == ["val_a", "val_b"]
         assert parts[4] == psycopg2_sql.SQL(")")
 
@@ -964,9 +962,9 @@ class TestPostgresEnumMigration:
 
         mock_cursor.execute.assert_called_once()
         query_arg = mock_cursor.execute.call_args[0][0]
-        assert isinstance(query_arg, psycopg2_sql.Composable), (
-            "drop_enum_type must pass a psycopg2.sql.Composable, not a raw string."
-        )
+        assert isinstance(
+            query_arg, psycopg2_sql.Composable
+        ), "drop_enum_type must pass a psycopg2.sql.Composable, not a raw string."
         # Verify the composed SQL structure: DROP TYPE <Identifier>
         parts = query_arg.seq
         assert parts[0] == psycopg2_sql.SQL("DROP TYPE ")
