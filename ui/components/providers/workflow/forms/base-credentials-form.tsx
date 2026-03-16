@@ -1,11 +1,11 @@
 "use client";
 
-import { Divider } from "@heroui/divider";
 import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { Control, UseFormSetValue } from "react-hook-form";
 
 import { Button } from "@/components/shadcn";
+import { Separator } from "@/components/shadcn/separator/separator";
 import { Form } from "@/components/ui/form";
 import { useCredentialsForm } from "@/hooks/use-credentials-form";
 import { getAWSCredentialsTemplateLinks } from "@/lib";
@@ -151,7 +151,7 @@ export const BaseCredentialsForm = ({
 
         <ProviderTitleDocs providerType={providerType} />
 
-        <Divider />
+        <Separator />
 
         {providerType === "aws" && effectiveVia === "role" && (
           <AWSRoleCredentialsForm

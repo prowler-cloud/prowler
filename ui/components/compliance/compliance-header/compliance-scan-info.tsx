@@ -20,24 +20,23 @@ interface ComplianceScanInfoProps {
 
 export const ComplianceScanInfo = ({ scan }: ComplianceScanInfoProps) => {
   return (
-    <div className="flex items-center gap-4">
-      <div className="flex shrink-0 items-center">
+    <div className="flex w-full items-center gap-2">
+      <div className="flex min-w-0 basis-1/2 items-center overflow-hidden">
         <EntityInfo
           cloudProvider={scan.providerInfo.provider}
           entityAlias={scan.providerInfo.alias}
           entityId={scan.providerInfo.uid}
           showCopyAction={false}
-          maxWidth="w-[80px]"
         />
       </div>
-      <Divider orientation="vertical" className="h-8" />
-      <div className="flex flex-col items-start whitespace-nowrap">
+      <Divider orientation="vertical" className="h-8 shrink-0" />
+      <div className="flex min-w-0 basis-1/2 flex-col items-start overflow-hidden">
         <Tooltip
           content={scan.attributes.name || "- -"}
           placement="top"
           size="sm"
         >
-          <p className="text-default-500 text-xs">
+          <p className="text-default-500 truncate text-xs">
             {scan.attributes.name || "- -"}
           </p>
         </Tooltip>

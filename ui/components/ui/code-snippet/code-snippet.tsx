@@ -21,6 +21,10 @@ interface CodeSnippetProps {
   icon?: ReactNode;
   /** Function to format the displayed text (value is still copied as-is) */
   formatter?: (value: string) => string;
+  /** Enable multiline display (disables truncation, enables word wrap) */
+  multiline?: boolean;
+  /** Custom aria-label for the copy button */
+  ariaLabel?: string;
 }
 
 export const CodeSnippet = ({
@@ -30,6 +34,8 @@ export const CodeSnippet = ({
   hideCopyButton = false,
   icon,
   formatter,
+  multiline = false,
+  ariaLabel = "Copy to clipboard",
 }: CodeSnippetProps) => {
   const [copied, setCopied] = useState(false);
 
@@ -46,7 +52,7 @@ export const CodeSnippet = ({
       type="button"
       onClick={handleCopy}
       className="text-text-neutral-secondary hover:text-text-neutral-primary shrink-0 cursor-pointer transition-colors"
-      aria-label="Copy to clipboard"
+      aria-label={ariaLabel}
     >
       {copied ? (
         <Check className="h-3.5 w-3.5" />
@@ -66,7 +72,7 @@ export const CodeSnippet = ({
           "hover:bg-bg-neutral-tertiary text-text-neutral-secondary hover:text-text-neutral-primary shrink-0 cursor-pointer rounded-md p-1 transition-colors",
           className,
         )}
-        aria-label="Copy to clipboard"
+        aria-label={ariaLabel}
       >
         {copied ? (
           <Check className="h-3.5 w-3.5" />
@@ -80,19 +86,26 @@ export const CodeSnippet = ({
   return (
     <div
       className={cn(
-        "bg-bg-neutral-tertiary text-text-neutral-primary border-border-neutral-tertiary flex h-6 w-fit items-center gap-2 rounded-lg border px-2 py-1 text-xs",
+        "bg-bg-neutral-tertiary text-text-neutral-primary border-border-neutral-tertiary flex w-fit min-w-0 items-center gap-1.5 border-2 px-2 py-0.5 text-xs",
+        multiline ? "h-auto rounded-lg" : "h-6 rounded-full",
         className,
       )}
     >
       {icon && (
         <span className="text-text-neutral-secondary shrink-0">{icon}</span>
       )}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <code className="min-w-0 flex-1 truncate">{displayValue}</code>
-        </TooltipTrigger>
-        <TooltipContent side="top">{value}</TooltipContent>
-      </Tooltip>
+      {multiline ? (
+        <span className="min-w-0 flex-1 break-all whitespace-pre-wrap">
+          {displayValue}
+        </span>
+      ) : (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="min-w-0 flex-1 truncate">{displayValue}</span>
+          </TooltipTrigger>
+          <TooltipContent side="top">{value}</TooltipContent>
+        </Tooltip>
+      )}
       {!hideCopyButton && <CopyButton />}
     </div>
   );

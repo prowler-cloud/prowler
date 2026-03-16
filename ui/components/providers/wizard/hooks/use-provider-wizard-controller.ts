@@ -177,7 +177,6 @@ export function useProviderWizardController({
       handleClose();
       return;
     }
-
     setCurrentStep(PROVIDER_WIZARD_STEP.LAUNCH);
   };
 
