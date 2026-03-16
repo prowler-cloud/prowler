@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.21.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Attack Paths: Recover `graph_data_ready` flag when scan fails during graph swap, preventing query endpoints from staying blocked until the next successful scan [(#10354)](https://github.com/prowler-cloud/prowler/pull/10354)
+
+---
+
 ## [1.21.0] (Prowler v5.20.0)
 
 ### 🔄 Changed
