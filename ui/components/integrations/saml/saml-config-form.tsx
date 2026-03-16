@@ -14,9 +14,9 @@ import { createSamlConfig, updateSamlConfig } from "@/actions/integrations";
 import { AddIcon } from "@/components/icons";
 import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomServerInput } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { SnippetChip } from "@/components/ui/entities";
 import { FormButtons } from "@/components/ui/form";
 import { apiBaseUrl } from "@/lib";
 
@@ -258,7 +258,11 @@ export const SamlConfigForm = ({
     : `${apiBaseUrl}/accounts/saml/your-domain.com/acs/`;
 
   return (
-    <form ref={formRef} action={formAction} className="flex flex-col gap-2">
+    <form
+      ref={formRef}
+      action={formAction}
+      className="flex min-w-0 flex-col gap-2"
+    >
       <div className="py-1 text-xs">
         Need help configuring SAML SSO?{" "}
         <CustomLink
@@ -304,9 +308,9 @@ export const SamlConfigForm = ({
               <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 ACS URL:
               </span>
-              <SnippetChip
+              <CodeSnippet
                 value={acsUrl}
-                ariaLabel="Copy ACS URL to clipboard"
+                ariaLabel="Copy ACS URL"
                 className="h-10 w-full"
               />
             </div>
@@ -315,9 +319,9 @@ export const SamlConfigForm = ({
               <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Audience:
               </span>
-              <SnippetChip
+              <CodeSnippet
                 value="urn:prowler.com:sp"
-                ariaLabel="Copy Audience to clipboard"
+                ariaLabel="Copy Audience"
                 className="h-10 w-full"
               />
             </div>

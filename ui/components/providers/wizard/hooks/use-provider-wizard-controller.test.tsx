@@ -121,7 +121,7 @@ describe("useProviderWizardController", () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 
-  it("moves to launch step after a successful connection test in update mode", async () => {
+  it("closes the modal after a successful connection test in update mode", async () => {
     // Given
     const onOpenChange = vi.fn();
     const { result } = renderHook(() =>
@@ -149,9 +149,8 @@ describe("useProviderWizardController", () => {
       result.current.handleTestSuccess();
     });
 
-    // Then
-    expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.LAUNCH);
-    expect(onOpenChange).not.toHaveBeenCalled();
+    // Then — update mode should close the modal, not advance to launch
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it("does not override launch footer config in the controller", () => {

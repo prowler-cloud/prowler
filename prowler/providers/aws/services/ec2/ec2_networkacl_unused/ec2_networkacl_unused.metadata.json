@@ -4,7 +4,7 @@
   "CheckTitle": "Non-default network ACL is associated with a subnet",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "ec2",
   "SubServiceName": "",

@@ -2,7 +2,7 @@
 
 import { Control } from "react-hook-form";
 
-import { CustomInput } from "@/components/ui/custom";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
 export const GitHubPersonalAccessTokenForm = ({
@@ -20,7 +20,7 @@ export const GitHubPersonalAccessTokenForm = ({
           Please provide your GitHub personal access token.
         </div>
       </div>
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.PERSONAL_ACCESS_TOKEN}
         type="password"

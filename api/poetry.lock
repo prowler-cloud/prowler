@@ -1822,14 +1822,14 @@ crt = ["awscrt (==0.27.6)"]
 
 [[package]]
 name = "cartography"
-version = "0.129.0"
+version = "0.132.0"
 description = "Explore assets and their relationships across your technical infrastructure."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "cartography-0.129.0-py3-none-any.whl", hash = "sha256:d42c840369be9e4d0ac4d024074e3732416e40bab3d9a3023b6a247918daed4c"},
-    {file = "cartography-0.129.0.tar.gz", hash = "sha256:cb47d603e652554a4cbcc1a868c96014eb02b3d5cc1affea0428b2ed7fa61699"},
+    {file = "cartography-0.132.0-py3-none-any.whl", hash = "sha256:c070aa51d0ab4479cb043cae70b35e7df49f2fb5f1fa95ccf10000bbeb952262"},
+    {file = "cartography-0.132.0.tar.gz", hash = "sha256:7c6332bc57fd2629d7b83aee7bd95a7b2edb0d51ef746efa0461399e0b66625c"},
 ]
 
 [package.dependencies]
@@ -1864,8 +1864,8 @@ boto3 = ">=1.15.1"
 botocore = ">=1.18.1"
 cloudflare = ">=4.1.0,<5.0.0"
 crowdstrike-falconpy = ">=0.5.1"
+cryptography = "*"
 dnspython = ">=1.15.0"
-dockerfile = ">=3.0.0"
 duo-client = "*"
 google-api-python-client = ">=1.7.8"
 google-auth = ">=2.37.0"
@@ -3094,21 +3094,6 @@ dev = ["coverage (==7.2.7)", "pytest (==7.4.2)", "pytest-cov (==4.1.0)", "pytest
 docs = ["myst-parser (==0.18.0)", "sphinx (==5.1.1)"]
 ssh = ["paramiko (>=2.4.3)"]
 websockets = ["websocket-client (>=1.3.0)"]
-
-[[package]]
-name = "dockerfile"
-version = "3.4.0"
-description = "Parse a dockerfile into a high-level representation using the official go parser."
-optional = false
-python-versions = ">=3.9"
-groups = ["main"]
-files = [
-    {file = "dockerfile-3.4.0-cp39-abi3-macosx_13_0_x86_64.whl", hash = "sha256:ed33446a76007cbb3f28c247f189cc06db34667d4f59a398a5c44912d7c13f36"},
-    {file = "dockerfile-3.4.0-cp39-abi3-macosx_14_0_arm64.whl", hash = "sha256:a4549d4f038483c25906d4fec56bb6ffe82ae26e0f80a15f2c0fedbb50712053"},
-    {file = "dockerfile-3.4.0-cp39-abi3-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:b95102bd82e6f67c836186b51c13114aa586a20e8cb6441bde24d4070542009d"},
-    {file = "dockerfile-3.4.0-cp39-abi3-win_amd64.whl", hash = "sha256:30202187f1885f99ac839fd41ca8150b2fd0a66fac12db0166361d0c4622e71a"},
-    {file = "dockerfile-3.4.0.tar.gz", hash = "sha256:238bb950985c55a525daef8bbfe994a0230aa0978c419f4caa4d9ce0a37343f1"},
-]
 
 [[package]]
 name = "dogpile-cache"
@@ -9397,4 +9382,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "42759b370c9e38da727e73f9d8ec0fa61bc6137eab18f11ccd7deff79a0dee69"
+content-hash = "6e38c38b1f8dc05b881f49703fa445eec299527e6697992b18e4613534fbcdb6"
