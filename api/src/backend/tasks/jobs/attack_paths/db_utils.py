@@ -155,6 +155,32 @@ def set_provider_graph_data_ready(
         attack_paths_scan.refresh_from_db(fields=["graph_data_ready"])
 
 
+def recover_graph_data_ready(
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
+) -> None:
+    """
+    Best-effort recovery of `graph_data_ready` after a scan failure.
+
+    Queries Neo4j to check if the provider still has data in the tenant
+    database. If data exists, restores `graph_data_ready=True` for all scans
+    of this provider. Never raises.
+    """
+    try:
+        tenant_db = graph_database.get_database_name(attack_paths_scan.tenant_id)
+        if graph_database.has_provider_data(
+            tenant_db, str(attack_paths_scan.provider_id)
+        ):
+            set_provider_graph_data_ready(attack_paths_scan, True)
+            logger.info(
+                f"Recovered `graph_data_ready` for provider {attack_paths_scan.provider_id}"
+            )
+
+    except Exception:
+        logger.exception(
+            f"Failed to recover `graph_data_ready` for provider {attack_paths_scan.provider_id}"
+        )
+
+
 def fail_attack_paths_scan(
     tenant_id: str,
     scan_id: str,
@@ -185,3 +211,5 @@ def fail_attack_paths_scan(
             StateChoices.FAILED,
             {"global_error": error},
         )
+
+        recover_graph_data_ready(attack_paths_scan)

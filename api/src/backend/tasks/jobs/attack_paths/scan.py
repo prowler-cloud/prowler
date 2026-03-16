@@ -147,6 +147,9 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         attack_paths_scan, task_id, tenant_cartography_config
     )
 
+    subgraph_dropped = False
+    sync_completed = False
+
     try:
         logger.info(
             f"Creating Neo4j database {tmp_cartography_config.neo4j_database} for tenant {prowler_api_provider.tenant_id}"
@@ -229,6 +232,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             database=tenant_database_name,
             provider_id=str(prowler_api_provider.id),
         )
+        subgraph_dropped = True
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 98)
 
         logger.info(
@@ -240,6 +244,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             tenant_id=str(prowler_api_provider.tenant_id),
             provider_id=str(prowler_api_provider.id),
         )
+        sync_completed = True
         db_utils.set_graph_data_ready(attack_paths_scan, True)
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 99)
 
@@ -263,6 +268,22 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         exception_message = utils.stringify_exception(e, "Attack Paths scan failed")
         logger.exception(exception_message)
         ingestion_exceptions["global_error"] = exception_message
+
+        # Recover graph_data_ready when safe to do so:
+        # - sync_completed: new data is fully synced, enable current scan only
+        #   (matches the normal success path at line 248).
+        # - not subgraph_dropped: old data still intact, reverse the bulk False.
+        # - subgraph_dropped and not sync_completed: partial data, leave gated.
+        try:
+            if sync_completed:
+                db_utils.set_graph_data_ready(attack_paths_scan, True)
+            elif not subgraph_dropped:
+                db_utils.set_provider_graph_data_ready(attack_paths_scan, True)
+        except Exception:
+            logger.error(
+                f"Failed to recover graph_data_ready for provider {attack_paths_scan.provider_id}",
+                exc_info=True,
+            )
 
         # Handling databases changes
         try:

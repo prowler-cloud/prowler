@@ -197,6 +197,29 @@ def drop_subgraph(database: str, provider_id: str) -> int:
     return deleted_nodes
 
 
+def has_provider_data(database: str, provider_id: str) -> bool:
+    """
+    Check if any ProviderResource node exists for this provider.
+
+    Returns `False` if the database doesn't exist.
+    """
+    query = (
+        f"MATCH (n:{PROVIDER_RESOURCE_LABEL} "
+        f"{{{PROVIDER_ID_PROPERTY}: $provider_id}}) "
+        "RETURN n LIMIT 1"
+    )
+
+    try:
+        with get_session(database) as session:
+            result = session.run(query, {"provider_id": provider_id})
+            return result.single() is not None
+
+    except GraphDatabaseQueryException as exc:
+        if exc.code == "Neo.ClientError.Database.DatabaseNotFound":
+            return False
+        raise
+
+
 def clear_cache(database: str) -> None:
     query = "CALL db.clearQueryCaches()"
 
