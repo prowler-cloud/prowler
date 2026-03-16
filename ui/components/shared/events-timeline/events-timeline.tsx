@@ -46,6 +46,8 @@ export const EventsTimeline = ({
   useEffect(() => {
     if (!isAwsProvider || !resourceId) return;
 
+    let cancelled = false;
+
     setError(null);
     setErrorStatus(null);
     setHasFetched(false);
@@ -55,6 +57,8 @@ export const EventsTimeline = ({
         const response = await getResourceEvents(resourceId, {
           includeReadEvents,
         });
+
+        if (cancelled) return;
 
         if (!response) {
           setError("Failed to fetch events. Please try again.");
@@ -70,12 +74,17 @@ export const EventsTimeline = ({
         setEvents(response.data || []);
         setExpandedRows(new Set());
       } catch (err) {
+        if (cancelled) return;
         console.error("Error fetching events:", err);
         setError("An unexpected error occurred.");
       } finally {
-        setHasFetched(true);
+        if (!cancelled) setHasFetched(true);
       }
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, [resourceId, includeReadEvents, isAwsProvider, retryCount]);
 
   const toggleRow = (eventId: string) => {
@@ -100,7 +109,7 @@ export const EventsTimeline = ({
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
   if (!isAwsProvider) {
@@ -214,6 +223,7 @@ export const EventsTimeline = ({
                     className={cn(
                       "group relative flex w-full items-start gap-4 py-2.5 pr-3 pl-6 text-left transition-colors",
                       "hover:bg-bg-neutral-tertiary/30 rounded-r-lg",
+                      "focus-visible:ring-border-neutral-secondary/50 outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
                     )}
                   >
                     {/* Timeline dot */}

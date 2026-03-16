@@ -135,6 +135,11 @@ export const ResourceDetailContent = ({
   const attributes = resource.attributes;
   const providerData = resource.relationships.provider.data.attributes;
 
+  // Reset to overview tab when switching resources
+  useEffect(() => {
+    setActiveTab("overview");
+  }, [resourceId]);
+
   // Cleanup abort controller on unmount
   useEffect(() => {
     return () => {
