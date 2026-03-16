@@ -1,6 +1,7 @@
 import { Control } from "react-hook-form";
 
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { ImageCredentials } from "@/types";
 
 export const ImageCredentialsForm = ({
@@ -21,7 +22,7 @@ export const ImageCredentialsForm = ({
       </div>
       <WizardInputField
         control={control}
-        name="registry_username"
+        name={ProviderCredentialFields.REGISTRY_USERNAME}
         label="Registry Username (Optional)"
         labelPlacement="inside"
         placeholder="Username for registry authentication"
@@ -31,7 +32,7 @@ export const ImageCredentialsForm = ({
       />
       <WizardInputField
         control={control}
-        name="registry_password"
+        name={ProviderCredentialFields.REGISTRY_PASSWORD}
         label="Registry Password (Optional)"
         labelPlacement="inside"
         placeholder="Password for registry authentication"
@@ -41,7 +42,7 @@ export const ImageCredentialsForm = ({
       />
       <WizardInputField
         control={control}
-        name="registry_token"
+        name={ProviderCredentialFields.REGISTRY_TOKEN}
         label="Registry Token (Optional)"
         labelPlacement="inside"
         placeholder="Token for registry authentication"
@@ -60,7 +61,7 @@ export const ImageCredentialsForm = ({
       </div>
       <WizardInputField
         control={control}
-        name="image_filter"
+        name={ProviderCredentialFields.IMAGE_FILTER}
         label="Image Filter (Optional)"
         labelPlacement="inside"
         placeholder="e.g. ^prod/.*"
@@ -70,7 +71,7 @@ export const ImageCredentialsForm = ({
       />
       <WizardInputField
         control={control}
-        name="tag_filter"
+        name={ProviderCredentialFields.TAG_FILTER}
         label="Tag Filter (Optional)"
         labelPlacement="inside"
         placeholder="e.g. ^(latest|v\d+\.\d+\.\d+)$"

@@ -394,14 +394,36 @@ export const addCredentialsFormSchema = (
       }
 
       if (providerType === "image") {
-        const password = data[ProviderCredentialFields.REGISTRY_PASSWORD];
+        const token = data[ProviderCredentialFields.REGISTRY_TOKEN];
         const username = data[ProviderCredentialFields.REGISTRY_USERNAME];
-        if (password && (!username || username.trim() === "")) {
-          ctx.addIssue({
-            code: "custom",
-            message: "Registry Username is required when providing a password",
-            path: [ProviderCredentialFields.REGISTRY_USERNAME],
-          });
+        const password = data[ProviderCredentialFields.REGISTRY_PASSWORD];
+
+        // When a token is provided, username/password validation is skipped (matches API behavior)
+        if (!token || token.trim() === "") {
+          if (
+            username &&
+            username.trim() !== "" &&
+            (!password || password.trim() === "")
+          ) {
+            ctx.addIssue({
+              code: "custom",
+              message:
+                "Registry Password is required when providing a username",
+              path: [ProviderCredentialFields.REGISTRY_PASSWORD],
+            });
+          }
+          if (
+            password &&
+            password.trim() !== "" &&
+            (!username || username.trim() === "")
+          ) {
+            ctx.addIssue({
+              code: "custom",
+              message:
+                "Registry Username is required when providing a password",
+              path: [ProviderCredentialFields.REGISTRY_USERNAME],
+            });
+          }
         }
       }
       if (providerType === "cloudflare") {
