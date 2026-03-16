@@ -632,7 +632,7 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
                 result = check.execute()
 
                 assert len(result) == 1
-                assert result[0].status == expected_status, f"Test case: {description}"
+                assert result[0].status == expected_status, f"Test case '{description}'"
 
     @pytest.mark.parametrize(
         "description, modify_element, expected_status",
@@ -915,3 +915,578 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
 
                 assert len(result) == 1
                 assert result[0].status == expected_status, f"Test case: {description}"
+
+    def test_assumed_role_configuration_with_valid_role_arn(self):
+        with mock_aws():
+            boto3_client = client("secretsmanager", region_name=AWS_REGION_EU_WEST_1)
+            boto3_client.create_secret(Name="mock-secret")
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            sm_client = SecretsManager(aws_provider)
+
+            mock_role_config = mock.MagicMock()
+            mock_role_config.info.role_arn.arn = (
+                "arn:aws:iam::123456789012:role/AssumedRole"
+            )
+
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch.object(
+                    sm_client.provider,
+                    "_assumed_role_configuration",
+                    mock_role_config,
+                    create=True,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    sm_client,
+                ),
+            ):
+                from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
+                    secretsmanager_has_restrictive_resource_policy,
+                )
+
+                check = secretsmanager_has_restrictive_resource_policy()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert (
+                    "arn:aws:iam::123456789012:role/AssumedRole"
+                    in result[0].status_extended
+                )
+
+    def test_identity_arn_none_fallback(self):
+        with mock_aws():
+            boto3_client = client("secretsmanager", region_name=AWS_REGION_EU_WEST_1)
+            boto3_client.create_secret(Name="mock-secret")
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            sm_client = SecretsManager(aws_provider)
+            sm_client.provider._assumed_role_configuration = None
+
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch.object(
+                    sm_client.provider.identity,
+                    "identity_arn",
+                    None,
+                ),
+                mock.patch.object(
+                    sm_client.provider, "_assumed_role_configuration", None
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    sm_client,
+                ),
+            ):
+                from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
+                    secretsmanager_has_restrictive_resource_policy,
+                )
+
+                check = secretsmanager_has_restrictive_resource_policy()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert "'None'" in result[0].status_extended
+
+    def test_cross_account_principal_in_allow_statement(self, secretsmanager_client):
+        with mock_aws():
+            client_instance, secret_arn = secretsmanager_client
+
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "AllowCrossAccountAccess",
+                        "Effect": "Allow",
+                        "Principal": {
+                            "AWS": "arn:aws:iam::999999999999:role/ExternalRole"
+                        },
+                        "Action": "secretsmanager:GetSecretValue",
+                        "Resource": "*",
+                    },
+                    {
+                        "Sid": "DenyUnauthorizedPrincipals",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "*",
+                        "Resource": "*",
+                        "Condition": {
+                            "StringNotEquals": {
+                                "aws:PrincipalArn": "arn:aws:iam::123456789012:role/MyRole"
+                            }
+                        },
+                    },
+                    {
+                        "Sid": "DenyOutsideOrganization",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "secretsmanager:*",
+                        "Resource": "*",
+                        "Condition": {
+                            "StringNotEquals": {"aws:PrincipalOrgID": "o-1234567890"}
+                        },
+                    },
+                    {
+                        "Sid": "DenyNotAction",
+                        "Effect": "Deny",
+                        "Principal": {"AWS": "arn:aws:iam::123456789012:role/MyRole"},
+                        "NotAction": ["secretsmanager:DescribeSecret"],
+                        "Resource": "*",
+                    },
+                ],
+            }
+
+            client_instance.put_resource_policy(
+                SecretId=secret_arn, ResourcePolicy=json.dumps(policy)
+            )
+
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    new=SecretsManager(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client.audit_config",
+                    {"organizations_trusted_ids": "o-1234567890"},
+                ),
+            ):
+                from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
+                    secretsmanager_has_restrictive_resource_policy,
+                )
+
+                check = secretsmanager_has_restrictive_resource_policy()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert "Cross-account access detected" in result[0].status_extended
+                assert (
+                    "arn:aws:iam::999999999999:role/ExternalRole"
+                    in result[0].status_extended
+                )
+
+    def test_multiple_cross_account_principals_truncation(self, secretsmanager_client):
+        with mock_aws():
+            client_instance, secret_arn = secretsmanager_client
+
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "AllowCrossAccount1",
+                        "Effect": "Allow",
+                        "Principal": {"AWS": "arn:aws:iam::111111111111:role/Role1"},
+                        "Action": "secretsmanager:GetSecretValue",
+                        "Resource": "*",
+                    },
+                    {
+                        "Sid": "AllowCrossAccount2",
+                        "Effect": "Allow",
+                        "Principal": {"AWS": "arn:aws:iam::222222222222:role/Role2"},
+                        "Action": "secretsmanager:GetSecretValue",
+                        "Resource": "*",
+                    },
+                    {
+                        "Sid": "AllowCrossAccount3",
+                        "Effect": "Allow",
+                        "Principal": {"AWS": "arn:aws:iam::333333333333:role/Role3"},
+                        "Action": "secretsmanager:GetSecretValue",
+                        "Resource": "*",
+                    },
+                    {
+                        "Sid": "AllowCrossAccount4",
+                        "Effect": "Allow",
+                        "Principal": {"AWS": "arn:aws:iam::444444444444:role/Role4"},
+                        "Action": "secretsmanager:GetSecretValue",
+                        "Resource": "*",
+                    },
+                    {
+                        "Sid": "DenyUnauthorizedPrincipals",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "*",
+                        "Resource": "*",
+                        "Condition": {
+                            "StringNotEquals": {
+                                "aws:PrincipalArn": "arn:aws:iam::123456789012:role/MyRole"
+                            }
+                        },
+                    },
+                ],
+            }
+
+            client_instance.put_resource_policy(
+                SecretId=secret_arn, ResourcePolicy=json.dumps(policy)
+            )
+
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    new=SecretsManager(aws_provider),
+                ),
+            ):
+                from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
+                    secretsmanager_has_restrictive_resource_policy,
+                )
+
+                check = secretsmanager_has_restrictive_resource_policy()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert "Cross-account access detected" in result[0].status_extended
+                assert "and more..." in result[0].status_extended
+
+    def test_wildcard_principal_in_allow_with_restrictive_condition(
+        self, secretsmanager_client
+    ):
+        with mock_aws():
+            client_instance, secret_arn = secretsmanager_client
+
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "DenyUnauthorizedPrincipals",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "*",
+                        "Resource": "*",
+                        "Condition": {
+                            "StringNotEquals": {
+                                "aws:PrincipalArn": "arn:aws:iam::123456789012:role/MyRole"
+                            }
+                        },
+                    },
+                    {
+                        "Sid": "DenyOutsideOrganization",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "secretsmanager:*",
+                        "Resource": "*",
+                        "Condition": {
+                            "StringNotEquals": {"aws:PrincipalOrgID": "o-1234567890"}
+                        },
+                    },
+                    {
+                        "Sid": "AllowWithRestrictiveCondition",
+                        "Effect": "Allow",
+                        "Principal": "*",
+                        "Action": "secretsmanager:GetSecretValue",
+                        "Resource": "*",
+                        "Condition": {
+                            "StringEquals": {"aws:PrincipalAccount": "123456789012"}
+                        },
+                    },
+                    {
+                        "Sid": "DenyNotAction",
+                        "Effect": "Deny",
+                        "Principal": {"AWS": "arn:aws:iam::123456789012:role/MyRole"},
+                        "NotAction": ["secretsmanager:DescribeSecret"],
+                        "Resource": "*",
+                    },
+                ],
+            }
+
+            client_instance.put_resource_policy(
+                SecretId=secret_arn, ResourcePolicy=json.dumps(policy)
+            )
+
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    new=SecretsManager(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client.audit_config",
+                    {"organizations_trusted_ids": "o-1234567890"},
+                ),
+            ):
+                from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
+                    secretsmanager_has_restrictive_resource_policy,
+                )
+
+                check = secretsmanager_has_restrictive_resource_policy()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert "Cross-account" not in result[0].status_extended
+
+    @pytest.mark.parametrize(
+        "description, arn_not_like_value, include_arn_like_statement, expected_status, expected_message",
+        [
+            (
+                "Valid ArnNotLike with matching ArnLike",
+                "arn:aws:iam::123456789012:role/LongPrefixRole*",
+                True,
+                "PASS",
+                "sufficiently restrictive",
+            ),
+            (
+                "Invalid ArnNotLike with short prefix",
+                "arn:aws:iam::123456789012:role/Sho*",
+                True,
+                "FAIL",
+                "does not meet all required restrictions",
+            ),
+            (
+                "Valid ArnNotLike but missing ArnLike statement",
+                "arn:aws:iam::123456789012:role/LongPrefixRole*",
+                False,
+                "FAIL",
+                "Missing or incorrect 'ArnLike' validation",
+            ),
+        ],
+    )
+    def test_policy_with_arn_not_like(
+        self,
+        secretsmanager_client,
+        description,
+        arn_not_like_value,
+        include_arn_like_statement,
+        expected_status,
+        expected_message,
+    ):
+        with mock_aws():
+            client_instance, secret_arn = secretsmanager_client
+
+            statements = [
+                {
+                    "Sid": "DenyUnauthorizedPrincipals",
+                    "Effect": "Deny",
+                    "Principal": "*",
+                    "Action": "*",
+                    "Resource": "*",
+                    "Condition": {
+                        "StringNotEquals": {
+                            "aws:PrincipalArn": "arn:aws:iam::123456789012:role/AccountSecurityAuditRole"
+                        },
+                        "ArnNotLike": {"aws:PrincipalArn": arn_not_like_value},
+                    },
+                },
+                {
+                    "Sid": "DenyOutsideOrganization",
+                    "Effect": "Deny",
+                    "Principal": "*",
+                    "Action": "secretsmanager:*",
+                    "Resource": "*",
+                    "Condition": {
+                        "StringNotEquals": {"aws:PrincipalOrgID": "o-1234567890"}
+                    },
+                },
+                {
+                    "Sid": "AllowAuditPolicyRead",
+                    "Effect": "Deny",
+                    "Principal": {
+                        "AWS": "arn:aws:iam::123456789012:role/AccountSecurityAuditRole"
+                    },
+                    "NotAction": [
+                        "secretsmanager:DescribeSecret",
+                        "secretsmanager:GetResourcePolicy",
+                    ],
+                    "Resource": "*",
+                },
+            ]
+
+            if include_arn_like_statement:
+                statements.append(
+                    {
+                        "Sid": "DenyWildcardPrincipals",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "*",
+                        "Resource": "*",
+                        "Condition": {
+                            "ArnLike": {"aws:PrincipalArn": arn_not_like_value}
+                        },
+                    }
+                )
+
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": statements,
+            }
+
+            client_instance.put_resource_policy(
+                SecretId=secret_arn, ResourcePolicy=json.dumps(policy)
+            )
+
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    new=SecretsManager(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client.audit_config",
+                    {"organizations_trusted_ids": "o-1234567890"},
+                ),
+            ):
+                from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
+                    secretsmanager_has_restrictive_resource_policy,
+                )
+
+                check = secretsmanager_has_restrictive_resource_policy()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == expected_status, f"Test case: {description}"
+                assert (
+                    expected_message in result[0].status_extended
+                ), f"Test case: {description}"
+
+    def test_resource_as_list_with_matching_arn(self, secretsmanager_client):
+        with mock_aws():
+            client_instance, secret_arn = secretsmanager_client
+
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "DenyUnauthorizedPrincipals",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "*",
+                        "Resource": [secret_arn],
+                        "Condition": {
+                            "StringNotEquals": {
+                                "aws:PrincipalArn": "arn:aws:iam::123456789012:role/MyRole"
+                            }
+                        },
+                    },
+                    {
+                        "Sid": "DenyOutsideOrganization",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "secretsmanager:*",
+                        "Resource": [secret_arn],
+                        "Condition": {
+                            "StringNotEquals": {"aws:PrincipalOrgID": "o-1234567890"}
+                        },
+                    },
+                    {
+                        "Sid": "DenyNotAction",
+                        "Effect": "Deny",
+                        "Principal": {"AWS": "arn:aws:iam::123456789012:role/MyRole"},
+                        "NotAction": ["secretsmanager:DescribeSecret"],
+                        "Resource": "*",
+                    },
+                ],
+            }
+
+            client_instance.put_resource_policy(
+                SecretId=secret_arn, ResourcePolicy=json.dumps(policy)
+            )
+
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    new=SecretsManager(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client.audit_config",
+                    {"organizations_trusted_ids": "o-1234567890"},
+                ),
+            ):
+                from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
+                    secretsmanager_has_restrictive_resource_policy,
+                )
+
+                check = secretsmanager_has_restrictive_resource_policy()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+
+    def test_resource_as_list_with_nonmatching_arn(self, secretsmanager_client):
+        with mock_aws():
+            client_instance, secret_arn = secretsmanager_client
+
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "DenyUnauthorizedPrincipals",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "*",
+                        "Resource": [
+                            "arn:aws:secretsmanager:eu-west-1:123456789012:secret:wrong-secret"
+                        ],
+                        "Condition": {
+                            "StringNotEquals": {
+                                "aws:PrincipalArn": "arn:aws:iam::123456789012:role/MyRole"
+                            }
+                        },
+                    },
+                    {
+                        "Sid": "DenyOutsideOrganization",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "secretsmanager:*",
+                        "Resource": "*",
+                        "Condition": {
+                            "StringNotEquals": {"aws:PrincipalOrgID": "o-1234567890"}
+                        },
+                    },
+                ],
+            }
+
+            client_instance.put_resource_policy(
+                SecretId=secret_arn, ResourcePolicy=json.dumps(policy)
+            )
+
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    new=SecretsManager(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client.audit_config",
+                    {"organizations_trusted_ids": "o-1234567890"},
+                ),
+            ):
+                from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
+                    secretsmanager_has_restrictive_resource_policy,
+                )
+
+                check = secretsmanager_has_restrictive_resource_policy()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
