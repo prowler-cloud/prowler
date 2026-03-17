@@ -365,6 +365,15 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif "vercel" in provider_class_name.lower():
+                    provider_class(
+                        api_token=getattr(arguments, "vercel_token", None),
+                        team_id=getattr(arguments, "vercel_team", None),
+                        projects=getattr(arguments, "project", None),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
 
         except TypeError as error:
             logger.critical(
