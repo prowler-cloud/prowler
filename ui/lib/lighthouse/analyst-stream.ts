@@ -18,7 +18,8 @@ export { CHAIN_OF_THOUGHT_ACTIONS, ERROR_PREFIX, STREAM_MESSAGE_ID };
 
 /**
  * Safely parses the JSON string nested inside a meta-tool's input wrapper.
- * All meta-tools receive their arguments as `{ input: "<JSON string>" }`.
+ * In tool stream events, meta-tools receive their arguments as `{ input: "<JSON string>" }`.
+ * Note: In chat_model_end events, args are pre-parsed by LangChain (see handleChatModelEndEvent).
  *
  * @returns The parsed object, or null if parsing fails
  */
@@ -59,7 +60,7 @@ export function extractActualToolName(
     metaToolName === META_TOOLS.EXECUTE
   ) {
     const parsed = parseMetaToolInput(toolInput);
-    return (parsed?.toolName as string) ?? null;
+    return (parsed?.toolName as string) || null;
   }
 
   if (metaToolName === META_TOOLS.LOAD_SKILL) {
