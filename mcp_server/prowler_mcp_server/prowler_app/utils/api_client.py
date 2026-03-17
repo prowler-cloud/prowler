@@ -208,6 +208,8 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             Exception: If the HTTP request fails
         """
         parsed = urlparse(url)
+        if parsed.scheme != "https":
+            raise ValueError(f"Only HTTPS URLs are allowed, got '{parsed.scheme}'")
         if parsed.hostname not in ALLOWED_EXTERNAL_DOMAINS:
             raise ValueError(
                 f"Domain '{parsed.hostname}' is not allowed. "
@@ -223,7 +225,9 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             return response.text
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error fetching external URL {url}: {e}")
-            raise Exception(f"Failed to fetch external URL: {e.response.status_code}")
+            raise Exception(
+                f"Failed to fetch external URL: {e.response.status_code}"
+            ) from e
         except Exception as e:
             logger.error(f"Error fetching external URL {url}: {e}")
             raise
