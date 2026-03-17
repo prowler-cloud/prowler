@@ -1,3 +1,58 @@
+"""
+Attack Paths scan orchestrator.
+
+Runs the full scan lifecycle for a single provider, called from a Celery task.
+The idea is simple: ingest everything into a throwaway Neo4j database, enrich
+it with Prowler-specific data, then swap it into the tenant's long-lived
+database so queries never see a half-built graph.
+
+Two databases are involved:
+- Temporary (db-tmp-scan-<attack_paths_scan_id>): short-lived, single-provider, dropped after sync.
+- Tenant (db-tenant-<tenant_uuid>): long-lived, multi-provider, what the API queries against.
+
+Pipeline steps:
+
+1. Resolve the Prowler provider and SDK credentials from the scan ID.
+   Retrieve or create the AttackPathsScan row. Exit early if the provider
+   type has no ingestion function (only AWS is supported today).
+
+2. Create a fresh temporary Neo4j database and set up Cartography indexes
+   plus ProwlerFinding indexes before writing any data.
+
+3. Run the provider-specific Cartography ingestion (e.g. aws.start_aws_ingestion).
+   This iterates over cloud services and writes the standard Cartography nodes
+   (AWSAccount, EC2Instance, IAMRole, etc.) and relationships (RESOURCE,
+   POLICY, STATEMENT, TRUSTS_AWS_PRINCIPAL, ...) into the temp database.
+   Wrapped in call_within_event_loop because some Cartography modules use async.
+
+4. Run Cartography post-processing: ontology for label propagation and
+   analysis for derived relationships.
+
+5. Create an Internet singleton node and add CAN_ACCESS relationships to
+   internet-exposed resources (EC2Instance, LoadBalancer, LoadBalancerV2).
+
+6. Stream Prowler findings from Postgres in batches. Each finding becomes a
+   ProwlerFinding node linked to its cloud-resource node via HAS_FINDING.
+   Before that, an _AWSResource label (provider-specific) is added to all
+   nodes connected to the AWSAccount so finding lookups can use an index.
+   Stale findings from previous scans are cleaned up.
+
+7. Sync the temp database into the tenant database:
+   - Drop the old provider subgraph (matched by _provider_id property).
+     graph_data_ready is set to False for all scans of this provider while
+     the swap happens so the API doesn't serve partial data.
+   - Copy nodes and relationships in batches. Every synced node gets a
+     _ProviderResource label and _provider_id / _provider_element_id
+     properties for multi-provider isolation.
+   - Set graph_data_ready back to True.
+
+8. Drop the temporary database, mark the AttackPathsScan as COMPLETED.
+
+On failure the temp database is dropped, the scan is marked FAILED, and the
+exception propagates to Celery.
+
+"""
+
 import logging
 import time
 
@@ -182,6 +237,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         sync.sync_graph(
             source_database=tmp_database_name,
             target_database=tenant_database_name,
+            tenant_id=str(prowler_api_provider.tenant_id),
             provider_id=str(prowler_api_provider.id),
         )
         db_utils.set_graph_data_ready(attack_paths_scan, True)

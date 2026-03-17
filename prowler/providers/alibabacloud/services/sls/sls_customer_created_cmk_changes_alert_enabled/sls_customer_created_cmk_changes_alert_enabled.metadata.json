@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "**Alibaba Cloud Simple Log Service (SLS)** should have a query and alarm configured for customer-created **KMS Customer Master Keys (CMKs)** that have changed state to disabled or scheduled for deletion. Real-time monitoring of API calls can be achieved by directing **ActionTrail** logs to SLS and establishing corresponding alert rules. This ensures that any disabling or deletion of encryption keys is promptly detected, preventing accidental or malicious loss of access to encrypted data.",
-  "Risk": "Without monitoring for **CMK state changes**, data encrypted with **disabled or deleted keys** will become permanently inaccessible. This could lead to **data loss**, **business disruption**, and **compliance violations**. Malicious actors who gain access to the KMS service could silently disable or schedule deletion of critical encryption keys, rendering protected data unrecoverable if not detected in time.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for customer-created **KMS CMKs** that are disabled or scheduled for deletion. By directing **ActionTrail** logs to SLS with alert rules, disabling or deletion of encryption keys is promptly detected, preventing accidental or malicious loss of access to encrypted data.",
+  "Risk": "Without monitoring for **CMK state changes**, data encrypted with **disabled or deleted keys** becomes permanently inaccessible, leading to **data loss**, **business disruption**, and **compliance violations**. Malicious actors could silently disable or schedule deletion of encryption keys, rendering data unrecoverable.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",

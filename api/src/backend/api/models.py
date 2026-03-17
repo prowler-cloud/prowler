@@ -293,6 +293,7 @@ class Provider(RowLevelSecurityProtectedModel):
         CLOUDFLARE = "cloudflare", _("Cloudflare")
         OPENSTACK = "openstack", _("OpenStack")
         IMAGE = "image", _("Image")
+        GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -339,6 +340,15 @@ class Provider(RowLevelSecurityProtectedModel):
                 "and contain only lowercase letters, numbers, and hyphens. "
                 "Legacy App Engine project IDs with a domain prefix (e.g., example.com:my-project) are also accepted.",
                 code="gcp-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_googleworkspace_uid(value):
+        if not re.match(r"^C[0-9a-zA-Z]+$", value):
+            raise ModelValidationError(
+                detail="Google Workspace Customer ID must start with 'C' followed by one or more alphanumeric characters (e.g., C01234abc, C12345678).",
+                code="googleworkspace-uid",
                 pointer="/data/attributes/uid",
             )
 

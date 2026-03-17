@@ -51,6 +51,13 @@ from api.v1.views import (
 )
 
 
+# This helper view is used to block any endpoints that should not be available
+# To use it, add a new entry in the `urlpatterns` list, for example (old but real one):
+#     path(
+#         "attack-paths-scans/<uuid:pk>/queries/custom",
+#         _blocked_endpoint,
+#         name="attack-paths-scans-queries-custom-blocked",
+#     ),
 @csrf_exempt
 def _blocked_endpoint(request, *args, **kwargs):
     return JsonResponse(
@@ -209,17 +216,6 @@ urlpatterns = [
     path("tokens/saml", SAMLTokenValidateView.as_view(), name="token-saml"),
     path("tokens/google", GoogleSocialLoginView.as_view(), name="token-google"),
     path("tokens/github", GithubSocialLoginView.as_view(), name="token-github"),
-    # TODO: Remove these blocked endpoints once they are properly tested
-    path(
-        "attack-paths-scans/<uuid:pk>/queries/custom",
-        _blocked_endpoint,
-        name="attack-paths-scans-queries-custom-blocked",
-    ),
-    path(
-        "attack-paths-scans/<uuid:pk>/schema",
-        _blocked_endpoint,
-        name="attack-paths-scans-schema-blocked",
-    ),
     path("", include(router.urls)),
     path("", include(tenants_router.urls)),
     path("", include(users_router.urls)),
