@@ -13,7 +13,12 @@ from api.attack_paths.queries.schema import (
     RAW_SCHEMA_URL,
 )
 from config.custom_logging import BackendLogger
-from tasks.jobs.attack_paths.config import INTERNAL_LABELS, INTERNAL_PROPERTIES
+from tasks.jobs.attack_paths.config import (
+    INTERNAL_LABELS,
+    INTERNAL_PROPERTIES,
+    PROVIDER_ID_PROPERTY,
+    is_dynamic_isolation_label,
+)
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -253,7 +258,7 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
     nodes = []
     kept_node_ids = set()
     for node in graph.nodes:
-        if node._properties.get("provider_id") != provider_id:
+        if node._properties.get(PROVIDER_ID_PROPERTY) != provider_id:
             continue
 
         kept_node_ids.add(node.element_id)
@@ -273,7 +278,7 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
 
     relationships = []
     for relationship in graph.relationships:
-        if relationship._properties.get("provider_id") != provider_id:
+        if relationship._properties.get(PROVIDER_ID_PROPERTY) != provider_id:
             continue
 
         if (
@@ -301,7 +306,11 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
 
 
 def _filter_labels(labels: Iterable[str]) -> list[str]:
-    return [label for label in labels if label not in INTERNAL_LABELS]
+    return [
+        label
+        for label in labels
+        if label not in INTERNAL_LABELS and not is_dynamic_isolation_label(label)
+    ]
 
 
 def _serialize_properties(properties: dict[str, Any]) -> dict[str, Any]:

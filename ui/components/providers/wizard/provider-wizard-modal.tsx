@@ -22,19 +22,21 @@ import { CredentialsStep } from "./steps/credentials-step";
 import { WIZARD_FOOTER_ACTION_TYPE } from "./steps/footer-controls";
 import { LaunchStep } from "./steps/launch-step";
 import { TestConnectionStep } from "./steps/test-connection-step";
-import type { ProviderWizardInitialData } from "./types";
+import type { OrgWizardInitialData, ProviderWizardInitialData } from "./types";
 import { WizardStepper } from "./wizard-stepper";
 
 interface ProviderWizardModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialData?: ProviderWizardInitialData;
+  orgInitialData?: OrgWizardInitialData;
 }
 
 export function ProviderWizardModal({
   open,
   onOpenChange,
   initialData,
+  orgInitialData,
 }: ProviderWizardModalProps) {
   const {
     backToProviderFlow,
@@ -43,6 +45,7 @@ export function ProviderWizardModal({
     handleClose,
     handleDialogOpenChange,
     handleTestSuccess,
+    isOrgDirectEntry,
     isProviderFlow,
     modalTitle,
     openOrganizationsFlow,
@@ -59,6 +62,7 @@ export function ProviderWizardModal({
     open,
     onOpenChange,
     initialData,
+    orgInitialData,
   });
   const scrollHintRefreshToken = `${wizardVariant}-${currentStep}-${orgCurrentStep}-${orgSetupPhase}`;
   const { containerRef, sentinelRef, showScrollHint } = useScrollHint({
@@ -149,13 +153,23 @@ export function ProviderWizardModal({
 
             {!isProviderFlow && orgCurrentStep === ORG_WIZARD_STEP.SETUP && (
               <OrgSetupForm
-                onBack={backToProviderFlow}
+                onBack={isOrgDirectEntry ? handleClose : backToProviderFlow}
+                onClose={handleClose}
                 onNext={() => {
                   setOrgCurrentStep(ORG_WIZARD_STEP.VALIDATE);
                 }}
                 onFooterChange={setFooterConfig}
                 onPhaseChange={setOrgSetupPhase}
                 initialPhase={orgSetupPhase}
+                initialValues={
+                  orgInitialData
+                    ? {
+                        organizationName: orgInitialData.organizationName,
+                        awsOrgId: orgInitialData.externalId,
+                      }
+                    : undefined
+                }
+                intent={orgInitialData?.intent}
               />
             )}
 

@@ -132,6 +132,10 @@ vi.mock("./delta-indicator", () => ({
   DeltaIndicator: () => null,
 }));
 
+vi.mock("@/components/shared/events-timeline/events-timeline", () => ({
+  EventsTimeline: () => <div data-testid="events-timeline" />,
+}));
+
 vi.mock("react-markdown", () => ({
   default: ({ children }: { children: string }) => <span>{children}</span>,
 }));
