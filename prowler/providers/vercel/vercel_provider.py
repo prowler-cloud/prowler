@@ -45,9 +45,12 @@ class VercelProvider(Provider):
 
     def __init__(
         self,
+        # Authentication credentials
         api_token: str = None,
         team_id: str = None,
+        # Scope
         projects: list[str] | None = None,
+        # Provider configuration
         config_path: str = None,
         config_content: dict | None = None,
         fixer_config: dict = {},
@@ -120,13 +123,14 @@ class VercelProvider(Provider):
     ) -> VercelSession:
         """Initialize Vercel API session.
 
-        Credentials can be provided as arguments or read from environment variables:
+        Credentials can be provided as arguments (for API use) or read from
+        environment variables:
         - VERCEL_TOKEN (API Bearer Token)
         - VERCEL_TEAM (Team ID or slug, optional)
 
         Args:
-            api_token: Vercel API token (optional, falls back to env var).
-            team_id: Vercel team ID or slug (optional, falls back to env var).
+            api_token: Vercel API token (optional, falls back to VERCEL_TOKEN env var).
+            team_id: Vercel team ID or slug (optional, falls back to VERCEL_TEAM env var).
 
         Returns:
             VercelSession: The initialized Vercel session.
@@ -141,7 +145,7 @@ class VercelProvider(Provider):
         if not token:
             raise VercelCredentialsError(
                 file=os.path.basename(__file__),
-                message="Vercel credentials not found. Set VERCEL_TOKEN environment variable or pass --vercel-token.",
+                message="Vercel credentials not found. Provide an api_token or set the VERCEL_TOKEN environment variable.",
             )
 
         try:
@@ -318,9 +322,12 @@ class VercelProvider(Provider):
     ) -> Connection:
         """Test connection to Vercel.
 
+        Credentials can be provided as arguments (for API use) or read from
+        environment variables (VERCEL_TOKEN, VERCEL_TEAM).
+
         Args:
-            api_token: Vercel API token.
-            team_id: Vercel team ID or slug.
+            api_token: Vercel API token (optional, falls back to env var).
+            team_id: Vercel team ID or slug (optional, falls back to env var).
             raise_on_exception: Whether to raise or return errors.
             provider_id: The provider ID.
 

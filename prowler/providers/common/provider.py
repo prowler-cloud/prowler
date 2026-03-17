@@ -367,8 +367,6 @@ class Provider(ABC):
                     )
                 elif "vercel" in provider_class_name.lower():
                     provider_class(
-                        api_token=getattr(arguments, "vercel_token", None),
-                        team_id=getattr(arguments, "vercel_team", None),
                         projects=getattr(arguments, "project", None),
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
