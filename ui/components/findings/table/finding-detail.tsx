@@ -2,7 +2,7 @@
 
 import { ExternalLink, Link, VolumeX, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 import {
@@ -23,6 +23,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
+import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { EntityInfo } from "@/components/ui/entities";
@@ -91,6 +92,12 @@ export const FindingDetail = ({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
+
+  const [activeTab, setActiveTab] = useState("general");
+
+  useEffect(() => {
+    setActiveTab("general");
+  }, [findingDetails.id]);
 
   const copyFindingUrl = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -172,12 +179,13 @@ export const FindingDetail = ({
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="general" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="mb-4 flex items-center justify-between">
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="resources">Resources</TabsTrigger>
             <TabsTrigger value="scans">Scans</TabsTrigger>
+            <TabsTrigger value="events">Events</TabsTrigger>
           </TabsList>
 
           {!attributes.muted && (
@@ -469,6 +477,14 @@ export const FindingDetail = ({
               Scan information is not available.
             </p>
           )}
+        </TabsContent>
+
+        {/* Events Tab */}
+        <TabsContent value="events" className="flex flex-col gap-4">
+          <EventsTimeline
+            resourceId={finding.relationships?.resource?.id}
+            isAwsProvider={providerDetails?.provider === "aws"}
+          />
         </TabsContent>
       </Tabs>
     </div>

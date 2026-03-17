@@ -15,7 +15,9 @@ import {
   CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
+  GoogleWorkspaceProviderBadge,
   IacProviderBadge,
+  ImageProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
@@ -61,9 +63,19 @@ const PROVIDERS = [
     badge: GitHubProviderBadge,
   },
   {
+    value: "googleworkspace",
+    label: "Google Workspace",
+    badge: GoogleWorkspaceProviderBadge,
+  },
+  {
     value: "iac",
     label: "Infrastructure as Code",
     badge: IacProviderBadge,
+  },
+  {
+    value: "image",
+    label: "Container Registry",
+    badge: ImageProviderBadge,
   },
   {
     value: "oraclecloud",

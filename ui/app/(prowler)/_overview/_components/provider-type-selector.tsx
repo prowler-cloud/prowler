@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { lazy, Suspense } from "react";
+import { type ComponentType, lazy, Suspense } from "react";
 
 import {
   MultiSelect,
@@ -48,6 +48,11 @@ const IacProviderBadge = lazy(() =>
     default: m.IacProviderBadge,
   })),
 );
+const ImageProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.ImageProviderBadge,
+  })),
+);
 const OracleCloudProviderBadge = lazy(() =>
   import("@/components/icons/providers-badge").then((m) => ({
     default: m.OracleCloudProviderBadge,
@@ -73,6 +78,11 @@ const OpenStackProviderBadge = lazy(() =>
     default: m.OpenStackProviderBadge,
   })),
 );
+const GoogleWorkspaceProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.GoogleWorkspaceProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -82,7 +92,7 @@ const IconPlaceholder = ({ width, height }: IconProps) => (
 
 const PROVIDER_DATA: Record<
   ProviderType,
-  { label: string; icon: React.ComponentType<IconProps> }
+  { label: string; icon: ComponentType<IconProps> }
 > = {
   aws: {
     label: "Amazon Web Services",
@@ -108,9 +118,17 @@ const PROVIDER_DATA: Record<
     label: "GitHub",
     icon: GitHubProviderBadge,
   },
+  googleworkspace: {
+    label: "Google Workspace",
+    icon: GoogleWorkspaceProviderBadge,
+  },
   iac: {
     label: "Infrastructure as Code",
     icon: IacProviderBadge,
+  },
+  image: {
+    label: "Container Registry",
+    icon: ImageProviderBadge,
   },
   oraclecloud: {
     label: "Oracle Cloud Infrastructure",

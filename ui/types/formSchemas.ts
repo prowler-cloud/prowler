@@ -116,6 +116,11 @@ export const addProviderFormSchema = z
         providerUid: z.string().trim().min(1, "Provider ID is required"),
       }),
       z.object({
+        providerType: z.literal("image"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
+      }),
+      z.object({
         providerType: z.literal("oraclecloud"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string().trim().min(1, "Provider ID is required"),
@@ -139,6 +144,17 @@ export const addProviderFormSchema = z
         providerType: z.literal("openstack"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
+      }),
+      z.object({
+        providerType: z.literal("googleworkspace"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z
+          .string()
+          .trim()
+          .regex(
+            /^C[0-9a-zA-Z]+$/,
+            "Customer ID must start with 'C' followed by alphanumeric characters (e.g., C01234abc)",
+          ),
       }),
     ]),
   );
@@ -269,44 +285,98 @@ export const addCredentialsFormSchema = (
                                   .string()
                                   .min(1, "Access Key Secret is required"),
                             }
-                          : providerType === "cloudflare"
+                          : providerType === "image"
                             ? {
-                                [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]:
-                                  z.string().optional(),
-                                [ProviderCredentialFields.CLOUDFLARE_API_KEY]: z
+                                [ProviderCredentialFields.REGISTRY_USERNAME]: z
                                   .string()
                                   .optional(),
-                                [ProviderCredentialFields.CLOUDFLARE_API_EMAIL]:
-                                  z
-                                    .string()
-                                    .superRefine((val, ctx) => {
-                                      if (val && val.trim() !== "") {
-                                        const emailRegex =
-                                          /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                                        if (!emailRegex.test(val)) {
-                                          ctx.addIssue({
-                                            code: z.ZodIssueCode.custom,
-                                            message:
-                                              "Please enter a valid email address",
-                                          });
-                                        }
-                                      }
-                                    })
-                                    .optional(),
+                                [ProviderCredentialFields.REGISTRY_PASSWORD]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.REGISTRY_TOKEN]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.IMAGE_FILTER]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.TAG_FILTER]: z
+                                  .string()
+                                  .optional(),
                               }
-                            : providerType === "openstack"
+                            : providerType === "cloudflare"
                               ? {
-                                  [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]:
+                                  [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]:
+                                    z.string().optional(),
+                                  [ProviderCredentialFields.CLOUDFLARE_API_KEY]:
+                                    z.string().optional(),
+                                  [ProviderCredentialFields.CLOUDFLARE_API_EMAIL]:
                                     z
                                       .string()
-                                      .min(
-                                        1,
-                                        "Clouds YAML content is required",
-                                      ),
-                                  [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]:
-                                    z.string().min(1, "Cloud name is required"),
+                                      .superRefine((val, ctx) => {
+                                        if (val && val.trim() !== "") {
+                                          const emailRegex =
+                                            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                                          if (!emailRegex.test(val)) {
+                                            ctx.addIssue({
+                                              code: z.ZodIssueCode.custom,
+                                              message:
+                                                "Please enter a valid email address",
+                                            });
+                                          }
+                                        }
+                                      })
+                                      .optional(),
                                 }
-                              : {}),
+                              : providerType === "googleworkspace"
+                                ? {
+                                    [ProviderCredentialFields.GOOGLEWORKSPACE_CUSTOMER_ID]:
+                                      z
+                                        .string()
+                                        .trim()
+                                        .regex(
+                                          /^C[0-9a-zA-Z]+$/,
+                                          "Customer ID must start with 'C' followed by alphanumeric characters (e.g., C01234abc)",
+                                        ),
+                                    [ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT]:
+                                      z.string().refine(
+                                        (val) => {
+                                          try {
+                                            const parsed = JSON.parse(val);
+                                            return (
+                                              typeof parsed === "object" &&
+                                              parsed !== null &&
+                                              !Array.isArray(parsed)
+                                            );
+                                          } catch {
+                                            return false;
+                                          }
+                                        },
+                                        {
+                                          message:
+                                            "Invalid JSON format. Please provide a valid Service Account JSON.",
+                                        },
+                                      ),
+                                    [ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER]:
+                                      z.email({
+                                        error:
+                                          "Please enter a valid email address",
+                                      }),
+                                  }
+                                : providerType === "openstack"
+                                  ? {
+                                      [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]:
+                                        z
+                                          .string()
+                                          .min(
+                                            1,
+                                            "Clouds YAML content is required",
+                                          ),
+                                      [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]:
+                                        z
+                                          .string()
+                                          .min(1, "Cloud name is required"),
+                                    }
+                                  : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {
@@ -369,6 +439,39 @@ export const addCredentialsFormSchema = (
         }
       }
 
+      if (providerType === "image") {
+        const token = data[ProviderCredentialFields.REGISTRY_TOKEN];
+        const username = data[ProviderCredentialFields.REGISTRY_USERNAME];
+        const password = data[ProviderCredentialFields.REGISTRY_PASSWORD];
+
+        // When a token is provided, username/password validation is skipped (matches API behavior)
+        if (!token || token.trim() === "") {
+          if (
+            username &&
+            username.trim() !== "" &&
+            (!password || password.trim() === "")
+          ) {
+            ctx.addIssue({
+              code: "custom",
+              message:
+                "Registry Password is required when providing a username",
+              path: [ProviderCredentialFields.REGISTRY_PASSWORD],
+            });
+          }
+          if (
+            password &&
+            password.trim() !== "" &&
+            (!username || username.trim() === "")
+          ) {
+            ctx.addIssue({
+              code: "custom",
+              message:
+                "Registry Username is required when providing a password",
+              path: [ProviderCredentialFields.REGISTRY_USERNAME],
+            });
+          }
+        }
+      }
       if (providerType === "cloudflare") {
         // For Cloudflare, validation depends on the 'via' parameter
         if (via === "api_token") {
