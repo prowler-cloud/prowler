@@ -233,6 +233,14 @@ export const useCredentialsForm = ({
             providerUid || "",
           [ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT]: "",
           [ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER]: "",
+      case "image":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.REGISTRY_USERNAME]: "",
+          [ProviderCredentialFields.REGISTRY_PASSWORD]: "",
+          [ProviderCredentialFields.REGISTRY_TOKEN]: "",
+          [ProviderCredentialFields.IMAGE_FILTER]: "",
+          [ProviderCredentialFields.TAG_FILTER]: "",
         };
       default:
         return baseDefaults;

@@ -10,6 +10,7 @@ import { GCPProviderBadge } from "./gcp-provider-badge";
 import { GitHubProviderBadge } from "./github-provider-badge";
 import { GoogleWorkspaceProviderBadge } from "./googleworkspace-provider-badge";
 import { IacProviderBadge } from "./iac-provider-badge";
+import { ImageProviderBadge } from "./image-provider-badge";
 import { KS8ProviderBadge } from "./ks8-provider-badge";
 import { M365ProviderBadge } from "./m365-provider-badge";
 import { MongoDBAtlasProviderBadge } from "./mongodbatlas-provider-badge";
@@ -25,6 +26,7 @@ export {
   GitHubProviderBadge,
   GoogleWorkspaceProviderBadge,
   IacProviderBadge,
+  ImageProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
@@ -33,7 +35,7 @@ export {
 };
 
 // Map provider display names to their icon components
-export const PROVIDER_ICONS: Record<string, FC<IconSvgProps>> = {
+export const PROVIDER_BADGE_BY_NAME: Record<string, FC<IconSvgProps>> = {
   AWS: AWSProviderBadge,
   Azure: AzureProviderBadge,
   "Google Cloud": GCPProviderBadge,
@@ -42,6 +44,7 @@ export const PROVIDER_ICONS: Record<string, FC<IconSvgProps>> = {
   GitHub: GitHubProviderBadge,
   "Google Workspace": GoogleWorkspaceProviderBadge,
   "Infrastructure as Code": IacProviderBadge,
+  "Container Registry": ImageProviderBadge,
   "Oracle Cloud Infrastructure": OracleCloudProviderBadge,
   "MongoDB Atlas": MongoDBAtlasProviderBadge,
   "Alibaba Cloud": AlibabaCloudProviderBadge,

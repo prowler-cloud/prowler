@@ -15,6 +15,8 @@ from tasks.jobs.attack_paths.config import (
     BATCH_SIZE,
     PROVIDER_ISOLATION_PROPERTIES,
     PROVIDER_RESOURCE_LABEL,
+    get_provider_label,
+    get_tenant_label,
 )
 from tasks.jobs.attack_paths.indexes import IndexType, create_indexes
 from tasks.jobs.attack_paths.queries import (
@@ -36,6 +38,7 @@ def create_sync_indexes(neo4j_session) -> None:
 def sync_graph(
     source_database: str,
     target_database: str,
+    tenant_id: str,
     provider_id: str,
 ) -> dict[str, int]:
     """
@@ -44,6 +47,7 @@ def sync_graph(
     Args:
         `source_database`: The temporary scan database
         `target_database`: The tenant database
+        `tenant_id`: The tenant ID for isolation
         `provider_id`: The provider ID for isolation
 
     Returns:
@@ -52,6 +56,7 @@ def sync_graph(
     nodes_synced = sync_nodes(
         source_database,
         target_database,
+        tenant_id,
         provider_id,
     )
     relationships_synced = sync_relationships(
@@ -69,12 +74,14 @@ def sync_graph(
 def sync_nodes(
     source_database: str,
     target_database: str,
+    tenant_id: str,
     provider_id: str,
 ) -> int:
     """
     Sync nodes from source to target database.
 
     Adds `_ProviderResource` label and `_provider_id` property to all nodes.
+    Also adds dynamic `_Tenant_{id}` and `_Provider_{id}` isolation labels.
     """
     last_id = -1
     total_synced = 0
@@ -112,6 +119,8 @@ def sync_nodes(
             for labels, batch in grouped.items():
                 label_set = set(labels)
                 label_set.add(PROVIDER_RESOURCE_LABEL)
+                label_set.add(get_tenant_label(tenant_id))
+                label_set.add(get_provider_label(provider_id))
                 node_labels = ":".join(f"`{label}`" for label in sorted(label_set))
 
                 query = render_cypher_template(

@@ -24,6 +24,7 @@ import {
   GCPServiceAccountKey,
   GoogleWorkspaceCredentials,
   IacCredentials,
+  ImageCredentials,
   KubernetesCredentials,
   M365CertificateCredentials,
   M365ClientSecretCredentials,
@@ -54,6 +55,7 @@ import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
 import { GoogleWorkspaceCredentialsForm } from "./via-credentials/googleworkspace-credentials-form";
 import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
+import { ImageCredentialsForm } from "./via-credentials/image-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { MongoDBAtlasCredentialsForm } from "./via-credentials/mongodbatlas-credentials-form";
 import { OpenStackCredentialsForm } from "./via-credentials/openstack-credentials-form";
@@ -211,6 +213,11 @@ export const BaseCredentialsForm = ({
         {providerType === "iac" && (
           <IacCredentialsForm
             control={form.control as unknown as Control<IacCredentials>}
+          />
+        )}
+        {providerType === "image" && (
+          <ImageCredentialsForm
+            control={form.control as unknown as Control<ImageCredentials>}
           />
         )}
         {providerType === "oraclecloud" && (
