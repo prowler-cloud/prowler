@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "deployment_preview_not_publicly_accessible",
-  "CheckTitle": "Ensure preview deployments are not publicly accessible without protection",
+  "CheckTitle": "Vercel preview deployments are not publicly accessible without protection",
   "CheckType": [],
   "ServiceName": "deployment",
   "SubServiceName": "",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Enable deployment protection on preview deployments to require authentication before visitors can access preview URLs. Use 'Standard Protection' for Vercel Authentication or configure trusted IP ranges for more granular control.",
-      "Url": "https://vercel.com/docs/security/deployment-protection"
+      "Url": "https://hub.prowler.com/checks/vercel/deployment_preview_not_publicly_accessible"
     }
   },
   "Categories": [

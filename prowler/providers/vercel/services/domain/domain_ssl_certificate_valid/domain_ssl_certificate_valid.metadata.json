@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "domain_ssl_certificate_valid",
-  "CheckTitle": "Ensure domains have a valid SSL certificate provisioned",
+  "CheckTitle": "Vercel domains have a valid SSL certificate provisioned",
   "CheckType": [],
   "ServiceName": "domain",
   "SubServiceName": "",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Ensure domain DNS records are properly configured to point to Vercel. Once DNS is validated, Vercel automatically provisions and renews SSL/TLS certificates. Check the domain configuration in the Vercel dashboard if the certificate is not being issued.",
-      "Url": "https://vercel.com/docs/security/encryption"
+      "Url": "https://hub.prowler.com/checks/vercel/domain_ssl_certificate_valid"
     }
   },
   "Categories": [

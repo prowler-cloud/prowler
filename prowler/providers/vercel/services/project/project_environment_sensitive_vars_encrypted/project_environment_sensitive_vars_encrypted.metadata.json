@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "project_environment_sensitive_vars_encrypted",
-  "CheckTitle": "Ensure environment variables with sensitive names are encrypted or secret",
+  "CheckTitle": "Vercel environment variables with sensitive names are encrypted or secret",
   "CheckType": [],
   "ServiceName": "project",
   "SubServiceName": "",
@@ -10,7 +10,7 @@
   "ResourceType": "VercelProject",
   "ResourceGroup": "security",
   "Description": "**Vercel project environment variables** are assessed for **encryption** by checking whether variables with sensitive-looking names (containing KEY, SECRET, TOKEN, PASSWORD, CREDENTIAL, API_KEY, PRIVATE, AUTH) are stored with type 'encrypted' or 'secret' rather than 'plain'.",
-  "Risk": "Environment variables stored as **plain text** can be read by anyone with project access and are visible in build logs and the Vercel dashboard.\n- **Confidentiality**: API keys, passwords, and tokens stored in plain text can be exposed to unauthorized personnel\n- **Integrity**: Leaked credentials may allow attackers to modify external services or data\n- **Availability**: Compromised credentials can lead to service disruption or account lockout",
+  "Risk": "Environment variables stored as plain text can be read by anyone with project access and are visible in build logs. API keys, passwords, and tokens in plain text can be exposed, allowing attackers to modify external services, compromise data, or cause service disruption.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/environment-variables"
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Always use the **Sensitive** (secret) or **Encrypted** type for environment variables containing API keys, passwords, tokens, or other credentials.\n- Sensitive variables are write-only and cannot be read back through the dashboard or API\n- Rotate any credentials that were previously stored as plain text\n- Audit build logs for any accidental exposure of plain-text secrets",
-      "Url": ""
+      "Url": "https://hub.prowler.com/checks/vercel/project_environment_sensitive_vars_encrypted"
     }
   },
   "Categories": [

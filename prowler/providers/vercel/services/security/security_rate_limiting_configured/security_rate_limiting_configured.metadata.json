@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "security_rate_limiting_configured",
-  "CheckTitle": "Ensure rate limiting rules are configured for each project",
+  "CheckTitle": "Vercel project has rate limiting rules configured",
   "CheckType": [],
   "ServiceName": "security",
   "SubServiceName": "",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Configure rate limiting rules to protect critical endpoints such as authentication, API routes, and form submissions. Start with conservative thresholds and adjust based on traffic patterns to avoid blocking legitimate users.",
-      "Url": "https://vercel.com/docs/security/vercel-firewall"
+      "Url": "https://hub.prowler.com/checks/vercel/security_rate_limiting_configured"
     }
   },
   "Categories": [

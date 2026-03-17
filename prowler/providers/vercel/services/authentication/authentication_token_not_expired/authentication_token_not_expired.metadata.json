@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "authentication_token_not_expired",
-  "CheckTitle": "Ensure API tokens have not expired",
+  "CheckTitle": "Vercel API tokens have not expired",
   "CheckType": [],
   "ServiceName": "authentication",
   "SubServiceName": "",
@@ -24,11 +24,11 @@
     },
     "Recommendation": {
       "Text": "Remove expired tokens and create new ones with appropriate expiration dates. Implement a token rotation schedule to ensure tokens are refreshed before they expire. Update all integrations and automation that depend on the replaced tokens.",
-      "Url": "https://vercel.com/docs/rest-api#authentication"
+      "Url": "https://hub.prowler.com/checks/vercel/authentication_token_not_expired"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [

@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "security_custom_rules_configured",
-  "CheckTitle": "Ensure custom firewall rules are configured for each project",
+  "CheckTitle": "Vercel project has custom firewall rules configured",
   "CheckType": [],
   "ServiceName": "security",
   "SubServiceName": "",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Configure custom firewall rules to protect application-specific endpoints and enforce security policies. Focus on protecting admin panels, API routes, authentication endpoints, and any paths that handle sensitive data.",
-      "Url": "https://vercel.com/docs/security/vercel-firewall/custom-rules"
+      "Url": "https://hub.prowler.com/checks/vercel/security_custom_rules_configured"
     }
   },
   "Categories": [

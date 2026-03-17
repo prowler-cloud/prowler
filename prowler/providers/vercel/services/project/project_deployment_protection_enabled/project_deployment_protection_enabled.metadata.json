@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "project_deployment_protection_enabled",
-  "CheckTitle": "Ensure deployment protection is enabled on preview deployments",
+  "CheckTitle": "Vercel project has deployment protection enabled on preview deployments",
   "CheckType": [],
   "ServiceName": "project",
   "SubServiceName": "",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Enable deployment protection on preview deployments to require authentication before visitors can access preview URLs. Use 'Standard Protection' for Vercel Authentication or configure trusted IP ranges for more granular control.",
-      "Url": "https://vercel.com/docs/security/deployment-protection"
+      "Url": "https://hub.prowler.com/checks/vercel/project_deployment_protection_enabled"
     }
   },
   "Categories": [

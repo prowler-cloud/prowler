@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "domain_verified",
-  "CheckTitle": "Ensure domains are verified by Vercel",
+  "CheckTitle": "Vercel domains are verified",
   "CheckType": [],
   "ServiceName": "domain",
   "SubServiceName": "",
@@ -24,11 +24,11 @@
     },
     "Recommendation": {
       "Text": "Complete domain verification by configuring the required DNS records at your domain registrar. Remove any domains that are no longer needed to reduce the attack surface. Regularly audit domain configurations to ensure all domains remain verified.",
-      "Url": "https://vercel.com/docs/projects/domains"
+      "Url": "https://hub.prowler.com/checks/vercel/domain_verified"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [

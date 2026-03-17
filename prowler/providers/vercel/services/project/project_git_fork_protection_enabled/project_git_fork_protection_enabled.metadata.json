@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "project_git_fork_protection_enabled",
-  "CheckTitle": "Ensure Git fork protection is enabled to prevent untrusted forks from accessing secrets",
+  "CheckTitle": "Vercel project has Git fork protection enabled to prevent untrusted forks from accessing secrets",
   "CheckType": [],
   "ServiceName": "project",
   "SubServiceName": "",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Enable Git fork protection to require explicit authorization before pull requests from forked repositories can trigger deployments. This prevents untrusted contributors from accessing environment variables and secrets through the build process. For open-source projects, review fork PRs manually before allowing builds.",
-      "Url": "https://vercel.com/docs/security/deployment-protection/managing-deployment-protection#git-fork-protection"
+      "Url": "https://hub.prowler.com/checks/vercel/project_git_fork_protection_enabled"
     }
   },
   "Categories": [

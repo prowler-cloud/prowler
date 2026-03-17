@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "deployment_production_uses_stable_target",
-  "CheckTitle": "Ensure production deployments originate from a stable branch",
+  "CheckTitle": "Vercel production deployments originate from a stable branch",
   "CheckType": [],
   "ServiceName": "deployment",
   "SubServiceName": "",
@@ -24,11 +24,11 @@
     },
     "Recommendation": {
       "Text": "Configure the production branch to main or master and ensure all production deployments go through the standard merge workflow. Use branch protection rules in your Git provider to prevent direct pushes to the production branch.",
-      "Url": "https://vercel.com/docs/deployments/git#production-branch"
+      "Url": "https://hub.prowler.com/checks/vercel/deployment_production_uses_stable_target"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

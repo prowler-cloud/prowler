@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "project_directory_listing_disabled",
-  "CheckTitle": "Ensure directory listing is disabled for the project",
+  "CheckTitle": "Vercel project has directory listing disabled",
   "CheckType": [],
   "ServiceName": "project",
   "SubServiceName": "",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Disable directory listing to prevent visitors from browsing the file structure of your deployments. Ensure that all directories either contain an index file or return a 404 response when accessed directly.",
-      "Url": "https://vercel.com/docs/projects/project-configuration"
+      "Url": "https://hub.prowler.com/checks/vercel/project_directory_listing_disabled"
     }
   },
   "Categories": [

@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "authentication_no_stale_tokens",
-  "CheckTitle": "Ensure no API tokens are stale or unused for over 90 days",
+  "CheckTitle": "Vercel API tokens are not stale or unused for over 90 days",
   "CheckType": [],
   "ServiceName": "authentication",
   "SubServiceName": "",
@@ -24,11 +24,11 @@
     },
     "Recommendation": {
       "Text": "Regularly audit API tokens and revoke any that have not been used within 90 days. Implement a token lifecycle management process that includes periodic reviews, automatic expiration dates, and documentation of each token's purpose and owner.",
-      "Url": "https://vercel.com/docs/rest-api#authentication"
+      "Url": "https://hub.prowler.com/checks/vercel/authentication_no_stale_tokens"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [

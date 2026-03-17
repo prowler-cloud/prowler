@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "project_environment_no_overly_broad_target",
-  "CheckTitle": "Ensure no environment variables target all three environments",
+  "CheckTitle": "Vercel project has no environment variables targeting all three environments",
   "CheckType": [],
   "ServiceName": "project",
   "SubServiceName": "",
@@ -10,7 +10,7 @@
   "ResourceType": "VercelProject",
   "ResourceGroup": "security",
   "Description": "**Vercel project environment variables** are assessed for **overly broad targeting** by checking whether any variable targets all three environments (production, preview, development) simultaneously, which violates the principle of least privilege.",
-  "Risk": "Environment variables that target all environments share the same values across production, preview, and development contexts, increasing the blast radius if credentials are compromised.\n- **Confidentiality**: Production secrets are exposed to development and preview environments where security controls may be weaker\n- **Integrity**: Shared credentials make it harder to isolate environments and track the source of unauthorized changes\n- **Availability**: A credential leak in any one environment compromises all three",
+  "Risk": "Environment variables targeting all environments share the same values across production, preview, and development, increasing blast radius if credentials are compromised. Production secrets are exposed to weaker environments, making it harder to isolate and track unauthorized changes.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/environment-variables"
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Follow the **principle of least privilege** for environment variable targeting.\n- Assign each variable to only the environments where it is actually needed\n- Use different credentials for production, preview, and development environments\n- Non-sensitive configuration (e.g. feature flags, public URLs) may be acceptable in multiple environments but should still be reviewed\n- Regularly audit environment variable targets to prevent scope creep",
-      "Url": ""
+      "Url": "https://hub.prowler.com/checks/vercel/project_environment_no_overly_broad_target"
     }
   },
   "Categories": [

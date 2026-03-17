@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "security_ip_blocking_rules_configured",
-  "CheckTitle": "Ensure IP blocking rules are configured for each project",
+  "CheckTitle": "Vercel project has IP blocking rules configured",
   "CheckType": [],
   "ServiceName": "security",
   "SubServiceName": "",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Configure IP blocking rules to deny traffic from known malicious sources. Maintain a blocklist of IPs identified through security monitoring, threat intelligence feeds, or incident investigation. Regularly review and update the blocklist.",
-      "Url": "https://vercel.com/docs/security/vercel-firewall"
+      "Url": "https://hub.prowler.com/checks/vercel/security_ip_blocking_rules_configured"
     }
   },
   "Categories": [

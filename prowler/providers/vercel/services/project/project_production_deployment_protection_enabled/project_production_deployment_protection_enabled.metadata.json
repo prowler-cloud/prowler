@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "project_production_deployment_protection_enabled",
-  "CheckTitle": "Ensure deployment protection is enabled on production deployments",
+  "CheckTitle": "Vercel project has deployment protection enabled on production deployments",
   "CheckType": [],
   "ServiceName": "project",
   "SubServiceName": "",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Enable deployment protection on production deployments for applications that should not be publicly accessible. This is critical for internal tools, admin dashboards, and pre-launch applications where unauthorized access could lead to data exposure or system compromise.",
-      "Url": "https://vercel.com/docs/security/deployment-protection"
+      "Url": "https://hub.prowler.com/checks/vercel/project_production_deployment_protection_enabled"
     }
   },
   "Categories": [

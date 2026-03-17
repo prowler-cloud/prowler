@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "domain_no_wildcard_dns_exposure",
-  "CheckTitle": "Ensure domains do not have wildcard DNS records exposing subdomains",
+  "CheckTitle": "Vercel domains do not have wildcard DNS records exposing subdomains",
   "CheckType": [],
   "ServiceName": "domain",
   "SubServiceName": "",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Remove wildcard DNS records and configure explicit DNS records for each required subdomain. This limits the attack surface and prevents unauthorized subdomains from resolving to your application.",
-      "Url": "https://vercel.com/docs/projects/domains"
+      "Url": "https://hub.prowler.com/checks/vercel/domain_no_wildcard_dns_exposure"
     }
   },
   "Categories": [
