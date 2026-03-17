@@ -15,6 +15,7 @@ import {
   CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
+  GoogleWorkspaceProviderBadge,
   IacProviderBadge,
   ImageProviderBadge,
   KS8ProviderBadge,
@@ -60,6 +61,11 @@ const PROVIDERS = [
     value: "github",
     label: "GitHub",
     badge: GitHubProviderBadge,
+  },
+  {
+    value: "googleworkspace",
+    label: "Google Workspace",
+    badge: GoogleWorkspaceProviderBadge,
   },
   {
     value: "iac",

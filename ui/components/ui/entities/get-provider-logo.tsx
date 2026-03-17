@@ -5,6 +5,7 @@ import {
   CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
+  GoogleWorkspaceProviderBadge,
   IacProviderBadge,
   ImageProviderBadge,
   KS8ProviderBadge,
@@ -29,6 +30,8 @@ export const getProviderLogo = (provider: ProviderType) => {
       return <M365ProviderBadge width={35} height={35} />;
     case "github":
       return <GitHubProviderBadge width={35} height={35} />;
+    case "googleworkspace":
+      return <GoogleWorkspaceProviderBadge width={35} height={35} />;
     case "iac":
       return <IacProviderBadge width={35} height={35} />;
     case "image":
@@ -62,6 +65,8 @@ export const getProviderName = (provider: ProviderType): string => {
       return "Microsoft 365";
     case "github":
       return "GitHub";
+    case "googleworkspace":
+      return "Google Workspace";
     case "iac":
       return "Infrastructure as Code";
     case "image":
