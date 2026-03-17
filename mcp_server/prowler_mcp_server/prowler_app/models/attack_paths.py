@@ -134,6 +134,10 @@ class AttackPathCartographySchema(MinimalSerializerMixin, BaseModel):
     raw_schema_url: str = Field(
         description="Raw URL to fetch the Cartography schema markdown content"
     )
+    schema_content: str | None = Field(
+        default=None,
+        description="Full Cartography schema markdown content (populated after fetch)",
+    )
 
     @classmethod
     def from_api_response(

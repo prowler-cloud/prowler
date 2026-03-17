@@ -268,9 +268,9 @@ class AttackPathsTools(BaseTool):
                 schema.raw_schema_url
             )
 
-            result = schema.model_dump()
-            result["schema_content"] = schema_content
-            return result
+            return schema.model_copy(
+                update={"schema_content": schema_content}
+            ).model_dump()
         except Exception as e:
             self.logger.error(
                 f"Failed to get cartography schema for scan {scan_id}: {e}"
