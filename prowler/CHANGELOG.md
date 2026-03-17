@@ -6,6 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- `misconfig` scanner as default for Image provider scans [(#10167)](https://github.com/prowler-cloud/prowler/pull/10167)
 - `entra_conditional_access_policy_device_code_flow_blocked` check for M365 provider [(#10218)](https://github.com/prowler-cloud/prowler/pull/10218)
 - CheckMetadata Pydantic validators [(#8584)](https://github.com/prowler-cloud/prowler/pull/8583)
 - `entra_conditional_access_policy_require_mfa_for_admin_portals` check for Azure provider and update CIS compliance [(#10330)](https://github.com/prowler-cloud/prowler/pull/10330)
@@ -22,6 +23,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🔐 Security
 
 - Bump `multipart` to 1.3.1 to fix [GHSA-p2m9-wcp5-6qw3](https://github.com/defnull/multipart/security/advisories/GHSA-p2m9-wcp5-6qw3) [(#10331)](https://github.com/prowler-cloud/prowler/pull/10331)
+
+### 🐞 Fixed
+
+- Route53 dangling IP check false positive when using `--region` flag [(#9952)](https://github.com/prowler-cloud/prowler/pull/9952)
+- RBI compliance framework support on Prowler Dashboard for the Azure provider [(#10360)](https://github.com/prowler-cloud/prowler/pull/10360)
 
 ---
 
