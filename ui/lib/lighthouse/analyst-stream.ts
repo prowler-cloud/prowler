@@ -9,6 +9,7 @@ import {
   ERROR_PREFIX,
   LIGHTHOUSE_AGENT_TAG,
   META_TOOLS,
+  SKILL_PREFIX,
   STREAM_MESSAGE_ID,
 } from "@/lib/lighthouse/constants";
 import type { ChainOfThoughtData, StreamEvent } from "@/lib/lighthouse/types";
@@ -65,7 +66,9 @@ export function extractActualToolName(
 
   if (metaToolName === META_TOOLS.LOAD_SKILL) {
     const parsed = parseMetaToolInput(toolInput);
-    return parsed?.skillId ? `skill:${parsed.skillId as string}` : null;
+    return parsed?.skillId
+      ? `${SKILL_PREFIX}${parsed.skillId as string}`
+      : null;
   }
 
   // Actual tool execution: use the name directly
@@ -197,7 +200,7 @@ export function handleChatModelEndEvent(
           metaToolName === META_TOOLS.LOAD_SKILL &&
           "skillId" in toolArgs
         ) {
-          actualToolName = `skill:${toolArgs.skillId as string}`;
+          actualToolName = `${SKILL_PREFIX}${toolArgs.skillId as string}`;
         }
       }
 
