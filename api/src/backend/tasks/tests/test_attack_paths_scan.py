@@ -419,9 +419,7 @@ class TestFailAttackPathsScan:
     def test_marks_executing_scan_as_failed(
         self, tenants_fixture, providers_fixture, scans_fixture
     ):
-        from tasks.jobs.attack_paths.db_utils import (
-            fail_attack_paths_scan,
-        )
+        from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
@@ -464,9 +462,7 @@ class TestFailAttackPathsScan:
     def test_drops_temp_database_even_when_drop_fails(
         self, tenants_fixture, providers_fixture, scans_fixture
     ):
-        from tasks.jobs.attack_paths.db_utils import (
-            fail_attack_paths_scan,
-        )
+        from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
@@ -507,9 +503,7 @@ class TestFailAttackPathsScan:
     def test_skips_already_failed_scan(
         self, tenants_fixture, providers_fixture, scans_fixture
     ):
-        from tasks.jobs.attack_paths.db_utils import (
-            fail_attack_paths_scan,
-        )
+        from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
@@ -544,9 +538,7 @@ class TestFailAttackPathsScan:
         mock_finish.assert_not_called()
 
     def test_skips_when_no_scan_found(self, tenants_fixture):
-        from tasks.jobs.attack_paths.db_utils import (
-            fail_attack_paths_scan,
-        )
+        from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
         tenant = tenants_fixture[0]
 
@@ -1184,16 +1176,19 @@ class TestSyncNodes:
         tgt_1 = MagicMock()
         tgt_2 = MagicMock()
 
-        with patch(
-            "tasks.jobs.attack_paths.sync.graph_database.get_session",
-            side_effect=[
-                _make_session_ctx(src_1),
-                _make_session_ctx(tgt_1),
-                _make_session_ctx(src_2),
-                _make_session_ctx(tgt_2),
-                _make_session_ctx(src_3),
-            ],
-        ), patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 1):
+        with (
+            patch(
+                "tasks.jobs.attack_paths.sync.graph_database.get_session",
+                side_effect=[
+                    _make_session_ctx(src_1),
+                    _make_session_ctx(tgt_1),
+                    _make_session_ctx(src_2),
+                    _make_session_ctx(tgt_2),
+                    _make_session_ctx(src_3),
+                ],
+            ),
+            patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 1),
+        ):
             total = sync_module.sync_nodes("src", "tgt", "t-1", "p-1")
 
         assert total == 2
@@ -1243,6 +1238,50 @@ class TestSyncRelationships:
             sync_module.sync_relationships("src", "tgt", "p-1")
 
         assert call_order.index("source1:exit") < call_order.index("target:enter")
+
+    def test_sync_relationships_pagination_with_batch_size_1(self):
+        row_a = {
+            "internal_id": 1,
+            "rel_type": "HAS",
+            "start_element_id": "s-1",
+            "end_element_id": "e-1",
+            "props": {"a": 1},
+        }
+        row_b = {
+            "internal_id": 2,
+            "rel_type": "CONNECTS",
+            "start_element_id": "s-2",
+            "end_element_id": "e-2",
+            "props": {"b": 2},
+        }
+
+        src_1 = MagicMock()
+        src_1.run.return_value = [row_a]
+        src_2 = MagicMock()
+        src_2.run.return_value = [row_b]
+        src_3 = MagicMock()
+        src_3.run.return_value = []
+        tgt_1 = MagicMock()
+        tgt_2 = MagicMock()
+
+        with (
+            patch(
+                "tasks.jobs.attack_paths.sync.graph_database.get_session",
+                side_effect=[
+                    _make_session_ctx(src_1),
+                    _make_session_ctx(tgt_1),
+                    _make_session_ctx(src_2),
+                    _make_session_ctx(tgt_2),
+                    _make_session_ctx(src_3),
+                ],
+            ),
+            patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 1),
+        ):
+            total = sync_module.sync_relationships("src", "tgt", "p-1")
+
+        assert total == 2
+        assert src_1.run.call_args.args[1]["last_id"] == -1
+        assert src_2.run.call_args.args[1]["last_id"] == 1
 
     def test_sync_relationships_empty_source_returns_zero(self):
         src = MagicMock()
