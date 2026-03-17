@@ -4,6 +4,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.22.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- `CORS_ALLOWED_ORIGINS` configurable via environment variable [(#10355)](https://github.com/prowler-cloud/prowler/pull/10355)
+
 ### 🔄 Changed
 
 - Attack Paths: Complete migration to private graph labels and properties, removing deprecated dual-write support [(#10268)](https://github.com/prowler-cloud/prowler/pull/10268)
