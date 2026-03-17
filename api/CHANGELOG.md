@@ -2,6 +2,15 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.22.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Attack Paths: Complete migration to private graph labels and properties, removing deprecated dual-write support [(#10268)](https://github.com/prowler-cloud/prowler/pull/10268)
+- Attack Paths: Added tenant and provider related labels to the nodes so they can be easily filtered on custom queries [(#10308)](https://github.com/prowler-cloud/prowler/pull/10308)
+
+---
+
 ## [1.21.1] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
@@ -15,9 +24,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🔄 Changed
 
 - Attack Paths: Migrate network exposure queries from APOC to standard openCypher for Neo4j and Neptune compatibility [(#10266)](https://github.com/prowler-cloud/prowler/pull/10266)
-- Attack Paths: Complete migration to private graph labels and properties, removing deprecated dual-write support [(#10268)](https://github.com/prowler-cloud/prowler/pull/10268)
 - `POST /api/v1/providers` returns `409 Conflict` if already exists [(#10293)](https://github.com/prowler-cloud/prowler/pull/10293)
-- Attack Paths: Added tenant and provider related labels to the nodes so they can be easily filtered on custom queries [(#10308)](https://github.com/prowler-cloud/prowler/pull/10308)
 
 ### 🐞 Fixed
 
