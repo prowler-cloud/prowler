@@ -64,7 +64,7 @@ You have access to THREE meta-tools to interact with the available tools and ski
 3. **load_skill** - Load specialized instructions for a complex task
    - Use when you identify a matching skill from the skill catalog below
    - Returns detailed workflows, schema knowledge, and examples
-   - Example: load_skill({ "skillId": "attack-path-custom-query" })
+   - Example: load_skill({ "skillId": "<skill-id-from-catalog-below>" })
 
 {{SKILL_CATALOG}}
 

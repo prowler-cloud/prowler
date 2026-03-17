@@ -79,7 +79,7 @@ export function getChainOfThoughtStepLabel(
 }
 
 /**
- * Determines if a meta-tool is a wrapper tool (describe_tool or execute_tool)
+ * Determines if a tool name is a meta-tool (describe_tool, execute_tool, or load_skill)
  *
  * @param metaTool - The meta-tool name to check
  * @returns True if it's a meta-tool, false otherwise
