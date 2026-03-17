@@ -210,7 +210,7 @@ class IacProvider(Provider):
                 "ResourceType": "iac",
                 "Description": finding_description,
                 "Risk": "This provider has not defined a risk for this check.",
-                "RelatedUrl": "",
+                "RelatedUrl": finding.get("PrimaryURL", ""),
                 "Remediation": {
                     "Code": {
                         "NativeIaC": "",
@@ -220,13 +220,11 @@ class IacProvider(Provider):
                     },
                     "Recommendation": {
                         "Text": finding.get("Resolution", ""),
-                        "Url": "",
+                        "Url": finding.get("PrimaryURL", ""),
                     },
                 },
                 "Categories": [],
-                "AdditionalURLs": (
-                    [url] if (url := finding.get("PrimaryURL", "")) else []
-                ),
+                "AdditionalURLs": [],
                 "DependsOn": [],
                 "RelatedTo": [],
                 "Notes": "",
