@@ -226,6 +226,15 @@ export const useCredentialsForm = ({
           [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]: "",
           [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]: "",
         };
+      case "image":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.REGISTRY_USERNAME]: "",
+          [ProviderCredentialFields.REGISTRY_PASSWORD]: "",
+          [ProviderCredentialFields.REGISTRY_TOKEN]: "",
+          [ProviderCredentialFields.IMAGE_FILTER]: "",
+          [ProviderCredentialFields.TAG_FILTER]: "",
+        };
       default:
         return baseDefaults;
     }
