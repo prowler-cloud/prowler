@@ -9,8 +9,8 @@
   "Severity": "high",
   "ResourceType": "ALIYUN::CS::ManagedKubernetesCluster",
   "ResourceGroup": "container",
-  "Description": "**Alibaba Cloud Kubernetes Engine** clusters should have **Role-Based Access Control (RBAC)** enabled to enforce fine-grained authorization for cluster resources. RBAC allows administrators to define roles with specific permissions at both the cluster and namespace level, ensuring that users and service accounts only have access to the resources they need. The legacy **ABAC** (Attribute-Based Access Control) authorizer grants broad, statically defined permissions and should be disabled in favor of RBAC for improved security.",
-  "Risk": "Without **RBAC** enabled, Kubernetes clusters may rely on legacy authorization mechanisms such as **ABAC**, which grant **overly broad permissions** that cannot be scoped to specific namespaces or resource types. This increases the risk of **unauthorized access** and **privilege escalation**, where a compromised service account or user could gain access to sensitive resources across the entire cluster. The lack of granular access control directly impacts the **confidentiality** and **integrity** of workloads and secrets stored in the cluster.",
+  "Description": "**Alibaba Cloud Kubernetes Engine** clusters should have **RBAC** enabled for fine-grained authorization. RBAC lets administrators define roles with specific permissions at cluster and namespace level, ensuring users and service accounts access only needed resources. Legacy **ABAC** grants broad, static permissions and should be disabled in favor of RBAC.",
+  "Risk": "Without **RBAC**, clusters may rely on legacy **ABAC** which grants **overly broad permissions** that cannot be scoped to specific namespaces or resources. This increases the risk of **unauthorized access** and **privilege escalation**, where a compromised account could access sensitive resources across the cluster, impacting **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/ack/",

@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "**Alibaba Cloud Simple Log Service (SLS)** should have a query and alarm configured for **unauthorized API calls**. Real-time monitoring of API calls can be achieved by directing **ActionTrail** logs to SLS and establishing corresponding alert rules. This ensures that any API calls resulting in unauthorized errors are detected promptly, helping identify misconfigured applications, compromised credentials, or active reconnaissance by attackers.",
-  "Risk": "Without monitoring for **unauthorized API calls**, patterns of failed access attempts may go undetected. These patterns often indicate **malicious activity** such as attackers probing for permissions or attempting to exploit misconfigured access controls. Failure to detect unauthorized API calls in a timely manner increases the risk of **security breaches**, as it delays identification of compromised credentials and **privilege escalation** attempts across cloud services.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for **unauthorized API calls**. By directing **ActionTrail** logs to SLS with alert rules, API calls resulting in unauthorized errors are detected promptly, helping identify misconfigured applications, compromised credentials, or active attacker reconnaissance.",
+  "Risk": "Without monitoring for **unauthorized API calls**, failed access patterns may go undetected. These often indicate **malicious activity** such as permission probing or exploiting misconfigured access controls. Delayed detection increases risk of **security breaches** by delaying identification of compromised credentials and **privilege escalation** attempts.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",

@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "**Alibaba Cloud Simple Log Service (SLS)** should have a query and alarm configured for console logins that are not protected by **multi-factor authentication (MFA)**. Real-time monitoring of API calls can be achieved by directing **ActionTrail** logs to SLS and establishing corresponding alert rules. This ensures that any single-factor console sign-in events are detected, helping identify accounts that bypass MFA enforcement policies.",
-  "Risk": "Without monitoring for **single-factor console logins**, accounts that are not protected by MFA may go unnoticed. This increases the risk of **unauthorized access** through compromised credentials, as passwords alone are insufficient to prevent account takeover. Failure to enforce and monitor MFA compliance weakens the overall **authentication posture** and may lead to **privilege escalation** or **data breaches** if an attacker gains access to an unprotected account.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for console logins not protected by **MFA**. By directing **ActionTrail** logs to SLS with alert rules, single-factor console sign-in events are detected, helping identify accounts that bypass MFA enforcement policies.",
+  "Risk": "Without monitoring for **single-factor logins**, accounts not protected by MFA may go unnoticed, increasing risk of **unauthorized access** through compromised credentials. Failure to monitor MFA compliance weakens **authentication posture** and may lead to **privilege escalation** or **data breaches** if an attacker accesses an unprotected account.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",

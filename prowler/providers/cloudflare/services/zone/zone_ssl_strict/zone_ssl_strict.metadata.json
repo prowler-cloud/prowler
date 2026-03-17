@@ -10,7 +10,7 @@
   "ResourceType": "Zone",
   "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for **SSL/TLS encryption mode** by checking if the mode is set to `Full (Strict)` to ensure **end-to-end encryption** with certificate validation.",
-  "Risk": "Without **strict SSL mode**, traffic between Cloudflare and origin may use unvalidated or unencrypted connections.\n- **Confidentiality**: sensitive data can be intercepted in transit via man-in-the-middle attacks\n- **Integrity**: responses can be modified without detection between Cloudflare and origin\n- **Compliance**: may violate PCI-DSS, HIPAA, and other regulatory requirements for encrypted transport",
+  "Risk": "Without **strict SSL mode**, traffic between Cloudflare and origin may use unvalidated or unencrypted connections. Sensitive data can be intercepted via **man-in-the-middle attacks**, responses can be modified without detection, and this may violate PCI-DSS, HIPAA, and other regulatory requirements.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/"

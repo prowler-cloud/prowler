@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::CS::ManagedKubernetesCluster",
   "ResourceGroup": "container",
-  "Description": "**Alibaba Cloud CloudMonitor** agent provides visibility into system metrics for **Kubernetes Engine clusters**, including CPU utilization, disk traffic, network traffic, and disk IO information. Without the CloudMonitor agent enabled, operators lack critical observability into node and pod health, making it difficult to detect performance degradation or anomalous resource consumption. Enabling CloudMonitor ensures that a monitor controller is created to periodically connect to each node, collect metrics about its Pods and containers, and send them to the **CloudMonitor** server for analysis and alerting.",
-  "Risk": "Without **CloudMonitor** enabled on Kubernetes Engine clusters, there is no automated collection of system-level metrics such as CPU, memory, disk, and network usage. This lack of visibility can delay detection of **resource exhaustion**, **node failures**, and **abnormal workload behavior**, increasing the risk of undetected **availability** and **performance** issues. In a security context, the absence of monitoring data impairs the ability to identify **denial-of-service conditions** or **cryptojacking** activities running on cluster nodes.",
+  "Description": "**CloudMonitor** agent provides visibility into system metrics for **Kubernetes Engine clusters**, including CPU, disk, network, and IO. Without it, operators lack observability into node and pod health. Enabling CloudMonitor creates a controller that collects metrics from each node's Pods and containers for analysis and alerting.",
+  "Risk": "Without **CloudMonitor**, there is no automated collection of system metrics (CPU, memory, disk, network). This delays detection of **resource exhaustion**, **node failures**, and **abnormal workloads**, increasing risk of undetected **availability** issues. It also impairs identification of **denial-of-service** or **cryptojacking** on cluster nodes.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/ack/",

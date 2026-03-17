@@ -4,7 +4,7 @@
   "CheckTitle": "ElastiCache cluster is not using public subnets",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "Effects/Data Exposure"
   ],
   "ServiceName": "elasticache",
