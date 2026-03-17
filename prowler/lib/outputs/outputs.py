@@ -39,7 +39,7 @@ def stdout_report(finding, color, verbose, status, fix):
     if finding.check_metadata.Provider == "googleworkspace":
         details = finding.location
     if finding.check_metadata.Provider == "vercel":
-        details = finding.resource_name
+        details = finding.region
 
     if (verbose or fix) and (not status or finding.status in status):
         if finding.muted:
