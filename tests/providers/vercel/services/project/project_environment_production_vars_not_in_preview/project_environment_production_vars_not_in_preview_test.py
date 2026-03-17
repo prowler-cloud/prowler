@@ -12,7 +12,7 @@ from tests.providers.vercel.vercel_fixtures import (
 )
 
 
-class Test_project_environment_sensitive_vars_encrypted:
+class Test_project_environment_production_vars_not_in_preview:
     def test_no_projects(self):
         project_client = mock.MagicMock
         project_client.projects = {}
@@ -23,19 +23,19 @@ class Test_project_environment_sensitive_vars_encrypted:
                 return_value=set_mocked_vercel_provider(),
             ),
             mock.patch(
-                "prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted.project_client",
+                "prowler.providers.vercel.services.project.project_environment_production_vars_not_in_preview.project_environment_production_vars_not_in_preview.project_client",
                 new=project_client,
             ),
         ):
-            from prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted import (
-                project_environment_sensitive_vars_encrypted,
+            from prowler.providers.vercel.services.project.project_environment_production_vars_not_in_preview.project_environment_production_vars_not_in_preview import (
+                project_environment_production_vars_not_in_preview,
             )
 
-            check = project_environment_sensitive_vars_encrypted()
+            check = project_environment_production_vars_not_in_preview()
             result = check.execute()
             assert len(result) == 0
 
-    def test_all_sensitive_vars_encrypted(self):
+    def test_prod_only_secret(self):
         project_client = mock.MagicMock
         project_client.projects = {
             PROJECT_ID: VercelProject(
@@ -45,8 +45,9 @@ class Test_project_environment_sensitive_vars_encrypted:
                 environment_variables=[
                     VercelEnvironmentVariable(
                         id="env_001",
-                        key="DATABASE_PASSWORD",
-                        type="encrypted",
+                        key="DB_PASSWORD",
+                        type="secret",
+                        target=["production"],
                         project_id=PROJECT_ID,
                     ),
                 ],
@@ -59,23 +60,23 @@ class Test_project_environment_sensitive_vars_encrypted:
                 return_value=set_mocked_vercel_provider(),
             ),
             mock.patch(
-                "prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted.project_client",
+                "prowler.providers.vercel.services.project.project_environment_production_vars_not_in_preview.project_environment_production_vars_not_in_preview.project_client",
                 new=project_client,
             ),
         ):
-            from prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted import (
-                project_environment_sensitive_vars_encrypted,
+            from prowler.providers.vercel.services.project.project_environment_production_vars_not_in_preview.project_environment_production_vars_not_in_preview import (
+                project_environment_production_vars_not_in_preview,
             )
 
-            check = project_environment_sensitive_vars_encrypted()
+            check = project_environment_production_vars_not_in_preview()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "properly encrypted" in result[0].status_extended
+            assert "no sensitive production environment" in result[0].status_extended
 
-    def test_sensitive_var_plain_text(self):
+    def test_prod_and_preview_secret(self):
         project_client = mock.MagicMock
         project_client.projects = {
             PROJECT_ID: VercelProject(
@@ -85,8 +86,9 @@ class Test_project_environment_sensitive_vars_encrypted:
                 environment_variables=[
                     VercelEnvironmentVariable(
                         id="env_002",
-                        key="API_KEY",
-                        type="plain",
+                        key="DB_PASSWORD",
+                        type="secret",
+                        target=["production", "preview"],
                         project_id=PROJECT_ID,
                     ),
                 ],
@@ -99,24 +101,23 @@ class Test_project_environment_sensitive_vars_encrypted:
                 return_value=set_mocked_vercel_provider(),
             ),
             mock.patch(
-                "prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted.project_client",
+                "prowler.providers.vercel.services.project.project_environment_production_vars_not_in_preview.project_environment_production_vars_not_in_preview.project_client",
                 new=project_client,
             ),
         ):
-            from prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted import (
-                project_environment_sensitive_vars_encrypted,
+            from prowler.providers.vercel.services.project.project_environment_production_vars_not_in_preview.project_environment_production_vars_not_in_preview import (
+                project_environment_production_vars_not_in_preview,
             )
 
-            check = project_environment_sensitive_vars_encrypted()
+            check = project_environment_production_vars_not_in_preview()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "FAIL"
-            assert "plain text" in result[0].status_extended
-            assert "API_KEY" in result[0].status_extended
+            assert "also targeting preview" in result[0].status_extended
 
-    def test_no_sensitive_vars(self):
+    def test_prod_and_preview_plain(self):
         project_client = mock.MagicMock
         project_client.projects = {
             PROJECT_ID: VercelProject(
@@ -126,8 +127,9 @@ class Test_project_environment_sensitive_vars_encrypted:
                 environment_variables=[
                     VercelEnvironmentVariable(
                         id="env_003",
-                        key="APP_NAME",
+                        key="APP_URL",
                         type="plain",
+                        target=["production", "preview"],
                         project_id=PROJECT_ID,
                     ),
                 ],
@@ -140,18 +142,18 @@ class Test_project_environment_sensitive_vars_encrypted:
                 return_value=set_mocked_vercel_provider(),
             ),
             mock.patch(
-                "prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted.project_client",
+                "prowler.providers.vercel.services.project.project_environment_production_vars_not_in_preview.project_environment_production_vars_not_in_preview.project_client",
                 new=project_client,
             ),
         ):
-            from prowler.providers.vercel.services.project.project_environment_sensitive_vars_encrypted.project_environment_sensitive_vars_encrypted import (
-                project_environment_sensitive_vars_encrypted,
+            from prowler.providers.vercel.services.project.project_environment_production_vars_not_in_preview.project_environment_production_vars_not_in_preview import (
+                project_environment_production_vars_not_in_preview,
             )
 
-            check = project_environment_sensitive_vars_encrypted()
+            check = project_environment_production_vars_not_in_preview()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "properly encrypted" in result[0].status_extended
+            assert "no sensitive production environment" in result[0].status_extended

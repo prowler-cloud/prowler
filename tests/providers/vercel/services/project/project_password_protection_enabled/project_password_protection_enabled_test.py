@@ -9,7 +9,7 @@ from tests.providers.vercel.vercel_fixtures import (
 )
 
 
-class Test_project_auto_expose_system_env_disabled:
+class Test_project_password_protection_enabled:
     def test_no_projects(self):
         project_client = mock.MagicMock
         project_client.projects = {}
@@ -20,26 +20,26 @@ class Test_project_auto_expose_system_env_disabled:
                 return_value=set_mocked_vercel_provider(),
             ),
             mock.patch(
-                "prowler.providers.vercel.services.project.project_auto_expose_system_env_disabled.project_auto_expose_system_env_disabled.project_client",
+                "prowler.providers.vercel.services.project.project_password_protection_enabled.project_password_protection_enabled.project_client",
                 new=project_client,
             ),
         ):
-            from prowler.providers.vercel.services.project.project_auto_expose_system_env_disabled.project_auto_expose_system_env_disabled import (
-                project_auto_expose_system_env_disabled,
+            from prowler.providers.vercel.services.project.project_password_protection_enabled.project_password_protection_enabled import (
+                project_password_protection_enabled,
             )
 
-            check = project_auto_expose_system_env_disabled()
+            check = project_password_protection_enabled()
             result = check.execute()
             assert len(result) == 0
 
-    def test_auto_expose_disabled(self):
+    def test_password_protection_configured(self):
         project_client = mock.MagicMock
         project_client.projects = {
             PROJECT_ID: VercelProject(
                 id=PROJECT_ID,
                 name=PROJECT_NAME,
                 team_id=TEAM_ID,
-                auto_expose_system_envs=False,
+                password_protection={"deployment_type": "all"},
             )
         }
 
@@ -49,30 +49,30 @@ class Test_project_auto_expose_system_env_disabled:
                 return_value=set_mocked_vercel_provider(),
             ),
             mock.patch(
-                "prowler.providers.vercel.services.project.project_auto_expose_system_env_disabled.project_auto_expose_system_env_disabled.project_client",
+                "prowler.providers.vercel.services.project.project_password_protection_enabled.project_password_protection_enabled.project_client",
                 new=project_client,
             ),
         ):
-            from prowler.providers.vercel.services.project.project_auto_expose_system_env_disabled.project_auto_expose_system_env_disabled import (
-                project_auto_expose_system_env_disabled,
+            from prowler.providers.vercel.services.project.project_password_protection_enabled.project_password_protection_enabled import (
+                project_password_protection_enabled,
             )
 
-            check = project_auto_expose_system_env_disabled()
+            check = project_password_protection_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "does not automatically expose" in result[0].status_extended
+            assert "has password protection configured" in result[0].status_extended
 
-    def test_auto_expose_enabled(self):
+    def test_no_password_protection(self):
         project_client = mock.MagicMock
         project_client.projects = {
             PROJECT_ID: VercelProject(
                 id=PROJECT_ID,
                 name=PROJECT_NAME,
                 team_id=TEAM_ID,
-                auto_expose_system_envs=True,
+                password_protection=None,
             )
         }
 
@@ -82,18 +82,18 @@ class Test_project_auto_expose_system_env_disabled:
                 return_value=set_mocked_vercel_provider(),
             ),
             mock.patch(
-                "prowler.providers.vercel.services.project.project_auto_expose_system_env_disabled.project_auto_expose_system_env_disabled.project_client",
+                "prowler.providers.vercel.services.project.project_password_protection_enabled.project_password_protection_enabled.project_client",
                 new=project_client,
             ),
         ):
-            from prowler.providers.vercel.services.project.project_auto_expose_system_env_disabled.project_auto_expose_system_env_disabled import (
-                project_auto_expose_system_env_disabled,
+            from prowler.providers.vercel.services.project.project_password_protection_enabled.project_password_protection_enabled import (
+                project_password_protection_enabled,
             )
 
-            check = project_auto_expose_system_env_disabled()
+            check = project_password_protection_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "FAIL"
-            assert "automatically exposes system" in result[0].status_extended
+            assert "does not have password protection" in result[0].status_extended

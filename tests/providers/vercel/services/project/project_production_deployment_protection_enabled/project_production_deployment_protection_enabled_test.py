@@ -12,7 +12,7 @@ from tests.providers.vercel.vercel_fixtures import (
 )
 
 
-class Test_project_deployment_protection_enabled:
+class Test_project_production_deployment_protection_enabled:
     def test_no_projects(self):
         project_client = mock.MagicMock
         project_client.projects = {}
@@ -23,26 +23,26 @@ class Test_project_deployment_protection_enabled:
                 return_value=set_mocked_vercel_provider(),
             ),
             mock.patch(
-                "prowler.providers.vercel.services.project.project_deployment_protection_enabled.project_deployment_protection_enabled.project_client",
+                "prowler.providers.vercel.services.project.project_production_deployment_protection_enabled.project_production_deployment_protection_enabled.project_client",
                 new=project_client,
             ),
         ):
-            from prowler.providers.vercel.services.project.project_deployment_protection_enabled.project_deployment_protection_enabled import (
-                project_deployment_protection_enabled,
+            from prowler.providers.vercel.services.project.project_production_deployment_protection_enabled.project_production_deployment_protection_enabled import (
+                project_production_deployment_protection_enabled,
             )
 
-            check = project_deployment_protection_enabled()
+            check = project_production_deployment_protection_enabled()
             result = check.execute()
             assert len(result) == 0
 
-    def test_deployment_protection_enabled(self):
+    def test_protection_enabled(self):
         project_client = mock.MagicMock
         project_client.projects = {
             PROJECT_ID: VercelProject(
                 id=PROJECT_ID,
                 name=PROJECT_NAME,
                 team_id=TEAM_ID,
-                deployment_protection=DeploymentProtectionConfig(
+                production_deployment_protection=DeploymentProtectionConfig(
                     level="standard",
                 ),
             )
@@ -54,30 +54,30 @@ class Test_project_deployment_protection_enabled:
                 return_value=set_mocked_vercel_provider(),
             ),
             mock.patch(
-                "prowler.providers.vercel.services.project.project_deployment_protection_enabled.project_deployment_protection_enabled.project_client",
+                "prowler.providers.vercel.services.project.project_production_deployment_protection_enabled.project_production_deployment_protection_enabled.project_client",
                 new=project_client,
             ),
         ):
-            from prowler.providers.vercel.services.project.project_deployment_protection_enabled.project_deployment_protection_enabled import (
-                project_deployment_protection_enabled,
+            from prowler.providers.vercel.services.project.project_production_deployment_protection_enabled.project_production_deployment_protection_enabled import (
+                project_production_deployment_protection_enabled,
             )
 
-            check = project_deployment_protection_enabled()
+            check = project_production_deployment_protection_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "deployment protection enabled" in result[0].status_extended
+            assert "production deployment protection" in result[0].status_extended
 
-    def test_deployment_protection_disabled(self):
+    def test_protection_none_level(self):
         project_client = mock.MagicMock
         project_client.projects = {
             PROJECT_ID: VercelProject(
                 id=PROJECT_ID,
                 name=PROJECT_NAME,
                 team_id=TEAM_ID,
-                deployment_protection=DeploymentProtectionConfig(
+                production_deployment_protection=DeploymentProtectionConfig(
                     level="none",
                 ),
             )
@@ -89,15 +89,15 @@ class Test_project_deployment_protection_enabled:
                 return_value=set_mocked_vercel_provider(),
             ),
             mock.patch(
-                "prowler.providers.vercel.services.project.project_deployment_protection_enabled.project_deployment_protection_enabled.project_client",
+                "prowler.providers.vercel.services.project.project_production_deployment_protection_enabled.project_production_deployment_protection_enabled.project_client",
                 new=project_client,
             ),
         ):
-            from prowler.providers.vercel.services.project.project_deployment_protection_enabled.project_deployment_protection_enabled import (
-                project_deployment_protection_enabled,
+            from prowler.providers.vercel.services.project.project_production_deployment_protection_enabled.project_production_deployment_protection_enabled import (
+                project_production_deployment_protection_enabled,
             )
 
-            check = project_deployment_protection_enabled()
+            check = project_production_deployment_protection_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == PROJECT_ID
@@ -105,14 +105,14 @@ class Test_project_deployment_protection_enabled:
             assert result[0].status == "FAIL"
             assert "does not have deployment protection" in result[0].status_extended
 
-    def test_deployment_protection_none(self):
+    def test_protection_null(self):
         project_client = mock.MagicMock
         project_client.projects = {
             PROJECT_ID: VercelProject(
                 id=PROJECT_ID,
                 name=PROJECT_NAME,
                 team_id=TEAM_ID,
-                deployment_protection=None,
+                production_deployment_protection=None,
             )
         }
 
@@ -122,17 +122,18 @@ class Test_project_deployment_protection_enabled:
                 return_value=set_mocked_vercel_provider(),
             ),
             mock.patch(
-                "prowler.providers.vercel.services.project.project_deployment_protection_enabled.project_deployment_protection_enabled.project_client",
+                "prowler.providers.vercel.services.project.project_production_deployment_protection_enabled.project_production_deployment_protection_enabled.project_client",
                 new=project_client,
             ),
         ):
-            from prowler.providers.vercel.services.project.project_deployment_protection_enabled.project_deployment_protection_enabled import (
-                project_deployment_protection_enabled,
+            from prowler.providers.vercel.services.project.project_production_deployment_protection_enabled.project_production_deployment_protection_enabled import (
+                project_production_deployment_protection_enabled,
             )
 
-            check = project_deployment_protection_enabled()
+            check = project_production_deployment_protection_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "FAIL"
+            assert "does not have deployment protection" in result[0].status_extended
