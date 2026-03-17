@@ -7858,8 +7858,12 @@ class TestUserRoleRelationshipViewSet:
         assert response.status_code == status.HTTP_204_NO_CONTENT
         relationships = UserRoleRelationship.objects.filter(user=create_test_user.id)
         assert relationships.count() == 4
-        for relationship in relationships[2:]:  # Skip admin role
-            assert relationship.role.id in [r.id for r in roles_fixture[:2]]
+        # Use set membership instead of positional slicing — QuerySet ordering is
+        # non-deterministic without an explicit order_by, which makes slice-based
+        # checks intermittently fail.
+        added_role_ids = {r.id for r in roles_fixture[:2]}
+        relationship_role_ids = {rel.role.id for rel in relationships}
+        assert added_role_ids.issubset(relationship_role_ids)
 
     def test_create_relationship_already_exists(
         self, authenticated_client, roles_fixture, create_test_user
