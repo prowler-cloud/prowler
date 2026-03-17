@@ -2,14 +2,39 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.20.0] (Prowler UNRELEASED)
+## [5.21.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
 
-- `entra_conditional_access_policy_approved_client_app_required_for_mobile` check for m365 provider [(#10216)](https://github.com/prowler-cloud/prowler/pull/10216)
+- `entra_conditional_access_policy_device_code_flow_blocked` check for M365 provider [(#10218)](https://github.com/prowler-cloud/prowler/pull/10218)
+- CheckMetadata Pydantic validators [(#8584)](https://github.com/prowler-cloud/prowler/pull/8583)
+- `entra_conditional_access_policy_require_mfa_for_admin_portals` check for Azure provider and update CIS compliance [(#10330)](https://github.com/prowler-cloud/prowler/pull/10330)
+- `organization_repository_deletion_limited` check for GitHub provider [(#10185)](https://github.com/prowler-cloud/prowler/pull/10185)
+
+### 🔄 Changed
+
+- Update M365 SharePoint service metadata to new format [(#9684)](https://github.com/prowler-cloud/prowler/pull/9684)
+- Update M365 Exchange service metadata to new format [(#9683)](https://github.com/prowler-cloud/prowler/pull/9683)
+- Update M365 Teams service metadata to new format [(#9685)](https://github.com/prowler-cloud/prowler/pull/9685)
+- Update M365 Entra ID service metadata to new format [(#9682)](https://github.com/prowler-cloud/prowler/pull/9682)
+- Update ResourceType and Categories for Azure Entra ID service metadata [(#10334)](https://github.com/prowler-cloud/prowler/pull/10334)
+
+### 🔐 Security
+
+- Bump `multipart` to 1.3.1 to fix [GHSA-p2m9-wcp5-6qw3](https://github.com/defnull/multipart/security/advisories/GHSA-p2m9-wcp5-6qw3) [(#10331)](https://github.com/prowler-cloud/prowler/pull/10331)
+
+---
+
+## [5.20.0] (Prowler v5.20.0)
+
+### 🚀 Added
+
+- `entra_conditional_access_policy_approved_client_app_required_for_mobile` check for M365 provider [(#10216)](https://github.com/prowler-cloud/prowler/pull/10216)
 - `entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required` check for M365 provider [(#10197)](https://github.com/prowler-cloud/prowler/pull/10197)
-- Add `trusted_ips` configurable option to `opensearch_service_domains_not_publicly_accessible` check to reduce false positives on IP-restricted policies [(#8631)](https://github.com/prowler-cloud/prowler/pull/8631)
+- `trusted_ips` configurable option for `opensearch_service_domains_not_publicly_accessible` check to reduce false positives on IP-restricted policies [(#8631)](https://github.com/prowler-cloud/prowler/pull/8631)
 - `guardduty_delegated_admin_enabled_all_regions` check for AWS provider [(#9867)](https://github.com/prowler-cloud/prowler/pull/9867)
+- OpenStack object storage service with 7 checks [(#10258)](https://github.com/prowler-cloud/prowler/pull/10258)
+- AWS Organizations OU metadata (OU ID, OU path) in ASFF, OCSF and CSV outputs [(#10283)](https://github.com/prowler-cloud/prowler/pull/10283)
 
 ### 🔄 Changed
 
@@ -109,6 +134,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
+- Google Workspace provider `test_connection()` missing `provider_id` parameter for API integration [(#10247)](https://github.com/prowler-cloud/prowler/pull/10247)
 - Update AWS checks metadata URLs to replace deprecated Trend Micro CloudOne Conformity (EOL July 2026) with Vision One and remove docs.prowler.com references [(#10068)](https://github.com/prowler-cloud/prowler/pull/10068)
 - Standardize resource_id values across Azure checks to use actual Azure resource IDs and prevent duplicate resource entries [(#9994)](https://github.com/prowler-cloud/prowler/pull/9994)
 - VPC endpoint service collection filtering third-party services that caused AccessDenied errors on `DescribeVpcEndpointServicePermissions` [(#10152)](https://github.com/prowler-cloud/prowler/pull/10152)

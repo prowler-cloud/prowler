@@ -4,7 +4,7 @@
   "CheckTitle": "RDS cluster has Multi-AZ enabled",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "rds",
   "SubServiceName": "",

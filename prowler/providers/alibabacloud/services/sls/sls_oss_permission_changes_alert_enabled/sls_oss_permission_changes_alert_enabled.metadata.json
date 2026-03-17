@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "**Alibaba Cloud Simple Log Service (SLS)** should have a metric filter and alarm configured for **OSS Bucket RAM** permission changes. By directing **ActionTrail** logs to SLS and establishing corresponding alert rules, real-time monitoring of OSS permission modifications can be achieved. This ensures that changes to bucket-level access controls and RAM policies affecting OSS resources are promptly detected and reviewed.",
-  "Risk": "Without monitoring for **OSS permission changes**, unauthorized modifications to bucket access controls may go undetected. This could allow attackers to grant themselves or others **unauthorized access** to sensitive objects stored in OSS buckets. Delayed detection of permission changes increases the risk of **data exfiltration**, **data tampering**, and **compliance violations**, as the confidentiality and integrity of stored data may be compromised.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for **OSS Bucket RAM** permission changes. By directing **ActionTrail** logs to SLS with alert rules, OSS permission modifications are monitored in real time. This ensures changes to bucket access controls and RAM policies affecting OSS are promptly detected.",
+  "Risk": "Without monitoring for **OSS permission changes**, unauthorized modifications to bucket access controls may go undetected, allowing attackers **unauthorized access** to sensitive objects. Delayed detection increases risk of **data exfiltration**, **data tampering**, and **compliance violations**, compromising confidentiality and integrity of stored data.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",

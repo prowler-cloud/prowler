@@ -31,6 +31,10 @@ vi.mock("@/lib/server-actions-helper", () => ({
 import {
   applyDiscovery,
   getDiscovery,
+  listOrganizations,
+  listOrganizationsSafe,
+  listOrganizationUnits,
+  listOrganizationUnitsSafe,
   triggerDiscovery,
   updateOrganizationSecret,
 } from "./organizations";
@@ -136,5 +140,67 @@ describe("organizations actions", () => {
     expect(result).toEqual({ data: { id: "apply-2" }, error: null });
     expect(revalidatePathMock).toHaveBeenCalledTimes(1);
     expect(revalidatePathMock).toHaveBeenCalledWith("/providers");
+  });
+
+  it("lists organizations with the expected filters", async () => {
+    // Given
+    handleApiResponseMock.mockResolvedValue({ data: [] });
+
+    // When
+    await listOrganizations();
+
+    // Then
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      "https://api.example.com/api/v1/organizations?filter%5Borg_type%5D=aws",
+    );
+  });
+
+  it("lists organization units from the dedicated endpoint", async () => {
+    // Given
+    handleApiResponseMock.mockResolvedValue({ data: [] });
+
+    // When
+    await listOrganizationUnits();
+
+    // Then
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      "https://api.example.com/api/v1/organizational-units",
+    );
+  });
+
+  it("returns an empty organizations payload when the safe organizations request fails", async () => {
+    // Given
+    fetchMock.mockResolvedValue(
+      new Response("Internal Server Error", {
+        status: 500,
+      }),
+    );
+
+    // When
+    const result = await listOrganizationsSafe();
+
+    // Then
+    expect(result).toEqual({ data: [] });
+    expect(handleApiResponseMock).not.toHaveBeenCalled();
+    expect(handleApiErrorMock).not.toHaveBeenCalled();
+  });
+
+  it("returns an empty organization units payload when the safe request fails", async () => {
+    // Given
+    fetchMock.mockResolvedValue(
+      new Response("Internal Server Error", {
+        status: 500,
+      }),
+    );
+
+    // When
+    const result = await listOrganizationUnitsSafe();
+
+    // Then
+    expect(result).toEqual({ data: [] });
+    expect(handleApiResponseMock).not.toHaveBeenCalled();
+    expect(handleApiErrorMock).not.toHaveBeenCalled();
   });
 });
