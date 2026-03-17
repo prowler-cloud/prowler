@@ -9,8 +9,24 @@ import {
   getSkillById,
 } from "@/lib/lighthouse/skills/index";
 
+interface SkillLoadedResult {
+  found: true;
+  skillId: string;
+  name: string;
+  instructions: string;
+}
+
+interface SkillNotFoundResult {
+  found: false;
+  skillId: string;
+  message: string;
+  availableSkills: string[];
+}
+
+type LoadSkillResult = SkillLoadedResult | SkillNotFoundResult;
+
 export const loadSkill = tool(
-  async ({ skillId }: { skillId: string }) => {
+  async ({ skillId }: { skillId: string }): Promise<LoadSkillResult> => {
     addBreadcrumb({
       category: "skill",
       message: `load_skill called for: ${skillId}`,
@@ -52,11 +68,9 @@ export const loadSkill = tool(
 Skills provide domain-specific guidance, workflows, and schema knowledge for complex tasks.
 Use this when you identify a relevant skill from the skill catalog in your system prompt.
 
-Example: load_skill({ "skillId": "attack-path-custom-query" })
-
 Returns:
-- Full skill instructions with workflows and examples
-- List of relevant MCP tools the skill guides`,
+- Skill metadata (id, name)
+- Full skill instructions with workflows and examples`,
     schema: z.object({
       skillId: z
         .string()
