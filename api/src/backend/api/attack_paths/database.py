@@ -17,7 +17,8 @@ from api.attack_paths.retryable_session import RetryableSession
 from config.env import env
 from tasks.jobs.attack_paths.config import (
     BATCH_SIZE,
-    DEPRECATED_PROVIDER_RESOURCE_LABEL,
+    PROVIDER_ID_PROPERTY,
+    PROVIDER_RESOURCE_LABEL,
 )
 
 # Without this Celery goes crazy with Neo4j logging
@@ -35,6 +36,7 @@ READ_EXCEPTION_CODES = [
     "Neo.ClientError.Statement.AccessMode",
     "Neo.ClientError.Procedure.ProcedureNotFound",
 ]
+CLIENT_STATEMENT_EXCEPTION_PREFIX = "Neo.ClientError.Statement."
 
 # Module-level process-wide driver singleton
 _driver: neo4j.Driver | None = None
@@ -108,6 +110,7 @@ def get_session(
     except neo4j.exceptions.Neo4jError as exc:
         if (
             default_access_mode == neo4j.READ_ACCESS
+            and exc.code
             and exc.code in READ_EXCEPTION_CODES
         ):
             message = "Read query not allowed"
@@ -115,6 +118,10 @@ def get_session(
             raise WriteQueryNotAllowedException(message=message, code=code)
 
         message = exc.message if exc.message is not None else str(exc)
+
+        if exc.code and exc.code.startswith(CLIENT_STATEMENT_EXCEPTION_PREFIX):
+            raise ClientStatementException(message=message, code=exc.code)
+
         raise GraphDatabaseQueryException(message=message, code=exc.code)
 
     finally:
@@ -172,7 +179,7 @@ def drop_subgraph(database: str, provider_id: str) -> int:
             while deleted_count > 0:
                 result = session.run(
                     f"""
-                    MATCH (n:{DEPRECATED_PROVIDER_RESOURCE_LABEL} {{provider_id: $provider_id}})
+                    MATCH (n:{PROVIDER_RESOURCE_LABEL} {{{PROVIDER_ID_PROPERTY}: $provider_id}})
                     WITH n LIMIT $batch_size
                     DETACH DELETE n
                     RETURN COUNT(n) AS deleted_nodes_count
@@ -226,4 +233,8 @@ class GraphDatabaseQueryException(Exception):
 
 
 class WriteQueryNotAllowedException(GraphDatabaseQueryException):
+    pass
+
+
+class ClientStatementException(GraphDatabaseQueryException):
     pass

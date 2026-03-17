@@ -7,6 +7,7 @@ export const PROVIDER_TYPES = [
   "mongodbatlas",
   "github",
   "iac",
+  "image",
   "oraclecloud",
   "alibabacloud",
   "cloudflare",
@@ -24,6 +25,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   mongodbatlas: "MongoDB Atlas",
   github: "GitHub",
   iac: "Infrastructure as Code",
+  image: "Container Registry",
   oraclecloud: "Oracle Cloud Infrastructure",
   alibabacloud: "Alibaba Cloud",
   cloudflare: "Cloudflare",
@@ -86,6 +88,11 @@ export interface ProviderEntity {
   provider: ProviderType;
   uid: string;
   alias: string | null;
+}
+
+export interface GroupFilterEntity {
+  name: string;
+  uid: string;
 }
 
 export interface ProviderConnectionStatus {

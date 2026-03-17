@@ -6,9 +6,6 @@ import pytest
 from tasks.jobs.attack_paths import findings as findings_module
 from tasks.jobs.attack_paths import internet as internet_module
 from tasks.jobs.attack_paths import sync as sync_module
-from tasks.jobs.attack_paths.config import (
-    get_deprecated_provider_resource_label,
-)
 from tasks.jobs.attack_paths.scan import run as attack_paths_run
 
 from api.models import (
@@ -154,6 +151,7 @@ class TestAttackPathsRun:
         mock_sync.assert_called_once_with(
             source_database="db-scan-id",
             target_database="tenant-db",
+            tenant_id=str(provider.tenant_id),
             provider_id=str(provider.id),
         )
         mock_get_ingestion.assert_called_once_with(provider.provider)
@@ -648,7 +646,7 @@ class TestAttackPathsFindingsHelpers:
             ),
             patch(
                 "tasks.jobs.attack_paths.findings.get_provider_resource_label",
-                return_value="AWSResource",
+                return_value="_AWSResource",
             ),
         ):
             findings_module.load_findings(
@@ -1069,7 +1067,7 @@ class TestAttackPathsFindingsHelpers:
             ),
             patch(
                 "tasks.jobs.attack_paths.findings.get_provider_resource_label",
-                return_value="AWSResource",
+                return_value="_AWSResource",
             ),
         ):
             findings_module.load_findings(mock_session, empty_gen(), provider, config)
@@ -1077,19 +1075,8 @@ class TestAttackPathsFindingsHelpers:
         mock_session.run.assert_not_called()
 
 
-class TestProviderConfigAccessors:
-    def test_get_deprecated_provider_resource_label_known_provider(self):
-        assert get_deprecated_provider_resource_label("aws") == "AWSResource"
-
-    def test_get_deprecated_provider_resource_label_unknown_provider(self):
-        assert (
-            get_deprecated_provider_resource_label("unknown")
-            == "UnknownProviderResource"
-        )
-
-
 class TestAddResourceLabel:
-    def test_add_resource_label_applies_both_labels(self):
+    def test_add_resource_label_applies_private_label(self):
         mock_session = MagicMock()
 
         first_result = MagicMock()
@@ -1104,11 +1091,11 @@ class TestAddResourceLabel:
         assert mock_session.run.call_count == 2
         query = mock_session.run.call_args_list[0].args[0]
         assert "_AWSResource" in query
-        assert "AWSResource" in query
+        assert "AWSResource" not in query.replace("_AWSResource", "")
 
 
 class TestSyncNodes:
-    def test_sync_nodes_adds_both_labels(self):
+    def test_sync_nodes_adds_private_label(self):
         mock_source_session = MagicMock()
         mock_target_session = MagicMock()
 
@@ -1132,12 +1119,15 @@ class TestSyncNodes:
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
             side_effect=[source_ctx, target_ctx],
         ):
-            total = sync_module.sync_nodes("source-db", "target-db", "prov-1")
+            total = sync_module.sync_nodes(
+                "source-db", "target-db", "tenant-1", "prov-1"
+            )
 
         assert total == 1
         query = mock_target_session.run.call_args.args[0]
         assert "_ProviderResource" in query
-        assert "ProviderResource" in query
+        assert "_Tenant_tenant1" in query
+        assert "_Provider_prov1" in query
 
 
 class TestInternetAnalysis:

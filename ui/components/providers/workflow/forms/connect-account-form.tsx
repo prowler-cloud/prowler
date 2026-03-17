@@ -9,10 +9,10 @@ import { z } from "zod";
 
 import { addProvider } from "@/actions/providers/providers";
 import { AwsMethodSelector } from "@/components/providers/organizations/aws-method-selector";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
 import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { addProviderFormSchema, ApiError, ProviderType } from "@/types";
 
@@ -80,6 +80,11 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
       return {
         label: "Repository URL",
         placeholder: "e.g. https://github.com/user/repo",
+      };
+    case "image":
+      return {
+        label: "Registry URL",
+        placeholder: "e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com",
       };
     case "oraclecloud":
       return {
@@ -346,7 +351,7 @@ export const ConnectAccountForm = ({
           (providerType !== "aws" || awsMethod === "single") && (
             <>
               <ProviderTitleDocs providerType={providerType} />
-              <CustomInput
+              <WizardInputField
                 control={form.control}
                 name="providerUid"
                 type="text"
@@ -356,7 +361,7 @@ export const ConnectAccountForm = ({
                 variant="bordered"
                 isRequired
               />
-              <CustomInput
+              <WizardInputField
                 control={form.control}
                 name="providerAlias"
                 type="text"

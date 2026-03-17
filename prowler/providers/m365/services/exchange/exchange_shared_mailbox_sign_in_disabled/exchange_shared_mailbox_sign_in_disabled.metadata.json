@@ -7,9 +7,9 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Shared Mailbox",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Shared mailboxes are used for collaboration and should not permit direct sign-in. This check verifies that the **AccountEnabled** property is set to `false` in Entra ID for all shared mailboxes, preventing direct authentication.",
+  "Description": "**Microsoft 365 Shared mailboxes** are used for collaboration and should not permit direct sign-in. This check verifies that the **AccountEnabled** property is set to `false` in Entra ID for all shared mailboxes, preventing direct authentication.",
   "Risk": "When sign-in is enabled on shared mailboxes, users with the password can bypass delegation controls and access the mailbox directly. This undermines **accountability** since actions cannot be attributed to individual users, and it increases the attack surface for credential-based attacks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
