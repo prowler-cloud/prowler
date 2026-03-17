@@ -383,7 +383,7 @@ class ImageProvider(Provider):
                     "Description", finding.get("Title", "")
                 )
                 finding_status = "FAIL"
-                finding_categories = ["vulnerability"]
+                finding_categories = ["vulnerabilities"]
             elif "RuleID" in finding:
                 # Secret finding
                 finding_id = finding["RuleID"]
@@ -433,10 +433,13 @@ class ImageProvider(Provider):
                     },
                     "Recommendation": {
                         "Text": remediation_text,
-                        "Url": finding.get("PrimaryURL", ""),
+                        "Url": "",
                     },
                 },
                 "Categories": finding_categories,
+                "AdditionalURLs": (
+                    [url] if (url := finding.get("PrimaryURL", "")) else []
+                ),
                 "DependsOn": [],
                 "RelatedTo": [],
                 "Notes": "",

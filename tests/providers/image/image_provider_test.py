@@ -143,7 +143,7 @@ class TestImageProvider:
         assert report.image_sha == "c1aabb73d233"
         assert report.resource_details == "alpine:3.18 (alpine 3.18.0)"
         assert report.region == "container"
-        assert report.check_metadata.Categories == ["vulnerability"]
+        assert report.check_metadata.Categories == ["vulnerabilities"]
         assert report.check_metadata.RelatedUrl == ""
 
     def test_process_finding_secret(self):
