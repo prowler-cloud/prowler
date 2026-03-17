@@ -9,6 +9,10 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack Paths: Complete migration to private graph labels and properties, removing deprecated dual-write support [(#10268)](https://github.com/prowler-cloud/prowler/pull/10268)
 - Attack Paths: Added tenant and provider related labels to the nodes so they can be easily filtered on custom queries [(#10308)](https://github.com/prowler-cloud/prowler/pull/10308)
 
+### 🔐 Security
+
+- Use `psycopg2.sql` to safely compose DDL in `PostgresEnumMigration`, preventing SQL injection via f-string interpolation [(#10166)](https://github.com/prowler-cloud/prowler/pull/10166)
+
 ---
 
 ## [1.21.0] (Prowler v5.20.0)
@@ -64,7 +68,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Bump `Pillow` to 12.1.1 (CVE-2021-25289) [(#10027)](https://github.com/prowler-cloud/prowler/pull/10027)
 - Remove safety ignore for CVE-2026-21226 (84420), fixed via `azure-core` 1.38.x [(#10110)](https://github.com/prowler-cloud/prowler/pull/10110)
-- Use `psycopg2.sql` to safely compose DDL in `PostgresEnumMigration`, preventing SQL injection via f-string interpolation [(#10166)](https://github.com/prowler-cloud/prowler/pull/10166)
 
 ---
 
