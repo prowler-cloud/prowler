@@ -151,7 +151,7 @@
         "cloudstorage_audit_logs_enabled",
         "compute_loadbalancer_logging_enabled",
         "compute_subnet_flow_logs_enabled",
-        "`logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled`",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
         "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
         "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled"
       ]
