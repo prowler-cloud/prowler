@@ -12,9 +12,9 @@ from celery.utils.log import get_task_logger
 
 from api.attack_paths import database as graph_database
 from tasks.jobs.attack_paths.config import (
-    BATCH_SIZE,
     PROVIDER_ISOLATION_PROPERTIES,
     PROVIDER_RESOURCE_LABEL,
+    SYNC_BATCH_SIZE,
     get_provider_label,
     get_tenant_label,
 )
@@ -82,40 +82,32 @@ def sync_nodes(
 
     Adds `_ProviderResource` label and `_provider_id` property to all nodes.
     Also adds dynamic `_Tenant_{id}` and `_Provider_{id}` isolation labels.
+
+    Source and target sessions are opened sequentially per batch to avoid
+    holding two Bolt connections simultaneously for the entire sync duration.
     """
     last_id = -1
     total_synced = 0
 
-    with (
-        graph_database.get_session(source_database) as source_session,
-        graph_database.get_session(target_database) as target_session,
-    ):
-        while True:
-            rows = list(
-                source_session.run(
-                    NODE_FETCH_QUERY,
-                    {"last_id": last_id, "batch_size": BATCH_SIZE},
-                )
+    while True:
+        grouped: dict[tuple[str, ...], list[dict[str, Any]]] = defaultdict(list)
+        batch_count = 0
+
+        with graph_database.get_session(source_database) as source_session:
+            result = source_session.run(
+                NODE_FETCH_QUERY,
+                {"last_id": last_id, "batch_size": SYNC_BATCH_SIZE},
             )
+            for record in result:
+                batch_count += 1
+                last_id = record["internal_id"]
+                key, value = _node_to_sync_dict(record, provider_id)
+                grouped[key].append(value)
 
-            if not rows:
-                break
+        if batch_count == 0:
+            break
 
-            last_id = rows[-1]["internal_id"]
-
-            grouped: dict[tuple[str, ...], list[dict[str, Any]]] = defaultdict(list)
-            for row in rows:
-                labels = tuple(sorted(set(row["labels"] or [])))
-                props = dict(row["props"] or {})
-                _strip_internal_properties(props)
-                provider_element_id = f"{provider_id}:{row['element_id']}"
-                grouped[labels].append(
-                    {
-                        "provider_element_id": provider_element_id,
-                        "props": props,
-                    }
-                )
-
+        with graph_database.get_session(target_database) as target_session:
             for labels, batch in grouped.items():
                 label_set = set(labels)
                 label_set.add(PROVIDER_RESOURCE_LABEL)
@@ -134,10 +126,10 @@ def sync_nodes(
                     },
                 )
 
-            total_synced += len(rows)
-            logger.info(
-                f"Synced {total_synced} nodes from {source_database} to {target_database}"
-            )
+        total_synced += batch_count
+        logger.info(
+            f"Synced {total_synced} nodes from {source_database} to {target_database}"
+        )
 
     return total_synced
 
@@ -151,41 +143,32 @@ def sync_relationships(
     Sync relationships from source to target database.
 
     Adds `_provider_id` property to all relationships.
+
+    Source and target sessions are opened sequentially per batch to avoid
+    holding two Bolt connections simultaneously for the entire sync duration.
     """
     last_id = -1
     total_synced = 0
 
-    with (
-        graph_database.get_session(source_database) as source_session,
-        graph_database.get_session(target_database) as target_session,
-    ):
-        while True:
-            rows = list(
-                source_session.run(
-                    RELATIONSHIPS_FETCH_QUERY,
-                    {"last_id": last_id, "batch_size": BATCH_SIZE},
-                )
+    while True:
+        grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        batch_count = 0
+
+        with graph_database.get_session(source_database) as source_session:
+            result = source_session.run(
+                RELATIONSHIPS_FETCH_QUERY,
+                {"last_id": last_id, "batch_size": SYNC_BATCH_SIZE},
             )
+            for record in result:
+                batch_count += 1
+                last_id = record["internal_id"]
+                key, value = _rel_to_sync_dict(record, provider_id)
+                grouped[key].append(value)
 
-            if not rows:
-                break
+        if batch_count == 0:
+            break
 
-            last_id = rows[-1]["internal_id"]
-
-            grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
-            for row in rows:
-                props = dict(row["props"] or {})
-                _strip_internal_properties(props)
-                rel_type = row["rel_type"]
-                grouped[rel_type].append(
-                    {
-                        "start_element_id": f"{provider_id}:{row['start_element_id']}",
-                        "end_element_id": f"{provider_id}:{row['end_element_id']}",
-                        "provider_element_id": f"{provider_id}:{rel_type}:{row['internal_id']}",
-                        "props": props,
-                    }
-                )
-
+        with graph_database.get_session(target_database) as target_session:
             for rel_type, batch in grouped.items():
                 query = render_cypher_template(
                     RELATIONSHIP_SYNC_TEMPLATE, {"__REL_TYPE__": rel_type}
@@ -198,12 +181,38 @@ def sync_relationships(
                     },
                 )
 
-            total_synced += len(rows)
-            logger.info(
-                f"Synced {total_synced} relationships from {source_database} to {target_database}"
-            )
+        total_synced += batch_count
+        logger.info(
+            f"Synced {total_synced} relationships from {source_database} to {target_database}"
+        )
 
     return total_synced
+
+
+def _node_to_sync_dict(
+    record: Any, provider_id: str
+) -> tuple[tuple[str, ...], dict[str, Any]]:
+    """Transform a source node record into a (grouping_key, sync_dict) pair."""
+    props = dict(record["props"] or {})
+    _strip_internal_properties(props)
+    labels = tuple(sorted(set(record["labels"] or [])))
+    return labels, {
+        "provider_element_id": f"{provider_id}:{record['element_id']}",
+        "props": props,
+    }
+
+
+def _rel_to_sync_dict(record: Any, provider_id: str) -> tuple[str, dict[str, Any]]:
+    """Transform a source relationship record into a (grouping_key, sync_dict) pair."""
+    props = dict(record["props"] or {})
+    _strip_internal_properties(props)
+    rel_type = record["rel_type"]
+    return rel_type, {
+        "start_element_id": f"{provider_id}:{record['start_element_id']}",
+        "end_element_id": f"{provider_id}:{record['end_element_id']}",
+        "provider_element_id": f"{provider_id}:{rel_type}:{record['internal_id']}",
+        "props": props,
+    }
 
 
 def _strip_internal_properties(props: dict[str, Any]) -> None:

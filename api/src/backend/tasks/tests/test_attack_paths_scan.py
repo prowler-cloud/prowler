@@ -621,16 +621,10 @@ class TestAttackPathsFindingsHelpers:
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
-        # Create mock Finding objects with to_dict() method
-        mock_finding_1 = MagicMock()
-        mock_finding_1.to_dict.return_value = {"id": "1", "resource_uid": "r-1"}
-        mock_finding_2 = MagicMock()
-        mock_finding_2.to_dict.return_value = {"id": "2", "resource_uid": "r-2"}
-
-        # Create a generator that yields two batches of Finding instances
+        # Create a generator that yields two batches of dicts (pre-converted)
         def findings_generator():
-            yield [mock_finding_1]
-            yield [mock_finding_2]
+            yield [{"id": "1", "resource_uid": "r-1"}]
+            yield [{"id": "2", "resource_uid": "r-2"}]
 
         config = SimpleNamespace(update_tag=12345)
         mock_session = MagicMock()
@@ -777,17 +771,17 @@ class TestAttackPathsFindingsHelpers:
 
         assert len(findings_data) == 1
         finding_result = findings_data[0]
-        assert finding_result.id == str(finding.id)
-        assert finding_result.resource_uid == resource.uid
-        assert finding_result.check_title == "Check title"
-        assert finding_result.scan_id == str(latest_scan.id)
+        assert finding_result["id"] == str(finding.id)
+        assert finding_result["resource_uid"] == resource.uid
+        assert finding_result["check_title"] == "Check title"
+        assert finding_result["scan_id"] == str(latest_scan.id)
 
     def test_enrich_batch_with_resources_single_resource(
         self,
         tenants_fixture,
         providers_fixture,
     ):
-        """One finding + one resource = one output Finding instance"""
+        """One finding + one resource = one output dict"""
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
         provider.provider = Provider.ProviderChoices.AWS
@@ -861,16 +855,16 @@ class TestAttackPathsFindingsHelpers:
             )
 
         assert len(result) == 1
-        assert result[0].resource_uid == resource.uid
-        assert result[0].id == str(finding.id)
-        assert result[0].status == "FAIL"
+        assert result[0]["resource_uid"] == resource.uid
+        assert result[0]["id"] == str(finding.id)
+        assert result[0]["status"] == "FAIL"
 
     def test_enrich_batch_with_resources_multiple_resources(
         self,
         tenants_fixture,
         providers_fixture,
     ):
-        """One finding + three resources = three output Finding instances"""
+        """One finding + three resources = three output dicts"""
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
         provider.provider = Provider.ProviderChoices.AWS
@@ -949,13 +943,13 @@ class TestAttackPathsFindingsHelpers:
             )
 
         assert len(result) == 3
-        result_resource_uids = {r.resource_uid for r in result}
+        result_resource_uids = {r["resource_uid"] for r in result}
         assert result_resource_uids == {r.uid for r in resources}
 
         # All should have same finding data
         for r in result:
-            assert r.id == str(finding.id)
-            assert r.status == "FAIL"
+            assert r["id"] == str(finding.id)
+            assert r["status"] == "FAIL"
 
     def test_enrich_batch_with_resources_no_resources_skips(
         self,
@@ -1032,16 +1026,12 @@ class TestAttackPathsFindingsHelpers:
         provider.save()
         scan_id = "some-scan-id"
 
-        with (
-            patch("tasks.jobs.attack_paths.findings.rls_transaction") as mock_rls,
-            patch("tasks.jobs.attack_paths.findings.Finding") as mock_finding,
-        ):
+        with patch("tasks.jobs.attack_paths.findings.rls_transaction") as mock_rls:
             # Create generator but don't iterate
             findings_module.stream_findings_with_resources(provider, scan_id)
 
             # Nothing should be called yet
             mock_rls.assert_not_called()
-            mock_finding.objects.filter.assert_not_called()
 
     def test_load_findings_empty_generator(self, providers_fixture):
         """Empty generator should not call neo4j"""
@@ -1094,40 +1084,178 @@ class TestAddResourceLabel:
         assert "AWSResource" not in query.replace("_AWSResource", "")
 
 
+def _make_session_ctx(session, call_order=None, name=None):
+    """Create a mock context manager wrapping a mock session."""
+    ctx = MagicMock()
+    if call_order is not None and name is not None:
+        ctx.__enter__ = MagicMock(
+            side_effect=lambda: (call_order.append(f"{name}:enter"), session)[1]
+        )
+        ctx.__exit__ = MagicMock(
+            side_effect=lambda *a: (call_order.append(f"{name}:exit"), False)[1]
+        )
+    else:
+        ctx.__enter__ = MagicMock(return_value=session)
+        ctx.__exit__ = MagicMock(return_value=False)
+    return ctx
+
+
 class TestSyncNodes:
     def test_sync_nodes_adds_private_label(self):
-        mock_source_session = MagicMock()
-        mock_target_session = MagicMock()
-
         row = {
             "internal_id": 1,
             "element_id": "elem-1",
             "labels": ["SomeLabel"],
             "props": {"key": "value"},
         }
-        mock_source_session.run.side_effect = [[row], []]
 
-        source_ctx = MagicMock()
-        source_ctx.__enter__ = MagicMock(return_value=mock_source_session)
-        source_ctx.__exit__ = MagicMock(return_value=False)
-
-        target_ctx = MagicMock()
-        target_ctx.__enter__ = MagicMock(return_value=mock_target_session)
-        target_ctx.__exit__ = MagicMock(return_value=False)
+        mock_source_1 = MagicMock()
+        mock_source_1.run.return_value = [row]
+        mock_target = MagicMock()
+        mock_source_2 = MagicMock()
+        mock_source_2.run.return_value = []
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
-            side_effect=[source_ctx, target_ctx],
+            side_effect=[
+                _make_session_ctx(mock_source_1),
+                _make_session_ctx(mock_target),
+                _make_session_ctx(mock_source_2),
+            ],
         ):
             total = sync_module.sync_nodes(
                 "source-db", "target-db", "tenant-1", "prov-1"
             )
 
         assert total == 1
-        query = mock_target_session.run.call_args.args[0]
+        query = mock_target.run.call_args.args[0]
         assert "_ProviderResource" in query
         assert "_Tenant_tenant1" in query
         assert "_Provider_prov1" in query
+
+    def test_sync_nodes_source_closes_before_target_opens(self):
+        row = {
+            "internal_id": 1,
+            "element_id": "elem-1",
+            "labels": ["SomeLabel"],
+            "props": {"key": "value"},
+        }
+
+        call_order = []
+
+        src_1 = MagicMock()
+        src_1.run.return_value = [row]
+        tgt = MagicMock()
+        src_2 = MagicMock()
+        src_2.run.return_value = []
+
+        with patch(
+            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            side_effect=[
+                _make_session_ctx(src_1, call_order, "source1"),
+                _make_session_ctx(tgt, call_order, "target"),
+                _make_session_ctx(src_2, call_order, "source2"),
+            ],
+        ):
+            sync_module.sync_nodes("src-db", "tgt-db", "t-1", "p-1")
+
+        assert call_order.index("source1:exit") < call_order.index("target:enter")
+
+    def test_sync_nodes_pagination_with_batch_size_1(self):
+        row_a = {
+            "internal_id": 1,
+            "element_id": "elem-1",
+            "labels": ["LabelA"],
+            "props": {"a": 1},
+        }
+        row_b = {
+            "internal_id": 2,
+            "element_id": "elem-2",
+            "labels": ["LabelB"],
+            "props": {"b": 2},
+        }
+
+        src_1 = MagicMock()
+        src_1.run.return_value = [row_a]
+        src_2 = MagicMock()
+        src_2.run.return_value = [row_b]
+        src_3 = MagicMock()
+        src_3.run.return_value = []
+        tgt_1 = MagicMock()
+        tgt_2 = MagicMock()
+
+        with patch(
+            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            side_effect=[
+                _make_session_ctx(src_1),
+                _make_session_ctx(tgt_1),
+                _make_session_ctx(src_2),
+                _make_session_ctx(tgt_2),
+                _make_session_ctx(src_3),
+            ],
+        ), patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 1):
+            total = sync_module.sync_nodes("src", "tgt", "t-1", "p-1")
+
+        assert total == 2
+        assert src_1.run.call_args.args[1]["last_id"] == -1
+        assert src_2.run.call_args.args[1]["last_id"] == 1
+
+    def test_sync_nodes_empty_source_returns_zero(self):
+        src = MagicMock()
+        src.run.return_value = []
+
+        with patch(
+            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            side_effect=[_make_session_ctx(src)],
+        ) as mock_get_session:
+            total = sync_module.sync_nodes("src", "tgt", "t-1", "p-1")
+
+        assert total == 0
+        assert mock_get_session.call_count == 1
+
+
+class TestSyncRelationships:
+    def test_sync_relationships_source_closes_before_target_opens(self):
+        row = {
+            "internal_id": 1,
+            "rel_type": "HAS",
+            "start_element_id": "s-1",
+            "end_element_id": "e-1",
+            "props": {},
+        }
+
+        call_order = []
+
+        src_1 = MagicMock()
+        src_1.run.return_value = [row]
+        tgt = MagicMock()
+        src_2 = MagicMock()
+        src_2.run.return_value = []
+
+        with patch(
+            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            side_effect=[
+                _make_session_ctx(src_1, call_order, "source1"),
+                _make_session_ctx(tgt, call_order, "target"),
+                _make_session_ctx(src_2, call_order, "source2"),
+            ],
+        ):
+            sync_module.sync_relationships("src", "tgt", "p-1")
+
+        assert call_order.index("source1:exit") < call_order.index("target:enter")
+
+    def test_sync_relationships_empty_source_returns_zero(self):
+        src = MagicMock()
+        src.run.return_value = []
+
+        with patch(
+            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            side_effect=[_make_session_ctx(src)],
+        ) as mock_get_session:
+            total = sync_module.sync_relationships("src", "tgt", "p-1")
+
+        assert total == 0
+        assert mock_get_session.call_count == 1
 
 
 class TestInternetAnalysis:

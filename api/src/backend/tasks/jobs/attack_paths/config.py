@@ -9,6 +9,8 @@ from tasks.jobs.attack_paths import aws
 
 # Batch size for Neo4j operations
 BATCH_SIZE = env.int("ATTACK_PATHS_BATCH_SIZE", 1000)
+SYNC_BATCH_SIZE = env.int("ATTACK_PATHS_SYNC_BATCH_SIZE", 250)
+FINDINGS_BATCH_SIZE = env.int("ATTACK_PATHS_FINDINGS_BATCH_SIZE", 500)
 
 # Neo4j internal labels (Prowler-specific, not provider-specific)
 # - `Internet`: Singleton node representing external internet access for exposed-resource queries
