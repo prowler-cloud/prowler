@@ -18,7 +18,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-create.html",
     "https://docs.aws.amazon.com/bedrock/latest/userguide/agents-guardrail.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/protect-agent-sessions-with-guardrails.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Bedrock/protect-agent-sessions-with-guardrails.html",
     "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html"
   ],
   "Remediation": {

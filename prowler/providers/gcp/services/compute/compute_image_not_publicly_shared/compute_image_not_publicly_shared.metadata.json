@@ -9,12 +9,11 @@
   "Severity": "medium",
   "ResourceType": "compute.googleapis.com/Image",
   "ResourceGroup": "compute",
-  "Description": "Custom disk images should not be shared publicly with **allAuthenticatedUsers**.\n\nNote: Per Google Cloud API restrictions, **allUsers** cannot be assigned to Compute Engine images. The security concern is **allAuthenticatedUsers**, which grants access to anyone with a Google account.\n\nPublicly shared disk images can expose application snapshots and sensitive data to anyone with a Google Cloud account, potentially leading to unauthorized access and data breaches.",
+  "Description": "Custom disk images should not be shared publicly with **allAuthenticatedUsers**. Per Google Cloud API restrictions, **allUsers** cannot be assigned to Compute Engine images. The concern is **allAuthenticatedUsers**, which grants access to anyone with a Google account, potentially exposing application snapshots and sensitive data.",
   "Risk": "Publicly shared disk images can expose **sensitive data** and application configurations to unauthorized users.\n\n- Any authenticated GCP user can access the image content\n- Could lead to **data breaches** if images contain secrets or proprietary code\n- Attackers may use exposed images to understand application architecture",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://cloud.google.com/compute/docs/images/managing-access-custom-images",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/publicly-shared-disk-images.html"
+    "https://cloud.google.com/compute/docs/images/managing-access-custom-images"
   ],
   "Remediation": {
     "Code": {

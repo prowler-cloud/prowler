@@ -190,13 +190,13 @@ export function LineChart({
     <div className="w-full">
       <ChartContainer
         config={chartConfig}
-        className="w-full overflow-hidden"
+        className="w-full"
         style={{ height, aspectRatio: "auto" }}
       >
         <RechartsLine
           data={data}
           margin={{
-            top: 10,
+            top: 20,
             left: 0,
             right: 30,
             bottom: 40,
@@ -222,6 +222,7 @@ export function LineChart({
             tickLine={false}
             axisLine={false}
             tickMargin={8}
+            padding={{ top: 20 }}
             tick={{
               fill: "var(--color-text-neutral-secondary)",
               fontSize: AXIS_FONT_SIZE,

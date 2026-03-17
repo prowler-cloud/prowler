@@ -17,9 +17,7 @@
   "Risk": "Absent this monitoring, logging can be stopped or altered without notice, eroding visibility.\n\nThat enables covert activity and data exfiltration without audit evidence, harming confidentiality, the integrity of records, and the availability of reliable logs for detection and forensics.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_5",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_5#fix---buildtime"
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html"
   ],
   "Remediation": {
     "Code": {

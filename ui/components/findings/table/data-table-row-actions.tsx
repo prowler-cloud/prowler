@@ -66,30 +66,13 @@ export function DataTableRowActions<T extends FindingRowData>({
     return [finding.id];
   };
 
-  const getMuteDescription = (): string => {
-    if (isMuted) {
-      return "This finding is already muted";
-    }
-    const ids = getMuteIds();
-    if (ids.length > 1) {
-      return `Mute ${ids.length} selected findings`;
-    }
-    return "Mute this finding";
-  };
-
   const getMuteLabel = () => {
     if (isMuted) return "Muted";
-    if (!isMuted && isCurrentSelected && hasMultipleSelected) {
-      return (
-        <>
-          Mute
-          <span className="ml-1 text-xs text-slate-500">
-            ({selectedFindingIds.length})
-          </span>
-        </>
-      );
+    const ids = getMuteIds();
+    if (ids.length > 1) {
+      return `Mute ${ids.length} Findings`;
     }
-    return "Mute";
+    return "Mute Finding";
   };
 
   const handleMuteComplete = () => {
@@ -146,7 +129,6 @@ export function DataTableRowActions<T extends FindingRowData>({
               )
             }
             label={getMuteLabel()}
-            description={getMuteDescription()}
             disabled={isMuted}
             onSelect={() => {
               setIsMuteModalOpen(true);
@@ -155,7 +137,6 @@ export function DataTableRowActions<T extends FindingRowData>({
           <ActionDropdownItem
             icon={<JiraIcon size={20} />}
             label="Send to Jira"
-            description="Create a Jira issue for this finding"
             onSelect={() => setIsJiraModalOpen(true)}
           />
         </ActionDropdown>

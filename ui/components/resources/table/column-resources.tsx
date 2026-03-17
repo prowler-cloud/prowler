@@ -83,7 +83,6 @@ const FailedFindingsBadge = ({ count }: { count: number }) => {
 // Row actions dropdown
 const ResourceRowActions = ({ row }: { row: { original: ResourceProps } }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const resourceName = row.original.attributes?.name || "Resource";
 
   return (
     <>
@@ -102,8 +101,7 @@ const ResourceRowActions = ({ row }: { row: { original: ResourceProps } }) => {
         >
           <ActionDropdownItem
             icon={<Eye className="size-5" />}
-            label="View details"
-            description={`View details for ${resourceName}`}
+            label="View Details"
             onSelect={() => setIsDrawerOpen(true)}
           />
         </ActionDropdown>

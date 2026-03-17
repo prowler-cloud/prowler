@@ -2,7 +2,7 @@
 
 import { Control } from "react-hook-form";
 
-import { CustomInput } from "@/components/ui/custom";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { M365ClientSecretCredentials } from "@/types";
 
 export const M365ClientSecretCredentialsForm = ({
@@ -20,7 +20,7 @@ export const M365ClientSecretCredentialsForm = ({
           Please provide your Microsoft 365 application credentials.
         </div>
       </div>
-      <CustomInput
+      <WizardInputField
         control={control}
         name="tenant_id"
         type="text"
@@ -30,7 +30,7 @@ export const M365ClientSecretCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name="client_id"
         type="text"
@@ -40,7 +40,7 @@ export const M365ClientSecretCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name="client_secret"
         type="password"

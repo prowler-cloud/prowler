@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { lazy, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { type ComponentType, lazy, Suspense } from "react";
 
 import {
   MultiSelect,
@@ -10,6 +10,7 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 import { type ProviderProps, ProviderType } from "@/types/providers";
 
 const AWSProviderBadge = lazy(() =>
@@ -47,6 +48,11 @@ const IacProviderBadge = lazy(() =>
     default: m.IacProviderBadge,
   })),
 );
+const ImageProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.ImageProviderBadge,
+  })),
+);
 const OracleCloudProviderBadge = lazy(() =>
   import("@/components/icons/providers-badge").then((m) => ({
     default: m.OracleCloudProviderBadge,
@@ -62,6 +68,16 @@ const AlibabaCloudProviderBadge = lazy(() =>
     default: m.AlibabaCloudProviderBadge,
   })),
 );
+const CloudflareProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.CloudflareProviderBadge,
+  })),
+);
+const OpenStackProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.OpenStackProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -71,7 +87,7 @@ const IconPlaceholder = ({ width, height }: IconProps) => (
 
 const PROVIDER_DATA: Record<
   ProviderType,
-  { label: string; icon: React.ComponentType<IconProps> }
+  { label: string; icon: ComponentType<IconProps> }
 > = {
   aws: {
     label: "Amazon Web Services",
@@ -101,6 +117,10 @@ const PROVIDER_DATA: Record<
     label: "Infrastructure as Code",
     icon: IacProviderBadge,
   },
+  image: {
+    label: "Container Registry",
+    icon: ImageProviderBadge,
+  },
   oraclecloud: {
     label: "Oracle Cloud Infrastructure",
     icon: OracleCloudProviderBadge,
@@ -113,6 +133,14 @@ const PROVIDER_DATA: Record<
     label: "Alibaba Cloud",
     icon: AlibabaCloudProviderBadge,
   },
+  cloudflare: {
+    label: "Cloudflare",
+    icon: CloudflareProviderBadge,
+  },
+  openstack: {
+    label: "OpenStack",
+    icon: OpenStackProviderBadge,
+  },
 };
 
 type ProviderTypeSelectorProps = {
@@ -122,8 +150,8 @@ type ProviderTypeSelectorProps = {
 export const ProviderTypeSelector = ({
   providers,
 }: ProviderTypeSelectorProps) => {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const { navigateWithParams } = useUrlFilters();
 
   const currentProviders = searchParams.get("filter[provider_type__in]") || "";
   const selectedTypes = currentProviders
@@ -131,20 +159,18 @@ export const ProviderTypeSelector = ({
     : [];
 
   const handleMultiValueChange = (values: string[]) => {
-    const params = new URLSearchParams(searchParams.toString());
+    navigateWithParams((params) => {
+      // Update provider_type__in
+      if (values.length > 0) {
+        params.set("filter[provider_type__in]", values.join(","));
+      } else {
+        params.delete("filter[provider_type__in]");
+      }
 
-    // Update provider_type__in
-    if (values.length > 0) {
-      params.set("filter[provider_type__in]", values.join(","));
-    } else {
-      params.delete("filter[provider_type__in]");
-    }
-
-    // Clear account selection when changing provider types
-    // User should manually select accounts if they want to filter by specific accounts
-    params.delete("filter[provider_id__in]");
-
-    router.push(`?${params.toString()}`, { scroll: false });
+      // Clear account selection when changing provider types
+      // User should manually select accounts if they want to filter by specific accounts
+      params.delete("filter[provider_id__in]");
+    });
   };
 
   const availableTypes = Array.from(
@@ -153,7 +179,7 @@ export const ProviderTypeSelector = ({
         // .filter((p) => p.attributes.connection?.connected)
         .map((p) => p.attributes.provider),
     ),
-  ) as ProviderType[];
+  ).filter((type): type is ProviderType => type in PROVIDER_DATA);
 
   const renderIcon = (providerType: ProviderType) => {
     const IconComponent = PROVIDER_DATA[providerType].icon;
@@ -169,14 +195,14 @@ export const ProviderTypeSelector = ({
     if (selectedTypes.length === 1) {
       const providerType = selectedTypes[0] as ProviderType;
       return (
-        <span className="flex items-center gap-2">
+        <span className="flex min-w-0 items-center gap-2">
           {renderIcon(providerType)}
-          <span>{PROVIDER_DATA[providerType].label}</span>
+          <span className="truncate">{PROVIDER_DATA[providerType].label}</span>
         </span>
       );
     }
     return (
-      <span className="truncate">
+      <span className="min-w-0 truncate">
         {selectedTypes.length} providers selected
       </span>
     );

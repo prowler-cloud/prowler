@@ -259,6 +259,8 @@ else:
                 accounts.append(account + " - K8S")
             if "alibabacloud" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
                 accounts.append(account + " - ALIBABACLOUD")
+            if "oraclecloud" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                accounts.append(account + " - OCI")
 
     account_dropdown = create_account_dropdown(accounts)
 
@@ -306,6 +308,8 @@ else:
             services.append(service + " - M365")
         if "alibabacloud" in list(data[data["SERVICE_NAME"] == service]["PROVIDER"]):
             services.append(service + " - ALIBABACLOUD")
+        if "oraclecloud" in list(data[data["SERVICE_NAME"] == service]["PROVIDER"]):
+            services.append(service + " - OCI")
 
     services = ["All"] + services
     services = [
@@ -767,6 +771,8 @@ def filter_data(
                 all_account_ids.append(account)
             if "alibabacloud" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
                 all_account_ids.append(account)
+            if "oraclecloud" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                all_account_ids.append(account)
 
     all_account_names = []
     if "ACCOUNT_NAME" in filtered_data.columns:
@@ -793,6 +799,8 @@ def filter_data(
                     data[data["ACCOUNT_UID"] == item]["PROVIDER"]
                 ):
                     cloud_accounts_options.append(item + " - ALIBABACLOUD")
+                if "oraclecloud" in list(data[data["ACCOUNT_UID"] == item]["PROVIDER"]):
+                    cloud_accounts_options.append(item + " - OCI")
             if "ACCOUNT_NAME" in filtered_data.columns:
                 if "azure" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
                     cloud_accounts_options.append(item + " - AZURE")
@@ -925,6 +933,10 @@ def filter_data(
                 filtered_data[filtered_data["SERVICE_NAME"] == item]["PROVIDER"]
             ):
                 service_filter_options.append(item + " - ALIBABACLOUD")
+            if "oraclecloud" in list(
+                filtered_data[filtered_data["SERVICE_NAME"] == item]["PROVIDER"]
+            ):
+                service_filter_options.append(item + " - OCI")
 
     # Filter Service
     if service_values == ["All"]:
@@ -1124,6 +1136,7 @@ def filter_data(
             config={"displayModeBar": False},
         )
         table = dcc.Graph(figure=fig, config={"displayModeBar": False})
+        table_row_options = []
 
     else:
         # Status Pie Chart

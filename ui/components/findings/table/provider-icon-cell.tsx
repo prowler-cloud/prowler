@@ -2,17 +2,20 @@ import {
   AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
+  CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
   IacProviderBadge,
+  ImageProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
+  OpenStackProviderBadge,
   OracleCloudProviderBadge,
 } from "@/components/icons/providers-badge";
 import { ProviderType } from "@/types";
 
-const PROVIDER_ICONS = {
+export const PROVIDER_ICONS = {
   aws: AWSProviderBadge,
   azure: AzureProviderBadge,
   gcp: GCPProviderBadge,
@@ -20,9 +23,12 @@ const PROVIDER_ICONS = {
   m365: M365ProviderBadge,
   github: GitHubProviderBadge,
   iac: IacProviderBadge,
+  image: ImageProviderBadge,
   oraclecloud: OracleCloudProviderBadge,
   mongodbatlas: MongoDBAtlasProviderBadge,
   alibabacloud: AlibabaCloudProviderBadge,
+  cloudflare: CloudflareProviderBadge,
+  openstack: OpenStackProviderBadge,
 } as const;
 
 interface ProviderIconCellProps {

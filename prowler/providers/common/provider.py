@@ -238,6 +238,21 @@ class Provider(ABC):
                         fixer_config=fixer_config,
                     )
                 elif "github" in provider_class_name.lower():
+                    orgs = []
+                    repos = []
+
+                    if getattr(arguments, "organization", None):
+                        orgs.extend(arguments.organization)
+                    if getattr(arguments, "organizations", None):
+                        orgs.extend(arguments.organizations)
+                    if getattr(arguments, "repository", None):
+                        repos.extend(arguments.repository)
+                    if getattr(arguments, "repositories", None):
+                        repos.extend(arguments.repositories)
+
+                    orgs = list(dict.fromkeys(orgs))
+                    repos = list(dict.fromkeys(repos))
+
                     provider_class(
                         personal_access_token=arguments.personal_access_token,
                         oauth_app_token=arguments.oauth_app_token,
@@ -245,8 +260,14 @@ class Provider(ABC):
                         github_app_id=arguments.github_app_id,
                         mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
-                        repositories=arguments.repository,
-                        organizations=arguments.organization,
+                        repositories=repos,
+                        organizations=orgs,
+                    )
+                elif "googleworkspace" in provider_class_name.lower():
+                    provider_class(
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "cloudflare" in provider_class_name.lower():
                     provider_class(
@@ -267,10 +288,23 @@ class Provider(ABC):
                         github_username=arguments.github_username,
                         personal_access_token=arguments.personal_access_token,
                         oauth_app_token=arguments.oauth_app_token,
+                        provider_uid=arguments.provider_uid,
                     )
                 elif "llm" in provider_class_name.lower():
                     provider_class(
                         max_concurrency=arguments.max_concurrency,
+                        config_path=arguments.config_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "image" in provider_class_name.lower():
+                    provider_class(
+                        images=arguments.images,
+                        image_list_file=arguments.image_list_file,
+                        scanners=arguments.scanners,
+                        image_config_scanners=arguments.image_config_scanners,
+                        trivy_severity=arguments.trivy_severity,
+                        ignore_unfixed=arguments.ignore_unfixed,
+                        timeout=arguments.timeout,
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
                     )
@@ -297,6 +331,9 @@ class Provider(ABC):
                 elif "openstack" in provider_class_name.lower():
                     provider_class(
                         clouds_yaml_file=getattr(arguments, "clouds_yaml_file", None),
+                        clouds_yaml_content=getattr(
+                            arguments, "clouds_yaml_content", None
+                        ),
                         clouds_yaml_cloud=getattr(arguments, "clouds_yaml_cloud", None),
                         auth_url=getattr(arguments, "os_auth_url", None),
                         identity_api_version=getattr(

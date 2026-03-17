@@ -18,7 +18,7 @@
   "Risk": "Permitting **IMDSv1** or optional tokens lets SSRF or compromised workloads retrieve **temporary IAM credentials**, impacting confidentiality and integrity. Stolen role creds can drive **privilege escalation**, unauthorized data access, and lateral movement across AWS resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/require-imds-v2.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/EC2/require-imds-v2.html",
     "https://support.icompaas.com/support/solutions/articles/62000234166-5-7-ensure-that-the-ec2-metadata-service-only-allows-imdsv2-automated-",
     "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html#configuring-instance-metadata-options"
   ],

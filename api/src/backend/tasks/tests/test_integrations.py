@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from django.db import OperationalError
 from tasks.jobs.integrations import (
     get_s3_client_from_integration,
     get_security_hub_client_from_integration,
@@ -1055,6 +1056,84 @@ class TestSecurityHubIntegrationUploads:
         mock_asff_instance.transform.assert_called_once_with(transformed_findings)
         mock_security_hub.batch_send_to_security_hub.assert_called_once()
         mock_security_hub.archive_previous_findings.assert_called_once()
+
+    @patch("tasks.jobs.integrations.time.sleep")
+    @patch("tasks.jobs.integrations.batched")
+    @patch("tasks.jobs.integrations.get_security_hub_client_from_integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_provider")
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.Provider")
+    @patch("tasks.jobs.integrations.Finding")
+    def test_upload_security_hub_integration_retries_on_operational_error(
+        self,
+        mock_finding_model,
+        mock_provider_model,
+        mock_integration_model,
+        mock_rls,
+        mock_initialize_provider,
+        mock_get_security_hub,
+        mock_batched,
+        mock_sleep,
+    ):
+        """Test SecurityHub upload retries on transient OperationalError."""
+        tenant_id = "tenant-id"
+        provider_id = "provider-id"
+        scan_id = "scan-123"
+
+        integration = MagicMock()
+        integration.id = "integration-1"
+        integration.configuration = {
+            "send_only_fails": True,
+            "archive_previous_findings": False,
+        }
+        mock_integration_model.objects.filter.return_value = [integration]
+
+        provider = MagicMock()
+        mock_provider_model.objects.get.return_value = provider
+
+        mock_prowler_provider = MagicMock()
+        mock_initialize_provider.return_value = mock_prowler_provider
+
+        mock_findings = [MagicMock(), MagicMock()]
+        mock_finding_model.all_objects.filter.return_value.order_by.return_value.iterator.return_value = iter(
+            mock_findings
+        )
+
+        transformed_findings = [MagicMock(), MagicMock()]
+        with patch("tasks.jobs.integrations.FindingOutput") as mock_finding_output:
+            mock_finding_output.transform_api_finding.side_effect = transformed_findings
+
+            with patch("tasks.jobs.integrations.ASFF") as mock_asff:
+                mock_asff_instance = MagicMock()
+                finding1 = MagicMock()
+                finding1.Compliance.Status = "FAILED"
+                finding2 = MagicMock()
+                finding2.Compliance.Status = "FAILED"
+                mock_asff_instance.data = [finding1, finding2]
+                mock_asff_instance._data = MagicMock()
+                mock_asff.return_value = mock_asff_instance
+
+                mock_security_hub = MagicMock()
+                mock_security_hub.batch_send_to_security_hub.return_value = 2
+                mock_get_security_hub.return_value = (True, mock_security_hub)
+
+                mock_rls.return_value.__enter__.return_value = None
+                mock_rls.return_value.__exit__.return_value = False
+
+                mock_batched.side_effect = [
+                    OperationalError("Conflict with recovery"),
+                    [(mock_findings, None)],
+                ]
+
+                with patch("tasks.jobs.integrations.REPLICA_MAX_ATTEMPTS", 2):
+                    with patch("tasks.jobs.integrations.READ_REPLICA_ALIAS", "replica"):
+                        result = upload_security_hub_integration(
+                            tenant_id, provider_id, scan_id
+                        )
+
+        assert result is True
+        mock_sleep.assert_called_once()
 
     @patch("tasks.jobs.integrations.get_security_hub_client_from_integration")
     @patch("tasks.jobs.integrations.initialize_prowler_provider")

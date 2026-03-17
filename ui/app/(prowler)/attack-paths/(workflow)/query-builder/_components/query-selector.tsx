@@ -27,7 +27,7 @@ export const QuerySelector = ({
   return (
     <Select value={selectedQueryId || ""} onValueChange={onQueryChange}>
       <SelectTrigger className="w-full text-left">
-        <SelectValue placeholder="Choose a query..." />
+        <SelectValue placeholder="Choose a query" />
       </SelectTrigger>
       <SelectContent>
         {queries.map((query) => (
@@ -35,7 +35,7 @@ export const QuerySelector = ({
             <div className="flex flex-col gap-1">
               <span className="font-medium">{query.attributes.name}</span>
               <span className="text-xs text-gray-500">
-                {query.attributes.description}
+                {query.attributes.short_description}
               </span>
             </div>
           </SelectItem>
