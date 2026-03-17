@@ -361,21 +361,22 @@ export const addCredentialsFormSchema = (
                                         error:
                                           "Please enter a valid email address",
                                       }),
-                              : providerType === "openstack"
-                                ? {
-                                    [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]:
-                                      z
-                                        .string()
-                                        .min(
-                                          1,
-                                          "Clouds YAML content is required",
-                                        ),
-                                    [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]:
-                                      z
-                                        .string()
-                                        .min(1, "Cloud name is required"),
                                   }
-                                : {}),
+                                : providerType === "openstack"
+                                  ? {
+                                      [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]:
+                                        z
+                                          .string()
+                                          .min(
+                                            1,
+                                            "Clouds YAML content is required",
+                                          ),
+                                      [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]:
+                                        z
+                                          .string()
+                                          .min(1, "Cloud name is required"),
+                                    }
+                                  : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {

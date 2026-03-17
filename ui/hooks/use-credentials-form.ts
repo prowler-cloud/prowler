@@ -233,6 +233,7 @@ export const useCredentialsForm = ({
             providerUid || "",
           [ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT]: "",
           [ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER]: "",
+        };
       case "image":
         return {
           ...baseDefaults,
