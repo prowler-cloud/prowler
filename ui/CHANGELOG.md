@@ -4,6 +4,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.20.0] (Prowler v5.20.0 UNRELEASED)
 
+### 🚀 Added
+
+- Add skill system to Lighthouse AI [(#10322)](https://github.com/prowler-cloud/prowler/pull/10322)
+
 ### 🔄 Changed
 
 - Attack Paths: Improved error handling for server errors (5xx) and network failures with user-friendly messages instead of raw internal errors and layout changes. [(#10249)](https://github.com/prowler-cloud/prowler/pull/10249)
