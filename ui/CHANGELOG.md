@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - Organization and organizational unit row actions (Edit Name, Update Credentials, Test Connections, Delete) in providers table dropdown [(#10317)](https://github.com/prowler-cloud/prowler/pull/10317)
+- Events tab in Findings and Resource detail cards showing an AWS CloudTrail timeline with expandable event rows, actor info, request/response JSON payloads, and error details [(#10320)](https://github.com/prowler-cloud/prowler/pull/10320)
 
 ---
 
