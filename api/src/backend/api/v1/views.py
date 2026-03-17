@@ -3,6 +3,8 @@ import glob
 import json
 import logging
 import os
+import time
+
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -10,6 +12,7 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from urllib.parse import urljoin
 
 import sentry_sdk
+
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -97,6 +100,7 @@ from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
+from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
@@ -404,7 +408,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.20.0"
+        spectacular_settings.VERSION = "1.22.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -2402,7 +2406,7 @@ class TaskViewSet(BaseRLSViewSet):
     ),
     run_custom_attack_paths_query=extend_schema(
         tags=["Attack Paths"],
-        summary="Execute a custom Cypher query",
+        summary="Execute a custom openCypher query",
         description="Execute a raw openCypher query against the Attack Paths graph. "
         "Results are filtered to the scan's provider and truncated to a maximum node count.",
         request=AttackPathsCustomQueryRunRequestSerializer,
@@ -2447,6 +2451,11 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     ]
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_SCANS]
+
+    def get_throttles(self):
+        if self.action == "run_custom_attack_paths_query":
+            self.throttle_scope = "attack-paths-custom-query"
+        return super().get_throttles()
 
     def set_required_permissions(self):
         if self.request.method in SAFE_METHODS:
@@ -2525,11 +2534,13 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         serializer = AttackPathsQuerySerializer(queries, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(parameters=[OpenApiParameter("format", exclude=True)])
     @action(
         detail=True,
         methods=["post"],
         url_path="queries/run",
         url_name="queries-run",
+        renderer_classes=[APIJSONRenderer, PlainTextRenderer],
     )
     def run_attack_paths_query(self, request, pk=None):
         attack_paths_scan = self.get_object()
@@ -2565,26 +2576,53 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             provider_id,
         )
 
+        start = time.monotonic()
         graph = attack_paths_views_helpers.execute_query(
             database_name,
             query_definition,
             parameters,
             provider_id,
         )
+        query_duration = time.monotonic() - start
         graph_database.clear_cache(database_name)
+
+        result_nodes = len(graph.get("nodes", []))
+        result_relationships = len(graph.get("relationships", []))
+        logger.info(
+            "attack_paths_query_run",
+            extra={
+                "user_id": str(request.user.id),
+                "tenant_id": str(attack_paths_scan.provider.tenant_id),
+                "metadata": {
+                    "query_id": query_definition.id,
+                    "provider": query_definition.provider,
+                    "scan_id": pk,
+                    "provider_id": provider_id,
+                    "result_nodes": result_nodes,
+                    "result_relationships": result_relationships,
+                    "query_duration": round(query_duration, 3),
+                },
+            },
+        )
 
         status_code = status.HTTP_200_OK
         if not graph.get("nodes"):
             status_code = status.HTTP_404_NOT_FOUND
 
+        if isinstance(request.accepted_renderer, PlainTextRenderer):
+            text = attack_paths_views_helpers.serialize_graph_as_text(graph)
+            return Response(text, status=status_code, content_type="text/plain")
+
         response_serializer = AttackPathsQueryResultSerializer(graph)
         return Response(response_serializer.data, status=status_code)
 
+    @extend_schema(parameters=[OpenApiParameter("format", exclude=True)])
     @action(
         detail=True,
         methods=["post"],
         url_path="queries/custom",
         url_name="queries-custom",
+        renderer_classes=[APIJSONRenderer, PlainTextRenderer],
     )
     def run_custom_attack_paths_query(self, request, pk=None):
         attack_paths_scan = self.get_object()
@@ -2607,16 +2645,42 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         )
         provider_id = str(attack_paths_scan.provider_id)
 
+        start = time.monotonic()
         graph = attack_paths_views_helpers.execute_custom_query(
             database_name,
-            serializer.validated_data["cypher"],
+            serializer.validated_data["query"],
             provider_id,
         )
+        query_duration = time.monotonic() - start
         graph_database.clear_cache(database_name)
+
+        query_length = len(serializer.validated_data["query"])
+        result_nodes = len(graph.get("nodes", []))
+        result_relationships = len(graph.get("relationships", []))
+        logger.info(
+            "attack_paths_custom_query_run",
+            extra={
+                "user_id": str(request.user.id),
+                "tenant_id": str(attack_paths_scan.provider.tenant_id),
+                "metadata": {
+                    "provider": attack_paths_scan.provider.provider,
+                    "scan_id": pk,
+                    "provider_id": provider_id,
+                    "query_length": query_length,
+                    "result_nodes": result_nodes,
+                    "result_relationships": result_relationships,
+                    "query_duration": round(query_duration, 3),
+                },
+            },
+        )
 
         status_code = status.HTTP_200_OK
         if not graph.get("nodes"):
             status_code = status.HTTP_404_NOT_FOUND
+
+        if isinstance(request.accepted_renderer, PlainTextRenderer):
+            text = attack_paths_views_helpers.serialize_graph_as_text(graph)
+            return Response(text, status=status_code, content_type="text/plain")
 
         response_serializer = AttackPathsQueryResultSerializer(graph)
         return Response(response_serializer.data, status=status_code)

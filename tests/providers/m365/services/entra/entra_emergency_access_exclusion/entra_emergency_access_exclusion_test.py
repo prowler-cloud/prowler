@@ -8,10 +8,12 @@ from prowler.providers.m365.services.entra.entra_service import (
     Conditions,
     GrantControlOperator,
     GrantControls,
+    Group,
     PersistentBrowser,
     SessionControls,
     SignInFrequency,
     SignInFrequencyInterval,
+    User,
     UsersConditions,
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
@@ -225,17 +227,14 @@ class Test_entra_emergency_access_exclusion:
 
             check = entra_emergency_access_exclusion()
             result = check.execute()
-            assert len(result) == 2
-            for finding in result:
-                assert finding.status == "FAIL"
-                assert (
-                    "does not have any user or group excluded as emergency access"
-                    in finding.status_extended
-                )
-            assert result[0].resource_name == "Policy 1"
-            assert result[0].resource_id == policy_id_1
-            assert result[1].resource_name == "Policy 2"
-            assert result[1].resource_id == policy_id_2
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                "No user or group is excluded as emergency access from all 2 enabled Conditional Access policies"
+                in result[0].status_extended
+            )
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
 
     def test_entra_user_excluded_from_all_policies(self):
         """Test when a user is excluded from all enabled policies."""
@@ -337,19 +336,27 @@ class Test_entra_emergency_access_exclusion:
                 ),
             }
 
+            entra_client.users = {
+                emergency_user_id: User(
+                    id=emergency_user_id,
+                    name="BreakGlass1",
+                    on_premises_sync_enabled=False,
+                    authentication_methods=[],
+                ),
+            }
+            entra_client.groups = []
+
             check = entra_emergency_access_exclusion()
             result = check.execute()
-            assert len(result) == 2
-            for finding in result:
-                assert finding.status == "PASS"
-                assert (
-                    "1 user(s) excluded as emergency access across all 2 enabled policies"
-                    in finding.status_extended
-                )
-            assert result[0].resource_name == "Policy 1"
-            assert result[0].resource_id == policy_id_1
-            assert result[1].resource_name == "Policy 2"
-            assert result[1].resource_id == policy_id_2
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert "BreakGlass1" in result[0].status_extended
+            assert (
+                "excluded from all 2 enabled Conditional Access policies"
+                in result[0].status_extended
+            )
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
 
     def test_entra_group_excluded_from_all_policies(self):
         """Test when a group is excluded from all enabled policies."""
@@ -451,15 +458,27 @@ class Test_entra_emergency_access_exclusion:
                 ),
             }
 
+            entra_client.users = {}
+            entra_client.groups = [
+                Group(
+                    id=emergency_group_id,
+                    name="BreakGlassGroup",
+                    groupTypes=[],
+                    membershipRule=None,
+                ),
+            ]
+
             check = entra_emergency_access_exclusion()
             result = check.execute()
-            assert len(result) == 2
-            for finding in result:
-                assert finding.status == "PASS"
-                assert (
-                    "1 group(s) excluded as emergency access across all 2 enabled policies"
-                    in finding.status_extended
-                )
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert "BreakGlassGroup" in result[0].status_extended
+            assert (
+                "excluded from all 2 enabled Conditional Access policies"
+                in result[0].status_extended
+            )
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
 
     def test_entra_user_and_group_excluded_from_all_policies(self):
         """Test when both a user and group are excluded from all enabled policies."""
@@ -562,15 +581,35 @@ class Test_entra_emergency_access_exclusion:
                 ),
             }
 
+            entra_client.users = {
+                emergency_user_id: User(
+                    id=emergency_user_id,
+                    name="BreakGlass1",
+                    on_premises_sync_enabled=False,
+                    authentication_methods=[],
+                ),
+            }
+            entra_client.groups = [
+                Group(
+                    id=emergency_group_id,
+                    name="BreakGlassGroup",
+                    groupTypes=[],
+                    membershipRule=None,
+                ),
+            ]
+
             check = entra_emergency_access_exclusion()
             result = check.execute()
-            assert len(result) == 2
-            for finding in result:
-                assert finding.status == "PASS"
-                assert (
-                    "1 user(s) and 1 group(s) excluded as emergency access across all 2 enabled policies"
-                    in finding.status_extended
-                )
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert "BreakGlass1" in result[0].status_extended
+            assert "BreakGlassGroup" in result[0].status_extended
+            assert (
+                "excluded from all 2 enabled Conditional Access policies"
+                in result[0].status_extended
+            )
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
 
     def test_entra_disabled_policies_ignored(self):
         """Test that disabled policies are ignored when checking exclusions."""
@@ -672,15 +711,25 @@ class Test_entra_emergency_access_exclusion:
                 ),
             }
 
+            entra_client.users = {
+                emergency_user_id: User(
+                    id=emergency_user_id,
+                    name="BreakGlass1",
+                    on_premises_sync_enabled=False,
+                    authentication_methods=[],
+                ),
+            }
+            entra_client.groups = []
+
             check = entra_emergency_access_exclusion()
             result = check.execute()
-            # Only 1 enabled policy, so only 1 finding
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].resource_name == "Enabled Policy"
-            assert result[0].resource_id == policy_id_1
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
+            assert "BreakGlass1" in result[0].status_extended
             assert (
-                "1 user(s) excluded as emergency access across all 1 enabled policies"
+                "excluded from all 1 enabled Conditional Access policies"
                 in result[0].status_extended
             )
 
@@ -785,12 +834,24 @@ class Test_entra_emergency_access_exclusion:
                 ),
             }
 
+            entra_client.users = {
+                emergency_user_id: User(
+                    id=emergency_user_id,
+                    name="BreakGlass1",
+                    on_premises_sync_enabled=False,
+                    authentication_methods=[],
+                ),
+            }
+            entra_client.groups = []
+
             check = entra_emergency_access_exclusion()
             result = check.execute()
-            assert len(result) == 2
-            for finding in result:
-                assert finding.status == "PASS"
-                assert (
-                    "1 user(s) excluded as emergency access across all 2 enabled policies"
-                    in finding.status_extended
-                )
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert "BreakGlass1" in result[0].status_extended
+            assert (
+                "excluded from all 2 enabled Conditional Access policies"
+                in result[0].status_extended
+            )
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"

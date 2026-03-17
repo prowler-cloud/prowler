@@ -1,29 +1,26 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "sls_unauthorized_api_calls_alert_enabled",
-  "CheckTitle": "A log monitoring and alerts are set up for unauthorized API calls",
-  "CheckType": [
-    "Unusual logon",
-    "Cloud threat detection"
-  ],
+  "CheckTitle": "A log monitoring and alert is set up for unauthorized API calls",
+  "CheckType": [],
   "ServiceName": "sls",
   "SubServiceName": "",
-  "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "Real-time monitoring of API calls can be achieved by directing **ActionTrail Logs** to Log Service and establishing corresponding query and alarms.\n\nIt is recommended that a query and alarm be established for **unauthorized API calls**.",
-  "Risk": "Monitoring **unauthorized API calls** will help reveal application errors and may reduce time to detect **malicious activity**.\n\nThis is essential for early detection of potential security breaches.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for **unauthorized API calls**. By directing **ActionTrail** logs to SLS with alert rules, API calls resulting in unauthorized errors are detected promptly, helping identify misconfigured applications, compromised credentials, or active attacker reconnaissance.",
+  "Risk": "Without monitoring for **unauthorized API calls**, failed access patterns may go undetected. These often indicate **malicious activity** such as permission probing or exploiting misconfigured access controls. Delayed detection increases risk of **security breaches** by delaying identification of compromised credentials and **privilege escalation** attempts.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/unauthorized-api-calls-alert.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/unauthorized-api-calls-alert.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aliyun sls create-alert --project <project-name> --alert-name unauthorized-api-calls --alert-displayname 'Unauthorized API Calls Alert' --condition 'event.errorCode: Forbidden or event.errorCode: AccessDenied' --dashboard <dashboard-name> --schedule '{\"type\":\"FixedRate\",\"interval\":\"1m\"}'",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Log on to the **SLS Console**.\n2. Ensure **ActionTrail** is enabled and delivering logs to a **Log Service** project.\n3. Navigate to the project receiving ActionTrail logs.\n4. Select **Alerts** and click **Create Alert Rule**.\n5. Configure the query to filter for unauthorized API calls: `event.errorCode: Forbidden or event.errorCode: AccessDenied`.\n6. Set the alert **schedule**, **notification method**, and **severity**.\n7. Save and enable the alert rule.",
       "Terraform": ""
     },
     "Recommendation": {

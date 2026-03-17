@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra** directory setting **Group.Unified** governs who can create **Microsoft 365 Groups**. The evaluation inspects `EnableGroupCreation` and, when present, `GroupCreationAllowedGroupId` to determine if group creation is broadly allowed or restricted to a designated group.",
   "Risk": "Unrestricted group creation drives sprawl of Teams, SharePoint sites, and mailboxes, undermining **confidentiality** via public spaces and guest invites. Compromised accounts can create groups to stage exfiltration or impersonation. It also heightens **integrity** risks from unsanctioned owners and **operational** burden for lifecycle and governance.",
@@ -30,7 +30,8 @@
     }
   },
   "Categories": [
-    "identity-access"
+    "identity-access",
+    "e3"
   ],
   "DependsOn": [],
   "RelatedTo": [],

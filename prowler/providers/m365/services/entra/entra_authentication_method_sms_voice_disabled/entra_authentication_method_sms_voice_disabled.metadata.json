@@ -1,0 +1,38 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_authentication_method_sms_voice_disabled",
+  "CheckTitle": "SMS and Voice authentication methods are disabled in the tenant",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra tenant's authentication methods policy should have **SMS and Voice** authentication methods disabled. These methods are vulnerable to **SIM-swapping**, **interception**, and **social engineering** attacks, and are deprecated by NIST SP 800-63B as out-of-band authenticators.",
+  "Risk": "Enabled SMS or Voice authentication allows attackers to bypass MFA through **SIM-swapping** or **SS7 protocol interception**, gaining unauthorized access to accounts. These methods lack cryptographic binding to the device, making them significantly weaker than phishing-resistant alternatives.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-phone-options",
+    "https://pages.nist.gov/800-63-3/sp800-63b.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Protection** > **Authentication methods** > **Policies**\n3. Select **SMS** and set its status to **Disabled**, then click **Save**\n4. Select **Voice call** and set its status to **Disabled**, then click **Save**\n5. Ensure users have alternative phishing-resistant MFA methods configured (e.g., FIDO2, Microsoft Authenticator)",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable SMS and Voice authentication methods and adopt **phishing-resistant** alternatives such as FIDO2 security keys or Microsoft Authenticator. Use Authentication Strengths in Conditional Access policies to enforce only strong MFA methods across the tenant.",
+      "Url": "https://hub.prowler.com/check/entra_authentication_method_sms_voice_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
