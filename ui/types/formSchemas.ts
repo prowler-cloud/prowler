@@ -347,9 +347,9 @@ export const addCredentialsFormSchema = (
                                         },
                                       ),
                                     [ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER]:
-                                      z.email(
-                                        "Please enter a valid email address",
-                                      ),
+                                      z.email({
+                                        error: "Please enter a valid email address",
+                                      }),
                                   }
                                 : {}),
     })

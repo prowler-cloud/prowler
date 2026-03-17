@@ -1,8 +1,8 @@
-import * as React from "react";
+import { type FC } from "react";
 
 import { IconSvgProps } from "@/types";
 
-export const GoogleWorkspaceProviderBadge: React.FC<IconSvgProps> = ({
+export const GoogleWorkspaceProviderBadge: FC<IconSvgProps> = ({
   size,
   width,
   height,
