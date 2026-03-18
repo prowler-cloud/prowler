@@ -14,6 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `organization_repository_deletion_limited` check for GitHub provider [(#10185)](https://github.com/prowler-cloud/prowler/pull/10185)
 - SecNumCloud 3.2 compliance framework for the GCP provider [(#10364)](https://github.com/prowler-cloud/prowler/pull/10364)
 - SecNumCloud 3.2 for the Azure provider [(#10358)](https://github.com/prowler-cloud/prowler/pull/10358)
+- SecNumCloud 3.2 for the Alibaba Cloud provider [(#10370)](https://github.com/prowler-cloud/prowler/pull/10370)
 
 ### 🔄 Changed
 
