@@ -4,8 +4,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useFilterTransitionOptional } from "@/contexts";
 
-const FINDINGS_PATH = "/findings";
-const DEFAULT_MUTED_FILTER = "false";
+// const FINDINGS_PATH = "/findings";
+// const DEFAULT_MUTED_FILTER = "false";
 
 /**
  * Custom hook to handle URL filters and automatically reset
