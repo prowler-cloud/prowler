@@ -23,6 +23,8 @@ interface CodeSnippetProps {
   formatter?: (value: string) => string;
   /** Enable multiline display (disables truncation, enables word wrap) */
   multiline?: boolean;
+  /** Remove background and border */
+  transparent?: boolean;
   /** Custom aria-label for the copy button */
   ariaLabel?: string;
 }
@@ -34,6 +36,7 @@ export const CodeSnippet = ({
   hideCopyButton = false,
   icon,
   formatter,
+  transparent = false,
   multiline = false,
   ariaLabel = "Copy to clipboard",
 }: CodeSnippetProps) => {
@@ -86,8 +89,15 @@ export const CodeSnippet = ({
   return (
     <div
       className={cn(
-        "bg-bg-neutral-tertiary text-text-neutral-primary border-border-neutral-tertiary flex w-fit min-w-0 items-center gap-1.5 border-2 px-2 py-0.5 text-xs",
-        multiline ? "h-auto rounded-lg" : "h-6 rounded-full",
+        "flex w-fit min-w-0 items-center gap-1.5 text-xs",
+        transparent
+          ? "text-text-neutral-tertiary border-0 bg-transparent px-0 py-0"
+          : "text-text-neutral-primary bg-bg-neutral-tertiary border-border-neutral-tertiary border-2 px-2 py-0.5",
+        multiline
+          ? "h-auto rounded-lg"
+          : transparent
+            ? "h-auto"
+            : "h-6 rounded-full",
         className,
       )}
     >

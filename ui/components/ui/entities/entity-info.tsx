@@ -18,6 +18,8 @@ interface EntityInfoProps {
   entityAlias?: string;
   entityId?: string;
   badge?: string;
+  /** Label before the ID value. Defaults to "UID" */
+  idLabel?: string;
   showCopyAction?: boolean;
   /** @deprecated No longer used — layout handles overflow naturally */
   maxWidth?: string;
@@ -33,6 +35,7 @@ export const EntityInfo = ({
   entityAlias,
   entityId,
   badge,
+  idLabel = "UID",
   showCopyAction = true,
 }: EntityInfoProps) => {
   const canCopy = Boolean(entityId && showCopyAction);
@@ -64,7 +67,7 @@ export const EntityInfo = ({
           {entityId && (
             <div className="flex min-w-0 items-center gap-1">
               <span className="text-text-neutral-tertiary shrink-0 text-xs font-medium">
-                UID:
+                {idLabel}:
               </span>
               <CodeSnippet
                 value={entityId}
