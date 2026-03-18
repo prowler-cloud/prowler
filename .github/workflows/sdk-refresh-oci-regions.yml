@@ -72,7 +72,7 @@ jobs:
             This PR updates the `OCI_COMMERCIAL_REGIONS` dictionary in `prowler/providers/oraclecloud/config.py` with the latest regions fetched from the OCI Identity API (`list_regions()`).
 
             - Government regions (`OCI_GOVERNMENT_REGIONS`) are preserved unchanged
-            - DOD regions (`OCI_DOD_REGIONS`) are preserved unchanged
+            - DOD regions (`OCI_US_DOD_REGIONS`) are preserved unchanged
             - Region display names are mapped from Oracle's official documentation
 
             ### Checklist
