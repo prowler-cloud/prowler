@@ -67,9 +67,9 @@ OCI_GOVERNMENT_REGIONS = {
 
 # OCI Defense Regions
 OCI_DOD_REGIONS = {
-    "us-gov-ashburn-1": "US DoD East (Ashburn)",
-    "us-gov-chicago-1": "US DoD North (Chicago)",
-    "us-gov-phoenix-1": "US DoD West (Phoenix)",
+    "us-gov-ashburn-1": "US DoD East (Ashburn)",
+    "us-gov-chicago-1": "US DoD North (Chicago)",
+    "us-gov-phoenix-1": "US DoD West (Phoenix)"
 }
 
 # All OCI Regions
