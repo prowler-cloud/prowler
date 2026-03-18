@@ -27,6 +27,7 @@ export function FindingsGroupTable({
   const [expandedGroup, setExpandedGroup] = useState<FindingGroupRow | null>(
     null,
   );
+  const [isDrillingDown, setIsDrillingDown] = useState(false);
 
   // Track finding group IDs to detect data changes (e.g., after muting)
   const currentIds = (data ?? []).map((g) => g.id).join(",");
@@ -82,9 +83,14 @@ export function FindingsGroupTable({
   };
 
   const handleDrillDown = (checkId: string, group: FindingGroupRow) => {
-    setExpandedCheckId(checkId);
-    setExpandedGroup(group);
+    setIsDrillingDown(true);
     setRowSelection({});
+    // Brief loading state before switching to drill-down view
+    setTimeout(() => {
+      setExpandedCheckId(checkId);
+      setExpandedGroup(group);
+      setIsDrillingDown(false);
+    }, 150);
   };
 
   const handleCollapse = () => {
@@ -128,6 +134,7 @@ export function FindingsGroupTable({
         getRowCanSelect={getRowCanSelect}
         showSearch
         searchPlaceholder="Search by Check ID"
+        isLoading={isDrillingDown}
       />
 
       {selectedFindingIds.length > 0 && (

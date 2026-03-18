@@ -7,7 +7,7 @@ import {
   RowSelectionState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 
@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
+import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
 import { useInfiniteResources } from "@/hooks/use-infinite-resources";
 import { cn, hasDateOrScanFilter } from "@/lib";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
@@ -250,8 +251,11 @@ export function FindingsGroupDrillDown({
 
           {/* Loading indicator */}
           {isLoading && (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="text-text-neutral-tertiary size-6 animate-spin" />
+            <div className="flex items-center justify-center gap-2 py-8">
+              <TreeSpinner className="size-6" />
+              <span className="text-text-neutral-tertiary text-sm">
+                Loading resources...
+              </span>
             </div>
           )}
 
