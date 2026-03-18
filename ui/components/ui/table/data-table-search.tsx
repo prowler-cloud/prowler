@@ -21,12 +21,14 @@ interface DataTableSearchProps {
    */
   controlledValue?: string;
   onSearchChange?: (value: string) => void;
+  placeholder?: string;
 }
 
 export const DataTableSearch = ({
   paramPrefix = "",
   controlledValue,
   onSearchChange,
+  placeholder = "Search...",
 }: DataTableSearchProps) => {
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -201,7 +203,7 @@ export const DataTableSearch = ({
           ref={inputRef}
           id={id}
           type="search"
-          placeholder="Search..."
+          placeholder={placeholder}
           value={value}
           onChange={(e) => handleChange(e.target.value)}
           onFocus={handleFocus}

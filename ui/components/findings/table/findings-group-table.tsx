@@ -127,6 +127,7 @@ export function FindingsGroupTable({
         onRowSelectionChange={setRowSelection}
         getRowCanSelect={getRowCanSelect}
         showSearch
+        searchPlaceholder="Search by Check ID"
       />
 
       {selectedFindingIds.length > 0 && (

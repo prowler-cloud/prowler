@@ -96,6 +96,8 @@ interface DataTableProviderProps<TData, TValue> {
   onPageSizeChange?: (pageSize: number) => void;
   /** Show loading state with opacity overlay (for controlled mode) */
   isLoading?: boolean;
+  /** Custom placeholder text for the search input */
+  searchPlaceholder?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -121,6 +123,7 @@ export function DataTable<TData, TValue>({
   onPageChange,
   onPageSizeChange,
   isLoading = false,
+  searchPlaceholder,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -213,6 +216,7 @@ export function DataTable<TData, TValue>({
                 paramPrefix={paramPrefix}
                 controlledValue={controlledSearch}
                 onSearchChange={onSearchChange}
+                placeholder={searchPlaceholder}
               />
             )}
           </div>
