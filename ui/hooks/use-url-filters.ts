@@ -22,10 +22,12 @@ export const useUrlFilters = () => {
   const isPending = false;
 
   const ensureFindingsDefaultMuted = (params: URLSearchParams) => {
+    // TODO: Re-enable when finding-groups endpoint supports filter[muted]
     // Findings defaults to excluding muted findings unless user sets it explicitly.
-    if (pathname === FINDINGS_PATH && !params.has("filter[muted]")) {
-      params.set("filter[muted]", DEFAULT_MUTED_FILTER);
-    }
+    // if (pathname === FINDINGS_PATH && !params.has("filter[muted]")) {
+    //   params.set("filter[muted]", DEFAULT_MUTED_FILTER);
+    // }
+    void params;
   };
 
   const navigate = (params: URLSearchParams) => {

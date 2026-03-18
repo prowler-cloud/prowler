@@ -18,11 +18,36 @@ import { FindingsSelectionContext } from "./findings-selection-context";
 
 export interface FindingRowData {
   id: string;
-  attributes: {
+  attributes?: {
     muted?: boolean;
     check_metadata?: {
       checktitle?: string;
     };
+  };
+  // Flat shape for FindingGroupRow
+  rowType?: string;
+  checkTitle?: string;
+  mutedCount?: number;
+  resourcesTotal?: number;
+}
+
+/**
+ * Extract muted state and title from either FindingProps (nested attributes)
+ * or FindingGroupRow (flat shape with rowType discriminant).
+ */
+function extractRowInfo(data: FindingRowData) {
+  if (data.rowType === "group") {
+    const allMuted =
+      (data.mutedCount ?? 0) > 0 &&
+      data.mutedCount === data.resourcesTotal;
+    return {
+      isMuted: allMuted,
+      title: data.checkTitle || "Security Finding",
+    };
+  }
+  return {
+    isMuted: data.attributes?.muted ?? false,
+    title: data.attributes?.check_metadata?.checktitle || "Security Finding",
   };
 }
 
@@ -40,7 +65,7 @@ export function DataTableRowActions<T extends FindingRowData>({
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
 
-  const isMuted = finding.attributes.muted;
+  const { isMuted, title: findingTitle } = extractRowInfo(finding);
 
   // Get selection context - if there are other selected rows, include them
   const selectionContext = useContext(FindingsSelectionContext);
@@ -48,9 +73,6 @@ export function DataTableRowActions<T extends FindingRowData>({
     selectedFindingIds: [],
     clearSelection: () => {},
   };
-
-  const findingTitle =
-    finding.attributes.check_metadata?.checktitle || "Security Finding";
 
   // If current finding is selected and there are multiple selections, mute all
   // Otherwise, just mute this single finding
