@@ -280,58 +280,59 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     """
     task_id = self.request.id
 
-    with rls_transaction(tenant_id):
-        periodic_task_instance = PeriodicTask.objects.get(
-            name=f"scan-perform-scheduled-{provider_id}"
-        )
-        executing_scan = (
-            Scan.objects.filter(
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            periodic_task_instance = PeriodicTask.objects.get(
+                name=f"scan-perform-scheduled-{provider_id}"
+            )
+            executing_scan = (
+                Scan.objects.filter(
+                    tenant_id=tenant_id,
+                    provider_id=provider_id,
+                    trigger=Scan.TriggerChoices.SCHEDULED,
+                    state=StateChoices.EXECUTING,
+                )
+                .order_by("-started_at")
+                .first()
+            )
+            if executing_scan:
+                logger.warning(
+                    f"Scheduled scan already executing for provider {provider_id}. Skipping."
+                )
+                return ScanTaskSerializer(instance=executing_scan).data
+
+            executed_scan = Scan.objects.filter(
                 tenant_id=tenant_id,
                 provider_id=provider_id,
-                trigger=Scan.TriggerChoices.SCHEDULED,
-                state=StateChoices.EXECUTING,
+                task__task_runner_task__task_id=task_id,
+            ).first()
+
+            if executed_scan:
+                # Duplicated task execution due to visibility timeout
+                logger.warning(f"Duplicated scheduled scan for provider {provider_id}.")
+                return ScanTaskSerializer(instance=executed_scan).data
+
+            interval = periodic_task_instance.interval
+            next_scan_datetime = get_next_execution_datetime(task_id, provider_id)
+            current_scan_datetime = next_scan_datetime - timedelta(
+                **{interval.period: interval.every}
             )
-            .order_by("-started_at")
-            .first()
-        )
-        if executing_scan:
-            logger.warning(
-                f"Scheduled scan already executing for provider {provider_id}. Skipping."
+
+            # TEMPORARY WORKAROUND: Clean up orphan scans from transaction isolation issue
+            _cleanup_orphan_scheduled_scans(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                scheduler_task_id=periodic_task_instance.id,
             )
-            return ScanTaskSerializer(instance=executing_scan).data
 
-        executed_scan = Scan.objects.filter(
-            tenant_id=tenant_id,
-            provider_id=provider_id,
-            task__task_runner_task__task_id=task_id,
-        ).first()
-
-        if executed_scan:
-            # Duplicated task execution due to visibility timeout
-            logger.warning(f"Duplicated scheduled scan for provider {provider_id}.")
-            return ScanTaskSerializer(instance=executed_scan).data
-
-        interval = periodic_task_instance.interval
-        next_scan_datetime = get_next_execution_datetime(task_id, provider_id)
-        current_scan_datetime = next_scan_datetime - timedelta(
-            **{interval.period: interval.every}
-        )
-
-        # TEMPORARY WORKAROUND: Clean up orphan scans from transaction isolation issue
-        _cleanup_orphan_scheduled_scans(
-            tenant_id=tenant_id,
-            provider_id=provider_id,
-            scheduler_task_id=periodic_task_instance.id,
-        )
-
-        scan_instance = _get_or_create_scheduled_scan(
-            tenant_id=tenant_id,
-            provider_id=provider_id,
-            scheduler_task_id=periodic_task_instance.id,
-            scheduled_at=current_scan_datetime,
-        )
-        scan_instance.task_id = task_id
-        scan_instance.save()
+            scan_instance = _get_or_create_scheduled_scan(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                scheduler_task_id=periodic_task_instance.id,
+                scheduled_at=current_scan_datetime,
+            )
+            scan_instance.task_id = task_id
+            scan_instance.save()
 
     try:
         result = perform_prowler_scan(
@@ -340,19 +341,20 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             provider_id=provider_id,
         )
     finally:
-        with rls_transaction(tenant_id):
-            now = datetime.now(timezone.utc)
-            if next_scan_datetime <= now:
-                interval_delta = timedelta(**{interval.period: interval.every})
-                while next_scan_datetime <= now:
-                    next_scan_datetime += interval_delta
-            _get_or_create_scheduled_scan(
-                tenant_id=tenant_id,
-                provider_id=provider_id,
-                scheduler_task_id=periodic_task_instance.id,
-                scheduled_at=next_scan_datetime,
-                update_state=True,
-            )
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                now = datetime.now(timezone.utc)
+                if next_scan_datetime <= now:
+                    interval_delta = timedelta(**{interval.period: interval.every})
+                    while next_scan_datetime <= now:
+                        next_scan_datetime += interval_delta
+                _get_or_create_scheduled_scan(
+                    tenant_id=tenant_id,
+                    provider_id=provider_id,
+                    scheduler_task_id=periodic_task_instance.id,
+                    scheduled_at=next_scan_datetime,
+                    update_state=True,
+                )
 
     _perform_scan_complete_tasks(tenant_id, str(scan_instance.id), provider_id)
 
@@ -486,67 +488,69 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         .order_by("uid")
         .iterator()
     )
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
-            fos = [
-                FindingOutput.transform_api_finding(f, prowler_provider) for f in batch
-            ]
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
+                fos = [
+                    FindingOutput.transform_api_finding(f, prowler_provider)
+                    for f in batch
+                ]
 
-            # Outputs
-            for mode, cfg in OUTPUT_FORMATS_MAPPING.items():
-                # Skip ASFF generation if not needed
-                if mode == "json-asff" and not generate_asff:
-                    continue
+                # Outputs
+                for mode, cfg in OUTPUT_FORMATS_MAPPING.items():
+                    # Skip ASFF generation if not needed
+                    if mode == "json-asff" and not generate_asff:
+                        continue
 
-                cls = cfg["class"]
-                suffix = cfg["suffix"]
-                extra = cfg.get("kwargs", {}).copy()
-                if mode == "html":
-                    extra.update(provider=prowler_provider, stats=scan_summary)
+                    cls = cfg["class"]
+                    suffix = cfg["suffix"]
+                    extra = cfg.get("kwargs", {}).copy()
+                    if mode == "html":
+                        extra.update(provider=prowler_provider, stats=scan_summary)
 
-                writer, initialization = get_writer(
-                    output_writers,
-                    cls,
-                    lambda cls=cls, fos=fos, suffix=suffix: cls(
-                        findings=fos,
-                        file_path=out_dir,
-                        file_extension=suffix,
-                        from_cli=False,
-                    ),
-                    is_last,
-                )
-                if not initialization:
-                    writer.transform(fos)
-                writer.batch_write_data_to_file(**extra)
-                writer._data.clear()
+                    writer, initialization = get_writer(
+                        output_writers,
+                        cls,
+                        lambda cls=cls, fos=fos, suffix=suffix: cls(
+                            findings=fos,
+                            file_path=out_dir,
+                            file_extension=suffix,
+                            from_cli=False,
+                        ),
+                        is_last,
+                    )
+                    if not initialization:
+                        writer.transform(fos)
+                    writer.batch_write_data_to_file(**extra)
+                    writer._data.clear()
 
-            # Compliance CSVs
-            for name in frameworks_avail:
-                compliance_obj = frameworks_bulk[name]
+                # Compliance CSVs
+                for name in frameworks_avail:
+                    compliance_obj = frameworks_bulk[name]
 
-                klass = GenericCompliance
-                for condition, cls in COMPLIANCE_CLASS_MAP.get(provider_type, []):
-                    if condition(name):
-                        klass = cls
-                        break
+                    klass = GenericCompliance
+                    for condition, cls in COMPLIANCE_CLASS_MAP.get(provider_type, []):
+                        if condition(name):
+                            klass = cls
+                            break
 
-                filename = f"{comp_dir}_{name}.csv"
+                    filename = f"{comp_dir}_{name}.csv"
 
-                writer, initialization = get_writer(
-                    compliance_writers,
-                    name,
-                    lambda klass=klass, fos=fos: klass(
-                        findings=fos,
-                        compliance=compliance_obj,
-                        file_path=filename,
-                        from_cli=False,
-                    ),
-                    is_last,
-                )
-                if not initialization:
-                    writer.transform(fos, compliance_obj, name)
-                writer.batch_write_data_to_file()
-                writer._data.clear()
+                    writer, initialization = get_writer(
+                        compliance_writers,
+                        name,
+                        lambda klass=klass, fos=fos: klass(
+                            findings=fos,
+                            compliance=compliance_obj,
+                            file_path=filename,
+                            from_cli=False,
+                        ),
+                        is_last,
+                    )
+                    if not initialization:
+                        writer.transform(fos, compliance_obj, name)
+                    writer.batch_write_data_to_file()
+                    writer._data.clear()
 
     compressed = _compress_output_files(out_dir)
 
@@ -569,12 +573,13 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
                 )
 
     # S3 integrations (need output_directory)
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        s3_integrations = Integration.objects.filter(
-            integrationproviderrelationship__provider_id=provider_id,
-            integration_type=Integration.IntegrationChoices.AMAZON_S3,
-            enabled=True,
-        )
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            s3_integrations = Integration.objects.filter(
+                integrationproviderrelationship__provider_id=provider_id,
+                integration_type=Integration.IntegrationChoices.AMAZON_S3,
+                enabled=True,
+            )
 
     if s3_integrations:
         # Pass the output directory path to S3 integration task to reconstruct objects from files
@@ -812,26 +817,31 @@ def check_integrations_task(tenant_id: str, provider_id: str, scan_id: str = Non
 
     try:
         integration_tasks = []
-        with rls_transaction(tenant_id):
-            integrations = Integration.objects.filter(
-                integrationproviderrelationship__provider_id=provider_id,
-                enabled=True,
-            )
-
-            if not integrations.exists():
-                logger.info(f"No integrations configured for provider {provider_id}")
-                return {"integrations_processed": 0}
-
-            # Security Hub integration
-            security_hub_integrations = integrations.filter(
-                integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB
-            )
-            if security_hub_integrations.exists():
-                integration_tasks.append(
-                    security_hub_integration_task.s(
-                        tenant_id=tenant_id, provider_id=provider_id, scan_id=scan_id
-                    )
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                integrations = Integration.objects.filter(
+                    integrationproviderrelationship__provider_id=provider_id,
+                    enabled=True,
                 )
+
+                if not integrations.exists():
+                    logger.info(
+                        f"No integrations configured for provider {provider_id}"
+                    )
+                    return {"integrations_processed": 0}
+
+                # Security Hub integration
+                security_hub_integrations = integrations.filter(
+                    integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB
+                )
+                if security_hub_integrations.exists():
+                    integration_tasks.append(
+                        security_hub_integration_task.s(
+                            tenant_id=tenant_id,
+                            provider_id=provider_id,
+                            scan_id=scan_id,
+                        )
+                    )
 
         # TODO: Add other integration types here
         # slack_integrations = integrations.filter(

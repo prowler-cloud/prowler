@@ -97,27 +97,29 @@ class Command(BaseCommand):
             ):
                 possible_types.append(check_metadata.ResourceType)
 
-        with rls_transaction(tenant_id):
-            provider, _ = Provider.all_objects.get_or_create(
-                tenant_id=tenant_id,
-                provider="aws",
-                connected=True,
-                uid=str(random.randint(100000000000, 999999999999)),
-                defaults={
-                    "alias": alias,
-                },
-            )
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                provider, _ = Provider.all_objects.get_or_create(
+                    tenant_id=tenant_id,
+                    provider="aws",
+                    connected=True,
+                    uid=str(random.randint(100000000000, 999999999999)),
+                    defaults={
+                        "alias": alias,
+                    },
+                )
 
-        with rls_transaction(tenant_id):
-            scan = Scan.all_objects.create(
-                tenant_id=tenant_id,
-                provider=provider,
-                name=alias,
-                trigger="manual",
-                state="executing",
-                progress=0,
-                started_at=datetime.now(timezone.utc),
-            )
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                scan = Scan.all_objects.create(
+                    tenant_id=tenant_id,
+                    provider=provider,
+                    name=alias,
+                    trigger="manual",
+                    state="executing",
+                    progress=0,
+                    started_at=datetime.now(timezone.utc),
+                )
         scan_state = "completed"
 
         try:
@@ -141,13 +143,15 @@ class Command(BaseCommand):
             num_batches = ceil(len(resources) / batch_size)
             self.stdout.write(self.style.WARNING("Creating resources..."))
             for i in tqdm(range(0, len(resources), batch_size), total=num_batches):
-                with rls_transaction(tenant_id):
-                    Resource.all_objects.bulk_create(resources[i : i + batch_size])
+                for attempt in rls_transaction(tenant_id):
+                    with attempt:
+                        Resource.all_objects.bulk_create(resources[i : i + batch_size])
             self.stdout.write(self.style.SUCCESS("Resources created successfully.\n\n"))
 
-            with rls_transaction(tenant_id):
-                scan.progress = 33
-                scan.save()
+            for attempt in rls_transaction(tenant_id):
+                with attempt:
+                    scan.progress = 33
+                    scan.save()
 
             # Create Findings
             findings = []
@@ -193,13 +197,15 @@ class Command(BaseCommand):
             num_batches = ceil(len(findings) / batch_size)
             self.stdout.write(self.style.WARNING("Creating findings..."))
             for i in tqdm(range(0, len(findings), batch_size), total=num_batches):
-                with rls_transaction(tenant_id):
-                    Finding.all_objects.bulk_create(findings[i : i + batch_size])
+                for attempt in rls_transaction(tenant_id):
+                    with attempt:
+                        Finding.all_objects.bulk_create(findings[i : i + batch_size])
             self.stdout.write(self.style.SUCCESS("Findings created successfully.\n\n"))
 
-            with rls_transaction(tenant_id):
-                scan.progress = 66
-                scan.save()
+            for attempt in rls_transaction(tenant_id):
+                with attempt:
+                    scan.progress = 66
+                    scan.save()
 
             # Create ResourceFindingMapping
             mappings = []
@@ -227,19 +233,21 @@ class Command(BaseCommand):
                 self.style.WARNING("Creating resource-finding mappings...")
             )
             for i in tqdm(range(0, len(mappings), batch_size), total=num_batches):
-                with rls_transaction(tenant_id):
-                    ResourceFindingMapping.objects.bulk_create(
-                        mappings[i : i + batch_size]
-                    )
+                for attempt in rls_transaction(tenant_id):
+                    with attempt:
+                        ResourceFindingMapping.objects.bulk_create(
+                            mappings[i : i + batch_size]
+                        )
             self.stdout.write(
                 self.style.SUCCESS(
                     "Resource-finding mappings created successfully.\n\n"
                 )
             )
 
-            with rls_transaction(tenant_id):
-                scan.progress = 99
-                scan.save()
+            for attempt in rls_transaction(tenant_id):
+                with attempt:
+                    scan.progress = 99
+                    scan.save()
 
             self.stdout.write(self.style.WARNING("Creating finding filter values..."))
             resource_scan_summaries = [
@@ -254,16 +262,18 @@ class Command(BaseCommand):
                 for resource_id, service, region, resource_type in scan_resource_cache
             ]
             num_batches = ceil(len(resource_scan_summaries) / batch_size)
-            with rls_transaction(tenant_id):
-                for i in tqdm(
-                    range(0, len(resource_scan_summaries), batch_size),
-                    total=num_batches,
-                ):
-                    with rls_transaction(tenant_id):
-                        ResourceScanSummary.objects.bulk_create(
-                            resource_scan_summaries[i : i + batch_size],
-                            ignore_conflicts=True,
-                        )
+            for attempt in rls_transaction(tenant_id):
+                with attempt:
+                    for i in tqdm(
+                        range(0, len(resource_scan_summaries), batch_size),
+                        total=num_batches,
+                    ):
+                        for inner_attempt in rls_transaction(tenant_id):
+                            with inner_attempt:
+                                ResourceScanSummary.objects.bulk_create(
+                                    resource_scan_summaries[i : i + batch_size],
+                                    ignore_conflicts=True,
+                                )
 
             self.stdout.write(
                 self.style.SUCCESS("Finding filter values created successfully.\n\n")
@@ -279,7 +289,8 @@ class Command(BaseCommand):
             scan.progress = 100
             scan.state = scan_state
             scan.unique_resource_count = num_resources
-            with rls_transaction(tenant_id):
-                scan.save()
+            for attempt in rls_transaction(tenant_id):
+                with attempt:
+                    scan.save()
 
         self.stdout.write(self.style.NOTICE("Successfully populated test data."))

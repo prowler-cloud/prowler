@@ -25,36 +25,38 @@ def mute_historical_findings(tenant_id: str, mute_rule_id: str):
     findings_muted_count = 0
 
     # Get the list of UIDs to mute and the reason
-    with rls_transaction(tenant_id):
-        mute_rule = MuteRule.objects.get(id=mute_rule_id, tenant_id=tenant_id)
-        finding_uids = mute_rule.finding_uids
-        mute_reason = mute_rule.reason
-        muted_at = mute_rule.inserted_at
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            mute_rule = MuteRule.objects.get(id=mute_rule_id, tenant_id=tenant_id)
+            finding_uids = mute_rule.finding_uids
+            mute_reason = mute_rule.reason
+            muted_at = mute_rule.inserted_at
 
     # Query findings that match the UIDs and are not already muted
-    with rls_transaction(tenant_id):
-        findings_to_mute = Finding.objects.filter(
-            tenant_id=tenant_id, uid__in=finding_uids, muted=False
-        )
-        total_findings = findings_to_mute.count()
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            findings_to_mute = Finding.objects.filter(
+                tenant_id=tenant_id, uid__in=finding_uids, muted=False
+            )
+            total_findings = findings_to_mute.count()
 
-        logger.info(
-            f"Processing {total_findings} findings for mute rule {mute_rule_id}"
-        )
+            logger.info(
+                f"Processing {total_findings} findings for mute rule {mute_rule_id}"
+            )
 
-        if total_findings > 0:
-            for batch, is_last in batched(
-                findings_to_mute.iterator(), DJANGO_FINDINGS_BATCH_SIZE
-            ):
-                batch_ids = [f.id for f in batch]
-                updated_count = Finding.all_objects.filter(
-                    id__in=batch_ids, tenant_id=tenant_id
-                ).update(
-                    muted=True,
-                    muted_at=muted_at,
-                    muted_reason=mute_reason,
-                )
-                findings_muted_count += updated_count
+            if total_findings > 0:
+                for batch, is_last in batched(
+                    findings_to_mute.iterator(), DJANGO_FINDINGS_BATCH_SIZE
+                ):
+                    batch_ids = [f.id for f in batch]
+                    updated_count = Finding.all_objects.filter(
+                        id__in=batch_ids, tenant_id=tenant_id
+                    ).update(
+                        muted=True,
+                        muted_at=muted_at,
+                        muted_reason=mute_reason,
+                    )
+                    findings_muted_count += updated_count
 
     logger.info(f"Muted {findings_muted_count} findings for rule {mute_rule_id}")
 

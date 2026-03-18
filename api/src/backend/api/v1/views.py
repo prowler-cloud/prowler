@@ -630,8 +630,11 @@ class SAMLInitiateAPIView(GenericAPIView):
         # Retrieve the SAML configuration for the given email domain
         try:
             check = SAMLDomainIndex.objects.get(email_domain=domain)
-            with rls_transaction(str(check.tenant_id)):
-                config = SAMLConfiguration.objects.get(tenant_id=str(check.tenant_id))
+            for attempt in rls_transaction(str(check.tenant_id)):
+                with attempt:
+                    config = SAMLConfiguration.objects.get(
+                        tenant_id=str(check.tenant_id)
+                    )
         except (SAMLDomainIndex.DoesNotExist, SAMLConfiguration.DoesNotExist):
             return Response(
                 {"detail": "Unauthorized domain."}, status=status.HTTP_403_FORBIDDEN
@@ -738,8 +741,9 @@ class TenantFinishACSView(FinishACSView):
         # This handles scenarios like partially deleted or missing related objects
         try:
             check = SAMLDomainIndex.objects.get(email_domain=organization_slug)
-            with rls_transaction(str(check.tenant_id)):
-                SAMLConfiguration.objects.get(tenant_id=str(check.tenant_id))
+            for attempt in rls_transaction(str(check.tenant_id)):
+                with attempt:
+                    SAMLConfiguration.objects.get(tenant_id=str(check.tenant_id))
             social_app = SocialApp.objects.get(
                 provider="saml", client_id=organization_slug
             )

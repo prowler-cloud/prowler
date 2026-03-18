@@ -90,11 +90,12 @@ class BaseRLSViewSet(BaseViewSet):
         if tenant_id is None:
             raise NotAuthenticated("Tenant ID is not present in token")
 
-        with rls_transaction(
+        for attempt in rls_transaction(
             tenant_id, using=getattr(self, "db_alias", MainRouter.default_db)
         ):
-            self.request.tenant_id = tenant_id
-            return super().initial(request, *args, **kwargs)
+            with attempt:
+                self.request.tenant_id = tenant_id
+                return super().initial(request, *args, **kwargs)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -163,12 +164,13 @@ class BaseTenantViewset(BaseViewSet):
             raise NotAuthenticated("Tenant ID is not present in token")
 
         user_id = str(request.user.id)
-        with rls_transaction(
+        for attempt in rls_transaction(
             value=user_id,
             parameter=POSTGRES_USER_VAR,
             using=getattr(self, "db_alias", MainRouter.default_db),
         ):
-            return super().initial(request, *args, **kwargs)
+            with attempt:
+                return super().initial(request, *args, **kwargs)
 
 
 class BaseUserViewset(BaseViewSet):
@@ -200,8 +202,9 @@ class BaseUserViewset(BaseViewSet):
         if tenant_id is None:
             raise NotAuthenticated("Tenant ID is not present in token")
 
-        with rls_transaction(
+        for attempt in rls_transaction(
             tenant_id, using=getattr(self, "db_alias", MainRouter.default_db)
         ):
-            self.request.tenant_id = tenant_id
-            return super().initial(request, *args, **kwargs)
+            with attempt:
+                self.request.tenant_id = tenant_id
+                return super().initial(request, *args, **kwargs)

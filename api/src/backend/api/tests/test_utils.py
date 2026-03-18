@@ -789,9 +789,8 @@ class TestProwlerIntegrationConnectionTest:
         mock_connection.projects = {"PROJ1": "Project 1", "PROJ2": "Project 2"}
         mock_jira_class.test_connection.return_value = mock_connection
 
-        # Mock rls_transaction context manager
-        mock_rls_transaction.return_value.__enter__ = MagicMock()
-        mock_rls_transaction.return_value.__exit__ = MagicMock()
+        # Mock rls_transaction as an iterable yielding a context manager
+        mock_rls_transaction.return_value = [MagicMock()]
 
         result = prowler_integration_connection_test(integration)
 
@@ -840,9 +839,8 @@ class TestProwlerIntegrationConnectionTest:
         mock_connection.projects = {}  # Empty projects when connection fails
         mock_jira_class.test_connection.return_value = mock_connection
 
-        # Mock rls_transaction context manager
-        mock_rls_transaction.return_value.__enter__ = MagicMock()
-        mock_rls_transaction.return_value.__exit__ = MagicMock()
+        # Mock rls_transaction as an iterable yielding a context manager
+        mock_rls_transaction.return_value = [MagicMock()]
 
         result = prowler_integration_connection_test(integration)
 
@@ -895,9 +893,8 @@ class TestProwlerIntegrationConnectionTest:
         }
         mock_jira_class.test_connection.return_value = mock_connection
 
-        # Mock rls_transaction context manager
-        mock_rls_transaction.return_value.__enter__ = MagicMock()
-        mock_rls_transaction.return_value.__exit__ = MagicMock()
+        # Mock rls_transaction as an iterable yielding a context manager
+        mock_rls_transaction.return_value = [MagicMock()]
 
         result = prowler_integration_connection_test(integration)
 

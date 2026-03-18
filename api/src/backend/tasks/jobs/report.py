@@ -248,22 +248,23 @@ def generate_compliance_reports(
     results = {}
 
     # Validate that the scan has findings and get provider info
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        if not ScanSummary.objects.filter(scan_id=scan_id).exists():
-            logger.info("No findings found for scan %s", scan_id)
-            if generate_threatscore:
-                results["threatscore"] = {"upload": False, "path": ""}
-            if generate_ens:
-                results["ens"] = {"upload": False, "path": ""}
-            if generate_nis2:
-                results["nis2"] = {"upload": False, "path": ""}
-            if generate_csa:
-                results["csa"] = {"upload": False, "path": ""}
-            return results
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            if not ScanSummary.objects.filter(scan_id=scan_id).exists():
+                logger.info("No findings found for scan %s", scan_id)
+                if generate_threatscore:
+                    results["threatscore"] = {"upload": False, "path": ""}
+                if generate_ens:
+                    results["ens"] = {"upload": False, "path": ""}
+                if generate_nis2:
+                    results["nis2"] = {"upload": False, "path": ""}
+                if generate_csa:
+                    results["csa"] = {"upload": False, "path": ""}
+                return results
 
-        provider_obj = Provider.objects.get(id=provider_id)
-        provider_uid = provider_obj.uid
-        provider_type = provider_obj.provider
+            provider_obj = Provider.objects.get(id=provider_id)
+            provider_uid = provider_obj.uid
+            provider_type = provider_obj.provider
 
     # Check provider compatibility
     if generate_threatscore and provider_type not in [
@@ -398,49 +399,50 @@ def generate_compliance_reports(
                     min_risk_level=min_risk_level_threatscore,
                 )
 
-                with rls_transaction(tenant_id):
-                    previous_snapshot = (
-                        ThreatScoreSnapshot.objects.filter(
+                for attempt in rls_transaction(tenant_id):
+                    with attempt:
+                        previous_snapshot = (
+                            ThreatScoreSnapshot.objects.filter(
+                                tenant_id=tenant_id,
+                                provider_id=provider_id,
+                                compliance_id=compliance_id_threatscore,
+                            )
+                            .order_by("-inserted_at")
+                            .first()
+                        )
+
+                        score_delta = None
+                        if previous_snapshot:
+                            score_delta = metrics["overall_score"] - float(
+                                previous_snapshot.overall_score
+                            )
+
+                        snapshot = ThreatScoreSnapshot.objects.create(
                             tenant_id=tenant_id,
+                            scan_id=scan_id,
                             provider_id=provider_id,
                             compliance_id=compliance_id_threatscore,
+                            overall_score=metrics["overall_score"],
+                            score_delta=score_delta,
+                            section_scores=metrics["section_scores"],
+                            critical_requirements=metrics["critical_requirements"],
+                            total_requirements=metrics["total_requirements"],
+                            passed_requirements=metrics["passed_requirements"],
+                            failed_requirements=metrics["failed_requirements"],
+                            manual_requirements=metrics["manual_requirements"],
+                            total_findings=metrics["total_findings"],
+                            passed_findings=metrics["passed_findings"],
+                            failed_findings=metrics["failed_findings"],
                         )
-                        .order_by("-inserted_at")
-                        .first()
-                    )
 
-                    score_delta = None
-                    if previous_snapshot:
-                        score_delta = metrics["overall_score"] - float(
-                            previous_snapshot.overall_score
+                        delta_msg = (
+                            f" (delta: {score_delta:+.2f}%)"
+                            if score_delta is not None
+                            else ""
                         )
-
-                    snapshot = ThreatScoreSnapshot.objects.create(
-                        tenant_id=tenant_id,
-                        scan_id=scan_id,
-                        provider_id=provider_id,
-                        compliance_id=compliance_id_threatscore,
-                        overall_score=metrics["overall_score"],
-                        score_delta=score_delta,
-                        section_scores=metrics["section_scores"],
-                        critical_requirements=metrics["critical_requirements"],
-                        total_requirements=metrics["total_requirements"],
-                        passed_requirements=metrics["passed_requirements"],
-                        failed_requirements=metrics["failed_requirements"],
-                        manual_requirements=metrics["manual_requirements"],
-                        total_findings=metrics["total_findings"],
-                        passed_findings=metrics["passed_findings"],
-                        failed_findings=metrics["failed_findings"],
-                    )
-
-                    delta_msg = (
-                        f" (delta: {score_delta:+.2f}%)"
-                        if score_delta is not None
-                        else ""
-                    )
-                    logger.info(
-                        f"ThreatScore snapshot created with ID {snapshot.id} (score: {snapshot.overall_score}%{delta_msg})",
-                    )
+                        logger.info(
+                            f"ThreatScore snapshot created with ID {snapshot.id} (score: {snapshot.overall_score}%{delta_msg})",
+                        )
             except Exception as e:
                 logger.error("Error creating ThreatScore snapshot: %s", e)
 

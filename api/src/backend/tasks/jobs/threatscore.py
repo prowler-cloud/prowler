@@ -58,12 +58,13 @@ def compute_threatscore_metrics(
         >>> print(f"Overall ThreatScore: {metrics['overall_score']:.2f}%")
     """
     # Get provider and compliance information
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        provider_obj = Provider.objects.get(id=provider_id)
-        provider_type = provider_obj.provider
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            provider_obj = Provider.objects.get(id=provider_id)
+            provider_type = provider_obj.provider
 
-        frameworks_bulk = Compliance.get_bulk(provider_type)
-        compliance_obj = frameworks_bulk[compliance_id]
+            frameworks_bulk = Compliance.get_bulk(provider_type)
+            compliance_obj = frameworks_bulk[compliance_id]
 
     # Aggregate requirement statistics from database
     requirement_statistics_by_check_id = (

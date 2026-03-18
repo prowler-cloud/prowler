@@ -418,23 +418,24 @@ def tenants_fixture(create_test_user):
 def set_user_admin_roles_fixture(create_test_user, tenants_fixture):
     user = create_test_user
     for tenant in tenants_fixture[:2]:
-        with rls_transaction(str(tenant.id)):
-            role = Role.objects.create(
-                name="admin",
-                tenant_id=tenant.id,
-                manage_users=True,
-                manage_account=True,
-                manage_billing=True,
-                manage_providers=True,
-                manage_integrations=True,
-                manage_scans=True,
-                unlimited_visibility=True,
-            )
-            UserRoleRelationship.objects.create(
-                user=user,
-                role=role,
-                tenant_id=tenant.id,
-            )
+        for attempt in rls_transaction(str(tenant.id)):
+            with attempt:
+                role = Role.objects.create(
+                    name="admin",
+                    tenant_id=tenant.id,
+                    manage_users=True,
+                    manage_account=True,
+                    manage_billing=True,
+                    manage_providers=True,
+                    manage_integrations=True,
+                    manage_scans=True,
+                    unlimited_visibility=True,
+                )
+                UserRoleRelationship.objects.create(
+                    user=user,
+                    role=role,
+                    tenant_id=tenant.id,
+                )
 
 
 @pytest.fixture

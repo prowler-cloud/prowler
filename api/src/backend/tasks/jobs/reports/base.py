@@ -750,25 +750,26 @@ class BaseComplianceReportGenerator(ABC):
         Returns:
             Aggregated ComplianceData object
         """
-        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-            # Load provider
-            if provider_obj is None:
-                provider_obj = Provider.objects.get(id=provider_id)
+        for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+            with attempt:
+                # Load provider
+                if provider_obj is None:
+                    provider_obj = Provider.objects.get(id=provider_id)
 
-            prowler_provider = initialize_prowler_provider(provider_obj)
-            provider_type = provider_obj.provider
+                prowler_provider = initialize_prowler_provider(provider_obj)
+                provider_type = provider_obj.provider
 
-            # Load compliance framework
-            frameworks_bulk = Compliance.get_bulk(provider_type)
-            compliance_obj = frameworks_bulk.get(compliance_id)
+                # Load compliance framework
+                frameworks_bulk = Compliance.get_bulk(provider_type)
+                compliance_obj = frameworks_bulk.get(compliance_id)
 
-            if not compliance_obj:
-                raise ValueError(f"Compliance framework not found: {compliance_id}")
+                if not compliance_obj:
+                    raise ValueError(f"Compliance framework not found: {compliance_id}")
 
-            framework = getattr(compliance_obj, "Framework", "N/A")
-            name = getattr(compliance_obj, "Name", "N/A")
-            version = getattr(compliance_obj, "Version", "N/A")
-            description = getattr(compliance_obj, "Description", "")
+                framework = getattr(compliance_obj, "Framework", "N/A")
+                name = getattr(compliance_obj, "Name", "N/A")
+                version = getattr(compliance_obj, "Version", "N/A")
+                description = getattr(compliance_obj, "Description", "")
 
         # Aggregate requirement statistics
         if requirement_statistics is None:

@@ -415,9 +415,10 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
             raise_on_exception=False,
         )
         project_keys = jira_connection.projects if jira_connection.is_connected else {}
-        with rls_transaction(str(integration.tenant_id)):
-            integration.configuration["projects"] = project_keys
-            integration.save()
+        for attempt in rls_transaction(str(integration.tenant_id)):
+            with attempt:
+                integration.configuration["projects"] = project_keys
+                integration.save()
         return jira_connection
     elif integration.integration_type == Integration.IntegrationChoices.SLACK:
         pass
@@ -544,9 +545,12 @@ def initialize_prowler_integration(integration: Integration) -> Jira:
         try:
             return Jira(**integration.credentials)
         except JiraBasicAuthError as jira_auth_error:
-            with rls_transaction(str(integration.tenant_id)):
-                integration.configuration["projects"] = {}
-                integration.connected = False
-                integration.connection_last_checked_at = datetime.now(tz=timezone.utc)
-                integration.save()
+            for attempt in rls_transaction(str(integration.tenant_id)):
+                with attempt:
+                    integration.configuration["projects"] = {}
+                    integration.connected = False
+                    integration.connection_last_checked_at = datetime.now(
+                        tz=timezone.utc
+                    )
+                    integration.save()
             raise jira_auth_error

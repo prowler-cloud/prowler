@@ -71,21 +71,14 @@ def psycopg_connection(database_alias: str):
 
 
 @contextmanager
-def rls_transaction(
+def _rls_transaction_context_manager(
     value: str,
     parameter: str = POSTGRES_TENANT_VAR,
     using: str | None = None,
-    retry_on_replica: bool = True,
 ):
-    """
-    Creates a new database transaction setting the given configuration value for Postgres RLS. It validates the
-    if the value is a valid UUID.
+    """Internal context manager that opens a single RLS transaction.
 
-    Args:
-        value (str): Database configuration parameter value.
-        parameter (str): Database configuration parameter name, by default is 'api.tenant_id'.
-        using (str | None): Optional database alias to run the transaction against. Defaults to the
-            active read alias (if any) or Django's default connection.
+    Callers should use ``rls_transaction`` (the public class) instead.
     """
     requested_alias = using or get_read_db_alias()
     db_alias = requested_alias or DEFAULT_DB_ALIAS
@@ -93,54 +86,164 @@ def rls_transaction(
         db_alias = DEFAULT_DB_ALIAS
 
     alias = db_alias
-    is_replica = READ_REPLICA_ALIAS and alias == READ_REPLICA_ALIAS
-    max_attempts = REPLICA_MAX_ATTEMPTS if is_replica and retry_on_replica else 1
+    router_token = None
+    conn = connections[alias]
+    try:
+        if alias != DEFAULT_DB_ALIAS:
+            router_token = set_read_db_alias(alias)
 
-    for attempt in range(1, max_attempts + 1):
-        router_token = None
-        yielded_cursor = False
+        with transaction.atomic(using=alias):
+            with conn.cursor() as cursor:
+                try:
+                    uuid.UUID(str(value))
+                except ValueError:
+                    raise ValidationError("Must be a valid UUID")
+                cursor.execute(SET_CONFIG_QUERY, [parameter, value])
+                yield cursor
+    finally:
+        if router_token is not None:
+            reset_read_db_alias(router_token)
 
-        # On final attempt, fallback to primary
-        if attempt == max_attempts and is_replica:
-            logger.warning(
-                f"RLS transaction failed after {attempt - 1} attempts on replica, "
-                f"falling back to primary DB"
-            )
+
+class rls_transaction:
+    """RLS transaction with retry and replica-to-primary fallback.
+
+    Usage::
+
+        for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+            with attempt:
+                result = Model.objects.filter(...)
+
+    When ``using`` points to a read replica and ``retry_on_replica`` is True,
+    the iterator yields up to ``REPLICA_MAX_ATTEMPTS`` attempts on the replica
+    followed by one final attempt on the primary DB.  For primary-only calls
+    the iterator yields a single attempt with no retry.
+    """
+
+    def __init__(
+        self,
+        value: str,
+        parameter: str = POSTGRES_TENANT_VAR,
+        using: str | None = None,
+        retry_on_replica: bool = True,
+    ):
+        self.value = value
+        self.parameter = parameter
+        self.using = using
+        self.retry_on_replica = retry_on_replica
+
+    def __iter__(self):
+        return _RLSRetryIterator(self)
+
+
+class _RLSRetryIterator:
+    def __init__(self, parent: rls_transaction):
+        self._parent = parent
+        self._attempt = 0
+        self._done = False
+
+        requested = parent.using or get_read_db_alias()
+        self._db_alias = requested or DEFAULT_DB_ALIAS
+        if self._db_alias not in connections:
+            self._db_alias = DEFAULT_DB_ALIAS
+
+        self._is_replica = bool(
+            READ_REPLICA_ALIAS and self._db_alias == READ_REPLICA_ALIAS
+        )
+
+        if self._is_replica and parent.retry_on_replica:
+            # N replica attempts + 1 primary fallback
+            self._max_attempts = REPLICA_MAX_ATTEMPTS + 1
+        else:
+            self._max_attempts = 1
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._done or self._attempt >= self._max_attempts:
+            raise StopIteration
+
+        self._attempt += 1
+        is_final = self._attempt == self._max_attempts
+
+        if is_final and self._is_replica and self._parent.retry_on_replica:
             alias = DEFAULT_DB_ALIAS
+            if self._attempt > 1:
+                logger.warning(
+                    f"RLS transaction failed after {self._attempt - 1} attempts on replica, "
+                    f"falling back to primary DB"
+                )
+        else:
+            alias = self._db_alias
 
-        conn = connections[alias]
+        return _RLSAttempt(self, alias, is_final)
+
+
+class _RLSAttempt:
+    def __init__(self, iterator: _RLSRetryIterator, alias: str, is_final: bool):
+        self._iterator = iterator
+        self._alias = alias
+        self._is_final = is_final
+        self._context_manager = None
+
+    def __enter__(self):
+        # Retry loop for connection-setup errors (pre-yield).
+        # Python does NOT call __exit__ when __enter__ raises, so we
+        # must handle retries here for errors like "connection refused".
+        while True:
+            try:
+                self._context_manager = _rls_transaction_context_manager(
+                    self._iterator._parent.value,
+                    self._iterator._parent.parameter,
+                    using=self._alias,
+                )
+                return self._context_manager.__enter__()
+            except OperationalError as exc:
+                if self._is_final or not self._iterator._is_replica:
+                    raise
+                self._handle_retry(exc)
+                # Consume the next attempt from the iterator
+                next_att = next(self._iterator)
+                self._alias = next_att._alias
+                self._is_final = next_att._is_final
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
         try:
-            if alias != DEFAULT_DB_ALIAS:
-                router_token = set_read_db_alias(alias)
-
-            with transaction.atomic(using=alias):
-                with conn.cursor() as cursor:
-                    try:
-                        # just in case the value is a UUID object
-                        uuid.UUID(str(value))
-                    except ValueError:
-                        raise ValidationError("Must be a valid UUID")
-                    cursor.execute(SET_CONFIG_QUERY, [parameter, value])
-                    yielded_cursor = True
-                    yield cursor
-            return
-        except OperationalError as e:
-            if yielded_cursor:
+            self._context_manager.__exit__(exc_type, exc_val, exc_tb)
+        except OperationalError as exc:
+            if self._is_final or not self._iterator._is_replica:
                 raise
-            # If on primary or max attempts reached, raise
-            if not is_replica or attempt == max_attempts:
-                raise
+            self._handle_retry(exc)
+            return True
 
-            # Retry with exponential backoff
-            delay = REPLICA_RETRY_BASE_DELAY * (2 ** (attempt - 1))
-            logger.info(
-                f"RLS transaction failed on replica (attempt {attempt}/{max_attempts}), "
-                f"retrying in {delay}s. Error: {e}"
-            )
-            time.sleep(delay)
-        finally:
-            if router_token is not None:
-                reset_read_db_alias(router_token)
+        if exc_type is None:
+            self._iterator._done = True
+            return False
+
+        if (
+            issubclass(exc_type, OperationalError)
+            and not self._is_final
+            and self._iterator._is_replica
+        ):
+            self._handle_retry(exc_val)
+            return True
+
+        return False
+
+    def _handle_retry(self, error):
+        try:
+            connections[self._alias].close()
+        except Exception:
+            pass
+        attempt = self._iterator._attempt
+        max_att = self._iterator._max_attempts
+        delay = REPLICA_RETRY_BASE_DELAY * (2 ** (attempt - 1))
+        logger.info(
+            f"RLS transaction failed on replica (attempt {attempt}/{max_att}), "
+            f"retrying in {delay:.1f}s. Error: {error}"
+        )
+        time.sleep(delay)
 
 
 class CustomUserManager(BaseUserManager):
@@ -197,22 +300,20 @@ def batch_delete(tenant_id, queryset, batch_size=settings.DJANGO_DELETION_BATCH_
     deletion_summary = {}
 
     while True:
-        with rls_transaction(tenant_id, POSTGRES_TENANT_VAR):
-            # Get a batch of IDs to delete
-            batch_ids = set(
-                queryset.values_list("id", flat=True).order_by("id")[:batch_size]
-            )
-            if not batch_ids:
-                # No more objects to delete
-                break
+        for attempt in rls_transaction(tenant_id, POSTGRES_TENANT_VAR):
+            with attempt:
+                # Get a batch of IDs to delete
+                batch_ids = set(
+                    queryset.values_list("id", flat=True).order_by("id")[:batch_size]
+                )
+                if not batch_ids:
+                    return total_deleted, deletion_summary
 
-            deleted_count, deleted_info = queryset.filter(id__in=batch_ids).delete()
+                deleted_count, deleted_info = queryset.filter(id__in=batch_ids).delete()
 
         total_deleted += deleted_count
         for model_label, count in deleted_info.items():
             deletion_summary[model_label] = deletion_summary.get(model_label, 0) + count
-
-    return total_deleted, deletion_summary
 
 
 def delete_related_daily_task(provider_id: str):
@@ -245,8 +346,9 @@ def create_objects_in_batches(
     total = len(objects)
     for i in range(0, total, batch_size):
         chunk = objects[i : i + batch_size]
-        with rls_transaction(value=tenant_id, parameter=POSTGRES_TENANT_VAR):
-            model.objects.bulk_create(chunk, batch_size)
+        for attempt in rls_transaction(value=tenant_id, parameter=POSTGRES_TENANT_VAR):
+            with attempt:
+                model.objects.bulk_create(chunk, batch_size)
 
 
 def update_objects_in_batches(
@@ -268,8 +370,9 @@ def update_objects_in_batches(
     total = len(objects)
     for start in range(0, total, batch_size):
         chunk = objects[start : start + batch_size]
-        with rls_transaction(value=tenant_id, parameter=POSTGRES_TENANT_VAR):
-            model.objects.bulk_update(chunk, fields, batch_size)
+        for attempt in rls_transaction(value=tenant_id, parameter=POSTGRES_TENANT_VAR):
+            with attempt:
+                model.objects.bulk_update(chunk, fields, batch_size)
 
 
 # Postgres Enums

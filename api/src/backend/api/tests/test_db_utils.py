@@ -364,29 +364,32 @@ class TestRlsTransaction:
         tenant = tenants_fixture[0]
         tenant_id = str(tenant.id)
 
-        with rls_transaction(tenant_id) as cursor:
-            assert cursor is not None
-            cursor.execute("SELECT current_setting(%s)", [POSTGRES_TENANT_VAR])
-            result = cursor.fetchone()
-            assert result[0] == tenant_id
+        for attempt in rls_transaction(tenant_id):
+            with attempt as cursor:
+                assert cursor is not None
+                cursor.execute("SELECT current_setting(%s)", [POSTGRES_TENANT_VAR])
+                result = cursor.fetchone()
+                assert result[0] == tenant_id
 
     def test_rls_transaction_valid_uuid_object(self, tenants_fixture):
         """Test rls_transaction with UUID object."""
         tenant = tenants_fixture[0]
 
-        with rls_transaction(tenant.id) as cursor:
-            assert cursor is not None
-            cursor.execute("SELECT current_setting(%s)", [POSTGRES_TENANT_VAR])
-            result = cursor.fetchone()
-            assert result[0] == str(tenant.id)
+        for attempt in rls_transaction(tenant.id):
+            with attempt as cursor:
+                assert cursor is not None
+                cursor.execute("SELECT current_setting(%s)", [POSTGRES_TENANT_VAR])
+                result = cursor.fetchone()
+                assert result[0] == str(tenant.id)
 
     def test_rls_transaction_invalid_uuid_raises_validation_error(self):
         """Test rls_transaction raises ValidationError for invalid UUID."""
         invalid_uuid = "not-a-valid-uuid"
 
         with pytest.raises(ValidationError, match="Must be a valid UUID"):
-            with rls_transaction(invalid_uuid):
-                pass
+            for attempt in rls_transaction(invalid_uuid):
+                with attempt:
+                    pass
 
     def test_rls_transaction_uses_default_database_when_no_alias(self, tenants_fixture):
         """Test rls_transaction uses DEFAULT_DB_ALIAS when no alias specified."""
@@ -402,8 +405,9 @@ class TestRlsTransaction:
                 mock_connections.__contains__.return_value = True
 
                 with patch("api.db_utils.transaction.atomic"):
-                    with rls_transaction(tenant_id):
-                        pass
+                    for attempt in rls_transaction(tenant_id):
+                        with attempt:
+                            pass
 
                 mock_connections.__getitem__.assert_called_with(DEFAULT_DB_ALIAS)
 
@@ -424,8 +428,9 @@ class TestRlsTransaction:
                 with patch("api.db_utils.set_read_db_alias") as mock_set_alias:
                     with patch("api.db_utils.reset_read_db_alias") as mock_reset_alias:
                         mock_set_alias.return_value = "test_token"
-                        with rls_transaction(tenant_id, using=custom_alias):
-                            pass
+                        for attempt in rls_transaction(tenant_id, using=custom_alias):
+                            with attempt:
+                                pass
 
                         mock_connections.__getitem__.assert_called_with(custom_alias)
                         mock_set_alias.assert_called_once_with(custom_alias)
@@ -452,8 +457,9 @@ class TestRlsTransaction:
                             "api.db_utils.reset_read_db_alias"
                         ) as mock_reset_alias:
                             mock_set_alias.return_value = "test_token"
-                            with rls_transaction(tenant_id):
-                                pass
+                            for attempt in rls_transaction(tenant_id):
+                                with attempt:
+                                    pass
 
                             mock_connections.__getitem__.assert_called()
                             mock_set_alias.assert_called_once()
@@ -480,8 +486,9 @@ class TestRlsTransaction:
                 mock_connections.__getitem__.return_value = mock_conn
 
                 with patch("api.db_utils.transaction.atomic"):
-                    with rls_transaction(tenant_id):
-                        pass
+                    for attempt in rls_transaction(tenant_id):
+                        with attempt:
+                            pass
 
                     mock_connections.__getitem__.assert_called_with(DEFAULT_DB_ALIAS)
 
@@ -503,15 +510,20 @@ class TestRlsTransaction:
                 with patch("api.db_utils.transaction.atomic"):
                     with patch("api.db_utils.set_read_db_alias", return_value="token"):
                         with patch("api.db_utils.reset_read_db_alias"):
-                            with rls_transaction(tenant_id):
-                                pass
+                            for attempt in rls_transaction(tenant_id):
+                                with attempt:
+                                    pass
 
                             assert mock_cursor.execute.call_count == 1
 
     def test_rls_transaction_retry_with_exponential_backoff_on_operational_error(
         self, tenants_fixture, enable_read_replica
     ):
-        """Test retry with exponential backoff on OperationalError on replica."""
+        """Test retry with exponential backoff on OperationalError on replica.
+
+        REPLICA_MAX_ATTEMPTS=3 means 3 replica tries + 1 primary fallback = 4 total.
+        First 3 attempts fail, 4th succeeds on primary.
+        """
         tenant = tenants_fixture[0]
         tenant_id = str(tenant.id)
 
@@ -528,7 +540,7 @@ class TestRlsTransaction:
                 def atomic_side_effect(*args, **kwargs):
                     nonlocal call_count
                     call_count += 1
-                    if call_count < 3:
+                    if call_count <= 3:
                         raise OperationalError("Connection error")
                     return MagicMock(
                         __enter__=MagicMock(return_value=None),
@@ -544,48 +556,24 @@ class TestRlsTransaction:
                         ):
                             with patch("api.db_utils.reset_read_db_alias"):
                                 with patch("api.db_utils.logger") as mock_logger:
-                                    with rls_transaction(tenant_id):
-                                        pass
+                                    for attempt in rls_transaction(tenant_id):
+                                        with attempt:
+                                            pass
 
-                                    assert mock_sleep.call_count == 2
+                                    assert mock_sleep.call_count == 3
                                     mock_sleep.assert_any_call(0.5)
                                     mock_sleep.assert_any_call(1.0)
-                                    assert mock_logger.info.call_count == 2
-
-    def test_rls_transaction_operational_error_inside_context_no_retry(
-        self, tenants_fixture, enable_read_replica
-    ):
-        """Test OperationalError raised inside context does not retry."""
-        tenant = tenants_fixture[0]
-        tenant_id = str(tenant.id)
-
-        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
-            with patch("api.db_utils.connections") as mock_connections:
-                mock_conn = MagicMock()
-                mock_cursor = MagicMock()
-                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
-                mock_connections.__getitem__.return_value = mock_conn
-                mock_connections.__contains__.return_value = True
-
-                with patch("api.db_utils.transaction.atomic") as mock_atomic:
-                    mock_atomic.return_value.__enter__.return_value = None
-                    mock_atomic.return_value.__exit__.return_value = False
-
-                    with patch("api.db_utils.time.sleep") as mock_sleep:
-                        with patch(
-                            "api.db_utils.set_read_db_alias", return_value="token"
-                        ):
-                            with patch("api.db_utils.reset_read_db_alias"):
-                                with pytest.raises(OperationalError):
-                                    with rls_transaction(tenant_id):
-                                        raise OperationalError("Conflict with recovery")
-
-                                mock_sleep.assert_not_called()
+                                    mock_sleep.assert_any_call(2.0)
+                                    assert mock_logger.info.call_count == 3
+                                    assert mock_logger.warning.call_count == 1
 
     def test_rls_transaction_max_three_attempts_for_replica(
         self, tenants_fixture, enable_read_replica
     ):
-        """Test maximum 3 attempts for replica database."""
+        """Test maximum attempts for replica database.
+
+        REPLICA_MAX_ATTEMPTS=3 means 3 replica + 1 primary = 4 total attempts.
+        """
         tenant = tenants_fixture[0]
         tenant_id = str(tenant.id)
 
@@ -606,10 +594,11 @@ class TestRlsTransaction:
                         ):
                             with patch("api.db_utils.reset_read_db_alias"):
                                 with pytest.raises(OperationalError):
-                                    with rls_transaction(tenant_id):
-                                        pass
+                                    for attempt in rls_transaction(tenant_id):
+                                        with attempt:
+                                            pass
 
-                                assert mock_atomic.call_count == 3
+                                assert mock_atomic.call_count == 4
 
     def test_rls_transaction_replica_no_retry_when_disabled(
         self, tenants_fixture, enable_read_replica
@@ -635,10 +624,11 @@ class TestRlsTransaction:
                         ):
                             with patch("api.db_utils.reset_read_db_alias"):
                                 with pytest.raises(OperationalError):
-                                    with rls_transaction(
+                                    for attempt in rls_transaction(
                                         tenant_id, retry_on_replica=False
                                     ):
-                                        pass
+                                        with attempt:
+                                            pass
 
                                 assert mock_atomic.call_count == 1
                                 mock_sleep.assert_not_called()
@@ -660,15 +650,19 @@ class TestRlsTransaction:
                     mock_atomic.side_effect = OperationalError("Primary error")
 
                     with pytest.raises(OperationalError):
-                        with rls_transaction(tenant_id):
-                            pass
+                        for attempt in rls_transaction(tenant_id):
+                            with attempt:
+                                pass
 
                     assert mock_atomic.call_count == 1
 
     def test_rls_transaction_fallback_to_primary_after_max_attempts(
         self, tenants_fixture, enable_read_replica
     ):
-        """Test fallback to primary DB after max attempts on replica."""
+        """Test fallback to primary DB after max attempts on replica.
+
+        First 3 attempts fail on replica, 4th succeeds on primary.
+        """
         tenant = tenants_fixture[0]
         tenant_id = str(tenant.id)
 
@@ -685,7 +679,7 @@ class TestRlsTransaction:
                 def atomic_side_effect(*args, **kwargs):
                     nonlocal call_count
                     call_count += 1
-                    if call_count < 3:
+                    if call_count <= 3:
                         raise OperationalError("Replica error")
                     return MagicMock(
                         __enter__=MagicMock(return_value=None),
@@ -701,8 +695,9 @@ class TestRlsTransaction:
                         ):
                             with patch("api.db_utils.reset_read_db_alias"):
                                 with patch("api.db_utils.logger") as mock_logger:
-                                    with rls_transaction(tenant_id):
-                                        pass
+                                    for attempt in rls_transaction(tenant_id):
+                                        with attempt:
+                                            pass
 
                                     mock_logger.warning.assert_called_once()
                                     warning_msg = mock_logger.warning.call_args[0][0]
@@ -711,7 +706,10 @@ class TestRlsTransaction:
     def test_rls_transaction_logger_warning_on_fallback(
         self, tenants_fixture, enable_read_replica
     ):
-        """Test logger warnings are emitted on fallback to primary."""
+        """Test logger warnings are emitted on fallback to primary.
+
+        3 replica failures produce 3 info logs, then 1 warning on fallback.
+        """
         tenant = tenants_fixture[0]
         tenant_id = str(tenant.id)
 
@@ -728,7 +726,7 @@ class TestRlsTransaction:
                 def atomic_side_effect(*args, **kwargs):
                     nonlocal call_count
                     call_count += 1
-                    if call_count < 3:
+                    if call_count <= 3:
                         raise OperationalError("Replica error")
                     return MagicMock(
                         __enter__=MagicMock(return_value=None),
@@ -744,10 +742,11 @@ class TestRlsTransaction:
                         ):
                             with patch("api.db_utils.reset_read_db_alias"):
                                 with patch("api.db_utils.logger") as mock_logger:
-                                    with rls_transaction(tenant_id):
-                                        pass
+                                    for attempt in rls_transaction(tenant_id):
+                                        with attempt:
+                                            pass
 
-                                    assert mock_logger.info.call_count == 2
+                                    assert mock_logger.info.call_count == 3
                                     assert mock_logger.warning.call_count == 1
 
     def test_rls_transaction_operational_error_raised_immediately_on_primary(
@@ -770,15 +769,16 @@ class TestRlsTransaction:
 
                     with patch("api.db_utils.time.sleep") as mock_sleep:
                         with pytest.raises(OperationalError):
-                            with rls_transaction(tenant_id):
-                                pass
+                            for attempt in rls_transaction(tenant_id):
+                                with attempt:
+                                    pass
 
                         mock_sleep.assert_not_called()
 
     def test_rls_transaction_operational_error_raised_after_max_attempts(
         self, tenants_fixture, enable_read_replica
     ):
-        """Test OperationalError raised after max attempts on replica."""
+        """Test OperationalError raised after all 4 attempts (3 replica + 1 primary)."""
         tenant = tenants_fixture[0]
         tenant_id = str(tenant.id)
 
@@ -801,8 +801,9 @@ class TestRlsTransaction:
                         ):
                             with patch("api.db_utils.reset_read_db_alias"):
                                 with pytest.raises(OperationalError):
-                                    with rls_transaction(tenant_id):
-                                        pass
+                                    for attempt in rls_transaction(tenant_id):
+                                        with attempt:
+                                            pass
 
     def test_rls_transaction_router_token_set_for_non_default_alias(
         self, tenants_fixture
@@ -823,8 +824,9 @@ class TestRlsTransaction:
                 with patch("api.db_utils.set_read_db_alias") as mock_set_alias:
                     with patch("api.db_utils.reset_read_db_alias") as mock_reset_alias:
                         mock_set_alias.return_value = "test_token"
-                        with rls_transaction(tenant_id, using=custom_alias):
-                            pass
+                        for attempt in rls_transaction(tenant_id, using=custom_alias):
+                            with attempt:
+                                pass
 
                         mock_set_alias.assert_called_once_with(custom_alias)
                         mock_reset_alias.assert_called_once_with("test_token")
@@ -848,8 +850,11 @@ class TestRlsTransaction:
                 with patch("api.db_utils.set_read_db_alias", return_value="test_token"):
                     with patch("api.db_utils.reset_read_db_alias") as mock_reset_alias:
                         with pytest.raises(Exception):
-                            with rls_transaction(tenant_id, using=custom_alias):
-                                pass
+                            for attempt in rls_transaction(
+                                tenant_id, using=custom_alias
+                            ):
+                                with attempt:
+                                    pass
 
                         mock_reset_alias.assert_called_once_with("test_token")
 
@@ -873,8 +878,9 @@ class TestRlsTransaction:
                         with patch(
                             "api.db_utils.reset_read_db_alias"
                         ) as mock_reset_alias:
-                            with rls_transaction(tenant_id):
-                                pass
+                            for attempt in rls_transaction(tenant_id):
+                                with attempt:
+                                    pass
 
                             mock_set_alias.assert_not_called()
                             mock_reset_alias.assert_not_called()
@@ -886,10 +892,11 @@ class TestRlsTransaction:
         tenant = tenants_fixture[0]
         tenant_id = str(tenant.id)
 
-        with rls_transaction(tenant_id) as cursor:
-            cursor.execute("SELECT current_setting(%s)", [POSTGRES_TENANT_VAR])
-            result = cursor.fetchone()
-            assert result[0] == tenant_id
+        for attempt in rls_transaction(tenant_id):
+            with attempt as cursor:
+                cursor.execute("SELECT current_setting(%s)", [POSTGRES_TENANT_VAR])
+                result = cursor.fetchone()
+                assert result[0] == tenant_id
 
     def test_rls_transaction_custom_parameter(self, tenants_fixture):
         """Test rls_transaction with custom parameter name."""
@@ -897,21 +904,205 @@ class TestRlsTransaction:
         tenant_id = str(tenant.id)
         custom_param = "api.user_id"
 
-        with rls_transaction(tenant_id, parameter=custom_param) as cursor:
-            cursor.execute("SELECT current_setting(%s)", [custom_param])
-            result = cursor.fetchone()
-            assert result[0] == tenant_id
+        for attempt in rls_transaction(tenant_id, parameter=custom_param):
+            with attempt as cursor:
+                cursor.execute("SELECT current_setting(%s)", [custom_param])
+                result = cursor.fetchone()
+                assert result[0] == tenant_id
 
     def test_rls_transaction_cursor_yielded_correctly(self, tenants_fixture):
         """Test cursor is yielded correctly."""
         tenant = tenants_fixture[0]
         tenant_id = str(tenant.id)
 
-        with rls_transaction(tenant_id) as cursor:
-            assert cursor is not None
-            cursor.execute("SELECT 1")
-            result = cursor.fetchone()
-            assert result[0] == 1
+        for attempt in rls_transaction(tenant_id):
+            with attempt as cursor:
+                assert cursor is not None
+                cursor.execute("SELECT 1")
+                result = cursor.fetchone()
+                assert result[0] == 1
+
+    def test_rls_transaction_for_with_retries_mid_body_error(
+        self, tenants_fixture, enable_read_replica
+    ):
+        """Test that OperationalError raised inside the body triggers retry."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_conn = MagicMock()
+                mock_cursor = MagicMock()
+                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+                mock_connections.__getitem__.return_value = mock_conn
+                mock_connections.__contains__.return_value = True
+
+                with patch("api.db_utils.transaction.atomic"):
+                    with patch("api.db_utils.time.sleep") as mock_sleep:
+                        with patch(
+                            "api.db_utils.set_read_db_alias", return_value="token"
+                        ):
+                            with patch("api.db_utils.reset_read_db_alias"):
+                                body_call_count = 0
+                                for attempt in rls_transaction(tenant_id):
+                                    with attempt:
+                                        body_call_count += 1
+                                        if body_call_count == 1:
+                                            raise OperationalError(
+                                                "Conflict with recovery"
+                                            )
+
+                                assert body_call_count == 2
+                                mock_connections.__getitem__.return_value.close.assert_called()
+                                assert mock_sleep.call_count == 1
+
+    def test_rls_transaction_for_with_success_first_attempt(
+        self, tenants_fixture, enable_read_replica
+    ):
+        """Test happy path on replica: body succeeds on first attempt, no retry."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_conn = MagicMock()
+                mock_cursor = MagicMock()
+                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+                mock_connections.__getitem__.return_value = mock_conn
+                mock_connections.__contains__.return_value = True
+
+                with patch("api.db_utils.transaction.atomic"):
+                    with patch("api.db_utils.time.sleep") as mock_sleep:
+                        with patch(
+                            "api.db_utils.set_read_db_alias", return_value="token"
+                        ):
+                            with patch("api.db_utils.reset_read_db_alias"):
+                                iterations = 0
+                                for attempt in rls_transaction(tenant_id):
+                                    with attempt:
+                                        iterations += 1
+
+                                assert iterations == 1
+                                mock_sleep.assert_not_called()
+
+    def test_rls_transaction_for_with_closes_stale_connection(
+        self, tenants_fixture, enable_read_replica
+    ):
+        """Test that stale connection is closed on OperationalError retry."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_conn = MagicMock()
+                mock_cursor = MagicMock()
+                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+                mock_connections.__getitem__.return_value = mock_conn
+                mock_connections.__contains__.return_value = True
+
+                with patch("api.db_utils.transaction.atomic"):
+                    with patch("api.db_utils.time.sleep"):
+                        with patch(
+                            "api.db_utils.set_read_db_alias", return_value="token"
+                        ):
+                            with patch("api.db_utils.reset_read_db_alias"):
+                                body_call_count = 0
+                                for attempt in rls_transaction(tenant_id):
+                                    with attempt:
+                                        body_call_count += 1
+                                        if body_call_count == 1:
+                                            raise OperationalError("stale connection")
+
+                                mock_conn.close.assert_called()
+
+    def test_rls_transaction_for_with_non_operational_error_propagates(
+        self, tenants_fixture, enable_read_replica
+    ):
+        """Test that non-OperationalError propagates immediately without retry."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_conn = MagicMock()
+                mock_cursor = MagicMock()
+                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+                mock_connections.__getitem__.return_value = mock_conn
+                mock_connections.__contains__.return_value = True
+
+                with patch("api.db_utils.transaction.atomic"):
+                    with patch("api.db_utils.time.sleep") as mock_sleep:
+                        with patch(
+                            "api.db_utils.set_read_db_alias", return_value="token"
+                        ):
+                            with patch("api.db_utils.reset_read_db_alias"):
+                                with pytest.raises(ValueError, match="bad value"):
+                                    for attempt in rls_transaction(tenant_id):
+                                        with attempt:
+                                            raise ValueError("bad value")
+
+                                mock_sleep.assert_not_called()
+
+    def test_rls_transaction_for_with_primary_no_retry(self, tenants_fixture):
+        """Test that OperationalError on primary propagates immediately."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=None):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_conn = MagicMock()
+                mock_cursor = MagicMock()
+                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+                mock_connections.__getitem__.return_value = mock_conn
+                mock_connections.__contains__.return_value = True
+
+                with patch("api.db_utils.transaction.atomic"):
+                    with patch("api.db_utils.time.sleep") as mock_sleep:
+                        with pytest.raises(OperationalError):
+                            for attempt in rls_transaction(tenant_id):
+                                with attempt:
+                                    raise OperationalError("primary failure")
+
+                        mock_sleep.assert_not_called()
+
+    def test_rls_transaction_for_with_replica_max_attempts_semantics(
+        self, tenants_fixture, enable_read_replica
+    ):
+        """Test that REPLICA_MAX_ATTEMPTS=3 produces 4 atomic calls (3 replica + 1 primary).
+
+        When transaction.atomic always fails, _RLSAttempt.__enter__ retries
+        internally and consumes all attempts. The for-loop body never
+        executes, so we assert on mock_atomic.call_count instead.
+        """
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_conn = MagicMock()
+                mock_cursor = MagicMock()
+                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+                mock_connections.__getitem__.return_value = mock_conn
+                mock_connections.__contains__.return_value = True
+
+                with patch("api.db_utils.transaction.atomic") as mock_atomic:
+                    mock_atomic.side_effect = OperationalError("always fails")
+
+                    with patch("api.db_utils.time.sleep"):
+                        with patch(
+                            "api.db_utils.set_read_db_alias", return_value="token"
+                        ):
+                            with patch("api.db_utils.reset_read_db_alias"):
+                                with pytest.raises(OperationalError):
+                                    for attempt in rls_transaction(tenant_id):
+                                        with attempt:
+                                            pass
+
+                                # 3 replica attempts + 1 primary fallback
+                                assert mock_atomic.call_count == 4
+                                # Last call should use the default (primary) alias
+                                last_call = mock_atomic.call_args_list[-1]
+                                assert last_call.kwargs.get("using") == DEFAULT_DB_ALIAS
 
 
 class TestPostgresEnumMigration:

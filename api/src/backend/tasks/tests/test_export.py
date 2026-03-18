@@ -159,9 +159,8 @@ class TestOutputs:
         mock_scan_instance.started_at = datetime(2023, 6, 15, 10, 30, 45)
         mock_scan.objects.get.return_value = mock_scan_instance
 
-        # Mock rls_transaction as a context manager
-        mock_rls_transaction.return_value.__enter__ = MagicMock()
-        mock_rls_transaction.return_value.__exit__ = MagicMock(return_value=False)
+        # Mock rls_transaction as an iterable yielding a context manager
+        mock_rls_transaction.return_value = [MagicMock()]
 
         base_tmp = Path(str(tmpdir.mkdir("generate_output")))
         base_dir = str(base_tmp)
@@ -210,9 +209,8 @@ class TestOutputs:
         mock_scan_instance.started_at = datetime(2023, 6, 15, 10, 30, 45)
         mock_scan.objects.get.return_value = mock_scan_instance
 
-        # Mock rls_transaction as a context manager
-        mock_rls_transaction.return_value.__enter__ = MagicMock()
-        mock_rls_transaction.return_value.__exit__ = MagicMock(return_value=False)
+        # Mock rls_transaction as an iterable yielding a context manager
+        mock_rls_transaction.return_value = [MagicMock()]
 
         base_tmp = Path(str(tmpdir.mkdir("generate_output")))
         base_dir = str(base_tmp)

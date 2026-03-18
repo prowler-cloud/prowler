@@ -1,5 +1,3 @@
-from contextlib import nullcontext
-
 from rest_framework.renderers import BaseRenderer
 from rest_framework_json_api.renderers import JSONRenderer
 
@@ -28,11 +26,8 @@ class APIJSONRenderer(JSONRenderer):
         db_alias = getattr(request, "db_alias", None) if request else None
         include_param_present = "include" in request.query_params if request else False
 
-        # Use rls_transaction if needed for included resources, otherwise do nothing
-        context_manager = (
-            rls_transaction(tenant_id, using=db_alias)
-            if tenant_id and include_param_present
-            else nullcontext()
-        )
-        with context_manager:
-            return super().render(data, accepted_media_type, renderer_context)
+        if tenant_id and include_param_present:
+            for attempt in rls_transaction(tenant_id, using=db_alias):
+                with attempt:
+                    return super().render(data, accepted_media_type, renderer_context)
+        return super().render(data, accepted_media_type, renderer_context)

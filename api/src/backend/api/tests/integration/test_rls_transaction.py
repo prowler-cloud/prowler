@@ -17,23 +17,26 @@ class TestRLSTransaction:
 
     def test_success_on_primary(self, tenant):
         """Basic: transaction succeeds on primary database."""
-        with rls_transaction(str(tenant.id), using=DEFAULT_DB_ALIAS) as cursor:
-            cursor.execute("SELECT 1")
-            result = cursor.fetchone()
-            assert result == (1,)
+        for attempt in rls_transaction(str(tenant.id), using=DEFAULT_DB_ALIAS):
+            with attempt as cursor:
+                cursor.execute("SELECT 1")
+                result = cursor.fetchone()
+                assert result == (1,)
 
     def test_invalid_uuid_raises_validation_error(self):
         """Invalid UUID raises ValidationError before DB operations."""
         with pytest.raises(ValidationError, match="Must be a valid UUID"):
-            with rls_transaction("not-a-uuid", using=DEFAULT_DB_ALIAS):
-                pass
+            for attempt in rls_transaction("not-a-uuid", using=DEFAULT_DB_ALIAS):
+                with attempt:
+                    pass
 
     def test_custom_parameter_name(self, tenant):
         """Test custom RLS parameter name."""
         custom_param = "api.custom_id"
-        with rls_transaction(
+        for attempt in rls_transaction(
             str(tenant.id), parameter=custom_param, using=DEFAULT_DB_ALIAS
-        ) as cursor:
-            cursor.execute("SELECT current_setting(%s, true)", [custom_param])
-            result = cursor.fetchone()
-            assert result == (str(tenant.id),)
+        ):
+            with attempt as cursor:
+                cursor.execute("SELECT current_setting(%s, true)", [custom_param])
+                result = cursor.fetchone()
+                assert result == (str(tenant.id),)

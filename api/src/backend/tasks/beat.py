@@ -30,15 +30,16 @@ def schedule_provider_scan(provider_instance: Provider):
             pointer="/data/attributes/provider_id",
         )
 
-    with rls_transaction(tenant_id):
-        scheduled_scan = Scan.objects.create(
-            tenant_id=tenant_id,
-            name="Daily scheduled scan",
-            provider_id=provider_id,
-            trigger=Scan.TriggerChoices.SCHEDULED,
-            state=StateChoices.AVAILABLE,
-            scheduled_at=datetime.now(timezone.utc),
-        )
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            scheduled_scan = Scan.objects.create(
+                tenant_id=tenant_id,
+                name="Daily scheduled scan",
+                provider_id=provider_id,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.AVAILABLE,
+                scheduled_at=datetime.now(timezone.utc),
+            )
 
     attack_paths_db_utils.create_attack_paths_scan(
         tenant_id=tenant_id,

@@ -295,8 +295,9 @@ def _build_output_path(
     # Sanitize the prowler provider name to ensure it is a valid directory name
     prowler_provider_sanitized = re.sub(r"[^\w\-]", "-", prowler_provider)
 
-    with rls_transaction(tenant_id):
-        started_at = Scan.objects.get(id=scan_id).started_at
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            started_at = Scan.objects.get(id=scan_id).started_at
 
     set_output_timestamp(started_at)
 

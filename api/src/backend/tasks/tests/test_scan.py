@@ -43,9 +43,12 @@ from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
 
 
-@contextmanager
 def noop_rls_transaction(*args, **kwargs):
-    yield
+    @contextmanager
+    def _ctx():
+        yield
+
+    return [_ctx()]
 
 
 class FakeFinding:
@@ -75,7 +78,7 @@ class TestPerformScan:
         providers_fixture,
     ):
         with (
-            patch("api.db_utils.rls_transaction"),
+            patch("api.db_utils.rls_transaction", new=lambda *a, **kw: [MagicMock()]),
             patch(
                 "tasks.jobs.scan.initialize_prowler_provider"
             ) as mock_initialize_prowler_provider,
@@ -241,6 +244,8 @@ class TestPerformScan:
         scans_fixture,
         providers_fixture,
     ):
+        mock_rls_transaction.return_value = [MagicMock()]
+
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
         provider = providers_fixture[0]
@@ -282,6 +287,8 @@ class TestPerformScan:
         mock_get_or_create_resource,
         mock_get_or_create_tag,
     ):
+        mock_rls_transaction.return_value = [MagicMock()]
+
         tenant_id = uuid.uuid4()
         provider_instance = MagicMock()
         provider_instance.id = "provider123"
@@ -331,6 +338,8 @@ class TestPerformScan:
         mock_get_or_create_resource,
         mock_get_or_create_tag,
     ):
+        mock_rls_transaction.return_value = [MagicMock()]
+
         tenant_id = uuid.uuid4()
         provider_instance = MagicMock()
         provider_instance.id = "provider456"
@@ -388,6 +397,8 @@ class TestPerformScan:
         mock_get_or_create_resource,
         mock_get_or_create_tag,
     ):
+        mock_rls_transaction.return_value = [MagicMock()]
+
         tenant_id = uuid.uuid4()
         provider_instance = MagicMock()
         provider_instance.id = "provider456"
@@ -438,7 +449,7 @@ class TestPerformScan:
     ):
         """Test that failed findings increment the failed_findings_count"""
         with (
-            patch("api.db_utils.rls_transaction"),
+            patch("api.db_utils.rls_transaction", new=lambda *a, **kw: [MagicMock()]),
             patch(
                 "tasks.jobs.scan.initialize_prowler_provider"
             ) as mock_initialize_prowler_provider,
@@ -516,7 +527,7 @@ class TestPerformScan:
     ):
         """Test that multiple FAIL findings on the same resource increment the counter correctly"""
         with (
-            patch("api.db_utils.rls_transaction"),
+            patch("api.db_utils.rls_transaction", new=lambda *a, **kw: [MagicMock()]),
             patch(
                 "tasks.jobs.scan.initialize_prowler_provider"
             ) as mock_initialize_prowler_provider,
@@ -633,7 +644,7 @@ class TestPerformScan:
     ):
         """Test that muted FAIL findings do not increment the failed_findings_count"""
         with (
-            patch("api.db_utils.rls_transaction"),
+            patch("api.db_utils.rls_transaction", new=lambda *a, **kw: [MagicMock()]),
             patch(
                 "tasks.jobs.scan.initialize_prowler_provider"
             ) as mock_initialize_prowler_provider,
@@ -723,7 +734,7 @@ class TestPerformScan:
         )
 
         with (
-            patch("api.db_utils.rls_transaction"),
+            patch("api.db_utils.rls_transaction", new=lambda *a, **kw: [MagicMock()]),
             patch(
                 "tasks.jobs.scan.initialize_prowler_provider"
             ) as mock_initialize_prowler_provider,
@@ -791,7 +802,7 @@ class TestPerformScan:
     ):
         """Test active MuteRule mutes findings with correct reason"""
         with (
-            patch("api.db_utils.rls_transaction"),
+            patch("api.db_utils.rls_transaction", new=lambda *a, **kw: [MagicMock()]),
             patch(
                 "tasks.jobs.scan.initialize_prowler_provider"
             ) as mock_initialize_prowler_provider,
@@ -908,7 +919,7 @@ class TestPerformScan:
     ):
         """Test inactive MuteRule does not mute findings"""
         with (
-            patch("api.db_utils.rls_transaction"),
+            patch("api.db_utils.rls_transaction", new=lambda *a, **kw: [MagicMock()]),
             patch(
                 "tasks.jobs.scan.initialize_prowler_provider"
             ) as mock_initialize_prowler_provider,
@@ -994,7 +1005,7 @@ class TestPerformScan:
     ):
         """Test mutelist processor takes precedence over MuteRule"""
         with (
-            patch("api.db_utils.rls_transaction"),
+            patch("api.db_utils.rls_transaction", new=lambda *a, **kw: [MagicMock()]),
             patch(
                 "tasks.jobs.scan.initialize_prowler_provider"
             ) as mock_initialize_prowler_provider,
@@ -1080,7 +1091,7 @@ class TestPerformScan:
     ):
         """Test MuteRule with multiple finding UIDs mutes all findings"""
         with (
-            patch("api.db_utils.rls_transaction"),
+            patch("api.db_utils.rls_transaction", new=lambda *a, **kw: [MagicMock()]),
             patch(
                 "tasks.jobs.scan.initialize_prowler_provider"
             ) as mock_initialize_prowler_provider,
@@ -1179,7 +1190,7 @@ class TestPerformScan:
     ):
         """Test scan continues when MuteRule loading fails"""
         with (
-            patch("api.db_utils.rls_transaction"),
+            patch("api.db_utils.rls_transaction", new=lambda *a, **kw: [MagicMock()]),
             patch(
                 "tasks.jobs.scan.initialize_prowler_provider"
             ) as mock_initialize_prowler_provider,
@@ -1262,7 +1273,7 @@ class TestPerformScan:
     ):
         """Test muted_at timestamp is set correctly for muted findings"""
         with (
-            patch("api.db_utils.rls_transaction"),
+            patch("api.db_utils.rls_transaction", new=lambda *a, **kw: [MagicMock()]),
             patch(
                 "tasks.jobs.scan.initialize_prowler_provider"
             ) as mock_initialize_prowler_provider,
@@ -2200,9 +2211,7 @@ class TestComplianceRequirementCopy:
         tenant_id = row["tenant_id"]
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
 
         _persist_compliance_requirement_rows(tenant_id, [row])
 
@@ -2727,9 +2736,7 @@ class TestComplianceRequirementCopy:
         }
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
 
         _persist_compliance_requirement_rows(tenant_id, [row])
 
@@ -2790,9 +2797,7 @@ class TestComplianceRequirementCopy:
         ]
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
 
         _persist_compliance_requirement_rows(tenant_id, rows)
 
@@ -2854,9 +2859,7 @@ class TestComplianceRequirementCopy:
         }
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
 
         _persist_compliance_requirement_rows(tenant_id, [row])
 
@@ -2920,9 +2923,7 @@ class TestCreateComplianceSummaries:
         }
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
 
         _create_compliance_summaries(tenant_id, scan_id, requirement_statuses)
 
@@ -2961,9 +2962,7 @@ class TestCreateComplianceSummaries:
         requirement_statuses = {}
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
 
         _create_compliance_summaries(tenant_id, scan_id, requirement_statuses)
 
@@ -2985,9 +2984,7 @@ class TestCreateComplianceSummaries:
         }
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
 
         _create_compliance_summaries(tenant_id, scan_id, requirement_statuses)
 
@@ -3017,9 +3014,7 @@ class TestCreateComplianceSummaries:
         }
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
 
         _create_compliance_summaries(tenant_id, scan_id, requirement_statuses)
 
@@ -3067,9 +3062,7 @@ class TestCreateComplianceSummaries:
         }
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
 
         _create_compliance_summaries(tenant_id, scan_id, requirement_statuses)
 
@@ -3157,9 +3150,7 @@ class TestAggregateFindings:
         scan = scans_fixture[0]
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
 
         aggregate_findings(str(tenant.id), str(scan.id))
 
@@ -3208,9 +3199,7 @@ class TestAggregateFindings:
         ]
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
         mock_findings_filter.return_value = mock_queryset
 
         aggregate_findings(tenant_id, scan_id)
@@ -3260,9 +3249,7 @@ class TestAggregateFindings:
         ]
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
         mock_findings_filter.return_value = mock_queryset
 
         aggregate_findings(tenant_id, scan_id)
@@ -3335,9 +3322,7 @@ class TestAggregateFindings:
         ]
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
         mock_findings_filter.return_value = mock_queryset
 
         aggregate_findings(tenant_id, scan_id)
@@ -3386,9 +3371,7 @@ class TestAggregateFindingsByRegion:
         mock_queryset.prefetch_related.return_value = [mock_finding1]
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
         mock_findings_filter.return_value = mock_queryset
 
         check_status_by_region, findings_count_by_compliance = (
@@ -3439,9 +3422,7 @@ class TestAggregateFindingsByRegion:
         mock_queryset.prefetch_related.return_value = [mock_finding1, mock_finding2]
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
         mock_findings_filter.return_value = mock_queryset
 
         check_status_by_region, _ = _aggregate_findings_by_region(
@@ -3466,9 +3447,7 @@ class TestAggregateFindingsByRegion:
         mock_queryset.prefetch_related.return_value = []
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
         mock_findings_filter.return_value = mock_queryset
 
         _aggregate_findings_by_region(
@@ -3516,9 +3495,7 @@ class TestAggregateFindingsByRegion:
         mock_queryset.prefetch_related.return_value = [mock_finding1, mock_finding2]
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
         mock_findings_filter.return_value = mock_queryset
 
         _, findings_count_by_compliance = _aggregate_findings_by_region(
@@ -3570,9 +3547,7 @@ class TestAggregateFindingsByRegion:
         mock_queryset.prefetch_related.return_value = [mock_finding1, mock_finding2]
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
         mock_findings_filter.return_value = mock_queryset
 
         check_status_by_region, _ = _aggregate_findings_by_region(
@@ -3600,9 +3575,7 @@ class TestAggregateFindingsByRegion:
         mock_queryset.prefetch_related.return_value = []
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
         mock_findings_filter.return_value = mock_queryset
 
         check_status_by_region, findings_count_by_compliance = (
@@ -3715,9 +3688,7 @@ class TestAggregateAttackSurface:
         ]
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
         mock_findings_filter.return_value = mock_queryset
 
         aggregate_attack_surface(str(tenant.id), str(scan.id))
@@ -3764,9 +3735,7 @@ class TestAggregateAttackSurface:
         ]
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
         mock_findings_filter.return_value = mock_queryset
 
         aggregate_attack_surface(str(tenant.id), str(scan.id))
@@ -3805,9 +3774,7 @@ class TestAggregateAttackSurface:
         mock_queryset.annotate.return_value = []  # No findings
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
         mock_findings_filter.return_value = mock_queryset
 
         aggregate_attack_surface(str(tenant.id), str(scan.id))
@@ -3848,9 +3815,7 @@ class TestAggregateAttackSurface:
         ]
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
         mock_findings_filter.return_value = mock_queryset
 
         aggregate_attack_surface(str(tenant.id), str(scan.id))
@@ -3880,9 +3845,7 @@ class TestAggregateAttackSurface:
         mock_select_related.return_value.get.return_value = mock_scan
 
         ctx = MagicMock()
-        ctx.__enter__.return_value = None
-        ctx.__exit__.return_value = False
-        mock_rls_transaction.return_value = ctx
+        mock_rls_transaction.return_value = [ctx]
 
         with patch(
             "tasks.jobs.scan._get_attack_surface_mapping_from_provider"

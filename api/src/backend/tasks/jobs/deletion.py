@@ -28,20 +28,21 @@ def _recalculate_tenant_compliance_summary(tenant_id: str, compliance_ids: list[
 
     compliance_ids = sorted(set(compliance_ids))
 
-    with rls_transaction(tenant_id, using=MainRouter.default_db) as cursor:
-        # Serialize tenant-level summary updates to avoid concurrent recomputes
-        cursor.execute(
-            "SELECT pg_advisory_xact_lock(hashtext(%s))",
-            [tenant_id],
-        )
-        cursor.execute(
-            COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
-            [tenant_id, tenant_id, compliance_ids],
-        )
-        cursor.execute(
-            COMPLIANCE_DELETE_EMPTY_TENANT_SUMMARY_SQL,
-            [tenant_id, compliance_ids],
-        )
+    for attempt in rls_transaction(tenant_id, using=MainRouter.default_db):
+        with attempt as cursor:
+            # Serialize tenant-level summary updates to avoid concurrent recomputes
+            cursor.execute(
+                "SELECT pg_advisory_xact_lock(hashtext(%s))",
+                [tenant_id],
+            )
+            cursor.execute(
+                COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
+                [tenant_id, tenant_id, compliance_ids],
+            )
+            cursor.execute(
+                COMPLIANCE_DELETE_EMPTY_TENANT_SUMMARY_SQL,
+                [tenant_id, compliance_ids],
+            )
 
 
 def delete_provider(tenant_id: str, pk: str):
@@ -59,32 +60,39 @@ def delete_provider(tenant_id: str, pk: str):
     """
 
     # Get all provider related data to delete them in batches
-    with rls_transaction(tenant_id):
-        try:
-            instance = Provider.all_objects.get(pk=pk)
-        except Provider.DoesNotExist:
-            logger.info(f"Provider `{pk}` already deleted, skipping")
-            return {}
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            try:
+                instance = Provider.all_objects.get(pk=pk)
+            except Provider.DoesNotExist:
+                logger.info(f"Provider `{pk}` already deleted, skipping")
+                return {}
 
-        compliance_ids = list(
-            ProviderComplianceScore.objects.filter(provider=instance)
-            .values_list("compliance_id", flat=True)
-            .distinct()
-        )
-
-        attack_paths_scan_ids = list(
-            AttackPathsScan.all_objects.filter(provider=instance).values_list(
-                "id", flat=True
+            compliance_ids = list(
+                ProviderComplianceScore.objects.filter(provider=instance)
+                .values_list("compliance_id", flat=True)
+                .distinct()
             )
-        )
 
-        deletion_steps = [
-            ("Scan Summaries", ScanSummary.all_objects.filter(scan__provider=instance)),
-            ("Findings", Finding.all_objects.filter(scan__provider=instance)),
-            ("Resources", Resource.all_objects.filter(provider=instance)),
-            ("Scans", Scan.all_objects.filter(provider=instance)),
-            ("AttackPathsScans", AttackPathsScan.all_objects.filter(provider=instance)),
-        ]
+            attack_paths_scan_ids = list(
+                AttackPathsScan.all_objects.filter(provider=instance).values_list(
+                    "id", flat=True
+                )
+            )
+
+            deletion_steps = [
+                (
+                    "Scan Summaries",
+                    ScanSummary.all_objects.filter(scan__provider=instance),
+                ),
+                ("Findings", Finding.all_objects.filter(scan__provider=instance)),
+                ("Resources", Resource.all_objects.filter(provider=instance)),
+                ("Scans", Scan.all_objects.filter(provider=instance)),
+                (
+                    "AttackPathsScans",
+                    AttackPathsScan.all_objects.filter(provider=instance),
+                ),
+            ]
 
     # Drop orphaned temporary Neo4j databases
     for aps_id in attack_paths_scan_ids:
@@ -116,8 +124,9 @@ def delete_provider(tenant_id: str, pk: str):
 
     # Delete the provider instance itself
     try:
-        with rls_transaction(tenant_id):
-            _, provider_summary = instance.delete()
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                _, provider_summary = instance.delete()
         deletion_summary.update(provider_summary)
     except DatabaseError as db_error:
         logger.error(f"Error deleting Provider: {db_error}")

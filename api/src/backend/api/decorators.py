@@ -97,23 +97,24 @@ def handle_provider_deletion(func):
             tenant_id = kwargs.get("tenant_id")
             provider_id = kwargs.get("provider_id")
 
-            with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-                if provider_id is None:
-                    scan_id = kwargs.get("scan_id")
-                    if scan_id is None:
-                        raise AssertionError(
-                            "This task does not have provider or scan in the kwargs"
-                        )
-                    scan = Scan.objects.filter(pk=scan_id).first()
-                    if scan is None:
+            for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+                with attempt:
+                    if provider_id is None:
+                        scan_id = kwargs.get("scan_id")
+                        if scan_id is None:
+                            raise AssertionError(
+                                "This task does not have provider or scan in the kwargs"
+                            )
+                        scan = Scan.objects.filter(pk=scan_id).first()
+                        if scan is None:
+                            raise ProviderDeletedException(
+                                f"Provider for scan '{scan_id}' was deleted during the scan"
+                            ) from None
+                        provider_id = str(scan.provider_id)
+                    if not Provider.objects.filter(pk=provider_id).exists():
                         raise ProviderDeletedException(
-                            f"Provider for scan '{scan_id}' was deleted during the scan"
+                            f"Provider '{provider_id}' was deleted during the scan"
                         ) from None
-                    provider_id = str(scan.provider_id)
-                if not Provider.objects.filter(pk=provider_id).exists():
-                    raise ProviderDeletedException(
-                        f"Provider '{provider_id}' was deleted during the scan"
-                    ) from None
             raise
 
     return wrapper

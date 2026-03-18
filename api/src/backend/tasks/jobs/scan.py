@@ -241,31 +241,33 @@ def _store_resources(
             - tuple[str, str]: A tuple containing the resource UID and region.
 
     """
-    with rls_transaction(tenant_id):
-        resource_instance, created = Resource.objects.get_or_create(
-            tenant_id=tenant_id,
-            provider=provider_instance,
-            uid=finding.resource_uid,
-            defaults={
-                "region": finding.region,
-                "service": finding.service_name,
-                "type": finding.resource_type,
-            },
-        )
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            resource_instance, created = Resource.objects.get_or_create(
+                tenant_id=tenant_id,
+                provider=provider_instance,
+                uid=finding.resource_uid,
+                defaults={
+                    "region": finding.region,
+                    "service": finding.service_name,
+                    "type": finding.resource_type,
+                },
+            )
 
-        if not created:
-            resource_instance.region = finding.region
-            resource_instance.service = finding.service_name
-            resource_instance.type = finding.resource_type
-            resource_instance.save()
-    with rls_transaction(tenant_id):
-        tags = [
-            ResourceTag.objects.get_or_create(
-                tenant_id=tenant_id, key=key, value=value
-            )[0]
-            for key, value in finding.resource_tags.items()
-        ]
-        resource_instance.upsert_or_delete_tags(tags=tags)
+            if not created:
+                resource_instance.region = finding.region
+                resource_instance.service = finding.service_name
+                resource_instance.type = finding.resource_type
+                resource_instance.save()
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            tags = [
+                ResourceTag.objects.get_or_create(
+                    tenant_id=tenant_id, key=key, value=value
+                )[0]
+                for key, value in finding.resource_tags.items()
+            ]
+            resource_instance.upsert_or_delete_tags(tags=tags)
     return resource_instance, (resource_instance.uid, resource_instance.region)
 
 
@@ -391,10 +393,11 @@ def _persist_compliance_requirement_rows(
             )
             for row in rows
         ]
-        with rls_transaction(tenant_id):
-            ComplianceRequirementOverview.objects.bulk_create(
-                fallback_objects, batch_size=500
-            )
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                ComplianceRequirementOverview.objects.bulk_create(
+                    fallback_objects, batch_size=500
+                )
 
 
 def _create_compliance_summaries(
@@ -456,10 +459,11 @@ def _create_compliance_summaries(
 
     # Bulk insert summaries
     if summary_objects:
-        with rls_transaction(tenant_id):
-            ComplianceOverviewSummary.objects.bulk_create(
-                summary_objects, batch_size=500, ignore_conflicts=True
-            )
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                ComplianceOverviewSummary.objects.bulk_create(
+                    summary_objects, batch_size=500, ignore_conflicts=True
+                )
 
 
 def _normalized_compliance_key(framework: str | None, version: str | None) -> str:
@@ -524,20 +528,21 @@ def _process_finding_micro_batch(
     finding_uids = [
         f.uid for f in findings_batch if f is not None and len(f.uid) <= 300
     ]
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        last_statuses = {
-            item["uid"]: (item["status"], item["first_seen_at"])
-            for item in Finding.all_objects.filter(
-                tenant_id=tenant_id, uid__in=finding_uids
-            )
-            .values("uid", "status", "first_seen_at")
-            .order_by("uid", "-inserted_at")
-            .distinct("uid")
-        }
-        # Update cache
-        for uid, data in last_statuses.items():
-            if uid not in last_status_cache:
-                last_status_cache[uid] = data
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            last_statuses = {
+                item["uid"]: (item["status"], item["first_seen_at"])
+                for item in Finding.all_objects.filter(
+                    tenant_id=tenant_id, uid__in=finding_uids
+                )
+                .values("uid", "status", "first_seen_at")
+                .order_by("uid", "-inserted_at")
+                .distinct("uid")
+            }
+            # Update cache
+            for uid, data in last_statuses.items():
+                if uid not in last_status_cache:
+                    last_status_cache[uid] = data
 
     # Process each finding in the batch
     for finding in findings_batch:
@@ -546,37 +551,38 @@ def _process_finding_micro_batch(
             continue
 
         # Process resource with deadlock retry
-        for attempt in range(CELERY_DEADLOCK_ATTEMPTS):
+        for deadlock_attempt in range(CELERY_DEADLOCK_ATTEMPTS):
             try:
-                with rls_transaction(tenant_id):
-                    resource_uid = finding.resource_uid
-                    if resource_uid not in resource_cache:
-                        check_metadata = finding.get_metadata()
-                        group = check_metadata.get("resourcegroup") or None
-                        resource_instance, _ = Resource.objects.get_or_create(
-                            tenant_id=tenant_id,
-                            provider=provider_instance,
-                            uid=resource_uid,
-                            defaults={
-                                "region": finding.region,
-                                "service": finding.service_name,
-                                "type": finding.resource_type,
-                                "name": finding.resource_name,
-                                "groups": [group] if group else None,
-                            },
-                        )
-                        resource_cache[resource_uid] = resource_instance
-                        resource_failed_findings_cache[resource_uid] = 0
-                    else:
-                        resource_instance = resource_cache[resource_uid]
+                for attempt in rls_transaction(tenant_id):
+                    with attempt:
+                        resource_uid = finding.resource_uid
+                        if resource_uid not in resource_cache:
+                            check_metadata = finding.get_metadata()
+                            group = check_metadata.get("resourcegroup") or None
+                            resource_instance, _ = Resource.objects.get_or_create(
+                                tenant_id=tenant_id,
+                                provider=provider_instance,
+                                uid=resource_uid,
+                                defaults={
+                                    "region": finding.region,
+                                    "service": finding.service_name,
+                                    "type": finding.resource_type,
+                                    "name": finding.resource_name,
+                                    "groups": [group] if group else None,
+                                },
+                            )
+                            resource_cache[resource_uid] = resource_instance
+                            resource_failed_findings_cache[resource_uid] = 0
+                        else:
+                            resource_instance = resource_cache[resource_uid]
                 break
             except (OperationalError, IntegrityError) as db_err:
-                if attempt < CELERY_DEADLOCK_ATTEMPTS - 1:
+                if deadlock_attempt < CELERY_DEADLOCK_ATTEMPTS - 1:
                     logger.warning(
                         f"{'Deadlock error' if isinstance(db_err, OperationalError) else 'Integrity error'} "
                         f"detected when processing resource {resource_uid} on scan {scan_instance.id}. Retrying..."
                     )
-                    time.sleep(0.1 * (2**attempt))
+                    time.sleep(0.1 * (2**deadlock_attempt))
                     continue
                 else:
                     raise db_err
@@ -616,17 +622,18 @@ def _process_finding_micro_batch(
 
         # Process tags
         tags = []
-        with rls_transaction(tenant_id):
-            for key, value in finding.resource_tags.items():
-                tag_key = (key, value)
-                if tag_key not in tag_cache:
-                    tag_instance, _ = ResourceTag.objects.get_or_create(
-                        tenant_id=tenant_id, key=key, value=value
-                    )
-                    tag_cache[tag_key] = tag_instance
-                else:
-                    tag_instance = tag_cache[tag_key]
-                tags.append(tag_instance)
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                for key, value in finding.resource_tags.items():
+                    tag_key = (key, value)
+                    if tag_key not in tag_cache:
+                        tag_instance, _ = ResourceTag.objects.get_or_create(
+                            tenant_id=tenant_id, key=key, value=value
+                        )
+                        tag_cache[tag_key] = tag_instance
+                    else:
+                        tag_instance = tag_cache[tag_key]
+                    tags.append(tag_instance)
             resource_instance.upsert_or_delete_tags(tags=tags)
 
         unique_resources.add((resource_instance.uid, resource_instance.region))
@@ -733,55 +740,56 @@ def _process_finding_micro_batch(
         )
 
     # Bulk operations within single transaction
-    with rls_transaction(tenant_id):
-        # Bulk create findings
-        if findings_to_create:
-            Finding.objects.bulk_create(
-                findings_to_create, batch_size=SCAN_DB_BATCH_SIZE
-            )
-
-        # Bulk create resource-finding mappings
-        for finding_instance, resource_instance in resource_denormalized_data:
-            mappings_to_create.append(
-                ResourceFindingMapping(
-                    tenant_id=tenant_id,
-                    resource=resource_instance,
-                    finding=finding_instance,
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            # Bulk create findings
+            if findings_to_create:
+                Finding.objects.bulk_create(
+                    findings_to_create, batch_size=SCAN_DB_BATCH_SIZE
                 )
-            )
 
-        if mappings_to_create:
-            ResourceFindingMapping.objects.bulk_create(
-                mappings_to_create,
-                batch_size=SCAN_DB_BATCH_SIZE,
-                ignore_conflicts=True,
-            )
+            # Bulk create resource-finding mappings
+            for finding_instance, resource_instance in resource_denormalized_data:
+                mappings_to_create.append(
+                    ResourceFindingMapping(
+                        tenant_id=tenant_id,
+                        resource=resource_instance,
+                        finding=finding_instance,
+                    )
+                )
 
-        # Update finding denormalized arrays
-        findings_to_update = []
-        for finding_instance, resource_instance in resource_denormalized_data:
-            if not finding_instance.resource_regions:
-                finding_instance.resource_regions = []
-            if not finding_instance.resource_services:
-                finding_instance.resource_services = []
-            if not finding_instance.resource_types:
-                finding_instance.resource_types = []
+            if mappings_to_create:
+                ResourceFindingMapping.objects.bulk_create(
+                    mappings_to_create,
+                    batch_size=SCAN_DB_BATCH_SIZE,
+                    ignore_conflicts=True,
+                )
 
-            if resource_instance.region not in finding_instance.resource_regions:
-                finding_instance.resource_regions.append(resource_instance.region)
-            if resource_instance.service not in finding_instance.resource_services:
-                finding_instance.resource_services.append(resource_instance.service)
-            if resource_instance.type not in finding_instance.resource_types:
-                finding_instance.resource_types.append(resource_instance.type)
+            # Update finding denormalized arrays
+            findings_to_update = []
+            for finding_instance, resource_instance in resource_denormalized_data:
+                if not finding_instance.resource_regions:
+                    finding_instance.resource_regions = []
+                if not finding_instance.resource_services:
+                    finding_instance.resource_services = []
+                if not finding_instance.resource_types:
+                    finding_instance.resource_types = []
 
-            findings_to_update.append(finding_instance)
+                if resource_instance.region not in finding_instance.resource_regions:
+                    finding_instance.resource_regions.append(resource_instance.region)
+                if resource_instance.service not in finding_instance.resource_services:
+                    finding_instance.resource_services.append(resource_instance.service)
+                if resource_instance.type not in finding_instance.resource_types:
+                    finding_instance.resource_types.append(resource_instance.type)
 
-        if findings_to_update:
-            Finding.objects.bulk_update(
-                findings_to_update,
-                ["resource_regions", "resource_services", "resource_types"],
-                batch_size=SCAN_DB_BATCH_SIZE,
-            )
+                findings_to_update.append(finding_instance)
+
+            if findings_to_update:
+                Finding.objects.bulk_update(
+                    findings_to_update,
+                    ["resource_regions", "resource_services", "resource_types"],
+                    batch_size=SCAN_DB_BATCH_SIZE,
+                )
 
     # Bulk update dirty resources
     if dirty_resources:
@@ -845,57 +853,62 @@ def perform_prowler_scan(
     start_time = time.time()
     exc = None
 
-    with rls_transaction(tenant_id):
-        provider_instance = Provider.objects.get(pk=provider_id)
-        scan_instance = Scan.objects.get(pk=scan_id)
-        scan_instance.state = StateChoices.EXECUTING
-        scan_instance.started_at = datetime.now(tz=timezone.utc)
-        scan_instance.save()
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            provider_instance = Provider.objects.get(pk=provider_id)
+            scan_instance = Scan.objects.get(pk=scan_id)
+            scan_instance.state = StateChoices.EXECUTING
+            scan_instance.started_at = datetime.now(tz=timezone.utc)
+            scan_instance.save()
 
     # Find the mutelist processor if it exists
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        try:
-            mutelist_processor = Processor.objects.get(
-                tenant_id=tenant_id, processor_type=Processor.ProcessorChoices.MUTELIST
-            )
-        except Processor.DoesNotExist:
-            mutelist_processor = None
-        except Exception as e:
-            logger.error(f"Error processing mutelist rules: {e}")
-            mutelist_processor = None
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            try:
+                mutelist_processor = Processor.objects.get(
+                    tenant_id=tenant_id,
+                    processor_type=Processor.ProcessorChoices.MUTELIST,
+                )
+            except Processor.DoesNotExist:
+                mutelist_processor = None
+            except Exception as e:
+                logger.error(f"Error processing mutelist rules: {e}")
+                mutelist_processor = None
 
     # Load enabled mute rules for this tenant
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        try:
-            active_mute_rules = MuteRule.objects.filter(
-                tenant_id=tenant_id, enabled=True
-            ).values_list("finding_uids", "reason")
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            try:
+                active_mute_rules = MuteRule.objects.filter(
+                    tenant_id=tenant_id, enabled=True
+                ).values_list("finding_uids", "reason")
 
-            mute_rules_cache = {}
-            for finding_uids, reason in active_mute_rules:
-                for uid in finding_uids:
-                    mute_rules_cache[uid] = reason
-        except Exception as e:
-            logger.error(f"Error loading mute rules: {e}")
-            mute_rules_cache = {}
+                mute_rules_cache = {}
+                for finding_uids, reason in active_mute_rules:
+                    for uid in finding_uids:
+                        mute_rules_cache[uid] = reason
+            except Exception as e:
+                logger.error(f"Error loading mute rules: {e}")
+                mute_rules_cache = {}
 
     try:
-        with rls_transaction(tenant_id):
-            try:
-                prowler_provider = initialize_prowler_provider(
-                    provider_instance, mutelist_processor
-                )
-                provider_instance.connected = True
-            except Exception as e:
-                provider_instance.connected = False
-                exc = ProviderConnectionError(
-                    f"Provider {provider_instance.provider} is not connected: {e}"
-                )
-            finally:
-                provider_instance.connection_last_checked_at = datetime.now(
-                    tz=timezone.utc
-                )
-                provider_instance.save()
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                try:
+                    prowler_provider = initialize_prowler_provider(
+                        provider_instance, mutelist_processor
+                    )
+                    provider_instance.connected = True
+                except Exception as e:
+                    provider_instance.connected = False
+                    exc = ProviderConnectionError(
+                        f"Provider {provider_instance.provider} is not connected: {e}"
+                    )
+                finally:
+                    provider_instance.connection_last_checked_at = datetime.now(
+                        tz=timezone.utc
+                    )
+                    provider_instance.save()
 
         # If the provider is not connected, raise an exception outside the transaction.
         # If raised within the transaction, the transaction will be rolled back and the provider will not be marked
@@ -937,9 +950,10 @@ def perform_prowler_scan(
                 )
 
             # Update scan progress
-            with rls_transaction(tenant_id):
-                scan_instance.progress = progress
-                scan_instance.save()
+            for attempt in rls_transaction(tenant_id):
+                with attempt:
+                    scan_instance.progress = progress
+                    scan_instance.save()
 
         scan_instance.state = StateChoices.COMPLETED
 
@@ -967,11 +981,12 @@ def perform_prowler_scan(
         scan_instance.state = StateChoices.FAILED
 
     finally:
-        with rls_transaction(tenant_id):
-            scan_instance.duration = time.time() - start_time
-            scan_instance.completed_at = datetime.now(tz=timezone.utc)
-            scan_instance.unique_resource_count = len(unique_resources)
-            scan_instance.save()
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                scan_instance.duration = time.time() - start_time
+                scan_instance.completed_at = datetime.now(tz=timezone.utc)
+                scan_instance.unique_resource_count = len(unique_resources)
+                scan_instance.save()
 
     if exception is not None:
         raise exception
@@ -988,10 +1003,11 @@ def perform_prowler_scan(
             )
             for resource_id, service, region, resource_type in scan_resource_cache
         ]
-        with rls_transaction(tenant_id):
-            ResourceScanSummary.objects.bulk_create(
-                resource_scan_summaries, batch_size=500, ignore_conflicts=True
-            )
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                ResourceScanSummary.objects.bulk_create(
+                    resource_scan_summaries, batch_size=500, ignore_conflicts=True
+                )
     except Exception as filter_exception:
         sentry_sdk.capture_exception(filter_exception)
         logger.error(
@@ -1012,10 +1028,11 @@ def perform_prowler_scan(
                 )
                 for (category, severity), counts in scan_categories_cache.items()
             ]
-            with rls_transaction(tenant_id):
-                ScanCategorySummary.objects.bulk_create(
-                    category_summaries, batch_size=500, ignore_conflicts=True
-                )
+            for attempt in rls_transaction(tenant_id):
+                with attempt:
+                    ScanCategorySummary.objects.bulk_create(
+                        category_summaries, batch_size=500, ignore_conflicts=True
+                    )
     except Exception as cat_exception:
         sentry_sdk.capture_exception(cat_exception)
         logger.error(f"Error storing categories for scan {scan_id}: {cat_exception}")
@@ -1042,10 +1059,11 @@ def perform_prowler_scan(
                     severity,
                 ), counts in scan_resource_groups_cache.items()
             ]
-            with rls_transaction(tenant_id):
-                ScanGroupSummary.objects.bulk_create(
-                    resource_group_summaries, batch_size=500, ignore_conflicts=True
-                )
+            for attempt in rls_transaction(tenant_id):
+                with attempt:
+                    ScanGroupSummary.objects.bulk_create(
+                        resource_group_summaries, batch_size=500, ignore_conflicts=True
+                    )
     except Exception as rg_exception:
         sentry_sdk.capture_exception(rg_exception)
         logger.error(
@@ -1068,128 +1086,130 @@ def aggregate_findings(tenant_id: str, scan_id: str):
         tenant_id: Tenant that owns the scan.
         scan_id: Scan UUID whose findings should be aggregated.
     """
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        findings = Finding.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            findings = Finding.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
 
-        aggregation = findings.values(
-            "check_id",
-            "resources__service",
-            "severity",
-            "resources__region",
-        ).annotate(
-            fail=Sum(
-                Case(
-                    When(status="FAIL", muted=False, then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            _pass=Sum(
-                Case(
-                    When(status="PASS", muted=False, then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            muted_count=Sum(
-                Case(
-                    When(muted=True, then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            total=Count("id"),
-            new=Sum(
-                Case(
-                    When(delta="new", muted=False, then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            changed=Sum(
-                Case(
-                    When(delta="changed", muted=False, then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            unchanged=Sum(
-                Case(
-                    When(delta__isnull=True, muted=False, then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            fail_new=Sum(
-                Case(
-                    When(delta="new", status="FAIL", muted=False, then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            fail_changed=Sum(
-                Case(
-                    When(delta="changed", status="FAIL", muted=False, then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            pass_new=Sum(
-                Case(
-                    When(delta="new", status="PASS", muted=False, then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            pass_changed=Sum(
-                Case(
-                    When(delta="changed", status="PASS", muted=False, then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            muted_new=Sum(
-                Case(
-                    When(delta="new", muted=True, then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            muted_changed=Sum(
-                Case(
-                    When(delta="changed", muted=True, then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-        )
-
-    with rls_transaction(tenant_id):
-        scan_aggregations = {
-            ScanSummary(
-                tenant_id=tenant_id,
-                scan_id=scan_id,
-                check_id=agg["check_id"],
-                service=agg["resources__service"],
-                severity=agg["severity"],
-                region=agg["resources__region"],
-                fail=agg["fail"],
-                _pass=agg["_pass"],
-                muted=agg["muted_count"],
-                total=agg["total"],
-                new=agg["new"],
-                changed=agg["changed"],
-                unchanged=agg["unchanged"],
-                fail_new=agg["fail_new"],
-                fail_changed=agg["fail_changed"],
-                pass_new=agg["pass_new"],
-                pass_changed=agg["pass_changed"],
-                muted_new=agg["muted_new"],
-                muted_changed=agg["muted_changed"],
+            aggregation = findings.values(
+                "check_id",
+                "resources__service",
+                "severity",
+                "resources__region",
+            ).annotate(
+                fail=Sum(
+                    Case(
+                        When(status="FAIL", muted=False, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                _pass=Sum(
+                    Case(
+                        When(status="PASS", muted=False, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                muted_count=Sum(
+                    Case(
+                        When(muted=True, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                total=Count("id"),
+                new=Sum(
+                    Case(
+                        When(delta="new", muted=False, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                changed=Sum(
+                    Case(
+                        When(delta="changed", muted=False, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                unchanged=Sum(
+                    Case(
+                        When(delta__isnull=True, muted=False, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                fail_new=Sum(
+                    Case(
+                        When(delta="new", status="FAIL", muted=False, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                fail_changed=Sum(
+                    Case(
+                        When(delta="changed", status="FAIL", muted=False, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                pass_new=Sum(
+                    Case(
+                        When(delta="new", status="PASS", muted=False, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                pass_changed=Sum(
+                    Case(
+                        When(delta="changed", status="PASS", muted=False, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                muted_new=Sum(
+                    Case(
+                        When(delta="new", muted=True, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                muted_changed=Sum(
+                    Case(
+                        When(delta="changed", muted=True, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
             )
-            for agg in aggregation
-        }
-        ScanSummary.objects.bulk_create(scan_aggregations, batch_size=3000)
+
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            scan_aggregations = {
+                ScanSummary(
+                    tenant_id=tenant_id,
+                    scan_id=scan_id,
+                    check_id=agg["check_id"],
+                    service=agg["resources__service"],
+                    severity=agg["severity"],
+                    region=agg["resources__region"],
+                    fail=agg["fail"],
+                    _pass=agg["_pass"],
+                    muted=agg["muted_count"],
+                    total=agg["total"],
+                    new=agg["new"],
+                    changed=agg["changed"],
+                    unchanged=agg["unchanged"],
+                    fail_new=agg["fail_new"],
+                    fail_changed=agg["fail_changed"],
+                    pass_new=agg["pass_new"],
+                    pass_changed=agg["pass_changed"],
+                    muted_new=agg["muted_new"],
+                    muted_changed=agg["muted_changed"],
+                )
+                for agg in aggregation
+            }
+            ScanSummary.objects.bulk_create(scan_aggregations, batch_size=3000)
 
 
 def _aggregate_findings_by_region(
@@ -1213,58 +1233,59 @@ def _aggregate_findings_by_region(
     check_status_by_region = {}
     findings_count_by_compliance = {}
 
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        # Fetch only PASS/FAIL findings (optimized query reduces data transfer)
-        # Other statuses are not needed for check_status or ThreatScore calculation
-        findings = (
-            Finding.all_objects.filter(
-                tenant_id=tenant_id,
-                scan_id=scan_id,
-                muted=False,
-                status__in=["PASS", "FAIL"],
-            )
-            .only("id", "check_id", "status", "compliance")
-            .prefetch_related(
-                Prefetch(
-                    "resources",
-                    queryset=Resource.objects.only("id", "region"),
-                    to_attr="small_resources",
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            # Fetch only PASS/FAIL findings (optimized query reduces data transfer)
+            # Other statuses are not needed for check_status or ThreatScore calculation
+            findings = (
+                Finding.all_objects.filter(
+                    tenant_id=tenant_id,
+                    scan_id=scan_id,
+                    muted=False,
+                    status__in=["PASS", "FAIL"],
+                )
+                .only("id", "check_id", "status", "compliance")
+                .prefetch_related(
+                    Prefetch(
+                        "resources",
+                        queryset=Resource.objects.only("id", "region"),
+                        to_attr="small_resources",
+                    )
                 )
             )
-        )
 
-        # Process findings in a single pass (more efficient than original nested loops)
-        normalized_id = re.sub(
-            r"[^a-z0-9]", "", modeled_threatscore_compliance_id.lower()
-        )
+            # Process findings in a single pass (more efficient than original nested loops)
+            normalized_id = re.sub(
+                r"[^a-z0-9]", "", modeled_threatscore_compliance_id.lower()
+            )
 
-        for finding in findings:
-            status = finding.status
+            for finding in findings:
+                status = finding.status
 
-            for resource in finding.small_resources:
-                region = resource.region
+                for resource in finding.small_resources:
+                    region = resource.region
 
-                # Aggregate check status by region
-                current_status = check_status_by_region.setdefault(region, {})
-                # Priority: FAIL > any other status
-                if current_status.get(finding.check_id) != "FAIL":
-                    current_status[finding.check_id] = status
+                    # Aggregate check status by region
+                    current_status = check_status_by_region.setdefault(region, {})
+                    # Priority: FAIL > any other status
+                    if current_status.get(finding.check_id) != "FAIL":
+                        current_status[finding.check_id] = status
 
-                # Aggregate ThreatScore compliance counts
-                if modeled_threatscore_compliance_id in (finding.compliance or {}):
-                    compliance_key = findings_count_by_compliance.setdefault(
-                        region, {}
-                    ).setdefault(normalized_id, {})
+                    # Aggregate ThreatScore compliance counts
+                    if modeled_threatscore_compliance_id in (finding.compliance or {}):
+                        compliance_key = findings_count_by_compliance.setdefault(
+                            region, {}
+                        ).setdefault(normalized_id, {})
 
-                    for requirement_id in finding.compliance[
-                        modeled_threatscore_compliance_id
-                    ]:
-                        requirement_stats = compliance_key.setdefault(
-                            requirement_id, {"total": 0, "pass": 0}
-                        )
-                        requirement_stats["total"] += 1
-                        if status == "PASS":
-                            requirement_stats["pass"] += 1
+                        for requirement_id in finding.compliance[
+                            modeled_threatscore_compliance_id
+                        ]:
+                            requirement_stats = compliance_key.setdefault(
+                                requirement_id, {"total": 0, "pass": 0}
+                            )
+                            requirement_stats["total"] += 1
+                            if status == "PASS":
+                                requirement_stats["pass"] += 1
 
     return check_status_by_region, findings_count_by_compliance
 
@@ -1287,10 +1308,11 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
         dict: Counts/metadata about the generated rows (e.g., frameworks touched, regions processed).
     """
     try:
-        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-            scan_instance = Scan.objects.get(pk=scan_id)
-            provider_instance = scan_instance.provider
-            return_prowler_provider(provider_instance)
+        for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+            with attempt:
+                scan_instance = Scan.objects.get(pk=scan_id)
+                provider_instance = scan_instance.provider
+                return_prowler_provider(provider_instance)
 
         compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
             provider_instance.provider
@@ -1444,9 +1466,10 @@ def aggregate_attack_surface(tenant_id: str, scan_id: str):
         tenant_id: Tenant that owns the scan.
         scan_id: Scan UUID whose findings should be aggregated.
     """
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        scan_instance = Scan.all_objects.select_related("provider").get(pk=scan_id)
-        provider_type = scan_instance.provider.provider
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            scan_instance = Scan.all_objects.select_related("provider").get(pk=scan_id)
+            provider_type = scan_instance.provider.provider
 
     provider_attack_surface_mapping = _get_attack_surface_mapping_from_provider(
         provider_type=provider_type
@@ -1493,29 +1516,30 @@ def aggregate_attack_surface(tenant_id: str, scan_id: str):
         for attack_surface_type in supported_mappings.keys()
     }
 
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        finding_stats = (
-            Finding.all_objects.filter(
-                tenant_id=tenant_id,
-                scan_id=scan_id,
-                check_id__in=list(check_id_to_surface.keys()),
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            finding_stats = (
+                Finding.all_objects.filter(
+                    tenant_id=tenant_id,
+                    scan_id=scan_id,
+                    check_id__in=list(check_id_to_surface.keys()),
+                )
+                .values("check_id")
+                .annotate(
+                    total=Count("id"),
+                    failed=Count("id", filter=Q(status="FAIL", muted=False)),
+                    muted=Count("id", filter=Q(status="FAIL", muted=True)),
+                )
             )
-            .values("check_id")
-            .annotate(
-                total=Count("id"),
-                failed=Count("id", filter=Q(status="FAIL", muted=False)),
-                muted=Count("id", filter=Q(status="FAIL", muted=True)),
-            )
-        )
 
-        for stats in finding_stats:
-            attack_surface_type = check_id_to_surface.get(stats["check_id"])
-            if not attack_surface_type:
-                continue
+            for stats in finding_stats:
+                attack_surface_type = check_id_to_surface.get(stats["check_id"])
+                if not attack_surface_type:
+                    continue
 
-            aggregated_counts[attack_surface_type]["total"] += stats["total"] or 0
-            aggregated_counts[attack_surface_type]["failed"] += stats["failed"] or 0
-            aggregated_counts[attack_surface_type]["muted"] += stats["muted"] or 0
+                aggregated_counts[attack_surface_type]["total"] += stats["total"] or 0
+                aggregated_counts[attack_surface_type]["failed"] += stats["failed"] or 0
+                aggregated_counts[attack_surface_type]["muted"] += stats["muted"] or 0
 
     overview_objects = []
     for attack_surface_type, counts in aggregated_counts.items():
@@ -1536,70 +1560,75 @@ def aggregate_attack_surface(tenant_id: str, scan_id: str):
 
     # Bulk create overview records
     if overview_objects:
-        with rls_transaction(tenant_id):
-            AttackSurfaceOverview.objects.bulk_create(overview_objects, batch_size=500)
-            logger.info(
-                f"Created {len(overview_objects)} attack surface overview records for scan {scan_id}"
-            )
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                AttackSurfaceOverview.objects.bulk_create(
+                    overview_objects, batch_size=500
+                )
+                logger.info(
+                    f"Created {len(overview_objects)} attack surface overview records for scan {scan_id}"
+                )
     else:
         logger.info(f"No attack surface overview records created for scan {scan_id}")
 
 
 def aggregate_daily_severity(tenant_id: str, scan_id: str):
     """Aggregate scan severity counts into DailySeveritySummary (one record per provider/day)."""
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        scan = Scan.objects.filter(
-            tenant_id=tenant_id,
-            id=scan_id,
-            state=StateChoices.COMPLETED,
-        ).first()
-
-        if not scan:
-            logger.warning(f"Scan {scan_id} not found or not completed")
-            return {"status": "scan is not completed"}
-
-        provider_id = scan.provider_id
-        scan_date = scan.completed_at.date()
-
-        severity_totals = (
-            ScanSummary.objects.filter(
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            scan = Scan.objects.filter(
                 tenant_id=tenant_id,
-                scan_id=scan_id,
+                id=scan_id,
+                state=StateChoices.COMPLETED,
+            ).first()
+
+            if not scan:
+                logger.warning(f"Scan {scan_id} not found or not completed")
+                return {"status": "scan is not completed"}
+
+            provider_id = scan.provider_id
+            scan_date = scan.completed_at.date()
+
+            severity_totals = (
+                ScanSummary.objects.filter(
+                    tenant_id=tenant_id,
+                    scan_id=scan_id,
+                )
+                .values("severity")
+                .annotate(total_fail=Sum("fail"), total_muted=Sum("muted"))
             )
-            .values("severity")
-            .annotate(total_fail=Sum("fail"), total_muted=Sum("muted"))
-        )
 
-        severity_data = {
-            "critical": 0,
-            "high": 0,
-            "medium": 0,
-            "low": 0,
-            "informational": 0,
-            "muted": 0,
-        }
+            severity_data = {
+                "critical": 0,
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+                "informational": 0,
+                "muted": 0,
+            }
 
-        for row in severity_totals:
-            severity = row["severity"]
-            if severity in severity_data:
-                severity_data[severity] = row["total_fail"] or 0
-            severity_data["muted"] += row["total_muted"] or 0
+            for row in severity_totals:
+                severity = row["severity"]
+                if severity in severity_data:
+                    severity_data[severity] = row["total_fail"] or 0
+                severity_data["muted"] += row["total_muted"] or 0
 
-    with rls_transaction(tenant_id):
-        summary, created = DailySeveritySummary.objects.update_or_create(
-            tenant_id=tenant_id,
-            provider_id=provider_id,
-            date=scan_date,
-            defaults={
-                "scan_id": scan_id,
-                "critical": severity_data["critical"],
-                "high": severity_data["high"],
-                "medium": severity_data["medium"],
-                "low": severity_data["low"],
-                "informational": severity_data["informational"],
-                "muted": severity_data["muted"],
-            },
-        )
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            summary, created = DailySeveritySummary.objects.update_or_create(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                date=scan_date,
+                defaults={
+                    "scan_id": scan_id,
+                    "critical": severity_data["critical"],
+                    "high": severity_data["high"],
+                    "medium": severity_data["medium"],
+                    "low": severity_data["low"],
+                    "informational": severity_data["informational"],
+                    "muted": severity_data["muted"],
+                },
+            )
 
     action = "created" if created else "updated"
     logger.info(
@@ -1632,29 +1661,30 @@ def update_provider_compliance_scores(tenant_id: str, scan_id: str):
     Returns:
         dict: Statistics about the upsert operation.
     """
-    with rls_transaction(tenant_id):
-        scan = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id,
-                id=scan_id,
-                state=StateChoices.COMPLETED,
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            scan = (
+                Scan.all_objects.filter(
+                    tenant_id=tenant_id,
+                    id=scan_id,
+                    state=StateChoices.COMPLETED,
+                )
+                .select_related("provider")
+                .first()
             )
-            .select_related("provider")
-            .first()
-        )
 
-        if not scan:
-            logger.warning(
-                f"Scan {scan_id} not found or not completed for compliance score update"
-            )
-            return {"status": "skipped", "reason": "scan not completed"}
+            if not scan:
+                logger.warning(
+                    f"Scan {scan_id} not found or not completed for compliance score update"
+                )
+                return {"status": "skipped", "reason": "scan not completed"}
 
-        if not scan.completed_at:
-            logger.warning(f"Scan {scan_id} has no completed_at timestamp")
-            return {"status": "skipped", "reason": "no completed_at"}
+            if not scan.completed_at:
+                logger.warning(f"Scan {scan_id} has no completed_at timestamp")
+                return {"status": "skipped", "reason": "no completed_at"}
 
-        provider_id = str(scan.provider_id)
-        scan_completed_at = scan.completed_at
+            provider_id = str(scan.provider_id)
+            scan_completed_at = scan.completed_at
 
     delete_stale_sql = """
         DELETE FROM provider_compliance_scores pcs
@@ -1766,164 +1796,168 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
     Returns:
         dict: Statistics about the aggregation operation.
     """
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        scan = Scan.objects.filter(
-            tenant_id=tenant_id,
-            id=scan_id,
-            state=StateChoices.COMPLETED,
-        ).first()
-
-        if not scan:
-            logger.warning(
-                f"Scan {scan_id} not found or not completed for finding group summary"
-            )
-            return {"status": "skipped", "reason": "scan not completed"}
-
-        if not scan.provider:
-            logger.warning(f"Scan {scan_id} has no provider for finding group summary")
-            return {"status": "skipped", "reason": "scan has no provider"}
-
-        summary_timestamp = scan.completed_at
-        if django_timezone.is_naive(summary_timestamp):
-            summary_timestamp = django_timezone.make_aware(
-                summary_timestamp, timezone.utc
-            )
-        summary_timestamp = summary_timestamp.replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
-        provider_id = scan.provider_id
-
-        # Build severity Case/When expression
-        severity_case = Case(
-            *[
-                When(severity=severity, then=order)
-                for severity, order in SEVERITY_ORDER.items()
-            ],
-            output_field=IntegerField(),
-        )
-
-        # Aggregate findings by check_id for this scan
-        aggregated = (
-            Finding.objects.filter(
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            scan = Scan.objects.filter(
                 tenant_id=tenant_id,
-                scan_id=scan_id,
-            )
-            .values("check_id")
-            .annotate(
-                severity_order=Max(severity_case),
-                pass_count=Count("id", filter=Q(status="PASS", muted=False)),
-                fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
-                muted_count=Count("id", filter=Q(muted=True)),
-                new_count=Count("id", filter=Q(delta="new", muted=False)),
-                changed_count=Count("id", filter=Q(delta="changed", muted=False)),
-                resources_total=Count("resources__id", distinct=True),
-                resources_fail=Count(
-                    "resources__id",
-                    distinct=True,
-                    filter=Q(status="FAIL", muted=False),
-                ),
-                # Use prefixed names to avoid conflict with model field names
-                agg_first_seen_at=Min("first_seen_at"),
-                agg_last_seen_at=Max("inserted_at"),
-                agg_failing_since=Min(
-                    "first_seen_at", filter=Q(status="FAIL", muted=False)
-                ),
-            )
-        )
+                id=scan_id,
+                state=StateChoices.COMPLETED,
+            ).first()
 
-        # Force evaluate queryset while inside RLS transaction (prevents lazy re-query issues)
-        aggregated_list = list(aggregated)
+            if not scan:
+                logger.warning(
+                    f"Scan {scan_id} not found or not completed for finding group summary"
+                )
+                return {"status": "skipped", "reason": "scan not completed"}
 
-        # Fetch check metadata for all check_ids in one query
-        check_ids = [row["check_id"] for row in aggregated_list]
-        check_metadata_map = {}
-        if check_ids:
-            findings_with_metadata = (
+            if not scan.provider:
+                logger.warning(
+                    f"Scan {scan_id} has no provider for finding group summary"
+                )
+                return {"status": "skipped", "reason": "scan has no provider"}
+
+            summary_timestamp = scan.completed_at
+            if django_timezone.is_naive(summary_timestamp):
+                summary_timestamp = django_timezone.make_aware(
+                    summary_timestamp, timezone.utc
+                )
+            summary_timestamp = summary_timestamp.replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            provider_id = scan.provider_id
+
+            # Build severity Case/When expression
+            severity_case = Case(
+                *[
+                    When(severity=severity, then=order)
+                    for severity, order in SEVERITY_ORDER.items()
+                ],
+                output_field=IntegerField(),
+            )
+
+            # Aggregate findings by check_id for this scan
+            aggregated = (
                 Finding.objects.filter(
                     tenant_id=tenant_id,
                     scan_id=scan_id,
-                    check_id__in=check_ids,
                 )
-                .order_by("check_id")
-                .distinct("check_id")
-                .values("check_id", "check_metadata")
+                .values("check_id")
+                .annotate(
+                    severity_order=Max(severity_case),
+                    pass_count=Count("id", filter=Q(status="PASS", muted=False)),
+                    fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
+                    muted_count=Count("id", filter=Q(muted=True)),
+                    new_count=Count("id", filter=Q(delta="new", muted=False)),
+                    changed_count=Count("id", filter=Q(delta="changed", muted=False)),
+                    resources_total=Count("resources__id", distinct=True),
+                    resources_fail=Count(
+                        "resources__id",
+                        distinct=True,
+                        filter=Q(status="FAIL", muted=False),
+                    ),
+                    # Use prefixed names to avoid conflict with model field names
+                    agg_first_seen_at=Min("first_seen_at"),
+                    agg_last_seen_at=Max("inserted_at"),
+                    agg_failing_since=Min(
+                        "first_seen_at", filter=Q(status="FAIL", muted=False)
+                    ),
+                )
             )
 
-            for f in findings_with_metadata:
-                if f["check_id"] not in check_metadata_map and f["check_metadata"]:
-                    check_metadata_map[f["check_id"]] = f["check_metadata"]
+            # Force evaluate queryset while inside RLS transaction (prevents lazy re-query issues)
+            aggregated_list = list(aggregated)
+
+            # Fetch check metadata for all check_ids in one query
+            check_ids = [row["check_id"] for row in aggregated_list]
+            check_metadata_map = {}
+            if check_ids:
+                findings_with_metadata = (
+                    Finding.objects.filter(
+                        tenant_id=tenant_id,
+                        scan_id=scan_id,
+                        check_id__in=check_ids,
+                    )
+                    .order_by("check_id")
+                    .distinct("check_id")
+                    .values("check_id", "check_metadata")
+                )
+
+                for f in findings_with_metadata:
+                    if f["check_id"] not in check_metadata_map and f["check_metadata"]:
+                        check_metadata_map[f["check_id"]] = f["check_metadata"]
 
     # Upsert summaries in bulk for performance
     created_count = 0
     updated_count = 0
 
-    with rls_transaction(tenant_id):
-        check_ids = [row["check_id"] for row in aggregated_list]
-        existing_check_ids = set()
-        if check_ids:
-            existing_check_ids = set(
-                FindingGroupDailySummary.objects.filter(
-                    tenant_id=tenant_id,
-                    provider_id=provider_id,
-                    check_id__in=check_ids,
-                    inserted_at=summary_timestamp,
-                ).values_list("check_id", flat=True)
-            )
-
-        created_count = len(check_ids) - len(existing_check_ids)
-        updated_count = len(existing_check_ids)
-
-        summaries_to_upsert = []
-        updated_at = django_timezone.now()
-        for row in aggregated_list:
-            check_id = row["check_id"]
-            metadata = check_metadata_map.get(check_id, {})
-
-            summaries_to_upsert.append(
-                FindingGroupDailySummary(
-                    tenant_id=tenant_id,
-                    provider_id=provider_id,
-                    check_id=check_id,
-                    inserted_at=summary_timestamp,
-                    updated_at=updated_at,
-                    check_title=metadata.get("checktitle", ""),
-                    check_description=metadata.get("Description", ""),
-                    severity_order=row["severity_order"] or 1,
-                    pass_count=row["pass_count"],
-                    fail_count=row["fail_count"],
-                    muted_count=row["muted_count"],
-                    new_count=row["new_count"],
-                    changed_count=row["changed_count"],
-                    resources_total=row["resources_total"],
-                    resources_fail=row["resources_fail"],
-                    first_seen_at=row["agg_first_seen_at"],
-                    last_seen_at=row["agg_last_seen_at"],
-                    failing_since=row["agg_failing_since"],
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            check_ids = [row["check_id"] for row in aggregated_list]
+            existing_check_ids = set()
+            if check_ids:
+                existing_check_ids = set(
+                    FindingGroupDailySummary.objects.filter(
+                        tenant_id=tenant_id,
+                        provider_id=provider_id,
+                        check_id__in=check_ids,
+                        inserted_at=summary_timestamp,
+                    ).values_list("check_id", flat=True)
                 )
-            )
 
-        if summaries_to_upsert:
-            FindingGroupDailySummary.objects.bulk_create(
-                summaries_to_upsert,
-                update_conflicts=True,
-                unique_fields=["tenant_id", "provider", "check_id", "inserted_at"],
-                update_fields=[
-                    "check_title",
-                    "check_description",
-                    "severity_order",
-                    "pass_count",
-                    "fail_count",
-                    "muted_count",
-                    "new_count",
-                    "changed_count",
-                    "resources_total",
-                    "resources_fail",
-                    "first_seen_at",
-                    "last_seen_at",
-                    "failing_since",
-                    "updated_at",
-                ],
-            )
+            created_count = len(check_ids) - len(existing_check_ids)
+            updated_count = len(existing_check_ids)
+
+            summaries_to_upsert = []
+            updated_at = django_timezone.now()
+            for row in aggregated_list:
+                check_id = row["check_id"]
+                metadata = check_metadata_map.get(check_id, {})
+
+                summaries_to_upsert.append(
+                    FindingGroupDailySummary(
+                        tenant_id=tenant_id,
+                        provider_id=provider_id,
+                        check_id=check_id,
+                        inserted_at=summary_timestamp,
+                        updated_at=updated_at,
+                        check_title=metadata.get("checktitle", ""),
+                        check_description=metadata.get("Description", ""),
+                        severity_order=row["severity_order"] or 1,
+                        pass_count=row["pass_count"],
+                        fail_count=row["fail_count"],
+                        muted_count=row["muted_count"],
+                        new_count=row["new_count"],
+                        changed_count=row["changed_count"],
+                        resources_total=row["resources_total"],
+                        resources_fail=row["resources_fail"],
+                        first_seen_at=row["agg_first_seen_at"],
+                        last_seen_at=row["agg_last_seen_at"],
+                        failing_since=row["agg_failing_since"],
+                    )
+                )
+
+            if summaries_to_upsert:
+                FindingGroupDailySummary.objects.bulk_create(
+                    summaries_to_upsert,
+                    update_conflicts=True,
+                    unique_fields=["tenant_id", "provider", "check_id", "inserted_at"],
+                    update_fields=[
+                        "check_title",
+                        "check_description",
+                        "severity_order",
+                        "pass_count",
+                        "fail_count",
+                        "muted_count",
+                        "new_count",
+                        "changed_count",
+                        "resources_total",
+                        "resources_fail",
+                        "first_seen_at",
+                        "last_seen_at",
+                        "failing_since",
+                        "updated_at",
+                    ],
+                )
 
     logger.info(
         f"Finding group summaries aggregated for scan {scan_id}: "

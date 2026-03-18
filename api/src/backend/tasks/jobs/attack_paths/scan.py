@@ -86,9 +86,10 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     ingestion_exceptions = {}  # This will hold any exceptions raised during ingestion
 
     # Prowler necessary objects
-    with rls_transaction(tenant_id):
-        prowler_api_provider = ProwlerAPIProvider.objects.get(scan__pk=scan_id)
-        prowler_sdk_provider = initialize_prowler_provider(prowler_api_provider)
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            prowler_api_provider = ProwlerAPIProvider.objects.get(scan__pk=scan_id)
+            prowler_sdk_provider = initialize_prowler_provider(prowler_api_provider)
 
     # Attack Paths Scan necessary objects
     cartography_ingestion_function = get_cartography_ingestion_function(

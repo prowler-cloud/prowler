@@ -277,15 +277,16 @@ def _fetch_findings_batch(
 
     Uses read replica and RLS-scoped transaction.
     """
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        # Use `all_objects` to get `Findings` even on soft-deleted `Providers`
-        # But even the provider is already validated as active in this context
-        qs = FindingModel.all_objects.filter(scan_id=scan_id).order_by("id")
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            # Use `all_objects` to get `Findings` even on soft-deleted `Providers`
+            # But even the provider is already validated as active in this context
+            qs = FindingModel.all_objects.filter(scan_id=scan_id).order_by("id")
 
-        if after_id is not None:
-            qs = qs.filter(id__gt=after_id)
+            if after_id is not None:
+                qs = qs.filter(id__gt=after_id)
 
-        return list(qs.values(*_DB_QUERY_FIELDS)[:FINDINGS_BATCH_SIZE])
+            return list(qs.values(*_DB_QUERY_FIELDS)[:FINDINGS_BATCH_SIZE])
 
 
 # Batch Enrichment
@@ -316,12 +317,13 @@ def _build_finding_resource_map(
     finding_ids: list[UUID], tenant_id: str
 ) -> dict[UUID, list[str]]:
     """Build mapping from finding_id to list of resource UIDs."""
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        resource_mappings = ResourceFindingMapping.objects.filter(
-            finding_id__in=finding_ids
-        ).values_list("finding_id", "resource__uid")
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            resource_mappings = ResourceFindingMapping.objects.filter(
+                finding_id__in=finding_ids
+            ).values_list("finding_id", "resource__uid")
 
-        result = defaultdict(list)
-        for finding_id, resource_uid in resource_mappings:
-            result[finding_id].append(resource_uid)
-        return result
+            result = defaultdict(list)
+            for finding_id, resource_uid in resource_mappings:
+                result[finding_id].append(resource_uid)
+            return result

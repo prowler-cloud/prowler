@@ -1,14 +1,12 @@
 import os
-import time
 from glob import glob
 
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
-from django.db import OperationalError
 from tasks.utils import batched
 
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
-from api.db_utils import REPLICA_MAX_ATTEMPTS, REPLICA_RETRY_BASE_DELAY, rls_transaction
+from api.db_utils import rls_transaction
 from api.models import Finding, Integration, Provider
 from api.utils import initialize_prowler_integration, initialize_prowler_provider
 from prowler.lib.outputs.asff.asff import ASFF
@@ -78,14 +76,15 @@ def upload_s3_integration(
     logger.info(f"Processing S3 integrations for provider {provider_id}")
 
     try:
-        with rls_transaction(tenant_id):
-            integrations = list(
-                Integration.objects.filter(
-                    integrationproviderrelationship__provider_id=provider_id,
-                    integration_type=Integration.IntegrationChoices.AMAZON_S3,
-                    enabled=True,
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                integrations = list(
+                    Integration.objects.filter(
+                        integrationproviderrelationship__provider_id=provider_id,
+                        integration_type=Integration.IntegrationChoices.AMAZON_S3,
+                        enabled=True,
+                    )
                 )
-            )
 
         if not integrations:
             logger.error(f"No S3 integrations found for provider {provider_id}")
@@ -184,14 +183,18 @@ def get_security_hub_client_from_integration(
         if the connection was successful and the SecurityHub client or connection object.
     """
     # Get the provider associated with this integration
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        provider_relationship = integration.integrationproviderrelationship_set.first()
-        if not provider_relationship:
-            return Connection(
-                is_connected=False, error="No provider associated with this integration"
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            provider_relationship = (
+                integration.integrationproviderrelationship_set.first()
             )
-        provider_uid = provider_relationship.provider.uid
-        provider_secret = provider_relationship.provider.secret.secret
+            if not provider_relationship:
+                return Connection(
+                    is_connected=False,
+                    error="No provider associated with this integration",
+                )
+            provider_uid = provider_relationship.provider.uid
+            provider_secret = provider_relationship.provider.secret.secret
 
     credentials = (
         integration.credentials if integration.credentials else provider_secret
@@ -213,9 +216,10 @@ def get_security_hub_client_from_integration(
             regions_status[region] = region in connection.enabled_regions
 
         # Save regions information in the integration configuration
-        with rls_transaction(tenant_id, using=MainRouter.default_db):
-            integration.configuration["regions"] = regions_status
-            integration.save()
+        for attempt in rls_transaction(tenant_id, using=MainRouter.default_db):
+            with attempt:
+                integration.configuration["regions"] = regions_status
+                integration.save()
 
         # Create SecurityHub client with all necessary parameters
         security_hub = SecurityHub(
@@ -228,10 +232,11 @@ def get_security_hub_client_from_integration(
         return True, security_hub
     else:
         # Reset regions information if connection fails and integration is not connected
-        with rls_transaction(tenant_id, using=MainRouter.default_db):
-            integration.connected = False
-            integration.configuration["regions"] = {}
-            integration.save()
+        for attempt in rls_transaction(tenant_id, using=MainRouter.default_db):
+            with attempt:
+                integration.connected = False
+                integration.configuration["regions"] = {}
+                integration.save()
 
     return False, connection
 
@@ -256,27 +261,28 @@ def upload_security_hub_integration(
     logger.info(f"Processing Security Hub integrations for provider {provider_id}")
 
     try:
-        with rls_transaction(tenant_id):
-            # Get Security Hub integrations for this provider
-            integrations = list(
-                Integration.objects.filter(
-                    integrationproviderrelationship__provider_id=provider_id,
-                    integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB,
-                    enabled=True,
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                # Get Security Hub integrations for this provider
+                integrations = list(
+                    Integration.objects.filter(
+                        integrationproviderrelationship__provider_id=provider_id,
+                        integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB,
+                        enabled=True,
+                    )
                 )
-            )
 
-            if not integrations:
-                logger.error(
-                    f"No Security Hub integrations found for provider {provider_id}"
-                )
-                return False
+                if not integrations:
+                    logger.error(
+                        f"No Security Hub integrations found for provider {provider_id}"
+                    )
+                    return False
 
-            # Get the provider object
-            provider = Provider.objects.get(id=provider_id)
+                # Get the provider object
+                provider = Provider.objects.get(id=provider_id)
 
-            # Initialize prowler provider for finding transformation
-            prowler_provider = initialize_prowler_provider(provider)
+                # Initialize prowler provider for finding transformation
+                prowler_provider = initialize_prowler_provider(provider)
 
         # Process each Security Hub integration
         integration_executions = 0
@@ -293,130 +299,104 @@ def upload_security_hub_integration(
                 total_findings_sent[integration.id] = 0
 
                 # Process findings in batches to avoid memory issues
-                max_attempts = REPLICA_MAX_ATTEMPTS if READ_REPLICA_ALIAS else 1
                 has_findings = False
                 batch_number = 0
 
-                for attempt in range(1, max_attempts + 1):
-                    read_alias = None
-                    if READ_REPLICA_ALIAS:
-                        read_alias = (
-                            READ_REPLICA_ALIAS
-                            if attempt < max_attempts
-                            else MainRouter.default_db
-                        )
-
-                    try:
+                for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+                    with attempt:
                         batch_number = 0
                         has_findings = False
-                        with rls_transaction(
-                            tenant_id,
-                            using=read_alias,
-                            retry_on_replica=False,
-                        ):
-                            qs = (
-                                Finding.all_objects.filter(
-                                    tenant_id=tenant_id, scan_id=scan_id
-                                )
-                                .order_by("uid")
-                                .iterator()
+                        qs = (
+                            Finding.all_objects.filter(
+                                tenant_id=tenant_id, scan_id=scan_id
                             )
-
-                            for batch, _ in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
-                                batch_number += 1
-                                has_findings = True
-
-                                # Transform findings for this batch
-                                transformed_findings = [
-                                    FindingOutput.transform_api_finding(
-                                        finding, prowler_provider
-                                    )
-                                    for finding in batch
-                                ]
-
-                                # Convert to ASFF format
-                                asff_transformer = ASFF(
-                                    findings=transformed_findings,
-                                    file_path="",
-                                    file_extension="json",
-                                )
-                                asff_transformer.transform(transformed_findings)
-
-                                # Get the batch of ASFF findings
-                                batch_asff_findings = asff_transformer.data
-
-                                if batch_asff_findings:
-                                    # Create Security Hub client for first batch or reuse existing
-                                    if not security_hub_client:
-                                        connected, security_hub = (
-                                            get_security_hub_client_from_integration(
-                                                integration,
-                                                tenant_id,
-                                                batch_asff_findings,
-                                            )
-                                        )
-
-                                        if not connected:
-                                            if isinstance(
-                                                security_hub.error,
-                                                SecurityHubNoEnabledRegionsError,
-                                            ):
-                                                logger.warning(
-                                                    f"Security Hub integration {integration.id} has no enabled regions"
-                                                )
-                                            else:
-                                                logger.error(
-                                                    f"Security Hub connection failed for integration {integration.id}: "
-                                                    f"{security_hub.error}"
-                                                )
-                                            break  # Skip this integration
-
-                                        security_hub_client = security_hub
-                                        logger.info(
-                                            f"Sending {'fail' if send_only_fails else 'all'} findings to Security Hub via "
-                                            f"integration {integration.id}"
-                                        )
-                                    else:
-                                        # Update findings in existing client for this batch
-                                        security_hub_client._findings_per_region = (
-                                            security_hub_client.filter(
-                                                batch_asff_findings,
-                                                send_only_fails,
-                                            )
-                                        )
-
-                                    # Send this batch to Security Hub
-                                    try:
-                                        findings_sent = security_hub_client.batch_send_to_security_hub()
-                                        total_findings_sent[integration.id] += (
-                                            findings_sent
-                                        )
-
-                                        if findings_sent > 0:
-                                            logger.debug(
-                                                f"Sent batch {batch_number} with {findings_sent} findings to Security Hub"
-                                            )
-                                    except Exception as batch_error:
-                                        logger.error(
-                                            f"Failed to send batch {batch_number} to Security Hub: {str(batch_error)}"
-                                        )
-
-                                # Clear memory after processing each batch
-                                asff_transformer._data.clear()
-                                del batch_asff_findings
-                                del transformed_findings
-
-                        break
-                    except OperationalError as e:
-                        if attempt == max_attempts:
-                            raise
-
-                        delay = REPLICA_RETRY_BASE_DELAY * (2 ** (attempt - 1))
-                        logger.info(
-                            "RLS query failed during Security Hub integration "
-                            f"(attempt {attempt}/{max_attempts}), retrying in {delay}s. Error: {e}"
+                            .order_by("uid")
+                            .iterator()
                         )
-                        time.sleep(delay)
+
+                        for batch, _ in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
+                            batch_number += 1
+                            has_findings = True
+
+                            # Transform findings for this batch
+                            transformed_findings = [
+                                FindingOutput.transform_api_finding(
+                                    finding, prowler_provider
+                                )
+                                for finding in batch
+                            ]
+
+                            # Convert to ASFF format
+                            asff_transformer = ASFF(
+                                findings=transformed_findings,
+                                file_path="",
+                                file_extension="json",
+                            )
+                            asff_transformer.transform(transformed_findings)
+
+                            # Get the batch of ASFF findings
+                            batch_asff_findings = asff_transformer.data
+
+                            if batch_asff_findings:
+                                # Create Security Hub client for first batch or reuse existing
+                                if not security_hub_client:
+                                    connected, security_hub = (
+                                        get_security_hub_client_from_integration(
+                                            integration,
+                                            tenant_id,
+                                            batch_asff_findings,
+                                        )
+                                    )
+
+                                    if not connected:
+                                        if isinstance(
+                                            security_hub.error,
+                                            SecurityHubNoEnabledRegionsError,
+                                        ):
+                                            logger.warning(
+                                                f"Security Hub integration {integration.id} has no enabled regions"
+                                            )
+                                        else:
+                                            logger.error(
+                                                f"Security Hub connection failed for integration {integration.id}: "
+                                                f"{security_hub.error}"
+                                            )
+                                        break  # Skip this integration
+
+                                    security_hub_client = security_hub
+                                    logger.info(
+                                        f"Sending {'fail' if send_only_fails else 'all'} findings to Security Hub via "
+                                        f"integration {integration.id}"
+                                    )
+                                else:
+                                    # Update findings in existing client for this batch
+                                    security_hub_client._findings_per_region = (
+                                        security_hub_client.filter(
+                                            batch_asff_findings,
+                                            send_only_fails,
+                                        )
+                                    )
+
+                                # Send this batch to Security Hub
+                                try:
+                                    findings_sent = (
+                                        security_hub_client.batch_send_to_security_hub()
+                                    )
+                                    total_findings_sent[integration.id] += findings_sent
+
+                                    if findings_sent > 0:
+                                        logger.debug(
+                                            f"Sent batch {batch_number} with {findings_sent} findings to Security Hub"
+                                        )
+                                except Exception as batch_error:
+                                    logger.error(
+                                        f"Failed to send batch {batch_number} to Security Hub: {str(batch_error)}"
+                                    )
+
+                            # Clear memory after processing each batch
+                            asff_transformer._data.clear()
+                            del batch_asff_findings
+                            del transformed_findings
 
                 if not has_findings:
                     logger.info(
@@ -479,67 +459,69 @@ def send_findings_to_jira(
     issue_type: str,
     finding_ids: list[str],
 ):
-    with rls_transaction(tenant_id):
-        integration = Integration.objects.get(id=integration_id)
-        jira_integration = initialize_prowler_integration(integration)
+    for attempt in rls_transaction(tenant_id):
+        with attempt:
+            integration = Integration.objects.get(id=integration_id)
+            jira_integration = initialize_prowler_integration(integration)
 
     num_tickets_created = 0
     for finding_id in finding_ids:
-        with rls_transaction(tenant_id):
-            finding_instance = (
-                Finding.all_objects.select_related("scan__provider")
-                .prefetch_related("resources")
-                .get(id=finding_id)
-            )
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                finding_instance = (
+                    Finding.all_objects.select_related("scan__provider")
+                    .prefetch_related("resources")
+                    .get(id=finding_id)
+                )
 
-            # Extract resource information
-            resource = (
-                finding_instance.resources.first()
-                if finding_instance.resources.exists()
-                else None
-            )
-            resource_uid = resource.uid if resource else ""
-            resource_name = resource.name if resource else ""
-            resource_tags = {}
-            if resource and hasattr(resource, "tags"):
-                resource_tags = resource.get_tags(tenant_id)
+                # Extract resource information
+                resource = (
+                    finding_instance.resources.first()
+                    if finding_instance.resources.exists()
+                    else None
+                )
+                resource_uid = resource.uid if resource else ""
+                resource_name = resource.name if resource else ""
+                resource_tags = {}
+                if resource and hasattr(resource, "tags"):
+                    resource_tags = resource.get_tags(tenant_id)
 
-            # Get region
-            region = resource.region if resource and resource.region else ""
+                # Get region
+                region = resource.region if resource and resource.region else ""
 
-            # Extract remediation information from check_metadata
-            check_metadata = finding_instance.check_metadata
-            remediation = check_metadata.get("remediation", {})
-            recommendation = remediation.get("recommendation", {})
-            remediation_code = remediation.get("code", {})
+                # Extract remediation information from check_metadata
+                check_metadata = finding_instance.check_metadata
+                remediation = check_metadata.get("remediation", {})
+                recommendation = remediation.get("recommendation", {})
+                remediation_code = remediation.get("code", {})
 
-            # Send the individual finding to Jira
-            result = jira_integration.send_finding(
-                check_id=finding_instance.check_id,
-                check_title=check_metadata.get("checktitle", ""),
-                severity=finding_instance.severity,
-                status=finding_instance.status,
-                status_extended=finding_instance.status_extended or "",
-                provider=finding_instance.scan.provider.provider,
-                region=region,
-                resource_uid=resource_uid,
-                resource_name=resource_name,
-                risk=check_metadata.get("risk", ""),
-                recommendation_text=recommendation.get("text", ""),
-                recommendation_url=recommendation.get("url", ""),
-                remediation_code_native_iac=remediation_code.get("nativeiac", ""),
-                remediation_code_terraform=remediation_code.get("terraform", ""),
-                remediation_code_cli=remediation_code.get("cli", ""),
-                remediation_code_other=remediation_code.get("other", ""),
-                resource_tags=resource_tags,
-                compliance=finding_instance.compliance or {},
-                project_key=project_key,
-                issue_type=issue_type,
-            )
-            if result:
-                num_tickets_created += 1
-            else:
-                logger.error(f"Failed to send finding {finding_id} to Jira")
+                # Send the individual finding to Jira
+                result = jira_integration.send_finding(
+                    check_id=finding_instance.check_id,
+                    check_title=check_metadata.get("checktitle", ""),
+                    severity=finding_instance.severity,
+                    status=finding_instance.status,
+                    status_extended=finding_instance.status_extended or "",
+                    provider=finding_instance.scan.provider.provider,
+                    region=region,
+                    resource_uid=resource_uid,
+                    resource_name=resource_name,
+                    risk=check_metadata.get("risk", ""),
+                    recommendation_text=recommendation.get("text", ""),
+                    recommendation_url=recommendation.get("url", ""),
+                    remediation_code_native_iac=remediation_code.get("nativeiac", ""),
+                    remediation_code_terraform=remediation_code.get("terraform", ""),
+                    remediation_code_cli=remediation_code.get("cli", ""),
+                    remediation_code_other=remediation_code.get("other", ""),
+                    resource_tags=resource_tags,
+                    compliance=finding_instance.compliance or {},
+                    project_key=project_key,
+                    issue_type=issue_type,
+                )
+                if result:
+                    num_tickets_created += 1
+                else:
+                    logger.error(f"Failed to send finding {finding_id} to Jira")
 
     return {
         "created_count": num_tickets_created,

@@ -36,35 +36,36 @@ def _aggregate_requirement_statistics_from_database(
     """
     requirement_statistics_by_check_id = {}
     # TODO: take into account that now the relation is 1 finding == 1 resource, review this when the logic changes
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        aggregated_statistics_queryset = (
-            Finding.all_objects.filter(
-                tenant_id=tenant_id,
-                scan_id=scan_id,
-                muted=False,
-                resources__provider__is_deleted=False,
+    for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        with attempt:
+            aggregated_statistics_queryset = (
+                Finding.all_objects.filter(
+                    tenant_id=tenant_id,
+                    scan_id=scan_id,
+                    muted=False,
+                    resources__provider__is_deleted=False,
+                )
+                .values("check_id")
+                .annotate(
+                    total_findings=Count(
+                        "id",
+                        distinct=True,
+                        filter=Q(status__in=[StatusChoices.PASS, StatusChoices.FAIL]),
+                    ),
+                    passed_findings=Count(
+                        "id",
+                        distinct=True,
+                        filter=Q(status=StatusChoices.PASS),
+                    ),
+                )
             )
-            .values("check_id")
-            .annotate(
-                total_findings=Count(
-                    "id",
-                    distinct=True,
-                    filter=Q(status__in=[StatusChoices.PASS, StatusChoices.FAIL]),
-                ),
-                passed_findings=Count(
-                    "id",
-                    distinct=True,
-                    filter=Q(status=StatusChoices.PASS),
-                ),
-            )
-        )
 
-        for aggregated_stat in aggregated_statistics_queryset:
-            check_id = aggregated_stat["check_id"]
-            requirement_statistics_by_check_id[check_id] = {
-                "passed": aggregated_stat["passed_findings"],
-                "total": aggregated_stat["total_findings"],
-            }
+            for aggregated_stat in aggregated_statistics_queryset:
+                check_id = aggregated_stat["check_id"]
+                requirement_statistics_by_check_id[check_id] = {
+                    "passed": aggregated_stat["passed_findings"],
+                    "total": aggregated_stat["total_findings"],
+                }
 
     logger.info(
         f"Aggregated statistics for {len(requirement_statistics_by_check_id)} unique checks"
@@ -220,35 +221,36 @@ def _load_findings_for_requirement_checks(
             f"Loading findings for {len(check_ids_to_load)} checks from database"
         )
 
-        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-            # Use iterator with chunk_size for memory-efficient streaming
-            # chunk_size controls how many rows Django fetches from DB at once
-            findings_queryset = (
-                Finding.all_objects.filter(
-                    tenant_id=tenant_id,
-                    scan_id=scan_id,
-                    check_id__in=check_ids_to_load,
+        for attempt in rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+            with attempt:
+                # Use iterator with chunk_size for memory-efficient streaming
+                # chunk_size controls how many rows Django fetches from DB at once
+                findings_queryset = (
+                    Finding.all_objects.filter(
+                        tenant_id=tenant_id,
+                        scan_id=scan_id,
+                        check_id__in=check_ids_to_load,
+                    )
+                    .order_by("check_id", "uid")
+                    .iterator(chunk_size=DJANGO_FINDINGS_BATCH_SIZE)
                 )
-                .order_by("check_id", "uid")
-                .iterator(chunk_size=DJANGO_FINDINGS_BATCH_SIZE)
-            )
 
-            # Pre-initialize empty lists for all check_ids to load
-            # This avoids repeated dict lookups and 'if not in' checks
-            for check_id in check_ids_to_load:
-                findings_cache[check_id] = []
+                # Pre-initialize empty lists for all check_ids to load
+                # This avoids repeated dict lookups and 'if not in' checks
+                for check_id in check_ids_to_load:
+                    findings_cache[check_id] = []
 
-            findings_count = 0
-            for finding_model in findings_queryset:
-                finding_output = FindingOutput.transform_api_finding(
-                    finding_model, prowler_provider
+                findings_count = 0
+                for finding_model in findings_queryset:
+                    finding_output = FindingOutput.transform_api_finding(
+                        finding_model, prowler_provider
+                    )
+                    findings_cache[finding_output.check_id].append(finding_output)
+                    findings_count += 1
+
+                logger.info(
+                    f"Loaded {findings_count} findings for {len(check_ids_to_load)} checks"
                 )
-                findings_cache[finding_output.check_id].append(finding_output)
-                findings_count += 1
-
-            logger.info(
-                f"Loaded {findings_count} findings for {len(check_ids_to_load)} checks"
-            )
 
     # Build result dict using cache references (no data duplication)
     # This shares the same list objects between cache and result

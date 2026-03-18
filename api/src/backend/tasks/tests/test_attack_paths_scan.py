@@ -55,7 +55,7 @@ class TestAttackPathsRun:
     )
     @patch(
         "tasks.jobs.attack_paths.scan.rls_transaction",
-        new=lambda *args, **kwargs: nullcontext(),
+        new=lambda *args, **kwargs: [nullcontext()],
     )
     def test_run_success_flow(
         self,
@@ -201,7 +201,7 @@ class TestAttackPathsRun:
     )
     @patch(
         "tasks.jobs.attack_paths.scan.rls_transaction",
-        new=lambda *args, **kwargs: nullcontext(),
+        new=lambda *args, **kwargs: [nullcontext()],
     )
     def test_run_failure_marks_scan_failed(
         self,
@@ -300,7 +300,7 @@ class TestAttackPathsRun:
     )
     @patch(
         "tasks.jobs.attack_paths.scan.rls_transaction",
-        new=lambda *args, **kwargs: nullcontext(),
+        new=lambda *args, **kwargs: [nullcontext()],
     )
     def test_failure_before_gate_does_not_flip_graph_data_ready_true(
         self,
@@ -403,7 +403,7 @@ class TestAttackPathsRun:
     )
     @patch(
         "tasks.jobs.attack_paths.scan.rls_transaction",
-        new=lambda *args, **kwargs: nullcontext(),
+        new=lambda *args, **kwargs: [nullcontext()],
     )
     def test_run_failure_marks_scan_failed_even_when_drop_database_fails(
         self,
@@ -509,7 +509,7 @@ class TestAttackPathsRun:
     )
     @patch(
         "tasks.jobs.attack_paths.scan.rls_transaction",
-        new=lambda *args, **kwargs: nullcontext(),
+        new=lambda *args, **kwargs: [nullcontext()],
     )
     def test_failure_after_gate_before_drop_restores_graph_data_ready(
         self,
@@ -622,7 +622,7 @@ class TestAttackPathsRun:
     )
     @patch(
         "tasks.jobs.attack_paths.scan.rls_transaction",
-        new=lambda *args, **kwargs: nullcontext(),
+        new=lambda *args, **kwargs: [nullcontext()],
     )
     def test_failure_after_drop_before_sync_leaves_graph_data_ready_false(
         self,
@@ -735,7 +735,7 @@ class TestAttackPathsRun:
     )
     @patch(
         "tasks.jobs.attack_paths.scan.rls_transaction",
-        new=lambda *args, **kwargs: nullcontext(),
+        new=lambda *args, **kwargs: [nullcontext()],
     )
     def test_failure_after_sync_restores_graph_data_ready(
         self,
@@ -853,7 +853,7 @@ class TestAttackPathsRun:
     )
     @patch(
         "tasks.jobs.attack_paths.scan.rls_transaction",
-        new=lambda *args, **kwargs: nullcontext(),
+        new=lambda *args, **kwargs: [nullcontext()],
     )
     def test_recovery_failure_does_not_suppress_original_exception(
         self,
@@ -949,7 +949,7 @@ class TestAttackPathsRun:
         with (
             patch(
                 "tasks.jobs.attack_paths.scan.rls_transaction",
-                new=lambda *args, **kwargs: nullcontext(),
+                new=lambda *args, **kwargs: [nullcontext()],
             ),
             patch(
                 "tasks.jobs.attack_paths.scan.initialize_prowler_provider",
@@ -1411,7 +1411,7 @@ class TestAttackPathsFindingsHelpers:
         with (
             patch(
                 "tasks.jobs.attack_paths.findings.rls_transaction",
-                new=lambda *args, **kwargs: nullcontext(),
+                new=lambda *args, **kwargs: [nullcontext()],
             ),
             patch(
                 "tasks.jobs.attack_paths.findings.READ_REPLICA_ALIAS",
@@ -2024,7 +2024,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
 
         with patch(
             "tasks.jobs.attack_paths.db_utils.rls_transaction",
-            new=lambda *args, **kwargs: nullcontext(),
+            new=lambda *args, **kwargs: [nullcontext()],
         ):
             attack_paths_scan = create_attack_paths_scan(
                 str(tenant.id), str(scan.id), provider.id
@@ -2064,7 +2064,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
 
         with patch(
             "tasks.jobs.attack_paths.db_utils.rls_transaction",
-            new=lambda *args, **kwargs: nullcontext(),
+            new=lambda *args, **kwargs: [nullcontext()],
         ):
             attack_paths_scan = create_attack_paths_scan(
                 str(tenant.id), str(new_scan.id), provider.id
@@ -2104,7 +2104,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
 
         with patch(
             "tasks.jobs.attack_paths.db_utils.rls_transaction",
-            new=lambda *args, **kwargs: nullcontext(),
+            new=lambda *args, **kwargs: [nullcontext()],
         ):
             attack_paths_scan = create_attack_paths_scan(
                 str(tenant.id), str(new_scan.id), provider.id
@@ -2136,7 +2136,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
 
         with patch(
             "tasks.jobs.attack_paths.db_utils.rls_transaction",
-            new=lambda *args, **kwargs: nullcontext(),
+            new=lambda *args, **kwargs: [nullcontext()],
         ):
             set_graph_data_ready(attack_paths_scan, False)
 
@@ -2145,7 +2145,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
 
         with patch(
             "tasks.jobs.attack_paths.db_utils.rls_transaction",
-            new=lambda *args, **kwargs: nullcontext(),
+            new=lambda *args, **kwargs: [nullcontext()],
         ):
             set_graph_data_ready(attack_paths_scan, True)
 
@@ -2175,7 +2175,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
 
         with patch(
             "tasks.jobs.attack_paths.db_utils.rls_transaction",
-            new=lambda *args, **kwargs: nullcontext(),
+            new=lambda *args, **kwargs: [nullcontext()],
         ):
             finish_attack_paths_scan(attack_paths_scan, StateChoices.COMPLETED, {})
 
@@ -2206,7 +2206,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
 
         with patch(
             "tasks.jobs.attack_paths.db_utils.rls_transaction",
-            new=lambda *args, **kwargs: nullcontext(),
+            new=lambda *args, **kwargs: [nullcontext()],
         ):
             finish_attack_paths_scan(
                 attack_paths_scan,
@@ -2257,7 +2257,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
 
         with patch(
             "tasks.jobs.attack_paths.db_utils.rls_transaction",
-            new=lambda *args, **kwargs: nullcontext(),
+            new=lambda *args, **kwargs: [nullcontext()],
         ):
             set_provider_graph_data_ready(new_ap_scan, False)
 
@@ -2309,7 +2309,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
 
         with patch(
             "tasks.jobs.attack_paths.db_utils.rls_transaction",
-            new=lambda *args, **kwargs: nullcontext(),
+            new=lambda *args, **kwargs: [nullcontext()],
         ):
             set_provider_graph_data_ready(ap_scan_a, False)
 

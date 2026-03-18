@@ -29,16 +29,17 @@ def migrate_daily_scheduled_scan_tasks(apps, schema_editor):
         else:
             next_scan_date = scheduled_time_today + timedelta(days=1)
 
-        with rls_transaction(tenant_id):
-            Scan.objects.create(
-                tenant_id=tenant_id,
-                name="Daily scheduled scan",
-                provider_id=provider_id,
-                trigger=Scan.TriggerChoices.SCHEDULED,
-                state=StateChoices.SCHEDULED,
-                scheduled_at=next_scan_date,
-                scheduler_task_id=daily_scheduled_scan_task.id,
-            )
+        for attempt in rls_transaction(tenant_id):
+            with attempt:
+                Scan.objects.create(
+                    tenant_id=tenant_id,
+                    name="Daily scheduled scan",
+                    provider_id=provider_id,
+                    trigger=Scan.TriggerChoices.SCHEDULED,
+                    state=StateChoices.SCHEDULED,
+                    scheduled_at=next_scan_date,
+                    scheduler_task_id=daily_scheduled_scan_task.id,
+                )
 
 
 class Migration(migrations.Migration):

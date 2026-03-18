@@ -713,7 +713,7 @@ class TestGenerateOutputs:
                 True,
             ]
             mock_integration_filter.return_value = [MagicMock()]
-            mock_rls.return_value.__enter__.return_value = None
+            mock_rls.return_value = [MagicMock()]
 
             with (
                 patch("tasks.tasks.OUTPUT_FORMATS_MAPPING", {}),
@@ -880,7 +880,7 @@ class TestCheckIntegrationsTask:
     ):
         mock_integration_filter.return_value.exists.return_value = False
         # Ensure rls_transaction is mocked
-        mock_rls.return_value.__enter__.return_value = None
+        mock_rls.return_value = [MagicMock()]
 
         result = check_integrations_task(
             tenant_id=self.tenant_id,
@@ -922,7 +922,7 @@ class TestCheckIntegrationsTask:
         mock_group.return_value = mock_job
 
         # Ensure rls_transaction is mocked
-        mock_rls.return_value.__enter__.return_value = None
+        mock_rls.return_value = [MagicMock()]
 
         # Execute the function
         result = check_integrations_task(
@@ -963,7 +963,7 @@ class TestCheckIntegrationsTask:
     ):
         """Test that disabled integrations are not processed."""
         mock_integration_filter.return_value.exists.return_value = False
-        mock_rls.return_value.__enter__.return_value = None
+        mock_rls.return_value = [MagicMock()]
 
         result = check_integrations_task(
             tenant_id=self.tenant_id,

@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import call, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
@@ -65,8 +65,7 @@ class TestHandleProviderDeletionDecorator:
         tenant = tenants_fixture[0]
         deleted_provider_id = str(uuid.uuid4())
 
-        mock_rls.return_value.__enter__ = lambda s: None
-        mock_rls.return_value.__exit__ = lambda s, *args: None
+        mock_rls.return_value = [MagicMock()]
         mock_filter.return_value.exists.return_value = False
 
         @handle_provider_deletion
@@ -89,8 +88,7 @@ class TestHandleProviderDeletionDecorator:
         scan_id = str(uuid.uuid4())
         provider_id = str(uuid.uuid4())
 
-        mock_rls.return_value.__enter__ = lambda s: None
-        mock_rls.return_value.__exit__ = lambda s, *args: None
+        mock_rls.return_value = [MagicMock()]
 
         mock_scan = type("MockScan", (), {"provider_id": provider_id})()
         mock_scan_filter.return_value.first.return_value = mock_scan
@@ -112,8 +110,7 @@ class TestHandleProviderDeletionDecorator:
         tenant = tenants_fixture[0]
         scan_id = str(uuid.uuid4())
 
-        mock_rls.return_value.__enter__ = lambda s: None
-        mock_rls.return_value.__exit__ = lambda s, *args: None
+        mock_rls.return_value = [MagicMock()]
         mock_scan_filter.return_value.first.return_value = None
 
         @handle_provider_deletion
@@ -134,8 +131,7 @@ class TestHandleProviderDeletionDecorator:
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
 
-        mock_rls.return_value.__enter__ = lambda s: None
-        mock_rls.return_value.__exit__ = lambda s, *args: None
+        mock_rls.return_value = [MagicMock()]
         mock_filter.return_value.exists.return_value = True
 
         @handle_provider_deletion
@@ -154,8 +150,7 @@ class TestHandleProviderDeletionDecorator:
         tenant = tenants_fixture[0]
         deleted_provider_id = str(uuid.uuid4())
 
-        mock_rls.return_value.__enter__ = lambda s: None
-        mock_rls.return_value.__exit__ = lambda s, *args: None
+        mock_rls.return_value = [MagicMock()]
         mock_filter.return_value.exists.return_value = False
 
         @handle_provider_deletion
@@ -174,8 +169,7 @@ class TestHandleProviderDeletionDecorator:
         tenant = tenants_fixture[0]
         deleted_provider_id = str(uuid.uuid4())
 
-        mock_rls.return_value.__enter__ = lambda s: None
-        mock_rls.return_value.__exit__ = lambda s, *args: None
+        mock_rls.return_value = [MagicMock()]
         mock_filter.return_value.exists.return_value = False
 
         @handle_provider_deletion
@@ -194,8 +188,7 @@ class TestHandleProviderDeletionDecorator:
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
 
-        mock_rls.return_value.__enter__ = lambda s: None
-        mock_rls.return_value.__exit__ = lambda s, *args: None
+        mock_rls.return_value = [MagicMock()]
         mock_filter.return_value.exists.return_value = True
 
         @handle_provider_deletion
