@@ -8,6 +8,7 @@ to the tenant database, adding provider isolation labels and properties.
 from collections import defaultdict
 from typing import Any
 
+import neo4j
 from celery.utils.log import get_task_logger
 
 from api.attack_paths import database as graph_database
@@ -190,7 +191,7 @@ def sync_relationships(
 
 
 def _node_to_sync_dict(
-    record: Any, provider_id: str
+    record: neo4j.Record, provider_id: str
 ) -> tuple[tuple[str, ...], dict[str, Any]]:
     """Transform a source node record into a (grouping_key, sync_dict) pair."""
     props = dict(record["props"] or {})
@@ -202,7 +203,9 @@ def _node_to_sync_dict(
     }
 
 
-def _rel_to_sync_dict(record: Any, provider_id: str) -> tuple[str, dict[str, Any]]:
+def _rel_to_sync_dict(
+    record: neo4j.Record, provider_id: str
+) -> tuple[str, dict[str, Any]]:
     """Transform a source relationship record into a (grouping_key, sync_dict) pair."""
     props = dict(record["props"] or {})
     _strip_internal_properties(props)
