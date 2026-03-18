@@ -20,6 +20,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update M365 Teams service metadata to new format [(#9685)](https://github.com/prowler-cloud/prowler/pull/9685)
 - Update M365 Entra ID service metadata to new format [(#9682)](https://github.com/prowler-cloud/prowler/pull/9682)
 - Update ResourceType and Categories for Azure Entra ID service metadata [(#10334)](https://github.com/prowler-cloud/prowler/pull/10334)
+- Update OCI Regions to include DoD regions [(#10375)](https://github.com/prowler-cloud/prowler/pull/10376)
 
 ### 🔐 Security
 
