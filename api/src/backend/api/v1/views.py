@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import time
-
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -12,7 +11,6 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from urllib.parse import urljoin
 
 import sentry_sdk
-
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -76,6 +74,7 @@ from rest_framework.exceptions import (
 )
 from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
+from rest_framework_json_api import filters as jsonapi_filters
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
@@ -100,7 +99,6 @@ from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
-from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
@@ -199,6 +197,7 @@ from api.models import (
 )
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
+from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.rls import Tenant
 from api.utils import (
     CustomOAuth2Client,
@@ -6777,6 +6776,11 @@ class FindingGroupViewSet(BaseRLSViewSet):
     queryset = FindingGroupDailySummary.objects.all()
     serializer_class = FindingGroupSerializer
     filterset_class = FindingGroupSummaryFilter
+    filter_backends = [
+        jsonapi_filters.QueryParameterValidationFilter,
+        jsonapi_filters.OrderingFilter,
+        CustomDjangoFilterBackend,
+    ]
     http_method_names = ["get"]
     required_permissions = []
 
@@ -6784,6 +6788,10 @@ class FindingGroupViewSet(BaseRLSViewSet):
         """Return appropriate filter based on action."""
         if self.action == "latest":
             return LatestFindingGroupSummaryFilter
+        if self.action == "resources":
+            return FindingGroupFilter
+        if self.action == "latest_resources":
+            return LatestFindingGroupFilter
         return FindingGroupSummaryFilter
 
     def get_queryset(self):
@@ -7237,6 +7245,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
         and timing information including how long they have been failing.
         """,
         tags=["Finding Groups"],
+        filters=True,
     )
     @action(detail=True, methods=["get"], url_path="resources")
     def resources(self, request, pk=None):
@@ -7311,6 +7320,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
         and timing information. No date filters required.
         """,
         tags=["Finding Groups"],
+        filters=True,
     )
     @action(
         detail=False,
