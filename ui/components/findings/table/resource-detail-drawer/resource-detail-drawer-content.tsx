@@ -226,12 +226,22 @@ export function ResourceDetailDrawerContent({
             entityId={f.providerUid}
           />
           <EntityInfo entityAlias={f.resourceName} entityId={f.resourceUid} />
-          <InfoField label="Service" inline>
-            {f.resourceService}
-          </InfoField>
-          <InfoField label="Region" inline>
-            {f.resourceRegion}
-          </InfoField>
+          <div className="flex flex-col gap-1">
+            <span className="text-text-neutral-secondary text-[10px]">
+              Service
+            </span>
+            <span className="text-text-neutral-primary text-sm">
+              {f.resourceService}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-text-neutral-secondary text-[10px]">
+              Region
+            </span>
+            <span className="text-text-neutral-primary text-sm">
+              {f.resourceRegion}
+            </span>
+          </div>
           <div>
             <ActionDropdown ariaLabel="Resource actions">
               <ActionDropdownItem
@@ -252,30 +262,48 @@ export function ResourceDetailDrawerContent({
 
         {/* Dates row */}
         <div className="grid grid-cols-3 gap-4">
-          <InfoField label="Last detected" variant="simple">
-            <DateWithTime inline dateTime={f.updatedAt || "-"} />
-          </InfoField>
-          <InfoField label="First seen" variant="simple">
-            <DateWithTime inline dateTime={f.firstSeenAt || "-"} />
-          </InfoField>
-          <InfoField label="Failing for" variant="simple">
-            <span className="text-sm">
+          <div className="flex flex-col gap-1">
+            <span className="text-text-neutral-secondary text-[10px]">
+              Last detected
+            </span>
+            <DateWithTime dateTime={f.updatedAt || "-"} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-text-neutral-secondary text-[10px]">
+              First seen
+            </span>
+            <DateWithTime dateTime={f.firstSeenAt || "-"} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-text-neutral-secondary text-[10px]">
+              Failing for
+            </span>
+            <span className="text-text-neutral-primary text-sm">
               {getFailingForLabel(f.firstSeenAt) || "-"}
             </span>
-          </InfoField>
+          </div>
         </div>
 
         {/* IDs row */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <InfoField label="Check ID" variant="simple">
+        <div className="grid grid-cols-3 gap-4">
+          <div className="flex flex-col gap-1">
+            <span className="text-text-neutral-secondary text-[10px]">
+              Check ID
+            </span>
             <CodeSnippet value={f.checkId} className="max-w-full" />
-          </InfoField>
-          <InfoField label="Finding ID" variant="simple">
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-text-neutral-secondary text-[10px]">
+              Finding ID
+            </span>
             <CodeSnippet value={f.id} className="max-w-full" />
-          </InfoField>
-          <InfoField label="Finding UID" variant="simple">
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-text-neutral-secondary text-[10px]">
+              Finding UID
+            </span>
             <CodeSnippet value={f.uid} className="max-w-full" />
-          </InfoField>
+          </div>
         </div>
 
         {/* Tabs */}
