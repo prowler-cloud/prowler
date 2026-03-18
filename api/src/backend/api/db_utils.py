@@ -18,6 +18,7 @@ from django.db import (
 )
 from django_celery_beat.models import PeriodicTask
 from psycopg2 import connect as psycopg2_connect
+from psycopg2 import sql as psycopg2_sql
 from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
 from rest_framework_json_api.serializers import ValidationError
 
@@ -280,15 +281,23 @@ class PostgresEnumMigration:
         self.enum_values = enum_values
 
     def create_enum_type(self, apps, schema_editor):  # noqa: F841
-        string_enum_values = ", ".join([f"'{value}'" for value in self.enum_values])
         with schema_editor.connection.cursor() as cursor:
             cursor.execute(
-                f"CREATE TYPE {self.enum_name} AS ENUM ({string_enum_values});"
+                psycopg2_sql.SQL("CREATE TYPE {} AS ENUM ({})").format(
+                    psycopg2_sql.Identifier(self.enum_name),
+                    psycopg2_sql.SQL(", ").join(
+                        psycopg2_sql.Literal(v) for v in self.enum_values
+                    ),
+                )
             )
 
     def drop_enum_type(self, apps, schema_editor):  # noqa: F841
         with schema_editor.connection.cursor() as cursor:
-            cursor.execute(f"DROP TYPE {self.enum_name};")
+            cursor.execute(
+                psycopg2_sql.SQL("DROP TYPE {}").format(
+                    psycopg2_sql.Identifier(self.enum_name)
+                )
+            )
 
 
 class PostgresEnumField(models.Field):
