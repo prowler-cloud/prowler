@@ -11,6 +11,7 @@ import { ChevronLeft } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 
+import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
 import {
   Table,
   TableBody,
@@ -20,7 +21,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
-import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
 import { useInfiniteResources } from "@/hooks/use-infinite-resources";
 import { cn, hasDateOrScanFilter } from "@/lib";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
@@ -30,6 +30,10 @@ import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
 import { DeltaValues, NotificationIndicator } from "./notification-indicator";
+import {
+  ResourceDetailDrawer,
+  useResourceDetailDrawer,
+} from "./resource-detail-drawer";
 
 interface FindingsGroupDrillDownProps {
   group: FindingGroupRow;
@@ -92,6 +96,17 @@ export function FindingsGroupDrillDown({
     onAppendResources: handleAppendResources,
     onSetLoading: handleSetLoading,
   });
+
+  // Resource detail drawer
+  const drawer = useResourceDetailDrawer({
+    resources,
+    checkId: group.checkId,
+  });
+
+  const handleDrawerMuteComplete = () => {
+    drawer.closeDrawer();
+    router.refresh();
+  };
 
   // Selection logic for resources
   const selectedFindingIds = Object.keys(rowSelection)
@@ -225,6 +240,8 @@ export function FindingsGroupDrillDown({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
+                    className="cursor-pointer"
+                    onClick={() => drawer.openDrawer(row.index)}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
@@ -271,6 +288,21 @@ export function FindingsGroupDrillDown({
           onComplete={handleMuteComplete}
         />
       )}
+
+      <ResourceDetailDrawer
+        open={drawer.isOpen}
+        onOpenChange={(open) => {
+          if (!open) drawer.closeDrawer();
+        }}
+        isLoading={drawer.isLoading}
+        currentIndex={drawer.currentIndex}
+        totalResources={drawer.totalResources}
+        currentFinding={drawer.currentFinding}
+        otherFindings={drawer.otherFindings}
+        onNavigatePrev={drawer.navigatePrev}
+        onNavigateNext={drawer.navigateNext}
+        onMuteComplete={handleDrawerMuteComplete}
+      />
     </FindingsSelectionContext.Provider>
   );
 }
