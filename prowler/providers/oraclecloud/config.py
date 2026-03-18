@@ -66,11 +66,11 @@ OCI_GOVERNMENT_REGIONS = {
 }
 
 # OCI Defense Regions
-OCI_DEFENSE_REGIONS = {
-    "us-gov-ashburn-1": "US DoD VA",
-    "us-gov-phoenix-1": "US DoD AZ",
-    "us-gov-chicago-1": "US DoD IL"
+OCI_DOD_REGIONS = {
+    "us-gov-ashburn-1": "US DoD East (Ashburn)",
+    "us-gov-chicago-1": "US DoD North (Chicago)",
+    "us-gov-phoenix-1": "US DoD West (Phoenix)",
 }
 
 # All OCI Regions
-OCI_REGIONS = {**OCI_COMMERCIAL_REGIONS, **OCI_GOVERNMENT_REGIONS, **OCI_DEFENSE_REGIONS}
+OCI_REGIONS = {**OCI_COMMERCIAL_REGIONS, **OCI_GOVERNMENT_REGIONS, **OCI_DOD_REGIONS}
