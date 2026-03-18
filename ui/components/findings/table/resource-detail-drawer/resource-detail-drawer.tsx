@@ -41,7 +41,7 @@ export function ResourceDetailDrawer({
 }: ResourceDetailDrawerProps) {
   return (
     <Drawer direction="right" open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="3xl:w-1/3 h-full w-full overflow-hidden p-6 outline-none md:w-1/2 md:max-w-none">
+      <DrawerContent className="3xl:w-1/3 h-full w-full overflow-hidden p-6 outline-none md:w-1/2 md:max-w-none md:min-w-[720px]">
         <DrawerHeader className="sr-only">
           <DrawerTitle>Resource Finding Details</DrawerTitle>
           <DrawerDescription>
