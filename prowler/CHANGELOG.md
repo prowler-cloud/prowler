@@ -12,6 +12,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 -`entra_conditional_access_policy_require_mfa_for_admin_portals` check for Azure provider and update CIS compliance [(#10330)](https://github.com/prowler-cloud/prowler/pull/10330)
 - CheckMetadata Pydantic validators [(#8584)](https://github.com/prowler-cloud/prowler/pull/8583)
 - `organization_repository_deletion_limited` check for GitHub provider [(#10185)](https://github.com/prowler-cloud/prowler/pull/10185)
+- SecNumCloud 3.2 compliance framework for the GCP provider [(#10364)](https://github.com/prowler-cloud/prowler/pull/10364)
 - SecNumCloud 3.2 for the Azure provider [(#10358)](https://github.com/prowler-cloud/prowler/pull/10358)
 
 ### 🔄 Changed
