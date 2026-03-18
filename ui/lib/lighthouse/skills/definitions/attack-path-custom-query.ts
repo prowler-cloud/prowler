@@ -1,7 +1,6 @@
-import { registerSkill } from "../registry";
 import type { SkillDefinition } from "../types";
 
-const customAttackPathQuerySkill: SkillDefinition = {
+export const customAttackPathQuerySkill: SkillDefinition = {
   metadata: {
     id: "attack-path-custom-query",
     name: "Attack Paths Custom Query",
@@ -311,4 +310,3 @@ RETURN path_principal, path_target,
 `,
 };
 
-registerSkill(customAttackPathQuerySkill);
