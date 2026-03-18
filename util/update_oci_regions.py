@@ -158,7 +158,7 @@ def update_config_file(regions, config_file_path):
         )
     if "OCI_US_DOD_REGIONS" not in updated_content:
         raise Exception(
-            "Validation failed: OCI_DOD_REGIONS section missing after update. Aborting to prevent data loss."
+            "Validation failed: OCI_US_DOD_REGIONS section missing after update. Aborting to prevent data loss."
         )
 
     # Verify the replacement was successful
