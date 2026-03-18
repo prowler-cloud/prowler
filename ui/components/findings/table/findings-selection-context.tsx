@@ -4,7 +4,7 @@ import { createContext, useContext } from "react";
 
 interface FindingsSelectionContextValue {
   selectedFindingIds: string[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   selectedFindings: any[];
   clearSelection: () => void;
   isSelected: (id: string) => boolean;

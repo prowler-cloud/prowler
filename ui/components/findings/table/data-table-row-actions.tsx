@@ -38,8 +38,7 @@ export interface FindingRowData {
 function extractRowInfo(data: FindingRowData) {
   if (data.rowType === "group") {
     const allMuted =
-      (data.mutedCount ?? 0) > 0 &&
-      data.mutedCount === data.resourcesTotal;
+      (data.mutedCount ?? 0) > 0 && data.mutedCount === data.resourcesTotal;
     return {
       isMuted: allMuted,
       title: data.checkTitle || "Security Finding",

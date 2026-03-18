@@ -39,8 +39,7 @@ function getFailingForLabel(firstSeenAt: string | null): string | null {
   if (diffDays < 30) return `${diffDays} day${diffDays > 1 ? "s" : ""}`;
 
   const diffMonths = Math.floor(diffDays / 30);
-  if (diffMonths < 12)
-    return `${diffMonths} month${diffMonths > 1 ? "s" : ""}`;
+  if (diffMonths < 12) return `${diffMonths} month${diffMonths > 1 ? "s" : ""}`;
 
   const diffYears = Math.floor(diffMonths / 12);
   return `${diffYears} year${diffYears > 1 ? "s" : ""}`;
@@ -50,11 +49,12 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
   const resource = row.original;
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
 
-  const { selectedFindingIds, clearSelection } =
-    useContext(FindingsSelectionContext) || {
-      selectedFindingIds: [],
-      clearSelection: () => {},
-    };
+  const { selectedFindingIds, clearSelection } = useContext(
+    FindingsSelectionContext,
+  ) || {
+    selectedFindingIds: [],
+    clearSelection: () => {},
+  };
 
   const isCurrentSelected = selectedFindingIds.includes(resource.findingId);
   const hasMultipleSelected = selectedFindingIds.length > 1;
@@ -169,9 +169,7 @@ export function getColumnFindingResources({
             size="sm"
             checked={!!rowSelection[row.id]}
             disabled={row.original.isMuted}
-            onCheckedChange={(checked) =>
-              row.toggleSelected(checked === true)
-            }
+            onCheckedChange={(checked) => row.toggleSelected(checked === true)}
             onClick={(e) => e.stopPropagation()}
             aria-label="Select resource"
           />
@@ -262,9 +260,7 @@ export function getColumnFindingResources({
           Last seen
         </span>
       ),
-      cell: ({ row }) => (
-        <DateWithTime dateTime={row.original.lastSeenAt} />
-      ),
+      cell: ({ row }) => <DateWithTime dateTime={row.original.lastSeenAt} />,
       enableSorting: false,
     },
     // Failing for — duration since first_seen_at
@@ -278,9 +274,7 @@ export function getColumnFindingResources({
       cell: ({ row }) => {
         const label = getFailingForLabel(row.original.firstSeenAt);
         return (
-          <p className="text-text-neutral-primary text-sm">
-            {label || "-"}
-          </p>
+          <p className="text-text-neutral-primary text-sm">{label || "-"}</p>
         );
       },
       enableSorting: false,

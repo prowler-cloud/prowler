@@ -69,7 +69,10 @@ export const getLatestFindingGroups = async ({
   if (sort) url.searchParams.append("sort", sort);
 
   appendSanitizedProviderFilters(url, mapSearchFilter(filters));
-  console.log("[finding-groups/latest] GET", decodeURIComponent(url.toString()));
+  console.log(
+    "[finding-groups/latest] GET",
+    decodeURIComponent(url.toString()),
+  );
 
   try {
     const response = await fetch(url.toString(), { headers });
