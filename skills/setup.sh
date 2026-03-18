@@ -4,7 +4,7 @@
 #   - Claude Code: .claude/skills/ symlink + CLAUDE.md symlink
 #   - Gemini CLI: .gemini/skills/ symlink + GEMINI.md symlink
 #   - Codex (OpenAI): .codex/skills/ symlink + AGENTS.md (native)
-#   - GitHub Copilot: .github/copilot-instructions.md copy
+#   - GitHub Copilot: .github/copilot-instructions.md symlink
 #
 # Usage:
 #   ./setup.sh              # Interactive mode (select AI assistants)
@@ -53,7 +53,7 @@ add_to_gitignore() {
         if ! grep -qxF "$header" "$gitignore_file"; then
             echo -e "\n\n$header" >> "$gitignore_file"
         fi
-        
+
         echo "$pattern" >> "$gitignore_file"
         echo -e "${GREEN}  ✓ Added $pattern to .gitignore${NC}"
     fi
@@ -191,13 +191,13 @@ setup_codex() {
 setup_copilot() {
     if [ -f "$REPO_ROOT/AGENTS.md" ]; then
         mkdir -p "$REPO_ROOT/.github"
-        
+
         # Link AGENTS.md -> .github/copilot-instructions.md
         local target="$REPO_ROOT/.github/copilot-instructions.md"
         ln -sf "../AGENTS.md" "$target"
-        
+
         echo -e "${GREEN}  ✓ AGENTS.md -> .github/copilot-instructions.md${NC}"
-        
+
         # Add specifically the file, NOT the .github folder
         add_to_gitignore ".github/copilot-instructions.md"
     fi
@@ -213,12 +213,11 @@ link_agents_md() {
     for agents_file in $agents_files; do
         local agents_dir
         agents_dir=$(dirname "$agents_file")
-        local target_path="$agents_dir/$target_name"
-        
+
         # Create relative symlink
         # Since files are in same dir, we can just link to basename
         (cd "$agents_dir" && ln -sf "$(basename "$agents_file")" "$target_name")
-        
+
         count=$((count + 1))
     done
 
@@ -341,4 +340,4 @@ echo "Configured:"
 [ "$SETUP_COPILOT" = true ] && echo "  • GitHub Copilot: .github/copilot-instructions.md"
 echo ""
 echo -e "${BLUE}Note: Restart your AI assistant to load the skills.${NC}"
-echo -e "${BLUE}      AGENTS.md is the source of truth - edit it, then re-run this script.${NC}"
+echo -e "${BLUE}      AGENTS.md is the source of truth - changes are reflected automatically via symlinks.${NC}"

@@ -272,7 +272,7 @@ test_idempotent_multiple_runs() {
     run_setup --claude > /dev/null
     run_setup --claude > /dev/null
     assert_symlink_exists "$TEST_DIR/.claude/skills" "Symlink should still exist after second run" && \
-    assert_file_exists "$TEST_DIR/CLAUDE.md" "CLAUDE.md should still exist after second run"
+    assert_symlink_exists "$TEST_DIR/CLAUDE.md" "CLAUDE.md should still be a symlink after second run"
 }
 
 # =============================================================================
