@@ -35,10 +35,33 @@ export function getColumnFindingGroups({
     selectedCount > 0 && selectedCount < selectableRowCount;
 
   return [
-    // Notification column — delta derived from new_count / changed_count
+    // Combined column: notification + expand toggle + checkbox
     {
-      id: "notification",
-      header: () => null,
+      id: "select",
+      header: ({ table }) => {
+        const headerChecked = isAllSelected
+          ? true
+          : isSomeSelected
+            ? "indeterminate"
+            : false;
+
+        return (
+          <div className="flex items-center gap-2">
+            <div className="w-2" />
+            <div className="w-4" />
+            <Checkbox
+              size="sm"
+              checked={headerChecked}
+              onCheckedChange={(checked) =>
+                table.toggleAllPageRowsSelected(checked === true)
+              }
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Select all"
+              disabled={selectableRowCount === 0}
+            />
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const group = row.original;
         const allMuted =
@@ -51,73 +74,29 @@ export function getColumnFindingGroups({
               ? DeltaValues.CHANGED
               : DeltaValues.NONE;
 
-        return <NotificationIndicator delta={delta} isMuted={allMuted} />;
-      },
-      enableSorting: false,
-      enableHiding: false,
-    },
-    // Expand column — chevron only if resources_total > 1
-    {
-      id: "expand",
-      header: () => null,
-      cell: ({ row }) => {
-        const group = row.original;
-
-        if (group.resourcesTotal <= 1) {
-          return <div className="w-6" />;
-        }
-
         return (
-          <button
-            type="button"
-            aria-label={`Expand ${group.checkTitle}`}
-            className="hover:bg-bg-neutral-tertiary flex size-6 items-center justify-center rounded-md transition-colors"
-            onClick={() => onDrillDown(group.checkId, group)}
-          >
-            <ChevronRight className="text-text-neutral-secondary size-4" />
-          </button>
-        );
-      },
-      enableSorting: false,
-      enableHiding: false,
-    },
-    // Select column
-    {
-      id: "select",
-      header: ({ table }) => {
-        const headerChecked = isAllSelected
-          ? true
-          : isSomeSelected
-            ? "indeterminate"
-            : false;
-
-        return (
-          <div className="ml-1 flex w-6 items-center justify-center pr-4">
+          <div className="flex items-center gap-2">
+            <NotificationIndicator delta={delta} isMuted={allMuted} />
+            {group.resourcesTotal > 1 ? (
+              <button
+                type="button"
+                aria-label={`Expand ${group.checkTitle}`}
+                className="hover:bg-bg-neutral-tertiary flex size-4 shrink-0 items-center justify-center rounded-md transition-colors"
+                onClick={() => onDrillDown(group.checkId, group)}
+              >
+                <ChevronRight className="text-text-neutral-secondary size-4" />
+              </button>
+            ) : (
+              <div className="w-4" />
+            )}
             <Checkbox
-              checked={headerChecked}
-              onCheckedChange={(checked) =>
-                table.toggleAllPageRowsSelected(checked === true)
-              }
-              aria-label="Select all"
-              disabled={selectableRowCount === 0}
-            />
-          </div>
-        );
-      },
-      cell: ({ row }) => {
-        const group = row.original;
-        const allMuted =
-          group.mutedCount > 0 && group.mutedCount === group.resourcesTotal;
-        const isSelected = !!rowSelection[row.id];
-
-        return (
-          <div className="ml-1 flex w-6 items-center justify-center pr-4">
-            <Checkbox
-              checked={isSelected}
+              size="sm"
+              checked={!!rowSelection[row.id]}
               disabled={allMuted}
               onCheckedChange={(checked) =>
                 row.toggleSelected(checked === true)
               }
+              onClick={(e) => e.stopPropagation()}
               aria-label="Select row"
             />
           </div>

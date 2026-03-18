@@ -131,32 +131,7 @@ export function getColumnFindingResources({
     selectedCount > 0 && selectedCount < selectableRowCount;
 
   return [
-    // Notification column — muted indicator only
-    {
-      id: "notification",
-      header: () => null,
-      cell: ({ row }) => (
-        <NotificationIndicator
-          isMuted={row.original.isMuted}
-          mutedReason={row.original.mutedReason}
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    // Child icon — corner-down-right arrow
-    {
-      id: "childIcon",
-      header: () => null,
-      cell: () => (
-        <div className="flex size-6 items-center justify-center">
-          <CornerDownRight className="text-text-neutral-tertiary size-4" />
-        </div>
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    // Select column
+    // Combined column: notification + child icon + checkbox
     {
       id: "select",
       header: ({ table }) => {
@@ -167,12 +142,16 @@ export function getColumnFindingResources({
             : false;
 
         return (
-          <div className="ml-1 flex w-6 items-center justify-center pr-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2" />
+            <div className="w-4" />
             <Checkbox
+              size="sm"
               checked={headerChecked}
               onCheckedChange={(checked) =>
                 table.toggleAllPageRowsSelected(checked === true)
               }
+              onClick={(e) => e.stopPropagation()}
               aria-label="Select all resources"
               disabled={selectableRowCount === 0}
             />
@@ -180,13 +159,20 @@ export function getColumnFindingResources({
         );
       },
       cell: ({ row }) => (
-        <div className="ml-1 flex w-6 items-center justify-center pr-4">
+        <div className="flex items-center gap-2">
+          <NotificationIndicator
+            isMuted={row.original.isMuted}
+            mutedReason={row.original.mutedReason}
+          />
+          <CornerDownRight className="text-text-neutral-tertiary h-4 w-4 shrink-0" />
           <Checkbox
+            size="sm"
             checked={!!rowSelection[row.id]}
             disabled={row.original.isMuted}
             onCheckedChange={(checked) =>
               row.toggleSelected(checked === true)
             }
+            onClick={(e) => e.stopPropagation()}
             aria-label="Select resource"
           />
         </div>
