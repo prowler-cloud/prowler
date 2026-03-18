@@ -1,13 +1,22 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { CornerDownRight } from "lucide-react";
+import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
+import { CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
+import { useContext, useState } from "react";
 
+import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
+import { VerticalDotsIcon } from "@/components/icons";
+import { Checkbox } from "@/components/shadcn";
+import {
+  ActionDropdown,
+  ActionDropdownItem,
+} from "@/components/shadcn/dropdown";
 import { DateWithTime } from "@/components/ui/entities";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { SeverityBadge } from "@/components/ui/table";
 import { FindingResourceRow } from "@/types";
 
+import { FindingsSelectionContext } from "./findings-selection-context";
 import { NotificationIndicator } from "./notification-indicator";
 
 /**
@@ -37,7 +46,90 @@ function getFailingForLabel(firstSeenAt: string | null): string | null {
   return `${diffYears} year${diffYears > 1 ? "s" : ""}`;
 }
 
-export function getColumnFindingResources(): ColumnDef<FindingResourceRow>[] {
+const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
+  const resource = row.original;
+  const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
+
+  const { selectedFindingIds, clearSelection } =
+    useContext(FindingsSelectionContext) || {
+      selectedFindingIds: [],
+      clearSelection: () => {},
+    };
+
+  const isCurrentSelected = selectedFindingIds.includes(resource.findingId);
+  const hasMultipleSelected = selectedFindingIds.length > 1;
+
+  const getMuteIds = (): string[] => {
+    if (isCurrentSelected && hasMultipleSelected) {
+      return selectedFindingIds;
+    }
+    return [resource.findingId];
+  };
+
+  const getMuteLabel = () => {
+    if (resource.isMuted) return "Muted";
+    const ids = getMuteIds();
+    if (ids.length > 1) return `Mute ${ids.length}`;
+    return "Mute";
+  };
+
+  return (
+    <>
+      <MuteFindingsModal
+        isOpen={isMuteModalOpen}
+        onOpenChange={setIsMuteModalOpen}
+        findingIds={getMuteIds()}
+        onComplete={clearSelection}
+      />
+      <div className="flex items-center justify-end">
+        <ActionDropdown
+          trigger={
+            <button
+              type="button"
+              aria-label="Resource actions"
+              className="hover:bg-bg-neutral-tertiary rounded-md p-1 transition-colors"
+            >
+              <VerticalDotsIcon
+                size={20}
+                className="text-text-neutral-secondary"
+              />
+            </button>
+          }
+          ariaLabel="Resource actions"
+        >
+          <ActionDropdownItem
+            icon={
+              resource.isMuted ? (
+                <VolumeOff className="size-5" />
+              ) : (
+                <VolumeX className="size-5" />
+              )
+            }
+            label={getMuteLabel()}
+            disabled={resource.isMuted}
+            onSelect={() => setIsMuteModalOpen(true)}
+          />
+        </ActionDropdown>
+      </div>
+    </>
+  );
+};
+
+interface GetColumnFindingResourcesOptions {
+  rowSelection: RowSelectionState;
+  selectableRowCount: number;
+}
+
+export function getColumnFindingResources({
+  rowSelection,
+  selectableRowCount,
+}: GetColumnFindingResourcesOptions): ColumnDef<FindingResourceRow>[] {
+  const selectedCount = Object.values(rowSelection).filter(Boolean).length;
+  const isAllSelected =
+    selectedCount > 0 && selectedCount === selectableRowCount;
+  const isSomeSelected =
+    selectedCount > 0 && selectedCount < selectableRowCount;
+
   return [
     // Notification column — muted indicator only
     {
@@ -59,6 +151,44 @@ export function getColumnFindingResources(): ColumnDef<FindingResourceRow>[] {
       cell: () => (
         <div className="flex size-6 items-center justify-center">
           <CornerDownRight className="text-text-neutral-tertiary size-4" />
+        </div>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    // Select column
+    {
+      id: "select",
+      header: ({ table }) => {
+        const headerChecked = isAllSelected
+          ? true
+          : isSomeSelected
+            ? "indeterminate"
+            : false;
+
+        return (
+          <div className="ml-1 flex w-6 items-center justify-center pr-4">
+            <Checkbox
+              checked={headerChecked}
+              onCheckedChange={(checked) =>
+                table.toggleAllPageRowsSelected(checked === true)
+              }
+              aria-label="Select all resources"
+              disabled={selectableRowCount === 0}
+            />
+          </div>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="ml-1 flex w-6 items-center justify-center pr-4">
+          <Checkbox
+            checked={!!rowSelection[row.id]}
+            disabled={row.original.isMuted}
+            onCheckedChange={(checked) =>
+              row.toggleSelected(checked === true)
+            }
+            aria-label="Select resource"
+          />
         </div>
       ),
       enableSorting: false,
@@ -167,6 +297,13 @@ export function getColumnFindingResources(): ColumnDef<FindingResourceRow>[] {
           </p>
         );
       },
+      enableSorting: false,
+    },
+    // Actions column — mute only
+    {
+      id: "actions",
+      header: () => <div className="w-10" />,
+      cell: ({ row }) => <ResourceRowActions row={row} />,
       enableSorting: false,
     },
   ];
