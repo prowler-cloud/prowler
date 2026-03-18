@@ -63,7 +63,11 @@ class Test_project_directory_listing_disabled:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "has directory listing disabled" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has directory listing disabled."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_listing_enabled(self):
         project_client = mock.MagicMock
@@ -96,4 +100,8 @@ class Test_project_directory_listing_disabled:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "FAIL"
-            assert "has directory listing enabled" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has directory listing enabled, which may expose the project's file structure to visitors."
+            )
+            assert result[0].team_id == TEAM_ID

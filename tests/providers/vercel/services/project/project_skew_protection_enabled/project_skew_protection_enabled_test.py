@@ -63,7 +63,11 @@ class Test_project_skew_protection_enabled:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "has skew protection enabled" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has skew protection enabled, ensuring consistent deployment versions during rollouts."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_skew_protection_disabled(self):
         project_client = mock.MagicMock
@@ -96,4 +100,8 @@ class Test_project_skew_protection_enabled:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "FAIL"
-            assert "does not have skew protection enabled" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} does not have skew protection enabled, which may cause version mismatches during deployments."
+            )
+            assert result[0].team_id == TEAM_ID

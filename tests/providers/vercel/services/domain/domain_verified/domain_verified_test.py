@@ -64,7 +64,8 @@ class Test_domain_verified:
             assert result[0].resource_id == DOMAIN_ID
             assert result[0].resource_name == DOMAIN_NAME
             assert result[0].status == "PASS"
-            assert "is verified" in result[0].status_extended
+            assert result[0].status_extended == f"Domain {DOMAIN_NAME} is verified."
+            assert result[0].team_id == TEAM_ID
 
     def test_not_verified(self):
         domain_client = mock.MagicMock
@@ -97,4 +98,8 @@ class Test_domain_verified:
             assert result[0].resource_id == DOMAIN_ID
             assert result[0].resource_name == DOMAIN_NAME
             assert result[0].status == "FAIL"
-            assert "is not verified" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Domain {DOMAIN_NAME} is not verified. The domain may not be serving traffic correctly."
+            )
+            assert result[0].team_id == TEAM_ID

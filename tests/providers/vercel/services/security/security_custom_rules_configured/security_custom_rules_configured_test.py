@@ -67,7 +67,11 @@ class Test_security_custom_rules_configured:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "custom firewall rule(s) configured" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} ({PROJECT_ID}) has 1 custom firewall rule(s) configured."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_no_custom_rules(self):
         security_client = mock.MagicMock
@@ -103,5 +107,7 @@ class Test_security_custom_rules_configured:
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "FAIL"
             assert (
-                "does not have any custom firewall rules" in result[0].status_extended
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} ({PROJECT_ID}) does not have any custom firewall rules configured."
             )
+            assert result[0].team_id == TEAM_ID

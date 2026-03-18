@@ -64,8 +64,10 @@ class Test_domain_ssl_certificate_valid:
             assert result[0].resource_name == DOMAIN_NAME
             assert result[0].status == "PASS"
             assert (
-                "has a valid SSL certificate provisioned" in result[0].status_extended
+                result[0].status_extended
+                == f"Domain {DOMAIN_NAME} has a valid SSL certificate provisioned."
             )
+            assert result[0].team_id == TEAM_ID
 
     def test_ssl_missing(self):
         domain_client = mock.MagicMock
@@ -100,6 +102,7 @@ class Test_domain_ssl_certificate_valid:
             assert result[0].resource_name == DOMAIN_NAME
             assert result[0].status == "FAIL"
             assert (
-                "does not have an SSL certificate provisioned"
-                in result[0].status_extended
+                result[0].status_extended
+                == f"Domain {DOMAIN_NAME} does not have an SSL certificate provisioned."
             )
+            assert result[0].team_id == TEAM_ID

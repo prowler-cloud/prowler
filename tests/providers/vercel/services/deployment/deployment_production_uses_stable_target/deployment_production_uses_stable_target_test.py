@@ -70,7 +70,11 @@ class Test_deployment_production_uses_stable_target:
             assert result[0].resource_id == DEPLOYMENT_ID
             assert result[0].resource_name == "my-app-abc123"
             assert result[0].status == "PASS"
-            assert "stable branch" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Production deployment my-app-abc123 ({DEPLOYMENT_ID}) is sourced from stable branch 'main'."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_non_stable_branch(self):
         deployment_client = mock.MagicMock
@@ -107,7 +111,11 @@ class Test_deployment_production_uses_stable_target:
             assert result[0].resource_id == DEPLOYMENT_ID
             assert result[0].resource_name == "my-app-abc123"
             assert result[0].status == "FAIL"
-            assert "instead of a" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Production deployment my-app-abc123 ({DEPLOYMENT_ID}) is sourced from branch 'feature-xyz' instead of a configured stable branch (main, master)."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_non_production_skipped(self):
         deployment_client = mock.MagicMock

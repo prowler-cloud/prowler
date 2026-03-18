@@ -63,7 +63,11 @@ class Test_team_directory_sync_enabled:
             assert result[0].resource_id == TEAM_ID
             assert result[0].resource_name == TEAM_NAME
             assert result[0].status == "PASS"
-            assert "has directory sync (SCIM) enabled" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Team {TEAM_NAME} has directory sync (SCIM) enabled for automated user provisioning."
+            )
+            assert result[0].team_id == ""
 
     def test_directory_sync_disabled(self):
         team_client = mock.MagicMock
@@ -97,6 +101,7 @@ class Test_team_directory_sync_enabled:
             assert result[0].resource_name == TEAM_NAME
             assert result[0].status == "FAIL"
             assert (
-                "does not have directory sync (SCIM) enabled"
-                in result[0].status_extended
+                result[0].status_extended
+                == f"Team {TEAM_NAME} does not have directory sync (SCIM) enabled. User provisioning and deprovisioning must be managed manually."
             )
+            assert result[0].team_id == ""

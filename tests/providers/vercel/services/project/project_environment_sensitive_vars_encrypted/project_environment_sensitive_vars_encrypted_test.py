@@ -73,7 +73,11 @@ class Test_project_environment_sensitive_vars_encrypted:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "properly encrypted" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has all sensitive environment variables properly encrypted or uses no sensitive variables."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_sensitive_var_plain_text(self):
         project_client = mock.MagicMock
@@ -113,8 +117,11 @@ class Test_project_environment_sensitive_vars_encrypted:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "FAIL"
-            assert "plain text" in result[0].status_extended
-            assert "API_KEY" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has 1 sensitive environment variable(s) stored as plain text: API_KEY."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_no_sensitive_vars(self):
         project_client = mock.MagicMock
@@ -154,4 +161,8 @@ class Test_project_environment_sensitive_vars_encrypted:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "properly encrypted" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has all sensitive environment variables properly encrypted or uses no sensitive variables."
+            )
+            assert result[0].team_id == TEAM_ID

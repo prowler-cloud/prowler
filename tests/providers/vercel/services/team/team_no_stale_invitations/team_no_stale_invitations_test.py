@@ -75,7 +75,11 @@ class Test_team_no_stale_invitations:
             assert result[0].resource_id == TEAM_ID
             assert result[0].resource_name == TEAM_NAME
             assert result[0].status == "PASS"
-            assert "no stale pending invitations" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Team {TEAM_NAME} has no stale pending invitations older than 30 days."
+            )
+            assert result[0].team_id == ""
 
     def test_stale_invitation(self):
         team_client = mock.MagicMock
@@ -116,5 +120,8 @@ class Test_team_no_stale_invitations:
             assert result[0].resource_id == TEAM_ID
             assert result[0].resource_name == TEAM_NAME
             assert result[0].status == "FAIL"
-            assert "stale" in result[0].status_extended
-            assert "pending invitation(s)" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Team {TEAM_NAME} has 1 stale pending invitation(s) older than 30 days."
+            )
+            assert result[0].team_id == ""

@@ -75,7 +75,11 @@ class Test_team_member_no_stale_access:
             assert result[0].resource_id == TEAM_ID
             assert result[0].resource_name == TEAM_NAME
             assert result[0].status == "PASS"
-            assert "no members with access older" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Team {TEAM_NAME} has no members with access older than 90 days requiring review."
+            )
+            assert result[0].team_id == ""
 
     def test_stale_member(self):
         team_client = mock.MagicMock
@@ -116,7 +120,11 @@ class Test_team_member_no_stale_access:
             assert result[0].resource_id == TEAM_ID
             assert result[0].resource_name == TEAM_NAME
             assert result[0].status == "FAIL"
-            assert "joined more than" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Team {TEAM_NAME} has 1 member(s) who joined more than 90 days ago and may require an access review."
+            )
+            assert result[0].team_id == ""
 
     def test_non_active_member_skipped(self):
         team_client = mock.MagicMock
@@ -157,4 +165,8 @@ class Test_team_member_no_stale_access:
             assert result[0].resource_id == TEAM_ID
             assert result[0].resource_name == TEAM_NAME
             assert result[0].status == "PASS"
-            assert "no members with access older" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Team {TEAM_NAME} has no members with access older than 90 days requiring review."
+            )
+            assert result[0].team_id == ""

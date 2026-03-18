@@ -64,7 +64,11 @@ class Test_domain_dns_properly_configured:
             assert result[0].resource_id == DOMAIN_ID
             assert result[0].resource_name == DOMAIN_NAME
             assert result[0].status == "PASS"
-            assert "has DNS properly configured" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Domain {DOMAIN_NAME} has DNS properly configured."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_not_configured(self):
         domain_client = mock.MagicMock
@@ -97,4 +101,8 @@ class Test_domain_dns_properly_configured:
             assert result[0].resource_id == DOMAIN_ID
             assert result[0].resource_name == DOMAIN_NAME
             assert result[0].status == "FAIL"
-            assert "does not have DNS properly configured" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Domain {DOMAIN_NAME} does not have DNS properly configured. The domain may not be resolving to Vercel's infrastructure."
+            )
+            assert result[0].team_id == TEAM_ID

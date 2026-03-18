@@ -66,7 +66,11 @@ class Test_domain_no_wildcard_dns_exposure:
             assert result[0].resource_id == DOMAIN_ID
             assert result[0].resource_name == DOMAIN_NAME
             assert result[0].status == "PASS"
-            assert "no wildcard DNS records" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Domain {DOMAIN_NAME} has no wildcard DNS records."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_has_wildcard_records(self):
         domain_client = mock.MagicMock
@@ -105,4 +109,8 @@ class Test_domain_no_wildcard_dns_exposure:
             assert result[0].resource_id == DOMAIN_ID
             assert result[0].resource_name == DOMAIN_NAME
             assert result[0].status == "FAIL"
-            assert "wildcard DNS" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Domain {DOMAIN_NAME} has 1 wildcard DNS record(s): *.example.com. This may expose unintended subdomains."
+            )
+            assert result[0].team_id == TEAM_ID

@@ -33,12 +33,13 @@ class Test_authentication_token_not_expired:
     def test_token_not_expired(self):
         token_id = "tok_1"
         token_name = "My Token"
+        expires_at = datetime.now(timezone.utc) + timedelta(days=30)
         authentication_client = mock.MagicMock
         authentication_client.tokens = {
             token_id: VercelAuthToken(
                 id=token_id,
                 name=token_name,
-                expires_at=datetime.now(timezone.utc) + timedelta(days=30),
+                expires_at=expires_at,
             )
         }
 
@@ -62,17 +63,22 @@ class Test_authentication_token_not_expired:
             assert result[0].resource_id == token_id
             assert result[0].resource_name == token_name
             assert result[0].status == "PASS"
-            assert "is valid and expires" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Token '{token_name}' ({token_id}) is valid and expires on {expires_at.strftime('%Y-%m-%d %H:%M UTC')}."
+            )
+            assert result[0].team_id is None
 
     def test_token_expired(self):
         token_id = "tok_2"
         token_name = "Old Token"
+        expires_at = datetime.now(timezone.utc) - timedelta(days=1)
         authentication_client = mock.MagicMock
         authentication_client.tokens = {
             token_id: VercelAuthToken(
                 id=token_id,
                 name=token_name,
-                expires_at=datetime.now(timezone.utc) - timedelta(days=1),
+                expires_at=expires_at,
             )
         }
 
@@ -96,7 +102,11 @@ class Test_authentication_token_not_expired:
             assert result[0].resource_id == token_id
             assert result[0].resource_name == token_name
             assert result[0].status == "FAIL"
-            assert "has expired" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Token '{token_name}' ({token_id}) has expired on {expires_at.strftime('%Y-%m-%d %H:%M UTC')}."
+            )
+            assert result[0].team_id is None
 
     def test_token_no_expiration(self):
         token_id = "tok_3"
@@ -130,4 +140,8 @@ class Test_authentication_token_not_expired:
             assert result[0].resource_id == token_id
             assert result[0].resource_name == token_name
             assert result[0].status == "PASS"
-            assert "does not have an expiration" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Token '{token_name}' ({token_id}) does not have an expiration date set and is currently valid."
+            )
+            assert result[0].team_id is None

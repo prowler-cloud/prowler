@@ -63,7 +63,11 @@ class Test_project_auto_expose_system_env_disabled:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "does not automatically expose" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} does not automatically expose system environment variables to the build process."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_auto_expose_enabled(self):
         project_client = mock.MagicMock
@@ -96,4 +100,8 @@ class Test_project_auto_expose_system_env_disabled:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "FAIL"
-            assert "automatically exposes system" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} automatically exposes system environment variables to the build process."
+            )
+            assert result[0].team_id == TEAM_ID

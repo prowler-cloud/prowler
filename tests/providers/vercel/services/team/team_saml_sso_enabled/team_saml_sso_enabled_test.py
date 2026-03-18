@@ -64,7 +64,10 @@ class Test_team_saml_sso_enabled:
             assert result[0].resource_id == TEAM_ID
             assert result[0].resource_name == TEAM_NAME
             assert result[0].status == "PASS"
-            assert f"Team {TEAM_NAME} has SAML SSO enabled" in result[0].status_extended
+            assert (
+                result[0].status_extended == f"Team {TEAM_NAME} has SAML SSO enabled."
+            )
+            assert result[0].team_id == ""
 
     def test_saml_disabled(self):
         team_client = mock.MagicMock
@@ -99,6 +102,7 @@ class Test_team_saml_sso_enabled:
             assert result[0].resource_name == TEAM_NAME
             assert result[0].status == "FAIL"
             assert (
-                f"Team {TEAM_NAME} does not have SAML SSO enabled"
-                in result[0].status_extended
+                result[0].status_extended
+                == f"Team {TEAM_NAME} does not have SAML SSO enabled."
             )
+            assert result[0].team_id == ""

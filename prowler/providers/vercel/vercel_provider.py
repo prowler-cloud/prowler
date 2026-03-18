@@ -27,9 +27,6 @@ from prowler.providers.vercel.models import (
     VercelTeamInfo,
 )
 
-# Vercel API base URL
-VERCEL_API_BASE = "https://api.vercel.com"
-
 
 class VercelProvider(Provider):
     """Vercel provider."""
@@ -189,7 +186,9 @@ class VercelProvider(Provider):
             params = {"teamId": session.team_id} if session.team_id else {}
 
             # Get user info
-            response = http.get(f"{VERCEL_API_BASE}/v2/user", params=params, timeout=30)
+            response = http.get(
+                f"{session.base_url}/v2/user", params=params, timeout=30
+            )
             response.raise_for_status()
             user_data = response.json().get("user", {})
 
@@ -202,7 +201,7 @@ class VercelProvider(Provider):
             if session.team_id:
                 params = {"teamId": session.team_id}
                 team_response = http.get(
-                    f"{VERCEL_API_BASE}/v2/teams/{session.team_id}",
+                    f"{session.base_url}/v2/teams/{session.team_id}",
                     params=params,
                     timeout=30,
                 )
@@ -254,7 +253,7 @@ class VercelProvider(Provider):
             if session.team_id:
                 params["teamId"] = session.team_id
             response = session.http_session.get(
-                f"{VERCEL_API_BASE}/v2/user", params=params, timeout=30
+                f"{session.base_url}/v2/user", params=params, timeout=30
             )
 
             if response.status_code == 401:

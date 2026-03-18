@@ -73,7 +73,11 @@ class Test_project_environment_no_secrets_in_plain_type:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "no secret-like environment variables" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has no secret-like environment variables stored as plain text."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_secret_key_plain(self):
         project_client = mock.MagicMock
@@ -113,7 +117,11 @@ class Test_project_environment_no_secrets_in_plain_type:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "FAIL"
-            assert "stored as plain text" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has 1 secret-like environment variable(s) stored as plain text: MY_API_KEY."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_non_secret_key_plain(self):
         project_client = mock.MagicMock
@@ -153,4 +161,8 @@ class Test_project_environment_no_secrets_in_plain_type:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "no secret-like environment variables" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has no secret-like environment variables stored as plain text."
+            )
+            assert result[0].team_id == TEAM_ID

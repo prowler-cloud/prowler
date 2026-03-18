@@ -74,7 +74,11 @@ class Test_project_environment_production_vars_not_in_preview:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "no sensitive production environment" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has no sensitive production environment variables leaking to preview deployments."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_prod_and_preview_secret(self):
         project_client = mock.MagicMock
@@ -115,7 +119,11 @@ class Test_project_environment_production_vars_not_in_preview:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "FAIL"
-            assert "also targeting preview" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has 1 sensitive production environment variable(s) also targeting preview: DB_PASSWORD."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_prod_and_preview_plain(self):
         project_client = mock.MagicMock
@@ -156,4 +164,8 @@ class Test_project_environment_production_vars_not_in_preview:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "no sensitive production environment" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has no sensitive production environment variables leaking to preview deployments."
+            )
+            assert result[0].team_id == TEAM_ID

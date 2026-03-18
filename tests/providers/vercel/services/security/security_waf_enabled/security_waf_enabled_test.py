@@ -67,7 +67,11 @@ class Test_security_waf_enabled:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "Web Application Firewall enabled" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} ({PROJECT_ID}) has the Web Application Firewall enabled."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_waf_disabled(self):
         security_client = mock.MagicMock
@@ -103,6 +107,7 @@ class Test_security_waf_enabled:
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "FAIL"
             assert (
-                "does not have the Web Application Firewall enabled"
-                in result[0].status_extended
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} ({PROJECT_ID}) does not have the Web Application Firewall enabled."
             )
+            assert result[0].team_id == TEAM_ID

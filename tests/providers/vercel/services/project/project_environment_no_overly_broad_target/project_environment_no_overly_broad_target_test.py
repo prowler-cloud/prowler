@@ -74,7 +74,11 @@ class Test_project_environment_no_overly_broad_target:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "no environment variables targeting" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has no environment variables targeting all three environments simultaneously."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_var_targets_all_envs(self):
         project_client = mock.MagicMock
@@ -115,4 +119,8 @@ class Test_project_environment_no_overly_broad_target:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "FAIL"
-            assert "targeting all three environments" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has 1 environment variable(s) targeting all three environments: SHARED_VAR."
+            )
+            assert result[0].team_id == TEAM_ID

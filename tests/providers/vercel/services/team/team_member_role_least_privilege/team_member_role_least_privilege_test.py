@@ -75,7 +75,11 @@ class Test_team_member_role_least_privilege:
             assert result[0].resource_id == TEAM_ID
             assert result[0].resource_name == TEAM_NAME
             assert result[0].status == "PASS"
-            assert "within the recommended 20% threshold" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Team {TEAM_NAME} has 0 owner(s) out of 1 active members (0%), which is within the recommended 20% threshold."
+            )
+            assert result[0].team_id == ""
 
     def test_member_owner_role(self):
         team_client = mock.MagicMock
@@ -116,4 +120,8 @@ class Test_team_member_role_least_privilege:
             assert result[0].resource_id == TEAM_ID
             assert result[0].resource_name == TEAM_NAME
             assert result[0].status == "FAIL"
-            assert "exceeds the recommended 20% threshold" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Team {TEAM_NAME} has 1 owner(s) out of 1 active members (100%), which exceeds the recommended 20% threshold."
+            )
+            assert result[0].team_id == ""

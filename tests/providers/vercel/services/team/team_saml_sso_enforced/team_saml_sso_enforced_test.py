@@ -63,7 +63,11 @@ class Test_team_saml_sso_enforced:
             assert result[0].resource_id == TEAM_ID
             assert result[0].resource_name == TEAM_NAME
             assert result[0].status == "PASS"
-            assert "enforces SAML SSO" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Team {TEAM_NAME} enforces SAML SSO for all members."
+            )
+            assert result[0].team_id == ""
 
     def test_saml_enabled_not_enforced(self):
         team_client = mock.MagicMock
@@ -96,7 +100,11 @@ class Test_team_saml_sso_enforced:
             assert result[0].resource_id == TEAM_ID
             assert result[0].resource_name == TEAM_NAME
             assert result[0].status == "FAIL"
-            assert "does not enforce it" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Team {TEAM_NAME} has SAML SSO enabled but does not enforce it. Members can still authenticate without SSO."
+            )
+            assert result[0].team_id == ""
 
     def test_saml_disabled(self):
         team_client = mock.MagicMock
@@ -129,4 +137,8 @@ class Test_team_saml_sso_enforced:
             assert result[0].resource_id == TEAM_ID
             assert result[0].resource_name == TEAM_NAME
             assert result[0].status == "FAIL"
-            assert "does not have SAML SSO enforced" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Team {TEAM_NAME} does not have SAML SSO enforced."
+            )
+            assert result[0].team_id == ""

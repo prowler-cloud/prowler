@@ -69,7 +69,11 @@ class Test_deployment_preview_not_publicly_accessible:
             assert result[0].resource_id == DEPLOYMENT_ID
             assert result[0].resource_name == "my-app-abc123"
             assert result[0].status == "PASS"
-            assert "has deployment protection configured" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Preview deployment my-app-abc123 ({DEPLOYMENT_ID}) has deployment protection configured."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_preview_not_protected(self):
         deployment_client = mock.MagicMock
@@ -106,9 +110,10 @@ class Test_deployment_preview_not_publicly_accessible:
             assert result[0].resource_name == "my-app-abc123"
             assert result[0].status == "FAIL"
             assert (
-                "does not have deployment protection configured"
-                in result[0].status_extended
+                result[0].status_extended
+                == f"Preview deployment my-app-abc123 ({DEPLOYMENT_ID}) does not have deployment protection configured and is publicly accessible."
             )
+            assert result[0].team_id == TEAM_ID
 
     def test_production_deployment_skipped(self):
         deployment_client = mock.MagicMock

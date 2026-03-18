@@ -63,7 +63,11 @@ class Test_project_git_fork_protection_enabled:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "has Git fork protection enabled" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has Git fork protection enabled, preventing untrusted forks from accessing secrets."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_fork_protection_disabled(self):
         project_client = mock.MagicMock
@@ -96,4 +100,8 @@ class Test_project_git_fork_protection_enabled:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "FAIL"
-            assert "does not have Git fork protection" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} does not have Git fork protection enabled, allowing forks to access environment variables and trigger deployments."
+            )
+            assert result[0].team_id == TEAM_ID

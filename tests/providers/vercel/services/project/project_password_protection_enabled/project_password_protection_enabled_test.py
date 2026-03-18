@@ -63,7 +63,11 @@ class Test_project_password_protection_enabled:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "has password protection configured" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} has password protection configured to restrict access to deployments."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_no_password_protection(self):
         project_client = mock.MagicMock
@@ -96,4 +100,8 @@ class Test_project_password_protection_enabled:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "FAIL"
-            assert "does not have password protection" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} does not have password protection configured for deployments."
+            )
+            assert result[0].team_id == TEAM_ID
