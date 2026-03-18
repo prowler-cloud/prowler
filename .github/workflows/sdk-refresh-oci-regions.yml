@@ -78,7 +78,7 @@ jobs:
             ### Checklist
 
             - [x] This is an automated update from OCI official sources
-            - [x] Government regions (us-langley-1, us-luke-1) and US DOD regions (us-gov-ashburn-1, us-gov-phoenix-1, us-gov-chicago-1) arepreserved
+            - [x] Government regions (us-langley-1, us-luke-1) and DOD regions (us-gov-ashburn-1, us-gov-phoenix-1, us-gov-chicago-1) are preserved
             - [x] No manual review of region data required
 
             ### License
