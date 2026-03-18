@@ -2,11 +2,10 @@
 
 import { createContext, useContext } from "react";
 
-import { FindingProps } from "@/types";
-
 interface FindingsSelectionContextValue {
   selectedFindingIds: string[];
-  selectedFindings: FindingProps[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  selectedFindings: any[];
   clearSelection: () => void;
   isSelected: (id: string) => boolean;
 }

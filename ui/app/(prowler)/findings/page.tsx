@@ -1,9 +1,12 @@
 import { Suspense } from "react";
 
 import {
+  adaptFindingGroupsResponse,
+  getFindingGroups,
+  getLatestFindingGroups,
+} from "@/actions/finding-groups";
+import {
   getFindingById,
-  getFindings,
-  getLatestFindings,
   getLatestMetadataInfo,
   getMetadataInfo,
 } from "@/actions/findings";
@@ -12,13 +15,12 @@ import { getScans } from "@/actions/scans";
 import { FindingDetailsSheet } from "@/components/findings";
 import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
-  FindingsTableWithSelection,
+  FindingsGroupTable,
   SkeletonTableFindings,
 } from "@/components/findings/table";
 import { ContentLayout } from "@/components/ui";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
-  createDict,
   createScanDetailsMapping,
   extractFiltersAndQuery,
   extractSortAndKey,
@@ -60,13 +62,12 @@ export default async function Findings({
         : Promise.resolve(null),
     ]);
 
-  // Process the finding data to match the expected structure
+  // Process the finding data to match the expected structure (for detail sheet)
   const processedFinding = findingByIdData?.data
     ? (() => {
         const finding = findingByIdData.data;
         const included = findingByIdData.included || [];
 
-        // Build dictionaries from included data
         type IncludedItem = {
           type: string;
           id: string;
@@ -179,65 +180,40 @@ const SSRDataTable = async ({
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
-  const defaultSort = "severity,status,-inserted_at";
+  const defaultSort = "-severity,-fail_count,-last_seen_at";
 
   const { encodedSort } = extractSortAndKey({
     ...searchParams,
     sort: searchParams.sort ?? defaultSort,
   });
 
-  const { filters, query } = extractFiltersAndQuery(searchParams);
+  const { filters } = extractFiltersAndQuery(searchParams);
   // Check if the searchParams contain any date or scan filter
   const hasDateOrScan = hasDateOrScanFilter(searchParams);
 
-  const fetchFindings = hasDateOrScan ? getFindings : getLatestFindings;
+  const fetchFindingGroups = hasDateOrScan
+    ? getFindingGroups
+    : getLatestFindingGroups;
 
-  const findingsData = await fetchFindings({
-    query,
+  const findingGroupsData = await fetchFindingGroups({
     page,
     sort: encodedSort,
     filters,
     pageSize,
   });
 
-  // Create dictionaries for resources, scans, and providers
-  const resourceDict = createDict("resources", findingsData);
-  const scanDict = createDict("scans", findingsData);
-  const providerDict = createDict("providers", findingsData);
-
-  // Expand each finding with its corresponding resource, scan, and provider
-  const expandedFindings = findingsData?.data
-    ? findingsData.data.map((finding: FindingProps) => {
-        const scan = scanDict[finding.relationships?.scan?.data?.id];
-        const resource =
-          resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-        const provider = providerDict[scan?.relationships?.provider?.data?.id];
-
-        return {
-          ...finding,
-          relationships: { scan, resource, provider },
-        };
-      })
-    : [];
-
-  // Create the new object while maintaining the original structure
-  const expandedResponse = {
-    ...findingsData,
-    data: expandedFindings,
-  };
+  // Transform API response to FindingGroupRow[]
+  const groups = adaptFindingGroupsResponse(findingGroupsData);
 
   return (
     <>
-      {findingsData?.errors && (
+      {findingGroupsData?.errors && (
         <div className="text-small mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-red-700">
           <p className="mr-2 font-semibold">Error:</p>
-          <p>{findingsData.errors[0].detail}</p>
+          <p>{findingGroupsData.errors[0].detail}</p>
         </div>
       )}
-      <FindingsTableWithSelection
-        data={expandedResponse?.data || []}
-        metadata={findingsData?.meta}
-      />
+      <FindingsGroupTable data={groups} metadata={findingGroupsData?.meta} />
     </>
   );
 };
