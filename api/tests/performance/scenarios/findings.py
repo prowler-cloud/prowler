@@ -80,7 +80,7 @@ class APIUser(APIUserBase):
 
     @task(3)
     def findings_metadata(self):
-        endpoint = f"/findings/metadata?" f"filter[inserted_at]={TARGET_INSERTED_AT}"
+        endpoint = f"/findings/metadata?filter[inserted_at]={TARGET_INSERTED_AT}"
         self.client.get(
             endpoint, headers=get_auth_headers(self.token), name="/findings/metadata"
         )
@@ -98,7 +98,7 @@ class APIUser(APIUserBase):
 
     @task
     def findings_metadata_scan_small(self):
-        endpoint = f"/findings/metadata?" f"&filter[scan]={self.s_scan_id}"
+        endpoint = f"/findings/metadata?&filter[scan]={self.s_scan_id}"
         self.client.get(
             endpoint,
             headers=get_auth_headers(self.token),
@@ -118,7 +118,7 @@ class APIUser(APIUserBase):
 
     @task
     def findings_metadata_scan_medium(self):
-        endpoint = f"/findings/metadata?" f"&filter[scan]={self.m_scan_id}"
+        endpoint = f"/findings/metadata?&filter[scan]={self.m_scan_id}"
         self.client.get(
             endpoint,
             headers=get_auth_headers(self.token),
@@ -150,7 +150,7 @@ class APIUser(APIUserBase):
 
     @task
     def findings_metadata_scan_large(self):
-        endpoint = f"/findings/metadata?" f"&filter[scan]={self.l_scan_id}"
+        endpoint = f"/findings/metadata?&filter[scan]={self.l_scan_id}"
         self.client.get(
             endpoint,
             headers=get_auth_headers(self.token),
