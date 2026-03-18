@@ -38,10 +38,12 @@ export function FindingsGroupTable({
     setRowSelection({});
   }, [metadata?.pagination?.page]);
 
-  // Reset selection when data changes
+  // Reset selection and collapse drill-down when data changes (e.g., filters)
   useEffect(() => {
     if (previousIdsRef.current !== currentIds) {
       setRowSelection({});
+      setExpandedCheckId(null);
+      setExpandedGroup(null);
       previousIdsRef.current = currentIds;
     }
   }, [currentIds]);
