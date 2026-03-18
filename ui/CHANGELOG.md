@@ -6,7 +6,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
-- Add skill system to Lighthouse AI [(#10322)](https://github.com/prowler-cloud/prowler/pull/10322)
+- Skill system to Lighthouse AI [(#10322)](https://github.com/prowler-cloud/prowler/pull/10322)
+- Skill for creating custom queries on Attack Paths [(#10323)](https://github.com/prowler-cloud/prowler/pull/10323)
 
 ### 🔄 Changed
 
