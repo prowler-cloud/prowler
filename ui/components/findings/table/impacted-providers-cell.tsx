@@ -8,7 +8,7 @@ import { ProviderType } from "@/types";
 import { PROVIDER_ICONS } from "./provider-icon-cell";
 
 const MAX_VISIBLE_PROVIDERS = 3;
-const ICON_SIZE = 20;
+const ICON_SIZE = 28;
 
 interface ImpactedProvidersCellProps {
   providers: ProviderType[];
@@ -33,7 +33,7 @@ export const ImpactedProvidersCell = ({
           return (
             <div
               key={provider}
-              className="flex size-7 items-center justify-center rounded-md bg-white"
+              className="flex size-7 items-center justify-center"
             >
               <span className="text-text-neutral-secondary text-xs">?</span>
             </div>
@@ -43,7 +43,7 @@ export const ImpactedProvidersCell = ({
         return (
           <div
             key={provider}
-            className="flex size-7 items-center justify-center overflow-hidden rounded-md bg-white"
+            className="flex size-7 items-center justify-center overflow-hidden"
           >
             <IconComponent width={ICON_SIZE} height={ICON_SIZE} />
           </div>
