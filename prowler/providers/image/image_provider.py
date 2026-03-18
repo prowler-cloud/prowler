@@ -411,7 +411,7 @@ class ImageProvider(Provider):
             metadata_dict = {
                 "Provider": "image",
                 "CheckID": finding_id,
-                "CheckTitle": finding.get("Title", finding_id)[:150],
+                "CheckTitle": finding.get("Title", finding_id),
                 "CheckType": ["Container Image Security"],
                 "ServiceName": "container-image",
                 "SubServiceName": "",
@@ -419,10 +419,10 @@ class ImageProvider(Provider):
                 "Severity": trivy_severity,
                 "ResourceType": "container-image",
                 "ResourceGroup": "container",
-                "Description": finding_description[:400],
+                "Description": finding_description,
                 "Risk": finding.get(
                     "Description", "Vulnerability detected in container image"
-                )[:400],
+                ),
                 "RelatedUrl": "",
                 "Remediation": {
                     "Code": {
