@@ -97,7 +97,7 @@ class APIUser(APIUserBase):
         name = "/resources?filter[scan_id] - 50k"
         page_number = self._next_page(name)
         endpoint = (
-            f"/resources?page[number]={page_number}&filter[scan]={self.s_scan_id}"
+            f"/resources?page[number]={page_number}" f"&filter[scan]={self.s_scan_id}"
         )
         self.client.get(endpoint, headers=get_auth_headers(self.token), name=name)
 
@@ -116,7 +116,7 @@ class APIUser(APIUserBase):
         name = "/resources?filter[scan_id] - 250k"
         page_number = self._next_page(name)
         endpoint = (
-            f"/resources?page[number]={page_number}&filter[scan]={self.m_scan_id}"
+            f"/resources?page[number]={page_number}" f"&filter[scan]={self.m_scan_id}"
         )
         self.client.get(endpoint, headers=get_auth_headers(self.token), name=name)
 
@@ -135,7 +135,7 @@ class APIUser(APIUserBase):
         name = "/resources?filter[scan_id] - 500k"
         page_number = self._next_page(name)
         endpoint = (
-            f"/resources?page[number]={page_number}&filter[scan]={self.l_scan_id}"
+            f"/resources?page[number]={page_number}" f"&filter[scan]={self.l_scan_id}"
         )
         self.client.get(endpoint, headers=get_auth_headers(self.token), name=name)
 
