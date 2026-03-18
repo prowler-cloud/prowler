@@ -41,7 +41,10 @@ export function ActionDropdown({
             aria-label={ariaLabel}
             className="hover:bg-bg-neutral-tertiary rounded-md p-1 transition-colors"
           >
-            <VerticalDotsIcon size={20} className="text-text-neutral-secondary" />
+            <VerticalDotsIcon
+              size={20}
+              className="text-text-neutral-secondary"
+            />
           </button>
         )}
       </DropdownMenuTrigger>

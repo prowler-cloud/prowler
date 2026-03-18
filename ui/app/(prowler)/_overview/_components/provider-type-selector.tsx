@@ -190,7 +190,9 @@ export const ProviderTypeSelector = ({
     ),
   )
     .filter((type): type is ProviderType => type in PROVIDER_DATA)
-    .sort((a, b) => PROVIDER_DATA[a].label.localeCompare(PROVIDER_DATA[b].label));
+    .sort((a, b) =>
+      PROVIDER_DATA[a].label.localeCompare(PROVIDER_DATA[b].label),
+    );
 
   const renderIcon = (providerType: ProviderType) => {
     const IconComponent = PROVIDER_DATA[providerType].icon;

@@ -115,8 +115,7 @@ export function adaptFindingsByResourceResponse(
     // Resolve provider via scan → provider (include path: scan.provider)
     const scanRel = item.relationships?.scan?.data;
     const scan = scanRel ? scansDict[scanRel.id] : null;
-    const providerRelId =
-      scan?.relationships?.provider?.data?.id ?? null;
+    const providerRelId = scan?.relationships?.provider?.data?.id ?? null;
     const provider = providerRelId ? providersDict[providerRelId] : null;
     const providerAttrs = provider?.attributes || {};
 
