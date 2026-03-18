@@ -40,11 +40,9 @@ export const getFindingGroups = async ({
   if (sort) url.searchParams.append("sort", sort);
 
   appendSanitizedProviderFilters(url, mapSearchFilter(filters));
-  console.log("[finding-groups] GET", decodeURIComponent(url.toString()));
 
   try {
     const response = await fetch(url.toString(), { headers });
-    console.log("[finding-groups]", response.status);
     return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching finding groups:", error);
@@ -69,14 +67,9 @@ export const getLatestFindingGroups = async ({
   if (sort) url.searchParams.append("sort", sort);
 
   appendSanitizedProviderFilters(url, mapSearchFilter(filters));
-  console.log(
-    "[finding-groups/latest] GET",
-    decodeURIComponent(url.toString()),
-  );
 
   try {
     const response = await fetch(url.toString(), { headers });
-    console.log("[finding-groups/latest]", response.status);
     return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching latest finding groups:", error);
