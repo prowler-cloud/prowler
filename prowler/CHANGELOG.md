@@ -16,6 +16,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - SecNumCloud 3.2 for the Azure provider [(#10358)](https://github.com/prowler-cloud/prowler/pull/10358)
 - SecNumCloud 3.2 for the Alibaba Cloud provider [(#10370)](https://github.com/prowler-cloud/prowler/pull/10370)
 - SecNumCloud 3.2 for the Oracle Cloud provider [(#10371)](https://github.com/prowler-cloud/prowler/pull/10371)
+- `glue_etl_jobs_no_secrets_in_arguments` check for plaintext secrets in AWS Glue ETL job arguments [(#10368)](https://github.com/prowler-cloud/prowler/pull/10368)
 
 ### 🔄 Changed
 
