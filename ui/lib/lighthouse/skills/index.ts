@@ -1,5 +1,5 @@
-import { registerSkill } from "./registry";
 import { customAttackPathQuerySkill } from "./definitions/attack-path-custom-query";
+import { registerSkill } from "./registry";
 
 // Explicit registration — tree-shake-proof
 registerSkill(customAttackPathQuerySkill);

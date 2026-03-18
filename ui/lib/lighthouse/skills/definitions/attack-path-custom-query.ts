@@ -309,4 +309,3 @@ RETURN path_principal, path_target,
 6. **Use alternatives for unsupported features**: Replace \`=~\` with \`toLower()\` + exact match or \`CONTAINS\`/\`STARTS WITH\`. Replace \`reduce()\` with \`UNWIND\` + \`collect()\`.
 `,
 };
-
