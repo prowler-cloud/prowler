@@ -38,6 +38,10 @@ class GoogleWorkspaceBaseException(ProwlerException):
             "message": "Service Account does not have required OAuth scopes",
             "remediation": "Ensure the Service Account has the required scopes configured in Domain-Wide Delegation settings.",
         },
+        (12008, "GoogleWorkspaceInvalidProviderIdError"): {
+            "message": "The provided provider_id does not match the credentials customer ID",
+            "remediation": "Check the provider_id (Customer ID) and ensure it matches the Google Workspace organization for the given credentials.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -116,4 +120,11 @@ class GoogleWorkspaceInsufficientScopesError(GoogleWorkspaceCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             12007, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GoogleWorkspaceInvalidProviderIdError(GoogleWorkspaceBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            12008, file=file, original_exception=original_exception, message=message
         )

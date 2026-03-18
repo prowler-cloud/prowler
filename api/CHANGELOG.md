@@ -2,20 +2,40 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.21.0] (Prowler UNRELEASED)
+## [1.22.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `CORS_ALLOWED_ORIGINS` configurable via environment variable [(#10355)](https://github.com/prowler-cloud/prowler/pull/10355)
+
+### 🔄 Changed
+
+- Attack Paths: Complete migration to private graph labels and properties, removing deprecated dual-write support [(#10268)](https://github.com/prowler-cloud/prowler/pull/10268)
+- Attack Paths: Added tenant and provider related labels to the nodes so they can be easily filtered on custom queries [(#10308)](https://github.com/prowler-cloud/prowler/pull/10308)
+- Attack Paths: Reduce sync and findings memory usage with smaller batches, cursor iteration, and sequential sessions [(#10359)](https://github.com/prowler-cloud/prowler/pull/10359)
+
+### 🐞 Fixed
+
+- Attack Paths: Recover `graph_data_ready` flag when scan fails during graph swap, preventing query endpoints from staying blocked until the next successful scan [(#10354)](https://github.com/prowler-cloud/prowler/pull/10354)
+
+### 🔐 Security
+
+- Use `psycopg2.sql` to safely compose DDL in `PostgresEnumMigration`, preventing SQL injection via f-string interpolation [(#10166)](https://github.com/prowler-cloud/prowler/pull/10166)
+
+---
+
+## [1.21.0] (Prowler v5.20.0)
 
 ### 🔄 Changed
 
 - Attack Paths: Migrate network exposure queries from APOC to standard openCypher for Neo4j and Neptune compatibility [(#10266)](https://github.com/prowler-cloud/prowler/pull/10266)
 - `POST /api/v1/providers` returns `409 Conflict` if already exists [(#10293)](https://github.com/prowler-cloud/prowler/pull/10293)
 
----
-
-## [1.20.1] (Prowler UNRELEASED)
-
 ### 🐞 Fixed
 
-- Attack Paths: Add missing logging for query execution and exception details in scan error handling [(#10269)](https://github.com/prowler-cloud/prowler/pull/10269)
+- Attack Paths: Security hardening for custom query endpoint (Cypher blocklist, input validation, rate limiting, Helm lockdown) [(#10238)](https://github.com/prowler-cloud/prowler/pull/10238)
+- Attack Paths: Missing logging for query execution and exception details in scan error handling [(#10269)](https://github.com/prowler-cloud/prowler/pull/10269)
+- Attack Paths: Upgrade Cartography from 0.129.0 to 0.132.0, fixing `exposed_internet` not set on ELB/ELBv2 nodes [(#10272)](https://github.com/prowler-cloud/prowler/pull/10272)
 
 ---
 
@@ -28,6 +48,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - PDF report for the CSA CCM compliance framework [(#10088)](https://github.com/prowler-cloud/prowler/pull/10088)
 - `image` provider support for container image scanning [(#10128)](https://github.com/prowler-cloud/prowler/pull/10128)
 - Attack Paths: Custom query and Cartography schema endpoints (temporarily blocked) [(#10149)](https://github.com/prowler-cloud/prowler/pull/10149)
+- `googleworkspace` provider support [(#10247)](https://github.com/prowler-cloud/prowler/pull/10247)
 
 ### 🔄 Changed
 

@@ -69,5 +69,7 @@ export const STREAM_MESSAGE_ID = "msg-1";
 
 export const ERROR_PREFIX = "[LIGHTHOUSE_ANALYST_ERROR]:";
 
+export const SKILL_PREFIX = "skill:";
+
 export const TOOLS_UNAVAILABLE_MESSAGE =
   "\nProwler tools are unavailable. You cannot access cloud accounts or security scan data. If asked about security status or scan results, inform the user that this data is currently inaccessible.\n";

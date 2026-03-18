@@ -1,4 +1,5 @@
 import logging
+import re
 
 from typing import Any, Iterable
 
@@ -12,7 +13,12 @@ from api.attack_paths.queries.schema import (
     RAW_SCHEMA_URL,
 )
 from config.custom_logging import BackendLogger
-from tasks.jobs.attack_paths.config import INTERNAL_LABELS, INTERNAL_PROPERTIES
+from tasks.jobs.attack_paths.config import (
+    INTERNAL_LABELS,
+    INTERNAL_PROPERTIES,
+    PROVIDER_ID_PROPERTY,
+    is_dynamic_isolation_label,
+)
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -117,6 +123,38 @@ def execute_query(
 
 # Custom query helpers
 
+# Patterns that indicate SSRF or dangerous procedure calls
+# Defense-in-depth layer - the primary control is `neo4j.READ_ACCESS`
+_BLOCKED_PATTERNS = [
+    re.compile(r"\bLOAD\s+CSV\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.load\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.import\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.export\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.cypher\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.systemdb\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.config\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.periodic\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.do\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.trigger\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.custom\b", re.IGNORECASE),
+]
+
+# Strip string literals so patterns inside quotes don't cause false positives
+# Handles escaped quotes (\' and \") inside strings
+_STRING_LITERALS = re.compile(r"'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"")
+
+
+def validate_custom_query(cypher: str) -> None:
+    """Reject queries containing known SSRF or dangerous procedure patterns.
+
+    Raises ValidationError if a blocked pattern is found.
+    String literals are stripped before matching to avoid false positives.
+    """
+    stripped = _STRING_LITERALS.sub("", cypher)
+    for pattern in _BLOCKED_PATTERNS:
+        if pattern.search(stripped):
+            raise ValidationError({"query": "Query contains a blocked operation"})
+
 
 def normalize_custom_query_payload(raw_data):
     if not isinstance(raw_data, dict):
@@ -135,6 +173,8 @@ def execute_custom_query(
     cypher: str,
     provider_id: str,
 ) -> dict[str, Any]:
+    validate_custom_query(cypher)
+
     try:
         graph = graph_database.execute_read_query(
             database=database_name,
@@ -142,6 +182,9 @@ def execute_custom_query(
         )
         serialized = _serialize_graph(graph, provider_id)
         return _truncate_graph(serialized)
+
+    except graph_database.ClientStatementException as exc:
+        raise ValidationError({"query": exc.message})
 
     except graph_database.WriteQueryNotAllowedException:
         raise PermissionDenied(
@@ -215,7 +258,7 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
     nodes = []
     kept_node_ids = set()
     for node in graph.nodes:
-        if node._properties.get("provider_id") != provider_id:
+        if node._properties.get(PROVIDER_ID_PROPERTY) != provider_id:
             continue
 
         kept_node_ids.add(node.element_id)
@@ -227,9 +270,15 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
             },
         )
 
+    filtered_count = len(graph.nodes) - len(nodes)
+    if filtered_count > 0:
+        logger.debug(
+            f"Filtered {filtered_count} nodes without matching provider_id={provider_id}"
+        )
+
     relationships = []
     for relationship in graph.relationships:
-        if relationship._properties.get("provider_id") != provider_id:
+        if relationship._properties.get(PROVIDER_ID_PROPERTY) != provider_id:
             continue
 
         if (
@@ -257,7 +306,11 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
 
 
 def _filter_labels(labels: Iterable[str]) -> list[str]:
-    return [label for label in labels if label not in INTERNAL_LABELS]
+    return [
+        label
+        for label in labels
+        if label not in INTERNAL_LABELS and not is_dynamic_isolation_label(label)
+    ]
 
 
 def _serialize_properties(properties: dict[str, Any]) -> dict[str, Any]:

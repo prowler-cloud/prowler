@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
 
-import { PROVIDER_ICONS } from "@/components/icons/providers-badge";
+import { PROVIDER_BADGE_BY_NAME } from "@/components/icons/providers-badge";
 import { initializeChartColors } from "@/lib/charts/colors";
 import { PROVIDER_DISPLAY_NAMES } from "@/types/providers";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
@@ -209,7 +209,7 @@ const CustomNode = ({
     }
   };
 
-  const IconComponent = PROVIDER_ICONS[nodeName];
+  const IconComponent = PROVIDER_BADGE_BY_NAME[nodeName];
   const hasIcon = IconComponent !== undefined;
   const iconSize = 24;
   const iconGap = 8;
@@ -620,7 +620,8 @@ export function SankeyChart({
           </p>
           <div className="flex flex-wrap gap-4">
             {zeroDataProviders.map((provider) => {
-              const IconComponent = PROVIDER_ICONS[provider.displayName];
+              const IconComponent =
+                PROVIDER_BADGE_BY_NAME[provider.displayName];
               return (
                 <div
                   key={provider.id}

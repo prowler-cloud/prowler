@@ -10,7 +10,7 @@
   "ResourceType": "DNSRecord",
   "ResourceGroup": "network",
   "Description": "**Cloudflare DNS records** (CNAME, MX, NS, SRV) that point to hostnames are assessed for **dangling record** vulnerabilities by checking if the target domain resolves to a valid address, preventing **subdomain takeover**, **mail interception**, and **service hijacking** attacks.",
-  "Risk": "Dangling **DNS records** pointing to non-existent targets create multiple vulnerabilities.\n- **Confidentiality**: dangling CNAME/NS allows subdomain takeover; dangling MX allows mail interception\n- **Integrity**: attackers can impersonate your organization, intercept emails, or hijack services\n- **Availability**: legitimate services may be disrupted or redirected to attacker-controlled infrastructure",
+  "Risk": "Dangling **DNS records** pointing to non-existent targets create multiple vulnerabilities. Dangling CNAME/NS allows **subdomain takeover**; dangling MX allows **mail interception**. Attackers can impersonate your organization, hijack services, or redirect legitimate traffic to attacker-controlled infrastructure.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://developers.cloudflare.com/dns/manage-dns-records/how-to/create-dns-records/"
