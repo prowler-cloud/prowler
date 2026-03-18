@@ -462,3 +462,16 @@ class Repo(BaseModel):
     secret_scanning_enabled: Optional[bool]
     dependabot_alerts_enabled: Optional[bool]
     delete_branch_on_merge: Optional[bool]
+    rulesets: Optional[list] = []
+
+
+class Ruleset(BaseModel):
+    """Model for GitHub Repository Ruleset"""
+    id: int
+    name: str
+    target: Optional[str] = None
+    enforcement: str
+    dismiss_stale_reviews_on_push: bool = False
+    require_code_owner_review: bool = False
+    required_approving_review_count: int = 0
+    require_last_push_approval: bool = False
