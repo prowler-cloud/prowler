@@ -1,8 +1,8 @@
 "use client";
 
-import { MoreHorizontal } from "lucide-react";
 import { ComponentProps, ReactNode } from "react";
 
+import { VerticalDotsIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 import {
@@ -41,7 +41,7 @@ export function ActionDropdown({
             aria-label={ariaLabel}
             className="hover:bg-bg-neutral-tertiary rounded-md p-1 transition-colors"
           >
-            <MoreHorizontal className="text-text-neutral-secondary size-5" />
+            <VerticalDotsIcon size={20} className="text-text-neutral-secondary" />
           </button>
         )}
       </DropdownMenuTrigger>
