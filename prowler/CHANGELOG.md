@@ -38,6 +38,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update M365 Defender service metadata to new format [(#9681)](https://github.com/prowler-cloud/prowler/pull/9681)
 - Update M365 Purview service metadata to new format [(#9092)](https://github.com/prowler-cloud/prowler/pull/9092)
 
+### 🐞 Fixed
+
+- Azure `vm_backup_enabled` and `vm_sufficient_daily_backup_retention_period` checks now compare VM names case-insensitively to avoid false negatives when Azure stores backup item names in a different case [(#10373)](https://github.com/prowler-cloud/prowler/pull/10373)
+
 ---
 
 ## [5.19.0] (Prowler v5.19.0)
