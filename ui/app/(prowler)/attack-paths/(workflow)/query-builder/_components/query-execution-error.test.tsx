@@ -13,9 +13,8 @@ describe("QueryExecutionError", () => {
     render(<QueryExecutionError error={error} />);
 
     // Then
-    expect(
-      screen.getByRole("heading", { name: /query execution failed/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(screen.getByText(/query execution failed/i)).toBeInTheDocument();
     expect(
       screen.getByText(/the attack paths query could not be executed/i),
     ).toBeInTheDocument();
