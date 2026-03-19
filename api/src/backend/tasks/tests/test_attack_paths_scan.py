@@ -1327,7 +1327,6 @@ class TestAttackPathsFindingsHelpers:
 
         assert mock_session.run.call_count == 2
         params = mock_session.run.call_args.args[1]
-        assert params["provider_uid"] == str(provider.uid)
         assert params["last_updated"] == config.update_tag
 
     def test_stream_findings_with_resources_returns_latest_scan_data(

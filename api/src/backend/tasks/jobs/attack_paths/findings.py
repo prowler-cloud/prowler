@@ -196,7 +196,6 @@ def cleanup_findings(
 ) -> None:
     """Remove stale findings (classic Cartography behaviour)."""
     parameters = {
-        "provider_uid": str(prowler_api_provider.uid),
         "last_updated": config.update_tag,
         "batch_size": BATCH_SIZE,
     }

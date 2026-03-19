@@ -38,12 +38,12 @@ Pipeline steps:
    Stale findings from previous scans are cleaned up.
 
 7. Sync the temp database into the tenant database:
-   - Drop the old provider subgraph (matched by _provider_id property).
+   - Drop the old provider subgraph (matched by dynamic _Provider_{uuid} label).
      graph_data_ready is set to False for all scans of this provider while
      the swap happens so the API doesn't serve partial data.
    - Copy nodes and relationships in batches. Every synced node gets a
-     _ProviderResource label and _provider_id / _provider_element_id
-     properties for multi-provider isolation.
+     _ProviderResource label and dynamic _Tenant_{uuid} / _Provider_{uuid}
+     isolation labels, plus a _provider_element_id property for MERGE keys.
    - Set graph_data_ready back to True.
 
 8. Drop the temporary database, mark the AttackPathsScan as COMPLETED.
