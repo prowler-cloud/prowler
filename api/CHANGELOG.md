@@ -7,6 +7,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🔄 Changed
 
 - Fix `rls_transaction` to retry mid-query read replica failures with primary DB fallback via `execute_wrapper`, preventing scan crashes during RDS replica recovery [(#10379)](https://github.com/prowler-cloud/prowler/pull/10379)
+
 ---
 
 ## [1.22.0] (Prowler UNRELEASED)
