@@ -42,3 +42,10 @@ export enum FilterType {
   CATEGORY = "category__in",
   RESOURCE_GROUPS = "resource_groups__in",
 }
+
+/**
+ * Controls the filter dispatch behavior of DataTableFilterCustom.
+ * - "instant": every selection immediately updates the URL (legacy/default behavior)
+ * - "batch":   selections accumulate in pending state; URL only updates on explicit apply
+ */
+export type DataTableFilterMode = "instant" | "batch";

@@ -48,57 +48,52 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
 
 interface AccountsSelectorProps {
   providers: ProviderProps[];
+  /**
+   * When provided, called instead of navigating immediately.
+   * Use this on pages that batch filter changes (e.g. Findings).
+   * The Overview page omits this prop to keep instant-apply behavior.
+   *
+   * @param filterKey - The raw filter key without "filter[]" wrapper, e.g. "provider_id__in"
+   * @param values - The selected values array
+   */
+  onBatchChange?: (filterKey: string, values: string[]) => void;
+  /**
+   * When in batch mode, pass the pending selected values from the parent.
+   * This allows the component to reflect pending state before Apply is clicked.
+   * Ignored when `onBatchChange` is not provided (URL-driven mode).
+   */
+  selectedValues?: string[];
 }
 
-export function AccountsSelector({ providers }: AccountsSelectorProps) {
+export function AccountsSelector({
+  providers,
+  onBatchChange,
+  selectedValues,
+}: AccountsSelectorProps) {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
 
   const filterKey = "filter[provider_id__in]";
   const current = searchParams.get(filterKey) || "";
-  const selectedTypes = searchParams.get("filter[provider_type__in]") || "";
-  const selectedTypesList = selectedTypes
-    ? selectedTypes.split(",").filter(Boolean)
-    : [];
-  const selectedIds = current ? current.split(",").filter(Boolean) : [];
-  const visibleProviders = providers
-    // .filter((p) => p.attributes.connection?.connected)
-    .filter((p) =>
-      selectedTypesList.length > 0
-        ? selectedTypesList.includes(p.attributes.provider)
-        : true,
-    );
+  const urlSelectedIds = current ? current.split(",").filter(Boolean) : [];
+
+  // In batch mode, use the parent-controlled pending values; otherwise, use URL state.
+  const selectedIds = onBatchChange
+    ? (selectedValues ?? [])
+    : urlSelectedIds;
+  const visibleProviders = providers;
+  // .filter((p) => p.attributes.connection?.connected)
 
   const handleMultiValueChange = (ids: string[]) => {
+    if (onBatchChange) {
+      onBatchChange("provider_id__in", ids);
+      return;
+    }
     navigateWithParams((params) => {
       params.delete(filterKey);
 
       if (ids.length > 0) {
         params.set(filterKey, ids.join(","));
-      }
-
-      // Auto-deselect provider types that no longer have any selected accounts
-      if (selectedTypesList.length > 0) {
-        // Get provider types of currently selected accounts
-        const selectedProviders = providers.filter((p) => ids.includes(p.id));
-        const selectedProviderTypes = new Set(
-          selectedProviders.map((p) => p.attributes.provider),
-        );
-
-        // Keep only provider types that still have selected accounts
-        const remainingProviderTypes = selectedTypesList.filter((type) =>
-          selectedProviderTypes.has(type as ProviderType),
-        );
-
-        // Update provider_type__in filter
-        if (remainingProviderTypes.length > 0) {
-          params.set(
-            "filter[provider_type__in]",
-            remainingProviderTypes.join(","),
-          );
-        } else {
-          params.delete("filter[provider_type__in]");
-        }
       }
     });
   };
@@ -115,10 +110,7 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
     );
   };
 
-  const filterDescription =
-    selectedTypesList.length > 0
-      ? `Showing accounts for ${selectedTypesList.join(", ")} providers`
-      : "All connected cloud provider accounts";
+  const filterDescription = "All connected cloud provider accounts";
 
   return (
     <div className="relative">
@@ -176,9 +168,7 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
             </>
           ) : (
             <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-              {selectedTypesList.length > 0
-                ? "No accounts available for selected providers"
-                : "No connected accounts available"}
+              No connected accounts available
             </div>
           )}
         </MultiSelectContent>

@@ -154,20 +154,46 @@ const PROVIDER_DATA: Record<
 
 type ProviderTypeSelectorProps = {
   providers: ProviderProps[];
+  /**
+   * When provided, called instead of navigating immediately.
+   * Use this on pages that batch filter changes (e.g. Findings).
+   * The Overview page omits this prop to keep instant-apply behavior.
+   *
+   * @param filterKey - The raw filter key without "filter[]" wrapper, e.g. "provider_type__in"
+   * @param values - The selected values array
+   */
+  onBatchChange?: (filterKey: string, values: string[]) => void;
+  /**
+   * When in batch mode, pass the pending selected values from the parent.
+   * This allows the component to reflect pending state before Apply is clicked.
+   * Ignored when `onBatchChange` is not provided (URL-driven mode).
+   */
+  selectedValues?: string[];
 };
 
 export const ProviderTypeSelector = ({
   providers,
+  onBatchChange,
+  selectedValues,
 }: ProviderTypeSelectorProps) => {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
 
   const currentProviders = searchParams.get("filter[provider_type__in]") || "";
-  const selectedTypes = currentProviders
+  const urlSelectedTypes = currentProviders
     ? currentProviders.split(",").filter(Boolean)
     : [];
 
+  // In batch mode, use the parent-controlled pending values; otherwise, use URL state.
+  const selectedTypes = onBatchChange
+    ? (selectedValues ?? [])
+    : urlSelectedTypes;
+
   const handleMultiValueChange = (values: string[]) => {
+    if (onBatchChange) {
+      onBatchChange("provider_type__in", values);
+      return;
+    }
     navigateWithParams((params) => {
       // Update provider_type__in
       if (values.length > 0) {
@@ -175,10 +201,6 @@ export const ProviderTypeSelector = ({
       } else {
         params.delete("filter[provider_type__in]");
       }
-
-      // Clear account selection when changing provider types
-      // User should manually select accounts if they want to filter by specific accounts
-      params.delete("filter[provider_id__in]");
     });
   };
 
