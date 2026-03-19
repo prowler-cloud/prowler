@@ -408,10 +408,14 @@ class Finding(BaseModel):
                 output_data["auth_method"] = "api_token"
                 team = get_nested_attribute(provider, "identity.team")
                 output_data["account_uid"] = (
-                    team.id if team else get_nested_attribute(provider, "identity.user_id")
+                    team.id
+                    if team
+                    else get_nested_attribute(provider, "identity.user_id")
                 )
                 output_data["account_name"] = (
-                    team.name if team else get_nested_attribute(provider, "identity.username")
+                    team.name
+                    if team
+                    else get_nested_attribute(provider, "identity.username")
                 )
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
