@@ -7,6 +7,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - Skill system to Lighthouse AI [(#10322)](https://github.com/prowler-cloud/prowler/pull/10322)
+- Skill for creating custom queries on Attack Paths [(#10323)](https://github.com/prowler-cloud/prowler/pull/10323)
+
+### 🔄 Changed
+
 - Google Workspace provider support [(#10333)](https://github.com/prowler-cloud/prowler/pull/10333)
 - Image (Container Registry) provider support in UI: badge icon, credentials form, and provider-type filtering [(#10167)](https://github.com/prowler-cloud/prowler/pull/10167)
 - Events tab in Findings and Resource detail cards showing an AWS CloudTrail timeline with expandable event rows, actor info, request/response JSON payloads, and error details [(#10320)](https://github.com/prowler-cloud/prowler/pull/10320)
