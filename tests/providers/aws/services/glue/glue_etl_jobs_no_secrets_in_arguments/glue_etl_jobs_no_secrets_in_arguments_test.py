@@ -134,6 +134,7 @@ class Test_glue_etl_jobs_no_secrets_in_arguments:
                 assert result[0].status == "FAIL"
                 assert "Potential secrets found" in result[0].status_extended
                 assert job_name in result[0].status_extended
+                assert "--db-password" in result[0].status_extended
                 assert result[0].resource_id == job_name
                 assert result[0].resource_arn == job_arn
                 assert result[0].resource_tags == [{"key_test": "value_test"}]
@@ -186,3 +187,4 @@ class Test_glue_etl_jobs_no_secrets_in_arguments:
                 )
                 assert result[0].resource_id == job_name
                 assert result[0].resource_arn == job_arn
+                assert result[0].resource_tags == [{"key_test": "value_test"}]
