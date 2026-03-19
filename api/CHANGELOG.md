@@ -2,9 +2,9 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.23.0] (Prowler UNRELEASED)
+## [1.22.1] (Prowler v5.21.1)
 
-### 🔄 Changed
+### 🐞 Fixed
 
 - Threat score aggregation query to eliminate unnecessary JOINs and `COUNT(DISTINCT)` overhead [(#10394)](https://github.com/prowler-cloud/prowler/pull/10394)
 
