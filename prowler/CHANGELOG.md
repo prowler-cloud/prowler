@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.21.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Azure MySQL flexible server checks now compare configuration values case-insensitively to avoid false negatives when Azure returns lowercase values [(#10386)](https://github.com/prowler-cloud/prowler/pull/10386)
+
+---
+
 ## [5.21.0] (Prowler v5.21.0)
 
 ### 🚀 Added
