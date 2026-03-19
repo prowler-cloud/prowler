@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, timezone
 
-from celery import current_app
+from celery import current_app, states
 from celery.utils.log import get_task_logger
-from config.django.base import STALE_SCAN_THRESHOLD_MINUTES
+from config.django.base import ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES
 from tasks.jobs.attack_paths.db_utils import (
     finish_attack_paths_scan,
     recover_graph_data_ready,
@@ -18,17 +18,17 @@ logger = get_task_logger(__name__)
 
 def cleanup_stale_attack_paths_scans() -> dict:
     """
-    Find EXECUTING attack paths scans whose workers are dead or that have
-    exceeded the stale threshold, and mark them as FAILED.
+    Find `EXECUTING` `AttackPathsScan` scans whose workers are dead or that have
+    exceeded the stale threshold, and mark them as `FAILED`.
 
     Two-pass detection:
-    1. If TaskResult.worker exists, ping the worker.
+    1. If `TaskResult.worker` exists, ping the worker.
        - Dead worker: cleanup immediately (any age).
        - Alive + past threshold: revoke the task, then cleanup.
        - Alive + within threshold: skip.
     2. If no worker field: fall back to time-based heuristic only.
     """
-    threshold = timedelta(minutes=STALE_SCAN_THRESHOLD_MINUTES)
+    threshold = timedelta(minutes=ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES)
     now = datetime.now(tz=timezone.utc)
     cutoff = now - threshold
 
@@ -73,19 +73,19 @@ def cleanup_stale_attack_paths_scans() -> dict:
         cleaned_up.append(str(scan.id))
 
     logger.info(
-        f"Stale attack paths scan cleanup: {len(cleaned_up)} scan(s) cleaned up"
+        f"Stale `AttackPathsScan` cleanup: {len(cleaned_up)} scan(s) cleaned up"
     )
     return {"cleaned_up_count": len(cleaned_up), "scan_ids": cleaned_up}
 
 
 def _is_worker_alive(worker: str) -> bool:
-    """Ping a specific Celery worker. Returns True if it responds."""
+    """Ping a specific Celery worker. Returns `True` if it responds."""
     response = current_app.control.inspect(destination=[worker]).ping()
     return response is not None and worker in response
 
 
 def _revoke_task(task_result) -> None:
-    """Send SIGTERM to a hung Celery task. Non-fatal on failure."""
+    """Send `SIGTERM` to a hung Celery task. Non-fatal on failure."""
     try:
         current_app.control.revoke(
             task_result.task_id, terminate=True, signal="SIGTERM"
@@ -97,8 +97,8 @@ def _revoke_task(task_result) -> None:
 
 def _cleanup_scan(scan, task_result, reason: str) -> None:
     """
-    Clean up a single stale attack paths scan:
-    drop temp DB, mark FAILED, update TaskResult, recover graph_data_ready.
+    Clean up a single stale `AttackPathsScan`:
+    drop temp DB, mark `FAILED`, update `TaskResult`, recover `graph_data_ready`.
     """
     scan_id_str = str(scan.id)
 
@@ -121,16 +121,16 @@ def _cleanup_scan(scan, task_result, reason: str) -> None:
             logger.info(f"Scan {scan_id_str} is now {fresh_scan.state}, skipping")
             return
 
-    # 3. Mark AttackPathsScan as FAILED
+    # 3. Mark `AttackPathsScan` as `FAILED`
     finish_attack_paths_scan(
         fresh_scan,
         StateChoices.FAILED,
         {"global_error": reason},
     )
 
-    # 4. Mark TaskResult as FAILURE
+    # 4. Mark `TaskResult` as `FAILURE`
     if task_result:
-        task_result.status = "FAILURE"
+        task_result.status = states.FAILURE
         task_result.save(update_fields=["status", "date_done"])
 
     # 5. Recover graph_data_ready if provider data still exists
