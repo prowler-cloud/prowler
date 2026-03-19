@@ -1,8 +1,9 @@
 import re
 import secrets
+import sys
 import time
 import uuid
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from datetime import datetime, timedelta, timezone
 
 from celery.utils.log import get_task_logger
@@ -131,7 +132,7 @@ def rls_transaction(
                 try:
                     connections[replica_alias].close()
                 except Exception:
-                    pass
+                    pass  # Best-effort; connection may already be dead
 
                 delay = REPLICA_RETRY_BASE_DELAY * (2 ** (retry - 1))
                 logger.info(
@@ -160,7 +161,7 @@ def rls_transaction(
             try:
                 connections[replica_alias].close()
             except Exception:
-                pass
+                pass  # Best-effort; connection may already be dead
 
             logger.warning(
                 "Mid-query replica retries exhausted, falling back to primary DB"
@@ -185,7 +186,7 @@ def rls_transaction(
     for attempt in range(1, max_attempts + 1):
         router_token = None
         yielded_cursor = False
-        wrapper_installed = False
+        _caller_exited_cleanly = False
 
         # On final attempt, fall back to primary
         if attempt == max_attempts and can_failover:
@@ -209,21 +210,24 @@ def rls_transaction(
                         raise ValidationError("Must be a valid UUID")
                     cursor.execute(SET_CONFIG_QUERY, [parameter, value])
 
-                    if can_failover and alias == replica_alias:
-                        conn.execute_wrappers.append(_query_failover)
-                        wrapper_installed = True
-
-                    yielded_cursor = True
-                    yield cursor
+                    wrapper_cm = (
+                        conn.execute_wrapper(_query_failover)
+                        if can_failover and alias == replica_alias
+                        else nullcontext()
+                    )
+                    with wrapper_cm:
+                        yielded_cursor = True
+                        yield cursor
+                        _caller_exited_cleanly = True
             return
         except OperationalError as e:
             try:
                 connections[alias].close()
             except Exception:
-                pass
+                pass  # Best-effort; connection may already be dead
 
             if yielded_cursor:
-                if _fallback["succeeded"]:
+                if _fallback["succeeded"] and _caller_exited_cleanly:
                     # Caller's queries succeeded on primary via failover.
                     # This error is transaction.atomic() cleanup on the
                     # dead replica connection — suppress it.
@@ -241,17 +245,11 @@ def rls_transaction(
             )
             time.sleep(delay)
         finally:
-            if wrapper_installed:
-                try:
-                    conn.execute_wrappers.remove(_query_failover)
-                except ValueError:
-                    pass
-
             if _fallback["atomic"] is not None:
                 try:
-                    _fallback["atomic"].__exit__(None, None, None)
+                    _fallback["atomic"].__exit__(*sys.exc_info())
                 except Exception:
-                    pass
+                    pass  # Best-effort; primary connection may be dead
                 _fallback["atomic"] = None
             if _fallback["token"] is not None:
                 reset_read_db_alias(_fallback["token"])
