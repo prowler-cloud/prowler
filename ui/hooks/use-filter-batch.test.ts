@@ -343,7 +343,10 @@ describe("useFilterBatch", () => {
       const { result } = renderHook(() => useFilterBatch());
 
       act(() => {
-        result.current.setPending("filter[provider_type__in]", ["aws", "azure"]);
+        result.current.setPending("filter[provider_type__in]", [
+          "aws",
+          "azure",
+        ]);
         result.current.setPending("filter[provider_id__in]", [
           "provider-uuid-1",
         ]);
@@ -355,9 +358,9 @@ describe("useFilterBatch", () => {
       expect(
         result.current.pendingFilters["filter[provider_type__in]"],
       ).toEqual(["aws", "azure"]);
-      expect(
-        result.current.pendingFilters["filter[provider_id__in]"],
-      ).toEqual(["provider-uuid-1"]);
+      expect(result.current.pendingFilters["filter[provider_id__in]"]).toEqual([
+        "provider-uuid-1",
+      ]);
       expect(result.current.pendingFilters["filter[severity__in]"]).toEqual([
         "critical",
       ]);
@@ -393,9 +396,9 @@ describe("useFilterBatch", () => {
       expect(
         result.current.pendingFilters["filter[provider_type__in]"],
       ).toEqual(["aws"]);
-      expect(
-        result.current.pendingFilters["filter[provider_id__in]"],
-      ).toEqual(["provider-uuid-1"]);
+      expect(result.current.pendingFilters["filter[provider_id__in]"]).toEqual([
+        "provider-uuid-1",
+      ]);
 
       // When
       act(() => {

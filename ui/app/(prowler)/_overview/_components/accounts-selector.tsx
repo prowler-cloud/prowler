@@ -78,9 +78,7 @@ export function AccountsSelector({
   const urlSelectedIds = current ? current.split(",").filter(Boolean) : [];
 
   // In batch mode, use the parent-controlled pending values; otherwise, use URL state.
-  const selectedIds = onBatchChange
-    ? (selectedValues ?? [])
-    : urlSelectedIds;
+  const selectedIds = onBatchChange ? (selectedValues ?? []) : urlSelectedIds;
   const visibleProviders = providers;
   // .filter((p) => p.attributes.connection?.connected)
 

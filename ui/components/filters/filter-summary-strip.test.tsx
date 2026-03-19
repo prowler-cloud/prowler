@@ -178,7 +178,9 @@ describe("FilterSummaryStrip", () => {
       );
 
       // Then
-      expect(screen.getByRole("region", { name: "Active filters" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("region", { name: "Active filters" }),
+      ).toBeInTheDocument();
     });
   });
 

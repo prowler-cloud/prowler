@@ -105,7 +105,9 @@ describe("ApplyFiltersButton", () => {
       );
 
       // Then
-      expect(screen.getByRole("button", { name: "Apply Filters" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Apply Filters" }),
+      ).toBeInTheDocument();
     });
   });
 
@@ -201,7 +203,9 @@ describe("ApplyFiltersButton", () => {
       );
 
       // When
-      await user.click(screen.getByRole("button", { name: "Apply Filters (1)" }));
+      await user.click(
+        screen.getByRole("button", { name: "Apply Filters (1)" }),
+      );
 
       // Then
       expect(onApply).toHaveBeenCalledTimes(1);

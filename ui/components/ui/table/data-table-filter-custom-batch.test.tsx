@@ -84,9 +84,12 @@ vi.mock("@/components/filters/clear-filters-button", () => ({
 }));
 
 // ── Other component stubs ───────────────────────────────────────────────────
-vi.mock("@/components/compliance/compliance-header/compliance-scan-info", () => ({
-  ComplianceScanInfo: () => null,
-}));
+vi.mock(
+  "@/components/compliance/compliance-header/compliance-scan-info",
+  () => ({
+    ComplianceScanInfo: () => null,
+  }),
+);
 vi.mock("@/components/ui/entities/entity-info", () => ({
   EntityInfo: () => null,
 }));

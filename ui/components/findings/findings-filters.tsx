@@ -93,7 +93,10 @@ const formatFilterValue = (filterKey: string, value: string): string => {
       FAIL: "Fail",
       MANUAL: "Manual",
     };
-    return statusMap[value] ?? (value.charAt(0).toUpperCase() + value.slice(1).toLowerCase());
+    return (
+      statusMap[value] ??
+      value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
+    );
   }
   // Default: capitalize first letter, lowercase rest
   if (!value) return value;
