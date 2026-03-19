@@ -19,15 +19,13 @@ import { ExpandableSection } from "@/components/ui/expandable-section";
 import { DataTableFilterCustom } from "@/components/ui/table";
 import { useFilterBatch } from "@/hooks/use-filter-batch";
 import { getCategoryLabel, getGroupLabel } from "@/lib/categories";
-import { FilterEntity, FilterType, ScanEntity, ScanProps } from "@/types";
+import { FilterType, ScanEntity } from "@/types";
+import { DATA_TABLE_FILTER_MODE } from "@/types/filters";
 import { ProviderProps } from "@/types/providers";
 
 interface FindingsFiltersProps {
   /** Provider data for ProviderTypeSelector and AccountsSelector */
   providers: ProviderProps[];
-  providerIds: string[];
-  providerDetails: { [id: string]: FilterEntity }[];
-  completedScans: ScanProps[];
   completedScanIds: string[];
   scanDetails: { [key: string]: ScanEntity }[];
   uniqueRegions: string[];
@@ -55,6 +53,15 @@ const FILTER_KEY_LABELS: Record<string, string> = {
   "filter[scan__in]": "Scan ID",
   "filter[inserted_at]": "Date",
   "filter[muted]": "Muted",
+};
+
+/**
+ * Maps raw status values to human-readable display strings.
+ */
+const STATUS_DISPLAY: Record<string, string> = {
+  PASS: "Pass",
+  FAIL: "Fail",
+  MANUAL: "Manual",
 };
 
 /**
@@ -88,13 +95,8 @@ const formatFilterValue = (filterKey: string, value: string): string => {
     return PROVIDER_TYPE_DISPLAY[value] ?? value;
   }
   if (filterKey === "filter[status__in]") {
-    const statusMap: Record<string, string> = {
-      PASS: "Pass",
-      FAIL: "Fail",
-      MANUAL: "Manual",
-    };
     return (
-      statusMap[value] ??
+      STATUS_DISPLAY[value] ??
       value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
     );
   }
@@ -124,7 +126,9 @@ export const FindingsFilters = ({
     hasChanges,
     changeCount,
     getFilterValue,
-  } = useFilterBatch();
+  } = useFilterBatch({
+    defaultParams: { "filter[muted]": "false" },
+  });
 
   // Custom filters for the expandable section (removed Provider - now using AccountsSelector)
   const customFilters = [
@@ -187,23 +191,18 @@ export const FindingsFilters = ({
     });
   });
 
-  // Handler for removing a single chip: update the pending filter to remove that value
+  // Handler for removing a single chip: update the pending filter to remove that value.
+  // setPending handles both "filter[key]" and "key" formats internally.
   const handleChipRemove = (filterKey: string, value: string) => {
     const currentValues = pendingFilters[filterKey] ?? [];
     const nextValues = currentValues.filter((v) => v !== value);
-    // Normalize key to strip "filter[...]" wrapper when calling setPending
-    // (setPending handles the normalization internally)
-    const rawKey =
-      filterKey.startsWith("filter[") && filterKey.endsWith("]")
-        ? filterKey.slice(7, -1)
-        : filterKey;
-    setPending(rawKey, nextValues);
+    setPending(filterKey, nextValues);
   };
 
   // Derive pending muted state for the checkbox.
-  // Note: "filter[muted]" is in EXCLUDED_FROM_BATCH in the hook, so applyAll won't
-  // include it — the muted filter routes through setPending but the hook immediately
-  // applies it. The checked prop drives the controlled display from local state.
+  // Note: "filter[muted]" participates in batch mode — applyAll includes it
+  // when present in pending state, and the defaultParams option ensures
+  // filter[muted]=false is applied as a fallback when no muted value is pending.
   const pendingMutedValue = pendingFilters["filter[muted]"];
   const mutedChecked =
     pendingMutedValue !== undefined
@@ -287,7 +286,7 @@ export const FindingsFilters = ({
               />
             }
             hideClearButton
-            mode="batch"
+            mode={DATA_TABLE_FILTER_MODE.BATCH}
             onBatchChange={setPending}
             getFilterValue={getFilterValue}
           />

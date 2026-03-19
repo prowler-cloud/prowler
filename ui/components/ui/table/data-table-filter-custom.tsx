@@ -22,7 +22,7 @@ import {
   ProviderEntity,
   ScanEntity,
 } from "@/types";
-import { DataTableFilterMode } from "@/types/filters";
+import { DATA_TABLE_FILTER_MODE, DataTableFilterMode } from "@/types/filters";
 import { ProviderConnectionStatus } from "@/types/providers";
 
 export interface DataTableFilterCustomProps {
@@ -55,7 +55,7 @@ export const DataTableFilterCustom = ({
   filters,
   prependElement,
   hideClearButton = false,
-  mode = "instant",
+  mode = DATA_TABLE_FILTER_MODE.INSTANT,
   onBatchChange,
   getFilterValue,
 }: DataTableFilterCustomProps) => {
@@ -131,7 +131,7 @@ export const DataTableFilterCustom = ({
   };
 
   const pushDropdownFilter = (filter: FilterOption, values: string[]) => {
-    if (mode === "batch" && onBatchChange) {
+    if (mode === DATA_TABLE_FILTER_MODE.BATCH && onBatchChange) {
       // In batch mode, notify the caller instead of updating the URL
       onBatchChange(filter.key, values);
       return;
@@ -152,7 +152,7 @@ export const DataTableFilterCustom = ({
   };
 
   const getSelectedValues = (filter: FilterOption): string[] => {
-    if (mode === "batch" && getFilterValue) {
+    if (mode === DATA_TABLE_FILTER_MODE.BATCH && getFilterValue) {
       // In batch mode, read from pending state provided by the caller
       return getFilterValue(filter.key);
     }

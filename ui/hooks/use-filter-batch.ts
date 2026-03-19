@@ -4,10 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 // Filters that are managed by the batch hook (excludes system defaults)
-const EXCLUDED_FROM_BATCH = ["filter[search]", "filter[muted]"];
-
-const FINDINGS_PATH = "/findings";
-const DEFAULT_MUTED_FILTER = "false";
+const EXCLUDED_FROM_BATCH = ["filter[search]"];
 
 /**
  * Snapshot of pending (un-applied) filter state.
@@ -112,6 +109,15 @@ function countChanges(
   return count;
 }
 
+export interface UseFilterBatchOptions {
+  /**
+   * Default URL params to apply when applyAll() is called and they are not
+   * already present in the params. Useful for page-level filter defaults
+   * (e.g. `{ "filter[muted]": "false" }` on the Findings page).
+   */
+  defaultParams?: Record<string, string>;
+}
+
 /**
  * Manages a two-state (pending → applied) filter model for the Findings view.
  *
@@ -121,7 +127,9 @@ function countChanges(
  * - `discardAll()` resets pending to match the current URL.
  * - Browser back/forward automatically re-syncs pending state from the new URL.
  */
-export const useFilterBatch = (): UseFilterBatchReturn => {
+export const useFilterBatch = (
+  options?: UseFilterBatchOptions,
+): UseFilterBatchReturn => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -130,14 +138,14 @@ export const useFilterBatch = (): UseFilterBatchReturn => {
     deriveAppliedFromUrl(new URLSearchParams(searchParams.toString())),
   );
 
-  // Sync pending state whenever the URL changes (back/forward nav or external update)
+  // Sync pending state whenever the URL changes (back/forward nav or external update).
+  // `searchParams` from useSearchParams() is stable between renders in Next.js App Router.
   useEffect(() => {
     const applied = deriveAppliedFromUrl(
       new URLSearchParams(searchParams.toString()),
     );
     setPendingFilters(applied);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams.toString()]);
+  }, [searchParams]);
 
   const setPending = (key: string, values: string[]) => {
     const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
@@ -175,9 +183,13 @@ export const useFilterBatch = (): UseFilterBatchReturn => {
       }
     });
 
-    // Ensure Findings muted default
-    if (pathname === FINDINGS_PATH && !params.has("filter[muted]")) {
-      params.set("filter[muted]", DEFAULT_MUTED_FILTER);
+    // Apply caller-supplied defaults for any params not already set
+    if (options?.defaultParams) {
+      Object.entries(options.defaultParams).forEach(([key, value]) => {
+        if (!params.has(key)) {
+          params.set(key, value);
+        }
+      });
     }
 
     // Reset pagination

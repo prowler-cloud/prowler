@@ -71,9 +71,13 @@ export const ClearFiltersButton = ({
   const displayCount =
     onClear && pendingCount !== undefined ? pendingCount : filterCount;
 
-  // When in batch mode (onClear provided), show button even if no URL filters
-  // (there may be pending filters not yet in the URL)
+  // In instant mode: hide when no URL filters exist
   if (!onClear && filterCount === 0) {
+    return null;
+  }
+
+  // In batch mode: hide when there are no pending or URL filters to clear
+  if (onClear && displayCount === 0) {
     return null;
   }
 

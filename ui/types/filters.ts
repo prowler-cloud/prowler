@@ -48,4 +48,10 @@ export enum FilterType {
  * - "instant": every selection immediately updates the URL (legacy/default behavior)
  * - "batch":   selections accumulate in pending state; URL only updates on explicit apply
  */
-export type DataTableFilterMode = "instant" | "batch";
+export const DATA_TABLE_FILTER_MODE = {
+  INSTANT: "instant",
+  BATCH: "batch",
+} as const;
+
+export type DataTableFilterMode =
+  (typeof DATA_TABLE_FILTER_MODE)[keyof typeof DATA_TABLE_FILTER_MODE];

@@ -67,7 +67,7 @@ describe("useFilterBatch", () => {
 
   describe("excluded keys", () => {
     it("should exclude filter[search] from batch operations", () => {
-      // Given — search and muted are excluded from batch
+      // Given — search is excluded from batch; muted now participates in batch
       setSearchParams({
         "filter[search]": "some-search-term",
         "filter[muted]": "false",
@@ -77,12 +77,14 @@ describe("useFilterBatch", () => {
       // When
       const { result } = renderHook(() => useFilterBatch());
 
-      // Then — only severity should be in pendingFilters
+      // Then — severity and muted are in pendingFilters; search is excluded
       expect(result.current.pendingFilters).toEqual({
+        "filter[muted]": ["false"],
         "filter[severity__in]": ["critical"],
       });
       expect(result.current.pendingFilters["filter[search]"]).toBeUndefined();
-      expect(result.current.pendingFilters["filter[muted]"]).toBeUndefined();
+      // muted is now part of batch (not excluded)
+      expect(result.current.pendingFilters["filter[muted]"]).toEqual(["false"]);
     });
   });
 
@@ -437,8 +439,8 @@ describe("useFilterBatch", () => {
       expect(result.current.hasChanges).toBe(true);
     });
 
-    it("should NOT clear excluded keys (filter[search], filter[muted])", () => {
-      // Given — URL has search and muted (excluded) plus severity
+    it("should NOT clear excluded keys (filter[search]) but DOES clear filter[muted]", () => {
+      // Given — URL has search (excluded) plus muted and severity (both in batch)
       setSearchParams({
         "filter[search]": "my-search",
         "filter[muted]": "false",
@@ -446,18 +448,19 @@ describe("useFilterBatch", () => {
       });
       const { result } = renderHook(() => useFilterBatch());
 
-      // Pre-condition — only severity is in pendingFilters (excluded keys are not loaded)
+      // Pre-condition — muted and severity are in pendingFilters; search is excluded
       expect(result.current.pendingFilters["filter[search]"]).toBeUndefined();
-      expect(result.current.pendingFilters["filter[muted]"]).toBeUndefined();
+      expect(result.current.pendingFilters["filter[muted]"]).toEqual(["false"]);
 
       // When
       act(() => {
         result.current.clearAll();
       });
 
-      // Then — severity is cleared; excluded keys remain excluded (undefined in pending)
+      // Then — severity and muted are cleared; search remains excluded (undefined in pending)
       expect(result.current.getFilterValue("filter[severity__in]")).toEqual([]);
       expect(result.current.pendingFilters["filter[search]"]).toBeUndefined();
+      // muted is a batch key, so it gets cleared by clearAll
       expect(result.current.pendingFilters["filter[muted]"]).toBeUndefined();
     });
 
