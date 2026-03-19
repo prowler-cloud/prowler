@@ -70,4 +70,50 @@ describe("QueryParametersForm", () => {
       screen.queryByText("Tag key to filter the S3 bucket."),
     ).not.toBeInTheDocument();
   });
+
+  it("renders a textarea when the parameter input type is textarea", () => {
+    // Given
+    const customQuery: AttackPathQuery = {
+      type: "attack-paths-scans",
+      id: "custom-query",
+      attributes: {
+        name: "Custom openCypher query",
+        short_description: "Write your own openCypher query",
+        description: "Run a custom query against the graph.",
+        provider: "aws",
+        attribution: null,
+        parameters: [
+          {
+            name: "query",
+            label: "openCypher query",
+            data_type: "string",
+            input_type: "textarea",
+            placeholder: "MATCH (n) RETURN n LIMIT 25",
+            description: "",
+            required: true,
+          },
+        ],
+      },
+    };
+
+    const form = useForm({
+      defaultValues: {
+        query: "",
+      },
+    });
+
+    render(
+      <FormProvider {...form}>
+        <QueryParametersForm selectedQuery={customQuery} />
+      </FormProvider>,
+    );
+
+    // When
+    const input = screen.getByRole("textbox", { name: /opencypher query/i });
+
+    // Then
+    expect(input.tagName).toBe("TEXTAREA");
+    expect(input).toHaveAttribute("data-slot", "textarea");
+    expect(input).toHaveAttribute("placeholder", "MATCH (n) RETURN n LIMIT 25");
+  });
 });

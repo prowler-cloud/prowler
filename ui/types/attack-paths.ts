@@ -81,6 +81,18 @@ export const DATA_TYPES = {
 
 type DataType = (typeof DATA_TYPES)[keyof typeof DATA_TYPES];
 
+export const QUERY_PARAMETER_INPUT_TYPES = {
+  TEXT: "text",
+  TEXTAREA: "textarea",
+} as const;
+
+export type QueryParameterInputType =
+  (typeof QUERY_PARAMETER_INPUT_TYPES)[keyof typeof QUERY_PARAMETER_INPUT_TYPES];
+
+export const ATTACK_PATH_QUERY_IDS = {
+  CUSTOM: "__custom-open-cypher__",
+} as const;
+
 // Query Types
 export interface AttackPathQueryParameter {
   name: string;
@@ -89,9 +101,15 @@ export interface AttackPathQueryParameter {
   description: string;
   placeholder?: string;
   required?: boolean;
+  input_type?: QueryParameterInputType;
 }
 
 export interface AttackPathQueryAttribution {
+  text: string;
+  link: string;
+}
+
+export interface AttackPathQueryDocumentationLink {
   text: string;
   link: string;
 }
@@ -103,6 +121,7 @@ export interface AttackPathQueryAttributes {
   provider: string;
   parameters: AttackPathQueryParameter[];
   attribution: AttackPathQueryAttribution | null;
+  documentation_link?: AttackPathQueryDocumentationLink | null;
 }
 
 export interface AttackPathQuery {
@@ -113,6 +132,24 @@ export interface AttackPathQuery {
 
 export interface AttackPathQueriesResponse {
   data: AttackPathQuery[];
+}
+
+export interface AttackPathCartographySchemaAttributes {
+  id: string;
+  provider: string;
+  cartography_version: string;
+  schema_url: string;
+  raw_schema_url: string;
+}
+
+export interface AttackPathCartographySchema {
+  type: "attack-paths-cartography-schemas";
+  id: string;
+  attributes: AttackPathCartographySchemaAttributes;
+}
+
+export interface AttackPathCartographySchemaResponse {
+  data: AttackPathCartographySchema;
 }
 
 // Graph Data Types
@@ -255,4 +292,17 @@ export interface ExecuteQueryRequestData {
 
 export interface ExecuteQueryRequest {
   data: ExecuteQueryRequestData;
+}
+
+export interface ExecuteCustomQueryRequestAttributes {
+  query: string;
+}
+
+export interface ExecuteCustomQueryRequestData {
+  type: "attack-paths-custom-query-run-requests";
+  attributes: ExecuteCustomQueryRequestAttributes;
+}
+
+export interface ExecuteCustomQueryRequest {
+  data: ExecuteCustomQueryRequestData;
 }

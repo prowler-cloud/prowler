@@ -3,7 +3,12 @@
 import { Controller, useFormContext } from "react-hook-form";
 
 import { Input } from "@/components/shadcn";
-import type { AttackPathQuery } from "@/types/attack-paths";
+import { Textarea } from "@/components/shadcn/textarea/textarea";
+import { cn } from "@/lib/utils";
+import {
+  type AttackPathQuery,
+  QUERY_PARAMETER_INPUT_TYPES,
+} from "@/types/attack-paths";
 
 interface QueryParametersFormProps {
   selectedQuery: AttackPathQuery | null | undefined;
@@ -76,8 +81,21 @@ export const QueryParametersForm = ({
                 return undefined;
               })();
 
+              const placeholder =
+                param.description ||
+                param.placeholder ||
+                `Enter ${param.label.toLowerCase()}`;
+
+              const isTextarea =
+                param.input_type === QUERY_PARAMETER_INPUT_TYPES.TEXTAREA;
+
               return (
-                <div className="flex flex-col gap-1.5">
+                <div
+                  className={cn(
+                    "flex flex-col gap-1.5",
+                    isTextarea && "md:col-span-2",
+                  )}
+                >
                   <label
                     htmlFor={param.name}
                     className="text-text-neutral-tertiary text-xs font-medium"
@@ -87,17 +105,24 @@ export const QueryParametersForm = ({
                       <span className="text-text-error-primary">*</span>
                     )}
                   </label>
-                  <Input
-                    {...field}
-                    id={param.name}
-                    type={param.data_type === "number" ? "number" : "text"}
-                    placeholder={
-                      param.description ||
-                      param.placeholder ||
-                      `Enter ${param.label.toLowerCase()}`
-                    }
-                    value={field.value ?? ""}
-                  />
+                  {isTextarea ? (
+                    <Textarea
+                      {...field}
+                      id={param.name}
+                      textareaSize="lg"
+                      placeholder={placeholder}
+                      value={field.value ?? ""}
+                      className="min-h-40 font-mono text-xs"
+                    />
+                  ) : (
+                    <Input
+                      {...field}
+                      id={param.name}
+                      type={param.data_type === "number" ? "number" : "text"}
+                      placeholder={placeholder}
+                      value={field.value ?? ""}
+                    />
+                  )}
                   {errorMessage && (
                     <span className="text-xs text-red-500">{errorMessage}</span>
                   )}
