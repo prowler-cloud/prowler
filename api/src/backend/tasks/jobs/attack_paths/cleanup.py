@@ -91,9 +91,7 @@ def cleanup_stale_attack_paths_scans() -> dict:
 def _is_worker_alive(worker: str) -> bool:
     """Ping a specific Celery worker. Returns `True` if it responds or on error."""
     try:
-        response = current_app.control.inspect(
-            destination=[worker], timeout=1.0
-        ).ping()
+        response = current_app.control.inspect(destination=[worker], timeout=1.0).ping()
         return response is not None and worker in response
     except Exception:
         logger.exception(f"Failed to ping worker {worker}, treating as alive")
