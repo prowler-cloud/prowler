@@ -959,3 +959,4 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Restore packages location in PyProject [(#7510)](https://github.com/prowler-cloud/prowler/pull/7510)
 
 ---
+- fix(azure): normalize MySQL configuration values to uppercase in mysql_service.py
