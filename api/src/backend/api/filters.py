@@ -926,6 +926,9 @@ class FindingGroupSummaryFilter(FilterSet):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+    check_title__icontains = CharFilter(
+        field_name="check_title", lookup_expr="icontains"
+    )
 
     # Provider filters
     provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
@@ -1025,6 +1028,9 @@ class LatestFindingGroupSummaryFilter(FilterSet):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+    check_title__icontains = CharFilter(
+        field_name="check_title", lookup_expr="icontains"
+    )
 
     # Provider filters
     provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
