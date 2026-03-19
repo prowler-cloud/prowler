@@ -10,8 +10,6 @@ from typing import Any
 
 import neo4j
 from celery.utils.log import get_task_logger
-
-from api.attack_paths import database as graph_database
 from tasks.jobs.attack_paths.config import (
     PROVIDER_ISOLATION_PROPERTIES,
     PROVIDER_RESOURCE_LABEL,
@@ -27,6 +25,8 @@ from tasks.jobs.attack_paths.queries import (
     RELATIONSHIPS_FETCH_QUERY,
     render_cypher_template,
 )
+
+from api.attack_paths import database as graph_database
 
 logger = get_task_logger(__name__)
 
@@ -81,8 +81,8 @@ def sync_nodes(
     """
     Sync nodes from source to target database.
 
-    Adds `_ProviderResource` label and `_provider_id` property to all nodes.
-    Also adds dynamic `_Tenant_{id}` and `_Provider_{id}` isolation labels.
+    Adds `_ProviderResource` label and dynamic `_Tenant_{id}` and `_Provider_{id}`
+    isolation labels to all nodes.
 
     Source and target sessions are opened sequentially per batch to avoid
     holding two Bolt connections simultaneously for the entire sync duration.
@@ -119,13 +119,7 @@ def sync_nodes(
                 query = render_cypher_template(
                     NODE_SYNC_TEMPLATE, {"__NODE_LABELS__": node_labels}
                 )
-                target_session.run(
-                    query,
-                    {
-                        "rows": batch,
-                        "provider_id": provider_id,
-                    },
-                )
+                target_session.run(query, {"rows": batch})
 
         total_synced += batch_count
         logger.info(
@@ -143,7 +137,7 @@ def sync_relationships(
     """
     Sync relationships from source to target database.
 
-    Adds `_provider_id` property to all relationships.
+    Matches source and target nodes by `_provider_element_id` in the tenant database.
 
     Source and target sessions are opened sequentially per batch to avoid
     holding two Bolt connections simultaneously for the entire sync duration.
@@ -174,13 +168,7 @@ def sync_relationships(
                 query = render_cypher_template(
                     RELATIONSHIP_SYNC_TEMPLATE, {"__REL_TYPE__": rel_type}
                 )
-                target_session.run(
-                    query,
-                    {
-                        "rows": batch,
-                        "provider_id": provider_id,
-                    },
-                )
+                target_session.run(query, {"rows": batch})
 
         total_synced += batch_count
         logger.info(
