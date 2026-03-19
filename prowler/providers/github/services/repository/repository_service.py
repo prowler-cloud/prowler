@@ -372,11 +372,79 @@ class Repository(GithubService):
                 secret_scanning_enabled=secret_scanning_enabled,
                 dependabot_alerts_enabled=dependabot_alerts_enabled,
                 delete_branch_on_merge=delete_branch_on_merge,
+                rulesets=self._get_repository_rulesets(repo),
             )
         except Exception as error:
             logger.error(
                 f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _get_repository_rulesets(self, repo) -> list:
+        """Fetch repository rulesets via GitHub REST API.
+
+        Args:
+            repo: The PyGithub repository instance.
+
+        Returns:
+            list[Ruleset]: List of active rulesets with their PR review rules.
+        """
+        rulesets = []
+        try:
+            token = self.provider.session.token
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+            }
+            url = f"https://api.github.com/repos/{repo.full_name}/rulesets"
+            response = requests.get(url, headers=headers)
+
+            if response.status_code in (404, 403):
+                return []
+
+            response.raise_for_status()
+            ruleset_list = response.json()
+
+            for rs in ruleset_list:
+                if rs.get("enforcement") != "active":
+                    continue
+
+                detail_url = f"https://api.github.com/repos/{repo.full_name}/rulesets/{rs.get('id')}"
+                detail_resp = requests.get(detail_url, headers=headers)
+                if detail_resp.status_code != 200:
+                    continue
+
+                detail = detail_resp.json()
+                dismiss_stale = False
+                require_code_owner = False
+                approving_count = 0
+                require_last_push = False
+
+                for rule in detail.get("rules", []):
+                    if rule.get("type") == "pull_request":
+                        params = rule.get("parameters", {})
+                        dismiss_stale = params.get("dismiss_stale_reviews_on_push", False)
+                        require_code_owner = params.get("require_code_owner_review", False)
+                        approving_count = params.get("required_approving_review_count", 0)
+                        require_last_push = params.get("require_last_push_approval", False)
+
+                rulesets.append(
+                    Ruleset(
+                        id=rs.get("id"),
+                        name=rs.get("name", ""),
+                        target=rs.get("target", "branch"),
+                        enforcement=rs.get("enforcement"),
+                        dismiss_stale_reviews_on_push=dismiss_stale,
+                        require_code_owner_review=require_code_owner,
+                        required_approving_review_count=approving_count,
+                        require_last_push_approval=require_last_push,
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return rulesets
 
     def _get_repository_immutable_releases_status(self, repo) -> Optional[bool]:
         """Retrieve the immutable releases status for the provided repository.
