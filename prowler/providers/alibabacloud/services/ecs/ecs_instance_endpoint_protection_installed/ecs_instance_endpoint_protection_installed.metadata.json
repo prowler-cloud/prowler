@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "ALIYUN::ECS::Instance",
   "ResourceGroup": "compute",
-  "Description": "**Alibaba Cloud Security Center** provides endpoint protection for ECS instances, offering real-time detection and removal of viruses, spyware, and other malicious software. This check verifies that the **Security Center agent** is installed and active on all ECS instances, ensuring configurable alerts notify administrators when known malicious software attempts to install itself or execute on the instance.",
+  "Description": "**Alibaba Cloud Security Center** provides endpoint protection for ECS instances with real-time detection and removal of malicious software. This check verifies the **Security Center agent** is installed and active on all ECS instances, ensuring alerts notify administrators when malicious software attempts to install or execute.",
   "Risk": "ECS instances without **endpoint protection** are vulnerable to **malware**, **viruses**, **webshells**, and other security threats that can compromise **confidentiality**, **integrity**, and **availability**. Without real-time monitoring, security incidents may go undetected, allowing attackers to maintain persistent access and exfiltrate sensitive data.",
   "RelatedUrl": "",
   "AdditionalURLs": [

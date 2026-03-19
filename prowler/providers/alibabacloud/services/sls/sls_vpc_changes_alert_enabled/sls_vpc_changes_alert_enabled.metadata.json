@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "**Alibaba Cloud Simple Log Service (SLS)** should have a log search/analysis query and alarm configured for **VPC** changes. By directing **ActionTrail** logs to SLS and establishing corresponding alert rules, real-time monitoring of VPC modifications can be achieved. This ensures that any creation, deletion, or modification of VPCs and their associated components is promptly detected and reviewed.",
-  "Risk": "Without monitoring for **VPC changes**, unauthorized or accidental modifications to virtual network infrastructure may go undetected. This could disrupt **network connectivity**, create **security vulnerabilities**, or expose internal resources to untrusted networks. Unauthorized VPC modifications increase the risk of **service disruption**, **data interception**, and **lateral movement** within the cloud environment, potentially compromising the **confidentiality** and **availability** of all connected resources.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for **VPC** changes. By directing **ActionTrail** logs to SLS with alert rules, VPC modifications are monitored in real time. This ensures creation, deletion, or modification of VPCs and associated components is promptly detected.",
+  "Risk": "Without monitoring for **VPC changes**, unauthorized modifications to network infrastructure may go undetected, disrupting **connectivity**, creating **vulnerabilities**, or exposing internal resources. This increases risk of **service disruption**, **data interception**, and **lateral movement**, compromising **confidentiality** and **availability** of connected resources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",

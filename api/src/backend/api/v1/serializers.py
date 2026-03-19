@@ -1241,7 +1241,7 @@ class AttackPathsQueryRunRequestSerializer(BaseSerializerV1):
 
 
 class AttackPathsCustomQueryRunRequestSerializer(BaseSerializerV1):
-    query = serializers.CharField()
+    query = serializers.CharField(max_length=10000, min_length=1, trim_whitespace=True)
 
     class JSONAPIMeta:
         resource_name = "attack-paths-custom-query-run-requests"

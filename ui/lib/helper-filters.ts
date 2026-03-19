@@ -1,6 +1,6 @@
 import { ProviderProps, ProvidersApiResponse, ScanProps } from "@/types";
 import { FilterEntity } from "@/types/filters";
-import { ProviderConnectionStatus } from "@/types/providers";
+import { GroupFilterEntity, ProviderConnectionStatus } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 
 /**
@@ -133,6 +133,18 @@ export const isConnectionStatus = (
   entity: FilterEntity,
 ): entity is ProviderConnectionStatus => {
   return !!(entity && "label" in entity && "value" in entity);
+};
+
+// Helper to check if entity is a GroupFilterEntity (organization or account group)
+export const isGroupFilterEntity = (
+  entity: FilterEntity,
+): entity is GroupFilterEntity => {
+  return !!(
+    entity &&
+    "name" in entity &&
+    !("provider" in entity) &&
+    !("label" in entity)
+  );
 };
 
 /**

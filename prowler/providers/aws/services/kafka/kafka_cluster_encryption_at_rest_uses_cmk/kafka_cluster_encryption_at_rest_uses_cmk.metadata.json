@@ -4,9 +4,9 @@
   "CheckTitle": "Kafka cluster has encryption at rest enabled with a customer managed key (CMK) or is serverless",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices/Data Encryption",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
-    "Industry and Regulatory Standards/NIST 800-53 Controls (USA)",
-    "Industry and Regulatory Standards/PCI-DSS",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls (USA)",
+    "Software and Configuration Checks/Industry and Regulatory Standards/PCI-DSS",
     "Effects/Data Exposure"
   ],
   "ServiceName": "kafka",

@@ -408,7 +408,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.21.0"
+        spectacular_settings.VERSION = "1.23.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -2451,6 +2451,11 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     ]
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_SCANS]
+
+    def get_throttles(self):
+        if self.action == "run_custom_attack_paths_query":
+            self.throttle_scope = "attack-paths-custom-query"
+        return super().get_throttles()
 
     def set_required_permissions(self):
         if self.request.method in SAFE_METHODS:

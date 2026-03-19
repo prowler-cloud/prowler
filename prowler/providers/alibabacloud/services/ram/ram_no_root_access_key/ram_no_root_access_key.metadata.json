@@ -9,8 +9,8 @@
   "Severity": "critical",
   "ResourceType": "ALIYUN::RAM::User",
   "ResourceGroup": "IAM",
-  "Description": "**Alibaba Cloud RAM** access keys provide programmatic access to a given account. The **root account** is the most privileged user in an Alibaba Cloud account and should not have access keys associated with it. It is recommended that all access keys associated with the root account be removed to limit vectors by which the account can be compromised and encourage the creation of **role-based accounts** that follow the principle of least privilege.",
-  "Risk": "The **root account** has unrestricted access to all resources and services within the Alibaba Cloud account. If access keys for the root account are compromised, an attacker gains **full administrative control** over the entire account, including the ability to create, modify, or delete any resource. This poses a critical risk to the **confidentiality**, **integrity**, and **availability** of all cloud resources and data.",
+  "Description": "**Alibaba Cloud RAM** access keys provide programmatic access to an account. The **root account** is the most privileged user and should not have access keys. All root access keys should be removed to limit compromise vectors and encourage **role-based accounts** following the principle of least privilege.",
+  "Risk": "The **root account** has unrestricted access to all resources and services. If its access keys are compromised, an attacker gains **full administrative control**, including ability to create, modify, or delete any resource. This poses critical risk to the **confidentiality**, **integrity**, and **availability** of all cloud resources and data.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/doc-detail/102600.htm",

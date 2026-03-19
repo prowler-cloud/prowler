@@ -252,12 +252,12 @@ https://raw.githubusercontent.com/cartography-cncf/cartography/refs/tags/0.126.0
 
 **IMPORTANT**: Always match the schema version to the dependency version in `pyproject.toml`. Using master/main may reference node labels or properties that don't exist in the deployed version.
 
-**Additional Prowler Labels**: The Attack Paths sync task adds extra labels:
+**Additional Prowler Labels**: The Attack Paths sync task adds labels that queries can reference:
 
 - `ProwlerFinding` - Prowler finding nodes with `status`, `provider_uid` properties
-- `ProviderResource` - Generic resource marker
-- `{Provider}Resource` - Provider-specific marker (e.g., `AWSResource`)
 - `Internet` - Internet sentinel node with `_provider_id` property (used in network exposure queries)
+
+Other internal labels (`_ProviderResource`, `_AWSResource`, `_Tenant_*`, `_Provider_*`) exist for isolation but should never be used in queries.
 
 These are defined in `api/src/backend/tasks/jobs/attack_paths/config.py`.
 
