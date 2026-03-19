@@ -1783,6 +1783,15 @@ class FindingGroupDailySummary(RowLevelSecurityProtectedModel):
                 fields=["tenant_id", "provider", "inserted_at"],
                 name="fgds_tenant_prov_ins_idx",
             ),
+            # Trigram indexes for case-insensitive search
+            GinIndex(
+                OpClass(Upper("check_id"), name="gin_trgm_ops"),
+                name="fgds_check_id_trgm_idx",
+            ),
+            GinIndex(
+                OpClass(Upper("check_title"), name="gin_trgm_ops"),
+                name="fgds_check_title_trgm_idx",
+            ),
         ]
 
     class JSONAPIMeta:
