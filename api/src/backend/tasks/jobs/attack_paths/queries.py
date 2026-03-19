@@ -3,7 +3,6 @@ from tasks.jobs.attack_paths.config import (
     INTERNET_NODE_LABEL,
     PROWLER_FINDING_LABEL,
     PROVIDER_ELEMENT_ID_PROPERTY,
-    PROVIDER_ID_PROPERTY,
     PROVIDER_RESOURCE_LABEL,
 )
 
@@ -62,7 +61,6 @@ INSERT_FINDING_TEMPLATE = f"""
             finding.check_title = finding_data.check_title,
             finding.muted = finding_data.muted,
             finding.muted_reason = finding_data.muted_reason,
-            finding.provider_uid = $provider_uid,
             finding.firstseen = timestamp(),
             finding.lastupdated = $last_updated,
             finding._module_name = 'cartography:prowler',
@@ -74,7 +72,6 @@ INSERT_FINDING_TEMPLATE = f"""
 
     MERGE (resource)-[rel:HAS_FINDING]->(finding)
         ON CREATE SET
-            rel.provider_uid = $provider_uid,
             rel.firstseen = timestamp(),
             rel.lastupdated = $last_updated,
             rel._module_name = 'cartography:prowler',
@@ -84,7 +81,7 @@ INSERT_FINDING_TEMPLATE = f"""
 """
 
 CLEANUP_FINDINGS_TEMPLATE = f"""
-    MATCH (finding:{PROWLER_FINDING_LABEL} {{provider_uid: $provider_uid}})
+    MATCH (finding:{PROWLER_FINDING_LABEL})
         WHERE finding.lastupdated < $last_updated
 
     WITH finding LIMIT $batch_size
@@ -155,7 +152,6 @@ NODE_SYNC_TEMPLATE = f"""
     UNWIND $rows AS row
     MERGE (n:__NODE_LABELS__ {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.provider_element_id}})
     SET n += row.props
-    SET n.{PROVIDER_ID_PROPERTY} = $provider_id
 """
 
 RELATIONSHIP_SYNC_TEMPLATE = f"""
@@ -164,5 +160,4 @@ RELATIONSHIP_SYNC_TEMPLATE = f"""
     MATCH (t:{PROVIDER_RESOURCE_LABEL} {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.end_element_id}})
     MERGE (s)-[r:__REL_TYPE__ {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.provider_element_id}}]->(t)
     SET r += row.props
-    SET r.{PROVIDER_ID_PROPERTY} = $provider_id
 """

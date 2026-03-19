@@ -9,7 +9,6 @@ from tasks.jobs.attack_paths.config import (
     INTERNET_NODE_LABEL,
     PROWLER_FINDING_LABEL,
     PROVIDER_ELEMENT_ID_PROPERTY,
-    PROVIDER_ID_PROPERTY,
     PROVIDER_RESOURCE_LABEL,
 )
 
@@ -30,7 +29,6 @@ FINDINGS_INDEX_STATEMENTS = [
     "CREATE INDEX aws_resource_id IF NOT EXISTS FOR (n:_AWSResource) ON (n.id);",
     # Prowler Finding indexes
     f"CREATE INDEX prowler_finding_id IF NOT EXISTS FOR (n:{PROWLER_FINDING_LABEL}) ON (n.id);",
-    f"CREATE INDEX prowler_finding_provider_uid IF NOT EXISTS FOR (n:{PROWLER_FINDING_LABEL}) ON (n.provider_uid);",
     f"CREATE INDEX prowler_finding_lastupdated IF NOT EXISTS FOR (n:{PROWLER_FINDING_LABEL}) ON (n.lastupdated);",
     f"CREATE INDEX prowler_finding_status IF NOT EXISTS FOR (n:{PROWLER_FINDING_LABEL}) ON (n.status);",
     # Internet node index for MERGE lookups
@@ -40,7 +38,6 @@ FINDINGS_INDEX_STATEMENTS = [
 # Indexes for provider resource sync operations
 SYNC_INDEX_STATEMENTS = [
     f"CREATE INDEX provider_resource_element_id IF NOT EXISTS FOR (n:{PROVIDER_RESOURCE_LABEL}) ON (n.{PROVIDER_ELEMENT_ID_PROPERTY});",
-    f"CREATE INDEX provider_resource_provider_id IF NOT EXISTS FOR (n:{PROVIDER_RESOURCE_LABEL}) ON (n.{PROVIDER_ID_PROPERTY});",
 ]
 
 

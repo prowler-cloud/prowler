@@ -11,8 +11,8 @@ from config.env import env
 from django.conf import settings
 from tasks.jobs.attack_paths.config import (
     BATCH_SIZE,
-    PROVIDER_ID_PROPERTY,
     PROVIDER_RESOURCE_LABEL,
+    get_provider_label,
 )
 
 from api.attack_paths.retryable_session import RetryableSession
@@ -163,11 +163,8 @@ def drop_subgraph(database: str, provider_id: str) -> int:
     Uses batched deletion to avoid memory issues with large graphs.
     Silently returns 0 if the database doesn't exist.
     """
+    provider_label = get_provider_label(provider_id)
     deleted_nodes = 0
-    parameters = {
-        "provider_id": provider_id,
-        "batch_size": BATCH_SIZE,
-    }
 
     try:
         with get_session(database) as session:
@@ -175,12 +172,12 @@ def drop_subgraph(database: str, provider_id: str) -> int:
             while deleted_count > 0:
                 result = session.run(
                     f"""
-                    MATCH (n:{PROVIDER_RESOURCE_LABEL} {{{PROVIDER_ID_PROPERTY}: $provider_id}})
+                    MATCH (n:{PROVIDER_RESOURCE_LABEL}:`{provider_label}`)
                     WITH n LIMIT $batch_size
                     DETACH DELETE n
                     RETURN COUNT(n) AS deleted_nodes_count
                     """,
-                    parameters,
+                    {"batch_size": BATCH_SIZE},
                 )
                 deleted_count = result.single().get("deleted_nodes_count", 0)
                 deleted_nodes += deleted_count
@@ -199,15 +196,12 @@ def has_provider_data(database: str, provider_id: str) -> bool:
 
     Returns `False` if the database doesn't exist.
     """
-    query = (
-        f"MATCH (n:{PROVIDER_RESOURCE_LABEL} "
-        f"{{{PROVIDER_ID_PROPERTY}: $provider_id}}) "
-        "RETURN 1 LIMIT 1"
-    )
+    provider_label = get_provider_label(provider_id)
+    query = f"MATCH (n:{PROVIDER_RESOURCE_LABEL}:`{provider_label}`) RETURN 1 LIMIT 1"
 
     try:
         with get_session(database, default_access_mode=neo4j.READ_ACCESS) as session:
-            result = session.run(query, {"provider_id": provider_id})
+            result = session.run(query)
             return result.single() is not None
 
     except GraphDatabaseQueryException as exc:

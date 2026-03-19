@@ -7,16 +7,17 @@ import neo4j
 from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 
 from api.attack_paths import database as graph_database, AttackPathsQueryDefinition
+from api.attack_paths.cypher_rewriter import inject_provider_label
 from api.attack_paths.queries.schema import (
-    CARTOGRAPHY_SCHEMA_METADATA,
     GITHUB_SCHEMA_URL,
     RAW_SCHEMA_URL,
+    get_cartography_schema_query,
 )
 from config.custom_logging import BackendLogger
 from tasks.jobs.attack_paths.config import (
     INTERNAL_LABELS,
     INTERNAL_PROPERTIES,
-    PROVIDER_ID_PROPERTY,
+    get_provider_label,
     is_dynamic_isolation_label,
 )
 
@@ -72,7 +73,6 @@ def prepare_parameters(
 
     clean_parameters = {
         "provider_uid": str(provider_uid),
-        "provider_id": str(provider_id),
     }
 
     for definition_parameter in definition.parameters:
@@ -174,6 +174,7 @@ def execute_custom_query(
     provider_id: str,
 ) -> dict[str, Any]:
     validate_custom_query(cypher)
+    cypher = inject_provider_label(cypher, provider_id)
 
     try:
         graph = graph_database.execute_read_query(
@@ -208,10 +209,7 @@ def get_cartography_schema(
         with graph_database.get_session(
             database_name, default_access_mode=neo4j.READ_ACCESS
         ) as session:
-            result = session.run(
-                CARTOGRAPHY_SCHEMA_METADATA,
-                {"provider_id": provider_id},
-            )
+            result = session.run(get_cartography_schema_query(provider_id))
             record = result.single()
     except graph_database.GraphDatabaseQueryException as exc:
         logger.error(f"Cartography schema query failed: {exc}")
@@ -255,10 +253,12 @@ def _truncate_graph(graph: dict[str, Any]) -> dict[str, Any]:
 
 
 def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
+    provider_label = get_provider_label(provider_id)
+
     nodes = []
     kept_node_ids = set()
     for node in graph.nodes:
-        if node._properties.get(PROVIDER_ID_PROPERTY) != provider_id:
+        if provider_label not in node.labels:
             continue
 
         kept_node_ids.add(node.element_id)
@@ -273,14 +273,11 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
     filtered_count = len(graph.nodes) - len(nodes)
     if filtered_count > 0:
         logger.debug(
-            f"Filtered {filtered_count} nodes without matching provider_id={provider_id}"
+            f"Filtered {filtered_count} nodes without provider label {provider_label}"
         )
 
     relationships = []
     for relationship in graph.relationships:
-        if relationship._properties.get(PROVIDER_ID_PROPERTY) != provider_id:
-            continue
-
         if (
             relationship.start_node.element_id not in kept_node_ids
             or relationship.end_node.element_id not in kept_node_ids

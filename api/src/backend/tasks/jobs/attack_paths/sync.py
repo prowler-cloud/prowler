@@ -119,13 +119,7 @@ def sync_nodes(
                 query = render_cypher_template(
                     NODE_SYNC_TEMPLATE, {"__NODE_LABELS__": node_labels}
                 )
-                target_session.run(
-                    query,
-                    {
-                        "rows": batch,
-                        "provider_id": provider_id,
-                    },
-                )
+                target_session.run(query, {"rows": batch})
 
         total_synced += batch_count
         logger.info(
@@ -174,13 +168,7 @@ def sync_relationships(
                 query = render_cypher_template(
                     RELATIONSHIP_SYNC_TEMPLATE, {"__REL_TYPE__": rel_type}
                 )
-                target_session.run(
-                    query,
-                    {
-                        "rows": batch,
-                        "provider_id": provider_id,
-                    },
-                )
+                target_session.run(query, {"rows": batch})
 
         total_synced += batch_count
         logger.info(
