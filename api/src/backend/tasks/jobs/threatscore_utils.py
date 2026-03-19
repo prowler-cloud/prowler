@@ -38,7 +38,7 @@ def _aggregate_requirement_statistics_from_database(
     # TODO: review when finding-resource relation changes from 1:1
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         # Pre-check: skip if the scan's provider is deleted (avoids JOINs in the main query)
-        if Scan.objects.filter(id=scan_id, provider__is_deleted=True).exists():
+        if Scan.all_objects.filter(id=scan_id, provider__is_deleted=True).exists():
             return requirement_statistics_by_check_id
 
         aggregated_statistics_queryset = (
