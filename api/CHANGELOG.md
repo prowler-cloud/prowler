@@ -2,16 +2,16 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.22.0] (Prowler UNRELEASED)
+## [1.22.0] (Prowler v5.21.0)
 
 ### 🚀 Added
 
 - `CORS_ALLOWED_ORIGINS` configurable via environment variable [(#10355)](https://github.com/prowler-cloud/prowler/pull/10355)
+- Attack Paths: Tenant and provider related labels to the nodes so they can be easily filtered on custom queries [(#10308)](https://github.com/prowler-cloud/prowler/pull/10308)
 
 ### 🔄 Changed
 
 - Attack Paths: Complete migration to private graph labels and properties, removing deprecated dual-write support [(#10268)](https://github.com/prowler-cloud/prowler/pull/10268)
-- Attack Paths: Added tenant and provider related labels to the nodes so they can be easily filtered on custom queries [(#10308)](https://github.com/prowler-cloud/prowler/pull/10308)
 - Attack Paths: Reduce sync and findings memory usage with smaller batches, cursor iteration, and sequential sessions [(#10359)](https://github.com/prowler-cloud/prowler/pull/10359)
 
 ### 🐞 Fixed
