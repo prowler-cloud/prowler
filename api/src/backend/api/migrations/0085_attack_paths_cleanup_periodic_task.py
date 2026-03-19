@@ -2,7 +2,7 @@ from django.db import migrations
 
 
 TASK_NAME = "attack-paths-cleanup-stale-scans"
-INTERVAL_HOURS = 24
+INTERVAL_HOURS = 1
 
 
 def create_periodic_task(apps, schema_editor):
@@ -14,11 +14,13 @@ def create_periodic_task(apps, schema_editor):
         period="hours",
     )
 
-    PeriodicTask.objects.create(
+    PeriodicTask.objects.update_or_create(
         name=TASK_NAME,
-        task=TASK_NAME,
-        interval=schedule,
-        enabled=True,
+        defaults={
+            "task": TASK_NAME,
+            "interval": schedule,
+            "enabled": True,
+        },
     )
 
 
@@ -32,7 +34,7 @@ def delete_periodic_task(apps, schema_editor):
     IntervalSchedule.objects.filter(
         every=INTERVAL_HOURS,
         period="hours",
-        periodictask=None,
+        periodictask__isnull=True,
     ).delete()
 
 
