@@ -16,11 +16,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - SecNumCloud 3.2 for the Azure provider [(#10358)](https://github.com/prowler-cloud/prowler/pull/10358)
 - SecNumCloud 3.2 for the Alibaba Cloud provider [(#10370)](https://github.com/prowler-cloud/prowler/pull/10370)
 - SecNumCloud 3.2 for the Oracle Cloud provider [(#10371)](https://github.com/prowler-cloud/prowler/pull/10371)
+- `ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip` check using `ipaddress.is_global` for accurate public IP detection [(#10335)](https://github.com/prowler-cloud/prowler/pull/10335)
 
 ### 🔄 Changed
 
 - Bump `pygithub` from 2.5.0 to 2.8.0 to use native Organization properties
-- Use `ipaddress.is_global` for public IP detection in `ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip` [(#10335)](https://github.com/prowler-cloud/prowler/pull/10335)
 - Update M365 SharePoint service metadata to new format [(#9684)](https://github.com/prowler-cloud/prowler/pull/9684)
 - Update M365 Exchange service metadata to new format [(#9683)](https://github.com/prowler-cloud/prowler/pull/9683)
 - Update M365 Teams service metadata to new format [(#9685)](https://github.com/prowler-cloud/prowler/pull/9685)
