@@ -53,7 +53,7 @@ class MySQL(AzureService):
                         configuration.name: Configuration(
                             resource_id=configuration.id,
                             description=configuration.description,
-                            value=configuration.value,
+                            value=configuration.value.upper() if configuration.value else configuration.value,
                         )
                     }
                 )
