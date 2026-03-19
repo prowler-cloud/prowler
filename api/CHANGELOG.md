@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.23.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Attack Paths: Periodic cleanup of stale scans with dead-worker detection via Celery inspect, marking orphaned `EXECUTING` scans as `FAILED` and recovering `graph_data_ready` [(#10387)](https://github.com/prowler-cloud/prowler/pull/10387)
+
+---
+
 ## [1.22.0] (Prowler v5.21.0)
 
 ### 🚀 Added
