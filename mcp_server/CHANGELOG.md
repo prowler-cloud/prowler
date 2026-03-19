@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
+## [0.5.0] (Prowler v5.21.0)
+
+### 🚀 Added
+
+- Attack Path tool to get Neo4j DB schema [(#10321)](https://github.com/prowler-cloud/prowler/pull/10321)
+
 ## [0.4.0] (Prowler v5.19.0)
 
 ### 🚀 Added

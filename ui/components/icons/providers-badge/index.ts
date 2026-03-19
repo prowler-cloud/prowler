@@ -8,6 +8,7 @@ import { AzureProviderBadge } from "./azure-provider-badge";
 import { CloudflareProviderBadge } from "./cloudflare-provider-badge";
 import { GCPProviderBadge } from "./gcp-provider-badge";
 import { GitHubProviderBadge } from "./github-provider-badge";
+import { GoogleWorkspaceProviderBadge } from "./googleworkspace-provider-badge";
 import { IacProviderBadge } from "./iac-provider-badge";
 import { ImageProviderBadge } from "./image-provider-badge";
 import { KS8ProviderBadge } from "./ks8-provider-badge";
@@ -23,6 +24,7 @@ export {
   CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
+  GoogleWorkspaceProviderBadge,
   IacProviderBadge,
   ImageProviderBadge,
   KS8ProviderBadge,
@@ -40,6 +42,7 @@ export const PROVIDER_BADGE_BY_NAME: Record<string, FC<IconSvgProps>> = {
   Kubernetes: KS8ProviderBadge,
   "Microsoft 365": M365ProviderBadge,
   GitHub: GitHubProviderBadge,
+  "Google Workspace": GoogleWorkspaceProviderBadge,
   "Infrastructure as Code": IacProviderBadge,
   "Container Registry": ImageProviderBadge,
   "Oracle Cloud Infrastructure": OracleCloudProviderBadge,

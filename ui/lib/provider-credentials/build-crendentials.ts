@@ -264,6 +264,21 @@ export const buildOpenStackSecret = (formData: FormData) => {
   return filterEmptyValues(secret);
 };
 
+export const buildGoogleWorkspaceSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT]:
+      getFormValue(
+        formData,
+        ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT,
+      ),
+    [ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER]: getFormValue(
+      formData,
+      ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 export const buildIacSecret = (formData: FormData) => {
   const secret = {
     [ProviderCredentialFields.REPOSITORY_URL]: getFormValue(
@@ -479,6 +494,10 @@ export const buildSecretConfig = (
     openstack: () => ({
       secretType: "static",
       secret: buildOpenStackSecret(formData),
+    }),
+    googleworkspace: () => ({
+      secretType: "static",
+      secret: buildGoogleWorkspaceSecret(formData),
     }),
   };
 

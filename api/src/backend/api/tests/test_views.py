@@ -7858,8 +7858,12 @@ class TestUserRoleRelationshipViewSet:
         assert response.status_code == status.HTTP_204_NO_CONTENT
         relationships = UserRoleRelationship.objects.filter(user=create_test_user.id)
         assert relationships.count() == 4
-        for relationship in relationships[2:]:  # Skip admin role
-            assert relationship.role.id in [r.id for r in roles_fixture[:2]]
+        # Use set membership instead of positional slicing — QuerySet ordering is
+        # non-deterministic without an explicit order_by, which makes slice-based
+        # checks intermittently fail.
+        added_role_ids = {r.id for r in roles_fixture[:2]}
+        relationship_role_ids = {rel.role.id for rel in relationships}
+        assert added_role_ids.issubset(relationship_role_ids)
 
     def test_create_relationship_already_exists(
         self, authenticated_client, roles_fixture, create_test_user
@@ -15521,6 +15525,22 @@ class TestFindingGroupViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 1
         assert "bucket" in response.json()["data"][0]["id"].lower()
+
+    def test_finding_groups_check_title_icontains(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test searching check titles with icontains."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_title.icontains]": "public access",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "s3_bucket_public_access"
 
     def test_resources_not_found(self, authenticated_client):
         """Test 404 returned for nonexistent check_id."""

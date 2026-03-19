@@ -22,6 +22,7 @@ import {
   CloudflareTokenCredentials,
   GCPDefaultCredentials,
   GCPServiceAccountKey,
+  GoogleWorkspaceCredentials,
   IacCredentials,
   ImageCredentials,
   KubernetesCredentials,
@@ -52,6 +53,7 @@ import {
 } from "./select-credentials-type/m365";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
+import { GoogleWorkspaceCredentialsForm } from "./via-credentials/googleworkspace-credentials-form";
 import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
 import { ImageCredentialsForm } from "./via-credentials/image-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
@@ -261,6 +263,13 @@ export const BaseCredentialsForm = ({
         {providerType === "openstack" && (
           <OpenStackCredentialsForm
             control={form.control as unknown as Control<OpenStackCredentials>}
+          />
+        )}
+        {providerType === "googleworkspace" && (
+          <GoogleWorkspaceCredentialsForm
+            control={
+              form.control as unknown as Control<GoogleWorkspaceCredentials>
+            }
           />
         )}
 

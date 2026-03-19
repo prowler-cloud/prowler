@@ -83,6 +83,11 @@ export const ProviderCredentialFields = {
   // OpenStack fields
   OPENSTACK_CLOUDS_YAML_CONTENT: "clouds_yaml_content",
   OPENSTACK_CLOUDS_YAML_CLOUD: "clouds_yaml_cloud",
+
+  // Google Workspace fields
+  GOOGLEWORKSPACE_CUSTOMER_ID: "customer_id",
+  GOOGLEWORKSPACE_CREDENTIALS_CONTENT: "credentials_content",
+  GOOGLEWORKSPACE_DELEGATED_USER: "delegated_user",
 } as const;
 
 // Type for credential field values
@@ -137,6 +142,10 @@ export const ErrorPointers = {
   CLOUDFLARE_API_EMAIL: "/data/attributes/secret/api_email",
   OPENSTACK_CLOUDS_YAML_CONTENT: "/data/attributes/secret/clouds_yaml_content",
   OPENSTACK_CLOUDS_YAML_CLOUD: "/data/attributes/secret/clouds_yaml_cloud",
+  GOOGLEWORKSPACE_CUSTOMER_ID: "/data/attributes/secret/customer_id",
+  GOOGLEWORKSPACE_CREDENTIALS_CONTENT:
+    "/data/attributes/secret/credentials_content",
+  GOOGLEWORKSPACE_DELEGATED_USER: "/data/attributes/secret/delegated_user",
 } as const;
 
 export type ErrorPointer = (typeof ErrorPointers)[keyof typeof ErrorPointers];

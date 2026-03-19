@@ -55,7 +55,6 @@ exception propagates to Celery.
 
 import logging
 import time
-
 from typing import Any
 
 from cartography.config import Config as CartographyConfig
@@ -63,16 +62,14 @@ from cartography.intel import analysis as cartography_analysis
 from cartography.intel import create_indexes as cartography_create_indexes
 from cartography.intel import ontology as cartography_ontology
 from celery.utils.log import get_task_logger
+from tasks.jobs.attack_paths import db_utils, findings, internet, sync, utils
+from tasks.jobs.attack_paths.config import get_cartography_ingestion_function
 
 from api.attack_paths import database as graph_database
 from api.db_utils import rls_transaction
-from api.models import (
-    Provider as ProwlerAPIProvider,
-    StateChoices,
-)
+from api.models import Provider as ProwlerAPIProvider
+from api.models import StateChoices
 from api.utils import initialize_prowler_provider
-from tasks.jobs.attack_paths import db_utils, findings, internet, sync, utils
-from tasks.jobs.attack_paths.config import get_cartography_ingestion_function
 
 # Without this Celery goes crazy with Cartography logging
 logging.getLogger("cartography").setLevel(logging.ERROR)
@@ -146,6 +143,10 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     db_utils.starting_attack_paths_scan(
         attack_paths_scan, task_id, tenant_cartography_config
     )
+
+    subgraph_dropped = False
+    sync_completed = False
+    provider_gated = False
 
     try:
         logger.info(
@@ -225,10 +226,12 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
         logger.info(f"Deleting existing provider graph in {tenant_database_name}")
         db_utils.set_provider_graph_data_ready(attack_paths_scan, False)
+        provider_gated = True
         graph_database.drop_subgraph(
             database=tenant_database_name,
             provider_id=str(prowler_api_provider.id),
         )
+        subgraph_dropped = True
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 98)
 
         logger.info(
@@ -240,6 +243,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             tenant_id=str(prowler_api_provider.tenant_id),
             provider_id=str(prowler_api_provider.id),
         )
+        sync_completed = True
         db_utils.set_graph_data_ready(attack_paths_scan, True)
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 99)
 
@@ -264,23 +268,39 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         logger.exception(exception_message)
         ingestion_exceptions["global_error"] = exception_message
 
-        # Handling databases changes
+        # Recover graph_data_ready based on how far the swap got.
+        # Partial drop (mid-batch failure) may leave `subgraph_dropped=False`
+        # with data partially deleted, so we prefer that over permanently blocked queries.
+        try:
+            if sync_completed:
+                db_utils.set_graph_data_ready(attack_paths_scan, True)
+            elif provider_gated and not subgraph_dropped:
+                db_utils.set_provider_graph_data_ready(attack_paths_scan, True)
+
+        except Exception:
+            logger.error(
+                f"Failed to recover `graph_data_ready` for provider {attack_paths_scan.provider_id}",
+                exc_info=True,
+            )
+
+        # Dropping the temporary database if it still exists
         try:
             graph_database.drop_database(tmp_cartography_config.neo4j_database)
 
         except Exception as e:
             logger.error(
-                f"Failed to drop temporary Neo4j database {tmp_cartography_config.neo4j_database} during cleanup: {e}",
+                f"Failed to drop temporary Neo4j database `{tmp_cartography_config.neo4j_database}` during cleanup: {e}",
                 exc_info=True,
             )
 
+        # Set Attack Paths scan state to FAILED
         try:
             db_utils.finish_attack_paths_scan(
                 attack_paths_scan, StateChoices.FAILED, ingestion_exceptions
             )
         except Exception as e:
             logger.error(
-                f"Could not mark attack paths scan {attack_paths_scan.id} as FAILED (row may have been deleted): {e}",
+                f"Could not mark Attack Paths scan {attack_paths_scan.id} as `FAILED` (row may have been deleted): {e}",
                 exc_info=True,
             )
 
