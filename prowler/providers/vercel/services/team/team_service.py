@@ -7,31 +7,6 @@ from prowler.lib.logger import logger
 from prowler.providers.vercel.lib.service.service import VercelService
 
 
-class SAMLConfig(BaseModel):
-    status: str = "disabled"  # "enabled" | "disabled"
-    enforced: bool = False
-    provider: Optional[str] = None
-
-
-class VercelTeamMember(BaseModel):
-    id: str
-    email: str
-    role: str  # "OWNER" | "MEMBER" | "DEVELOPER" | "VIEWER" | "BILLING"
-    status: str = "active"  # "active" | "invited"
-    joined_at: Optional[datetime] = None
-    created_at: Optional[datetime] = None
-
-
-class VercelTeam(BaseModel):
-    id: str
-    name: str
-    slug: str
-    saml: Optional[SAMLConfig] = None
-    directory_sync_enabled: bool = False
-    members: list[VercelTeamMember] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
-
-
 class Team(VercelService):
     """Retrieve Vercel team configuration and membership."""
 
@@ -79,7 +54,9 @@ class Team(VercelService):
 
             created_at = None
             if team_data.get("createdAt"):
-                created_at = datetime.fromtimestamp(team_data["createdAt"] / 1000, tz=timezone.utc)
+                created_at = datetime.fromtimestamp(
+                    team_data["createdAt"] / 1000, tz=timezone.utc
+                )
 
             team = VercelTeam(
                 id=team_data.get("id", team_id),
@@ -104,7 +81,7 @@ class Team(VercelService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _fetch_members(self, team: VercelTeam):
+    def _fetch_members(self, team: "VercelTeam"):
         """Fetch all members for a team."""
         try:
             raw_members = self._paginate(f"/v2/teams/{team.id}/members", "members")
@@ -116,11 +93,15 @@ class Team(VercelService):
                         member["joinedFrom"]["commitAt"] / 1000, tz=timezone.utc
                     )
                 elif member.get("createdAt"):
-                    joined_at = datetime.fromtimestamp(member["createdAt"] / 1000, tz=timezone.utc)
+                    joined_at = datetime.fromtimestamp(
+                        member["createdAt"] / 1000, tz=timezone.utc
+                    )
 
                 created_at = None
                 if member.get("createdAt"):
-                    created_at = datetime.fromtimestamp(member["createdAt"] / 1000, tz=timezone.utc)
+                    created_at = datetime.fromtimestamp(
+                        member["createdAt"] / 1000, tz=timezone.utc
+                    )
 
                 team.members.append(
                     VercelTeamMember(
@@ -140,3 +121,28 @@ class Team(VercelService):
                 f"Team - Error fetching members for {team.name}: "
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+
+class SAMLConfig(BaseModel):
+    status: str = "disabled"  # "enabled" | "disabled"
+    enforced: bool = False
+    provider: Optional[str] = None
+
+
+class VercelTeamMember(BaseModel):
+    id: str
+    email: str
+    role: str  # "OWNER" | "MEMBER" | "DEVELOPER" | "VIEWER" | "BILLING"
+    status: str = "active"  # "active" | "invited"
+    joined_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+
+
+class VercelTeam(BaseModel):
+    id: str
+    name: str
+    slug: str
+    saml: Optional[SAMLConfig] = None
+    directory_sync_enabled: bool = False
+    members: list[VercelTeamMember] = Field(default_factory=list)
+    created_at: Optional[datetime] = None

@@ -7,20 +7,6 @@ from prowler.lib.logger import logger
 from prowler.providers.vercel.lib.service.service import VercelService
 
 
-class VercelAuthToken(BaseModel):
-    """Vercel API token representation."""
-
-    id: str
-    name: str
-    type: Optional[str] = None
-    active_at: Optional[datetime] = None
-    created_at: Optional[datetime] = None
-    expires_at: Optional[datetime] = None
-    scopes: list[dict] = Field(default_factory=list)
-    origin: Optional[str] = None
-    team_id: Optional[str] = None
-
-
 class Authentication(VercelService):
     """Retrieve Vercel API token metadata for hygiene checks."""
 
@@ -47,15 +33,21 @@ class Authentication(VercelService):
 
                 active_at = None
                 if token.get("activeAt"):
-                    active_at = datetime.fromtimestamp(token["activeAt"] / 1000, tz=timezone.utc)
+                    active_at = datetime.fromtimestamp(
+                        token["activeAt"] / 1000, tz=timezone.utc
+                    )
 
                 created_at = None
                 if token.get("createdAt"):
-                    created_at = datetime.fromtimestamp(token["createdAt"] / 1000, tz=timezone.utc)
+                    created_at = datetime.fromtimestamp(
+                        token["createdAt"] / 1000, tz=timezone.utc
+                    )
 
                 expires_at = None
                 if token.get("expiresAt"):
-                    expires_at = datetime.fromtimestamp(token["expiresAt"] / 1000, tz=timezone.utc)
+                    expires_at = datetime.fromtimestamp(
+                        token["expiresAt"] / 1000, tz=timezone.utc
+                    )
 
                 self.tokens[token_id] = VercelAuthToken(
                     id=token_id,
@@ -76,3 +68,17 @@ class Authentication(VercelService):
                 f"Authentication - Error listing tokens: "
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+
+class VercelAuthToken(BaseModel):
+    """Vercel API token representation."""
+
+    id: str
+    name: str
+    type: Optional[str] = None
+    active_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+    scopes: list[dict] = Field(default_factory=list)
+    origin: Optional[str] = None
+    team_id: Optional[str] = None

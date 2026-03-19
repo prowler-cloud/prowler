@@ -7,23 +7,6 @@ from prowler.lib.logger import logger
 from prowler.providers.vercel.lib.service.service import VercelService
 
 
-class VercelDeployment(BaseModel):
-    """Vercel deployment representation."""
-
-    id: str
-    name: str
-    url: str = ""
-    state: str = ""
-    target: Optional[str] = None  # "production" | "preview"
-    created_at: Optional[datetime] = None
-    ready_at: Optional[datetime] = None
-    project_id: Optional[str] = None
-    project_name: Optional[str] = None
-    team_id: Optional[str] = None
-    git_source: Optional[dict] = None
-    deployment_protection: Optional[str] = None
-
-
 class Deployment(VercelService):
     """Retrieve recent Vercel deployments."""
 
@@ -58,11 +41,15 @@ class Deployment(VercelService):
 
                 created_at = None
                 if dep.get("createdAt"):
-                    created_at = datetime.fromtimestamp(dep["createdAt"] / 1000, tz=timezone.utc)
+                    created_at = datetime.fromtimestamp(
+                        dep["createdAt"] / 1000, tz=timezone.utc
+                    )
 
                 ready_at = None
                 if dep.get("ready"):
-                    ready_at = datetime.fromtimestamp(dep["ready"] / 1000, tz=timezone.utc)
+                    ready_at = datetime.fromtimestamp(
+                        dep["ready"] / 1000, tz=timezone.utc
+                    )
 
                 git_source = None
                 meta = dep.get("meta", {}) or {}
@@ -97,3 +84,20 @@ class Deployment(VercelService):
                 f"Deployment - Error listing deployments: "
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+
+class VercelDeployment(BaseModel):
+    """Vercel deployment representation."""
+
+    id: str
+    name: str
+    url: str = ""
+    state: str = ""
+    target: Optional[str] = None  # "production" | "preview"
+    created_at: Optional[datetime] = None
+    ready_at: Optional[datetime] = None
+    project_id: Optional[str] = None
+    project_name: Optional[str] = None
+    team_id: Optional[str] = None
+    git_source: Optional[dict] = None
+    deployment_protection: Optional[str] = None
