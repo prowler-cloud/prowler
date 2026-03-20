@@ -27,7 +27,11 @@ import {
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
 import { useUrlFilters } from "@/hooks/use-url-filters";
-import type { ProviderProps, ProviderType } from "@/types/providers";
+import {
+  getProviderDisplayName,
+  type ProviderProps,
+  type ProviderType,
+} from "@/types/providers";
 
 const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   aws: <AWSProviderBadge width={18} height={18} />,
@@ -63,12 +67,19 @@ interface AccountsSelectorProps {
    * Ignored when `onBatchChange` is not provided (URL-driven mode).
    */
   selectedValues?: string[];
+  /**
+   * Currently selected provider types (from the pending ProviderTypeSelector state).
+   * Used only for contextual description/empty-state messaging — does NOT narrow
+   * the list of available accounts, which remains independent of provider selection.
+   */
+  selectedProviderTypes?: string[];
 }
 
 export function AccountsSelector({
   providers,
   onBatchChange,
   selectedValues,
+  selectedProviderTypes,
 }: AccountsSelectorProps) {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
@@ -108,7 +119,13 @@ export function AccountsSelector({
     );
   };
 
-  const filterDescription = "All connected cloud provider accounts";
+  // Build a contextual description based on currently selected provider types.
+  // This is purely for user guidance (aria label + empty state) and does NOT
+  // narrow the list of available accounts — all providers remain selectable.
+  const filterDescription =
+    selectedProviderTypes && selectedProviderTypes.length > 0
+      ? `Accounts for ${selectedProviderTypes.map(getProviderDisplayName).join(", ")}`
+      : "All connected cloud provider accounts";
 
   return (
     <div className="relative">
@@ -166,7 +183,9 @@ export function AccountsSelector({
             </>
           ) : (
             <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-              No connected accounts available
+              {selectedProviderTypes && selectedProviderTypes.length > 0
+                ? `No accounts available for ${selectedProviderTypes.map(getProviderDisplayName).join(", ")}`
+                : "No connected accounts available"}
             </div>
           )}
         </MultiSelectContent>

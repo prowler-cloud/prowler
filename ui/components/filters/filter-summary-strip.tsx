@@ -49,6 +49,7 @@ export const FilterSummaryStrip = ({
       className={cn("flex flex-wrap items-center gap-2 py-2", className)}
       role="region"
       aria-label="Active filters"
+      aria-live="polite"
     >
       {chips.map((chip) => (
         <Badge

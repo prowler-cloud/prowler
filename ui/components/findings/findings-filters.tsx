@@ -18,10 +18,11 @@ import { Button } from "@/components/shadcn";
 import { ExpandableSection } from "@/components/ui/expandable-section";
 import { DataTableFilterCustom } from "@/components/ui/table";
 import { useFilterBatch } from "@/hooks/use-filter-batch";
-import { getCategoryLabel, getGroupLabel } from "@/lib/categories";
-import { FilterType, ScanEntity } from "@/types";
+import { formatLabel, getCategoryLabel, getGroupLabel } from "@/lib/categories";
+import { FilterType, FINDING_STATUS_DISPLAY_NAMES, ScanEntity } from "@/types";
 import { DATA_TABLE_FILTER_MODE } from "@/types/filters";
-import { ProviderProps } from "@/types/providers";
+import { getProviderDisplayName, ProviderProps } from "@/types/providers";
+import { SEVERITY_DISPLAY_NAMES } from "@/types/severities";
 
 interface FindingsFiltersProps {
   /** Provider data for ProviderTypeSelector and AccountsSelector */
@@ -56,53 +57,41 @@ const FILTER_KEY_LABELS: Record<string, string> = {
 };
 
 /**
- * Maps raw status values to human-readable display strings.
- */
-const STATUS_DISPLAY: Record<string, string> = {
-  PASS: "Pass",
-  FAIL: "Fail",
-  MANUAL: "Manual",
-};
-
-/**
- * Maps raw provider type values to human-readable display strings.
- */
-const PROVIDER_TYPE_DISPLAY: Record<string, string> = {
-  aws: "AWS",
-  azure: "Azure",
-  gcp: "GCP",
-  kubernetes: "Kubernetes",
-  googleworkspace: "Google Workspace",
-  iac: "IaC",
-  m365: "Microsoft 365",
-  github: "GitHub",
-  image: "Container Registry",
-  oraclecloud: "Oracle Cloud",
-  mongodbatlas: "MongoDB Atlas",
-  alibabacloud: "Alibaba Cloud",
-  cloudflare: "Cloudflare",
-  openstack: "OpenStack",
-};
-
-/**
  * Formats a raw filter value into a human-readable display string.
- * - Provider types: uses PROVIDER_TYPE_DISPLAY map
- * - Status: PASS → Pass, FAIL → Fail, MANUAL → Manual
- * - Other values: capitalizes the first letter
+ * - Provider types: uses shared getProviderDisplayName utility
+ * - Severities: uses shared SEVERITY_DISPLAY_NAMES (e.g. "critical" → "Critical")
+ * - Status: uses shared FINDING_STATUS_DISPLAY_NAMES (e.g. "FAIL" → "Fail")
+ * - Categories: uses getCategoryLabel (handles IAM, EC2, IMDSv1, etc.)
+ * - Resource groups: uses getGroupLabel (underscore-delimited)
+ * - Other values: uses formatLabel as a generic fallback (avoids naive capitalisation)
  */
 const formatFilterValue = (filterKey: string, value: string): string => {
+  if (!value) return value;
   if (filterKey === "filter[provider_type__in]") {
-    return PROVIDER_TYPE_DISPLAY[value] ?? value;
+    return getProviderDisplayName(value);
+  }
+  if (filterKey === "filter[severity__in]") {
+    return (
+      SEVERITY_DISPLAY_NAMES[
+        value.toLowerCase() as keyof typeof SEVERITY_DISPLAY_NAMES
+      ] ?? formatLabel(value)
+    );
   }
   if (filterKey === "filter[status__in]") {
     return (
-      STATUS_DISPLAY[value] ??
-      value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
+      FINDING_STATUS_DISPLAY_NAMES[
+        value as keyof typeof FINDING_STATUS_DISPLAY_NAMES
+      ] ?? formatLabel(value)
     );
   }
-  // Default: capitalize first letter, lowercase rest
-  if (!value) return value;
-  return value.charAt(0).toUpperCase() + value.slice(1);
+  if (filterKey === "filter[category__in]") {
+    return getCategoryLabel(value);
+  }
+  if (filterKey === "filter[resource_groups__in]") {
+    return getGroupLabel(value);
+  }
+  // Generic fallback: handles hyphen/underscore-delimited IDs with smart capitalisation
+  return formatLabel(value);
 };
 
 export const FindingsFilters = ({
@@ -232,6 +221,7 @@ export const FindingsFilters = ({
             providers={providers}
             onBatchChange={setPending}
             selectedValues={getFilterValue("filter[provider_id__in]")}
+            selectedProviderTypes={getFilterValue("filter[provider_type__in]")}
           />
         </div>
         <CustomCheckboxMutedFindings
