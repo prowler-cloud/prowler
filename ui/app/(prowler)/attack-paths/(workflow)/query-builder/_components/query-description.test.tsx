@@ -24,16 +24,18 @@ const customQuery: AttackPathQuery = {
 };
 
 describe("QueryDescription", () => {
-  it("renders the schema documentation link when the selected query provides one", () => {
+  it("renders the schema documentation link inside an info alert", () => {
     // Given
     render(<QueryDescription query={customQuery} />);
 
     // When
+    const alert = screen.getByRole("alert");
     const link = screen.getByRole("link", {
       name: /cartography schema used by prowler for aws graphs/i,
     });
 
     // Then
+    expect(alert).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "https://example.com/schema");
   });
 });
