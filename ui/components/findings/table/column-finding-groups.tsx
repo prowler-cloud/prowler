@@ -64,8 +64,6 @@ export function getColumnFindingGroups({
       },
       cell: ({ row }) => {
         const group = row.original;
-        const allMuted =
-          group.mutedCount > 0 && group.mutedCount === group.resourcesTotal;
 
         const delta =
           group.newCount > 0
@@ -76,7 +74,7 @@ export function getColumnFindingGroups({
 
         return (
           <div className="flex items-center gap-2">
-            <NotificationIndicator delta={delta} isMuted={allMuted} />
+            <NotificationIndicator delta={delta} />
             {group.resourcesTotal > 1 ? (
               <button
                 type="button"
@@ -92,7 +90,6 @@ export function getColumnFindingGroups({
             <Checkbox
               size="sm"
               checked={!!rowSelection[row.id]}
-              disabled={allMuted}
               onCheckedChange={(checked) =>
                 row.toggleSelected(checked === true)
               }
