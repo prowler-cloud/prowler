@@ -19,6 +19,12 @@ import { adaptAttackPathQueriesResponse } from "./queries.adapter";
 
 // Validation schema for UUID - RFC 9562/4122 compliant
 const UUIDSchema = z.uuid();
+const CustomQuerySchema = z
+  .string()
+  .max(10000, "Custom query must be 10000 characters or fewer")
+  .refine((value) => value.trim().length > 0, {
+    message: "Custom query cannot be empty",
+  });
 
 /**
  * Fetch available queries for a specific attack path scan
@@ -119,13 +125,22 @@ export const executeCustomQuery = async (
     return undefined;
   }
 
+  const validatedQuery = CustomQuerySchema.safeParse(query);
+  if (!validatedQuery.success) {
+    return {
+      error:
+        validatedQuery.error.issues[0]?.message ?? "Custom query is invalid.",
+      status: 400,
+    };
+  }
+
   const headers = await getAuthHeaders({ contentType: true });
 
   const requestBody: ExecuteCustomQueryRequest = {
     data: {
       type: "attack-paths-custom-query-run-requests",
       attributes: {
-        query,
+        query: validatedQuery.data,
       },
     },
   };

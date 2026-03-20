@@ -113,6 +113,38 @@ describe("executeCustomQuery", () => {
       }),
     );
   });
+
+  it("rejects empty custom queries before calling the API", async () => {
+    // When
+    const result = await executeCustomQuery(
+      "550e8400-e29b-41d4-a716-446655440000",
+      "   ",
+    );
+
+    // Then
+    expect(result).toEqual({
+      error: "Custom query cannot be empty",
+      status: 400,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(handleApiResponseMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects custom queries longer than 10000 characters before calling the API", async () => {
+    // When
+    const result = await executeCustomQuery(
+      "550e8400-e29b-41d4-a716-446655440000",
+      "x".repeat(10001),
+    );
+
+    // Then
+    expect(result).toEqual({
+      error: "Custom query must be 10000 characters or fewer",
+      status: 400,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(handleApiResponseMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("getCartographySchema", () => {
