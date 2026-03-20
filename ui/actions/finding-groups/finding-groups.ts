@@ -7,9 +7,9 @@ import { appendSanitizedProviderFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
 /**
- * Maps filter[search] to filter[check_id__icontains] for finding-groups.
- * The finding-groups endpoint doesn't support filter[search] but supports
- * check_id__icontains for substring matching on check IDs and titles.
+ * Maps filter[search] to filter[check_title__icontains] for finding-groups.
+ * The finding-groups endpoint supports check_title__icontains for substring
+ * matching on the human-readable check title displayed in the table.
  */
 function mapSearchFilter(
   filters: Record<string, string | string[] | undefined>,
@@ -17,7 +17,7 @@ function mapSearchFilter(
   const mapped = { ...filters };
   const searchValue = mapped["filter[search]"];
   if (searchValue) {
-    mapped["filter[check_id__icontains]"] = searchValue;
+    mapped["filter[check_title__icontains]"] = searchValue;
     delete mapped["filter[search]"];
   }
   return mapped;
