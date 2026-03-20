@@ -75,18 +75,14 @@ export function getColumnFindingGroups({
         return (
           <div className="flex items-center gap-2">
             <NotificationIndicator delta={delta} />
-            {group.resourcesTotal > 1 ? (
-              <button
-                type="button"
-                aria-label={`Expand ${group.checkTitle}`}
-                className="hover:bg-bg-neutral-tertiary flex size-4 shrink-0 items-center justify-center rounded-md transition-colors"
-                onClick={() => onDrillDown(group.checkId, group)}
-              >
-                <ChevronRight className="text-text-neutral-secondary size-4" />
-              </button>
-            ) : (
-              <div className="w-4" />
-            )}
+            <button
+              type="button"
+              aria-label={`Expand ${group.checkTitle}`}
+              className="hover:bg-bg-neutral-tertiary flex size-4 shrink-0 items-center justify-center rounded-md transition-colors"
+              onClick={() => onDrillDown(group.checkId, group)}
+            >
+              <ChevronRight className="text-text-neutral-secondary size-4" />
+            </button>
             <Checkbox
               size="sm"
               checked={!!rowSelection[row.id]}
@@ -125,18 +121,10 @@ export function getColumnFindingGroups({
         const group = row.original;
 
         return (
-          <div className="max-w-[500px]">
+          <div>
             <p
-              className={cn(
-                "text-text-neutral-primary text-left text-sm break-words whitespace-normal",
-                group.resourcesTotal > 1 &&
-                  "hover:text-button-tertiary cursor-pointer hover:underline",
-              )}
-              onClick={
-                group.resourcesTotal > 1
-                  ? () => onDrillDown(group.checkId, group)
-                  : undefined
-              }
+              className="text-text-neutral-primary hover:text-button-tertiary cursor-pointer text-left text-sm break-words whitespace-normal hover:underline"
+              onClick={() => onDrillDown(group.checkId, group)}
             >
               {group.checkTitle}
             </p>
