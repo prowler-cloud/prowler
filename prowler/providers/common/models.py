@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 from os import makedirs
 from os.path import isdir
@@ -26,6 +27,15 @@ class ProviderOutputOptions:
     output_filename: str
     only_logs: bool
     unix_timestamp: bool
+    # Elasticsearch integration options
+    elasticsearch_enabled: bool
+    elasticsearch_url: str
+    elasticsearch_index: str
+    elasticsearch_api_key: str
+    elasticsearch_username: str
+    elasticsearch_password: str
+    elasticsearch_skip_tls_verify: bool
+    send_es_only_fails: bool
 
     def __init__(self, arguments, bulk_checks_metadata):
         self.status = getattr(arguments, "status", None)
@@ -37,6 +47,28 @@ class ProviderOutputOptions:
         self.unix_timestamp = getattr(arguments, "unix_timestamp", None)
         self.shodan_api_key = getattr(arguments, "shodan", None)
         self.fixer = getattr(arguments, "fixer", None)
+
+        # Elasticsearch integration options
+        self.elasticsearch_enabled = getattr(arguments, "elasticsearch", False)
+        self.elasticsearch_url = getattr(
+            arguments, "elasticsearch_url", None
+        ) or os.environ.get("ELASTICSEARCH_URL")
+        self.elasticsearch_index = getattr(
+            arguments, "elasticsearch_index", "prowler-findings"
+        )
+        self.elasticsearch_api_key = getattr(
+            arguments, "elasticsearch_api_key", None
+        ) or os.environ.get("ELASTICSEARCH_API_KEY")
+        self.elasticsearch_username = getattr(
+            arguments, "elasticsearch_username", None
+        ) or os.environ.get("ELASTICSEARCH_USERNAME")
+        self.elasticsearch_password = getattr(
+            arguments, "elasticsearch_password", None
+        ) or os.environ.get("ELASTICSEARCH_PASSWORD")
+        self.elasticsearch_skip_tls_verify = getattr(
+            arguments, "elasticsearch_skip_tls_verify", False
+        )
+        self.send_es_only_fails = getattr(arguments, "send_es_only_fails", False)
 
         # Shodan API Key
         if self.shodan_api_key:
