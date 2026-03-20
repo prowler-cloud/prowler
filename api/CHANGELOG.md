@@ -6,7 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🐞 Fixed
 
-- Threat score aggregation query to eliminate unnecessary JOINs and `COUNT(DISTINCT)` overhead [(#10394)](https://github.com/prowler-cloud/prowler/pull/10394)
+- ThreatScore aggregation query to eliminate unnecessary JOINs and `COUNT(DISTINCT)` overhead [(#10394)](https://github.com/prowler-cloud/prowler/pull/10394)
 
 ---
 
