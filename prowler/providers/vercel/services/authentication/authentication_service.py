@@ -33,7 +33,9 @@ class Authentication(VercelService):
             team_id: Team ID to fetch tokens for. None for personal tokens.
         """
         try:
-            params = {"teamId": team_id} if team_id else {}
+            # Always set teamId key explicitly — _get won't auto-inject when key
+            # is present, and requests skips None values from query params.
+            params = {"teamId": team_id}
             data = self._get("/v5/user/tokens", params=params)
             if not data:
                 return

@@ -65,7 +65,7 @@ class Test_domain_ssl_certificate_valid:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Domain {DOMAIN_NAME} has a valid SSL certificate provisioned."
+                == f"Domain {DOMAIN_NAME} has an SSL certificate provisioned."
             )
             assert result[0].team_id == TEAM_ID
 

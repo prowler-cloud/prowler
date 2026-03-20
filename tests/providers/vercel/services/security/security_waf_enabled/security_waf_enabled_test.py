@@ -42,6 +42,7 @@ class Test_security_waf_enabled:
                 project_name=PROJECT_NAME,
                 team_id=TEAM_ID,
                 firewall_enabled=True,
+                managed_rulesets={},
                 id=PROJECT_ID,
                 name=PROJECT_NAME,
             )
@@ -81,6 +82,7 @@ class Test_security_waf_enabled:
                 project_name=PROJECT_NAME,
                 team_id=TEAM_ID,
                 firewall_enabled=False,
+                managed_rulesets={},
                 id=PROJECT_ID,
                 name=PROJECT_NAME,
             )
