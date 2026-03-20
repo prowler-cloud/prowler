@@ -16,6 +16,7 @@ class CloudFront(AWSService):
         self._list_distributions(self.client, self.region)
         self._get_distribution_config(self.client, self.distributions, self.region)
         self._list_tags_for_resource(self.client, self.distributions, self.region)
+        self._get_log_delivery_sources(self.distributions, self.region)
 
     def _list_distributions(self, client, region) -> dict:
         logger.info("CloudFront - Listing Distributions...")
@@ -153,6 +154,32 @@ class CloudFront(AWSService):
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_log_delivery_sources(self, distributions, region):
+        """Check for Standard Logging v2 via CloudWatch Logs delivery sources."""
+        logger.info("CloudFront - Checking CloudWatch Logs delivery sources...")
+        try:
+            # Build a set of distribution ARNs for quick lookup
+            distribution_arns = {
+                dist.arn: dist_id for dist_id, dist in distributions.items()
+            }
+            if not distribution_arns:
+                return
+
+            # Use a logs client in us-east-1 (CloudFront is global)
+            logs_client = self.session.client("logs", region_name=region)
+            # Paginate through delivery sources
+            paginator = logs_client.get_paginator("describe_delivery_sources")
+            for page in paginator.paginate():
+                for source in page.get("deliverySources", []):
+                    resource_arn = source.get("resourceArn", "")
+                    if resource_arn in distribution_arns:
+                        dist_id = distribution_arns[resource_arn]
+                        distributions[dist_id].logging_v2_enabled = True
+        except Exception as error:
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class OriginsSSLProtocols(Enum):
     SSLv3 = "SSLv3"
@@ -207,6 +234,7 @@ class Distribution(BaseModel):
     id: str
     region: str
     logging_enabled: bool = False
+    logging_v2_enabled: bool = False
     default_cache_config: Optional[DefaultCacheConfigBehaviour] = None
     geo_restriction_type: Optional[GeoRestrictionType] = None
     origins: list[Origin]

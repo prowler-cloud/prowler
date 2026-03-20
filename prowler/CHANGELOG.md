@@ -120,6 +120,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `unmapped.provider_uid` field in OCSF output to match CLI scan results with API provider entities during ingestion [(#10231)](https://github.com/prowler-cloud/prowler/pull/10231)
 - `unmapped.provider` field in OCSF output for provider name availability in non-cloud providers like Kubernetes [(#10240)](https://github.com/prowler-cloud/prowler/pull/10240)
 
+### 🐛 Fixed
+
+- CloudFront logging check now detects Standard Logging v2 via CloudWatch Log Delivery [(#10090)](https://github.com/prowler-cloud/prowler/pull/10090)
+
 ### 🔄 Changed
 
 - Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
