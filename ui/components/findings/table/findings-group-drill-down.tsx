@@ -295,6 +295,8 @@ export function FindingsGroupDrillDown({
           if (!open) drawer.closeDrawer();
         }}
         isLoading={drawer.isLoading}
+        isNavigating={drawer.isNavigating}
+        checkMeta={drawer.checkMeta}
         currentIndex={drawer.currentIndex}
         totalResources={drawer.totalResources}
         currentFinding={drawer.currentFinding}

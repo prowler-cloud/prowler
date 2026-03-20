@@ -13,11 +13,14 @@ import {
 } from "@/components/shadcn";
 
 import { ResourceDetailDrawerContent } from "./resource-detail-drawer-content";
+import type { CheckMeta } from "./use-resource-detail-drawer";
 
 interface ResourceDetailDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isLoading: boolean;
+  isNavigating: boolean;
+  checkMeta: CheckMeta | null;
   currentIndex: number;
   totalResources: number;
   currentFinding: ResourceDrawerFinding | null;
@@ -31,6 +34,8 @@ export function ResourceDetailDrawer({
   open,
   onOpenChange,
   isLoading,
+  isNavigating,
+  checkMeta,
   currentIndex,
   totalResources,
   currentFinding,
@@ -55,6 +60,8 @@ export function ResourceDetailDrawer({
         {open && (
           <ResourceDetailDrawerContent
             isLoading={isLoading}
+            isNavigating={isNavigating}
+            checkMeta={checkMeta}
             currentIndex={currentIndex}
             totalResources={totalResources}
             currentFinding={currentFinding}

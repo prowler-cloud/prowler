@@ -49,9 +49,12 @@ import { cn } from "@/lib/utils";
 
 import { Muted } from "../../muted";
 import { NotificationIndicator } from "../notification-indicator";
+import type { CheckMeta } from "./use-resource-detail-drawer";
 
 interface ResourceDetailDrawerContentProps {
   isLoading: boolean;
+  isNavigating: boolean;
+  checkMeta: CheckMeta | null;
   currentIndex: number;
   totalResources: number;
   currentFinding: ResourceDrawerFinding | null;
@@ -91,6 +94,8 @@ function getFailingForLabel(firstSeenAt: string | null): string | null {
 
 export function ResourceDetailDrawerContent({
   isLoading,
+  isNavigating,
+  checkMeta,
   currentIndex,
   totalResources,
   currentFinding,
@@ -101,7 +106,8 @@ export function ResourceDetailDrawerContent({
 }: ResourceDetailDrawerContentProps) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
 
-  if (isLoading) {
+  // Initial load — no check metadata yet
+  if (!checkMeta && isLoading) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 py-16">
         <TreeSpinner className="size-6" />
@@ -112,7 +118,7 @@ export function ResourceDetailDrawerContent({
     );
   }
 
-  if (!currentFinding) {
+  if (!checkMeta) {
     return (
       <div className="flex flex-1 items-center justify-center py-16">
         <p className="text-text-neutral-tertiary text-sm">
@@ -122,6 +128,8 @@ export function ResourceDetailDrawerContent({
     );
   }
 
+  // checkMeta is always available from here.
+  // currentFinding may be null during resource loading (e.g. drawer reopen).
   const f = currentFinding;
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < totalResources - 1;
@@ -129,7 +137,7 @@ export function ResourceDetailDrawerContent({
   return (
     <div className="flex h-full min-w-0 flex-col gap-4 overflow-hidden">
       {/* Mute modal — rendered outside drawer content to avoid overlay conflicts */}
-      {!f.isMuted && (
+      {f && !f.isMuted && (
         <MuteFindingsModal
           isOpen={isMuteModalOpen}
           onOpenChange={setIsMuteModalOpen}
@@ -141,12 +149,12 @@ export function ResourceDetailDrawerContent({
         />
       )}
 
-      {/* Header: status badges + title */}
+      {/* Header: status badges + title (check-level from checkMeta) */}
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3">
-          <StatusFindingBadge status={f.status as FindingStatus} />
-          <SeverityBadge severity={f.severity} />
-          {f.delta && (
+          {f && <StatusFindingBadge status={f.status as FindingStatus} />}
+          {f && <SeverityBadge severity={f.severity} />}
+          {f?.delta && (
             <div className="flex items-center gap-1 capitalize">
               <div
                 className={cn(
@@ -161,23 +169,25 @@ export function ResourceDetailDrawerContent({
               </span>
             </div>
           )}
-          <Muted
-            isMuted={f.isMuted}
-            mutedReason={f.mutedReason || "This finding is muted"}
-          />
+          {f && (
+            <Muted
+              isMuted={f.isMuted}
+              mutedReason={f.mutedReason || "This finding is muted"}
+            />
+          )}
         </div>
 
         <h2 className="text-text-neutral-primary line-clamp-2 text-lg leading-tight font-medium">
-          {f.checkTitle}
+          {checkMeta.checkTitle}
         </h2>
 
-        {f.complianceFrameworks.length > 0 && (
+        {checkMeta.complianceFrameworks.length > 0 && (
           <div className="flex items-center gap-2">
             <span className="text-text-neutral-tertiary text-xs font-medium">
               Compliance Frameworks:
             </span>
             <div className="flex items-center gap-1.5">
-              {f.complianceFrameworks.map((framework) => {
+              {checkMeta.complianceFrameworks.map((framework) => {
                 const icon = getComplianceIcon(framework);
                 return icon ? (
                   <Image
@@ -234,114 +244,123 @@ export function ResourceDetailDrawerContent({
 
       {/* Resource card */}
       <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg border p-4">
-        {/* Account, Resource, Service, Region, Actions */}
-        <div className="flex items-center justify-between">
-          <EntityInfo
-            cloudProvider={f.providerType}
-            entityAlias={f.providerAlias}
-            entityId={f.providerUid}
-          />
-          <EntityInfo
-            entityAlias={f.resourceType}
-            entityId={f.resourceUid}
-            idLabel="UID"
-          />
-          <div className="flex flex-col gap-1">
-            <span className="text-text-neutral-secondary text-[10px]">
-              Service
-            </span>
-            <span className="text-text-neutral-primary text-sm">
-              {f.resourceService}
-            </span>
+        {/* Resource info — shows loading when currentFinding is not yet available */}
+        {!f || isNavigating ? (
+          <div className="flex items-center justify-center py-6">
+            <TreeSpinner className="size-5" />
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-text-neutral-secondary text-[10px]">
-              Region
-            </span>
-            <span className="text-text-neutral-primary flex items-center gap-1.5 text-sm">
-              {getRegionFlag(f.resourceRegion) && (
-                <span className="translate-y-px text-base leading-none">
-                  {getRegionFlag(f.resourceRegion)}
-                </span>
-              )}
-              {f.resourceRegion}
-            </span>
-          </div>
-          <div>
-            <ActionDropdown ariaLabel="Resource actions">
-              <ActionDropdownItem
-                icon={
-                  f.isMuted ? (
-                    <VolumeOff className="size-5" />
-                  ) : (
-                    <VolumeX className="size-5" />
-                  )
-                }
-                label={f.isMuted ? "Muted" : "Mute"}
-                disabled={f.isMuted}
-                onSelect={() => setIsMuteModalOpen(true)}
+        ) : (
+          <>
+            {/* Account, Resource, Service, Region, Actions */}
+            <div className="flex items-center justify-between">
+              <EntityInfo
+                cloudProvider={f.providerType}
+                entityAlias={f.providerAlias}
+                entityId={f.providerUid}
               />
-            </ActionDropdown>
-          </div>
-        </div>
+              <EntityInfo
+                entityAlias={f.resourceType}
+                entityId={f.resourceUid}
+                idLabel="UID"
+              />
+              <div className="flex flex-col gap-1">
+                <span className="text-text-neutral-secondary text-[10px]">
+                  Service
+                </span>
+                <span className="text-text-neutral-primary text-sm">
+                  {f.resourceService}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-text-neutral-secondary text-[10px]">
+                  Region
+                </span>
+                <span className="text-text-neutral-primary flex items-center gap-1.5 text-sm">
+                  {getRegionFlag(f.resourceRegion) && (
+                    <span className="translate-y-px text-base leading-none">
+                      {getRegionFlag(f.resourceRegion)}
+                    </span>
+                  )}
+                  {f.resourceRegion}
+                </span>
+              </div>
+              <div>
+                <ActionDropdown ariaLabel="Resource actions">
+                  <ActionDropdownItem
+                    icon={
+                      f.isMuted ? (
+                        <VolumeOff className="size-5" />
+                      ) : (
+                        <VolumeX className="size-5" />
+                      )
+                    }
+                    label={f.isMuted ? "Muted" : "Mute"}
+                    disabled={f.isMuted}
+                    onSelect={() => setIsMuteModalOpen(true)}
+                  />
+                </ActionDropdown>
+              </div>
+            </div>
 
-        {/* Dates row */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="flex flex-col gap-1">
-            <span className="text-text-neutral-secondary text-[10px]">
-              Last detected
-            </span>
-            <DateWithTime inline dateTime={f.updatedAt || "-"} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-text-neutral-secondary text-[10px]">
-              First seen
-            </span>
-            <DateWithTime inline dateTime={f.firstSeenAt || "-"} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-text-neutral-secondary text-[10px]">
-              Failing for
-            </span>
-            <span className="text-text-neutral-primary text-sm">
-              {getFailingForLabel(f.firstSeenAt) || "-"}
-            </span>
-          </div>
-        </div>
+            {/* Dates row */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="flex flex-col gap-1">
+                <span className="text-text-neutral-secondary text-[10px]">
+                  Last detected
+                </span>
+                <DateWithTime inline dateTime={f.updatedAt || "-"} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-text-neutral-secondary text-[10px]">
+                  First seen
+                </span>
+                <DateWithTime inline dateTime={f.firstSeenAt || "-"} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-text-neutral-secondary text-[10px]">
+                  Failing for
+                </span>
+                <span className="text-text-neutral-primary text-sm">
+                  {getFailingForLabel(f.firstSeenAt) || "-"}
+                </span>
+              </div>
+            </div>
 
-        {/* IDs row */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="flex flex-col gap-1">
-            <span className="text-text-neutral-secondary text-[10px]">
-              Check ID
-            </span>
-            <CodeSnippet
-              value={f.checkId}
-              transparent
-              className="max-w-full text-sm"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-text-neutral-secondary text-[10px]">
-              Finding ID
-            </span>
-            <CodeSnippet
-              value={f.id}
-              transparent
-              className="max-w-full text-sm"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-text-neutral-secondary text-[10px]">
-              Finding UID
-            </span>
-            <CodeSnippet
-              value={f.uid}
-              transparent
-              className="max-w-full text-sm"
-            />
-          </div>
-        </div>
+            {/* IDs row */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="flex flex-col gap-1">
+                <span className="text-text-neutral-secondary text-[10px]">
+                  Check ID
+                </span>
+                <CodeSnippet
+                  value={checkMeta.checkId}
+                  transparent
+                  className="max-w-full text-sm"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-text-neutral-secondary text-[10px]">
+                  Finding ID
+                </span>
+                <CodeSnippet
+                  value={f.id}
+                  transparent
+                  className="max-w-full text-sm"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-text-neutral-secondary text-[10px]">
+                  Finding UID
+                </span>
+                <CodeSnippet
+                  value={f.uid}
+                  transparent
+                  className="max-w-full text-sm"
+                />
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Tabs */}
         <Tabs
@@ -357,31 +376,33 @@ export function ResourceDetailDrawerContent({
             </TabsList>
           </div>
 
-          {/* Finding Overview */}
+          {/* Finding Overview — check-level data from checkMeta (always stable) */}
           <TabsContent
             value="overview"
             className="minimal-scrollbar flex flex-col gap-4 overflow-y-auto"
           >
             {/* Card 1: Risk + Description + Status Extended */}
-            {(f.risk || f.description || f.statusExtended) && (
+            {(checkMeta.risk || checkMeta.description || f?.statusExtended) && (
               <Card variant="inner">
-                {f.risk && (
+                {checkMeta.risk && (
                   <div className="flex flex-col gap-1">
                     <span className="text-text-neutral-secondary text-xs">
                       Risk:
                     </span>
-                    <MarkdownContainer>{f.risk}</MarkdownContainer>
+                    <MarkdownContainer>{checkMeta.risk}</MarkdownContainer>
                   </div>
                 )}
-                {f.description && (
+                {checkMeta.description && (
                   <div className="flex flex-col gap-1">
                     <span className="text-text-neutral-secondary text-xs">
                       Description:
                     </span>
-                    <MarkdownContainer>{f.description}</MarkdownContainer>
+                    <MarkdownContainer>
+                      {checkMeta.description}
+                    </MarkdownContainer>
                   </div>
                 )}
-                {f.statusExtended && (
+                {f?.statusExtended && (
                   <div className="flex flex-col gap-1">
                     <span className="text-text-neutral-secondary text-xs">
                       Status Extended:
@@ -395,12 +416,12 @@ export function ResourceDetailDrawerContent({
             )}
 
             {/* Card 2: Remediation + Commands */}
-            {(f.remediation.recommendation.text ||
-              f.remediation.code.cli ||
-              f.remediation.code.terraform ||
-              f.remediation.code.nativeiac) && (
+            {(checkMeta.remediation.recommendation.text ||
+              checkMeta.remediation.code.cli ||
+              checkMeta.remediation.code.terraform ||
+              checkMeta.remediation.code.nativeiac) && (
               <Card variant="inner">
-                {f.remediation.recommendation.text && (
+                {checkMeta.remediation.recommendation.text && (
                   <div className="flex flex-col gap-1">
                     <span className="text-text-neutral-secondary text-xs">
                       Remediation:
@@ -408,12 +429,12 @@ export function ResourceDetailDrawerContent({
                     <div className="flex items-start gap-3">
                       <div className="text-text-neutral-primary flex-1 text-sm">
                         <MarkdownContainer>
-                          {f.remediation.recommendation.text}
+                          {checkMeta.remediation.recommendation.text}
                         </MarkdownContainer>
                       </div>
-                      {f.remediation.recommendation.url && (
+                      {checkMeta.remediation.recommendation.url && (
                         <CustomLink
-                          href={f.remediation.recommendation.url}
+                          href={checkMeta.remediation.recommendation.url}
                           size="sm"
                           className="shrink-0"
                         >
@@ -424,13 +445,13 @@ export function ResourceDetailDrawerContent({
                   </div>
                 )}
 
-                {f.remediation.code.cli && (
+                {checkMeta.remediation.code.cli && (
                   <div className="flex flex-col gap-1">
                     <span className="text-text-neutral-secondary text-xs">
                       CLI Command:
                     </span>
                     <CodeSnippet
-                      value={`$ ${f.remediation.code.cli}`}
+                      value={`$ ${checkMeta.remediation.code.cli}`}
                       multiline
                       transparent
                       className="max-w-full text-sm"
@@ -438,13 +459,13 @@ export function ResourceDetailDrawerContent({
                   </div>
                 )}
 
-                {f.remediation.code.terraform && (
+                {checkMeta.remediation.code.terraform && (
                   <div className="flex flex-col gap-1">
                     <span className="text-text-neutral-secondary text-xs">
                       Terraform Command:
                     </span>
                     <CodeSnippet
-                      value={`$ ${f.remediation.code.terraform}`}
+                      value={`$ ${checkMeta.remediation.code.terraform}`}
                       multiline
                       transparent
                       className="max-w-full text-sm"
@@ -452,13 +473,13 @@ export function ResourceDetailDrawerContent({
                   </div>
                 )}
 
-                {f.remediation.code.nativeiac && (
+                {checkMeta.remediation.code.nativeiac && (
                   <div className="flex flex-col gap-1">
                     <span className="text-text-neutral-secondary text-xs">
                       CloudFormation Command:
                     </span>
                     <CodeSnippet
-                      value={`$ ${f.remediation.code.nativeiac}`}
+                      value={`$ ${checkMeta.remediation.code.nativeiac}`}
                       multiline
                       transparent
                       className="max-w-full text-sm"
@@ -466,27 +487,27 @@ export function ResourceDetailDrawerContent({
                   </div>
                 )}
 
-                {f.remediation.code.other && (
+                {checkMeta.remediation.code.other && (
                   <div className="flex flex-col gap-1">
                     <span className="text-text-neutral-secondary text-xs">
                       Remediation Steps:
                     </span>
                     <MarkdownContainer>
-                      {f.remediation.code.other}
+                      {checkMeta.remediation.code.other}
                     </MarkdownContainer>
                   </div>
                 )}
               </Card>
             )}
 
-            {f.additionalUrls.length > 0 && (
+            {checkMeta.additionalUrls.length > 0 && (
               <Card variant="inner">
                 <div className="flex flex-col gap-1">
                   <span className="text-text-neutral-secondary text-xs">
                     References:
                   </span>
                   <ul className="list-inside list-disc space-y-1">
-                    {f.additionalUrls.map((link, idx) => (
+                    {checkMeta.additionalUrls.map((link, idx) => (
                       <li key={idx}>
                         <CustomLink
                           href={link}
@@ -502,14 +523,14 @@ export function ResourceDetailDrawerContent({
               </Card>
             )}
 
-            {f.categories.length > 0 && (
+            {checkMeta.categories.length > 0 && (
               <Card variant="inner">
                 <div className="flex flex-col gap-1">
                   <span className="text-text-neutral-secondary text-xs">
                     Categories:
                   </span>
                   <p className="text-text-neutral-primary text-sm">
-                    {f.categories.join(", ")}
+                    {checkMeta.categories.join(", ")}
                   </p>
                 </div>
               </Card>
@@ -521,58 +542,66 @@ export function ResourceDetailDrawerContent({
             value="other-findings"
             className="minimal-scrollbar flex flex-col gap-2 overflow-y-auto"
           >
-            <div className="flex items-center justify-between">
-              <h4 className="text-text-neutral-primary text-sm font-medium">
-                Failed Findings For This Resource
-              </h4>
-              <span className="text-text-neutral-tertiary text-sm">
-                {otherFindings.length} Total Entries
-              </span>
-            </div>
+            {!f || isNavigating ? (
+              <div className="flex items-center justify-center py-8">
+                <TreeSpinner className="size-5" />
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-text-neutral-primary text-sm font-medium">
+                    Failed Findings For This Resource
+                  </h4>
+                  <span className="text-text-neutral-tertiary text-sm">
+                    {otherFindings.length} Total Entries
+                  </span>
+                </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10" />
-                  <TableHead>
-                    <span className="text-text-neutral-secondary text-sm font-medium">
-                      Status
-                    </span>
-                  </TableHead>
-                  <TableHead>
-                    <span className="text-text-neutral-secondary text-sm font-medium">
-                      Finding
-                    </span>
-                  </TableHead>
-                  <TableHead>
-                    <span className="text-text-neutral-secondary text-sm font-medium">
-                      Severity
-                    </span>
-                  </TableHead>
-                  <TableHead>
-                    <span className="text-text-neutral-secondary text-sm font-medium">
-                      Time
-                    </span>
-                  </TableHead>
-                  <TableHead className="w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {otherFindings.length > 0 ? (
-                  otherFindings.map((finding) => (
-                    <OtherFindingRow key={finding.id} finding={finding} />
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-16 text-center">
-                      <span className="text-text-neutral-tertiary text-sm">
-                        No other findings for this resource.
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-10" />
+                      <TableHead>
+                        <span className="text-text-neutral-secondary text-sm font-medium">
+                          Status
+                        </span>
+                      </TableHead>
+                      <TableHead>
+                        <span className="text-text-neutral-secondary text-sm font-medium">
+                          Finding
+                        </span>
+                      </TableHead>
+                      <TableHead>
+                        <span className="text-text-neutral-secondary text-sm font-medium">
+                          Severity
+                        </span>
+                      </TableHead>
+                      <TableHead>
+                        <span className="text-text-neutral-secondary text-sm font-medium">
+                          Time
+                        </span>
+                      </TableHead>
+                      <TableHead className="w-10" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {otherFindings.length > 0 ? (
+                      otherFindings.map((finding) => (
+                        <OtherFindingRow key={finding.id} finding={finding} />
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-16 text-center">
+                          <span className="text-text-neutral-tertiary text-sm">
+                            No other findings for this resource.
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </>
+            )}
           </TabsContent>
         </Tabs>
       </div>

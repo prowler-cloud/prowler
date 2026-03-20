@@ -9,6 +9,34 @@ import {
 } from "@/actions/findings";
 import { FindingResourceRow } from "@/types";
 
+/**
+ * Check-level metadata that is identical across all resources for a given check.
+ * Extracted once on first successful fetch and kept stable during navigation.
+ */
+export interface CheckMeta {
+  checkId: string;
+  checkTitle: string;
+  risk: string;
+  description: string;
+  complianceFrameworks: string[];
+  categories: string[];
+  remediation: ResourceDrawerFinding["remediation"];
+  additionalUrls: string[];
+}
+
+function extractCheckMeta(finding: ResourceDrawerFinding): CheckMeta {
+  return {
+    checkId: finding.checkId,
+    checkTitle: finding.checkTitle,
+    risk: finding.risk,
+    description: finding.description,
+    complianceFrameworks: finding.complianceFrameworks,
+    categories: finding.categories,
+    remediation: finding.remediation,
+    additionalUrls: finding.additionalUrls,
+  };
+}
+
 interface UseResourceDetailDrawerOptions {
   resources: FindingResourceRow[];
   checkId: string;
@@ -18,6 +46,8 @@ interface UseResourceDetailDrawerOptions {
 interface UseResourceDetailDrawerReturn {
   isOpen: boolean;
   isLoading: boolean;
+  isNavigating: boolean;
+  checkMeta: CheckMeta | null;
   currentIndex: number;
   totalResources: number;
   currentFinding: ResourceDrawerFinding | null;
@@ -44,15 +74,22 @@ export function useResourceDetailDrawer({
   const [isLoading, setIsLoading] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [findings, setFindings] = useState<ResourceDrawerFinding[]>([]);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const cacheRef = useRef<Map<string, ResourceDrawerFinding[]>>(new Map());
+  const checkMetaRef = useRef<CheckMeta | null>(null);
 
   const fetchFindings = async (resourceUid: string) => {
     // Check cache first
     const cached = cacheRef.current.get(resourceUid);
     if (cached) {
+      if (!checkMetaRef.current) {
+        const main = cached.find((f) => f.checkId === checkId) ?? cached[0];
+        if (main) checkMetaRef.current = extractCheckMeta(main);
+      }
       setFindings(cached);
       setIsLoading(false);
+      setIsNavigating(false);
       return;
     }
 
@@ -61,12 +98,20 @@ export function useResourceDetailDrawer({
       const response = await getLatestFindingsByResourceUid({ resourceUid });
       const adapted = adaptFindingsByResourceResponse(response);
       cacheRef.current.set(resourceUid, adapted);
+
+      // Extract check-level metadata once (stable across all resources)
+      if (!checkMetaRef.current) {
+        const main = adapted.find((f) => f.checkId === checkId) ?? adapted[0];
+        if (main) checkMetaRef.current = extractCheckMeta(main);
+      }
+
       setFindings(adapted);
     } catch (error) {
       console.error("Error fetching findings for resource:", error);
-      setFindings([]);
+      // Don't clear findings — keep previous data as fallback during navigation
     } finally {
       setIsLoading(false);
+      setIsNavigating(false);
     }
   };
 
@@ -89,7 +134,7 @@ export function useResourceDetailDrawer({
     if (!resource) return;
 
     setCurrentIndex(index);
-    setFindings([]);
+    setIsNavigating(true);
     fetchFindings(resource.resourceUid);
   };
 
@@ -122,6 +167,8 @@ export function useResourceDetailDrawer({
   return {
     isOpen,
     isLoading,
+    isNavigating,
+    checkMeta: checkMetaRef.current,
     currentIndex,
     totalResources: resources.length,
     currentFinding,
