@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.22.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `Vercel` provider support with 30 checks [(#10189)](https://github.com/prowler-cloud/prowler/pull/10189)
+
+---
+
 ## [5.21.0] (Prowler v5.21.0)
 
 ### 🚀 Added

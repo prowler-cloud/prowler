@@ -1,0 +1,38 @@
+{
+  "Provider": "vercel",
+  "CheckID": "project_production_deployment_protection_enabled",
+  "CheckTitle": "Vercel project has deployment protection enabled on production deployments",
+  "CheckType": [],
+  "ServiceName": "project",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "**Vercel projects** are assessed for **production deployment protection** configuration, which restricts access to the live production deployment by requiring Vercel Authentication or other access controls. When enabled, visitors must authenticate before accessing the production URL, adding a layer of defense for internal applications or projects that should not be publicly accessible.",
+  "Risk": "Without **production deployment protection**, the live production deployment is fully accessible to anyone on the internet. For internal tools, admin panels, or pre-launch applications this means **unauthorized users** can interact with production systems, potentially exploiting vulnerabilities, accessing sensitive data, or abusing application functionality.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/deployment-protection"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Vercel dashboard\n2. Navigate to the project Settings > General\n3. Scroll to Deployment Protection\n4. Under Production deployments, select 'Standard Protection' or 'Vercel Authentication'\n5. Click Save",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable deployment protection on production deployments for applications that should not be publicly accessible. This is critical for internal tools, admin dashboards, and pre-launch applications where unauthorized access could lead to data exposure or system compromise.",
+      "Url": "https://hub.prowler.com/checks/vercel/project_production_deployment_protection_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "project_deployment_protection_enabled"
+  ],
+  "Notes": ""
+}

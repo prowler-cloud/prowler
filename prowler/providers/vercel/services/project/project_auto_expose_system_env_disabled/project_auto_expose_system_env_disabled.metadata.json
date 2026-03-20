@@ -1,0 +1,36 @@
+{
+  "Provider": "vercel",
+  "CheckID": "project_auto_expose_system_env_disabled",
+  "CheckTitle": "Vercel project has automatic exposure of system environment variables disabled",
+  "CheckType": [],
+  "ServiceName": "project",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "**Vercel projects** are assessed for **automatic system environment variable exposure** (`VERCEL_URL`, `VERCEL_ENV`, `VERCEL_GIT_COMMIT_SHA`). When enabled, these variables are injected into every deployment and may be accessible in client-side JavaScript bundles if not handled carefully, leaking internal infrastructure details.",
+  "Risk": "Automatically exposed **system environment variables** can reveal deployment URLs, Git metadata, environment names, and other internal details. If these values are inadvertently included in **client-side bundles**, attackers can use them to map infrastructure, identify staging environments, or craft targeted attacks against specific deployment instances.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/projects/environment-variables/system-environment-variables"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Vercel dashboard\n2. Navigate to the project Settings > Environment Variables\n3. Locate the 'Automatically expose System Environment Variables' toggle\n4. Disable the toggle\n5. Manually add only the specific system variables your application needs",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable automatic exposure of system environment variables and explicitly define only the variables required by your application. This follows the principle of least privilege and reduces the risk of leaking internal infrastructure details through client-side code.",
+      "Url": "https://hub.prowler.com/checks/vercel/project_auto_expose_system_env_disabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,36 @@
+{
+  "Provider": "vercel",
+  "CheckID": "project_directory_listing_disabled",
+  "CheckTitle": "Vercel project has directory listing disabled",
+  "CheckType": [],
+  "ServiceName": "project",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "**Vercel projects** are assessed for **directory listing** configuration. When enabled, this feature allows visitors to browse the file structure of a deployment when no index file is present in a directory, potentially exposing source files, configuration files, and other assets that should not be publicly accessible.",
+  "Risk": "Enabled **directory listing** allows attackers to enumerate the file structure of the deployment, potentially discovering backup files, configuration files, source maps, or other **sensitive assets**. This information disclosure can be leveraged to identify attack vectors or access files that were not intended to be public.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/projects/project-configuration"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Vercel dashboard\n2. Navigate to the project Settings > General\n3. Locate the 'Directory Listing' option\n4. Ensure it is disabled\n5. Click Save",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable directory listing to prevent visitors from browsing the file structure of your deployments. Ensure that all directories either contain an index file or return a 404 response when accessed directly.",
+      "Url": "https://hub.prowler.com/checks/vercel/project_directory_listing_disabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

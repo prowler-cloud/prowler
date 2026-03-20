@@ -1240,6 +1240,50 @@ class CheckReportMongoDBAtlas(Check_Report):
         self.location = getattr(resource, "location", self.project_id)
 
 
+@dataclass
+class CheckReportVercel(Check_Report):
+    """Contains the Vercel Check's finding information.
+
+    Vercel is a global platform - team_id is the scoping context.
+    All resource-related attributes are derived from the resource object.
+    """
+
+    resource_name: str
+    resource_id: str
+    team_id: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        team_id: str = None,
+    ) -> None:
+        """Initialize the Vercel Check's finding information.
+
+        Args:
+            metadata: Check metadata dictionary
+            resource: The Vercel resource being checked
+            resource_name: Override for resource name
+            resource_id: Override for resource ID
+            team_id: Override for team ID
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = resource_id or getattr(
+            resource, "id", getattr(resource, "resource_id", "")
+        )
+        self.team_id = team_id or getattr(resource, "team_id", "")
+
+    @property
+    def region(self) -> str:
+        """Vercel is global - return 'global'."""
+        return "global"
+
+
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> CheckMetadata:
     """

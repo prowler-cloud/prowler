@@ -1,0 +1,36 @@
+{
+  "Provider": "vercel",
+  "CheckID": "project_git_fork_protection_enabled",
+  "CheckTitle": "Vercel project has Git fork protection enabled to prevent untrusted forks from accessing secrets",
+  "CheckType": [],
+  "ServiceName": "project",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "devops",
+  "Description": "**Vercel projects** are assessed for **Git fork protection** configuration, which controls whether pull requests from forked repositories can trigger deployments and access environment variables. When disabled, anyone who forks a public repository can submit a pull request that triggers a Vercel build with access to the project's environment variables, including secrets and API keys.",
+  "Risk": "Without **Git fork protection**, an attacker can fork a public repository, modify the build process to **exfiltrate environment variables** (API keys, database credentials, third-party tokens), and submit a pull request. The Vercel build triggered by the PR would execute the attacker's code with access to the project's secrets, leading to **credential theft** and potential full system compromise.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/deployment-protection/managing-deployment-protection#git-fork-protection"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Vercel dashboard\n2. Navigate to the project Settings > General\n3. Scroll to the 'Git Fork Protection' section\n4. Enable the option to require authorization for fork pull requests\n5. Click Save",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Git fork protection to require explicit authorization before pull requests from forked repositories can trigger deployments. This prevents untrusted contributors from accessing environment variables and secrets through the build process. For open-source projects, review fork PRs manually before allowing builds.",
+      "Url": "https://hub.prowler.com/checks/vercel/project_git_fork_protection_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
