@@ -103,7 +103,10 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
         findingIds={resolvedIds}
         onComplete={handleMuteComplete}
       />
-      <div className="flex items-center justify-end">
+      <div
+        className="flex items-center justify-end"
+        onClick={(e) => e.stopPropagation()}
+      >
         <ActionDropdown
           trigger={
             <button
