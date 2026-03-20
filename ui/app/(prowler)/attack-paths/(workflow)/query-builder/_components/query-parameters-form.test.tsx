@@ -153,4 +153,21 @@ describe("QueryParametersForm", () => {
     // Then
     expect(errorMessage).toHaveClass("text-text-error-primary", "text-xs");
   });
+
+  it("connects field errors to the input for accessibility", async () => {
+    // Given
+    render(<TestFormWithError />);
+
+    // When
+    const input = screen.getByRole("textbox", { name: /tag key/i });
+    const errorMessage = await screen.findByText("Tag key is required");
+
+    // Then
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(errorMessage).toHaveAttribute("id");
+    expect(input).toHaveAttribute(
+      "aria-describedby",
+      expect.stringContaining(errorMessage.getAttribute("id") ?? ""),
+    );
+  });
 });
