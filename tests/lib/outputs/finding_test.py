@@ -1130,6 +1130,95 @@ class TestFinding:
         "prowler.lib.outputs.finding.get_check_compliance",
         new=mock_get_check_compliance,
     )
+    def test_transform_api_finding_azure_accepts_legacy_persisted_metadata(self):
+        provider = MagicMock()
+        provider.type = "azure"
+        provider.identity.identity_type = "mock_identity_type"
+        provider.identity.identity_id = "mock_identity_id"
+        provider.identity.subscriptions = {"legacy-subscription": "legacy-sub-id"}
+        provider.identity.tenant_ids = ["test-ing-432a-a828-d9c965196f87"]
+        provider.identity.tenant_domain = "mock_tenant_domain"
+        provider.region_config.name = "AzureCloud"
+
+        api_finding = DummyAPIFinding()
+        api_finding.uid = "finding-uid-legacy"
+        api_finding.status = "FAIL"
+        api_finding.status_extended = "Legacy metadata finding"
+        api_finding.check_id = (
+            "entra_conditional_access_policy_require_mfa_for_management_api"
+        )
+        api_finding.check_metadata = {
+            "provider": "azure",
+            "checkid": "entra_conditional_access_policy_require_mfa_for_management_api",
+            "checktitle": "Ensure Multifactor Authentication is Required for Windows Azure Service Management API",
+            "checktype": [],
+            "servicename": "entra",
+            "subservicename": "",
+            "severity": "medium",
+            "resourcetype": "#microsoft.graph.conditionalAccess",
+            "resourcegroup": "IAM",
+            "description": "Legacy description",
+            "risk": "Legacy risk",
+            "relatedurl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-azure-management",
+            "additionalurls": [
+                "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps"
+            ],
+            "remediation": {
+                "code": {
+                    "cli": "",
+                    "other": "",
+                    "nativeiac": "",
+                    "terraform": "",
+                },
+                "recommendation": {
+                    "text": "Legacy remediation",
+                    "url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps",
+                },
+            },
+            "resourceidtemplate": "",
+            "categories": [],
+            "dependson": [],
+            "relatedto": [],
+            "notes": "Legacy notes",
+        }
+        api_finding.muted = False
+        api_resource = DummyResource(
+            uid="/subscriptions/legacy-sub-id/providers/Microsoft.Authorization/policyAssignments/legacy",
+            name="legacy-policy",
+            resource_arn="arn",
+            region="global",
+            tags=[],
+        )
+        api_finding.resources = DummyResources(api_resource)
+
+        finding_obj = Finding.transform_api_finding(api_finding, provider)
+
+        assert finding_obj.account_uid == "legacy-sub-id"
+        assert finding_obj.resource_uid == api_resource.uid
+        assert finding_obj.resource_name == api_resource.name
+
+        meta = finding_obj.metadata
+        assert (
+            meta.CheckTitle
+            == "Ensure Multifactor Authentication is Required for Windows Azure Service Management API"
+        )
+        assert (
+            meta.RelatedUrl
+            == "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-azure-management"
+        )
+        assert (
+            meta.Remediation.Recommendation.Url
+            == "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps"
+        )
+        assert meta.ResourceGroup == "IAM"
+        assert meta.AdditionalURLs == [
+            "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps"
+        ]
+
+    @patch(
+        "prowler.lib.outputs.finding.get_check_compliance",
+        new=mock_get_check_compliance,
+    )
     def test_transform_api_finding_gcp(self):
         provider = MagicMock()
         provider.type = "gcp"
