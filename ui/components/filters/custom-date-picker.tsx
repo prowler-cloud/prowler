@@ -14,22 +14,79 @@ import {
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { cn } from "@/lib/utils";
 
-export const CustomDatePicker = () => {
+/** Batch mode: caller controls both the pending date value and the notification callback (all-or-nothing). */
+interface CustomDatePickerBatchProps {
+  /**
+   * Called instead of updating the URL directly.
+   * Receives the filter key ("inserted_at") and the formatted date string (YYYY-MM-DD).
+   */
+  onBatchChange: (filterKey: string, value: string) => void;
+  /**
+   * Controlled date value from the parent (pending state).
+   * Expected format: YYYY-MM-DD (or any value parseable by `new Date()`).
+   */
+  value: string | undefined;
+}
+
+/** Instant mode: URL-driven — neither callback nor controlled value. */
+interface CustomDatePickerInstantProps {
+  onBatchChange?: never;
+  value?: never;
+}
+
+type CustomDatePickerProps =
+  | CustomDatePickerBatchProps
+  | CustomDatePickerInstantProps;
+
+const parseDate = (raw: string | null | undefined): Date | undefined => {
+  if (!raw) return undefined;
+  try {
+    // Use T00:00:00 suffix to avoid timezone offset shifting the date
+    return new Date(raw + "T00:00:00");
+  } catch {
+    return undefined;
+  }
+};
+
+export const CustomDatePicker = ({
+  onBatchChange,
+  value: valueProp,
+}: CustomDatePickerProps = {}) => {
   const searchParams = useSearchParams();
   const { updateFilter } = useUrlFilters();
   const [open, setOpen] = useState(false);
 
-  const [date, setDate] = useState<Date | undefined>(() => {
-    const dateParam = searchParams.get("filter[inserted_at]");
-    if (!dateParam) return undefined;
-    try {
-      return new Date(dateParam);
-    } catch {
-      return undefined;
+  // In instant mode, we need local state to track the selected date so the
+  // calendar stays in sync when URL params change externally (e.g. Clear Filters).
+  // In batch mode, `valueProp` is the source of truth — derive date directly.
+  const [localDate, setLocalDate] = useState<Date | undefined>(() =>
+    parseDate(searchParams.get("filter[inserted_at]")),
+  );
+
+  // In batch mode: derive the displayed date from the controlled prop.
+  // In instant mode: keep local state in sync with URL changes.
+  useEffect(() => {
+    if (valueProp === undefined) {
+      // Instant mode: sync from URL (e.g., when Clear Filters is clicked)
+      setLocalDate(parseDate(searchParams.get("filter[inserted_at]")));
     }
-  });
+    // Batch mode: date is derived from valueProp directly — no state update needed
+  }, [valueProp, searchParams]);
+
+  // In batch mode, derive date from controlled prop directly to avoid stale state
+  const date = valueProp !== undefined ? parseDate(valueProp) : localDate;
 
   const applyDateFilter = (selectedDate: Date | undefined) => {
+    if (onBatchChange) {
+      // Batch mode: notify caller instead of updating URL
+      onBatchChange(
+        "inserted_at",
+        selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
+      );
+      return;
+    }
+
+    // Instant mode (default): push to URL immediately
     if (selectedDate) {
       // Format as YYYY-MM-DD for the API
       updateFilter("inserted_at", format(selectedDate, "yyyy-MM-dd"));
@@ -38,22 +95,11 @@ export const CustomDatePicker = () => {
     }
   };
 
-  // Sync local state with URL params (e.g., when Clear Filters is clicked)
-  useEffect(() => {
-    const dateParam = searchParams.get("filter[inserted_at]");
-    if (!dateParam) {
-      setDate(undefined);
-    } else {
-      try {
-        setDate(new Date(dateParam));
-      } catch {
-        setDate(undefined);
-      }
-    }
-  }, [searchParams]);
-
   const handleDateSelect = (newDate: Date | undefined) => {
-    setDate(newDate);
+    if (valueProp === undefined) {
+      // Instant mode: update local state
+      setLocalDate(newDate);
+    }
     applyDateFilter(newDate);
     setOpen(false);
   };
