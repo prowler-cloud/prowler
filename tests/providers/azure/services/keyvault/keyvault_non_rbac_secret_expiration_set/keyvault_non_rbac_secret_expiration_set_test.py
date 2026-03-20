@@ -193,21 +193,18 @@ class Test_keyvault_non_rbac_secret_expiration_set:
             }
             check = keyvault_non_rbac_secret_expiration_set()
             result = check.execute()
-            assert len(result) == 1
+            assert len(result) == 2
+            assert result[0] is not result[1]
             assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has the secret {secret1_name} without expiration date set."
-            )
-            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == keyvault_name
-            assert result[0].resource_id == keyvault_id
-            assert result[0].location == "westeurope"
+            assert secret1_name in result[0].status_extended
+            assert result[1].status == "PASS"
+            assert secret2_name in result[1].status_extended
 
     def test_key_vaults_valid_keys(self):
         keyvault_client = mock.MagicMock
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
+        secret_name = "name"
 
         with (
             mock.patch(
@@ -229,7 +226,7 @@ class Test_keyvault_non_rbac_secret_expiration_set:
 
             secret = Secret(
                 id="id",
-                name="name",
+                name=secret_name,
                 enabled=False,
                 location="location",
                 attributes=SecretAttributes(expires=None),
@@ -257,7 +254,7 @@ class Test_keyvault_non_rbac_secret_expiration_set:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has all the secrets with expiration date set."
+                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has the secret {secret_name} with expiration date set."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name
