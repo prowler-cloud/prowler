@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VercelProject",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
   "Description": "**Vercel project environment variables** are assessed for **overly broad targeting** by checking whether any variable targets all three environments (production, preview, development) simultaneously, which violates the principle of least privilege.",
-  "Risk": "Environment variables targeting all environments share the same values across production, preview, and development, increasing blast radius if credentials are compromised. Production secrets are exposed to weaker environments, making it harder to isolate and track unauthorized changes.",
+  "Risk": "Environment variables targeting **all environments** share the same values across production, preview, and development, increasing **blast radius** if credentials are compromised. Production secrets are exposed to weaker environments, making it harder to isolate and track unauthorized changes.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/environment-variables"

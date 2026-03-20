@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "VercelProject",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "**Vercel project environment variables** are assessed for **encryption** by checking whether variables with sensitive-looking names (containing KEY, SECRET, TOKEN, PASSWORD, CREDENTIAL, API_KEY, PRIVATE, AUTH) are stored with type 'encrypted' or 'secret' rather than 'plain'.",
-  "Risk": "Environment variables stored as plain text can be read by anyone with project access and are visible in build logs. API keys, passwords, and tokens in plain text can be exposed, allowing attackers to modify external services, compromise data, or cause service disruption.",
+  "Description": "**Vercel project environment variables** are assessed for **encryption** by checking whether variables with sensitive-looking names (containing `KEY`, `SECRET`, `TOKEN`, `PASSWORD`, `CREDENTIAL`, `API_KEY`, `PRIVATE`, `AUTH`) are stored with type `encrypted` or `secret` rather than `plain`.",
+  "Risk": "Environment variables stored as **plain text** can be read by anyone with project access and are visible in build logs. API keys, passwords, and tokens in plain text can be exposed, allowing attackers to **modify external services**, compromise data, or cause service disruption.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/environment-variables"

@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "VercelFirewallConfig",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "Checks whether Vercel managed WAF rulesets are enabled for each project. Managed rulesets are curated by Vercel and provide protection against known attack patterns including OWASP Top 10 threats. This feature requires an Enterprise plan and reports MANUAL status when unavailable.",
-  "Risk": "Without managed rulesets enabled, the firewall lacks curated protection rules against well-known attack patterns. The application relies solely on custom rules, which may miss new or evolving threats that managed rulesets are designed to detect and block automatically.",
+  "Description": "**Vercel projects** are assessed for **managed WAF ruleset** enablement. Managed rulesets are curated by Vercel and provide protection against known attack patterns including **OWASP Top 10** threats. This feature requires an Enterprise plan and reports MANUAL status when unavailable.",
+  "Risk": "Without **managed rulesets** enabled, the firewall lacks curated protection rules against well-known attack patterns. The application relies solely on custom rules, which may miss **new or evolving threats** that managed rulesets are designed to detect and block automatically.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/security/vercel-firewall/managed-rulesets"

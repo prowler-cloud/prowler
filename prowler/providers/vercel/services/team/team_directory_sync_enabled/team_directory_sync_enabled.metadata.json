@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VercelTeam",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Checks whether the Vercel team has directory sync (SCIM) enabled. Directory sync automates user provisioning and deprovisioning by synchronizing team membership with an external identity provider, ensuring timely access revocation when employees leave.",
-  "Risk": "Without directory sync, user provisioning and deprovisioning must be managed manually, increasing the risk of orphaned accounts remaining active after employees leave or change roles. Manual processes are error-prone and may lead to unauthorized access persisting longer than intended.",
+  "Description": "**Vercel team** is assessed for **directory sync (SCIM)** enablement. Directory sync automates user provisioning and deprovisioning by synchronizing team membership with an external identity provider, ensuring timely access revocation when employees leave.",
+  "Risk": "Without **directory sync**, user provisioning and deprovisioning must be managed manually, increasing the risk of **orphaned accounts** remaining active after employees leave or change roles. Manual processes are error-prone and may lead to unauthorized access persisting longer than intended.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/accounts/team-members-and-roles",

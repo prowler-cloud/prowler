@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VercelDeployment",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "devops",
-  "Description": "Checks whether Vercel production deployments are sourced from a stable branch (main or master). Deploying to production from feature branches bypasses standard CI/CD review processes and may introduce untested or incomplete code into the production environment.",
-  "Risk": "Production deployments from feature branches may contain untested, incomplete, or unapproved code changes. This bypasses the standard code review and merge workflow, increasing the risk of shipping bugs, security vulnerabilities, or breaking changes to end users.",
+  "Description": "**Vercel production deployments** are assessed for **source branch stability** by verifying they are sourced from a stable branch (`main` or `master`). Deploying to production from feature branches bypasses standard CI/CD review processes and may introduce untested or incomplete code into the production environment.",
+  "Risk": "Production deployments from **feature branches** may contain untested, incomplete, or unapproved code changes. This bypasses the standard **code review and merge workflow**, increasing the risk of shipping bugs, security vulnerabilities, or breaking changes to end users.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/deployments/git"

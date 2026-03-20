@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "VercelProject",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "Vercel Deployment Protection restricts access to preview deployments by requiring authentication before visitors can view them. When disabled, anyone with the preview URL can access in-progress or staging versions of your application, potentially exposing unreleased features, debug information, or internal endpoints.",
-  "Risk": "Without deployment protection on preview deployments, any person who obtains or guesses a preview URL can view unreleased application code, test data, or internal API endpoints. This increases the attack surface and may leak sensitive business logic or credentials embedded in preview builds.",
+  "Description": "**Vercel projects** are assessed for **deployment protection** configuration, which restricts access to preview deployments by requiring authentication before visitors can view them. When disabled, anyone with the preview URL can access in-progress or staging versions of the application, potentially exposing unreleased features, debug information, or internal endpoints.",
+  "Risk": "Without **deployment protection** on preview deployments, any person who obtains or guesses a preview URL can view **unreleased application code**, test data, or internal API endpoints. This increases the attack surface and may leak sensitive business logic or credentials embedded in preview builds.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/security/deployment-protection"

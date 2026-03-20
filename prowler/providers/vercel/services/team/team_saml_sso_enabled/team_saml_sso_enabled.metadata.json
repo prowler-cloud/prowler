@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "VercelTeam",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Checks whether the Vercel team has SAML single sign-on (SSO) enabled. SAML SSO enables centralized identity management through an external identity provider, ensuring consistent authentication policies across the organization.",
-  "Risk": "Without SAML SSO, team members authenticate using individual Vercel credentials that are not centrally managed. This increases the risk of credential sprawl, inconsistent password policies, and inability to enforce organization-wide authentication controls such as MFA.",
+  "Description": "**Vercel team** is assessed for **SAML single sign-on (SSO)** enablement. SAML SSO enables centralized identity management through an external identity provider, ensuring consistent authentication policies across the organization.",
+  "Risk": "Without **SAML SSO**, team members authenticate using individual Vercel credentials that are not centrally managed. This increases the risk of **credential sprawl**, inconsistent password policies, and inability to enforce organization-wide authentication controls such as **MFA**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/accounts/team-members-and-roles",

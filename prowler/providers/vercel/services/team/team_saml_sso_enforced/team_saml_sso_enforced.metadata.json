@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "VercelTeam",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Checks whether the Vercel team enforces SAML SSO for all members. When enforced, all team members must authenticate through the configured identity provider, preventing the use of individual Vercel credentials.",
-  "Risk": "Without SAML SSO enforcement, team members can bypass centralized authentication and log in with individual credentials even when SAML is configured. This undermines identity governance, allows circumvention of MFA policies, and creates gaps in access auditing.",
+  "Description": "**Vercel team** is assessed for **SAML SSO enforcement** across all members. When enforced, all team members must authenticate through the configured identity provider, preventing the use of individual Vercel credentials.",
+  "Risk": "Without **SAML SSO enforcement**, team members can bypass centralized authentication and log in with individual credentials even when SAML is configured. This undermines **identity governance**, allows circumvention of MFA policies, and creates gaps in access auditing.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/accounts/team-members-and-roles",

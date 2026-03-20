@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",
-  "ResourceType": "VercelProject",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "compute",
-  "Description": "Vercel Skew Protection ensures that clients interacting with your application always communicate with the correct deployment version, even during active rollouts. Without it, clients may fetch assets or make API calls against a different deployment version than the one that served the initial page, causing hydration errors, broken functionality, or data inconsistencies.",
-  "Risk": "Without skew protection, users may experience version mismatches during deployment rollouts where the HTML is served from one deployment version but subsequent client-side navigation or API calls hit a newer version. This can cause broken user interfaces, failed client-side transitions, or data corruption from incompatible API contract changes.",
+  "Description": "**Vercel projects** are assessed for **skew protection** configuration, which ensures that clients interacting with the application always communicate with the correct deployment version, even during active rollouts. Without it, clients may fetch assets or make API calls against a different deployment version than the one that served the initial page, causing hydration errors, broken functionality, or data inconsistencies.",
+  "Risk": "Without **skew protection**, users may experience **version mismatches** during deployment rollouts where the HTML is served from one deployment version but subsequent client-side navigation or API calls hit a newer version. This can cause broken user interfaces, failed client-side transitions, or **data corruption** from incompatible API contract changes.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/deployments/skew-protection"

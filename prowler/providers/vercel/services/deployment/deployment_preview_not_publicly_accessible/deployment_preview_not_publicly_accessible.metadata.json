@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "VercelDeployment",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "Checks whether Vercel preview deployments have deployment protection configured. Preview deployments without protection are publicly accessible to anyone who knows or guesses the URL, potentially exposing unreleased features, staging data, or internal endpoints.",
-  "Risk": "Without deployment protection on preview deployments, any person who obtains or guesses a preview URL can view unreleased application code, test data, or internal API endpoints. This increases the attack surface and may leak sensitive business logic or credentials embedded in preview builds.",
+  "Description": "**Vercel preview deployments** are assessed for **deployment protection** configuration. Preview deployments without protection are publicly accessible to anyone who knows or guesses the URL, potentially exposing unreleased features, staging data, or internal endpoints.",
+  "Risk": "Without **deployment protection** on preview deployments, any person who obtains or guesses a preview URL can view **unreleased application code**, test data, or internal API endpoints. This increases the attack surface and may leak sensitive business logic or credentials embedded in preview builds.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/security/deployment-protection"

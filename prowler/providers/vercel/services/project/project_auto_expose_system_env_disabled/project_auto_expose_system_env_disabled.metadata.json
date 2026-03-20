@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VercelProject",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "Vercel can automatically expose system environment variables (such as VERCEL_URL, VERCEL_ENV, VERCEL_GIT_COMMIT_SHA) to the build and runtime environment. When enabled, these variables are injected into every deployment and may be accessible in client-side JavaScript bundles if not handled carefully, leaking internal infrastructure details.",
-  "Risk": "Automatically exposed system environment variables can reveal deployment URLs, Git metadata, environment names, and other internal details. If these values are inadvertently included in client-side bundles, attackers can use them to map infrastructure, identify staging environments, or craft targeted attacks against specific deployment instances.",
+  "Description": "**Vercel projects** are assessed for **automatic system environment variable exposure** (`VERCEL_URL`, `VERCEL_ENV`, `VERCEL_GIT_COMMIT_SHA`). When enabled, these variables are injected into every deployment and may be accessible in client-side JavaScript bundles if not handled carefully, leaking internal infrastructure details.",
+  "Risk": "Automatically exposed **system environment variables** can reveal deployment URLs, Git metadata, environment names, and other internal details. If these values are inadvertently included in **client-side bundles**, attackers can use them to map infrastructure, identify staging environments, or craft targeted attacks against specific deployment instances.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/projects/environment-variables/system-environment-variables"

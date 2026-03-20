@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VercelFirewallConfig",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "Checks whether Vercel projects have at least one IP blocking rule configured. IP blocking rules allow you to deny access from known malicious IP addresses or ranges, reducing the attack surface and preventing traffic from untrusted sources.",
-  "Risk": "Without IP blocking rules, all traffic is accepted regardless of source IP. Known malicious IPs, abuse networks, and previously identified attackers can freely access the application. This increases the risk of automated scanning, credential stuffing, and targeted attacks from known threat sources.",
+  "Description": "**Vercel projects** are assessed for **IP blocking rule** configuration. IP blocking rules allow denying access from known malicious IP addresses or ranges, reducing the attack surface and preventing traffic from untrusted sources.",
+  "Risk": "Without **IP blocking rules**, all traffic is accepted regardless of source IP. Known malicious IPs, abuse networks, and previously identified attackers can freely access the application. This increases the risk of **automated scanning**, credential stuffing, and targeted attacks from known threat sources.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/security/vercel-firewall"

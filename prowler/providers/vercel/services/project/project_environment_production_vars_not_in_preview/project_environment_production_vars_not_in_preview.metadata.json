@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VercelProject",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "**Vercel project environment variables** are assessed for **environment separation** by checking whether sensitive variables (type 'secret' or 'encrypted') that target the 'production' environment also target 'preview', which could expose production credentials to untrusted preview builds.",
-  "Risk": "Preview deployments are often triggered by pull requests, including those from external contributors or forks. Sharing production secrets with preview environments can lead to credential theft. Production API keys and database credentials could be exfiltrated by malicious code in preview builds and used to modify or disrupt live services.",
+  "Description": "**Vercel project environment variables** are assessed for **environment separation** by checking whether sensitive variables (type `secret` or `encrypted`) that target the `production` environment also target `preview`, which could expose production credentials to untrusted preview builds.",
+  "Risk": "Preview deployments are often triggered by **pull requests**, including those from external contributors or forks. Sharing **production secrets** with preview environments can lead to credential theft. Production API keys and database credentials could be exfiltrated by malicious code in preview builds and used to modify or disrupt live services.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/environment-variables"

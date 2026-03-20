@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VercelAuthToken",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "Checks whether Vercel API tokens have been active within the last 90 days. Stale tokens that remain unused for extended periods represent unnecessary access credentials that increase the attack surface. Tokens with no recorded activity are also flagged.",
-  "Risk": "Stale tokens that have not been used for over 90 days may belong to decommissioned integrations, former team members, or forgotten automation. These tokens remain valid and could be compromised or misused without detection, as their inactivity makes suspicious usage harder to notice in access logs.",
+  "Description": "**Vercel API tokens** are assessed for **staleness** by checking whether each token has been active within the last 90 days. Stale tokens that remain unused for extended periods represent unnecessary access credentials that increase the attack surface. Tokens with no recorded activity are also flagged.",
+  "Risk": "Stale tokens that have not been used for over **90 days** may belong to decommissioned integrations, former team members, or forgotten automation. These tokens remain **valid** and could be compromised or misused without detection, as their inactivity makes suspicious usage harder to notice in access logs.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/rest-api#authentication"

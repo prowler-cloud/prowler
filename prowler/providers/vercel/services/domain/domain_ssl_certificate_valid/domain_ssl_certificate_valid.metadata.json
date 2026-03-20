@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "VercelDomain",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Checks whether Vercel domains have an SSL certificate provisioned. Vercel automatically provisions and renews SSL certificates for properly configured domains. A missing SSL certificate indicates a configuration issue that leaves traffic unencrypted.",
-  "Risk": "Without an SSL certificate, traffic between users and the domain is transmitted in plain text. This exposes sensitive data such as authentication tokens, form submissions, and personal information to interception via man-in-the-middle attacks. Search engines also penalize non-HTTPS sites, reducing visibility.",
+  "Description": "**Vercel domains** are assessed for **SSL certificate provisioning** to verify a valid certificate is in place. Vercel automatically provisions and renews SSL certificates for properly configured domains. A missing SSL certificate indicates a configuration issue that leaves traffic unencrypted.",
+  "Risk": "Without an **SSL certificate**, traffic between users and the domain is transmitted in **plain text**. This exposes sensitive data such as authentication tokens, form submissions, and personal information to interception via **man-in-the-middle attacks**. Search engines also penalize non-HTTPS sites, reducing visibility.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/security/encryption"
