@@ -2,9 +2,11 @@
 
 import { createContext, useContext } from "react";
 
+import { FindingGroupRow, FindingProps } from "@/types";
+
 interface FindingsSelectionContextValue {
   selectedFindingIds: string[];
-  selectedFindings: any[];
+  selectedFindings: (FindingProps | FindingGroupRow)[];
   clearSelection: () => void;
   isSelected: (id: string) => boolean;
   /** Resolves display IDs (check_ids or resource_ids) into real finding UUIDs for the mute API. */

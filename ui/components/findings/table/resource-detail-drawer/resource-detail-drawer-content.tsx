@@ -44,6 +44,7 @@ import {
   type FindingStatus,
   StatusFindingBadge,
 } from "@/components/ui/table/status-finding-badge";
+import { getFailingForLabel } from "@/lib/date-utils";
 import { getRegionFlag } from "@/lib/region-flags";
 import { cn } from "@/lib/utils";
 
@@ -69,28 +70,6 @@ const MarkdownContainer = ({ children }: { children: string }) => (
     <ReactMarkdown>{children}</ReactMarkdown>
   </div>
 );
-
-function getFailingForLabel(firstSeenAt: string | null): string | null {
-  if (!firstSeenAt) return null;
-
-  const start = new Date(firstSeenAt);
-  if (isNaN(start.getTime())) return null;
-
-  const now = new Date();
-  const diffMs = now.getTime() - start.getTime();
-  if (diffMs < 0) return null;
-
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays < 1) return "< 1 day";
-  if (diffDays < 30) return `${diffDays} day${diffDays > 1 ? "s" : ""}`;
-
-  const diffMonths = Math.floor(diffDays / 30);
-  if (diffMonths < 12) return `${diffMonths} month${diffMonths > 1 ? "s" : ""}`;
-
-  const diffYears = Math.floor(diffMonths / 12);
-  return `${diffYears} year${diffYears > 1 ? "s" : ""}`;
-}
 
 export function ResourceDetailDrawerContent({
   isLoading,
@@ -609,9 +588,9 @@ export function ResourceDetailDrawerContent({
       {/* Lighthouse AI button */}
       <a
         href={`/lighthouse?${new URLSearchParams({ prompt: `Analyze this security finding and provide remediation guidance:\n\n- **Finding**: ${checkMeta.checkTitle}\n- **Check ID**: ${checkMeta.checkId}\n- **Severity**: ${f?.severity ?? "unknown"}\n- **Status**: ${f?.status ?? "unknown"}${f?.statusExtended ? `\n- **Detail**: ${f.statusExtended}` : ""}${checkMeta.risk ? `\n- **Risk**: ${checkMeta.risk}` : ""}` }).toString()}`}
-        className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-950 transition-opacity hover:opacity-90"
+        className="text-text-neutral-primary flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold transition-opacity hover:opacity-90"
         style={{
-          background: "linear-gradient(96deg, #2EE59B 3.55%, #62DFF0 98.85%)",
+          background: "var(--gradient-lighthouse)",
         }}
       >
         <CircleArrowRight className="size-5" />
@@ -626,11 +605,13 @@ function OtherFindingRow({ finding }: { finding: ResourceDrawerFinding }) {
 
   return (
     <>
-      <MuteFindingsModal
-        isOpen={isMuteModalOpen}
-        onOpenChange={setIsMuteModalOpen}
-        findingIds={[finding.id]}
-      />
+      {!finding.isMuted && (
+        <MuteFindingsModal
+          isOpen={isMuteModalOpen}
+          onOpenChange={setIsMuteModalOpen}
+          findingIds={[finding.id]}
+        />
+      )}
       <TableRow>
         <TableCell className="w-10">
           <NotificationIndicator isMuted={finding.isMuted} />

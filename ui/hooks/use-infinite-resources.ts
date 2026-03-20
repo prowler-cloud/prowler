@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import {
   adaptFindingGroupResourcesResponse,
@@ -64,53 +64,50 @@ export function useInfiniteResources({
   onAppendResourcesRef.current = onAppendResources;
   onSetLoadingRef.current = onSetLoading;
 
-  const fetchPage = useCallback(
-    async (page: number, append: boolean, forCheckId: string) => {
-      if (isLoadingRef.current) return;
+  async function fetchPage(page: number, append: boolean, forCheckId: string) {
+    if (isLoadingRef.current) return;
 
-      isLoadingRef.current = true;
-      onSetLoadingRef.current(true);
+    isLoadingRef.current = true;
+    onSetLoadingRef.current(true);
 
-      const fetchFn = hasDateOrScanRef.current
-        ? getFindingGroupResources
-        : getLatestFindingGroupResources;
+    const fetchFn = hasDateOrScanRef.current
+      ? getFindingGroupResources
+      : getLatestFindingGroupResources;
 
-      try {
-        const response = await fetchFn({
-          checkId: forCheckId,
-          page,
-          pageSize: RESOURCES_PAGE_SIZE,
-          filters: filtersRef.current,
-        });
+    try {
+      const response = await fetchFn({
+        checkId: forCheckId,
+        page,
+        pageSize: RESOURCES_PAGE_SIZE,
+        filters: filtersRef.current,
+      });
 
-        // Discard stale response if checkId changed during fetch
-        if (currentCheckIdRef.current !== forCheckId) return;
+      // Discard stale response if checkId changed during fetch
+      if (currentCheckIdRef.current !== forCheckId) return;
 
-        const resources = adaptFindingGroupResourcesResponse(
-          response,
-          forCheckId,
-        );
-        const totalPages = response?.meta?.pagination?.pages ?? 1;
-        const hasMore = page < totalPages;
+      const resources = adaptFindingGroupResourcesResponse(
+        response,
+        forCheckId,
+      );
+      const totalPages = response?.meta?.pagination?.pages ?? 1;
+      const hasMore = page < totalPages;
 
-        hasMoreRef.current = hasMore;
+      hasMoreRef.current = hasMore;
 
-        if (append) {
-          onAppendResourcesRef.current(resources, hasMore);
-        } else {
-          onSetResourcesRef.current(resources, hasMore);
-        }
-      } catch (error) {
-        console.error("Error fetching resources:", error);
-        if (currentCheckIdRef.current === forCheckId) {
-          onSetLoadingRef.current(false);
-        }
-      } finally {
-        isLoadingRef.current = false;
+      if (append) {
+        onAppendResourcesRef.current(resources, hasMore);
+      } else {
+        onSetResourcesRef.current(resources, hasMore);
       }
-    },
-    [], // No dependencies — reads everything from refs
-  );
+    } catch (error) {
+      console.error("Error fetching resources:", error);
+      if (currentCheckIdRef.current === forCheckId) {
+        onSetLoadingRef.current(false);
+      }
+    } finally {
+      isLoadingRef.current = false;
+    }
+  }
 
   // Fetch first page when checkId changes
   useEffect(() => {
@@ -122,42 +119,36 @@ export function useInfiniteResources({
     fetchPage(1, false, checkId);
   }, [checkId, fetchPage]);
 
-  const loadNextPage = useCallback(() => {
+  function loadNextPage() {
     if (!hasMoreRef.current || isLoadingRef.current) return;
 
     const nextPage = pageRef.current + 1;
     pageRef.current = nextPage;
     fetchPage(nextPage, true, currentCheckIdRef.current);
-  }, [fetchPage]);
+  }
 
-  // IntersectionObserver callback — stable since loadNextPage is stable
-  const handleIntersection = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const [entry] = entries;
-      if (entry.isIntersecting) {
-        loadNextPage();
-      }
-    },
-    [loadNextPage],
-  );
+  // IntersectionObserver callback
+  function handleIntersection(entries: IntersectionObserverEntry[]) {
+    const [entry] = entries;
+    if (entry.isIntersecting) {
+      loadNextPage();
+    }
+  }
 
   // Set up observer when sentinel node changes
-  const sentinelRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-        observerRef.current = null;
-      }
+  function sentinelRef(node: HTMLDivElement | null) {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
 
-      if (node) {
-        observerRef.current = new IntersectionObserver(handleIntersection, {
-          rootMargin: "200px",
-        });
-        observerRef.current.observe(node);
-      }
-    },
-    [handleIntersection],
-  );
+    if (node) {
+      observerRef.current = new IntersectionObserver(handleIntersection, {
+        rootMargin: "200px",
+      });
+      observerRef.current.observe(node);
+    }
+  }
 
   // Cleanup on unmount
   useEffect(() => {

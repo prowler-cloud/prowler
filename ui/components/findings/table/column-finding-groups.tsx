@@ -9,7 +9,6 @@ import {
   SeverityBadge,
   StatusFindingBadge,
 } from "@/components/ui/table";
-import { cn } from "@/lib";
 import { FindingGroupRow, ProviderType } from "@/types";
 
 import { DataTableRowActions } from "./data-table-row-actions";

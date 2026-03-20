@@ -7,12 +7,11 @@ import {
   RowSelectionState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronLeft, VolumeX } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 
 import { resolveFindingIds } from "@/actions/findings/findings-by-resource";
-import { Button } from "@/components/shadcn";
 import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
 import {
   Table,
@@ -27,7 +26,7 @@ import { useInfiniteResources } from "@/hooks/use-infinite-resources";
 import { cn, hasDateOrScanFilter } from "@/lib";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
 
-import { MuteFindingsModal } from "../mute-findings-modal";
+import { FloatingMuteButton } from "../floating-mute-button";
 import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
@@ -53,42 +52,36 @@ export function FindingsGroupDrillDown({
   const [isLoading, setIsLoading] = useState(true);
 
   // Derive hasDateOrScan from current URL params
-  const currentParams = useMemo(
-    () => Object.fromEntries(searchParams.entries()),
-    [searchParams],
-  );
+  const currentParams = Object.fromEntries(searchParams.entries());
   const hasDateOrScan = hasDateOrScanFilter(currentParams);
 
-  // Stabilize filters object — only recompute when searchParams change
-  const filters = useMemo(() => {
-    const result: Record<string, string> = {};
-    searchParams.forEach((value, key) => {
-      if (key.startsWith("filter[") || key.includes("__in")) {
-        result[key] = value;
-      }
-    });
-    return result;
-  }, [searchParams]);
+  // Extract filter params from search params
+  const filters: Record<string, string> = {};
+  searchParams.forEach((value, key) => {
+    if (key.startsWith("filter[") || key.includes("__in")) {
+      filters[key] = value;
+    }
+  });
 
-  const handleSetResources = useCallback(
-    (newResources: FindingResourceRow[], _hasMore: boolean) => {
-      setResources(newResources);
-      setIsLoading(false);
-    },
-    [],
-  );
+  const handleSetResources = (
+    newResources: FindingResourceRow[],
+    _hasMore: boolean,
+  ) => {
+    setResources(newResources);
+    setIsLoading(false);
+  };
 
-  const handleAppendResources = useCallback(
-    (newResources: FindingResourceRow[], _hasMore: boolean) => {
-      setResources((prev) => [...prev, ...newResources]);
-      setIsLoading(false);
-    },
-    [],
-  );
+  const handleAppendResources = (
+    newResources: FindingResourceRow[],
+    _hasMore: boolean,
+  ) => {
+    setResources((prev) => [...prev, ...newResources]);
+    setIsLoading(false);
+  };
 
-  const handleSetLoading = useCallback((loading: boolean) => {
+  const handleSetLoading = (loading: boolean) => {
     setIsLoading(loading);
-  }, []);
+  };
 
   const { sentinelRef } = useInfiniteResources({
     checkId: group.checkId,
@@ -116,34 +109,16 @@ export function FindingsGroupDrillDown({
     .map((idx) => resources[parseInt(idx)]?.findingId)
     .filter(Boolean);
 
-  // Mute modal state — resource IDs resolved to finding UUIDs on-click
-  const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
-  const [resolvedFindingIds, setResolvedFindingIds] = useState<string[]>([]);
-  const [isResolvingIds, setIsResolvingIds] = useState(false);
-
   /** Converts resource_ids (display) → resourceUids → finding UUIDs via API. */
-  const resolveResourceIds = useCallback(
-    async (ids: string[]) => {
-      const resourceUids = ids
-        .map((id) => resources.find((r) => r.findingId === id)?.resourceUid)
-        .filter(Boolean) as string[];
-      if (resourceUids.length === 0) return [];
-      return resolveFindingIds({
-        checkId: group.checkId,
-        resourceUids,
-      });
-    },
-    [resources, group.checkId],
-  );
-
-  const handleMuteClick = async () => {
-    setIsResolvingIds(true);
-    const findingIds = await resolveResourceIds(selectedFindingIds);
-    setResolvedFindingIds(findingIds);
-    setIsResolvingIds(false);
-    if (findingIds.length > 0) {
-      setIsMuteModalOpen(true);
-    }
+  const resolveResourceIds = async (ids: string[]) => {
+    const resourceUids = ids
+      .map((id) => resources.find((r) => r.findingId === id)?.resourceUid)
+      .filter(Boolean) as string[];
+    if (resourceUids.length === 0) return [];
+    return resolveFindingIds({
+      checkId: group.checkId,
+      resourceUids,
+    });
   };
 
   const selectableRowCount = resources.filter((r) => !r.isMuted).length;
@@ -162,7 +137,6 @@ export function FindingsGroupDrillDown({
 
   const handleMuteComplete = () => {
     clearSelection();
-    setResolvedFindingIds([]);
     router.refresh();
   };
 
@@ -316,29 +290,14 @@ export function FindingsGroupDrillDown({
       </div>
 
       {selectedFindingIds.length > 0 && (
-        <>
-          <MuteFindingsModal
-            isOpen={isMuteModalOpen}
-            onOpenChange={setIsMuteModalOpen}
-            findingIds={resolvedFindingIds}
-            onComplete={handleMuteComplete}
-          />
-          <div className="animate-in fade-in slide-in-from-bottom-4 fixed right-6 bottom-6 z-50 duration-300">
-            <Button
-              onClick={handleMuteClick}
-              disabled={isResolvingIds}
-              size="lg"
-              className="shadow-lg"
-            >
-              {isResolvingIds ? (
-                <TreeSpinner className="size-5" />
-              ) : (
-                <VolumeX className="size-5" />
-              )}
-              Mute ({selectedFindingIds.length})
-            </Button>
-          </div>
-        </>
+        <FloatingMuteButton
+          selectedCount={selectedFindingIds.length}
+          selectedFindingIds={selectedFindingIds}
+          onBeforeOpen={async () => {
+            return resolveResourceIds(selectedFindingIds);
+          }}
+          onComplete={handleMuteComplete}
+        />
       )}
 
       <ResourceDetailDrawer

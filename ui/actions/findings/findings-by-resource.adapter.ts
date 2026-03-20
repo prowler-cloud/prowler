@@ -1,6 +1,23 @@
 import { createDict } from "@/lib";
 import { ProviderType, Severity } from "@/types";
 
+export interface RemediationRecommendation {
+  text: string;
+  url: string;
+}
+
+export interface RemediationCode {
+  cli: string;
+  other: string;
+  nativeiac: string;
+  terraform: string;
+}
+
+export interface Remediation {
+  recommendation: RemediationRecommendation;
+  code: RemediationCode;
+}
+
 /**
  * Flattened finding for the resource detail drawer.
  * Merges data from the finding attributes, its check_metadata,
@@ -34,15 +51,7 @@ export interface ResourceDrawerFinding {
   statusExtended: string;
   complianceFrameworks: string[];
   categories: string[];
-  remediation: {
-    recommendation: { text: string; url: string };
-    code: {
-      cli: string;
-      other: string;
-      nativeiac: string;
-      terraform: string;
-    };
-  };
+  remediation: Remediation;
   additionalUrls: string[];
 }
 
