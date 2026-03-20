@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { describe, expect, it } from "vitest";
 
@@ -79,6 +80,27 @@ function TestCustomQueryForm() {
   );
 }
 
+function TestFormWithError() {
+  const form = useForm({
+    defaultValues: {
+      tag_key: "",
+    },
+  });
+
+  useEffect(() => {
+    form.setError("tag_key", {
+      type: "manual",
+      message: "Tag key is required",
+    });
+  }, [form]);
+
+  return (
+    <FormProvider {...form}>
+      <QueryParametersForm selectedQuery={mockQuery} />
+    </FormProvider>
+  );
+}
+
 describe("QueryParametersForm", () => {
   it("uses the field description as the placeholder instead of rendering helper text below", () => {
     // Given
@@ -119,5 +141,16 @@ describe("QueryParametersForm", () => {
     expect(input.tagName).toBe("TEXTAREA");
     expect(input).toHaveAttribute("data-slot", "textarea");
     expect(input).toHaveAttribute("placeholder", "MATCH (n) RETURN n LIMIT 25");
+  });
+
+  it("uses the design-system error token for field validation messages", async () => {
+    // Given
+    render(<TestFormWithError />);
+
+    // When
+    const errorMessage = await screen.findByText("Tag key is required");
+
+    // Then
+    expect(errorMessage).toHaveClass("text-text-error-primary", "text-xs");
   });
 });

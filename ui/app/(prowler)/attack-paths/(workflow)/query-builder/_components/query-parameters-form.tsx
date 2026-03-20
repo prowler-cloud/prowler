@@ -2,8 +2,7 @@
 
 import { Controller, useFormContext } from "react-hook-form";
 
-import { Input } from "@/components/shadcn";
-import { Textarea } from "@/components/shadcn/textarea/textarea";
+import { Input, Textarea } from "@/components/shadcn";
 import { cn } from "@/lib/utils";
 import {
   type AttackPathQuery,
@@ -124,7 +123,9 @@ export const QueryParametersForm = ({
                     />
                   )}
                   {errorMessage && (
-                    <span className="text-xs text-red-500">{errorMessage}</span>
+                    <span className="text-text-error-primary text-xs">
+                      {errorMessage}
+                    </span>
                   )}
                 </div>
               );
