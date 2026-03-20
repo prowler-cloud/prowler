@@ -16,15 +16,20 @@ class Team(VercelService):
         self._fetch_team()
 
     def _fetch_team(self):
-        """Fetch team details and members if team_id is set."""
-        team_id = self.provider.session.team_id
-        if not team_id:
-            logger.info("Team - No team ID configured, skipping team checks")
+        """Fetch team details and members for all teams in scope."""
+        team_ids = self._all_team_ids
+        if not team_ids:
+            logger.info("Team - No teams found, skipping team checks")
             return
 
+        for team_id in team_ids:
+            self._fetch_single_team(team_id)
+
+    def _fetch_single_team(self, team_id: str):
+        """Fetch details and members for a single team."""
         try:
-            # Fetch team details
-            team_data = self._get(f"/v2/teams/{team_id}")
+            # Fetch team details (pass teamId explicitly for auto-discovered teams)
+            team_data = self._get(f"/v2/teams/{team_id}", params={"teamId": team_id})
             if not team_data:
                 return
 
@@ -77,14 +82,18 @@ class Team(VercelService):
 
         except Exception as error:
             logger.error(
-                f"Team - Error fetching team: "
+                f"Team - Error fetching team {team_id}: "
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _fetch_members(self, team: "VercelTeam"):
         """Fetch all members for a team."""
         try:
-            raw_members = self._paginate(f"/v2/teams/{team.id}/members", "members")
+            raw_members = self._paginate(
+                f"/v2/teams/{team.id}/members",
+                "members",
+                params={"teamId": team.id},
+            )
 
             for member in raw_members:
                 joined_at = None

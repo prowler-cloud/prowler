@@ -30,6 +30,7 @@ class VercelIdentityInfo(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
     team: Optional[VercelTeamInfo] = None
+    teams: list[VercelTeamInfo] = Field(default_factory=list)
 
 
 class VercelOutputOptions(ProviderOutputOptions):

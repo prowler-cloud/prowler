@@ -100,4 +100,4 @@ class VercelDeployment(BaseModel):
     project_name: Optional[str] = None
     team_id: Optional[str] = None
     git_source: Optional[dict] = None
-    deployment_protection: Optional[str] = None
+    deployment_protection: Optional[dict] = None

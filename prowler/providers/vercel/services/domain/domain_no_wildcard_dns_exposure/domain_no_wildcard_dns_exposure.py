@@ -31,7 +31,7 @@ class domain_no_wildcard_dns_exposure(Check):
 
             wildcard_records = []
             for record in domain.dns_records:
-                record_name = record.get("name", "")
+                record_name = record.get("name") or ""
                 if record_name == "*" or record_name.startswith("*."):
                     wildcard_records.append(record_name)
 

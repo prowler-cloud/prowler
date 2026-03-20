@@ -37,7 +37,7 @@ class deployment_production_uses_stable_target(Check):
             stable_branches = deployment_client.audit_config.get(
                 "stable_branches", ["main", "master"]
             )
-            branch = deployment.git_source.get("branch", "")
+            branch = deployment.git_source.get("branch") or ""
             if branch in stable_branches:
                 report.status = "PASS"
                 report.status_extended = (

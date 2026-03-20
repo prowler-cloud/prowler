@@ -41,8 +41,6 @@ class Project(VercelService):
 
                 # Parse deployment protection
                 dp = None
-                proj.get("protectionBypass", {})
-                proj.get("ssoProtection", {})
                 dp_raw = proj.get("deploymentProtection", {}) or {}
 
                 preview_dp = dp_raw.get("deploymentType", "none")

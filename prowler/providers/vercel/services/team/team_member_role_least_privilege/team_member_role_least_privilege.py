@@ -45,7 +45,14 @@ class team_member_role_least_privilege(Check):
             owner_count = len(owners)
             owner_percentage = (owner_count / total_active) * 100
 
-            if owner_percentage <= 20:
+            if total_active < 5 and owner_count <= 1:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Team {team.name} has {owner_count} owner(s) out of "
+                    f"{total_active} active members. Small team with minimum "
+                    f"required owner — least privilege threshold not applicable."
+                )
+            elif owner_percentage <= 20:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Team {team.name} has {owner_count} owner(s) out of "

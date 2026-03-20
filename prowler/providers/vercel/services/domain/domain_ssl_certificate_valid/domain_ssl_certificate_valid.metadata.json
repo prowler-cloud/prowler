@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "domain_ssl_certificate_valid",
-  "CheckTitle": "Vercel domains have a valid SSL certificate provisioned",
+  "CheckTitle": "Vercel domains have an SSL certificate provisioned",
   "CheckType": [],
   "ServiceName": "domain",
   "SubServiceName": "",

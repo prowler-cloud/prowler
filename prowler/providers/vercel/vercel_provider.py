@@ -196,9 +196,12 @@ class VercelProvider(Provider):
             username = user_data.get("username")
             email = user_data.get("email")
 
-            # Get team info if team_id is set
+            # Get team info
             team_info = None
+            all_teams = []
+
             if session.team_id:
+                # Specific team requested — fetch just that one
                 params = {"teamId": session.team_id}
                 team_response = http.get(
                     f"{session.base_url}/v2/teams/{session.team_id}",
@@ -212,6 +215,7 @@ class VercelProvider(Provider):
                         name=team_data.get("name", ""),
                         slug=team_data.get("slug", ""),
                     )
+                    all_teams = [team_info]
                 elif team_response.status_code in (404, 403):
                     raise VercelInvalidTeamError(
                         file=os.path.basename(__file__),
@@ -219,12 +223,38 @@ class VercelProvider(Provider):
                     )
                 else:
                     team_response.raise_for_status()
+            else:
+                # No team specified — auto-discover all teams the user belongs to
+                try:
+                    teams_response = http.get(
+                        f"{session.base_url}/v2/teams",
+                        params={"limit": 100},
+                        timeout=30,
+                    )
+                    if teams_response.status_code == 200:
+                        teams_data = teams_response.json().get("teams", [])
+                        for t in teams_data:
+                            all_teams.append(
+                                VercelTeamInfo(
+                                    id=t.get("id", ""),
+                                    name=t.get("name", ""),
+                                    slug=t.get("slug", ""),
+                                )
+                            )
+                        if all_teams:
+                            logger.info(
+                                f"Auto-discovered {len(all_teams)} team(s): "
+                                f"{', '.join(t.name for t in all_teams)}"
+                            )
+                except Exception as teams_error:
+                    logger.warning(f"Could not auto-discover teams: {teams_error}")
 
             return VercelIdentityInfo(
                 user_id=user_id,
                 username=username,
                 email=email,
                 team=team_info,
+                teams=all_teams,
             )
         except VercelInvalidTeamError:
             raise
@@ -304,6 +334,11 @@ class VercelProvider(Provider):
         if self.identity.team:
             report_lines.append(
                 f"Team: {Fore.YELLOW}{self.identity.team.name} ({self.identity.team.slug}){Style.RESET_ALL}"
+            )
+        elif self.identity.teams:
+            team_names = ", ".join(f"{t.name} ({t.slug})" for t in self.identity.teams)
+            report_lines.append(
+                f"Scope: {Fore.YELLOW}Personal Account + {len(self.identity.teams)} team(s): {team_names}{Style.RESET_ALL}"
             )
         else:
             report_lines.append(

@@ -1,9 +1,10 @@
+import re
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportVercel
 from prowler.providers.vercel.services.project.project_client import project_client
 
-SENSITIVE_PATTERNS = {
+SENSITIVE_PATTERNS = [
     "KEY",
     "SECRET",
     "TOKEN",
@@ -12,7 +13,10 @@ SENSITIVE_PATTERNS = {
     "API_KEY",
     "PRIVATE",
     "AUTH",
-}
+]
+
+# Pre-compiled regex: each pattern must appear as a whole word (bounded by _ or string edges)
+_SENSITIVE_RE = re.compile(r"(?:^|_)(?:" + "|".join(SENSITIVE_PATTERNS) + r")(?:_|$)")
 
 
 class project_environment_sensitive_vars_encrypted(Check):
@@ -40,7 +44,7 @@ class project_environment_sensitive_vars_encrypted(Check):
             plain_sensitive_keys = []
             for env_var in project.environment_variables:
                 upper_key = env_var.key.upper()
-                if any(pattern in upper_key for pattern in SENSITIVE_PATTERNS):
+                if _SENSITIVE_RE.search(upper_key):
                     if env_var.type not in ("encrypted", "secret"):
                         plain_sensitive_keys.append(env_var.key)
 

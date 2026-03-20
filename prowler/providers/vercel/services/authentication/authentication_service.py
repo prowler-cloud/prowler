@@ -16,20 +16,34 @@ class Authentication(VercelService):
         self._list_tokens()
 
     def _list_tokens(self):
-        """List all API tokens for the authenticated user."""
+        """List all API tokens for the authenticated user and their teams."""
+        # Always fetch personal tokens (no teamId filter)
+        self._fetch_tokens_for_scope(team_id=None)
+
+        # Also fetch tokens scoped to each team
+        for tid in self._all_team_ids:
+            self._fetch_tokens_for_scope(team_id=tid)
+
+        logger.info(f"Authentication - Found {len(self.tokens)} token(s)")
+
+    def _fetch_tokens_for_scope(self, team_id: str = None):
+        """Fetch tokens for a specific scope (personal or team).
+
+        Args:
+            team_id: Team ID to fetch tokens for. None for personal tokens.
+        """
         try:
-            data = self._get("/v5/user/tokens")
+            params = {"teamId": team_id} if team_id else {}
+            data = self._get("/v5/user/tokens", params=params)
             if not data:
                 return
 
             tokens = data.get("tokens", [])
-            seen_ids: set[str] = set()
 
             for token in tokens:
                 token_id = token.get("id", "")
-                if not token_id or token_id in seen_ids:
+                if not token_id or token_id in self.tokens:
                     continue
-                seen_ids.add(token_id)
 
                 active_at = None
                 if token.get("activeAt"):
@@ -58,14 +72,13 @@ class Authentication(VercelService):
                     expires_at=expires_at,
                     scopes=token.get("scopes", []),
                     origin=token.get("origin"),
-                    team_id=token.get("teamId") or self.provider.session.team_id,
+                    team_id=token.get("teamId") or team_id,
                 )
 
-            logger.info(f"Authentication - Found {len(self.tokens)} token(s)")
-
         except Exception as error:
+            scope = f"team {team_id}" if team_id else "personal"
             logger.error(
-                f"Authentication - Error listing tokens: "
+                f"Authentication - Error listing tokens for {scope}: "
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 

@@ -35,6 +35,13 @@ class VercelService:
         # Thread pool for parallel API calls
         self.thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
+    @property
+    def _all_team_ids(self) -> list[str]:
+        """Return team IDs to scan: explicit team_id, or all auto-discovered teams."""
+        if self._team_id:
+            return [self._team_id]
+        return [t.id for t in self.provider.identity.teams]
+
     def _get(self, path: str, params: dict = None) -> dict:
         """Make a rate-limit-aware GET request to the Vercel API.
 
