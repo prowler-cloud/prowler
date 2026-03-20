@@ -4,8 +4,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useFilterTransitionOptional } from "@/contexts";
 
-// const FINDINGS_PATH = "/findings";
-// const DEFAULT_MUTED_FILTER = "false";
+const FINDINGS_PATH = "/findings";
+const DEFAULT_MUTED_FILTER = "false";
 
 /**
  * Custom hook to handle URL filters and automatically reset
@@ -22,12 +22,10 @@ export const useUrlFilters = () => {
   const isPending = false;
 
   const ensureFindingsDefaultMuted = (params: URLSearchParams) => {
-    // TODO: Re-enable when finding-groups endpoint supports filter[muted]
     // Findings defaults to excluding muted findings unless user sets it explicitly.
-    // if (pathname === FINDINGS_PATH && !params.has("filter[muted]")) {
-    //   params.set("filter[muted]", DEFAULT_MUTED_FILTER);
-    // }
-    void params;
+    if (pathname === FINDINGS_PATH && !params.has("filter[muted]")) {
+      params.set("filter[muted]", DEFAULT_MUTED_FILTER);
+    }
   };
 
   const navigate = (params: URLSearchParams) => {
