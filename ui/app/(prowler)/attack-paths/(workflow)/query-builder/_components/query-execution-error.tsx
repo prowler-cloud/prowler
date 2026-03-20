@@ -4,15 +4,21 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn";
 
 interface QueryExecutionErrorProps {
   error: string;
+  title?: string;
+  description?: string;
 }
 
-export const QueryExecutionError = ({ error }: QueryExecutionErrorProps) => {
+export const QueryExecutionError = ({
+  error,
+  title = "Query execution failed",
+  description,
+}: QueryExecutionErrorProps) => {
   return (
     <Alert variant="error">
       <CircleAlert className="size-4" />
-      <AlertTitle>Query execution failed</AlertTitle>
+      <AlertTitle>{title}</AlertTitle>
       <AlertDescription className="w-full gap-3">
-        <p>The Attack Paths query could not be executed.</p>
+        {description ? <p>{description}</p> : null}
         <div className="bg-bg-neutral-primary/70 border-border-neutral-secondary w-full rounded-md border px-3 py-2">
           <pre className="text-text-error-primary font-mono text-xs break-words whitespace-pre-wrap">
             {error}

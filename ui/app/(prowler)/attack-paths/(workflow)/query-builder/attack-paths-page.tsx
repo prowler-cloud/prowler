@@ -384,9 +384,10 @@ export default function AttackPathsPage() {
               {queriesLoading ? (
                 <p className="text-sm">Loading queries...</p>
               ) : queriesError ? (
-                <p className="text-text-danger dark:text-text-danger text-sm">
-                  {queriesError}
-                </p>
+                <QueryExecutionError
+                  title="Failed to load queries"
+                  error={queriesError}
+                />
               ) : (
                 <>
                   <FormProvider {...queryBuilder.form}>
