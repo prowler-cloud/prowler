@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import {
+  ATTACK_PATH_QUERY_IDS,
   type AttackPathQuery,
   QUERY_PARAMETER_INPUT_TYPES,
 } from "@/types/attack-paths";
@@ -48,7 +49,7 @@ export const QueryParametersForm = ({
             key={param.name}
             name={param.name}
             control={control}
-            render={({ field }) => {
+            render={({ field, fieldState }) => {
               if (param.data_type === "boolean") {
                 return (
                   <FormItem className="flex flex-col gap-2">
@@ -87,6 +88,10 @@ export const QueryParametersForm = ({
 
               const isTextarea =
                 param.input_type === QUERY_PARAMETER_INPUT_TYPES.TEXTAREA;
+              const isCustomCodeEditor =
+                selectedQuery.id === ATTACK_PATH_QUERY_IDS.CUSTOM &&
+                param.name === "query" &&
+                isTextarea;
 
               return (
                 <FormItem
@@ -95,30 +100,72 @@ export const QueryParametersForm = ({
                     isTextarea && "md:col-span-2",
                   )}
                 >
-                  <FormLabel className="text-text-neutral-tertiary text-xs font-medium">
-                    {param.label}
-                    {param.required && (
-                      <span className="text-text-error-primary">*</span>
-                    )}
-                  </FormLabel>
-                  <FormControl>
-                    {isTextarea ? (
-                      <Textarea
-                        {...field}
-                        textareaSize="lg"
-                        placeholder={placeholder}
-                        value={field.value ?? ""}
-                        className="min-h-40 font-mono text-xs"
-                      />
-                    ) : (
-                      <Input
-                        {...field}
-                        type={param.data_type === "number" ? "number" : "text"}
-                        placeholder={placeholder}
-                        value={field.value ?? ""}
-                      />
-                    )}
-                  </FormControl>
+                  {!isCustomCodeEditor && (
+                    <FormLabel className="text-text-neutral-tertiary text-xs font-medium">
+                      {param.label}
+                      {param.required && (
+                        <span className="text-text-error-primary">*</span>
+                      )}
+                    </FormLabel>
+                  )}
+                  {isCustomCodeEditor ? (
+                    <div
+                      data-testid="query-code-editor"
+                      className={cn(
+                        "border-border-neutral-secondary bg-bg-neutral-primary overflow-hidden rounded-xl border",
+                        fieldState.invalid && "border-border-error-primary",
+                      )}
+                    >
+                      <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex items-center justify-between border-b px-4 py-2">
+                        <span className="text-text-neutral-secondary text-xs font-medium">
+                          {param.label}
+                          {param.required && (
+                            <span className="text-text-error-primary">*</span>
+                          )}
+                        </span>
+                        <span className="text-text-neutral-tertiary text-[11px]">
+                          Read-only
+                        </span>
+                      </div>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          aria-label={param.label}
+                          variant="ghost"
+                          textareaSize="lg"
+                          placeholder={placeholder}
+                          value={field.value ?? ""}
+                          rows={14}
+                          spellCheck={false}
+                          autoComplete="off"
+                          autoCorrect="off"
+                          autoCapitalize="none"
+                          className="minimal-scrollbar min-h-[320px] rounded-none border-0 bg-transparent font-mono text-xs leading-6 hover:bg-transparent focus:bg-transparent focus:ring-0"
+                        />
+                      </FormControl>
+                    </div>
+                  ) : (
+                    <FormControl>
+                      {isTextarea ? (
+                        <Textarea
+                          {...field}
+                          textareaSize="lg"
+                          placeholder={placeholder}
+                          value={field.value ?? ""}
+                          className="min-h-40 font-mono text-xs"
+                        />
+                      ) : (
+                        <Input
+                          {...field}
+                          type={
+                            param.data_type === "number" ? "number" : "text"
+                          }
+                          placeholder={placeholder}
+                          value={field.value ?? ""}
+                        />
+                      )}
+                    </FormControl>
+                  )}
                   <FormMessage className="text-xs" />
                 </FormItem>
               );

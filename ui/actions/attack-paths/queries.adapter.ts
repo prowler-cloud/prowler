@@ -74,7 +74,7 @@ const createCustomQuery = (
   id: ATTACK_PATH_QUERY_IDS.CUSTOM,
   attributes: {
     name: "Custom openCypher query",
-    short_description: "Write and run your own read-only openCypher query",
+    short_description: "Write and run your own read-only query",
     description:
       "Run a read-only openCypher query against the selected Attack Paths scan. Results are automatically scoped to the selected provider.",
     provider: "custom",
@@ -88,7 +88,7 @@ const createCustomQuery = (
     parameters: [
       {
         name: "query",
-        label: "openCypher query",
+        label: "openCypher",
         data_type: "string",
         description: "",
         placeholder: CUSTOM_QUERY_PLACEHOLDER,

@@ -22,7 +22,7 @@ const presetQuery: AttackPathQuery = {
 };
 
 describe("buildAttackPathQueries", () => {
-  it("prepends a custom openCypher query with a schema documentation link", () => {
+  it("prepends a custom query with a schema documentation link", () => {
     // Given
     const schema: AttackPathCartographySchemaAttributes = {
       id: "aws-0.129.0",
@@ -42,7 +42,7 @@ describe("buildAttackPathQueries", () => {
       id: ATTACK_PATH_QUERY_IDS.CUSTOM,
       attributes: {
         name: "Custom openCypher query",
-        short_description: "Write and run your own read-only openCypher query",
+        short_description: "Write and run your own read-only query",
         documentation_link: {
           text: "Cartography schema used by Prowler for AWS graphs",
           link: schema.schema_url,

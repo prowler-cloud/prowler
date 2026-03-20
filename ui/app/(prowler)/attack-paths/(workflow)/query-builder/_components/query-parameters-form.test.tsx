@@ -3,7 +3,10 @@ import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { describe, expect, it } from "vitest";
 
-import type { AttackPathQuery } from "@/types/attack-paths";
+import {
+  ATTACK_PATH_QUERY_IDS,
+  type AttackPathQuery,
+} from "@/types/attack-paths";
 
 import { QueryParametersForm } from "./query-parameters-form";
 
@@ -46,17 +49,17 @@ function TestForm() {
 function TestCustomQueryForm() {
   const customQuery: AttackPathQuery = {
     type: "attack-paths-scans",
-    id: "custom-query",
+    id: ATTACK_PATH_QUERY_IDS.CUSTOM,
     attributes: {
       name: "Custom openCypher query",
-      short_description: "Write your own openCypher query",
+      short_description: "Write your own query",
       description: "Run a custom query against the graph.",
       provider: "aws",
       attribution: null,
       parameters: [
         {
           name: "query",
-          label: "openCypher query",
+          label: "openCypher",
           data_type: "string",
           input_type: "textarea",
           placeholder: "MATCH (n) RETURN n LIMIT 25",
@@ -135,12 +138,29 @@ describe("QueryParametersForm", () => {
     render(<TestCustomQueryForm />);
 
     // When
-    const input = screen.getByRole("textbox", { name: /opencypher query/i });
+    const input = screen.getByRole("textbox", { name: /opencypher/i });
+    const codeEditor = screen.getByTestId("query-code-editor");
 
     // Then
     expect(input.tagName).toBe("TEXTAREA");
     expect(input).toHaveAttribute("data-slot", "textarea");
     expect(input).toHaveAttribute("placeholder", "MATCH (n) RETURN n LIMIT 25");
+    expect(input).toHaveAttribute("spellcheck", "false");
+    expect(input).toHaveAttribute("autocomplete", "off");
+    expect(input).toHaveAttribute("autocorrect", "off");
+    expect(input).toHaveAttribute("autocapitalize", "none");
+    expect(input).toHaveClass(
+      "minimal-scrollbar",
+      "min-h-[320px]",
+      "font-mono",
+      "leading-6",
+    );
+    expect(codeEditor).toHaveClass(
+      "rounded-xl",
+      "border",
+      "bg-bg-neutral-primary",
+    );
+    expect(screen.getByText("Read-only")).toBeInTheDocument();
   });
 
   it("uses the design-system error token for field validation messages", async () => {
