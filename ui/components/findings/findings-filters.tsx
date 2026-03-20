@@ -63,6 +63,7 @@ const FILTER_KEY_LABELS: Record<string, string> = {
  * - Status: uses shared FINDING_STATUS_DISPLAY_NAMES (e.g. "FAIL" → "Fail")
  * - Categories: uses getCategoryLabel (handles IAM, EC2, IMDSv1, etc.)
  * - Resource groups: uses getGroupLabel (underscore-delimited)
+ * - Date (filter[inserted_at]): returns the ISO date string as-is (YYYY-MM-DD)
  * - Other values: uses formatLabel as a generic fallback (avoids naive capitalisation)
  */
 const formatFilterValue = (filterKey: string, value: string): string => {
@@ -89,6 +90,10 @@ const formatFilterValue = (filterKey: string, value: string): string => {
   }
   if (filterKey === "filter[resource_groups__in]") {
     return getGroupLabel(value);
+  }
+  // Date filter: preserve ISO date string (YYYY-MM-DD) — do not run through formatLabel
+  if (filterKey === "filter[inserted_at]") {
+    return value;
   }
   // Generic fallback: handles hyphen/underscore-delimited IDs with smart capitalisation
   return formatLabel(value);
@@ -165,12 +170,15 @@ export const FindingsFilters = ({
 
   const hasCustomFilters = customFilters.length > 0;
 
-  // Build FilterChip[] from pendingFilters — one chip per individual value, not per key
+  // Build FilterChip[] from pendingFilters — one chip per individual value, not per key.
+  // Skip filter[muted]="false" — it is the silent default and should not appear as a chip.
   const filterChips: FilterChip[] = [];
   Object.entries(pendingFilters).forEach(([key, values]) => {
     if (!values || values.length === 0) return;
     const label = FILTER_KEY_LABELS[key] ?? key;
     values.forEach((value) => {
+      // Do not show a chip for the default muted=false state
+      if (key === "filter[muted]" && value === "false") return;
       filterChips.push({
         key,
         label,
@@ -244,7 +252,17 @@ export const FindingsFilters = ({
           showCount
           onClear={clearAll}
           pendingCount={
-            Object.values(pendingFilters).filter((v) => v.length > 0).length
+            Object.entries(pendingFilters).filter(([key, values]) => {
+              if (!values || values.length === 0) return false;
+              // filter[muted]=false is the silent default — don't count it as active
+              if (
+                key === "filter[muted]" &&
+                values.length === 1 &&
+                values[0] === "false"
+              )
+                return false;
+              return true;
+            }).length
           }
         />
         <ApplyFiltersButton
