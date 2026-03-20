@@ -152,24 +152,38 @@ const PROVIDER_DATA: Record<
   },
 };
 
-type ProviderTypeSelectorProps = {
+/** Common props shared by both batch and instant modes. */
+interface ProviderTypeSelectorBaseProps {
   providers: ProviderProps[];
+}
+
+/** Batch mode: caller controls both pending state and notification callback (all-or-nothing). */
+interface ProviderTypeSelectorBatchProps extends ProviderTypeSelectorBaseProps {
   /**
-   * When provided, called instead of navigating immediately.
+   * Called instead of navigating immediately.
    * Use this on pages that batch filter changes (e.g. Findings).
-   * The Overview page omits this prop to keep instant-apply behavior.
    *
    * @param filterKey - The raw filter key without "filter[]" wrapper, e.g. "provider_type__in"
    * @param values - The selected values array
    */
-  onBatchChange?: (filterKey: string, values: string[]) => void;
+  onBatchChange: (filterKey: string, values: string[]) => void;
   /**
-   * When in batch mode, pass the pending selected values from the parent.
-   * This allows the component to reflect pending state before Apply is clicked.
-   * Ignored when `onBatchChange` is not provided (URL-driven mode).
+   * Pending selected values controlled by the parent.
+   * Reflects pending state before Apply is clicked.
    */
-  selectedValues?: string[];
-};
+  selectedValues: string[];
+}
+
+/** Instant mode: URL-driven — neither callback nor controlled value. */
+interface ProviderTypeSelectorInstantProps
+  extends ProviderTypeSelectorBaseProps {
+  onBatchChange?: never;
+  selectedValues?: never;
+}
+
+type ProviderTypeSelectorProps =
+  | ProviderTypeSelectorBatchProps
+  | ProviderTypeSelectorInstantProps;
 
 export const ProviderTypeSelector = ({
   providers,
@@ -185,9 +199,7 @@ export const ProviderTypeSelector = ({
     : [];
 
   // In batch mode, use the parent-controlled pending values; otherwise, use URL state.
-  const selectedTypes = onBatchChange
-    ? (selectedValues ?? [])
-    : urlSelectedTypes;
+  const selectedTypes = onBatchChange ? selectedValues : urlSelectedTypes;
 
   const handleMultiValueChange = (values: string[]) => {
     if (onBatchChange) {

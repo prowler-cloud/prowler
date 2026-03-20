@@ -50,23 +50,9 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   openstack: <OpenStackProviderBadge width={18} height={18} />,
 };
 
-interface AccountsSelectorProps {
+/** Common props shared by both batch and instant modes. */
+interface AccountsSelectorBaseProps {
   providers: ProviderProps[];
-  /**
-   * When provided, called instead of navigating immediately.
-   * Use this on pages that batch filter changes (e.g. Findings).
-   * The Overview page omits this prop to keep instant-apply behavior.
-   *
-   * @param filterKey - The raw filter key without "filter[]" wrapper, e.g. "provider_id__in"
-   * @param values - The selected values array
-   */
-  onBatchChange?: (filterKey: string, values: string[]) => void;
-  /**
-   * When in batch mode, pass the pending selected values from the parent.
-   * This allows the component to reflect pending state before Apply is clicked.
-   * Ignored when `onBatchChange` is not provided (URL-driven mode).
-   */
-  selectedValues?: string[];
   /**
    * Currently selected provider types (from the pending ProviderTypeSelector state).
    * Used only for contextual description/empty-state messaging — does NOT narrow
@@ -74,6 +60,33 @@ interface AccountsSelectorProps {
    */
   selectedProviderTypes?: string[];
 }
+
+/** Batch mode: caller controls both pending state and notification callback (all-or-nothing). */
+interface AccountsSelectorBatchProps extends AccountsSelectorBaseProps {
+  /**
+   * Called instead of navigating immediately.
+   * Use this on pages that batch filter changes (e.g. Findings).
+   *
+   * @param filterKey - The raw filter key without "filter[]" wrapper, e.g. "provider_id__in"
+   * @param values - The selected values array
+   */
+  onBatchChange: (filterKey: string, values: string[]) => void;
+  /**
+   * Pending selected values controlled by the parent.
+   * Reflects pending state before Apply is clicked.
+   */
+  selectedValues: string[];
+}
+
+/** Instant mode: URL-driven — neither callback nor controlled value. */
+interface AccountsSelectorInstantProps extends AccountsSelectorBaseProps {
+  onBatchChange?: never;
+  selectedValues?: never;
+}
+
+type AccountsSelectorProps =
+  | AccountsSelectorBatchProps
+  | AccountsSelectorInstantProps;
 
 export function AccountsSelector({
   providers,
@@ -89,7 +102,7 @@ export function AccountsSelector({
   const urlSelectedIds = current ? current.split(",").filter(Boolean) : [];
 
   // In batch mode, use the parent-controlled pending values; otherwise, use URL state.
-  const selectedIds = onBatchChange ? (selectedValues ?? []) : urlSelectedIds;
+  const selectedIds = onBatchChange ? selectedValues : urlSelectedIds;
   const visibleProviders = providers;
   // .filter((p) => p.attributes.connection?.connected)
 

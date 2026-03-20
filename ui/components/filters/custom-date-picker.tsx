@@ -14,20 +14,29 @@ import {
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { cn } from "@/lib/utils";
 
-interface CustomDatePickerProps {
+/** Batch mode: caller controls both the pending date value and the notification callback (all-or-nothing). */
+interface CustomDatePickerBatchProps {
   /**
-   * Called in batch mode instead of updating the URL directly.
-   * Receives the filter key and the formatted date string (YYYY-MM-DD).
-   * When provided, the component does NOT call `updateFilter`.
+   * Called instead of updating the URL directly.
+   * Receives the filter key ("inserted_at") and the formatted date string (YYYY-MM-DD).
    */
-  onBatchChange?: (filterKey: string, value: string) => void;
+  onBatchChange: (filterKey: string, value: string) => void;
   /**
-   * Controlled value override for batch mode.
-   * When provided, this value is used as the displayed date instead of reading from URL params.
+   * Controlled date value from the parent (pending state).
    * Expected format: YYYY-MM-DD (or any value parseable by `new Date()`).
    */
-  value?: string;
+  value: string | undefined;
 }
+
+/** Instant mode: URL-driven — neither callback nor controlled value. */
+interface CustomDatePickerInstantProps {
+  onBatchChange?: never;
+  value?: never;
+}
+
+type CustomDatePickerProps =
+  | CustomDatePickerBatchProps
+  | CustomDatePickerInstantProps;
 
 const parseDate = (raw: string | null | undefined): Date | undefined => {
   if (!raw) return undefined;

@@ -33,11 +33,8 @@ export const ApplyFiltersButton = ({
   onDiscard,
   className,
 }: ApplyFiltersButtonProps) => {
-  const label = hasChanges
-    ? changeCount > 0
-      ? `Apply Filters (${changeCount})`
-      : "Apply Filters"
-    : "Apply Filters";
+  const label =
+    changeCount > 0 ? `Apply Filters (${changeCount})` : "Apply Filters";
 
   return (
     <div className={cn("flex items-center gap-1", className)}>

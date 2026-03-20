@@ -20,7 +20,7 @@ import { DataTableFilterCustom } from "@/components/ui/table";
 import { useFilterBatch } from "@/hooks/use-filter-batch";
 import { formatLabel, getCategoryLabel, getGroupLabel } from "@/lib/categories";
 import { FilterType, FINDING_STATUS_DISPLAY_NAMES, ScanEntity } from "@/types";
-import { DATA_TABLE_FILTER_MODE } from "@/types/filters";
+import { DATA_TABLE_FILTER_MODE, FilterParam } from "@/types/filters";
 import { getProviderDisplayName, ProviderProps } from "@/types/providers";
 import { SEVERITY_DISPLAY_NAMES } from "@/types/severities";
 
@@ -39,8 +39,10 @@ interface FindingsFiltersProps {
 /**
  * Maps raw filter param keys (e.g. "filter[severity__in]") to human-readable labels.
  * Used to render chips in the FilterSummaryStrip.
+ * Typed as Record<FilterParam, string> so TypeScript enforces exhaustiveness — any
+ * addition to FilterParam will cause a compile error here if the label is missing.
  */
-const FILTER_KEY_LABELS: Record<string, string> = {
+const FILTER_KEY_LABELS: Record<FilterParam, string> = {
   "filter[provider_type__in]": "Provider",
   "filter[provider_id__in]": "Account",
   "filter[severity__in]": "Severity",
@@ -175,7 +177,7 @@ export const FindingsFilters = ({
   const filterChips: FilterChip[] = [];
   Object.entries(pendingFilters).forEach(([key, values]) => {
     if (!values || values.length === 0) return;
-    const label = FILTER_KEY_LABELS[key] ?? key;
+    const label = FILTER_KEY_LABELS[key as FilterParam] ?? key;
     values.forEach((value) => {
       // Do not show a chip for the default muted=false state
       if (key === "filter[muted]" && value === "false") return;

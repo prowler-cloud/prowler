@@ -11,20 +11,30 @@ const MUTED_FILTER_VALUES = {
   INCLUDE: "include",
 } as const;
 
-interface CustomCheckboxMutedFindingsProps {
+/** Batch mode: caller controls both the checked state and the notification callback (all-or-nothing). */
+interface CustomCheckboxMutedFindingsBatchProps {
   /**
-   * Called in batch mode instead of navigating directly.
+   * Called instead of navigating directly.
    * Receives the filter key ("muted") and the string value ("include" or "false").
-   * When provided, the component does NOT call `navigateWithParams`.
    */
-  onBatchChange?: (filterKey: string, value: string) => void;
+  onBatchChange: (filterKey: string, value: string) => void;
   /**
-   * Controlled checked state override for batch mode.
-   * When provided, this value is used as the checkbox state instead of reading from URL params.
+   * Controlled checked state from the parent (pending state).
    * `true` = include muted, `false` = exclude muted.
+   * `undefined` defers to URL state while pending state is not yet set.
    */
-  checked?: boolean;
+  checked: boolean | undefined;
 }
+
+/** Instant mode: URL-driven — neither callback nor controlled value. */
+interface CustomCheckboxMutedFindingsInstantProps {
+  onBatchChange?: never;
+  checked?: never;
+}
+
+type CustomCheckboxMutedFindingsProps =
+  | CustomCheckboxMutedFindingsBatchProps
+  | CustomCheckboxMutedFindingsInstantProps;
 
 export const CustomCheckboxMutedFindings = ({
   onBatchChange,

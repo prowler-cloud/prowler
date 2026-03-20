@@ -165,7 +165,8 @@ export const useFilterBatch = (
   };
 
   const applyAll = () => {
-    // Start from the current URL params to preserve non-batch params (e.g. filter[search])
+    // Start from the current URL params to preserve non-batch params.
+    // Only filter[search] is excluded from batch management and preserved from the URL as-is.
     const params = new URLSearchParams(searchParams.toString());
 
     // Remove all existing batch-managed filter params
