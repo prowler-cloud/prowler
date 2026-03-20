@@ -6,7 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
-- Attack Paths custom openCypher queries with Cartography schema guidance and clearer execution errors (PROWLER-1119)
+- Attack Paths custom openCypher queries with Cartography schema guidance and clearer execution errors [(#10397)](https://github.com/prowler-cloud/prowler/pull/10397)
 
 ---
 
