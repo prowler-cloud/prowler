@@ -163,7 +163,7 @@ export function getColumnFindingGroups({
     {
       id: "impactedProviders",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Providers" />
+        <DataTableColumnHeader column={column} title="Impacted Providers" />
       ),
       cell: ({ row }) => (
         <ImpactedProvidersCell
@@ -176,7 +176,7 @@ export function getColumnFindingGroups({
     {
       id: "impactedResources",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Resources" />
+        <DataTableColumnHeader column={column} title="Impacted Resources" />
       ),
       cell: ({ row }) => {
         const group = row.original;
