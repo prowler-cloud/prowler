@@ -38,4 +38,39 @@ describe("QueryDescription", () => {
     expect(alert).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "https://example.com/schema");
   });
+
+  it("does not render unsafe documentation or attribution URLs as clickable links", () => {
+    // Given
+    const queryWithUnsafeLinks: AttackPathQuery = {
+      ...customQuery,
+      attributes: {
+        ...customQuery.attributes,
+        documentation_link: {
+          text: "Cartography schema used by Prowler for AWS graphs",
+          link: "javascript:alert('xss')",
+        },
+        attribution: {
+          text: "Unsafe source",
+          link: "javascript:alert('xss')",
+        },
+      },
+    };
+
+    // When
+    render(<QueryDescription query={queryWithUnsafeLinks} />);
+
+    // Then
+    expect(
+      screen.queryByRole("link", {
+        name: /cartography schema used by prowler for aws graphs/i,
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /unsafe source/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/cartography schema used by prowler for aws graphs/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/unsafe source/i)).toBeInTheDocument();
+  });
 });
