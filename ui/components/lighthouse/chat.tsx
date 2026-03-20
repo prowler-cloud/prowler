@@ -61,6 +61,7 @@ interface ChatProps {
   providers: Provider[];
   defaultProviderId?: LighthouseProvider;
   defaultModelId?: string;
+  initialPrompt?: string;
 }
 
 interface SelectedModel {
@@ -102,6 +103,7 @@ export const Chat = ({
   providers: initialProviders,
   defaultProviderId,
   defaultModelId,
+  initialPrompt,
 }: ChatProps) => {
   const { toast } = useToast();
 
@@ -305,6 +307,15 @@ export const Chat = ({
       stop();
     }
   };
+
+  // Auto-send initial prompt from URL (e.g., finding context from drawer)
+  const initialPromptSentRef = useRef(false);
+  useEffect(() => {
+    if (initialPrompt && !initialPromptSentRef.current) {
+      initialPromptSentRef.current = true;
+      sendMessage({ text: initialPrompt });
+    }
+  }, [initialPrompt, sendMessage]);
 
   // Handlers
   const handleNewChat = () => {
