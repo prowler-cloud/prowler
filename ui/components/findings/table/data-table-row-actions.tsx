@@ -68,41 +68,57 @@ export function DataTableRowActions<T extends FindingRowData>({
 
   // Get selection context - if there are other selected rows, include them
   const selectionContext = useContext(FindingsSelectionContext);
-  const { selectedFindingIds, clearSelection } = selectionContext || {
-    selectedFindingIds: [],
-    clearSelection: () => {},
-  };
+  const { selectedFindingIds, clearSelection, resolveMuteIds } =
+    selectionContext || {
+      selectedFindingIds: [],
+      clearSelection: () => {},
+    };
+
+  const [resolvedIds, setResolvedIds] = useState<string[]>([]);
+  const [isResolving, setIsResolving] = useState(false);
 
   // If current finding is selected and there are multiple selections, mute all
   // Otherwise, just mute this single finding
   const isCurrentSelected = selectedFindingIds.includes(finding.id);
   const hasMultipleSelected = selectedFindingIds.length > 1;
 
-  const getMuteIds = (): string[] => {
+  const getDisplayIds = (): string[] => {
     if (isCurrentSelected && hasMultipleSelected) {
-      // Mute all selected including current
       return selectedFindingIds;
     }
-    // Just mute the current finding
     return [finding.id];
   };
 
   const getMuteLabel = () => {
     if (isMuted) return "Muted";
-    const ids = getMuteIds();
+    const ids = getDisplayIds();
     if (ids.length > 1) {
       return `Mute ${ids.length} Findings`;
     }
     return "Mute Finding";
   };
 
+  const handleMuteClick = async () => {
+    const displayIds = getDisplayIds();
+
+    if (resolveMuteIds) {
+      setIsResolving(true);
+      const ids = await resolveMuteIds(displayIds);
+      setResolvedIds(ids);
+      setIsResolving(false);
+      if (ids.length > 0) setIsMuteModalOpen(true);
+    } else {
+      // Regular findings — IDs are already valid finding UUIDs
+      setResolvedIds(displayIds);
+      setIsMuteModalOpen(true);
+    }
+  };
+
   const handleMuteComplete = () => {
-    // Always clear selection when a finding is muted because:
-    // 1. If the muted finding was selected, its index now points to a different finding
-    // 2. rowSelection uses indices (0, 1, 2...) not IDs, so after refresh the wrong findings would appear selected
     clearSelection();
+    setResolvedIds([]);
     if (onMuteComplete) {
-      onMuteComplete(getMuteIds());
+      onMuteComplete(getDisplayIds());
       return;
     }
 
@@ -121,7 +137,7 @@ export function DataTableRowActions<T extends FindingRowData>({
       <MuteFindingsModal
         isOpen={isMuteModalOpen}
         onOpenChange={setIsMuteModalOpen}
-        findingIds={getMuteIds()}
+        findingIds={resolvedIds}
         onComplete={handleMuteComplete}
       />
 
@@ -145,15 +161,15 @@ export function DataTableRowActions<T extends FindingRowData>({
             icon={
               isMuted ? (
                 <VolumeOff className="size-5" />
+              ) : isResolving ? (
+                <div className="size-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
               ) : (
                 <VolumeX className="size-5" />
               )
             }
-            label={getMuteLabel()}
-            disabled={isMuted}
-            onSelect={() => {
-              setIsMuteModalOpen(true);
-            }}
+            label={isResolving ? "Resolving..." : getMuteLabel()}
+            disabled={isMuted || isResolving}
+            onSelect={handleMuteClick}
           />
           <ActionDropdownItem
             icon={<JiraIcon size={20} />}

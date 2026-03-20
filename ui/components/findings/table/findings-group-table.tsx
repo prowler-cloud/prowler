@@ -1,13 +1,17 @@
 "use client";
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
+import { VolumeX } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
+import { resolveFindingIdsByCheckIds } from "@/actions/findings/findings-by-resource";
+import { Button } from "@/components/shadcn";
+import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
 import { DataTable } from "@/components/ui/table";
 import { FindingGroupRow, MetaDataProps } from "@/types";
 
-import { FloatingMuteButton } from "../floating-mute-button";
+import { MuteFindingsModal } from "../mute-findings-modal";
 import { getColumnFindingGroups } from "./column-finding-groups";
 import { FindingsGroupDrillDown } from "./findings-group-drill-down";
 import { FindingsSelectionContext } from "./findings-selection-context";
@@ -79,8 +83,32 @@ export function FindingsGroupTable({
     return selectedFindingIds.includes(id);
   };
 
+  // Mute modal state — check IDs resolved to finding UUIDs on-click
+  const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
+  const [resolvedFindingIds, setResolvedFindingIds] = useState<string[]>([]);
+  const [isResolvingIds, setIsResolvingIds] = useState(false);
+
+  const handleMuteClick = async () => {
+    setIsResolvingIds(true);
+    const findingIds = await resolveFindingIdsByCheckIds({
+      checkIds: selectedFindingIds,
+    });
+    setResolvedFindingIds(findingIds);
+    setIsResolvingIds(false);
+    if (findingIds.length > 0) {
+      setIsMuteModalOpen(true);
+    }
+  };
+
+  /** Shared resolver for row action dropdowns (via context). */
+  const resolveMuteIds = useCallback(
+    async (checkIds: string[]) => resolveFindingIdsByCheckIds({ checkIds }),
+    [],
+  );
+
   const handleMuteComplete = () => {
     clearSelection();
+    setResolvedFindingIds([]);
     router.refresh();
   };
 
@@ -124,6 +152,7 @@ export function FindingsGroupTable({
         selectedFindings,
         clearSelection,
         isSelected,
+        resolveMuteIds,
       }}
     >
       <DataTable
@@ -140,11 +169,29 @@ export function FindingsGroupTable({
       />
 
       {selectedFindingIds.length > 0 && (
-        <FloatingMuteButton
-          selectedCount={selectedFindingIds.length}
-          selectedFindingIds={selectedFindingIds}
-          onComplete={handleMuteComplete}
-        />
+        <>
+          <MuteFindingsModal
+            isOpen={isMuteModalOpen}
+            onOpenChange={setIsMuteModalOpen}
+            findingIds={resolvedFindingIds}
+            onComplete={handleMuteComplete}
+          />
+          <div className="animate-in fade-in slide-in-from-bottom-4 fixed right-6 bottom-6 z-50 duration-300">
+            <Button
+              onClick={handleMuteClick}
+              disabled={isResolvingIds}
+              size="lg"
+              className="shadow-lg"
+            >
+              {isResolvingIds ? (
+                <TreeSpinner className="size-5" />
+              ) : (
+                <VolumeX className="size-5" />
+              )}
+              Mute ({selectedFindingIds.length})
+            </Button>
+          </div>
+        </>
       )}
     </FindingsSelectionContext.Provider>
   );

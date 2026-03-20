@@ -48,8 +48,10 @@ function getFailingForLabel(firstSeenAt: string | null): string | null {
 const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
   const resource = row.original;
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
+  const [resolvedIds, setResolvedIds] = useState<string[]>([]);
+  const [isResolving, setIsResolving] = useState(false);
 
-  const { selectedFindingIds, clearSelection } = useContext(
+  const { selectedFindingIds, clearSelection, resolveMuteIds } = useContext(
     FindingsSelectionContext,
   ) || {
     selectedFindingIds: [],
@@ -59,7 +61,7 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
   const isCurrentSelected = selectedFindingIds.includes(resource.findingId);
   const hasMultipleSelected = selectedFindingIds.length > 1;
 
-  const getMuteIds = (): string[] => {
+  const getDisplayIds = (): string[] => {
     if (isCurrentSelected && hasMultipleSelected) {
       return selectedFindingIds;
     }
@@ -68,9 +70,29 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
 
   const getMuteLabel = () => {
     if (resource.isMuted) return "Muted";
-    const ids = getMuteIds();
+    const ids = getDisplayIds();
     if (ids.length > 1) return `Mute ${ids.length}`;
     return "Mute";
+  };
+
+  const handleMuteClick = async () => {
+    const displayIds = getDisplayIds();
+
+    if (resolveMuteIds) {
+      setIsResolving(true);
+      const ids = await resolveMuteIds(displayIds);
+      setResolvedIds(ids);
+      setIsResolving(false);
+      if (ids.length > 0) setIsMuteModalOpen(true);
+    } else {
+      setResolvedIds(displayIds);
+      setIsMuteModalOpen(true);
+    }
+  };
+
+  const handleMuteComplete = () => {
+    clearSelection();
+    setResolvedIds([]);
   };
 
   return (
@@ -78,8 +100,8 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
       <MuteFindingsModal
         isOpen={isMuteModalOpen}
         onOpenChange={setIsMuteModalOpen}
-        findingIds={getMuteIds()}
-        onComplete={clearSelection}
+        findingIds={resolvedIds}
+        onComplete={handleMuteComplete}
       />
       <div className="flex items-center justify-end">
         <ActionDropdown
@@ -101,13 +123,15 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
             icon={
               resource.isMuted ? (
                 <VolumeOff className="size-5" />
+              ) : isResolving ? (
+                <div className="size-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
               ) : (
                 <VolumeX className="size-5" />
               )
             }
-            label={getMuteLabel()}
-            disabled={resource.isMuted}
-            onSelect={() => setIsMuteModalOpen(true)}
+            label={isResolving ? "Resolving..." : getMuteLabel()}
+            disabled={resource.isMuted || isResolving}
+            onSelect={handleMuteClick}
           />
         </ActionDropdown>
       </div>

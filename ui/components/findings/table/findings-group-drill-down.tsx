@@ -7,10 +7,12 @@ import {
   RowSelectionState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, VolumeX } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 
+import { resolveFindingIds } from "@/actions/findings/findings-by-resource";
+import { Button } from "@/components/shadcn";
 import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
 import {
   Table,
@@ -25,7 +27,7 @@ import { useInfiniteResources } from "@/hooks/use-infinite-resources";
 import { cn, hasDateOrScanFilter } from "@/lib";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
 
-import { FloatingMuteButton } from "../floating-mute-button";
+import { MuteFindingsModal } from "../mute-findings-modal";
 import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
@@ -108,11 +110,41 @@ export function FindingsGroupDrillDown({
     router.refresh();
   };
 
-  // Selection logic for resources
+  // Selection logic — tracks by findingId (resource_id) for checkbox consistency
   const selectedFindingIds = Object.keys(rowSelection)
     .filter((key) => rowSelection[key])
     .map((idx) => resources[parseInt(idx)]?.findingId)
     .filter(Boolean);
+
+  // Mute modal state — resource IDs resolved to finding UUIDs on-click
+  const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
+  const [resolvedFindingIds, setResolvedFindingIds] = useState<string[]>([]);
+  const [isResolvingIds, setIsResolvingIds] = useState(false);
+
+  /** Converts resource_ids (display) → resourceUids → finding UUIDs via API. */
+  const resolveResourceIds = useCallback(
+    async (ids: string[]) => {
+      const resourceUids = ids
+        .map((id) => resources.find((r) => r.findingId === id)?.resourceUid)
+        .filter(Boolean) as string[];
+      if (resourceUids.length === 0) return [];
+      return resolveFindingIds({
+        checkId: group.checkId,
+        resourceUids,
+      });
+    },
+    [resources, group.checkId],
+  );
+
+  const handleMuteClick = async () => {
+    setIsResolvingIds(true);
+    const findingIds = await resolveResourceIds(selectedFindingIds);
+    setResolvedFindingIds(findingIds);
+    setIsResolvingIds(false);
+    if (findingIds.length > 0) {
+      setIsMuteModalOpen(true);
+    }
+  };
 
   const selectableRowCount = resources.filter((r) => !r.isMuted).length;
 
@@ -130,6 +162,7 @@ export function FindingsGroupDrillDown({
 
   const handleMuteComplete = () => {
     clearSelection();
+    setResolvedFindingIds([]);
     router.refresh();
   };
 
@@ -170,6 +203,7 @@ export function FindingsGroupDrillDown({
         selectedFindings: [],
         clearSelection,
         isSelected,
+        resolveMuteIds: resolveResourceIds,
       }}
     >
       <div
@@ -282,11 +316,29 @@ export function FindingsGroupDrillDown({
       </div>
 
       {selectedFindingIds.length > 0 && (
-        <FloatingMuteButton
-          selectedCount={selectedFindingIds.length}
-          selectedFindingIds={selectedFindingIds}
-          onComplete={handleMuteComplete}
-        />
+        <>
+          <MuteFindingsModal
+            isOpen={isMuteModalOpen}
+            onOpenChange={setIsMuteModalOpen}
+            findingIds={resolvedFindingIds}
+            onComplete={handleMuteComplete}
+          />
+          <div className="animate-in fade-in slide-in-from-bottom-4 fixed right-6 bottom-6 z-50 duration-300">
+            <Button
+              onClick={handleMuteClick}
+              disabled={isResolvingIds}
+              size="lg"
+              className="shadow-lg"
+            >
+              {isResolvingIds ? (
+                <TreeSpinner className="size-5" />
+              ) : (
+                <VolumeX className="size-5" />
+              )}
+              Mute ({selectedFindingIds.length})
+            </Button>
+          </div>
+        </>
       )}
 
       <ResourceDetailDrawer
