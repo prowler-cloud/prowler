@@ -4,6 +4,11 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.23.0] (Prowler UNRELEASED)
 
+### 🐞 Fixed
+
+- Finding groups latest endpoint now aggregates the latest snapshot per provider before check-level totals, keeping impacted resources aligned across providers [(#10419)](https://github.com/prowler-cloud/prowler/pull/10419)
+- Mute rule creation now triggers finding-group summary re-aggregation after historical muting, keeping stats in sync after mute operations [(#10419)](https://github.com/prowler-cloud/prowler/pull/10419)
+
 ### 🔐 Security
 
 - Replace stdlib XML parser with `defusedxml` in SAML metadata parsing to prevent XML bomb (billion laughs) DoS attacks [(#10165)](https://github.com/prowler-cloud/prowler/pull/10165)
