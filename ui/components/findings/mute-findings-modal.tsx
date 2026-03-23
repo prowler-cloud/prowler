@@ -59,7 +59,7 @@ export function MuteFindingsModal({
         description: state.errors.general,
       });
     }
-  }, [state, toast]);
+  }, [state, toast, isBulkOperation]);
 
   const handleCancel = () => {
     onOpenChange(false);
