@@ -249,7 +249,7 @@ celery_app.conf.update(
 
 # Django settings (config/settings/celery.py)
 """
-CELERY_BROKER_URL = f"redis://{VALKEY_HOST}:{VALKEY_PORT}/{VALKEY_DB}"
+CELERY_BROKER_URL = f"{VALKEY_SCHEME}://{VALKEY_HOST}:{VALKEY_PORT}/{VALKEY_DB}"
 CELERY_RESULT_BACKEND = "django-db"  # Store results in PostgreSQL
 CELERY_TASK_TRACK_STARTED = True     # Track when tasks start
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True

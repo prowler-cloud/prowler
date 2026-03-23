@@ -4,6 +4,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.23.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- `VALKEY_SCHEME` environment variable to configure Celery broker connection scheme (`redis` or `rediss`) for Valkey/ElastiCache SSL support [(#8832)](https://github.com/prowler-cloud/prowler/issues/8832)
+
 ### 🔐 Security
 
 - Replace stdlib XML parser with `defusedxml` in SAML metadata parsing to prevent XML bomb (billion laughs) DoS attacks [(#10165)](https://github.com/prowler-cloud/prowler/pull/10165)
