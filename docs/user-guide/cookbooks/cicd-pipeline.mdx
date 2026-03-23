@@ -17,6 +17,10 @@ Prowler CLI provides the `--push-to-cloud` flag, which uploads scan results dire
 
 For full details on the flag and API, refer to the [Import Findings](/user-guide/tutorials/prowler-app-import-findings) documentation.
 
+<Note>
+The examples in this guide use AWS as the target provider, but the same approach applies to any provider supported by Prowler (Azure, GCP, Kubernetes, and others). Replace `prowler aws` with the desired provider command (e.g., `prowler gcp`, `prowler azure`) and configure the corresponding credentials in the CI/CD environment.
+</Note>
+
 ## GitHub Actions
 
 ### Store Secrets
