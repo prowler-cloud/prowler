@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.21.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Oracle Cloud `events_rule_idp_group_mapping_changes` now recognizes the CIS 3.1 `add/remove` event names to avoid false positives [(#10411)](https://github.com/prowler-cloud/prowler/issues/10411)
+
+---
+
 ## [5.21.0] (Prowler v5.21.0)
 
 ### 🚀 Added
