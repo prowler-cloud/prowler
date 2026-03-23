@@ -21,6 +21,7 @@ interface MuteFindingsModalProps {
   onOpenChange: Dispatch<SetStateAction<boolean>>;
   findingIds: string[];
   onComplete?: () => void;
+  isBulkOperation?: boolean;
 }
 
 export function MuteFindingsModal({
@@ -28,6 +29,7 @@ export function MuteFindingsModal({
   onOpenChange,
   findingIds,
   onComplete,
+  isBulkOperation = false,
 }: MuteFindingsModalProps) {
   const { toast } = useToast();
   const [state, setState] = useState<MuteRuleActionState | null>(null);
@@ -44,7 +46,9 @@ export function MuteFindingsModal({
     if (state?.success) {
       toast({
         title: "Success",
-        description: state.success,
+        description: isBulkOperation
+          ? "Mute rule created. It may take a few minutes for all findings to update."
+          : state.success,
       });
       onCompleteRef.current?.();
       onOpenChangeRef.current(false);

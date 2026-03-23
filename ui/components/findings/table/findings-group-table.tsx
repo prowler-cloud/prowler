@@ -155,6 +155,7 @@ export function FindingsGroupTable({
             });
           }}
           onComplete={handleMuteComplete}
+          isBulkOperation
         />
       )}
     </FindingsSelectionContext.Provider>

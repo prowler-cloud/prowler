@@ -14,6 +14,8 @@ interface FloatingMuteButtonProps {
   onComplete?: () => void;
   /** Async resolver that returns actual finding UUIDs before opening modal */
   onBeforeOpen?: () => Promise<string[]>;
+  /** When true, the toast warns that processing may take a few minutes */
+  isBulkOperation?: boolean;
 }
 
 export function FloatingMuteButton({
@@ -21,6 +23,7 @@ export function FloatingMuteButton({
   selectedFindingIds,
   onComplete,
   onBeforeOpen,
+  isBulkOperation = false,
 }: FloatingMuteButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
@@ -54,6 +57,7 @@ export function FloatingMuteButton({
         onOpenChange={setIsModalOpen}
         findingIds={findingIds}
         onComplete={handleComplete}
+        isBulkOperation={isBulkOperation}
       />
 
       <div className="animate-in fade-in slide-in-from-bottom-4 fixed right-6 bottom-6 z-50 duration-300">
