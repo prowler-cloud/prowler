@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.22.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `cloudfront_distributions_logging_enabled` detects Standard Logging v2 via CloudWatch Log Delivery [(#10090)](https://github.com/prowler-cloud/prowler/pull/10090)
+
+---
+
 ## [5.21.2] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
@@ -128,10 +136,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `--provider-uid` CLI flag for IaC provider, used as `cloud.account.uid` in OCSF output and required with `--export-ocsf` [(#10233)](https://github.com/prowler-cloud/prowler/pull/10233)
 - `unmapped.provider_uid` field in OCSF output to match CLI scan results with API provider entities during ingestion [(#10231)](https://github.com/prowler-cloud/prowler/pull/10231)
 - `unmapped.provider` field in OCSF output for provider name availability in non-cloud providers like Kubernetes [(#10240)](https://github.com/prowler-cloud/prowler/pull/10240)
-
-### 🐛 Fixed
-
-- CloudFront logging check now detects Standard Logging v2 via CloudWatch Log Delivery [(#10090)](https://github.com/prowler-cloud/prowler/pull/10090)
 
 ### 🔄 Changed
 
