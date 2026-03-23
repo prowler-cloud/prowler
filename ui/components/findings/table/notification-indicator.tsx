@@ -31,8 +31,6 @@ export const NotificationIndicator = ({
 }: NotificationIndicatorProps) => {
   // Muted takes precedence over delta
   if (isMuted) {
-    const ruleName = mutedReason || "Unknown rule";
-
     return (
       <Tooltip>
         <TooltipTrigger asChild>
@@ -45,8 +43,17 @@ export const NotificationIndicator = ({
             href="/mutelist"
             className="text-button-tertiary hover:text-button-tertiary-hover flex items-center gap-1 text-xs underline-offset-4"
           >
-            <span className="text-text-neutral-primary">Mute rule:</span>
-            <span className="max-w-[150px] truncate">{ruleName}</span>
+            {/* TODO: always show rule name once the API returns muted_reason in finding-group-resources */}
+            {mutedReason ? (
+              <>
+                <span className="text-text-neutral-primary">Mute rule:</span>
+                <span className="max-w-[150px] truncate">{mutedReason}</span>
+              </>
+            ) : (
+              <span className="text-text-neutral-primary">
+                Muted — view rules
+              </span>
+            )}
           </Link>
         </TooltipContent>
       </Tooltip>

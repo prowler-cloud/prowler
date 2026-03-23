@@ -91,6 +91,7 @@ interface FindingGroupResourceApiItem {
     severity: string;
     first_seen_at: string | null;
     last_seen_at: string | null;
+    muted_reason?: string | null;
   };
 }
 
@@ -121,7 +122,8 @@ export function adaptFindingGroupResourcesResponse(
     severity: (item.attributes.severity || "informational") as Severity,
     status: item.attributes.status,
     isMuted: item.attributes.status === "MUTED",
-    mutedReason: undefined,
+    // TODO: remove fallback once the API returns muted_reason in finding-group-resources
+    mutedReason: item.attributes.muted_reason || undefined,
     firstSeenAt: item.attributes.first_seen_at,
     lastSeenAt: item.attributes.last_seen_at,
   }));
