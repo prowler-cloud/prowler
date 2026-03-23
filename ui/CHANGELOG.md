@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.22.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Resource events tool to Lighthouse AI [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+
+--
+
 ## [1.21.0] (Prowler v5.21.0)
 
 ### 🚀 Added
