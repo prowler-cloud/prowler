@@ -169,35 +169,27 @@ class TestAggregateRequirementStatistics:
         assert result["check_1"]["passed"] == 1
         assert result["check_1"]["total"] == 1
 
-    def test_excludes_findings_without_resources(self, tenants_fixture, scans_fixture):
-        """Verify findings without resources are excluded from aggregation."""
+    def test_skips_aggregation_for_deleted_provider(
+        self, tenants_fixture, scans_fixture
+    ):
+        """Verify aggregation returns empty when the scan's provider is soft-deleted."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
 
-        # Finding WITH resource → should be counted
         self._create_finding_with_resource(
             tenant, scan, "finding-1", "check_1", StatusChoices.PASS
         )
 
-        # Finding WITHOUT resource → should be EXCLUDED
-        Finding.objects.create(
-            tenant_id=tenant.id,
-            scan=scan,
-            uid="finding-2",
-            check_id="check_1",
-            status=StatusChoices.FAIL,
-            severity=Severity.high,
-            impact=Severity.high,
-            check_metadata={},
-            raw_result={},
-        )
+        # Soft-delete the provider
+        provider = scan.provider
+        provider.is_deleted = True
+        provider.save(update_fields=["is_deleted"])
 
         result = _aggregate_requirement_statistics_from_database(
             str(tenant.id), str(scan.id)
         )
 
-        assert result["check_1"]["passed"] == 1
-        assert result["check_1"]["total"] == 1
+        assert result == {}
 
     def test_multiple_resources_no_double_count(self, tenants_fixture, scans_fixture):
         """Verify a finding with multiple resources is only counted once."""
