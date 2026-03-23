@@ -13,6 +13,12 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Replace stdlib XML parser with `defusedxml` in SAML metadata parsing to prevent XML bomb (billion laughs) DoS attacks [(#10165)](https://github.com/prowler-cloud/prowler/pull/10165)
 
+## [1.22.2] (Prowler UNRELEASED)
+
+### 🔐 Security
+
+- Bump `flask` to 3.1.3 (CVE-2026-27205) and `werkzeug` to 3.1.6 (CVE-2026-27199) [(#10430)](https://github.com/prowler-cloud/prowler/pull/10430)
+
 ---
 
 ## [1.22.1] (Prowler v5.21.1)
