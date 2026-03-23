@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [1.23.0] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
@@ -15,6 +13,8 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Replace stdlib XML parser with `defusedxml` in SAML metadata parsing to prevent XML bomb (billion laughs) DoS attacks [(#10165)](https://github.com/prowler-cloud/prowler/pull/10165)
 
+---
+
 ## [1.22.2] (Prowler UNRELEASED)
 
 ### 🔐 Security
@@ -23,7 +23,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
->>>>>>> d60b4f0f5 (fix(api): Update Flask and Werkzeug to address vulnerabilities (#10430))
 ## [1.22.1] (Prowler v5.21.1)
 
 ### 🐞 Fixed
