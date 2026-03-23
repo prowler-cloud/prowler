@@ -2,6 +2,7 @@
 
 import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
 import { CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useContext, useState } from "react";
 
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
@@ -25,6 +26,7 @@ import { FindingsSelectionContext } from "./findings-selection-context";
 import { NotificationIndicator } from "./notification-indicator";
 
 const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
+  const router = useRouter();
   const resource = row.original;
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
@@ -72,6 +74,7 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
   const handleMuteComplete = () => {
     clearSelection();
     setResolvedIds([]);
+    router.refresh();
   };
 
   return (

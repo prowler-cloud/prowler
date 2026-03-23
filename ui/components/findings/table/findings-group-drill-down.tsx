@@ -297,6 +297,7 @@ export function FindingsGroupDrillDown({
             return resolveResourceIds(selectedFindingIds);
           }}
           onComplete={handleMuteComplete}
+          isBulkOperation
         />
       )}
 

@@ -54,6 +54,7 @@ export function useInfiniteResources({
   const hasMoreRef = useRef(true);
   const isLoadingRef = useRef(false);
   const currentCheckIdRef = useRef(checkId);
+  const controllerRef = useRef<AbortController | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   // Store latest values in refs so the fetch function always reads current values
@@ -71,8 +72,13 @@ export function useInfiniteResources({
   onAppendResourcesRef.current = onAppendResources;
   onSetLoadingRef.current = onSetLoading;
 
-  async function fetchPage(page: number, append: boolean, forCheckId: string) {
-    if (isLoadingRef.current) return;
+  async function fetchPage(
+    page: number,
+    append: boolean,
+    forCheckId: string,
+    signal: AbortSignal,
+  ) {
+    if (isLoadingRef.current || signal.aborted) return;
 
     isLoadingRef.current = true;
     onSetLoadingRef.current(true);
@@ -89,8 +95,11 @@ export function useInfiniteResources({
         filters: filtersRef.current,
       });
 
-      // Discard stale response if checkId changed during fetch
-      if (currentCheckIdRef.current !== forCheckId) return;
+      // Discard stale response if checkId or filters changed during fetch
+      if (signal.aborted) {
+        onSetLoadingRef.current(false);
+        return;
+      }
 
       const resources = adaptFindingGroupResourcesResponse(
         response,
@@ -107,8 +116,8 @@ export function useInfiniteResources({
         onSetResourcesRef.current(resources, hasMore);
       }
     } catch (error) {
-      console.error("Error fetching resources:", error);
-      if (currentCheckIdRef.current === forCheckId) {
+      if (!signal.aborted) {
+        console.error("Error fetching resources:", error);
         onSetLoadingRef.current(false);
       }
     } finally {
@@ -118,20 +127,34 @@ export function useInfiniteResources({
 
   // Fetch first page when checkId or filters change
   useEffect(() => {
+    // Abort any in-flight requests from previous checkId/filters
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
     currentCheckIdRef.current = checkId;
     pageRef.current = 1;
     hasMoreRef.current = true;
     isLoadingRef.current = false;
 
-    fetchPage(1, false, checkId);
+    fetchPage(1, false, checkId, controller.signal);
+
+    return () => controller.abort();
   }, [checkId, filtersKey]);
 
   function loadNextPage() {
-    if (!hasMoreRef.current || isLoadingRef.current) return;
+    const signal = controllerRef.current?.signal;
+    if (
+      !hasMoreRef.current ||
+      isLoadingRef.current ||
+      !signal ||
+      signal.aborted
+    )
+      return;
 
     const nextPage = pageRef.current + 1;
     pageRef.current = nextPage;
-    fetchPage(nextPage, true, currentCheckIdRef.current);
+    fetchPage(nextPage, true, currentCheckIdRef.current, signal);
   }
 
   // IntersectionObserver callback
