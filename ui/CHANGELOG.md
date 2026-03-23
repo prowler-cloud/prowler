@@ -6,7 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
-- Resource events tool to Lighthouse AI [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+- Resource events tool to Lighthouse AI [(#10412)](https://github.com/prowler-cloud/prowler/pull/10412)
 
 --
 

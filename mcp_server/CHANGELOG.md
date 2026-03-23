@@ -6,7 +6,7 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 ### 🚀 Added
 
-- Resource events tool to get timeline for a resource (who, what, when) [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+- Resource events tool to get timeline for a resource (who, what, when) [(#10412)](https://github.com/prowler-cloud/prowler/pull/10412)
 
 ## [0.5.0] (Prowler v5.21.0)
 
