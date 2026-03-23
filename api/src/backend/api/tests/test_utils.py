@@ -33,6 +33,7 @@ from prowler.providers.m365.m365_provider import M365Provider
 from prowler.providers.mongodbatlas.mongodbatlas_provider import MongodbatlasProvider
 from prowler.providers.openstack.openstack_provider import OpenstackProvider
 from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
+from prowler.providers.vercel.vercel_provider import VercelProvider
 
 
 class TestMergeDicts:
@@ -128,6 +129,7 @@ class TestReturnProwlerProvider:
             (Provider.ProviderChoices.CLOUDFLARE.value, CloudflareProvider),
             (Provider.ProviderChoices.OPENSTACK.value, OpenstackProvider),
             (Provider.ProviderChoices.IMAGE.value, ImageProvider),
+            (Provider.ProviderChoices.VERCEL.value, VercelProvider),
         ],
     )
     def test_return_prowler_provider(self, provider_type, expected_provider):
@@ -219,6 +221,24 @@ class TestProwlerProviderConnectionTest:
         )
 
     @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_vercel_provider(
+        self, mock_return_prowler_provider
+    ):
+        """Test connection test for Vercel provider passes team_id."""
+        provider = MagicMock()
+        provider.uid = "team_abcdef1234567890"
+        provider.provider = Provider.ProviderChoices.VERCEL.value
+        provider.secret.secret = {"api_token": "vercel_token_123"}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            api_token="vercel_token_123",
+            team_id="team_abcdef1234567890",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.return_prowler_provider")
     def test_prowler_provider_connection_test_image_provider_no_creds(
         self, mock_return_prowler_provider
     ):
@@ -283,6 +303,10 @@ class TestGetProwlerProviderKwargs:
             (
                 Provider.ProviderChoices.OPENSTACK.value,
                 {},
+            ),
+            (
+                Provider.ProviderChoices.VERCEL.value,
+                {"team_id": "provider_uid"},
             ),
         ],
     )
