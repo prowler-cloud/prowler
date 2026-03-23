@@ -40,6 +40,8 @@ secrets:
   POSTGRES_DB:
   # Valkey settings
   VALKEY_SCHEME: redis
+  VALKEY_USERNAME:
+  VALKEY_PASSWORD:
   VALKEY_HOST: valkey-headless
   VALKEY_PORT: "6379"
   VALKEY_DB: "0"

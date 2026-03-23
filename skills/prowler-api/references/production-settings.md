@@ -166,6 +166,8 @@ POSTGRES_PASSWORD=...
 
 # Valkey/Redis (for Celery)
 VALKEY_SCHEME=rediss
+VALKEY_USERNAME=default
+VALKEY_PASSWORD=<strong-password>
 VALKEY_HOST=host
 VALKEY_PORT=6379
 VALKEY_DB=0
