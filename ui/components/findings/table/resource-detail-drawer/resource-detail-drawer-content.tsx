@@ -13,7 +13,9 @@ import ReactMarkdown from "react-markdown";
 
 import type { ResourceDrawerFinding } from "@/actions/findings";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
+import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { getComplianceIcon } from "@/components/icons";
+import { JiraIcon } from "@/components/icons/services/IconServices";
 import {
   Badge,
   Tabs,
@@ -84,6 +86,7 @@ export function ResourceDetailDrawerContent({
   onMuteComplete,
 }: ResourceDetailDrawerContentProps) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
+  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
 
   // Initial load — no check metadata yet
   if (!checkMeta && isLoading) {
@@ -125,6 +128,14 @@ export function ResourceDetailDrawerContent({
             setIsMuteModalOpen(false);
             onMuteComplete();
           }}
+        />
+      )}
+      {f && (
+        <SendToJiraModal
+          isOpen={isJiraModalOpen}
+          onOpenChange={setIsJiraModalOpen}
+          findingId={f.id}
+          findingTitle={checkMeta.checkTitle}
         />
       )}
 
@@ -276,6 +287,11 @@ export function ResourceDetailDrawerContent({
                     label={f.isMuted ? "Muted" : "Mute"}
                     disabled={f.isMuted}
                     onSelect={() => setIsMuteModalOpen(true)}
+                  />
+                  <ActionDropdownItem
+                    icon={<JiraIcon size={20} />}
+                    label="Send to Jira"
+                    onSelect={() => setIsJiraModalOpen(true)}
                   />
                 </ActionDropdown>
               </div>
@@ -602,6 +618,7 @@ export function ResourceDetailDrawerContent({
 
 function OtherFindingRow({ finding }: { finding: ResourceDrawerFinding }) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
+  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
 
   const findingUrl = `/findings?filter%5Bcheck_id__in%5D=${encodeURIComponent(finding.checkId)}&filter%5Bmuted%5D=include`;
 
@@ -614,6 +631,12 @@ function OtherFindingRow({ finding }: { finding: ResourceDrawerFinding }) {
           findingIds={[finding.id]}
         />
       )}
+      <SendToJiraModal
+        isOpen={isJiraModalOpen}
+        onOpenChange={setIsJiraModalOpen}
+        findingId={finding.id}
+        findingTitle={finding.checkTitle}
+      />
       <TableRow
         className="cursor-pointer"
         onClick={() => window.open(findingUrl, "_blank", "noopener,noreferrer")}
@@ -649,6 +672,11 @@ function OtherFindingRow({ finding }: { finding: ResourceDrawerFinding }) {
                 label={finding.isMuted ? "Muted" : "Mute"}
                 disabled={finding.isMuted}
                 onSelect={() => setIsMuteModalOpen(true)}
+              />
+              <ActionDropdownItem
+                icon={<JiraIcon size={20} />}
+                label="Send to Jira"
+                onSelect={() => setIsJiraModalOpen(true)}
               />
             </ActionDropdown>
           </div>

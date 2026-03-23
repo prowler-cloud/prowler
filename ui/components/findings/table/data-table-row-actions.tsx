@@ -93,9 +93,9 @@ export function DataTableRowActions<T extends FindingRowData>({
     if (isMuted) return "Muted";
     const ids = getDisplayIds();
     if (ids.length > 1) {
-      return `Mute ${ids.length} Findings`;
+      return `Mute ${ids.length} ${isGroup ? "Finding Groups" : "Findings"}`;
     }
-    return "Mute Finding";
+    return isGroup ? "Mute Finding Group" : "Mute Finding";
   };
 
   const handleMuteClick = async () => {
@@ -125,20 +125,25 @@ export function DataTableRowActions<T extends FindingRowData>({
     router.refresh();
   };
 
+  const isGroup = finding.rowType === "group";
+
   return (
     <>
-      <SendToJiraModal
-        isOpen={isJiraModalOpen}
-        onOpenChange={setIsJiraModalOpen}
-        findingId={finding.id}
-        findingTitle={findingTitle}
-      />
+      {!isGroup && (
+        <SendToJiraModal
+          isOpen={isJiraModalOpen}
+          onOpenChange={setIsJiraModalOpen}
+          findingId={finding.id}
+          findingTitle={findingTitle}
+        />
+      )}
 
       <MuteFindingsModal
         isOpen={isMuteModalOpen}
         onOpenChange={setIsMuteModalOpen}
         findingIds={resolvedIds}
         onComplete={handleMuteComplete}
+        isBulkOperation={finding.rowType === "group"}
       />
 
       <div className="flex items-center justify-end">
@@ -171,11 +176,13 @@ export function DataTableRowActions<T extends FindingRowData>({
             disabled={isMuted || isResolving}
             onSelect={handleMuteClick}
           />
-          <ActionDropdownItem
-            icon={<JiraIcon size={20} />}
-            label="Send to Jira"
-            onSelect={() => setIsJiraModalOpen(true)}
-          />
+          {!isGroup && (
+            <ActionDropdownItem
+              icon={<JiraIcon size={20} />}
+              label="Send to Jira"
+              onSelect={() => setIsJiraModalOpen(true)}
+            />
+          )}
         </ActionDropdown>
       </div>
     </>
