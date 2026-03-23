@@ -289,6 +289,12 @@ def test_azure_entra__get_users_handles_pagination():
 
     assert len(users["tenant-1"]) == 3
     assert users_builder.get.await_count == 1
+    request_configuration = users_builder.get.await_args.kwargs["request_configuration"]
+    assert request_configuration.query_parameters.select == [
+        "id",
+        "displayName",
+        "accountEnabled",
+    ]
     with_url_mock.assert_called_once_with("next-link")
     registration_details_builder.get.assert_awaited()
     registration_details_builder.with_url.assert_not_called()
