@@ -1822,14 +1822,14 @@ crt = ["awscrt (==0.27.6)"]
 
 [[package]]
 name = "cartography"
-version = "0.129.0"
+version = "0.132.0"
 description = "Explore assets and their relationships across your technical infrastructure."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "cartography-0.129.0-py3-none-any.whl", hash = "sha256:d42c840369be9e4d0ac4d024074e3732416e40bab3d9a3023b6a247918daed4c"},
-    {file = "cartography-0.129.0.tar.gz", hash = "sha256:cb47d603e652554a4cbcc1a868c96014eb02b3d5cc1affea0428b2ed7fa61699"},
+    {file = "cartography-0.132.0-py3-none-any.whl", hash = "sha256:c070aa51d0ab4479cb043cae70b35e7df49f2fb5f1fa95ccf10000bbeb952262"},
+    {file = "cartography-0.132.0.tar.gz", hash = "sha256:7c6332bc57fd2629d7b83aee7bd95a7b2edb0d51ef746efa0461399e0b66625c"},
 ]
 
 [package.dependencies]
@@ -1864,8 +1864,8 @@ boto3 = ">=1.15.1"
 botocore = ">=1.18.1"
 cloudflare = ">=4.1.0,<5.0.0"
 crowdstrike-falconpy = ">=0.5.1"
+cryptography = "*"
 dnspython = ">=1.15.0"
-dockerfile = ">=3.0.0"
 duo-client = "*"
 google-api-python-client = ">=1.7.8"
 google-auth = ">=2.37.0"
@@ -2700,22 +2700,16 @@ files = [
 ]
 
 [[package]]
-name = "deprecated"
-version = "1.3.1"
-description = "Python @deprecated decorator to deprecate old python classes, functions or methods."
+name = "defusedxml"
+version = "0.7.1"
+description = "XML bomb protection for Python stdlib modules"
 optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 groups = ["main"]
 files = [
-    {file = "deprecated-1.3.1-py2.py3-none-any.whl", hash = "sha256:597bfef186b6f60181535a29fbe44865ce137a5079f295b479886c82729d5f3f"},
-    {file = "deprecated-1.3.1.tar.gz", hash = "sha256:b1b50e0ff0c1fddaa5708a2c6b0a6588bb09b892825ab2b214ac9ea9d92a5223"},
+    {file = "defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61"},
+    {file = "defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69"},
 ]
-
-[package.dependencies]
-wrapt = ">=1.10,<3"
-
-[package.extras]
-dev = ["PyTest", "PyTest-Cov", "bump2version (<1)", "setuptools ; python_version >= \"3.12\"", "tox"]
 
 [[package]]
 name = "detect-secrets"
@@ -3096,21 +3090,6 @@ ssh = ["paramiko (>=2.4.3)"]
 websockets = ["websocket-client (>=1.3.0)"]
 
 [[package]]
-name = "dockerfile"
-version = "3.4.0"
-description = "Parse a dockerfile into a high-level representation using the official go parser."
-optional = false
-python-versions = ">=3.9"
-groups = ["main"]
-files = [
-    {file = "dockerfile-3.4.0-cp39-abi3-macosx_13_0_x86_64.whl", hash = "sha256:ed33446a76007cbb3f28c247f189cc06db34667d4f59a398a5c44912d7c13f36"},
-    {file = "dockerfile-3.4.0-cp39-abi3-macosx_14_0_arm64.whl", hash = "sha256:a4549d4f038483c25906d4fec56bb6ffe82ae26e0f80a15f2c0fedbb50712053"},
-    {file = "dockerfile-3.4.0-cp39-abi3-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:b95102bd82e6f67c836186b51c13114aa586a20e8cb6441bde24d4070542009d"},
-    {file = "dockerfile-3.4.0-cp39-abi3-win_amd64.whl", hash = "sha256:30202187f1885f99ac839fd41ca8150b2fd0a66fac12db0166361d0c4622e71a"},
-    {file = "dockerfile-3.4.0.tar.gz", hash = "sha256:238bb950985c55a525daef8bbfe994a0230aa0978c419f4caa4d9ce0a37343f1"},
-]
-
-[[package]]
 name = "dogpile-cache"
 version = "1.5.0"
 description = "A caching front-end based on the Dogpile lock."
@@ -3373,14 +3352,14 @@ files = [
 
 [[package]]
 name = "flask"
-version = "3.1.2"
+version = "3.1.3"
 description = "A simple framework for building complex web applications."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "flask-3.1.2-py3-none-any.whl", hash = "sha256:ca1d8112ec8a6158cc29ea4858963350011b5c846a414cdb7a954aa9e967d03c"},
-    {file = "flask-3.1.2.tar.gz", hash = "sha256:bf656c15c80190ed628ad08cdfd3aaa35beb087855e2f494910aa3774cc4fd87"},
+    {file = "flask-3.1.3-py3-none-any.whl", hash = "sha256:f4bcbefc124291925f1a26446da31a5178f9483862233b23c0c96a20701f670c"},
+    {file = "flask-3.1.3.tar.gz", hash = "sha256:0ef0e52b8a9cd932855379197dd8f94047b359ca0a78695144304cb45f87c9eb"},
 ]
 
 [package.dependencies]
@@ -6657,7 +6636,7 @@ files = [
 
 [[package]]
 name = "prowler"
-version = "5.19.0"
+version = "5.22.0"
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 optional = false
 python-versions = ">3.9.1,<3.13"
@@ -6715,6 +6694,7 @@ colorama = "0.4.6"
 cryptography = "44.0.3"
 dash = "3.1.1"
 dash-bootstrap-components = "2.0.3"
+defusedxml = ">=0.7.1"
 detect-secrets = "1.5.0"
 dulwich = "0.23.0"
 google-api-python-client = "2.163.0"
@@ -6732,7 +6712,7 @@ pandas = "2.2.3"
 py-iam-expand = "0.1.0"
 py-ocsf-models = "0.8.1"
 pydantic = ">=2.0,<3.0"
-pygithub = "2.5.0"
+pygithub = "2.8.0"
 python-dateutil = ">=2.9.0.post0,<3.0.0"
 pytz = "2025.1"
 schema = "0.7.5"
@@ -6740,12 +6720,13 @@ shodan = "1.31.0"
 slack-sdk = "3.39.0"
 tabulate = "0.9.0"
 tzlocal = "5.3.1"
+uuid6 = "2024.7.10"
 
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
 reference = "master"
-resolved_reference = "6962622fd21401886371add25463f77228cd9c1f"
+resolved_reference = "41629137efdec1ade078e4386f738c8e0ffce94b"
 
 [[package]]
 name = "psutil"
@@ -7118,22 +7099,21 @@ typing-extensions = ">=4.14.1"
 
 [[package]]
 name = "pygithub"
-version = "2.5.0"
+version = "2.8.0"
 description = "Use the full Github API v3"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "PyGithub-2.5.0-py3-none-any.whl", hash = "sha256:b0b635999a658ab8e08720bdd3318893ff20e2275f6446fcf35bf3f44f2c0fd2"},
-    {file = "pygithub-2.5.0.tar.gz", hash = "sha256:e1613ac508a9be710920d26eb18b1905ebd9926aa49398e88151c1b526aad3cf"},
+    {file = "pygithub-2.8.0-py3-none-any.whl", hash = "sha256:11a3473c1c2f1c39c525d0ee8c559f369c6d46c272cb7321c9b0cabc7aa1ce7d"},
+    {file = "pygithub-2.8.0.tar.gz", hash = "sha256:72f5f2677d86bc3a8843aa720c6ce4c1c42fb7500243b136e3d5e14ddb5c3386"},
 ]
 
 [package.dependencies]
-Deprecated = "*"
 pyjwt = {version = ">=2.4.0", extras = ["crypto"]}
 pynacl = ">=1.4.0"
 requests = ">=2.14.0"
-typing-extensions = ">=4.0.0"
+typing-extensions = ">=4.5.0"
 urllib3 = ">=1.26.0"
 
 [[package]]
@@ -8788,14 +8768,14 @@ test = ["pytest", "websockets"]
 
 [[package]]
 name = "werkzeug"
-version = "3.1.5"
+version = "3.1.6"
 description = "The comprehensive WSGI web application library."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "werkzeug-3.1.5-py3-none-any.whl", hash = "sha256:5111e36e91086ece91f93268bb39b4a35c1e6f1feac762c9c822ded0a4e322dc"},
-    {file = "werkzeug-3.1.5.tar.gz", hash = "sha256:6a548b0e88955dd07ccb25539d7d0cc97417ee9e179677d22c7041c8f078ce67"},
+    {file = "werkzeug-3.1.6-py3-none-any.whl", hash = "sha256:7ddf3357bb9564e407607f988f683d72038551200c704012bb9a4c523d42f131"},
+    {file = "werkzeug-3.1.6.tar.gz", hash = "sha256:210c6bede5a420a913956b4791a7f4d6843a43b6fcee4dfa08a65e93007d0d25"},
 ]
 
 [package.dependencies]
@@ -9397,4 +9377,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "42759b370c9e38da727e73f9d8ec0fa61bc6137eab18f11ccd7deff79a0dee69"
+content-hash = "2ed5b4e47d81da81963814f21702220ac5619f50cd605fd779be53c8c46ffca5"

@@ -2,28 +2,25 @@
   "Provider": "alibabacloud",
   "CheckID": "sls_rds_instance_configuration_changes_alert_enabled",
   "CheckTitle": "Log monitoring and alerts are set up for RDS instance configuration changes",
-  "CheckType": [
-    "Intrusion into applications",
-    "Cloud threat detection"
-  ],
+  "CheckType": [],
   "ServiceName": "sls",
   "SubServiceName": "",
-  "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "It is recommended that a **metric filter and alarm** be established for **RDS Instance** configuration changes.",
-  "Risk": "Monitoring changes to **RDS Instance configuration** may reduce time to detect and correct **misconfigurations** done on database servers.\n\nThis helps prevent security gaps in database deployments.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for **RDS Instance** configuration changes. By directing **ActionTrail** logs to SLS with alert rules, database configuration modifications are monitored in real time. This ensures changes to security parameters, network settings, or access controls are promptly detected.",
+  "Risk": "Without monitoring for **RDS configuration changes**, unauthorized modifications may go undetected, leading to **security misconfigurations** such as enabling public access or disabling encryption. Delayed detection increases risk of **data breaches**, **unauthorized database access**, and **service disruption**, compromising **confidentiality** and **integrity** of stored data.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/rds-instance-config-changes-alert.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/rds-instance-config-changes-alert.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aliyun sls create-alert --project <project-name> --alert-name rds-config-changes --alert-displayname 'RDS Instance Configuration Changes Alert' --condition 'event.serviceName: Rds and (event.eventName: ModifyDBInstanceSpec or event.eventName: ModifySecurityIps or event.eventName: ModifyDBInstanceNetworkType)' --dashboard <dashboard-name> --schedule '{\"type\":\"FixedRate\",\"interval\":\"1m\"}'",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Log on to the **SLS Console**.\n2. Ensure **ActionTrail** is enabled and delivering logs to a **Log Service** project.\n3. Navigate to the project receiving ActionTrail logs.\n4. Select **Alerts** and click **Create Alert Rule**.\n5. Configure the query to filter for RDS configuration changes: `event.serviceName: Rds and (event.eventName: ModifyDBInstanceSpec or event.eventName: ModifySecurityIps or event.eventName: ModifyDBInstanceNetworkType)`.\n6. Set the alert **schedule**, **notification method**, and **severity**.\n7. Save and enable the alert rule.",
       "Terraform": ""
     },
     "Recommendation": {

@@ -1,7 +1,10 @@
 import { MetaDataProps } from "@/types";
 import {
+  ATTACK_PATH_QUERY_IDS,
+  type AttackPathCartographySchemaAttributes,
   AttackPathQueriesResponse,
   AttackPathQuery,
+  QUERY_PARAMETER_INPUT_TYPES,
 } from "@/types/attack-paths";
 
 /**
@@ -53,3 +56,52 @@ export function adaptAttackPathQueriesResponse(
 
   return { data: enrichedData, metadata };
 }
+
+const CUSTOM_QUERY_PLACEHOLDER = `MATCH (n)
+RETURN n
+LIMIT 25`;
+
+const formatSchemaDocumentationLinkText = (
+  schema: AttackPathCartographySchemaAttributes,
+): string => {
+  return `Cartography schema used by Prowler for ${schema.provider.toUpperCase()} graphs`;
+};
+
+const createCustomQuery = (
+  schema?: AttackPathCartographySchemaAttributes,
+): AttackPathQuery => ({
+  type: "attack-paths-scans",
+  id: ATTACK_PATH_QUERY_IDS.CUSTOM,
+  attributes: {
+    name: "Custom openCypher query",
+    short_description: "Write and run your own read-only query",
+    description:
+      "Run a read-only openCypher query against the selected Attack Paths scan. Results are automatically scoped to the selected provider.",
+    provider: "custom",
+    attribution: null,
+    documentation_link: schema
+      ? {
+          text: formatSchemaDocumentationLinkText(schema),
+          link: schema.schema_url,
+        }
+      : null,
+    parameters: [
+      {
+        name: "query",
+        label: "openCypher",
+        data_type: "string",
+        description: "",
+        placeholder: CUSTOM_QUERY_PLACEHOLDER,
+        required: true,
+        input_type: QUERY_PARAMETER_INPUT_TYPES.TEXTAREA,
+      },
+    ],
+  },
+});
+
+export const buildAttackPathQueries = (
+  queries: AttackPathQuery[],
+  schema?: AttackPathCartographySchemaAttributes,
+): AttackPathQuery[] => {
+  return [createCustomQuery(schema), ...queries];
+};

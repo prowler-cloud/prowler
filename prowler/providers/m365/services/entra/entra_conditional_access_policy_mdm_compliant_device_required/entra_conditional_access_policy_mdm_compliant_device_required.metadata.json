@@ -9,9 +9,9 @@
   "Severity": "high",
   "ResourceType": "Conditional Access Policy",
   "ResourceGroup": "IAM",
-  "Description": "An enabled Conditional Access policy enforces **Require device to be marked as compliant** for **all users** accessing **all cloud applications**, with no application exclusions. This check also validates Microsoft Intune prerequisites required for that control to represent an effective **MDM-compliant device** requirement: at least one assigned device compliance policy and at least one currently reported **compliant MDM-managed device** in Intune. When Microsoft Graph exposes Intune tenant settings, the check also verifies **secure-by-default** compliance evaluation for devices without policy assignment.",
-  "Risk": "Without a mandatory MDM-backed compliant device requirement, users can access cloud resources from **unmanaged or non-compliant devices** that may lack encryption, antivirus, or OS updates. If Intune compliance policies are missing, unassigned, or devices without policy assignment can remain compliant, Conditional Access can give a **false sense of protection** and increase the risk of **credential theft** and **data exfiltration** from compromised endpoints.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-device-compliance",
+  "Description": "An enabled Conditional Access policy enforces **Require device to be marked as compliant** for **all users** across **all cloud apps** with no application exclusions. This check also verifies that Intune has assigned compliance policies and at least one currently reported **compliant MDM-managed device**. If Graph exposes tenant settings, it also checks **secure-by-default** evaluation.",
+  "Risk": "Without a mandatory MDM-backed compliant device requirement, users can access cloud resources from **unmanaged or non-compliant devices**. If Intune compliance policies are missing, unassigned, or devices without policy assignment can remain compliant, Conditional Access can create a **false sense of protection** and increase the risk of **credential theft** and **data exfiltration**.",
+  "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-grant",
     "https://learn.microsoft.com/en-us/intune/intune-service/protect/device-compliance-get-started",

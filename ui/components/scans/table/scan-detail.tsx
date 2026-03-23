@@ -1,8 +1,7 @@
 "use client";
 
-import { Snippet } from "@heroui/snippet";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { DateWithTime, EntityInfo, InfoField } from "@/components/ui/entities";
 import { StatusBadge } from "@/components/ui/table/status-badge";
 import { ProviderProps, ProviderType, ScanProps, TaskDetails } from "@/types";
@@ -81,18 +80,17 @@ export const ScanDetail = ({
           </div>
 
           <InfoField label="Scan ID" variant="simple">
-            <Snippet hideSymbol>{scanDetails.id}</Snippet>
+            <CodeSnippet value={scanDetails.id} />
           </InfoField>
 
           {scan.state === "failed" && taskDetails?.attributes.result && (
             <>
               {taskDetails.attributes.result.exc_message && (
                 <InfoField label="Error Message" variant="simple">
-                  <Snippet hideSymbol>
-                    <span className="text-xs whitespace-pre-line">
-                      {taskDetails.attributes.result.exc_message.join("\n")}
-                    </span>
-                  </Snippet>
+                  <CodeSnippet
+                    value={taskDetails.attributes.result.exc_message.join("\n")}
+                    multiline
+                  />
                 </InfoField>
               )}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

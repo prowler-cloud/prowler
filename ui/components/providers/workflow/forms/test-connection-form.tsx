@@ -9,20 +9,15 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import {
-  checkConnectionProvider,
-  deleteCredentials,
-} from "@/actions/providers";
-import { getTask } from "@/actions/task/tasks";
+import { deleteCredentials } from "@/actions/providers";
 import { CheckIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
 import { Form } from "@/components/ui/form";
-import { checkTaskStatus } from "@/lib/helper";
+import { testProviderConnection } from "@/lib/provider-helpers";
 import { ProviderType } from "@/types";
-import { ApiError, testConnectionFormSchema } from "@/types";
+import { testConnectionFormSchema } from "@/types";
 
-import { ProviderInfo } from "../..";
+import { ProviderConnectionInfo } from "./provider-connection-info";
 
 type FormValues = z.input<typeof testConnectionFormSchema>;
 
@@ -70,7 +65,6 @@ export const TestConnectionForm = ({
   hideActions = false,
   onLoadingChange,
 }: TestConnectionFormProps) => {
-  const { toast } = useToast();
   const router = useRouter();
 
   const providerId = searchParams.id;
@@ -99,70 +93,23 @@ export const TestConnectionForm = ({
   }, [isLoading, isResettingCredentials, onLoadingChange]);
 
   const onSubmitClient = async (values: FormValues) => {
-    const formData = new FormData();
-    formData.append("providerId", values.providerId);
+    setApiErrorMessage(null);
 
-    const data = await checkConnectionProvider(formData);
+    const result = await testProviderConnection(values.providerId);
 
-    if (data?.errors && data.errors.length > 0) {
-      data.errors.forEach((error: ApiError) => {
-        const errorMessage = error.detail;
+    if (result.error === "Not found.") {
+      setApiErrorMessage(result.error);
+      return;
+    }
 
-        switch (errorMessage) {
-          case "Not found.":
-            setApiErrorMessage(errorMessage);
-            break;
-          default:
-            toast({
-              variant: "destructive",
-              title: `Error ${error.status}`,
-              description: errorMessage,
-            });
-        }
-      });
-    } else {
-      const taskId = data.data.id;
-      setApiErrorMessage(null);
+    setConnectionStatus(result);
 
-      // Use the helper function to check the task status
-      const taskResult = await checkTaskStatus(taskId);
-
-      if (taskResult.completed) {
-        const task = await getTask(taskId);
-        const { connected, error } = task.data.attributes.result;
-
-        setConnectionStatus({
-          connected,
-          error: connected ? null : error || "Unknown error",
-        });
-
-        if (connected && isUpdated) {
-          if (onSuccess) {
-            onSuccess();
-            return;
-          }
-          return router.push("/providers");
-        }
-
-        if (connected && !isUpdated) {
-          if (onSuccess) {
-            onSuccess();
-            return;
-          }
-
-          return router.push("/providers");
-        } else {
-          setConnectionStatus({
-            connected: false,
-            error: error || "Connection failed, please review credentials.",
-          });
-        }
-      } else {
-        setConnectionStatus({
-          connected: false,
-          error: taskResult.error || "Unknown error",
-        });
+    if (result.connected) {
+      if (onSuccess) {
+        onSuccess();
+        return;
       }
+      return router.push("/providers");
     }
   };
 
@@ -243,7 +190,7 @@ export const TestConnectionForm = ({
           </>
         )}
 
-        <ProviderInfo
+        <ProviderConnectionInfo
           connected={providerData.data.attributes.connection.connected}
           provider={providerData.data.attributes.provider}
           providerAlias={providerData.data.attributes.alias}

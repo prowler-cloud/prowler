@@ -5,6 +5,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from typing import Generator
 
 from alive_progress import alive_bar
@@ -88,7 +89,9 @@ class ImageProvider(Provider):
 
         self.images = images if images is not None else []
         self.image_list_file = image_list_file
-        self.scanners = scanners if scanners is not None else ["vuln", "secret"]
+        self.scanners = (
+            scanners if scanners is not None else ["vuln", "secret", "misconfig"]
+        )
         self.image_config_scanners = (
             image_config_scanners if image_config_scanners is not None else []
         )
@@ -100,6 +103,10 @@ class ImageProvider(Provider):
         self._session = None
         self._identity = "prowler"
         self._listing_only = False
+        self._trivy_cache_dir_obj = tempfile.TemporaryDirectory(
+            prefix="prowler-trivy-cache-"
+        )
+        self._trivy_cache_dir = self._trivy_cache_dir_obj.name
 
         # Registry authentication (follows IaC pattern: explicit params, env vars internal)
         self.registry_username = registry_username or os.environ.get(
@@ -329,9 +336,15 @@ class ImageProvider(Provider):
     def _is_registry_url(image_uid: str) -> bool:
         """Determine whether an image UID is a registry URL (namespace only).
 
-        A registry URL like ``docker.io/andoniaf`` has a registry host but
-        the remaining part contains no ``/`` (no repo) and no ``:`` (no tag).
+        Bare hostnames like "714274078102.dkr.ecr.eu-west-1.amazonaws.com"
+        or "myregistry.com:5000" are registry URLs (dots in host, no slash).
+        Image references like "alpine:3.18" or "nginx" are not.
         """
+        if "/" not in image_uid:
+            host_part = image_uid.split(":")[0]
+            if "." in host_part:
+                return True
+
         registry_host = ImageProvider._extract_registry(image_uid)
         if not registry_host:
             return False
@@ -340,6 +353,8 @@ class ImageProvider(Provider):
 
     def cleanup(self) -> None:
         """Clean up any resources after scanning."""
+        if hasattr(self, "_trivy_cache_dir_obj"):
+            self._trivy_cache_dir_obj.cleanup()
 
     def _process_finding(
         self,
@@ -368,7 +383,7 @@ class ImageProvider(Provider):
                     "Description", finding.get("Title", "")
                 )
                 finding_status = "FAIL"
-                finding_categories = ["vulnerability"]
+                finding_categories = ["vulnerabilities"]
             elif "RuleID" in finding:
                 # Secret finding
                 finding_id = finding["RuleID"]
@@ -418,10 +433,13 @@ class ImageProvider(Provider):
                     },
                     "Recommendation": {
                         "Text": remediation_text,
-                        "Url": finding.get("PrimaryURL", ""),
+                        "Url": "",
                     },
                 },
                 "Categories": finding_categories,
+                "AdditionalURLs": (
+                    [url] if (url := finding.get("PrimaryURL", "")) else []
+                ),
                 "DependsOn": [],
                 "RelatedTo": [],
                 "Notes": "",
@@ -540,6 +558,8 @@ class ImageProvider(Provider):
             trivy_command = [
                 "trivy",
                 "image",
+                "--cache-dir",
+                self._trivy_cache_dir,
                 "--format",
                 "json",
                 "--scanners",
@@ -928,6 +948,9 @@ class ImageProvider(Provider):
         Uses registry HTTP APIs directly instead of Trivy to avoid false
         failures caused by Trivy DB download issues.
 
+        For bare registry hostnames (e.g. ECR URLs passed by the API as provider_uid),
+        uses the OCI catalog endpoint instead of trivy image.
+
         Args:
             image: Container image or registry URL to test
             raise_on_exception: Whether to raise exceptions
@@ -946,32 +969,34 @@ class ImageProvider(Provider):
             if not image:
                 return Connection(is_connected=False, error="Image name is required")
 
+            # Registry URL (bare hostname) → test via OCI catalog
             if ImageProvider._is_registry_url(image):
-                # Registry enumeration mode — test by listing repositories
-                adapter = create_registry_adapter(
+                return ImageProvider._test_registry_connection(
                     registry_url=image,
-                    username=registry_username,
-                    password=registry_password,
-                    token=registry_token,
+                    registry_username=registry_username,
+                    registry_password=registry_password,
+                    registry_token=registry_token,
                 )
-                adapter.list_repositories()
-                return Connection(is_connected=True)
 
-            # Image reference mode — verify the specific tag exists
+            # Image reference → verify tag exists via registry API
             registry_host = ImageProvider._extract_registry(image)
-            repo_and_tag = image[len(registry_host) + 1 :] if registry_host else image
-            if ":" in repo_and_tag:
-                repository, tag = repo_and_tag.rsplit(":", 1)
-            else:
-                repository = repo_and_tag
-                tag = "latest"
-
-            is_dockerhub = not registry_host or registry_host in (
+            is_dockerhub = registry_host is None or registry_host in (
                 "docker.io",
                 "registry-1.docker.io",
             )
 
-            # Docker Hub official images use "library/" prefix
+            # Parse repository and tag from the image reference
+            ref = image.rsplit("@", 1)[0] if "@" in image else image
+            last_segment = ref.split("/")[-1]
+            if ":" in last_segment:
+                tag = last_segment.split(":")[-1]
+                base = ref[: -(len(tag) + 1)]
+            else:
+                tag = "latest"
+                base = ref
+
+            repository = base[len(registry_host) + 1 :] if registry_host else base
+
             if is_dockerhub and "/" not in repository:
                 repository = f"library/{repository}"
 
@@ -1012,4 +1037,38 @@ class ImageProvider(Provider):
             return Connection(
                 is_connected=False,
                 error=f"Unexpected error: {str(error)}",
+            )
+
+    @staticmethod
+    def _test_registry_connection(
+        registry_url: str,
+        registry_username: str | None = None,
+        registry_password: str | None = None,
+        registry_token: str | None = None,
+    ) -> "Connection":
+        """Test connection to a registry URL by listing repositories via OCI catalog."""
+        try:
+            adapter = create_registry_adapter(
+                registry_url=registry_url,
+                username=registry_username,
+                password=registry_password,
+                token=registry_token,
+            )
+            adapter.list_repositories()
+            return Connection(is_connected=True)
+        except Exception as error:
+            error_str = str(error).lower()
+            if "401" in error_str or "unauthorized" in error_str:
+                return Connection(
+                    is_connected=False,
+                    error="Authentication failed. Check registry credentials.",
+                )
+            elif "404" in error_str or "not found" in error_str:
+                return Connection(
+                    is_connected=False,
+                    error="Registry catalog not found.",
+                )
+            return Connection(
+                is_connected=False,
+                error=f"Failed to connect to registry: {str(error)[:200]}",
             )

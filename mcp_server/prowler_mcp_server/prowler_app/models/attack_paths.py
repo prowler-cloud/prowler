@@ -118,6 +118,51 @@ class AttackPathScansListResponse(BaseModel):
             )
 
 
+class AttackPathCartographySchema(MinimalSerializerMixin, BaseModel):
+    """Cartography graph schema metadata for a completed attack paths scan.
+
+    Contains the schema URL and provider info needed to fetch the full
+    Cartography schema markdown for openCypher query generation.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    id: str = Field(description="Unique identifier for the schema resource")
+    provider: str = Field(description="Cloud provider type (aws, azure, gcp, etc.)")
+    cartography_version: str = Field(description="Version of the Cartography schema")
+    schema_url: str = Field(description="URL to the Cartography schema page on GitHub")
+    raw_schema_url: str = Field(
+        description="Raw URL to fetch the Cartography schema markdown content"
+    )
+    schema_content: str | None = Field(
+        default=None,
+        description="Full Cartography schema markdown content (populated after fetch)",
+    )
+
+    @classmethod
+    def from_api_response(
+        cls, response: dict[str, Any]
+    ) -> "AttackPathCartographySchema":
+        """Transform JSON:API schema response to model.
+
+        Args:
+            response: Full API response with data and attributes
+
+        Returns:
+            AttackPathCartographySchema instance
+        """
+        data = response.get("data", {})
+        attributes = data.get("attributes", {})
+
+        return cls(
+            id=data["id"],
+            provider=attributes["provider"],
+            cartography_version=attributes["cartography_version"],
+            schema_url=attributes["schema_url"],
+            raw_schema_url=attributes["raw_schema_url"],
+        )
+
+
 class AttackPathQueryParameter(MinimalSerializerMixin, BaseModel):
     """Parameter definition for an attack paths query.
 

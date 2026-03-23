@@ -3,7 +3,7 @@ import glob
 import json
 import logging
 import os
-
+import time
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -11,12 +11,12 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from urllib.parse import urljoin
 
 import sentry_sdk
-
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.saml.views import FinishACSView, LoginView
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
+from celery import chain
 from celery.result import AsyncResult
 from config.custom_logging import BackendLogger
 from config.env import env
@@ -75,12 +75,14 @@ from rest_framework.exceptions import (
 )
 from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
+from rest_framework_json_api import filters as jsonapi_filters
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
+    aggregate_finding_group_summaries_task,
     backfill_compliance_summaries_task,
     backfill_scan_resource_summaries_task,
     check_integration_connection_task,
@@ -99,7 +101,6 @@ from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
-from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
@@ -198,6 +199,7 @@ from api.models import (
 )
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
+from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.rls import Tenant
 from api.utils import (
     CustomOAuth2Client,
@@ -407,7 +409,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.20.0"
+        spectacular_settings.VERSION = "1.23.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -2451,6 +2453,11 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_SCANS]
 
+    def get_throttles(self):
+        if self.action == "run_custom_attack_paths_query":
+            self.throttle_scope = "attack-paths-custom-query"
+        return super().get_throttles()
+
     def set_required_permissions(self):
         if self.request.method in SAFE_METHODS:
             self.required_permissions = []
@@ -2570,13 +2577,34 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             provider_id,
         )
 
+        start = time.monotonic()
         graph = attack_paths_views_helpers.execute_query(
             database_name,
             query_definition,
             parameters,
             provider_id,
         )
+        query_duration = time.monotonic() - start
         graph_database.clear_cache(database_name)
+
+        result_nodes = len(graph.get("nodes", []))
+        result_relationships = len(graph.get("relationships", []))
+        logger.info(
+            "attack_paths_query_run",
+            extra={
+                "user_id": str(request.user.id),
+                "tenant_id": str(attack_paths_scan.provider.tenant_id),
+                "metadata": {
+                    "query_id": query_definition.id,
+                    "provider": query_definition.provider,
+                    "scan_id": pk,
+                    "provider_id": provider_id,
+                    "result_nodes": result_nodes,
+                    "result_relationships": result_relationships,
+                    "query_duration": round(query_duration, 3),
+                },
+            },
+        )
 
         status_code = status.HTTP_200_OK
         if not graph.get("nodes"):
@@ -2618,12 +2646,34 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         )
         provider_id = str(attack_paths_scan.provider_id)
 
+        start = time.monotonic()
         graph = attack_paths_views_helpers.execute_custom_query(
             database_name,
             serializer.validated_data["query"],
             provider_id,
         )
+        query_duration = time.monotonic() - start
         graph_database.clear_cache(database_name)
+
+        query_length = len(serializer.validated_data["query"])
+        result_nodes = len(graph.get("nodes", []))
+        result_relationships = len(graph.get("relationships", []))
+        logger.info(
+            "attack_paths_custom_query_run",
+            extra={
+                "user_id": str(request.user.id),
+                "tenant_id": str(attack_paths_scan.provider.tenant_id),
+                "metadata": {
+                    "provider": attack_paths_scan.provider.provider,
+                    "scan_id": pk,
+                    "provider_id": provider_id,
+                    "query_length": query_length,
+                    "result_nodes": result_nodes,
+                    "result_relationships": result_relationships,
+                    "query_duration": round(query_duration, 3),
+                },
+            },
+        )
 
         status_code = status.HTTP_200_OK
         if not graph.get("nodes"):
@@ -6677,10 +6727,25 @@ class MuteRuleViewSet(BaseRLSViewSet):
         )
 
         # Launch background task for historical muting
-        with transaction.atomic():
-            mute_historical_findings_task.apply_async(
-                kwargs={"tenant_id": tenant_id, "mute_rule_id": str(mute_rule.id)}
-            )
+        latest_scan_id = (
+            Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("-completed_at", "-inserted_at")
+            .values_list("id", flat=True)
+            .first()
+        )
+
+        transaction.on_commit(
+            lambda: chain(
+                mute_historical_findings_task.si(
+                    tenant_id=tenant_id,
+                    mute_rule_id=str(mute_rule.id),
+                ),
+                aggregate_finding_group_summaries_task.si(
+                    tenant_id=tenant_id,
+                    scan_id=str(latest_scan_id),
+                ),
+            ).apply_async()
+        )
 
         # Return the created mute rule
         serializer = self.get_serializer(mute_rule)
@@ -6728,13 +6793,29 @@ class FindingGroupViewSet(BaseRLSViewSet):
     queryset = FindingGroupDailySummary.objects.all()
     serializer_class = FindingGroupSerializer
     filterset_class = FindingGroupSummaryFilter
+    filter_backends = [
+        jsonapi_filters.QueryParameterValidationFilter,
+        jsonapi_filters.OrderingFilter,
+        CustomDjangoFilterBackend,
+    ]
     http_method_names = ["get"]
     required_permissions = []
 
     def get_filterset_class(self):
-        """Return appropriate filter based on action."""
+        """Return the filterset class used for schema generation and the list action.
+
+        Note: The resources and latest_resources actions do not use this method
+        at runtime. They manually instantiate FindingGroupFilter /
+        LatestFindingGroupFilter against a Finding queryset (see
+        _get_finding_queryset). The class returned here for those actions only
+        affects the OpenAPI schema generated by drf-spectacular.
+        """
         if self.action == "latest":
             return LatestFindingGroupSummaryFilter
+        if self.action == "resources":
+            return FindingGroupFilter
+        if self.action == "latest_resources":
+            return LatestFindingGroupFilter
         return FindingGroupSummaryFilter
 
     def get_queryset(self):
@@ -7146,13 +7227,15 @@ class FindingGroupViewSet(BaseRLSViewSet):
             raise ValidationError(filterset.errors)
         filtered_queryset = filterset.qs
 
-        # Keep only rows from the latest inserted_at date per check_id
-        latest_per_check = filtered_queryset.annotate(
-            latest_inserted_at=Window(
-                expression=Max("inserted_at"),
-                partition_by=[F("check_id")],
-            )
-        ).filter(inserted_at=F("latest_inserted_at"))
+        # Keep only the latest row per (check_id, provider), then aggregate by check_id.
+        latest_per_check_ids = (
+            filtered_queryset.order_by("check_id", "provider_id", "-inserted_at")
+            .distinct("check_id", "provider_id")
+            .values("id")
+        )
+        latest_per_check = filtered_queryset.filter(
+            id__in=Subquery(latest_per_check_ids)
+        )
 
         # Re-aggregate daily summaries
         aggregated_queryset = self._aggregate_daily_summaries(latest_per_check)
@@ -7188,6 +7271,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
         and timing information including how long they have been failing.
         """,
         tags=["Finding Groups"],
+        filters=True,
     )
     @action(detail=True, methods=["get"], url_path="resources")
     def resources(self, request, pk=None):
@@ -7262,6 +7346,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
         and timing information. No date filters required.
         """,
         tags=["Finding Groups"],
+        filters=True,
     )
     @action(
         detail=False,

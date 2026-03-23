@@ -29,6 +29,24 @@ export function getProviderWizardModalTitle(mode: ProviderWizardMode) {
 }
 
 export function getProviderWizardDocsDestination(docsLink: string) {
+  const destinationLabelMap: Record<string, string> = {
+    "aws-organizations": "AWS Organizations",
+    aws: "AWS",
+    azure: "Azure",
+    m365: "Microsoft 365",
+    gcp: "GCP",
+    k8s: "Kubernetes",
+    kubernetes: "Kubernetes",
+    github: "GitHub",
+    iac: "IaC",
+    oraclecloud: "Oracle Cloud",
+    mongodbatlas: "MongoDB Atlas",
+    alibabacloud: "Alibaba Cloud",
+    cloudflare: "Cloudflare",
+    openstack: "OpenStack",
+    help: "Cloud Provider",
+  };
+
   try {
     const parsed = new URL(docsLink);
     const pathSegments = parsed.pathname
@@ -40,7 +58,21 @@ export function getProviderWizardDocsDestination(docsLink: string) {
       return parsed.hostname;
     }
 
-    return lastSegment.replace(/^provider-/, "").replace(/^prowler-cloud-/, "");
+    const compactDestination = lastSegment
+      .replace(/^provider-/, "")
+      .replace(/^prowler-cloud-/, "");
+    const mappedDestination = destinationLabelMap[compactDestination];
+
+    if (mappedDestination) {
+      return mappedDestination;
+    }
+
+    return compactDestination
+      .split("-")
+      .map((word) =>
+        word.length === 0 ? word : word[0].toUpperCase() + word.slice(1),
+      )
+      .join(" ");
   } catch {
     return docsLink;
   }

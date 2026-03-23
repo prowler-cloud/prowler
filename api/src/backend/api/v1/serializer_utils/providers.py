@@ -193,6 +193,22 @@ from rest_framework_json_api import serializers
             },
             {
                 "type": "object",
+                "title": "Google Workspace Service Account",
+                "properties": {
+                    "credentials_content": {
+                        "type": "string",
+                        "description": "The service account JSON credentials content for Google Workspace API access with domain-wide delegation enabled.",
+                    },
+                    "delegated_user": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "The email address of the Google Workspace super admin user to impersonate for domain-wide delegation.",
+                    },
+                },
+                "required": ["credentials_content", "delegated_user"],
+            },
+            {
+                "type": "object",
                 "title": "Kubernetes Static Credentials",
                 "properties": {
                     "kubeconfig_content": {
