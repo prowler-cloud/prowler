@@ -204,7 +204,9 @@ To expand the graph for detailed exploration, click the fullscreen icon in the g
 
 ## Using Attack Paths with the MCP Server and Lighthouse AI
 
-Attack Paths capabilities are also available through the [Prowler MCP Server](/getting-started/products/prowler-mcp), enabling interaction with Attack Paths data via AI assistants like Claude Desktop, Cursor, and other MCP clients. [Prowler Lighthouse AI](/getting-started/products/prowler-lighthouse-ai) also supports Attack Paths queries, allowing you to analyze privilege escalation chains and security misconfigurations directly from the chat interface.
+Attack Paths capabilities are also available through the [Prowler MCP Server](/getting-started/products/prowler-mcp), enabling interaction with Attack Paths data via AI assistants like Claude Desktop, Cursor, and other MCP clients.
+
+[Prowler Lighthouse AI](/getting-started/products/prowler-lighthouse-ai) also supports Attack Paths queries, allowing you to analyze privilege escalation chains and security misconfigurations directly from the chat interface.
 
 The following MCP tools are available for Attack Paths:
 
@@ -215,7 +217,7 @@ The following MCP tools are available for Attack Paths:
 
 ### Example Questions
 
-The following are examples of questions you can ask through the MCP Server or Lighthouse AI:
+Ask through the MCP Server or Lighthouse AI:
 
 - "Find EC2 instances exposed to the internet with access to sensitive S3 buckets"
 - "Are there any IAM roles that can escalate their own privileges?"
@@ -282,11 +284,11 @@ These queries are based on research from [pathfinding.cloud](https://pathfinding
 | **Spot Instance Launch with Privileged Role (EC2-003)** | Launch EC2 Spot Instances with privileged IAM roles to gain their permissions via IMDS |
 | **Launch Template Poisoning for Role Access (EC2-004)** | Inject malicious userData into launch templates that reference privileged roles, no PassRole needed |
 | **EC2 Instance Connect SSH Access for Role Credentials (EC2INSTANCECONNECT-003)** | Push a temporary SSH key to an EC2 instance via Instance Connect to access its attached role credentials through IMDS |
-| **ECS Service Creation with Privileged Role (ECS-001)** | Create an ECS cluster and service with a privileged Fargate task role to execute arbitrary code |
-| **ECS Task Execution with Privileged Role (ECS-002)** | Create an ECS cluster and run a one-off Fargate task with a privileged role to execute arbitrary code |
-| **ECS Service Creation with Privileged Role (ECS-003)** | Deploy a Fargate service with a privileged role on an existing ECS cluster |
-| **ECS Task Execution with Privileged Role (ECS-004)** | Run a one-off Fargate task with a privileged role on an existing ECS cluster |
-| **ECS Task Start with Privileged Role on EC2 (ECS-005)** | Register a task definition with a privileged role and start it on an EC2 container instance to execute arbitrary code |
+| **ECS Service Creation with Privileged Role (ECS-001 - New Cluster)** | Create an ECS cluster and service with a privileged Fargate task role to execute arbitrary code |
+| **ECS Task Execution with Privileged Role (ECS-002 - New Cluster)** | Create an ECS cluster and run a one-off Fargate task with a privileged role to execute arbitrary code |
+| **ECS Service Creation with Privileged Role (ECS-003 - Existing Cluster)** | Deploy a Fargate service with a privileged role on an existing ECS cluster |
+| **ECS Task Execution with Privileged Role (ECS-004 - Existing Cluster)** | Run a one-off Fargate task with a privileged role on an existing ECS cluster |
+| **ECS Task Start with Privileged Role on EC2 (ECS-005 - Existing Cluster)** | Register a task definition with a privileged role and start it on an EC2 container instance to execute arbitrary code |
 | **ECS Exec Container Hijacking for Role Credentials (ECS-006)** | Shell into a running ECS container via ECS Exec to steal the attached task role's credentials |
 | **Glue Dev Endpoint with Privileged Role (GLUE-001)** | Create a Glue development endpoint with a privileged role attached to gain its permissions |
 | **Glue Dev Endpoint SSH Hijacking via Update (GLUE-002)** | Update an existing Glue development endpoint to inject an SSH public key and access its attached role credentials |
