@@ -225,7 +225,8 @@
                 "group": "Kubernetes",
                 "pages": [
                   "user-guide/providers/kubernetes/getting-started-k8s",
-                  "user-guide/providers/kubernetes/misc"
+                  "user-guide/providers/kubernetes/misc",
+                  "user-guide/cookbooks/kubernetes-in-cluster"
                 ]
               },
               {
