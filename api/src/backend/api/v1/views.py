@@ -6734,25 +6734,18 @@ class MuteRuleViewSet(BaseRLSViewSet):
             .first()
         )
 
-        if latest_scan_id:
-            transaction.on_commit(
-                lambda: chain(
-                    mute_historical_findings_task.si(
-                        tenant_id=tenant_id,
-                        mute_rule_id=str(mute_rule.id),
-                    ),
-                    aggregate_finding_group_summaries_task.si(
-                        tenant_id=tenant_id,
-                        scan_id=str(latest_scan_id),
-                    ),
-                ).apply_async()
-            )
-        else:
-            transaction.on_commit(
-                lambda: mute_historical_findings_task.apply_async(
-                    kwargs={"tenant_id": tenant_id, "mute_rule_id": str(mute_rule.id)}
-                )
-            )
+        transaction.on_commit(
+            lambda: chain(
+                mute_historical_findings_task.si(
+                    tenant_id=tenant_id,
+                    mute_rule_id=str(mute_rule.id),
+                ),
+                aggregate_finding_group_summaries_task.si(
+                    tenant_id=tenant_id,
+                    scan_id=str(latest_scan_id),
+                ),
+            ).apply_async()
+        )
 
         # Return the created mute rule
         serializer = self.get_serializer(mute_rule)
