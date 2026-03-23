@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.23.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `Vercel` provider support [(#10190)](https://github.com/prowler-cloud/prowler/pull/10190)
+
+---
+
 ## [1.22.0] (Prowler v5.21.0)
 
 ### 🚀 Added
