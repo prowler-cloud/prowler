@@ -71,7 +71,7 @@ class OraclecloudProvider(Provider):
         self,
         oci_config_file: str = None,
         profile: str = None,
-        region: str = None,
+        region: set = set(),
         compartment_ids: list = None,
         config_path: str = None,
         config_content: dict = None,
@@ -92,7 +92,7 @@ class OraclecloudProvider(Provider):
         Args:
             - oci_config_file: The path to the OCI config file.
             - profile: The name of the OCI CLI profile to use.
-            - region: The OCI region to audit.
+            - region: The OCI regions to audit.
             - compartment_ids: A list of compartment OCIDs to audit.
             - config_path: The path to the Prowler configuration file.
             - config_content: The content of the configuration file.
@@ -148,14 +148,13 @@ class OraclecloudProvider(Provider):
         logger.info("Validating OCI credentials ...")
         self._identity = self.set_identity(
             session=self._session,
-            region=region,
+            region=list(region)[0],
             compartment_ids=compartment_ids,
         )
         logger.info("OCI credentials validated")
 
         # Get regions
         self._regions = self.get_regions_to_audit(region)
-
         # Get compartments
         self._compartments = self.get_compartments_to_audit(
             compartment_ids, self._identity.tenancy_id
@@ -233,7 +232,7 @@ class OraclecloudProvider(Provider):
         key_file: str = None,
         key_content: str = None,
         tenancy: str = None,
-        region: str = None,
+        region: set = None,
         pass_phrase: str = None,
     ) -> OCISession:
         """
@@ -531,30 +530,31 @@ class OraclecloudProvider(Provider):
 
         return True
 
-    def get_regions_to_audit(self, region: str = None) -> list:
+    def get_regions_to_audit(self, region_set: set = None) -> list:
         """
         get_regions_to_audit returns the list of regions to audit.
 
         Args:
-            - region: The OCI region to audit.
+            - regions: The list of OCI regions to audit.
 
         Returns:
             - list: The list of OCIRegion objects to audit.
         """
         regions = []
 
-        if region:
-            # Audit specific region
-            if region in OCI_REGIONS:
-                regions.append(
-                    OCIRegion(
-                        key=region,
-                        name=OCI_REGIONS[region],
-                        is_home_region=True,
+        # Audit specific regions
+        if region_set:
+            for region in list(region_set):
+                if region in OCI_REGIONS:
+                    regions.append(
+                        OCIRegion(
+                            key=region,
+                            name=OCI_REGIONS[region],
+                            is_home_region=True,
+                        )
                     )
-                )
-            else:
-                logger.warning(f"Invalid region: {region}. Using default region.")
+                else:
+                    logger.warning(f"Invalid region: {region}. Using default region.")
         else:
             # Audit all subscribed regions
             try:
