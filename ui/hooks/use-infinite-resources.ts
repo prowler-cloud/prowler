@@ -31,8 +31,8 @@ interface UseInfiniteResourcesReturn {
  * Hook for paginated infinite-scroll loading of finding group resources.
  *
  * Uses refs for all mutable state to avoid dependency chains that
- * cause infinite re-render loops. Only `checkId` triggers a new
- * initial fetch via useEffect.
+ * cause infinite re-render loops. `checkId` and `filtersKey` trigger
+ * a new initial fetch via useEffect.
  */
 export function useInfiniteResources({
   checkId,
@@ -42,6 +42,13 @@ export function useInfiniteResources({
   onAppendResources,
   onSetLoading,
 }: UseInfiniteResourcesOptions): UseInfiniteResourcesReturn {
+  // Stable serialization of filters for dependency tracking
+  const filtersKey = JSON.stringify(
+    Object.entries(filters)
+      .filter(([, v]) => v !== undefined)
+      .sort(([a], [b]) => a.localeCompare(b)),
+  );
+
   // All mutable state in refs to break dependency chains
   const pageRef = useRef(1);
   const hasMoreRef = useRef(true);
@@ -109,7 +116,7 @@ export function useInfiniteResources({
     }
   }
 
-  // Fetch first page when checkId changes
+  // Fetch first page when checkId or filters change
   useEffect(() => {
     currentCheckIdRef.current = checkId;
     pageRef.current = 1;
@@ -117,7 +124,7 @@ export function useInfiniteResources({
     isLoadingRef.current = false;
 
     fetchPage(1, false, checkId);
-  }, [checkId]);
+  }, [checkId, filtersKey]);
 
   function loadNextPage() {
     if (!hasMoreRef.current || isLoadingRef.current) return;
