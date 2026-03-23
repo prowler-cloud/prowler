@@ -413,7 +413,10 @@ export default function AttackPathsPage() {
                   <div className="flex justify-end gap-3">
                     <ExecuteButton
                       isLoading={graphState.loading}
-                      isDisabled={!queryBuilder.selectedQuery}
+                      isDisabled={
+                        !queryBuilder.selectedQuery ||
+                        queryBuilder.isExecutionBlocked
+                      }
                       onExecute={handleExecuteQuery}
                     />
                   </div>

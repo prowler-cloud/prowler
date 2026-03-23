@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { customAttackPathQuerySchema } from "@/lib/attack-paths/custom-query";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import {
   AttackPathCartographySchema,
@@ -19,12 +20,6 @@ import { adaptAttackPathQueriesResponse } from "./queries.adapter";
 
 // Validation schema for UUID - RFC 9562/4122 compliant
 const UUIDSchema = z.uuid();
-const CustomQuerySchema = z
-  .string()
-  .max(10000, "Custom query must be 10000 characters or fewer")
-  .refine((value) => value.trim().length > 0, {
-    message: "Custom query cannot be empty",
-  });
 
 /**
  * Fetch available queries for a specific attack path scan
@@ -125,7 +120,7 @@ export const executeCustomQuery = async (
     return undefined;
   }
 
-  const validatedQuery = CustomQuerySchema.safeParse(query);
+  const validatedQuery = customAttackPathQuerySchema.safeParse(query);
   if (!validatedQuery.success) {
     return {
       error:

@@ -145,6 +145,22 @@ describe("executeCustomQuery", () => {
     expect(fetchMock).not.toHaveBeenCalled();
     expect(handleApiResponseMock).not.toHaveBeenCalled();
   });
+
+  it("rejects custom queries with write operations before calling the API", async () => {
+    // When
+    const result = await executeCustomQuery(
+      "550e8400-e29b-41d4-a716-446655440000",
+      "MATCH (n) SET n.name = 'updated' RETURN n",
+    );
+
+    // Then
+    expect(result).toEqual({
+      error: "Only read-only queries are allowed",
+      status: 400,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(handleApiResponseMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("getCartographySchema", () => {
