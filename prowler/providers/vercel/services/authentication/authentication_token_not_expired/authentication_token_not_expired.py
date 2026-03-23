@@ -24,6 +24,7 @@ class authentication_token_not_expired(Check):
             List[CheckReportVercel]: A list of reports for each token.
         """
         findings = []
+        now = datetime.now(timezone.utc)
         for token in authentication_client.tokens.values():
             report = CheckReportVercel(
                 metadata=self.metadata(),
@@ -38,7 +39,7 @@ class authentication_token_not_expired(Check):
                     f"Token '{token.name}' ({token.id}) does not have an expiration "
                     f"date set and is currently valid."
                 )
-            elif token.expires_at > datetime.now(timezone.utc):
+            elif token.expires_at > now:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Token '{token.name}' ({token.id}) is valid and expires "

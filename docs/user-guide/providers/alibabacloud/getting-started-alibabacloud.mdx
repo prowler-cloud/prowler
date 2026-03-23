@@ -117,6 +117,12 @@ prowler alibabacloud
 #### RAM Role Assumption
 
 ```bash
+# Using --role-arn CLI flag
+export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
+export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
+prowler alibabacloud --role-arn acs:ram::123456789012:role/ProwlerAuditRole
+
+# Or using environment variables
 export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
 export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
 export ALIBABA_CLOUD_ROLE_ARN="acs:ram::123456789012:role/ProwlerAuditRole"

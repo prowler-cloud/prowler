@@ -27,9 +27,6 @@ from prowler.providers.vercel.models import (
     VercelTeamInfo,
 )
 
-# Vercel API base URL
-VERCEL_API_BASE = "https://api.vercel.com"
-
 
 class VercelProvider(Provider):
     """Vercel provider."""
@@ -45,9 +42,12 @@ class VercelProvider(Provider):
 
     def __init__(
         self,
+        # Authentication credentials
         api_token: str = None,
         team_id: str = None,
+        # Scope
         projects: list[str] | None = None,
+        # Provider configuration
         config_path: str = None,
         config_content: dict | None = None,
         fixer_config: dict = {},
@@ -120,13 +120,14 @@ class VercelProvider(Provider):
     ) -> VercelSession:
         """Initialize Vercel API session.
 
-        Credentials can be provided as arguments or read from environment variables:
+        Credentials can be provided as arguments (for API use) or read from
+        environment variables:
         - VERCEL_TOKEN (API Bearer Token)
         - VERCEL_TEAM (Team ID or slug, optional)
 
         Args:
-            api_token: Vercel API token (optional, falls back to env var).
-            team_id: Vercel team ID or slug (optional, falls back to env var).
+            api_token: Vercel API token (optional, falls back to VERCEL_TOKEN env var).
+            team_id: Vercel team ID or slug (optional, falls back to VERCEL_TEAM env var).
 
         Returns:
             VercelSession: The initialized Vercel session.
@@ -141,7 +142,7 @@ class VercelProvider(Provider):
         if not token:
             raise VercelCredentialsError(
                 file=os.path.basename(__file__),
-                message="Vercel credentials not found. Set VERCEL_TOKEN environment variable or pass --vercel-token.",
+                message="Vercel credentials not found. Provide an api_token or set the VERCEL_TOKEN environment variable.",
             )
 
         try:
@@ -185,7 +186,9 @@ class VercelProvider(Provider):
             params = {"teamId": session.team_id} if session.team_id else {}
 
             # Get user info
-            response = http.get(f"{VERCEL_API_BASE}/v2/user", params=params, timeout=30)
+            response = http.get(
+                f"{session.base_url}/v2/user", params=params, timeout=30
+            )
             response.raise_for_status()
             user_data = response.json().get("user", {})
 
@@ -193,12 +196,15 @@ class VercelProvider(Provider):
             username = user_data.get("username")
             email = user_data.get("email")
 
-            # Get team info if team_id is set
+            # Get team info
             team_info = None
+            all_teams = []
+
             if session.team_id:
+                # Specific team requested — fetch just that one
                 params = {"teamId": session.team_id}
                 team_response = http.get(
-                    f"{VERCEL_API_BASE}/v2/teams/{session.team_id}",
+                    f"{session.base_url}/v2/teams/{session.team_id}",
                     params=params,
                     timeout=30,
                 )
@@ -209,6 +215,7 @@ class VercelProvider(Provider):
                         name=team_data.get("name", ""),
                         slug=team_data.get("slug", ""),
                     )
+                    all_teams = [team_info]
                 elif team_response.status_code in (404, 403):
                     raise VercelInvalidTeamError(
                         file=os.path.basename(__file__),
@@ -216,12 +223,38 @@ class VercelProvider(Provider):
                     )
                 else:
                     team_response.raise_for_status()
+            else:
+                # No team specified — auto-discover all teams the user belongs to
+                try:
+                    teams_response = http.get(
+                        f"{session.base_url}/v2/teams",
+                        params={"limit": 100},
+                        timeout=30,
+                    )
+                    if teams_response.status_code == 200:
+                        teams_data = teams_response.json().get("teams", [])
+                        for t in teams_data:
+                            all_teams.append(
+                                VercelTeamInfo(
+                                    id=t.get("id", ""),
+                                    name=t.get("name", ""),
+                                    slug=t.get("slug", ""),
+                                )
+                            )
+                        if all_teams:
+                            logger.info(
+                                f"Auto-discovered {len(all_teams)} team(s): "
+                                f"{', '.join(t.name for t in all_teams)}"
+                            )
+                except Exception as teams_error:
+                    logger.warning(f"Could not auto-discover teams: {teams_error}")
 
             return VercelIdentityInfo(
                 user_id=user_id,
                 username=username,
                 email=email,
                 team=team_info,
+                teams=all_teams,
             )
         except VercelInvalidTeamError:
             raise
@@ -250,7 +283,7 @@ class VercelProvider(Provider):
             if session.team_id:
                 params["teamId"] = session.team_id
             response = session.http_session.get(
-                f"{VERCEL_API_BASE}/v2/user", params=params, timeout=30
+                f"{session.base_url}/v2/user", params=params, timeout=30
             )
 
             if response.status_code == 401:
@@ -302,6 +335,11 @@ class VercelProvider(Provider):
             report_lines.append(
                 f"Team: {Fore.YELLOW}{self.identity.team.name} ({self.identity.team.slug}){Style.RESET_ALL}"
             )
+        elif self.identity.teams:
+            team_names = ", ".join(f"{t.name} ({t.slug})" for t in self.identity.teams)
+            report_lines.append(
+                f"Scope: {Fore.YELLOW}Personal Account + {len(self.identity.teams)} team(s): {team_names}{Style.RESET_ALL}"
+            )
         else:
             report_lines.append(
                 f"Scope: {Fore.YELLOW}Personal Account{Style.RESET_ALL}"
@@ -318,9 +356,12 @@ class VercelProvider(Provider):
     ) -> Connection:
         """Test connection to Vercel.
 
+        Credentials can be provided as arguments (for API use) or read from
+        environment variables (VERCEL_TOKEN, VERCEL_TEAM).
+
         Args:
-            api_token: Vercel API token.
-            team_id: Vercel team ID or slug.
+            api_token: Vercel API token (optional, falls back to env var).
+            team_id: Vercel team ID or slug (optional, falls back to env var).
             raise_on_exception: Whether to raise or return errors.
             provider_id: The provider ID.
 

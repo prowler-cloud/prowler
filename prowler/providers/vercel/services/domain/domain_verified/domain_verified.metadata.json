@@ -1,18 +1,20 @@
 {
   "Provider": "vercel",
   "CheckID": "domain_verified",
-  "CheckTitle": "Ensure domains are verified by Vercel",
+  "CheckTitle": "Vercel domains are verified",
   "CheckType": [],
   "ServiceName": "domain",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:domain/{resource_id}",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "VercelDomain",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Checks whether Vercel domains have passed ownership verification. Unverified domains may not serve traffic correctly and could indicate a pending or incomplete domain setup. Domain verification confirms that the domain owner has authorized Vercel to manage the domain.",
-  "Risk": "Unverified domains may fail to resolve or serve content, causing downtime for users. An unverified domain could also indicate a stale or orphaned configuration, or a domain that was added but never properly transferred, creating potential for domain takeover if the ownership verification is left incomplete.",
-  "RelatedUrl": "https://vercel.com/docs/projects/domains",
-  "AdditionalURLs": [],
+  "Description": "**Vercel domains** are assessed for **ownership verification** status. Unverified domains may not serve traffic correctly and could indicate a pending or incomplete domain setup. Domain verification confirms that the domain owner has authorized Vercel to manage the domain.",
+  "Risk": "**Unverified domains** may fail to resolve or serve content, causing **downtime** for users. An unverified domain could also indicate a stale or orphaned configuration, or a domain that was added but never properly transferred, creating potential for **domain takeover** if the ownership verification is left incomplete.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/projects/domains"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -22,11 +24,11 @@
     },
     "Recommendation": {
       "Text": "Complete domain verification by configuring the required DNS records at your domain registrar. Remove any domains that are no longer needed to reduce the attack surface. Regularly audit domain configurations to ensure all domains remain verified.",
-      "Url": "https://vercel.com/docs/projects/domains"
+      "Url": "https://hub.prowler.com/checks/vercel/domain_verified"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [

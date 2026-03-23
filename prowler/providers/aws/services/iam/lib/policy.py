@@ -380,6 +380,56 @@ def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
     return is_from_private_ip
 
 
+def is_condition_restricting_to_trusted_ips(
+    condition_statement: dict, trusted_ips: list = None
+) -> bool:
+    """Check if the policy condition restricts access to trusted IP addresses.
+
+    Keyword arguments:
+    condition_statement -- The policy condition to check. For example:
+        {
+            "IpAddress": {
+                "aws:SourceIp": "X.X.X.X"
+            }
+        }
+    trusted_ips -- A list of trusted IP addresses or CIDR ranges.
+    """
+    if not trusted_ips:
+        return False
+
+    try:
+        CONDITION_OPERATOR = "IpAddress"
+        CONDITION_KEY = "aws:sourceip"
+
+        if condition_statement.get(CONDITION_OPERATOR, {}):
+            condition_statement[CONDITION_OPERATOR] = {
+                k.lower(): v for k, v in condition_statement[CONDITION_OPERATOR].items()
+            }
+
+            if condition_statement[CONDITION_OPERATOR].get(CONDITION_KEY, ""):
+                if not isinstance(
+                    condition_statement[CONDITION_OPERATOR][CONDITION_KEY], list
+                ):
+                    condition_statement[CONDITION_OPERATOR][CONDITION_KEY] = [
+                        condition_statement[CONDITION_OPERATOR][CONDITION_KEY]
+                    ]
+
+                trusted_ips_set = {ip.lower() for ip in trusted_ips}
+                for ip in condition_statement[CONDITION_OPERATOR][CONDITION_KEY]:
+                    if ip == "*" or ip == "0.0.0.0/0":
+                        return False
+                    if ip not in trusted_ips_set:
+                        return False
+                return True
+
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+
+    return False
+
+
 # TODO: Add logic for deny statements
 def is_policy_public(
     policy: dict,
@@ -388,6 +438,7 @@ def is_policy_public(
     not_allowed_actions: list = [],
     check_cross_service_confused_deputy=False,
     trusted_account_ids: list = None,
+    trusted_ips: list = None,
 ) -> bool:
     """
     Check if the policy allows public access to the resource.
@@ -399,6 +450,7 @@ def is_policy_public(
         not_allowed_actions (list): List of actions that are not allowed, default: []. If not_allowed_actions is empty, the function will not consider the actions in the policy.
         check_cross_service_confused_deputy (bool): If the policy is checked for cross-service confused deputy, default: False
         trusted_account_ids (list): A list of trusted accound ids to reduce false positives on cross-account checks
+        trusted_ips (list): A list of trusted IP addresses or CIDR ranges to reduce false positives on IP-based checks
     Returns:
         bool: True if the policy allows public access, False otherwise
     """
@@ -510,6 +562,10 @@ def is_policy_public(
                         )
                         and not is_condition_restricting_from_private_ip(
                             statement.get("Condition", {})
+                        )
+                        and not is_condition_restricting_to_trusted_ips(
+                            statement.get("Condition", {}),
+                            trusted_ips,
                         )
                     )
                     if is_public:

@@ -1,18 +1,20 @@
 {
   "Provider": "vercel",
   "CheckID": "domain_dns_properly_configured",
-  "CheckTitle": "Ensure domain DNS records are properly configured for Vercel",
+  "CheckTitle": "Vercel domain DNS records are properly configured",
   "CheckType": [],
   "ServiceName": "domain",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:domain/{resource_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VercelDomain",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Checks whether Vercel domains have their DNS records properly configured to point to Vercel's infrastructure. Misconfigured DNS can result in domains that fail to serve content, SSL certificate provisioning failures, and degraded user experience.",
-  "Risk": "Misconfigured DNS records can cause the domain to be unreachable, preventing users from accessing the application. It can also prevent SSL certificate provisioning, resulting in browser security warnings. Stale DNS configurations may point to decommissioned infrastructure, creating a risk of subdomain takeover.",
-  "RelatedUrl": "https://vercel.com/docs/projects/domains",
-  "AdditionalURLs": [],
+  "Description": "**Vercel domains** are assessed for **DNS configuration** to verify records properly point to Vercel's infrastructure. Misconfigured DNS can result in domains that fail to serve content, SSL certificate provisioning failures, and degraded user experience.",
+  "Risk": "**Misconfigured DNS records** can cause the domain to be unreachable, preventing users from accessing the application. It can also prevent **SSL certificate provisioning**, resulting in browser security warnings. Stale DNS configurations may point to decommissioned infrastructure, creating a risk of **subdomain takeover**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/projects/domains"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -22,11 +24,11 @@
     },
     "Recommendation": {
       "Text": "Update DNS records at your domain registrar to correctly point to Vercel. Use a CNAME record for subdomains or an A record for apex domains. Verify the configuration in the Vercel dashboard after making changes.",
-      "Url": "https://vercel.com/docs/projects/domains/add-a-domain"
+      "Url": "https://hub.prowler.com/checks/vercel/domain_dns_properly_configured"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [

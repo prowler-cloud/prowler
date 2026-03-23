@@ -38,6 +38,7 @@ class IacProvider(Provider):
         github_username: str = None,
         personal_access_token: str = None,
         oauth_app_token: str = None,
+        provider_uid: str = None,
     ):
         logger.info("Instantiating IAC Provider...")
 
@@ -47,6 +48,7 @@ class IacProvider(Provider):
         self.exclude_path = exclude_path
         self.region = "branch"
         self.audited_account = "local-iac"
+        self._provider_uid = provider_uid
         self._session = None
         self._identity = "prowler"
         self._auth_method = "No auth"
@@ -146,6 +148,10 @@ class IacProvider(Provider):
     def fixer_config(self):
         return self._fixer_config
 
+    @property
+    def provider_uid(self):
+        return self._provider_uid
+
     def __del__(self):
         """Cleanup temporary directory when provider is destroyed"""
         self.cleanup()
@@ -218,6 +224,7 @@ class IacProvider(Provider):
                     },
                 },
                 "Categories": [],
+                "AdditionalURLs": [],
                 "DependsOn": [],
                 "RelatedTo": [],
                 "Notes": "",

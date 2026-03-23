@@ -1,18 +1,20 @@
 {
   "Provider": "vercel",
   "CheckID": "deployment_production_uses_stable_target",
-  "CheckTitle": "Ensure production deployments originate from a stable branch",
+  "CheckTitle": "Vercel production deployments originate from a stable branch",
   "CheckType": [],
   "ServiceName": "deployment",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:deployment/{resource_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VercelDeployment",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "devops",
-  "Description": "Checks whether Vercel production deployments are sourced from a stable branch (main or master). Deploying to production from feature branches bypasses standard CI/CD review processes and may introduce untested or incomplete code into the production environment.",
-  "Risk": "Production deployments from feature branches may contain untested, incomplete, or unapproved code changes. This bypasses the standard code review and merge workflow, increasing the risk of shipping bugs, security vulnerabilities, or breaking changes to end users.",
-  "RelatedUrl": "https://vercel.com/docs/deployments/git",
-  "AdditionalURLs": [],
+  "Description": "**Vercel production deployments** are assessed for **source branch stability** by verifying they are sourced from a stable branch (`main` or `master`). Deploying to production from feature branches bypasses standard CI/CD review processes and may introduce untested or incomplete code into the production environment.",
+  "Risk": "Production deployments from **feature branches** may contain untested, incomplete, or unapproved code changes. This bypasses the standard **code review and merge workflow**, increasing the risk of shipping bugs, security vulnerabilities, or breaking changes to end users.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/deployments/git"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -22,11 +24,11 @@
     },
     "Recommendation": {
       "Text": "Configure the production branch to main or master and ensure all production deployments go through the standard merge workflow. Use branch protection rules in your Git provider to prevent direct pushes to the production branch.",
-      "Url": "https://vercel.com/docs/deployments/git#production-branch"
+      "Url": "https://hub.prowler.com/checks/vercel/deployment_production_uses_stable_target"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

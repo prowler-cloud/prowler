@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra** non-privileged users are assessed for **multifactor authentication** by verifying they have **two or more registered authentication methods** (*MFA enrollment*).",
   "Risk": "Absent **MFA** on standard accounts enables password-only logins after phishing, reuse, or spraying, leading to **account takeover**. Attackers can access email, files, and apps, send internal phishing, and escalate, undermining **confidentiality** and **integrity**, and risking **availability** via malicious changes.",
@@ -30,7 +30,8 @@
     }
   },
   "Categories": [
-    "identity-access"
+    "identity-access",
+    "e3"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -11,9 +11,6 @@ from prowler.providers.vercel.exceptions.exceptions import (
 
 MAX_WORKERS = 10
 
-# Vercel API base URL
-VERCEL_API_BASE = "https://api.vercel.com"
-
 
 class VercelService:
     """Base class for Vercel services to share provider context and HTTP client."""
@@ -32,10 +29,18 @@ class VercelService:
                 "Content-Type": "application/json",
             }
         )
+        self._base_url = provider.session.base_url
         self._team_id = provider.session.team_id
 
         # Thread pool for parallel API calls
         self.thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
+
+    @property
+    def _all_team_ids(self) -> list[str]:
+        """Return team IDs to scan: explicit team_id, or all auto-discovered teams."""
+        if self._team_id:
+            return [self._team_id]
+        return [t.id for t in self.provider.identity.teams]
 
     def _get(self, path: str, params: dict = None) -> dict:
         """Make a rate-limit-aware GET request to the Vercel API.
@@ -58,7 +63,7 @@ class VercelService:
         if self._team_id and "teamId" not in params:
             params["teamId"] = self._team_id
 
-        url = f"{VERCEL_API_BASE}{path}"
+        url = f"{self._base_url}{path}"
         max_retries = self.audit_config.get("max_retries", 3)
 
         for attempt in range(max_retries + 1):

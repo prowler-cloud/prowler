@@ -99,7 +99,7 @@
               },
               "user-guide/tutorials/prowler-app-rbac",
               "user-guide/tutorials/prowler-app-api-keys",
-              "user-guide/tutorials/prowler-app-findings-ingestion",
+              "user-guide/tutorials/prowler-app-import-findings",
               {
                 "group": "Mutelist",
                 "expanded": true,
@@ -118,12 +118,20 @@
                 ]
               },
               {
+                "group": "AWS Organizations",
+                "expanded": true,
+                "pages": [
+                  "user-guide/tutorials/prowler-cloud-aws-organizations"
+                ]
+              },
+              {
                 "group": "Lighthouse AI",
                 "pages": [
                   "user-guide/tutorials/prowler-app-lighthouse",
                   "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
                 ]
               },
+              "user-guide/tutorials/prowler-app-attack-paths",
               "user-guide/tutorials/prowler-cloud-public-ips",
               {
                 "group": "Tutorials",
@@ -287,6 +295,13 @@
                 "pages": [
                   "user-guide/providers/openstack/getting-started-openstack",
                   "user-guide/providers/openstack/authentication"
+                ]
+              },
+              {
+                "group": "Vercel",
+                "pages": [
+                  "user-guide/providers/vercel/getting-started-vercel",
+                  "user-guide/providers/vercel/authentication"
                 ]
               }
             ]

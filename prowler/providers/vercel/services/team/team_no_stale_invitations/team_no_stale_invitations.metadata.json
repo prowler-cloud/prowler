@@ -5,14 +5,16 @@
   "CheckType": [],
   "ServiceName": "team",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:team/{team_id}",
+  "ResourceIdTemplate": "",
   "Severity": "low",
-  "ResourceType": "VercelTeam",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "Checks whether the Vercel team has pending invitations that have been outstanding for more than 30 days. Stale invitations may indicate abandoned onboarding processes or forgotten invitation links that could be exploited.",
-  "Risk": "Stale pending invitations represent unresolved access grants. If invitation links are intercepted or forwarded to unintended recipients, they could be used to gain unauthorized access to the team. Old invitations also indicate poor access lifecycle management.",
-  "RelatedUrl": "https://vercel.com/docs/accounts/team-members-and-roles",
-  "AdditionalURLs": [],
+  "Description": "**Vercel team** is assessed for **stale invitations** by checking whether pending invitations have been outstanding for more than 30 days. Stale invitations may indicate abandoned onboarding processes or forgotten invitation links that could be exploited.",
+  "Risk": "**Stale pending invitations** represent unresolved access grants. If invitation links are intercepted or forwarded to unintended recipients, they could be used to gain **unauthorized access** to the team. Old invitations also indicate poor access lifecycle management.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/accounts/team-members-and-roles"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -22,11 +24,11 @@
     },
     "Recommendation": {
       "Text": "Regularly review and revoke stale team invitations. Establish a process to follow up on pending invitations within a reasonable timeframe and revoke those that are no longer needed to reduce the risk of unauthorized access.",
-      "Url": "https://vercel.com/docs/accounts/team-members-and-roles"
+      "Url": "https://hub.prowler.com/checks/vercel/team_no_stale_invitations"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

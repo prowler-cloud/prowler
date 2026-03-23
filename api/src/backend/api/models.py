@@ -294,6 +294,7 @@ class Provider(RowLevelSecurityProtectedModel):
         OPENSTACK = "openstack", _("OpenStack")
         VERCEL = "vercel", _("Vercel")
         IMAGE = "image", _("Image")
+        GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -340,6 +341,15 @@ class Provider(RowLevelSecurityProtectedModel):
                 "and contain only lowercase letters, numbers, and hyphens. "
                 "Legacy App Engine project IDs with a domain prefix (e.g., example.com:my-project) are also accepted.",
                 code="gcp-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_googleworkspace_uid(value):
+        if not re.match(r"^C[0-9a-zA-Z]+$", value):
+            raise ModelValidationError(
+                detail="Google Workspace Customer ID must start with 'C' followed by one or more alphanumeric characters (e.g., C01234abc, C12345678).",
+                code="googleworkspace-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -1782,6 +1792,15 @@ class FindingGroupDailySummary(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "provider", "inserted_at"],
                 name="fgds_tenant_prov_ins_idx",
+            ),
+            # Trigram indexes for case-insensitive search
+            GinIndex(
+                OpClass(Upper("check_id"), name="gin_trgm_ops"),
+                name="fgds_check_id_trgm_idx",
+            ),
+            GinIndex(
+                OpClass(Upper("check_title"), name="gin_trgm_ops"),
+                name="fgds_check_title_trgm_idx",
             ),
         ]
 

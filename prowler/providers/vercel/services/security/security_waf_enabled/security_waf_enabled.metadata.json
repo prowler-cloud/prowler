@@ -1,18 +1,20 @@
 {
   "Provider": "vercel",
   "CheckID": "security_waf_enabled",
-  "CheckTitle": "Ensure the Web Application Firewall is enabled for each project",
+  "CheckTitle": "Vercel project has the Web Application Firewall enabled",
   "CheckType": [],
   "ServiceName": "security",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:security/{resource_id}",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "VercelFirewallConfig",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "Checks whether the Vercel Web Application Firewall (WAF) is enabled for each project. The WAF provides protection against common web attacks including SQL injection, cross-site scripting (XSS), and other OWASP Top 10 threats.",
-  "Risk": "Without the Web Application Firewall enabled, the application is directly exposed to common web attacks including SQL injection, cross-site scripting, request smuggling, and other exploits. Attackers can exploit these vulnerabilities to steal data, deface the application, or gain unauthorized access.",
-  "RelatedUrl": "https://vercel.com/docs/security/vercel-firewall",
-  "AdditionalURLs": [],
+  "Description": "**Vercel projects** are assessed for **Web Application Firewall (WAF)** enablement. The WAF provides protection against common web attacks including **SQL injection**, **cross-site scripting (XSS)**, and other OWASP Top 10 threats.",
+  "Risk": "Without the **Web Application Firewall** enabled, the application is directly exposed to common web attacks including **SQL injection**, **cross-site scripting**, request smuggling, and other exploits. Attackers can exploit these vulnerabilities to steal data, deface the application, or gain unauthorized access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/vercel-firewall"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -22,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Enable the Vercel Web Application Firewall to protect your application against common web attacks. Start with managed rulesets for baseline protection and add custom rules as needed based on your application's threat model.",
-      "Url": "https://vercel.com/docs/security/vercel-firewall"
+      "Url": "https://hub.prowler.com/checks/vercel/security_waf_enabled"
     }
   },
   "Categories": [

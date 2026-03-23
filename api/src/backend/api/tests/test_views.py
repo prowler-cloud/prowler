@@ -1190,6 +1190,26 @@ class TestProviderViewSet:
                     "uid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                     "alias": "OpenStack Project",
                 },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C01234abc",
+                    "alias": "Google Workspace Customer",
+                },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C12345678",
+                    "alias": "Google Workspace All Digits",
+                },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "CABCDEF123",
+                    "alias": "Google Workspace Uppercase",
+                },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C12",
+                    "alias": "Google Workspace Minimum Length",
+                },
             ]
         ),
     )
@@ -1342,7 +1362,11 @@ class TestProviderViewSet:
         response = authenticated_client.post(
             reverse("provider-list"), data=provider_json_payload, format="json"
         )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_409_CONFLICT
+        error = response.json()["errors"][0]
+        assert error["detail"] == "Provider already exists."
+        assert error["code"] == "conflict"
+        assert error["source"]["pointer"] == "/data/attributes/uid"
 
         mock_delete_task.reset_mock()
         mock_delete_task.return_value = task_mock
@@ -1634,6 +1658,36 @@ class TestProviderViewSet:
                     "min_length",
                     "uid",
                 ),
+                # Google Workspace UID validation - missing 'C' prefix
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "01234abc",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - contains special characters
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "C0123-abc",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - lowercase 'c' prefix
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "c12345678",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -1807,21 +1861,21 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    10,
+                    11,
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 11),
+                ("inserted_at", TODAY, 12),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    11,
+                    12,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    11,
+                    12,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2435,6 +2489,15 @@ class TestProviderSecretViewSet:
                 {
                     "clouds_yaml_content": "clouds:\n  mycloud:\n    auth:\n      auth_url: https://openstack.example.com:5000/v3\n",
                     "clouds_yaml_cloud": "mycloud",
+                },
+            ),
+            # Google Workspace with service account credentials
+            (
+                Provider.ProviderChoices.GOOGLEWORKSPACE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "credentials_content": '{"type": "service_account", "project_id": "test-project", "private_key_id": "key123", "private_key": "-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----\\n", "client_email": "test@test-project.iam.gserviceaccount.com", "client_id": "123456789"}',
+                    "delegated_user": "admin@example.com",
                 },
             ),
         ],
@@ -3747,6 +3810,12 @@ class TestTaskViewSet:
 
 @pytest.mark.django_db
 class TestAttackPathsScanViewSet:
+    @pytest.fixture(autouse=True)
+    def _clear_throttle_cache(self):
+        from django.core.cache import cache
+
+        cache.clear()
+
     @staticmethod
     def _run_payload(query_id="aws-rds", parameters=None):
         return {
@@ -4348,8 +4417,6 @@ class TestAttackPathsScanViewSet:
             }
         }
 
-    # TODO: Remove skip once queries/custom and schema endpoints are unblocked
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_run_custom_query_returns_graph(
         self,
         authenticated_client,
@@ -4407,7 +4474,6 @@ class TestAttackPathsScanViewSet:
         assert attributes["total_nodes"] == 1
         assert attributes["truncated"] is False
 
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_run_custom_query_returns_text_when_accept_text_plain(
         self,
         authenticated_client,
@@ -4462,7 +4528,6 @@ class TestAttackPathsScanViewSet:
         assert "## Relationships (0)" in body
         assert "## Summary" in body
 
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_run_custom_query_returns_404_when_no_nodes(
         self,
         authenticated_client,
@@ -4504,7 +4569,6 @@ class TestAttackPathsScanViewSet:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_run_custom_query_returns_400_when_graph_not_ready(
         self,
         authenticated_client,
@@ -4531,7 +4595,6 @@ class TestAttackPathsScanViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "not available" in response.json()["errors"][0]["detail"]
 
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_run_custom_query_returns_403_for_write_query(
         self,
         authenticated_client,
@@ -4569,9 +4632,343 @@ class TestAttackPathsScanViewSet:
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
+    # -- SSRF blocklist (HTTP level) ----------------------------------------------
+
+    @pytest.mark.parametrize(
+        "cypher",
+        [
+            "LOAD CSV FROM 'http://169.254.169.254/' AS x RETURN x",
+            "CALL apoc.load.json('http://evil.com/') YIELD value RETURN value",
+            "CALL apoc.import.csv([{fileName: 'f'}], [], {}) YIELD node RETURN node",
+            "CALL apoc.export.csv.all('file.csv', {})",
+            "CALL apoc.cypher.run('CREATE (n)', {}) YIELD value RETURN value",
+            "CALL apoc.systemdb.graph() YIELD nodes RETURN nodes",
+        ],
+        ids=[
+            "LOAD_CSV",
+            "apoc.load",
+            "apoc.import",
+            "apoc.export",
+            "apoc.cypher.run",
+            "apoc.systemdb",
+        ],
+    )
+    def test_run_custom_query_rejects_ssrf_patterns(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+        cypher,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with patch(
+            "api.v1.views.graph_database.get_database_name",
+            return_value="db-test",
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(cypher),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "blocked" in response.json()["errors"][0]["detail"].lower()
+
+    # -- Cross-tenant isolation ---------------------------------------------------
+
+    def test_run_custom_query_returns_404_for_foreign_tenant(
+        self,
+        authenticated_client,
+        create_attack_paths_scan,
+    ):
+        from api.models import Provider, Tenant
+
+        foreign_tenant = Tenant.objects.create(name="foreign-tenant")
+        foreign_provider = Provider.objects.create(
+            tenant=foreign_tenant,
+            provider="aws",
+            uid="123456789999",
+        )
+        attack_paths_scan = create_attack_paths_scan(
+            foreign_provider,
+            graph_data_ready=True,
+        )
+
+        with patch(
+            "api.v1.views.graph_database.get_database_name",
+            return_value="db-test",
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_cartography_schema_returns_404_for_foreign_tenant(
+        self,
+        authenticated_client,
+        create_attack_paths_scan,
+    ):
+        from api.models import Provider, Tenant
+
+        foreign_tenant = Tenant.objects.create(name="foreign-tenant-schema")
+        foreign_provider = Provider.objects.create(
+            tenant=foreign_tenant,
+            provider="aws",
+            uid="123456789998",
+        )
+        attack_paths_scan = create_attack_paths_scan(
+            foreign_provider,
+            graph_data_ready=True,
+        )
+
+        response = authenticated_client.get(
+            reverse(
+                "attack-paths-scans-schema",
+                kwargs={"pk": attack_paths_scan.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    # -- Authentication / authorization -------------------------------------------
+
+    def test_run_custom_query_returns_401_unauthenticated(
+        self,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        from rest_framework.test import APIClient
+
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        unauthenticated = APIClient()
+        response = unauthenticated.post(
+            reverse(
+                "attack-paths-scans-queries-custom",
+                kwargs={"pk": attack_paths_scan.id},
+            ),
+            data=self._custom_query_payload(),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_cartography_schema_returns_401_unauthenticated(
+        self,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        from rest_framework.test import APIClient
+
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        unauthenticated = APIClient()
+        response = unauthenticated.get(
+            reverse(
+                "attack-paths-scans-schema",
+                kwargs={"pk": attack_paths_scan.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_run_custom_query_returns_403_no_manage_scans(
+        self,
+        authenticated_client_no_permissions_rbac,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        response = authenticated_client_no_permissions_rbac.post(
+            reverse(
+                "attack-paths-scans-queries-custom",
+                kwargs={"pk": attack_paths_scan.id},
+            ),
+            data=self._custom_query_payload(),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    # -- Error leakage ------------------------------------------------------------
+
+    def test_run_custom_query_does_not_leak_internals_on_error(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        from rest_framework.exceptions import APIException
+
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                side_effect=APIException(
+                    "Attack Paths query execution failed due to a database error"
+                ),
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        body = json.dumps(response.json()).lower()
+        for forbidden_term in ["neo4j", "bolt://", "syntaxerror", "db-tenant-"]:
+            assert forbidden_term not in body
+
+    # -- Rate limiting (throttle) -------------------------------------------------
+
+    def test_run_custom_query_throttled_after_limit(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        mock_graph = {
+            "nodes": [{"id": "n1", "labels": ["Test"], "properties": {}}],
+            "relationships": [],
+            "total_nodes": 1,
+            "truncated": False,
+        }
+
+        url = reverse(
+            "attack-paths-scans-queries-custom",
+            kwargs={"pk": attack_paths_scan.id},
+        )
+        payload = self._custom_query_payload()
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                return_value=mock_graph,
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+            patch(
+                "api.v1.views.graph_database.clear_cache",
+            ),
+        ):
+            for i in range(11):
+                response = authenticated_client.post(
+                    url,
+                    data=payload,
+                    content_type=API_JSON_CONTENT_TYPE,
+                )
+                if i < 10:
+                    assert (
+                        response.status_code == status.HTTP_200_OK
+                    ), f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
+                else:
+                    assert (
+                        response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+                    ), f"Request {i + 1} should be throttled"
+
+    # -- Timeout simulation -------------------------------------------------------
+
+    def test_run_custom_query_returns_500_on_database_timeout(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        from rest_framework.exceptions import APIException
+
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                side_effect=APIException(
+                    "Attack Paths query execution failed due to a database error"
+                ),
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
     # -- cartography_schema action ------------------------------------------------
 
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_cartography_schema_returns_urls(
         self,
         authenticated_client,
@@ -4621,7 +5018,6 @@ class TestAttackPathsScanViewSet:
         assert "schema.md" in attributes["schema_url"]
         assert "raw.githubusercontent.com" in attributes["raw_schema_url"]
 
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_cartography_schema_returns_404_when_no_metadata(
         self,
         authenticated_client,
@@ -4656,7 +5052,6 @@ class TestAttackPathsScanViewSet:
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert "No cartography schema metadata" in str(response.json())
 
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_cartography_schema_returns_400_when_graph_not_ready(
         self,
         authenticated_client,
@@ -7463,8 +7858,12 @@ class TestUserRoleRelationshipViewSet:
         assert response.status_code == status.HTTP_204_NO_CONTENT
         relationships = UserRoleRelationship.objects.filter(user=create_test_user.id)
         assert relationships.count() == 4
-        for relationship in relationships[2:]:  # Skip admin role
-            assert relationship.role.id in [r.id for r in roles_fixture[:2]]
+        # Use set membership instead of positional slicing — QuerySet ordering is
+        # non-deterministic without an explicit order_by, which makes slice-based
+        # checks intermittently fail.
+        added_role_ids = {r.id for r in roles_fixture[:2]}
+        relationship_role_ids = {rel.role.id for rel in relationships}
+        assert added_role_ids.issubset(relationship_role_ids)
 
     def test_create_relationship_already_exists(
         self, authenticated_client, roles_fixture, create_test_user
@@ -15126,6 +15525,22 @@ class TestFindingGroupViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 1
         assert "bucket" in response.json()["data"][0]["id"].lower()
+
+    def test_finding_groups_check_title_icontains(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test searching check titles with icontains."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_title.icontains]": "public access",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "s3_bucket_public_access"
 
     def test_resources_not_found(self, authenticated_client):
         """Test 404 returned for nonexistent check_id."""

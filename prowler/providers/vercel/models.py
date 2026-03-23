@@ -11,6 +11,7 @@ class VercelSession(BaseModel):
 
     token: str
     team_id: Optional[str] = None
+    base_url: str = "https://api.vercel.com"
     http_session: Any = Field(default=None, exclude=True)
 
 
@@ -29,6 +30,7 @@ class VercelIdentityInfo(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
     team: Optional[VercelTeamInfo] = None
+    teams: list[VercelTeamInfo] = Field(default_factory=list)
 
 
 class VercelOutputOptions(ProviderOutputOptions):

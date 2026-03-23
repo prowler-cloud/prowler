@@ -23,7 +23,7 @@ class project_password_protection_enabled(Check):
         for project in project_client.projects.values():
             report = CheckReportVercel(metadata=self.metadata(), resource=project)
 
-            if project.password_protection is not None and isinstance(
+            if project.password_protection and isinstance(
                 project.password_protection, dict
             ):
                 report.status = "PASS"

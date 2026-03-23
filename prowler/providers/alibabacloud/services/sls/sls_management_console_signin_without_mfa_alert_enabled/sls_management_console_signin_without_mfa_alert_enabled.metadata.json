@@ -1,29 +1,26 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "sls_management_console_signin_without_mfa_alert_enabled",
-  "CheckTitle": "A log monitoring and alerts are set up for Management Console sign-in without MFA",
-  "CheckType": [
-    "Unusual logon",
-    "Abnormal account"
-  ],
+  "CheckTitle": "A log monitoring and alert is set up for Management Console sign-in without MFA",
+  "CheckType": [],
   "ServiceName": "sls",
   "SubServiceName": "",
-  "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "Real-time monitoring of API calls can be achieved by directing **ActionTrail Logs** to Log Service and establishing corresponding query and alarms.\n\nIt is recommended that a query and alarm be established for console logins that are not protected by **multi-factor authentication (MFA)**.",
-  "Risk": "Monitoring for **single-factor console logins** will increase visibility into accounts that are not protected by MFA.\n\nThis helps identify potential security gaps in authentication enforcement.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for console logins not protected by **MFA**. By directing **ActionTrail** logs to SLS with alert rules, single-factor console sign-in events are detected, helping identify accounts that bypass MFA enforcement policies.",
+  "Risk": "Without monitoring for **single-factor logins**, accounts not protected by MFA may go unnoticed, increasing risk of **unauthorized access** through compromised credentials. Failure to monitor MFA compliance weakens **authentication posture** and may lead to **privilege escalation** or **data breaches** if an attacker accesses an unprotected account.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/single-factor-console-logins-alert.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/single-factor-console-logins-alert.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aliyun sls create-alert --project <project-name> --alert-name console-signin-no-mfa --alert-displayname 'Console Sign-in Without MFA Alert' --condition 'event.eventName: ConsoleSignin and event.additionalEventData.MFAUsed: false' --dashboard <dashboard-name> --schedule '{\"type\":\"FixedRate\",\"interval\":\"1m\"}'",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Log on to the **SLS Console**.\n2. Ensure **ActionTrail** is enabled and delivering logs to a **Log Service** project.\n3. Navigate to the project receiving ActionTrail logs.\n4. Select **Alerts** and click **Create Alert Rule**.\n5. Configure the query to filter for sign-in without MFA: `event.eventName: ConsoleSignin and event.additionalEventData.MFAUsed: false`.\n6. Set the alert **schedule**, **notification method**, and **severity**.\n7. Save and enable the alert rule.",
       "Terraform": ""
     },
     "Recommendation": {

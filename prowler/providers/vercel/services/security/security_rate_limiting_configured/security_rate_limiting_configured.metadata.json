@@ -1,18 +1,20 @@
 {
   "Provider": "vercel",
   "CheckID": "security_rate_limiting_configured",
-  "CheckTitle": "Ensure rate limiting rules are configured for each project",
+  "CheckTitle": "Vercel project has rate limiting rules configured",
   "CheckType": [],
   "ServiceName": "security",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:security/{resource_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VercelFirewallConfig",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "Checks whether Vercel projects have at least one rate limiting rule configured. Rate limiting protects applications from abuse, brute-force attacks, and DDoS attempts by restricting the number of requests from a single source within a given time window.",
-  "Risk": "Without rate limiting, the application is vulnerable to brute-force attacks on authentication endpoints, API abuse, resource exhaustion, and denial-of-service attacks. Attackers can overwhelm the application with excessive requests, degrading performance for legitimate users or exploiting endpoints without throttling.",
-  "RelatedUrl": "https://vercel.com/docs/security/vercel-firewall",
-  "AdditionalURLs": [],
+  "Description": "**Vercel projects** are assessed for **rate limiting rule** configuration. Rate limiting protects applications from abuse, brute-force attacks, and DDoS attempts by restricting the number of requests from a single source within a given time window.",
+  "Risk": "Without **rate limiting**, the application is vulnerable to **brute-force attacks** on authentication endpoints, API abuse, resource exhaustion, and denial-of-service attacks. Attackers can overwhelm the application with excessive requests, degrading performance for legitimate users or exploiting endpoints without throttling.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/vercel-firewall"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -22,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Configure rate limiting rules to protect critical endpoints such as authentication, API routes, and form submissions. Start with conservative thresholds and adjust based on traffic patterns to avoid blocking legitimate users.",
-      "Url": "https://vercel.com/docs/security/vercel-firewall"
+      "Url": "https://hub.prowler.com/checks/vercel/security_rate_limiting_configured"
     }
   },
   "Categories": [

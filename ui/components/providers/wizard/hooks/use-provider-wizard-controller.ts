@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { DOCS_URLS, getProviderHelpText } from "@/lib/external-urls";
 import { useOrgSetupStore } from "@/store/organizations/store";
@@ -24,7 +23,7 @@ import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
 } from "../steps/footer-controls";
-import type { ProviderWizardInitialData } from "../types";
+import type { OrgWizardInitialData, ProviderWizardInitialData } from "../types";
 
 const WIZARD_VARIANT = {
   PROVIDER: "provider",
@@ -49,12 +48,14 @@ interface UseProviderWizardControllerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialData?: ProviderWizardInitialData;
+  orgInitialData?: OrgWizardInitialData;
 }
 
 export function useProviderWizardController({
   open,
   onOpenChange,
   initialData,
+  orgInitialData,
 }: UseProviderWizardControllerProps) {
   const initialProviderId = initialData?.providerId ?? null;
   const initialProviderType = initialData?.providerType ?? null;
@@ -63,7 +64,7 @@ export function useProviderWizardController({
   const initialSecretId = initialData?.secretId ?? null;
   const initialVia = initialData?.via ?? null;
   const initialMode = initialData?.mode ?? null;
-  const router = useRouter();
+  const hasHydratedForCurrentOpenRef = useRef(false);
   const [wizardVariant, setWizardVariant] = useState<WizardVariant>(
     WIZARD_VARIANT.PROVIDER,
   );
@@ -91,10 +92,31 @@ export function useProviderWizardController({
     mode,
     providerType,
   } = useProviderWizardStore();
-  const { reset: resetOrgWizard } = useOrgSetupStore();
+  const { reset: resetOrgWizard, setOrganization } = useOrgSetupStore();
 
   useEffect(() => {
     if (!open) {
+      hasHydratedForCurrentOpenRef.current = false;
+      return;
+    }
+
+    if (hasHydratedForCurrentOpenRef.current) {
+      return;
+    }
+    hasHydratedForCurrentOpenRef.current = true;
+
+    if (orgInitialData) {
+      setWizardVariant(WIZARD_VARIANT.ORGANIZATIONS);
+      resetOrgWizard();
+      setOrganization(
+        orgInitialData.organizationId,
+        orgInitialData.organizationName,
+        orgInitialData.externalId,
+      );
+      setOrgCurrentStep(orgInitialData.targetStep);
+      setOrgSetupPhase(orgInitialData.targetPhase);
+      setFooterConfig(EMPTY_FOOTER_CONFIG);
+      setProviderTypeHint(null);
       return;
     }
 
@@ -139,13 +161,17 @@ export function useProviderWizardController({
     initialSecretId,
     initialVia,
     open,
+    orgInitialData,
     resetOrgWizard,
     resetProviderWizard,
     setMode,
+    setOrganization,
     setProvider,
     setSecretId,
     setVia,
   ]);
+
+  const isOrgDirectEntry = Boolean(orgInitialData);
 
   const handleClose = () => {
     resetProviderWizard();
@@ -172,7 +198,6 @@ export function useProviderWizardController({
       handleClose();
       return;
     }
-
     setCurrentStep(PROVIDER_WIZARD_STEP.LAUNCH);
   };
 
@@ -198,25 +223,7 @@ export function useProviderWizardController({
   const docsLink = isProviderFlow
     ? getProviderHelpText(providerTypeHint ?? providerType ?? "").link
     : DOCS_URLS.AWS_ORGANIZATIONS;
-  const resolvedFooterConfig: WizardFooterConfig =
-    isProviderFlow && currentStep === PROVIDER_WIZARD_STEP.LAUNCH
-      ? {
-          showBack: true,
-          backLabel: "Back",
-          onBack: () => setCurrentStep(PROVIDER_WIZARD_STEP.TEST),
-          showSecondaryAction: false,
-          secondaryActionLabel: "",
-          secondaryActionVariant: "outline",
-          secondaryActionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
-          showAction: true,
-          actionLabel: "Go to scans",
-          actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
-          onAction: () => {
-            handleClose();
-            router.push("/scans");
-          },
-        }
-      : footerConfig;
+  const resolvedFooterConfig: WizardFooterConfig = footerConfig;
   const modalTitle = getProviderWizardModalTitle(mode);
 
   return {
@@ -226,6 +233,7 @@ export function useProviderWizardController({
     handleClose,
     handleDialogOpenChange,
     handleTestSuccess,
+    isOrgDirectEntry,
     isProviderFlow,
     modalTitle,
     openOrganizationsFlow,
