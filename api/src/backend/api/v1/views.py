@@ -31,6 +31,7 @@ from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import (
     Case,
+    CharField,
     Count,
     DecimalField,
     ExpressionWrapper,
@@ -124,6 +125,7 @@ from api.filters import (
     CustomDjangoFilterBackend,
     DailySeveritySummaryFilter,
     FindingFilter,
+    FindingGroupAggregatedComputedFilter,
     FindingGroupFilter,
     FindingGroupSummaryFilter,
     IntegrationFilter,
@@ -6872,6 +6874,39 @@ class FindingGroupViewSet(BaseRLSViewSet):
         "resource_type__icontains": "type__icontains",
     }
 
+    def _get_finding_level_filter_keys(self, latest: bool = False) -> set[str]:
+        """Derive filters that require finding-level prefiltering."""
+        summary_filterset = (
+            LatestFindingGroupSummaryFilter if latest else FindingGroupSummaryFilter
+        )
+        finding_filterset = LatestFindingGroupFilter if latest else FindingGroupFilter
+
+        summary_supported = set(summary_filterset.base_filters.keys()) | {
+            "status",
+            "status__in",
+            "severity",
+            "severity__in",
+        }
+        finding_supported = set(finding_filterset.base_filters.keys())
+        return finding_supported - summary_supported
+
+    def _requires_finding_level_aggregation(
+        self, params: QueryDict, latest: bool = False
+    ) -> bool:
+        finding_level_keys = self._get_finding_level_filter_keys(latest=latest)
+        return any(key in finding_level_keys for key in params.keys())
+
+    def _get_matching_check_ids_from_findings(
+        self, normalized_params: QueryDict, latest: bool = False
+    ):
+        """Return check_ids matching advanced finding-level filters."""
+        finding_queryset = self._get_finding_queryset()
+        filterset_class = LatestFindingGroupFilter if latest else FindingGroupFilter
+        filterset = filterset_class(normalized_params, queryset=finding_queryset)
+        if not filterset.is_valid():
+            raise ValidationError(filterset.errors)
+        return filterset.qs.values("check_id").distinct()
+
     def _split_resource_filters(self, params: QueryDict) -> tuple[QueryDict, QueryDict]:
         resource_keys = set(self.RESOURCE_FILTER_MAP)
         finding_params = QueryDict(mutable=True)
@@ -6998,6 +7033,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
         """Validate and map JSON:API sort fields for aggregated finding groups."""
         sort_field_map = {
             "check_id": "check_id",
+            "check_title": "check_title",
             "severity": "severity_order",
             "fail_count": "fail_count",
             "pass_count": "pass_count",
@@ -7034,6 +7070,43 @@ class FindingGroupViewSet(BaseRLSViewSet):
             ordering.append(f"-{mapped_field}" if is_desc else mapped_field)
 
         return ordering
+
+    def _apply_aggregated_computed_filters(
+        self, queryset, normalized_params: QueryDict
+    ):
+        """Apply computed filters (status/severity) on aggregated finding-group rows."""
+        status_params = QueryDict(mutable=True)
+        if normalized_params.get("status"):
+            status_params.setlist("status", [normalized_params.get("status")])
+        if normalized_params.getlist("status__in"):
+            status_params.setlist("status__in", normalized_params.getlist("status__in"))
+        if normalized_params.get("severity"):
+            status_params.setlist("severity", [normalized_params.get("severity")])
+        if normalized_params.getlist("severity__in"):
+            status_params.setlist(
+                "severity__in", normalized_params.getlist("severity__in")
+            )
+
+        if not status_params:
+            return queryset
+
+        if status_params.get("status") or status_params.getlist("status__in"):
+            queryset = queryset.annotate(
+                aggregated_status=Case(
+                    When(fail_count__gt=0, then=Value("FAIL")),
+                    When(pass_count__gt=0, then=Value("PASS")),
+                    default=Value("MUTED"),
+                    output_field=CharField(),
+                )
+            )
+
+        filterset = FindingGroupAggregatedComputedFilter(
+            status_params, queryset=queryset
+        )
+        if not filterset.is_valid():
+            raise ValidationError(filterset.errors)
+
+        return filterset.qs
 
     def _build_resource_mapping_queryset(
         self, filtered_queryset, resource_ids=None, tenant_id: str | None = None
@@ -7166,6 +7239,17 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         # Re-aggregate daily summaries across the date range
         aggregated_queryset = self._aggregate_daily_summaries(filtered_queryset)
+        aggregated_queryset = self._apply_aggregated_computed_filters(
+            aggregated_queryset, normalized_params
+        )
+
+        if self._requires_finding_level_aggregation(normalized_params, latest=False):
+            matching_check_ids = self._get_matching_check_ids_from_findings(
+                normalized_params, latest=False
+            )
+            aggregated_queryset = aggregated_queryset.filter(
+                check_id__in=Subquery(matching_check_ids)
+            )
 
         # Apply ordering (respect JSON:API sort param or use default)
         sort_param = request.query_params.get("sort")
@@ -7239,6 +7323,17 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         # Re-aggregate daily summaries
         aggregated_queryset = self._aggregate_daily_summaries(latest_per_check)
+        aggregated_queryset = self._apply_aggregated_computed_filters(
+            aggregated_queryset, normalized_params
+        )
+
+        if self._requires_finding_level_aggregation(normalized_params, latest=True):
+            matching_check_ids = self._get_matching_check_ids_from_findings(
+                normalized_params, latest=True
+            )
+            aggregated_queryset = aggregated_queryset.filter(
+                check_id__in=Subquery(matching_check_ids)
+            )
 
         # Apply ordering
         sort_param = request.query_params.get("sort")
