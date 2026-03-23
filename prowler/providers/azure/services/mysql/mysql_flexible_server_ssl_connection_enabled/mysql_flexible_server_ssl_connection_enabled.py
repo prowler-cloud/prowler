@@ -20,7 +20,10 @@ class mysql_flexible_server_ssl_connection_enabled(Check):
                     report.resource_id = server.configurations[
                         "require_secure_transport"
                     ].resource_id
-                    if server.configurations["require_secure_transport"].value == "ON":
+                    if (
+                        server.configurations["require_secure_transport"].value.lower()
+                        == "on"
+                    ):
                         report.status = "PASS"
                         report.status_extended = f"SSL connection is enabled for server {server.name} in subscription {subscription_name}."
 
