@@ -1,9 +1,14 @@
 "use client";
 
 import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, InfoIcon } from "lucide-react";
 
 import { Checkbox } from "@/components/shadcn";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import {
   DataTableColumnHeader,
   SeverityBadge,
@@ -64,8 +69,7 @@ export function getColumnFindingGroups({
       cell: ({ row }) => {
         const group = row.original;
         const allMuted =
-          group.mutedCount > 0 &&
-          group.mutedCount === group.resourcesTotal;
+          group.mutedCount > 0 && group.mutedCount === group.resourcesTotal;
 
         const delta =
           group.newCount > 0
@@ -166,8 +170,21 @@ export function getColumnFindingGroups({
     // Impacted Resources column
     {
       id: "impactedResources",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Impacted Resources" />
+      header: () => (
+        <div className="-ml-px flex h-8 items-center text-left align-middle text-sm font-semibold whitespace-nowrap">
+          <span>Impacted Resources</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="ml-1 inline-flex cursor-pointer items-center">
+                <InfoIcon className="text-bg-data-info size-3" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              Total across all accounts for this check. Not affected by active
+              filters.
+            </TooltipContent>
+          </Tooltip>
+        </div>
       ),
       cell: ({ row }) => {
         const group = row.original;
