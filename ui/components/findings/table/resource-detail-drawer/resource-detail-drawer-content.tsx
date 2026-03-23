@@ -17,6 +17,7 @@ import { getComplianceIcon } from "@/components/icons";
 import { JiraIcon } from "@/components/icons/services/IconServices";
 import {
   Badge,
+  InfoField,
   Tabs,
   TabsContent,
   TabsList,
@@ -246,19 +247,11 @@ export function ResourceDetailDrawerContent({
                 entityId={f.resourceUid}
                 idLabel="UID"
               />
-              <div className="flex flex-col gap-1">
-                <span className="text-text-neutral-secondary text-[10px]">
-                  Service
-                </span>
-                <span className="text-text-neutral-primary text-sm">
-                  {f.resourceService}
-                </span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-text-neutral-secondary text-[10px]">
-                  Region
-                </span>
-                <span className="text-text-neutral-primary flex items-center gap-1.5 text-sm">
+              <InfoField label="Service" variant="compact">
+                {f.resourceService}
+              </InfoField>
+              <InfoField label="Region" variant="compact">
+                <span className="flex items-center gap-1.5">
                   {getRegionFlag(f.resourceRegion) && (
                     <span className="translate-y-px text-base leading-none">
                       {getRegionFlag(f.resourceRegion)}
@@ -266,7 +259,7 @@ export function ResourceDetailDrawerContent({
                   )}
                   {f.resourceRegion}
                 </span>
-              </div>
+              </InfoField>
               <div>
                 <ActionDropdown ariaLabel="Resource actions">
                   <ActionDropdownItem
@@ -292,60 +285,40 @@ export function ResourceDetailDrawerContent({
 
             {/* Dates row */}
             <div className="grid grid-cols-3 gap-4">
-              <div className="flex flex-col gap-1">
-                <span className="text-text-neutral-secondary text-[10px]">
-                  Last detected
-                </span>
+              <InfoField label="Last detected" variant="compact">
                 <DateWithTime inline dateTime={f.updatedAt || "-"} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-text-neutral-secondary text-[10px]">
-                  First seen
-                </span>
+              </InfoField>
+              <InfoField label="First seen" variant="compact">
                 <DateWithTime inline dateTime={f.firstSeenAt || "-"} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-text-neutral-secondary text-[10px]">
-                  Failing for
-                </span>
-                <span className="text-text-neutral-primary text-sm">
-                  {getFailingForLabel(f.firstSeenAt) || "-"}
-                </span>
-              </div>
+              </InfoField>
+              <InfoField label="Failing for" variant="compact">
+                {getFailingForLabel(f.firstSeenAt) || "-"}
+              </InfoField>
             </div>
 
             {/* IDs row */}
             <div className="grid grid-cols-3 gap-4">
-              <div className="flex flex-col gap-1">
-                <span className="text-text-neutral-secondary text-[10px]">
-                  Check ID
-                </span>
+              <InfoField label="Check ID" variant="compact">
                 <CodeSnippet
                   value={checkMeta.checkId}
                   transparent
                   className="max-w-full text-sm"
                 />
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-text-neutral-secondary text-[10px]">
-                  Finding ID
-                </span>
+              </InfoField>
+              <InfoField label="Finding ID" variant="compact">
                 <CodeSnippet
                   value={f.id}
                   transparent
                   className="max-w-full text-sm"
                 />
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-text-neutral-secondary text-[10px]">
-                  Finding UID
-                </span>
+              </InfoField>
+              <InfoField label="Finding UID" variant="compact">
                 <CodeSnippet
                   value={f.uid}
                   transparent
                   className="max-w-full text-sm"
                 />
-              </div>
+              </InfoField>
             </div>
           </>
         )}

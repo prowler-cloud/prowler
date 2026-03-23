@@ -12,9 +12,11 @@ import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
 import { DateWithTime } from "@/components/ui/entities";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { SeverityBadge } from "@/components/ui/table";
+import { DataTableColumnHeader } from "@/components/ui/table/data-table-column-header";
 import {
   type FindingStatus,
   StatusFindingBadge,
@@ -79,12 +81,14 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
 
   return (
     <>
-      <MuteFindingsModal
-        isOpen={isMuteModalOpen}
-        onOpenChange={setIsMuteModalOpen}
-        findingIds={resolvedIds}
-        onComplete={handleMuteComplete}
-      />
+      {!resource.isMuted && (
+        <MuteFindingsModal
+          isOpen={isMuteModalOpen}
+          onOpenChange={setIsMuteModalOpen}
+          findingIds={resolvedIds}
+          onComplete={handleMuteComplete}
+        />
+      )}
       <div
         className="flex items-center justify-end"
         onClick={(e) => e.stopPropagation()}
@@ -109,7 +113,7 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
               resource.isMuted ? (
                 <VolumeOff className="size-5" />
               ) : isResolving ? (
-                <div className="size-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                <TreeSpinner className="size-5" />
               ) : (
                 <VolumeX className="size-5" />
               )
@@ -190,10 +194,8 @@ export function getColumnFindingResources({
     // Resource — name + uid (EntityInfo with resource icon)
     {
       id: "resource",
-      header: () => (
-        <span className="text-text-neutral-secondary text-sm font-medium">
-          Resource
-        </span>
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Resource" />
       ),
       cell: ({ row }) => (
         <EntityInfo
@@ -206,10 +208,8 @@ export function getColumnFindingResources({
     // Status
     {
       id: "status",
-      header: () => (
-        <span className="text-text-neutral-secondary text-sm font-medium">
-          Status
-        </span>
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Status" />
       ),
       cell: ({ row }) => {
         const rawStatus = row.original.status;
@@ -222,10 +222,8 @@ export function getColumnFindingResources({
     // Service
     {
       id: "service",
-      header: () => (
-        <span className="text-text-neutral-secondary text-sm font-medium">
-          Service
-        </span>
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Service" />
       ),
       cell: ({ row }) => (
         <p className="text-text-neutral-primary max-w-[100px] truncate text-sm">
@@ -237,10 +235,8 @@ export function getColumnFindingResources({
     // Region
     {
       id: "region",
-      header: () => (
-        <span className="text-text-neutral-secondary text-sm font-medium">
-          Region
-        </span>
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Region" />
       ),
       cell: ({ row }) => (
         <p className="text-text-neutral-primary max-w-[120px] truncate text-sm">
@@ -252,10 +248,8 @@ export function getColumnFindingResources({
     // Severity
     {
       id: "severity",
-      header: () => (
-        <span className="text-text-neutral-secondary text-sm font-medium">
-          Severity
-        </span>
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Severity" />
       ),
       cell: ({ row }) => <SeverityBadge severity={row.original.severity} />,
       enableSorting: false,
@@ -263,10 +257,8 @@ export function getColumnFindingResources({
     // Account — alias + uid (EntityInfo with provider logo)
     {
       id: "account",
-      header: () => (
-        <span className="text-text-neutral-secondary text-sm font-medium">
-          Account
-        </span>
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Account" />
       ),
       cell: ({ row }) => (
         <EntityInfo
@@ -280,10 +272,8 @@ export function getColumnFindingResources({
     // Last seen
     {
       id: "lastSeen",
-      header: () => (
-        <span className="text-text-neutral-secondary text-sm font-medium">
-          Last seen
-        </span>
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Last seen" />
       ),
       cell: ({ row }) => <DateWithTime dateTime={row.original.lastSeenAt} />,
       enableSorting: false,
@@ -291,10 +281,8 @@ export function getColumnFindingResources({
     // Failing for — duration since first_seen_at
     {
       id: "failingFor",
-      header: () => (
-        <span className="text-text-neutral-secondary text-sm font-medium">
-          Failing for
-        </span>
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Failing for" />
       ),
       cell: ({ row }) => {
         const label = getFailingForLabel(row.original.firstSeenAt);
