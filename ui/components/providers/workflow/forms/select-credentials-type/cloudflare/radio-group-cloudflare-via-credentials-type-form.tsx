@@ -44,7 +44,7 @@ export const RadioGroupCloudflareViaCredentialsTypeForm = ({
             </WizardRadioCard>
           </RadioGroup>
           {errorMessage && (
-            <FormMessage className="text-text-error">
+            <FormMessage className="text-text-error-primary">
               {errorMessage}
             </FormMessage>
           )}

@@ -7,7 +7,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, api]
   auto_invoke:
     - "Creating Attack Paths queries"
@@ -80,7 +80,16 @@ api/src/backend/api/attack_paths/queries/{provider}.py
 
 Example: `api/src/backend/api/attack_paths/queries/aws.py`
 
-### Query Definition Pattern
+### Query parameters for provider scoping
+
+Two parameters exist. Both are injected automatically by the query runner.
+
+| Parameter       | Property it matches | Used on        | Purpose                              |
+| --------------- | ------------------- | -------------- | ------------------------------------ |
+| `$provider_uid` | `id`                | `AWSAccount`   | Scopes to a specific AWS account     |
+| `$provider_id`  | `_provider_id`      | Any other node | Scopes nodes to the provider context |
+
+### Privilege Escalation Query Pattern
 
 ```python
 from api.attack_paths.queries.types import (
@@ -88,7 +97,6 @@ from api.attack_paths.queries.types import (
     AttackPathsQueryDefinition,
     AttackPathsQueryParameterDefinition,
 )
-from tasks.jobs.attack_paths.config import PROWLER_FINDING_LABEL
 
 # {REFERENCE_ID} (e.g., EC2-001, GLUE-001)
 AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
@@ -129,10 +137,40 @@ AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
         )
 
         UNWIND nodes(path_principal) + nodes(path_target) as n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding {{status: 'FAIL', provider_uid: $provider_uid}})
 
         RETURN path_principal, path_target,
             collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+```
+
+### Network Exposure Query Pattern
+
+```python
+AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
+    id="aws-{kebab-case-name}",
+    name="{Human-friendly label}",
+    short_description="{Brief explanation.}",
+    description="{Detailed description.}",
+    provider="aws",
+    cypher=f"""
+        // Match the Internet sentinel node
+        OPTIONAL MATCH (internet:Internet {{_provider_id: $provider_id}})
+
+        // Match exposed resources (MUST chain from `aws`)
+        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(resource:EC2Instance)
+        WHERE resource.exposed_internet = true
+
+        // Link Internet to resource
+        OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(resource)
+
+        UNWIND nodes(path) as n
+        OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding {{status: 'FAIL', provider_uid: $provider_uid}})
+
+        RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr,
+            internet, can_access
     """,
     parameters=[],
 )
@@ -214,11 +252,12 @@ https://raw.githubusercontent.com/cartography-cncf/cartography/refs/tags/0.126.0
 
 **IMPORTANT**: Always match the schema version to the dependency version in `pyproject.toml`. Using master/main may reference node labels or properties that don't exist in the deployed version.
 
-**Additional Prowler Labels**: The Attack Paths sync task adds extra labels:
+**Additional Prowler Labels**: The Attack Paths sync task adds labels that queries can reference:
 
 - `ProwlerFinding` - Prowler finding nodes with `status`, `provider_uid` properties
-- `ProviderResource` - Generic resource marker
-- `{Provider}Resource` - Provider-specific marker (e.g., `AWSResource`)
+- `Internet` - Internet sentinel node with `_provider_id` property (used in network exposure queries)
+
+Other internal labels (`_ProviderResource`, `_AWSResource`, `_Tenant_*`, `_Provider_*`) exist for isolation but should never be used in queries.
 
 These are defined in `api/src/backend/tasks/jobs/attack_paths/config.py`.
 
@@ -234,7 +273,7 @@ This informs query design by showing what data is actually available to query.
 
 ### 4. Create Query Definition
 
-Use the standard pattern (see above) with:
+Use the appropriate pattern (privilege escalation or network exposure) with:
 
 - **id**: Auto-generated as `{provider}-{kebab-case-description}`
 - **name**: Short, human-friendly label. No raw IAM permissions. For sourced queries (e.g., pathfinding.cloud), append the reference ID in parentheses: `"EC2 Instance Launch with Privileged Role (EC2-001)"`. If the name already has parentheses, prepend the ID inside them: `"ECS Service Creation with Privileged Role (ECS-003 - Existing Cluster)"`.
@@ -263,7 +302,7 @@ Examples:
 
 - `aws-ec2-privesc-passrole-iam`
 - `aws-iam-privesc-attach-role-policy-assume-role`
-- `aws-rds-unencrypted-storage`
+- `aws-ec2-instances-internet-exposed`
 
 ### Query Constant Name
 
@@ -275,7 +314,7 @@ Examples:
 
 - `AWS_EC2_PRIVESC_PASSROLE_IAM`
 - `AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_ASSUME_ROLE`
-- `AWS_RDS_UNENCRYPTED_STORAGE`
+- `AWS_EC2_INSTANCES_INTERNET_EXPOSED`
 
 ---
 
@@ -325,14 +364,49 @@ WHERE any(resource IN stmt.resource WHERE
 )
 ```
 
+### Match Internet Sentinel Node
+
+Used in network exposure queries. The Internet node is a real graph node, scoped by `_provider_id`:
+
+```cypher
+OPTIONAL MATCH (internet:Internet {_provider_id: $provider_id})
+```
+
+### Link Internet to Exposed Resource
+
+The `CAN_ACCESS` relationship is a real graph relationship linking the Internet node to exposed resources:
+
+```cypher
+OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(resource)
+```
+
+### Multi-label OR (match multiple resource types)
+
+When a query needs to match different resource types in the same position, use label checks in WHERE:
+
+```cypher
+MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x)-[q]-(y)
+WHERE (x:EC2PrivateIp AND x.public_ip = $ip)
+   OR (x:EC2Instance AND x.publicipaddress = $ip)
+   OR (x:NetworkInterface AND x.public_ip = $ip)
+   OR (x:ElasticIPAddress AND x.public_ip = $ip)
+```
+
 ### Include Prowler Findings
 
 ```cypher
 UNWIND nodes(path_principal) + nodes(path_target) as n
-OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {status: 'FAIL', provider_uid: $provider_uid})
+OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding {status: 'FAIL', provider_uid: $provider_uid})
 
 RETURN path_principal, path_target,
     collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+```
+
+For network exposure queries, also return the internet node and relationship:
+
+```cypher
+RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr,
+    internet, can_access
 ```
 
 ---
@@ -341,30 +415,40 @@ RETURN path_principal, path_target,
 
 ### AWS
 
-| Label                | Description                         |
-| -------------------- | ----------------------------------- |
-| `AWSAccount`         | AWS account root                    |
-| `AWSPrincipal`       | IAM principal (user, role, service) |
-| `AWSRole`            | IAM role                            |
-| `AWSUser`            | IAM user                            |
-| `AWSPolicy`          | IAM policy                          |
-| `AWSPolicyStatement` | Policy statement                    |
-| `EC2Instance`        | EC2 instance                        |
-| `EC2SecurityGroup`   | Security group                      |
-| `S3Bucket`           | S3 bucket                           |
-| `RDSInstance`        | RDS database instance               |
-| `LoadBalancer`       | Classic ELB                         |
-| `LoadBalancerV2`     | ALB/NLB                             |
-| `LaunchTemplate`     | EC2 launch template                 |
+| Label                 | Description                             |
+| --------------------- | --------------------------------------- |
+| `AWSAccount`          | AWS account root                        |
+| `AWSPrincipal`        | IAM principal (user, role, service)     |
+| `AWSRole`             | IAM role                                |
+| `AWSUser`             | IAM user                                |
+| `AWSPolicy`           | IAM policy                              |
+| `AWSPolicyStatement`  | Policy statement                        |
+| `AWSTag`              | Resource tag (key/value)                |
+| `EC2Instance`         | EC2 instance                            |
+| `EC2SecurityGroup`    | Security group                          |
+| `EC2PrivateIp`        | EC2 private IP (has `public_ip`)        |
+| `IpPermissionInbound` | Inbound security group rule             |
+| `IpRange`             | IP range (e.g., `0.0.0.0/0`)            |
+| `NetworkInterface`    | ENI (has `public_ip`)                   |
+| `ElasticIPAddress`    | Elastic IP (has `public_ip`)            |
+| `S3Bucket`            | S3 bucket                               |
+| `RDSInstance`         | RDS database instance                   |
+| `LoadBalancer`        | Classic ELB                             |
+| `LoadBalancerV2`      | ALB/NLB                                 |
+| `ELBListener`         | Classic ELB listener                    |
+| `ELBV2Listener`       | ALB/NLB listener                        |
+| `LaunchTemplate`      | EC2 launch template                     |
+| `Internet`            | Internet sentinel node (`_provider_id`) |
 
 ### Common Relationships
 
-| Relationship           | Description             |
-| ---------------------- | ----------------------- |
-| `TRUSTS_AWS_PRINCIPAL` | Role trust relationship |
-| `STS_ASSUMEROLE_ALLOW` | Can assume role         |
-| `POLICY`               | Has policy attached     |
-| `STATEMENT`            | Policy has statement    |
+| Relationship           | Description                        |
+| ---------------------- | ---------------------------------- |
+| `TRUSTS_AWS_PRINCIPAL` | Role trust relationship            |
+| `STS_ASSUMEROLE_ALLOW` | Can assume role                    |
+| `CAN_ACCESS`           | Internet-to-resource exposure link |
+| `POLICY`               | Has policy attached                |
+| `STATEMENT`            | Policy has statement               |
 
 ---
 
@@ -393,7 +477,7 @@ parameters=[
 
 ## Best Practices
 
-1. **Always filter by provider_uid**: Use `{id: $provider_uid}` on account nodes and `{provider_uid: $provider_uid}` on ProwlerFinding nodes
+1. **Always scope by provider**: Use `{id: $provider_uid}` on `AWSAccount` nodes. Use `{_provider_id: $provider_id}` on any other node that needs provider scoping (e.g., `Internet`).
 
 2. **Use consistent naming**: Follow existing patterns in the file
 
@@ -415,6 +499,8 @@ parameters=[
    MATCH (aws)--(role:AWSRole) WHERE role.name = 'admin'
    ```
 
+   The `Internet` node is an exception: it uses `OPTIONAL MATCH` with `_provider_id` for scoping instead of chaining from `aws`.
+
 ---
 
 ## openCypher Compatibility
@@ -425,23 +511,14 @@ Queries must be written in **openCypher Version 9** to ensure compatibility with
 
 ### Avoid These (Not in openCypher spec)
 
-| Feature                                             | Reason                                          |
-| --------------------------------------------------- | ----------------------------------------------- |
-| APOC procedures (`apoc.*`)                          | Neo4j-specific plugin, not available in Neptune |
-| Virtual nodes (`apoc.create.vNode`)                 | APOC-specific                                   |
-| Virtual relationships (`apoc.create.vRelationship`) | APOC-specific                                   |
-| Neptune extensions                                  | Not available in Neo4j                          |
-| `reduce()` function                                 | Use `UNWIND` + aggregation instead              |
-| `FOREACH` clause                                    | Use `WITH` + `UNWIND` + `SET` instead           |
-| Regex match operator (`=~`)                         | Not supported in Neptune                        |
-
-### CALL Subqueries
-
-Supported with limitations:
-
-- Use `WITH` clause to import variables: `CALL { WITH var ... }`
-- Updates inside CALL subqueries are NOT supported
-- Emitted variables cannot overlap with variables before the CALL
+| Feature                    | Reason                                          | Use instead                                            |
+| -------------------------- | ----------------------------------------------- | ------------------------------------------------------ |
+| APOC procedures (`apoc.*`) | Neo4j-specific plugin, not available in Neptune | Real nodes and relationships in the graph              |
+| Neptune extensions         | Not available in Neo4j                          | Standard openCypher                                    |
+| `reduce()` function        | Not in openCypher spec                          | `UNWIND` + `collect()`                                 |
+| `FOREACH` clause           | Not in openCypher spec                          | `WITH` + `UNWIND` + `SET`                              |
+| Regex operator (`=~`)      | Not supported in Neptune                        | `toLower()` + exact match, or `CONTAINS`/`STARTS WITH` |
+| `CALL () { UNION }`        | Complex, hard to maintain                       | Multi-label OR in WHERE (see patterns section)         |
 
 ---
 
@@ -451,7 +528,7 @@ Supported with limitations:
 
 - **Repository**: https://github.com/DataDog/pathfinding.cloud
 - **All paths JSON**: `https://raw.githubusercontent.com/DataDog/pathfinding.cloud/main/docs/paths.json`
-- Use WebFetch to query specific paths or list available services
+- Always use Bash with `curl | jq` to fetch paths (WebFetch truncates the large JSON)
 
 ### Cartography Schema
 
@@ -461,7 +538,6 @@ Supported with limitations:
 ### openCypher Specification
 
 - **Neptune openCypher compliance** (what Neptune supports): https://docs.aws.amazon.com/neptune/latest/userguide/feature-opencypher-compliance.html
-- **Rewriting Cypher for Neptune** (converting Neo4j-specific syntax): https://docs.aws.amazon.com/neptune/latest/userguide/migration-opencypher-rewrites.html
 - **openCypher project** (spec, grammar, TCK): https://github.com/opencypher/openCypher
 
 ---
@@ -485,13 +561,4 @@ Use the existing queries to learn:
 - How to include Prowler findings
 - Comment style
 
-> **Compatibility Warning**: Some existing queries use Neo4j-specific features
-> (e.g., `apoc.create.vNode`, `apoc.create.vRelationship`, regex `=~`) that are
-> **NOT compatible** with Amazon Neptune. Use these queries to learn general
-> patterns (structure, naming, Prowler findings integration, comment style) but
-> **DO NOT copy APOC procedures or other Neo4j-specific syntax** into new queries.
-> New queries must be pure openCypher Version 9. Refer to the
-> [openCypher Compatibility](#opencypher-compatibility) section for the full list
-> of features to avoid.
-
-**DO NOT** use generic templates. Match the exact style of existing **compatible** queries in the file.
+**DO NOT** use generic templates. Match the exact style of existing queries in the file.

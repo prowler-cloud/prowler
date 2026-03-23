@@ -9,6 +9,10 @@ from rest_framework.exceptions import APIException, PermissionDenied, Validation
 
 from api.attack_paths import database as graph_database
 from api.attack_paths import views_helpers
+from tasks.jobs.attack_paths.config import (
+    PROVIDER_ELEMENT_ID_PROPERTY,
+    PROVIDER_ID_PROPERTY,
+)
 
 
 def _make_neo4j_error(message, code):
@@ -108,7 +112,7 @@ def test_execute_query_serializes_graph(
         labels=["AWSAccount"],
         properties={
             "name": "account",
-            "provider_id": provider_id,
+            PROVIDER_ID_PROPERTY: provider_id,
             "complex": {
                 "items": [
                     attack_paths_graph_stub_classes.NativeValue("value"),
@@ -118,14 +122,14 @@ def test_execute_query_serializes_graph(
         },
     )
     node_2 = attack_paths_graph_stub_classes.Node(
-        "node-2", ["RDSInstance"], {"provider_id": provider_id}
+        "node-2", ["RDSInstance"], {PROVIDER_ID_PROPERTY: provider_id}
     )
     relationship = attack_paths_graph_stub_classes.Relationship(
         element_id="rel-1",
         rel_type="OWNS",
         start_node=node,
         end_node=node_2,
-        properties={"weight": 1, "provider_id": provider_id},
+        properties={"weight": 1, PROVIDER_ID_PROPERTY: provider_id},
     )
     graph = SimpleNamespace(nodes=[node, node_2], relationships=[relationship])
 
@@ -213,20 +217,20 @@ def test_serialize_graph_filters_by_provider_id(attack_paths_graph_stub_classes)
     provider_id = "provider-keep"
 
     node_keep = attack_paths_graph_stub_classes.Node(
-        "n1", ["AWSAccount"], {"provider_id": provider_id}
+        "n1", ["AWSAccount"], {PROVIDER_ID_PROPERTY: provider_id}
     )
     node_drop = attack_paths_graph_stub_classes.Node(
-        "n2", ["AWSAccount"], {"provider_id": "provider-other"}
+        "n2", ["AWSAccount"], {PROVIDER_ID_PROPERTY: "provider-other"}
     )
 
     rel_keep = attack_paths_graph_stub_classes.Relationship(
-        "r1", "OWNS", node_keep, node_keep, {"provider_id": provider_id}
+        "r1", "OWNS", node_keep, node_keep, {PROVIDER_ID_PROPERTY: provider_id}
     )
     rel_drop_by_provider = attack_paths_graph_stub_classes.Relationship(
-        "r2", "OWNS", node_keep, node_drop, {"provider_id": "provider-other"}
+        "r2", "OWNS", node_keep, node_drop, {PROVIDER_ID_PROPERTY: "provider-other"}
     )
     rel_drop_orphaned = attack_paths_graph_stub_classes.Relationship(
-        "r3", "OWNS", node_keep, node_drop, {"provider_id": provider_id}
+        "r3", "OWNS", node_keep, node_drop, {PROVIDER_ID_PROPERTY: provider_id}
     )
 
     graph = SimpleNamespace(
@@ -350,15 +354,21 @@ def test_serialize_properties_filters_internal_fields():
         "_module_name": "cartography:aws",
         "_module_version": "0.98.0",
         # Provider isolation
-        "_provider_id": "42",
-        "_provider_element_id": "42:abc123",
-        "provider_id": "42",
-        "provider_element_id": "42:abc123",
+        PROVIDER_ID_PROPERTY: "42",
+        PROVIDER_ELEMENT_ID_PROPERTY: "42:abc123",
     }
 
     result = views_helpers._serialize_properties(properties)
 
     assert result == {"name": "prod"}
+
+
+def test_filter_labels_strips_dynamic_isolation_labels():
+    labels = ["AWSRole", "_Tenant_abc123", "_Provider_def456", "_ProviderResource"]
+
+    result = views_helpers._filter_labels(labels)
+
+    assert result == ["AWSRole"]
 
 
 def test_serialize_graph_as_text_node_without_properties():
@@ -440,13 +450,13 @@ def test_execute_custom_query_serializes_graph(
 ):
     provider_id = "test-provider-123"
     node_1 = attack_paths_graph_stub_classes.Node(
-        "node-1", ["AWSAccount"], {"provider_id": provider_id}
+        "node-1", ["AWSAccount"], {PROVIDER_ID_PROPERTY: provider_id}
     )
     node_2 = attack_paths_graph_stub_classes.Node(
-        "node-2", ["RDSInstance"], {"provider_id": provider_id}
+        "node-2", ["RDSInstance"], {PROVIDER_ID_PROPERTY: provider_id}
     )
     relationship = attack_paths_graph_stub_classes.Relationship(
-        "rel-1", "OWNS", node_1, node_2, {"provider_id": provider_id}
+        "rel-1", "OWNS", node_1, node_2, {PROVIDER_ID_PROPERTY: provider_id}
     )
 
     graph_result = MagicMock()
@@ -499,6 +509,72 @@ def test_execute_custom_query_wraps_graph_errors():
             )
 
     mock_logger.error.assert_called_once()
+
+
+# -- validate_custom_query ------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "cypher",
+    [
+        "LOAD CSV FROM 'http://169.254.169.254/' AS x RETURN x",
+        "load csv from 'http://evil.com' as row return row",
+        "CALL apoc.load.json('http://evil.com/') YIELD value RETURN value",
+        "CALL apoc.load.csvParams('http://evil.com/', {}, null) YIELD list RETURN list",
+        "CALL apoc.import.csv([{fileName: 'f'}], [], {}) YIELD node RETURN node",
+        "CALL apoc.export.csv.all('file.csv', {})",
+        "CALL apoc.cypher.run('CREATE (n)', {}) YIELD value RETURN value",
+        "CALL apoc.systemdb.graph() YIELD nodes RETURN nodes",
+        "CALL apoc.config.list() YIELD key, value RETURN key, value",
+        "CALL apoc.periodic.iterate('MATCH (n) RETURN n', 'DELETE n', {batchSize: 100})",
+        "CALL apoc.do.when(true, 'CREATE (n) RETURN n', '', {}) YIELD value RETURN value",
+        "CALL apoc.trigger.add('t', 'RETURN 1', {phase: 'before'})",
+        "CALL apoc.custom.asProcedure('myProc', 'RETURN 1')",
+    ],
+    ids=[
+        "LOAD_CSV",
+        "LOAD_CSV_lowercase",
+        "apoc.load.json",
+        "apoc.load.csvParams",
+        "apoc.import.csv",
+        "apoc.export.csv",
+        "apoc.cypher.run",
+        "apoc.systemdb.graph",
+        "apoc.config.list",
+        "apoc.periodic.iterate",
+        "apoc.do.when",
+        "apoc.trigger.add",
+        "apoc.custom.asProcedure",
+    ],
+)
+def test_validate_custom_query_rejects_blocked_patterns(cypher):
+    with pytest.raises(ValidationError) as exc:
+        views_helpers.validate_custom_query(cypher)
+
+    assert "blocked operation" in str(exc.value.detail)
+
+
+@pytest.mark.parametrize(
+    "cypher",
+    [
+        "MATCH (n:AWSAccount) RETURN n LIMIT 10",
+        "MATCH (a)-[r]->(b) RETURN a, r, b",
+        "MATCH (n) WHERE n.name CONTAINS 'load' RETURN n",
+        "CALL apoc.create.vNode(['Label'], {}) YIELD node RETURN node",
+        "MATCH (n) WHERE n.name = 'apoc.load.json' RETURN n",
+        'MATCH (n) WHERE n.description = "LOAD CSV is cool" RETURN n',
+    ],
+    ids=[
+        "simple_match",
+        "traversal",
+        "contains_load_substring",
+        "apoc_virtual_node",
+        "apoc_load_inside_single_quotes",
+        "load_csv_inside_double_quotes",
+    ],
+)
+def test_validate_custom_query_allows_clean_queries(cypher):
+    views_helpers.validate_custom_query(cypher)
 
 
 # -- _truncate_graph ----------------------------------------------------------

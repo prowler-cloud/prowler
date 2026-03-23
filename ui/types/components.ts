@@ -304,6 +304,15 @@ export type IacCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type ImageCredentials = {
+  [ProviderCredentialFields.REGISTRY_USERNAME]?: string;
+  [ProviderCredentialFields.REGISTRY_PASSWORD]?: string;
+  [ProviderCredentialFields.REGISTRY_TOKEN]?: string;
+  [ProviderCredentialFields.IMAGE_FILTER]?: string;
+  [ProviderCredentialFields.TAG_FILTER]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type OCICredentials = {
   [ProviderCredentialFields.OCI_USER]: string;
   [ProviderCredentialFields.OCI_FINGERPRINT]: string;
@@ -355,6 +364,13 @@ export type OpenStackCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type GoogleWorkspaceCredentials = {
+  [ProviderCredentialFields.GOOGLEWORKSPACE_CUSTOMER_ID]: string;
+  [ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT]: string;
+  [ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AWSCredentialsRole
@@ -363,13 +379,15 @@ export type CredentialsFormSchema =
   | GCPServiceAccountKey
   | KubernetesCredentials
   | IacCredentials
+  | ImageCredentials
   | M365Credentials
   | OCICredentials
   | MongoDBAtlasCredentials
   | AlibabaCloudCredentials
   | AlibabaCloudCredentialsRole
   | CloudflareCredentials
-  | OpenStackCredentials;
+  | OpenStackCredentials
+  | GoogleWorkspaceCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;

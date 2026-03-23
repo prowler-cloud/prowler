@@ -148,10 +148,60 @@ export interface OrganizationAttributes {
   updated_at?: string;
 }
 
+interface OrganizationRelationshipRef<T extends string = string> {
+  data: Array<{ id: string; type: T }>;
+}
+
+interface OrganizationRelationships {
+  providers?: OrganizationRelationshipRef<"providers">;
+  organizational_units?: OrganizationRelationshipRef<"organizational-units">;
+}
+
 export interface OrganizationResource {
   id: string;
   type: "organizations";
   attributes: OrganizationAttributes;
+  relationships?: OrganizationRelationships;
+}
+
+export interface OrganizationListResponse {
+  data: OrganizationResource[];
+  meta?: {
+    version?: string;
+  };
+}
+
+export interface OrganizationUnitAttributes {
+  name: string;
+  external_id: string;
+  parent_external_id: string | null;
+  metadata: Record<string, unknown>;
+  inserted_at?: string;
+  updated_at?: string;
+}
+
+export interface OrganizationUnitRelationships {
+  organization: {
+    data: { id: string; type: "organizations" };
+  };
+  parent?: {
+    data: { id: string; type: "organizational-units" } | null;
+  };
+  providers?: OrganizationRelationshipRef<"providers">;
+}
+
+export interface OrganizationUnitResource {
+  id: string;
+  type: "organizational-units";
+  attributes: OrganizationUnitAttributes;
+  relationships: OrganizationUnitRelationships;
+}
+
+export interface OrganizationUnitListResponse {
+  data: OrganizationUnitResource[];
+  meta?: {
+    version?: string;
+  };
 }
 
 export interface DiscoveryAttributes {
