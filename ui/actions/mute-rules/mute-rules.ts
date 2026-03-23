@@ -182,6 +182,9 @@ export const createMuteRule = async (
   }
 };
 
+// Note: Adding findings to existing mute rules is not supported by the API.
+// The MuteRuleUpdateSerializer only allows updating name, reason, and enabled fields.
+// finding_ids can only be specified when creating a new mute rule.
 export const updateMuteRule = async (
   _prevState: MuteRuleActionState,
   formData: FormData,

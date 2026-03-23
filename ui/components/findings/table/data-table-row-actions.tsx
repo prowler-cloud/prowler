@@ -116,6 +116,9 @@ export function DataTableRowActions<T extends FindingRowData>({
   };
 
   const handleMuteComplete = () => {
+    // Always clear selection when a finding is muted because:
+    // rowSelection uses indices (0, 1, 2...) not IDs, so after refresh
+    // the wrong findings would appear selected
     clearSelection();
     setResolvedIds([]);
     if (onMuteComplete) {
