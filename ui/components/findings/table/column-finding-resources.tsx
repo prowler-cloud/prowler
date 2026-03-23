@@ -14,6 +14,10 @@ import {
 import { DateWithTime } from "@/components/ui/entities";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { SeverityBadge } from "@/components/ui/table";
+import {
+  type FindingStatus,
+  StatusFindingBadge,
+} from "@/components/ui/table/status-finding-badge";
 import { getFailingForLabel } from "@/lib/date-utils";
 import { FindingResourceRow } from "@/types";
 
@@ -194,6 +198,22 @@ export function getColumnFindingResources({
           entityId={row.original.resourceUid}
         />
       ),
+      enableSorting: false,
+    },
+    // Status
+    {
+      id: "status",
+      header: () => (
+        <span className="text-text-neutral-secondary text-sm font-medium">
+          Status
+        </span>
+      ),
+      cell: ({ row }) => {
+        const rawStatus = row.original.status;
+        const status =
+          rawStatus === "MUTED" ? "FAIL" : (rawStatus as FindingStatus);
+        return <StatusFindingBadge status={status} />;
+      },
       enableSorting: false,
     },
     // Service

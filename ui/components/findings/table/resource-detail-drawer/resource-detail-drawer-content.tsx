@@ -603,6 +603,8 @@ export function ResourceDetailDrawerContent({
 function OtherFindingRow({ finding }: { finding: ResourceDrawerFinding }) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
 
+  const findingUrl = `/findings?filter%5Bcheck_id__in%5D=${encodeURIComponent(finding.checkId)}&filter%5Bmuted%5D=include`;
+
   return (
     <>
       {!finding.isMuted && (
@@ -612,7 +614,10 @@ function OtherFindingRow({ finding }: { finding: ResourceDrawerFinding }) {
           findingIds={[finding.id]}
         />
       )}
-      <TableRow>
+      <TableRow
+        className="cursor-pointer"
+        onClick={() => window.open(findingUrl, "_blank", "noopener,noreferrer")}
+      >
         <TableCell className="w-10">
           <NotificationIndicator isMuted={finding.isMuted} />
         </TableCell>
@@ -631,20 +636,22 @@ function OtherFindingRow({ finding }: { finding: ResourceDrawerFinding }) {
           <DateWithTime dateTime={finding.updatedAt} />
         </TableCell>
         <TableCell className="w-10">
-          <ActionDropdown ariaLabel="Finding actions">
-            <ActionDropdownItem
-              icon={
-                finding.isMuted ? (
-                  <VolumeOff className="size-5" />
-                ) : (
-                  <VolumeX className="size-5" />
-                )
-              }
-              label={finding.isMuted ? "Muted" : "Mute"}
-              disabled={finding.isMuted}
-              onSelect={() => setIsMuteModalOpen(true)}
-            />
-          </ActionDropdown>
+          <div onClick={(e) => e.stopPropagation()}>
+            <ActionDropdown ariaLabel="Finding actions">
+              <ActionDropdownItem
+                icon={
+                  finding.isMuted ? (
+                    <VolumeOff className="size-5" />
+                  ) : (
+                    <VolumeX className="size-5" />
+                  )
+                }
+                label={finding.isMuted ? "Muted" : "Mute"}
+                disabled={finding.isMuted}
+                onSelect={() => setIsMuteModalOpen(true)}
+              />
+            </ActionDropdown>
+          </div>
         </TableCell>
       </TableRow>
     </>

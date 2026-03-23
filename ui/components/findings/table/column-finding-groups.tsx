@@ -63,6 +63,9 @@ export function getColumnFindingGroups({
       },
       cell: ({ row }) => {
         const group = row.original;
+        const allMuted =
+          group.mutedCount > 0 &&
+          group.mutedCount === group.resourcesTotal;
 
         const delta =
           group.newCount > 0
@@ -73,7 +76,7 @@ export function getColumnFindingGroups({
 
         return (
           <div className="flex items-center gap-2">
-            <NotificationIndicator delta={delta} />
+            <NotificationIndicator delta={delta} isMuted={allMuted} />
             <button
               type="button"
               aria-label={`Expand ${group.checkTitle}`}
@@ -103,7 +106,11 @@ export function getColumnFindingGroups({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Status" />
       ),
-      cell: ({ row }) => <StatusFindingBadge status={row.original.status} />,
+      cell: ({ row }) => {
+        const rawStatus = row.original.status as string;
+        const status = rawStatus === "MUTED" ? "FAIL" : row.original.status;
+        return <StatusFindingBadge status={status} />;
+      },
       enableSorting: false,
     },
     // Finding title column
@@ -112,7 +119,7 @@ export function getColumnFindingGroups({
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title="Finding"
+          title="Finding Groups"
           param="check_id"
         />
       ),
