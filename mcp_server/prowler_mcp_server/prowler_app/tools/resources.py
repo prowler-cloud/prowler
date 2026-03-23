@@ -397,11 +397,13 @@ class ResourcesTools(BaseTool):
         params = {
             "lookback_days": lookback_days,
             "page[size]": page_size,
-            "include_read_events": str(include_read_events).lower(),
+            "include_read_events": include_read_events,
         }
 
+        clean_params = self.api_client.build_filter_params(params)
+
         api_response = await self.api_client.get(
-            f"/resources/{resource_id}/events", params=params
+            f"/resources/{resource_id}/events", params=clean_params
         )
         events_response = ResourceEventsResponse.from_api_response(api_response)
 
