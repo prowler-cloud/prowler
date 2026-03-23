@@ -36,6 +36,7 @@ class S3(AWSService):
         self.__threading_call__(
             self._get_bucket_notification_configuration, self.buckets.values()
         )
+        self.__threading_call__(self._get_bucket_website, self.buckets.values())
 
     def _list_buckets(self, provider):
         logger.info("S3 - Listing buckets...")
@@ -487,6 +488,28 @@ class S3(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_bucket_website(self, bucket):
+        logger.info("S3 - Get bucket's website configuration...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            regional_client.get_bucket_website(Bucket=bucket.name)
+            bucket.website_hosting_enabled = True
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchWebsiteConfiguration":
+                bucket.website_hosting_enabled = False
+            elif error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _head_bucket(self, bucket_name):
         logger.info("S3 - Checking if bucket exists...")
         try:
@@ -703,3 +726,4 @@ class Bucket(BaseModel):
     lifecycle: List[LifeCycleRule] = Field(default_factory=list)
     replication_rules: List[ReplicationRule] = Field(default_factory=list)
     notification_config: Dict = Field(default_factory=dict)
+    website_hosting_enabled: bool = False
