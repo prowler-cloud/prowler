@@ -117,7 +117,7 @@ export function useInfiniteResources({
     isLoadingRef.current = false;
 
     fetchPage(1, false, checkId);
-  }, [checkId, fetchPage]);
+  }, [checkId]);
 
   function loadNextPage() {
     if (!hasMoreRef.current || isLoadingRef.current) return;
