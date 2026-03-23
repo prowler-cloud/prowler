@@ -1,0 +1,39 @@
+{
+  "Provider": "aws",
+  "CheckID": "s3_bucket_website_hosting_disabled",
+  "CheckTitle": "S3 bucket does not have static website hosting enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "s3",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsS3Bucket",
+  "ResourceGroup": "storage",
+  "Description": "**Amazon S3 buckets** are evaluated to ensure **static website hosting** is not enabled. When website hosting is enabled, objects in the bucket may be publicly accessible via an HTTP endpoint, potentially exposing sensitive data.",
+  "Risk": "Enabling static website hosting on an S3 bucket creates an HTTP endpoint that serves bucket content directly. If bucket permissions are misconfigured, sensitive data could be exposed to the internet. Attackers can discover these endpoints through DNS enumeration or brute-force and access unprotected objects, leading to data leakage.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/WebsiteHosting.html",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/EnableWebsiteHosting.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws s3api delete-bucket-website --bucket <BUCKET_NAME>",
+      "NativeIaC": "```yaml\nResources:\n  S3Bucket:\n    Type: AWS::S3::Bucket\n    Properties:\n      BucketName: <example_bucket_name>\n      # CRITICAL: Remove WebsiteConfiguration to disable static website hosting\n```",
+      "Other": "1. Open the AWS Management Console and go to S3\n2. Select the bucket with the finding\n3. Go to the Properties tab\n4. In Static website hosting, click Edit\n5. Select Disable and Save changes",
+      "Terraform": "```hcl\n# CRITICAL: Remove the aws_s3_bucket_website_configuration resource to disable website hosting\n# resource \"aws_s3_bucket_website_configuration\" \"example\" {\n#   bucket = aws_s3_bucket.example.id\n#   index_document { suffix = \"index.html\" }\n# }\n```"
+    },
+    "Recommendation": {
+      "Text": "Disable **static website hosting** on S3 buckets that do not require it. If website hosting is needed, ensure the bucket policy restricts access appropriately and consider using **Amazon CloudFront** with an Origin Access Identity (OAI) instead of direct S3 website endpoints for better security controls.",
+      "Url": "https://hub.prowler.com/check/s3_bucket_website_hosting_disabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

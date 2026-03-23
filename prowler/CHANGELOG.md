@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.22.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `s3_bucket_website_hosting_disabled` check for AWS provider [(#10415)](https://github.com/prowler-cloud/prowler/pull/10415)
+
+---
+
 ## [5.21.0] (Prowler v5.21.0)
 
 ### 🚀 Added
