@@ -81,6 +81,9 @@ class Entra(AzureService):
                                         is_mfa_capable=registration_details.get(
                                             user.id, False
                                         ),
+                                        account_enabled=getattr(
+                                            user, "account_enabled", True
+                                        ),
                                     )
                                 }
                             )
@@ -409,6 +412,7 @@ class User(BaseModel):
     id: str
     name: str
     is_mfa_capable: bool = False
+    account_enabled: bool = True
 
 
 class DefaultUserRolePermissions(BaseModel):
