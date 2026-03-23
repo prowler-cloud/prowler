@@ -154,6 +154,7 @@ def prowler():
         from dashboard.__main__ import dashboard
 
         sys.exit(dashboard.run(**DASHBOARD_ARGS))
+
     checks = args.check
     excluded_checks = args.excluded_check
     excluded_checks_file = args.excluded_checks_file
@@ -192,7 +193,7 @@ def prowler():
 
     # Set Logger configuration
     set_logging_config(args.log_level, args.log_file, args.only_logs)
-    
+
     if args.list_services:
         print_services(list_services(provider))
         sys.exit()
@@ -200,7 +201,7 @@ def prowler():
     if args.list_fixer:
         print_fixers(list_fixers(provider))
         sys.exit()
-    
+
     # Load checks metadata
     logger.debug("Loading checks metadata from .metadata.json files")
     bulk_checks_metadata = CheckMetadata.get_bulk(provider)
