@@ -3,8 +3,6 @@
 import { ExternalLink, Link, VolumeX, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
-
 import {
   Button,
   Drawer,
@@ -37,17 +35,10 @@ import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/iac-utils";
 import { cn } from "@/lib/utils";
 import { FindingProps, ProviderType } from "@/types";
 
+import { MarkdownContainer } from "../markdown-container";
 import { MuteFindingsModal } from "../mute-findings-modal";
 import { Muted } from "../muted";
 import { DeltaIndicator } from "./delta-indicator";
-
-const MarkdownContainer = ({ children }: { children: string }) => {
-  return (
-    <div className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-normal">
-      <ReactMarkdown>{children}</ReactMarkdown>
-    </div>
-  );
-};
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";

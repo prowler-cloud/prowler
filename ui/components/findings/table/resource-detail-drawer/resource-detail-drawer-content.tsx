@@ -9,9 +9,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import ReactMarkdown from "react-markdown";
-
 import type { ResourceDrawerFinding } from "@/actions/findings";
+import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
 import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { getComplianceIcon } from "@/components/icons";
@@ -66,12 +65,6 @@ interface ResourceDetailDrawerContentProps {
   onNavigateNext: () => void;
   onMuteComplete: () => void;
 }
-
-const MarkdownContainer = ({ children }: { children: string }) => (
-  <div className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-normal">
-    <ReactMarkdown>{children}</ReactMarkdown>
-  </div>
-);
 
 export function ResourceDetailDrawerContent({
   isLoading,

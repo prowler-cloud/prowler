@@ -14,27 +14,29 @@ import {
  * Fields come from FindingGroupSerializer which aggregates
  * FindingGroupDailySummary rows by check_id.
  */
+interface FindingGroupAttributes {
+  check_id: string;
+  check_title: string | null;
+  check_description: string | null;
+  severity: string;
+  status: string; // "FAIL" | "PASS" | "MUTED" (already uppercase)
+  impacted_providers: string[];
+  resources_total: number;
+  resources_fail: number;
+  pass_count: number;
+  fail_count: number;
+  muted_count: number;
+  new_count: number;
+  changed_count: number;
+  first_seen_at: string | null;
+  last_seen_at: string | null;
+  failing_since: string | null;
+}
+
 interface FindingGroupApiItem {
   type: "finding-groups";
   id: string;
-  attributes: {
-    check_id: string;
-    check_title: string | null;
-    check_description: string | null;
-    severity: string;
-    status: string; // "FAIL" | "PASS" | "MUTED" (already uppercase)
-    impacted_providers: string[];
-    resources_total: number;
-    resources_fail: number;
-    pass_count: number;
-    fail_count: number;
-    muted_count: number;
-    new_count: number;
-    changed_count: number;
-    first_seen_at: string | null;
-    last_seen_at: string | null;
-    failing_since: string | null;
-  };
+  attributes: FindingGroupAttributes;
 }
 
 /**
@@ -71,28 +73,34 @@ export function adaptFindingGroupsResponse(
  * Each item has nested `resource` and `provider` objects in attributes
  * (NOT JSON:API included — it's a custom serializer).
  */
+interface ResourceInfo {
+  uid: string;
+  name: string;
+  service: string;
+  region: string;
+  type: string;
+}
+
+interface ProviderInfo {
+  type: string;
+  uid: string;
+  alias: string;
+}
+
+interface FindingGroupResourceAttributes {
+  resource: ResourceInfo;
+  provider: ProviderInfo;
+  status: string;
+  severity: string;
+  first_seen_at: string | null;
+  last_seen_at: string | null;
+  muted_reason?: string | null;
+}
+
 interface FindingGroupResourceApiItem {
   type: "finding-group-resources";
   id: string;
-  attributes: {
-    resource: {
-      uid: string;
-      name: string;
-      service: string;
-      region: string;
-      type: string;
-    };
-    provider: {
-      type: string;
-      uid: string;
-      alias: string;
-    };
-    status: string;
-    severity: string;
-    first_seen_at: string | null;
-    last_seen_at: string | null;
-    muted_reason?: string | null;
-  };
+  attributes: FindingGroupResourceAttributes;
 }
 
 /**
