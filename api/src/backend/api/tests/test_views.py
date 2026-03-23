@@ -15526,6 +15526,22 @@ class TestFindingGroupViewSet:
         assert len(response.json()["data"]) == 1
         assert "bucket" in response.json()["data"][0]["id"].lower()
 
+    def test_finding_groups_check_title_icontains(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test searching check titles with icontains."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_title.icontains]": "public access",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "s3_bucket_public_access"
+
     def test_resources_not_found(self, authenticated_client):
         """Test 404 returned for nonexistent check_id."""
         response = authenticated_client.get(
