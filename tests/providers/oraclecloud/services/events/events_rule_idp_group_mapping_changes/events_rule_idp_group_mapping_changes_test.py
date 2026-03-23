@@ -9,6 +9,102 @@ from tests.providers.oraclecloud.oci_fixtures import (
 
 
 class Test_events_rule_idp_group_mapping_changes:
+    def test_current_cis_3_1_event_types_pass(self):
+        """events_rule_idp_group_mapping_changes: current CIS 3.1 event types should pass."""
+        events_client = mock.MagicMock()
+        events_client.audited_compartments = {OCI_COMPARTMENT_ID: mock.MagicMock()}
+        events_client.audited_tenancy = OCI_TENANCY_ID
+
+        rule = mock.MagicMock()
+        rule.id = "ocid1.eventrule.oc1.iad.aaaaaaaexample"
+        rule.name = "idp-group-mapping-events"
+        rule.region = OCI_REGION
+        rule.compartment_id = OCI_COMPARTMENT_ID
+        rule.lifecycle_state = "ACTIVE"
+        rule.is_enabled = True
+        rule.condition = """
+        {
+          "eventType": [
+            "com.oraclecloud.identitycontrolplane.addidpgroupmapping",
+            "com.oraclecloud.identitycontrolplane.removeidpgroupmapping",
+            "com.oraclecloud.identitycontrolplane.updateidpgroupmapping"
+          ]
+        }
+        """
+        rule.actions = [{"action_type": "ONS", "is_enabled": True}]
+
+        events_client.rules = [rule]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_oraclecloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.oraclecloud.services.events.events_rule_idp_group_mapping_changes.events_rule_idp_group_mapping_changes.events_client",
+                new=events_client,
+            ),
+        ):
+            from prowler.providers.oraclecloud.services.events.events_rule_idp_group_mapping_changes.events_rule_idp_group_mapping_changes import (
+                events_rule_idp_group_mapping_changes,
+            )
+
+            check = events_rule_idp_group_mapping_changes()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].resource_id == rule.id
+            assert result[0].resource_name == rule.name
+
+    def test_legacy_event_types_still_pass(self):
+        """events_rule_idp_group_mapping_changes: legacy event types remain supported."""
+        events_client = mock.MagicMock()
+        events_client.audited_compartments = {OCI_COMPARTMENT_ID: mock.MagicMock()}
+        events_client.audited_tenancy = OCI_TENANCY_ID
+
+        rule = mock.MagicMock()
+        rule.id = "ocid1.eventrule.oc1.iad.bbbbbbbexample"
+        rule.name = "legacy-idp-group-mapping-events"
+        rule.region = OCI_REGION
+        rule.compartment_id = OCI_COMPARTMENT_ID
+        rule.lifecycle_state = "ACTIVE"
+        rule.is_enabled = True
+        rule.condition = """
+        {
+          "eventType": [
+            "com.oraclecloud.identitycontrolplane.createidpgroupmapping",
+            "com.oraclecloud.identitycontrolplane.deleteidpgroupmapping",
+            "com.oraclecloud.identitycontrolplane.updateidpgroupmapping"
+          ]
+        }
+        """
+        rule.actions = [{"action_type": "ONS", "is_enabled": True}]
+
+        events_client.rules = [rule]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_oraclecloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.oraclecloud.services.events.events_rule_idp_group_mapping_changes.events_rule_idp_group_mapping_changes.events_client",
+                new=events_client,
+            ),
+        ):
+            from prowler.providers.oraclecloud.services.events.events_rule_idp_group_mapping_changes.events_rule_idp_group_mapping_changes import (
+                events_rule_idp_group_mapping_changes,
+            )
+
+            check = events_rule_idp_group_mapping_changes()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].resource_id == rule.id
+            assert result[0].resource_name == rule.name
+
     def test_no_resources(self):
         """events_rule_idp_group_mapping_changes: No resources to check"""
         events_client = mock.MagicMock()
