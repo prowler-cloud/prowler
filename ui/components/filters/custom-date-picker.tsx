@@ -3,7 +3,7 @@
 import { format } from "date-fns";
 import { CalendarIcon, ChevronDown } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Calendar } from "@/components/shadcn/calendar";
 import {
@@ -56,25 +56,13 @@ export const CustomDatePicker = ({
   const { updateFilter } = useUrlFilters();
   const [open, setOpen] = useState(false);
 
-  // In instant mode, we need local state to track the selected date so the
-  // calendar stays in sync when URL params change externally (e.g. Clear Filters).
-  // In batch mode, `valueProp` is the source of truth — derive date directly.
-  const [localDate, setLocalDate] = useState<Date | undefined>(() =>
-    parseDate(searchParams.get("filter[inserted_at]")),
-  );
-
-  // In batch mode: derive the displayed date from the controlled prop.
-  // In instant mode: keep local state in sync with URL changes.
-  useEffect(() => {
-    if (valueProp === undefined) {
-      // Instant mode: sync from URL (e.g., when Clear Filters is clicked)
-      setLocalDate(parseDate(searchParams.get("filter[inserted_at]")));
-    }
-    // Batch mode: date is derived from valueProp directly — no state update needed
-  }, [valueProp, searchParams]);
-
-  // In batch mode, derive date from controlled prop directly to avoid stale state
-  const date = valueProp !== undefined ? parseDate(valueProp) : localDate;
+  // Derive the displayed date directly from the controlled source of truth:
+  // - Batch mode: `valueProp` from parent (pending state)
+  // - Instant mode: `searchParams` from URL (re-renders automatically on URL change)
+  const date =
+    valueProp !== undefined
+      ? parseDate(valueProp)
+      : parseDate(searchParams.get("filter[inserted_at]"));
 
   const applyDateFilter = (selectedDate: Date | undefined) => {
     if (onBatchChange) {
@@ -96,10 +84,6 @@ export const CustomDatePicker = ({
   };
 
   const handleDateSelect = (newDate: Date | undefined) => {
-    if (valueProp === undefined) {
-      // Instant mode: update local state
-      setLocalDate(newDate);
-    }
     applyDateFilter(newDate);
     setOpen(false);
   };
