@@ -301,7 +301,7 @@ class TestTokenSwitchTenant:
         assert invalid_tenant_response.status_code == 400
         assert invalid_tenant_response.json()["errors"][0]["code"] == "invalid"
         assert invalid_tenant_response.json()["errors"][0]["detail"] == (
-            "Tenant does not exist or user is not a " "member."
+            "Tenant does not exist or user is not a member."
         )
 
 
@@ -912,10 +912,9 @@ class TestAPIKeyLifecycle:
         auth_response = client.get(reverse("provider-list"), headers=api_key_headers)
 
         # Must return 401 Unauthorized, not 500 Internal Server Error
-        assert auth_response.status_code == 401, (
-            f"Expected 401 but got {auth_response.status_code}: "
-            f"{auth_response.json()}"
-        )
+        assert (
+            auth_response.status_code == 401
+        ), f"Expected 401 but got {auth_response.status_code}: {auth_response.json()}"
 
         # Verify error message is present
         response_json = auth_response.json()

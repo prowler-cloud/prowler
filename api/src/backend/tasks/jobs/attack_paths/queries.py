@@ -2,6 +2,8 @@
 from tasks.jobs.attack_paths.config import (
     INTERNET_NODE_LABEL,
     PROWLER_FINDING_LABEL,
+    PROVIDER_ELEMENT_ID_PROPERTY,
+    PROVIDER_ID_PROPERTY,
     PROVIDER_RESOURCE_LABEL,
 )
 
@@ -149,18 +151,18 @@ RELATIONSHIPS_FETCH_QUERY = """
     LIMIT $batch_size
 """
 
-NODE_SYNC_TEMPLATE = """
+NODE_SYNC_TEMPLATE = f"""
     UNWIND $rows AS row
-    MERGE (n:__NODE_LABELS__ {provider_element_id: row.provider_element_id})
+    MERGE (n:__NODE_LABELS__ {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.provider_element_id}})
     SET n += row.props
-    SET n.provider_id = $provider_id
+    SET n.{PROVIDER_ID_PROPERTY} = $provider_id
 """
 
 RELATIONSHIP_SYNC_TEMPLATE = f"""
     UNWIND $rows AS row
-    MATCH (s:{PROVIDER_RESOURCE_LABEL} {{provider_element_id: row.start_element_id}})
-    MATCH (t:{PROVIDER_RESOURCE_LABEL} {{provider_element_id: row.end_element_id}})
-    MERGE (s)-[r:__REL_TYPE__ {{provider_element_id: row.provider_element_id}}]->(t)
+    MATCH (s:{PROVIDER_RESOURCE_LABEL} {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.start_element_id}})
+    MATCH (t:{PROVIDER_RESOURCE_LABEL} {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.end_element_id}})
+    MERGE (s)-[r:__REL_TYPE__ {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.provider_element_id}}]->(t)
     SET r += row.props
-    SET r.provider_id = $provider_id
+    SET r.{PROVIDER_ID_PROPERTY} = $provider_id
 """

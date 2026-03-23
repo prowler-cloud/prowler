@@ -151,6 +151,8 @@ class TestFinding:
         provider.organizations_metadata.organization_arn = "mock_account_org_uid"
         provider.organizations_metadata.organization_id = "mock_account_org_name"
         provider.organizations_metadata.account_tags = {"tag1": "value1"}
+        provider.organizations_metadata.account_ou_id = "ou-test-12345678"
+        provider.organizations_metadata.account_ou_name = "TestOU/SubOU"
 
         # Mock check result
         check_output = MagicMock()
@@ -204,6 +206,8 @@ class TestFinding:
         assert finding_output.account_email == "mock_account_email"
         assert finding_output.account_organization_uid == "mock_account_org_uid"
         assert finding_output.account_organization_name == "mock_account_org_name"
+        assert finding_output.account_ou_uid == "ou-test-12345678"
+        assert finding_output.account_ou_name == "TestOU/SubOU"
         assert finding_output.account_tags == {"tag1": "value1"}
 
         # Metadata
@@ -240,6 +244,45 @@ class TestFinding:
         assert finding_output.resource_type == "mock_resource_type"
         assert finding_output.service_name == "service"
         assert finding_output.raw == {}
+
+    def test_generate_output_aws_without_organizations_metadata(self):
+        # Simulates running without --organizations-role
+        provider = MagicMock()
+        provider.type = "aws"
+        provider.identity.profile = "mock_auth"
+        provider.identity.account = "mock_account_uid"
+        provider.identity.partition = "aws"
+        provider.organizations_metadata = None
+
+        check_output = MagicMock()
+        check_output.resource_id = "test_resource_id"
+        check_output.resource_arn = "test_resource_arn"
+        check_output.resource_details = "test_resource_details"
+        check_output.resource_tags = {}
+        check_output.region = "us-east-1"
+        check_output.partition = "aws"
+        check_output.status = Status.PASS
+        check_output.status_extended = "mock_status_extended"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="aws")
+        check_output.resource = {}
+        check_output.compliance = {}
+
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert isinstance(finding_output, Finding)
+        assert finding_output.account_uid == "mock_account_uid"
+        # get_nested_attribute returns empty string when the attribute chain
+        # is None, so the Finding fields are "" not None
+        assert finding_output.account_name == ""
+        assert finding_output.account_email == ""
+        assert finding_output.account_organization_uid == ""
+        assert finding_output.account_organization_name == ""
+        assert finding_output.account_ou_uid == ""
+        assert finding_output.account_ou_name == ""
 
     def test_generate_output_azure(self):
         # Mock provider
@@ -428,6 +471,40 @@ class TestFinding:
         assert finding_output.metadata.Notes == "mock_notes"
         assert finding_output.metadata.Compliance == []
 
+    def test_generate_output_googleworkspace(self):
+        provider = MagicMock()
+        provider.type = "googleworkspace"
+        provider.identity.delegated_user = "admin@test-company.com"
+        provider.identity.customer_id = "C1234567"
+        provider.identity.domain = "test-company.com"
+
+        check_output = MagicMock()
+        check_output.resource_id = "test_resource_id"
+        check_output.resource_name = "test_resource_name"
+        check_output.resource_details = ""
+        check_output.location = "global"
+        check_output.status = Status.PASS
+        check_output.status_extended = "mock_status_extended"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="googleworkspace")
+        check_output.resource = {}
+        check_output.compliance = {}
+
+        output_options = MagicMock()
+        output_options.unix_timestamp = True
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert isinstance(finding_output, Finding)
+        assert finding_output.auth_method == "service_account: admin@test-company.com"
+        assert finding_output.account_uid == "C1234567"
+        assert finding_output.account_name == "test-company.com"
+        assert finding_output.resource_name == "test_resource_name"
+        assert finding_output.resource_uid == "test_resource_id"
+        assert finding_output.region == "global"
+        assert finding_output.status == Status.PASS
+        assert finding_output.muted is False
+
     def test_generate_output_kubernetes(self):
         # Mock provider
         provider = MagicMock()
@@ -480,6 +557,7 @@ class TestFinding:
         assert finding_output.resource_tags == {}
         assert finding_output.partition is None
         assert finding_output.account_uid == "test_cluster"
+        assert finding_output.provider_uid == "In-Cluster"
         assert finding_output.account_name == "context: In-Cluster"
         assert finding_output.account_email is None
         assert finding_output.account_organization_uid is None
@@ -565,8 +643,9 @@ class TestFinding:
         assert finding_output.resource_tags == {"topic": "security"}
 
         # Assert account information for Personal Access Token
-        assert finding_output.account_name == ACCOUNT_NAME
-        assert finding_output.account_uid == ACCOUNT_ID
+        # When owner is present, it takes priority for account_name and account_uid
+        assert finding_output.account_name == "test-owner"
+        assert finding_output.account_uid == "test-owner"
         assert finding_output.account_email is None
         assert finding_output.account_organization_uid is None
         assert finding_output.account_organization_name is None
@@ -632,13 +711,12 @@ class TestFinding:
         assert finding_output.resource_tags == {"language": "python"}
         assert isinstance(finding_output.timestamp, int)
 
-        # Assert account information for GitHub App - this is the core of the bug fix
-        # Before the fix, this would fail because GithubAppIdentityInfo doesn't have account_name
-        # After the fix, it should use app_name
-        assert finding_output.account_name == "test-app"
-        assert finding_output.account_uid == APP_ID
+        # Assert account information for GitHub App
+        # When owner is present, it takes priority for account_name and account_uid
+        assert finding_output.account_name == "test-owner"
+        assert finding_output.account_uid == "test-owner"
         assert finding_output.account_email is None
-        assert finding_output.account_organization_uid is None
+        assert finding_output.account_organization_uid == str(APP_ID)
         assert finding_output.account_organization_name is None
         assert finding_output.account_tags == {}
 
@@ -655,6 +733,7 @@ class TestFinding:
         provider.type = "iac"
         provider.scan_repository_url = "https://github.com/user/repo"
         provider.auth_method = "No auth"
+        provider.provider_uid = None
 
         # Mock check result
         check_output = MagicMock()
@@ -687,6 +766,10 @@ class TestFinding:
         assert finding_output.resource_name == "aws_s3_bucket.example"
         assert finding_output.resource_uid == "aws_s3_bucket.example"
         assert finding_output.region == "main"  # Branch name, not line range
+        assert (
+            finding_output.uid
+            == "prowler-iac-service_check_id-iac-main-aws_s3_bucket.example-1:5"
+        )
         assert finding_output.status == Status.PASS
         assert finding_output.status_extended == "mock_status_extended"
         assert finding_output.muted is False
@@ -700,6 +783,35 @@ class TestFinding:
         assert finding_output.metadata.ServiceName == "service"
         assert finding_output.metadata.SubServiceName == ""
         assert finding_output.metadata.ResourceIdTemplate == ""
+
+    def test_generate_output_iac_empty_line_range(self):
+        provider = MagicMock()
+        provider.type = "iac"
+        provider.provider_uid = None
+        provider.scan_repository_url = "https://github.com/user/repo"
+        provider.auth_method = "No auth"
+
+        check_output = MagicMock()
+        check_output.file_path = "/path/to/iac/main.tf"
+        check_output.resource_name = "main.tf"
+        check_output.resource_path = "/path/to/iac/main.tf"
+        check_output.resource_line_range = ""
+        check_output.region = "main"
+        check_output.resource = {"resource": "main.tf", "value": {}}
+        check_output.resource_details = ""
+        check_output.status = Status.PASS
+        check_output.status_extended = "No issues found"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="iac")
+        check_output.compliance = {}
+
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert isinstance(finding_output, Finding)
+        assert finding_output.uid == "prowler-iac-service_check_id-iac-main-main.tf"
 
     def assert_keys_lowercase(self, d):
         for k, v in d.items():
@@ -730,6 +842,8 @@ class TestFinding:
         provider.organizations_metadata.organization_arn = "mock_account_org_uid"
         provider.organizations_metadata.organization_id = "mock_account_org_name"
         provider.organizations_metadata.account_tags = {"tag1": "value1"}
+        provider.organizations_metadata.account_ou_id = ""
+        provider.organizations_metadata.account_ou_name = ""
 
         # Mock check result
         check_output = MagicMock()
@@ -796,16 +910,19 @@ class TestFinding:
             "provider": "test_provider",
             "checkid": "service_check_001",
             "checktitle": "Test Check",
-            "checktype": ["type1"],
+            "checktype": [],
             "servicename": "service",
             "subservicename": "SubService",
             "severity": "high",
             "resourcetype": "TestResource",
             "description": "A test check",
             "risk": "High risk",
-            "relatedurl": "http://example.com",
+            "relatedurl": "",
             "remediation": {
-                "recommendation": {"text": "Fix it", "url": "http://fix.com"},
+                "recommendation": {
+                    "text": "Fix it",
+                    "url": "https://hub.prowler.com/check/service_check_001",
+                },
                 "code": {
                     "nativeiac": "iac_code",
                     "terraform": "terraform_code",
@@ -814,7 +931,7 @@ class TestFinding:
                 },
             },
             "resourceidtemplate": "template",
-            "categories": ["cat-one", "cat-two"],
+            "categories": ["encryption", "logging"],
             "dependson": ["dep1"],
             "relatedto": ["rel1"],
             "notes": "Some notes",
@@ -839,22 +956,25 @@ class TestFinding:
         assert meta.Provider == "test_provider"
         assert meta.CheckID == "service_check_001"
         assert meta.CheckTitle == "Test Check"
-        assert meta.CheckType == ["type1"]
+        assert meta.CheckType == []
         assert meta.ServiceName == "service"
         assert meta.SubServiceName == "SubService"
         assert meta.Severity == "high"
         assert meta.ResourceType == "TestResource"
         assert meta.Description == "A test check"
         assert meta.Risk == "High risk"
-        assert meta.RelatedUrl == "http://example.com"
+        assert meta.RelatedUrl == ""
         assert meta.Remediation.Recommendation.Text == "Fix it"
-        assert meta.Remediation.Recommendation.Url == "http://fix.com"
+        assert (
+            meta.Remediation.Recommendation.Url
+            == "https://hub.prowler.com/check/service_check_001"
+        )
         assert meta.Remediation.Code.NativeIaC == "iac_code"
         assert meta.Remediation.Code.Terraform == "terraform_code"
         assert meta.Remediation.Code.CLI == "cli_code"
         assert meta.Remediation.Code.Other == "other_code"
         assert meta.ResourceIdTemplate == "template"
-        assert meta.Categories == ["cat-one", "cat-two"]
+        assert meta.Categories == ["encryption", "logging"]
         assert meta.DependsOn == ["dep1"]
         assert meta.RelatedTo == ["rel1"]
         assert meta.Notes == "Some notes"
@@ -920,11 +1040,11 @@ class TestFinding:
             "dependson": [],
             "relatedto": [],
             "categories": [],
-            "checktitle": "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'",
+            "checktitle": "Auto provisioning of Log Analytics agent for Azure VMs should be On",
             "compliance": None,
-            "relatedurl": "https://docs.microsoft.com/en-us/azure/security-center/security-center-data-security",
+            "relatedurl": "",
             "description": (
-                "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'. "
+                "Auto provisioning of Log Analytics agent for Azure VMs should be On. "
                 "The Microsoft Monitoring Agent scans for various security-related configurations and events such as system updates, "
                 "OS vulnerabilities, endpoint protection, and provides alerts."
             ),
@@ -936,9 +1056,9 @@ class TestFinding:
                     "terraform": "",
                 },
                 "recommendation": {
-                    "url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/monitoring-components",
+                    "url": "https://hub.prowler.com/check/defender_auto_provisioning_log_analytics_agent_vms_on",
                     "text": (
-                        "Ensure comprehensive visibility into possible security vulnerabilities, including missing updates, "
+                        "Comprehensive visibility into possible security vulnerabilities, including missing updates, "
                         "misconfigured operating system security settings, and active threats, allowing for timely mitigation and improved overall security posture"
                     ),
                 },
@@ -985,16 +1105,16 @@ class TestFinding:
         assert meta.CheckID == "defender_auto_provisioning_log_analytics_agent_vms_on"
         assert (
             meta.CheckTitle
-            == "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'"
+            == "Auto provisioning of Log Analytics agent for Azure VMs should be On"
         )
         assert meta.Severity == "medium"
         assert meta.ResourceType == "AzureDefenderPlan"
         assert (
             meta.Remediation.Recommendation.Url
-            == "https://learn.microsoft.com/en-us/azure/defender-for-cloud/monitoring-components"
+            == "https://hub.prowler.com/check/defender_auto_provisioning_log_analytics_agent_vms_on"
         )
         assert meta.Remediation.Recommendation.Text.startswith(
-            "Ensure comprehensive visibility"
+            "Comprehensive visibility"
         )
 
         expected_segments = [
@@ -1042,7 +1162,7 @@ class TestFinding:
             "resourcetype": "GCPResourceType",
             "description": "GCP check description",
             "risk": "Medium risk",
-            "relatedurl": "http://gcp.example.com",
+            "relatedurl": "",
             "remediation": {
                 "code": {
                     "nativeiac": "iac_code",
@@ -1050,10 +1170,13 @@ class TestFinding:
                     "cli": "cli_code",
                     "other": "other_code",
                 },
-                "recommendation": {"text": "Fix it", "url": "http://fix-gcp.com"},
+                "recommendation": {
+                    "text": "Fix it",
+                    "url": "https://hub.prowler.com/check/service_gcp_check_001",
+                },
             },
             "resourceidtemplate": "template",
-            "categories": ["cat-one", "cat-two"],
+            "categories": ["encryption", "logging"],
             "dependson": ["dep1"],
             "relatedto": ["rel1"],
             "notes": "Some notes",
@@ -1122,7 +1245,7 @@ class TestFinding:
             "resourcetype": "K8sResourceType",
             "description": "K8s check description",
             "risk": "Low risk",
-            "relatedurl": "http://k8s.example.com",
+            "relatedurl": "",
             "remediation": {
                 "code": {
                     "nativeiac": "iac_code",
@@ -1130,10 +1253,13 @@ class TestFinding:
                     "cli": "cli_code",
                     "other": "other_code",
                 },
-                "recommendation": {"text": "Fix it", "url": "http://fix-k8s.com"},
+                "recommendation": {
+                    "text": "Fix it",
+                    "url": "https://hub.prowler.com/check/service_k8s_check_001",
+                },
             },
             "resourceidtemplate": "template",
-            "categories": ["cat-one"],
+            "categories": ["encryption"],
             "dependson": [],
             "relatedto": [],
             "notes": "K8s notes",
@@ -1188,7 +1314,7 @@ class TestFinding:
             "resourcetype": "M365ResourceType",
             "description": "M365 check description",
             "risk": "High risk",
-            "relatedurl": "http://m365.example.com",
+            "relatedurl": "",
             "remediation": {
                 "code": {
                     "nativeiac": "iac_code",
@@ -1196,10 +1322,13 @@ class TestFinding:
                     "cli": "cli_code",
                     "other": "other_code",
                 },
-                "recommendation": {"text": "Fix it", "url": "http://fix-m365.com"},
+                "recommendation": {
+                    "text": "Fix it",
+                    "url": "https://hub.prowler.com/check/service_m365_check_001",
+                },
             },
             "resourceidtemplate": "template",
-            "categories": ["cat-one"],
+            "categories": ["encryption"],
             "dependson": [],
             "relatedto": [],
             "notes": "M365 notes",
@@ -1220,7 +1349,7 @@ class TestFinding:
         dummy_finding.muted = True
         finding_obj = Finding.transform_api_finding(dummy_finding, provider)
         assert finding_obj.auth_method == "ms_identity_type: ms_identity_id"
-        assert finding_obj.account_uid == "ms-tenant-id"
+        assert finding_obj.account_uid == "ms-tenant-domain"
         assert finding_obj.account_name == "ms-tenant-domain"
         assert finding_obj.resource_name == "ms-resource-name"
         assert finding_obj.resource_uid == "ms-resource-uid"

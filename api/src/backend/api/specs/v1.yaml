@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.20.0
+  version: 1.23.0
   description: |-
     Prowler API specification.
 
@@ -296,6 +296,7 @@ paths:
             enum:
             - state
             - progress
+            - graph_data_ready
             - provider
             - provider_alias
             - provider_type
@@ -355,7 +356,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -363,7 +364,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -382,13 +385,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -396,7 +401,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -417,6 +424,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -571,6 +580,7 @@ paths:
             enum:
             - state
             - progress
+            - graph_data_ready
             - provider
             - provider_alias
             - provider_type
@@ -631,6 +641,7 @@ paths:
             enum:
             - state
             - progress
+            - graph_data_ready
             - provider
             - provider_alias
             - provider_type
@@ -677,6 +688,53 @@ paths:
           description: ''
         '404':
           description: No queries found for the selected provider
+  /api/v1/attack-paths-scans/{id}/queries/custom:
+    post:
+      operationId: attack_paths_scans_queries_custom_create
+      description: Execute a raw openCypher query against the Attack Paths graph.
+        Results are filtered to the scan's provider and truncated to a maximum node
+        count.
+      summary: Execute a custom openCypher query
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this attack paths scan.
+        required: true
+      tags:
+      - Attack Paths
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/AttackPathsCustomQueryRunRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AttackPathsCustomQueryRunRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AttackPathsCustomQueryRunRequestRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AttackPathsQueryResult'
+          description: ''
+        '403':
+          description: Read-only queries are enforced
+        '404':
+          description: No results found for the given query
+        '500':
+          description: Query execution failed due to a database error
   /api/v1/attack-paths-scans/{id}/queries/run:
     post:
       operationId: attack_paths_scans_queries_run_create
@@ -713,6 +771,9 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/AttackPathsQueryResult'
           description: ''
         '400':
           description: Bad request (e.g., Unknown Attack Paths query for the selected
@@ -721,6 +782,53 @@ paths:
           description: No Attack Paths found for the given query and parameters
         '500':
           description: Attack Paths query execution failed due to a database error
+  /api/v1/attack-paths-scans/{id}/schema:
+    get:
+      operationId: attack_paths_scans_schema_retrieve
+      description: Return the cartography provider, version, and links to the schema
+        documentation for the cloud provider associated with this Attack Paths scan.
+      summary: Retrieve cartography schema metadata
+      parameters:
+      - in: query
+        name: fields[attack-paths-cartography-schemas]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - provider
+            - cartography_version
+            - schema_url
+            - raw_schema_url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this attack paths scan.
+        required: true
+      tags:
+      - Attack Paths
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: ''
+        '400':
+          description: Attack Paths data is not yet available (graph_data_ready is
+            false)
+        '404':
+          description: No cartography schema metadata found for this provider
+        '500':
+          description: Unable to retrieve cartography schema due to a database error
   /api/v1/compliance-overviews:
     get:
       operationId: compliance_overviews_list
@@ -1131,6 +1239,369 @@ paths:
           description: The task is in progress
         '500':
           description: Compliance overviews generation task failed
+  /api/v1/finding-groups:
+    get:
+      operationId: finding_groups_list
+      description: "\n        Retrieve aggregated findings grouped by check_id.\n\n\
+        \        Each group shows:\n        - Aggregated status (FAIL if any non-muted\
+        \ failure)\n        - Maximum severity across all findings\n        - Resource\
+        \ counts (failing vs total)\n        - Finding counts by status and delta\n\
+        \        - Affected provider types\n\n        At least one date filter is\
+        \ required for performance reasons.\n        "
+      summary: List finding groups
+      parameters:
+      - in: query
+        name: fields[finding-groups]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - check_id
+            - check_title
+            - check_description
+            - severity
+            - status
+            - impacted_providers
+            - resources_fail
+            - resources_total
+            - pass_count
+            - fail_count
+            - muted_count
+            - new_count
+            - changed_count
+            - first_seen_at
+            - last_seen_at
+            - failing_since
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[check_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date
+        description: Maximum date range is 7 days.
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date
+        description: Maximum date range is 7 days.
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: c0d56cad8ab9abe5
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - cloudflare
+          - gcp
+          - github
+          - googleworkspace
+          - iac
+          - image
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - openstack
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - check_id
+            - -check_id
+            - check_title
+            - -check_title
+            - check_description
+            - -check_description
+            - severity
+            - -severity
+            - status
+            - -status
+            - impacted_providers
+            - -impacted_providers
+            - resources_fail
+            - -resources_fail
+            - resources_total
+            - -resources_total
+            - pass_count
+            - -pass_count
+            - fail_count
+            - -fail_count
+            - muted_count
+            - -muted_count
+            - new_count
+            - -new_count
+            - changed_count
+            - -changed_count
+            - first_seen_at
+            - -first_seen_at
+            - last_seen_at
+            - -last_seen_at
+            - failing_since
+            - -failing_since
+        explode: false
+      tags:
+      - Finding Groups
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFindingGroupList'
+          description: ''
+  /api/v1/finding-groups/{id}/resources:
+    get:
+      operationId: finding_groups_resources_retrieve
+      description: "\n        Retrieve resources affected by a specific check (finding\
+        \ group).\n\n        Returns individual resources with their current status,\
+        \ severity,\n        and timing information including how long they have been\
+        \ failing.\n        "
+      summary: List resources for a finding group
+      parameters:
+      - in: query
+        name: fields[finding-groups]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - check_id
+            - check_title
+            - check_description
+            - severity
+            - status
+            - impacted_providers
+            - resources_fail
+            - resources_total
+            - pass_count
+            - fail_count
+            - muted_count
+            - new_count
+            - changed_count
+            - first_seen_at
+            - last_seen_at
+            - failing_since
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this finding group daily summary.
+        required: true
+      tags:
+      - Finding Groups
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/FindingGroupResponse'
+          description: ''
+  /api/v1/finding-groups/latest:
+    get:
+      operationId: finding_groups_latest_retrieve
+      description: "\n        Retrieve the latest available state for each finding\
+        \ group (check_id).\n\n        This endpoint returns finding groups without\
+        \ requiring date filters,\n        automatically using the latest available\
+        \ data per check_id.\n        All other filters (provider_id, provider_type,\
+        \ check_id) are still supported.\n        "
+      summary: List latest finding groups
+      parameters:
+      - in: query
+        name: fields[finding-groups]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - check_id
+            - check_title
+            - check_description
+            - severity
+            - status
+            - impacted_providers
+            - resources_fail
+            - resources_total
+            - pass_count
+            - fail_count
+            - muted_count
+            - new_count
+            - changed_count
+            - first_seen_at
+            - last_seen_at
+            - failing_since
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      tags:
+      - Finding Groups
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/FindingGroupResponse'
+          description: ''
+  /api/v1/finding-groups/latest/{check_id}/resources:
+    get:
+      operationId: finding_groups_latest_resources_retrieve
+      description: "\n        Retrieve resources affected by a specific check (finding\
+        \ group) from the\n        latest completed scan for each provider.\n\n  \
+        \      Returns individual resources with their current status, severity,\n\
+        \        and timing information. No date filters required.\n        "
+      summary: List resources for a finding group from latest scans
+      parameters:
+      - in: path
+        name: check_id
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: fields[finding-groups]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - check_id
+            - check_title
+            - check_description
+            - severity
+            - status
+            - impacted_providers
+            - resources_fail
+            - resources_total
+            - pass_count
+            - fail_count
+            - muted_count
+            - new_count
+            - changed_count
+            - first_seen_at
+            - last_seen_at
+            - failing_since
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      tags:
+      - Finding Groups
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/FindingGroupResponse'
+          description: ''
   /api/v1/findings:
     get:
       operationId: findings_list
@@ -1340,7 +1811,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -1348,7 +1819,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -1367,13 +1840,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -1381,7 +1856,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -1402,6 +1879,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -1934,7 +2413,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -1942,7 +2421,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -1961,13 +2442,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -1975,7 +2458,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -1996,6 +2481,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -2436,7 +2923,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -2444,7 +2931,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -2463,13 +2952,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -2477,7 +2968,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -2498,6 +2991,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -2936,7 +3431,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -2944,7 +3439,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -2963,13 +3460,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -2977,7 +3476,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -2998,6 +3499,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -3424,7 +3927,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -3432,7 +3935,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -3451,13 +3956,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -3465,7 +3972,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -3486,6 +3995,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -5253,7 +5764,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -5261,7 +5772,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -5280,13 +5793,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -5294,7 +5809,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -5315,6 +5832,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - name: filter[search]
@@ -5420,7 +5939,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -5428,7 +5947,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -5447,13 +5968,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -5461,7 +5984,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -5482,6 +6007,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - name: filter[search]
@@ -5584,7 +6111,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -5603,6 +6132,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5616,7 +6147,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -5637,6 +6170,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - name: filter[search]
@@ -5763,7 +6298,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -5771,7 +6306,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -5790,13 +6327,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -5804,7 +6343,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -5825,6 +6366,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -5964,7 +6507,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -5972,7 +6515,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -5991,13 +6536,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -6005,7 +6552,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -6026,6 +6575,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -6167,7 +6718,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -6186,6 +6739,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6199,7 +6754,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -6220,6 +6777,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - name: filter[search]
@@ -6395,7 +6954,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -6403,7 +6962,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -6422,13 +6983,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -6436,7 +6999,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -6457,6 +7022,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -6561,7 +7128,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -6569,7 +7136,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -6588,13 +7157,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -6602,7 +7173,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -6623,6 +7196,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -6751,7 +7326,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -6759,7 +7334,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -6778,13 +7355,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -6792,7 +7371,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -6813,6 +7394,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -7582,7 +8165,7 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -7590,7 +8173,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -7609,13 +8194,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -7623,7 +8210,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -7644,13 +8233,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -7658,7 +8249,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -7677,13 +8270,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -7691,7 +8286,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -7712,6 +8309,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - name: filter[search]
@@ -8268,6 +8867,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[inserted_at]
         schema:
           type: string
@@ -8290,6 +8904,15 @@ paths:
         name: filter[name__icontains]
         schema:
           type: string
+      - in: query
+        name: filter[name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[provider]
         schema:
@@ -8341,7 +8964,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -8349,7 +8972,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -8368,13 +8993,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -8382,7 +9009,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -8403,6 +9032,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -8518,6 +9149,15 @@ paths:
         name: filter[uid__icontains]
         schema:
           type: string
+      - in: query
+        name: filter[uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[updated_at]
         schema:
@@ -8789,6 +9429,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[name]
         schema:
           type: string
@@ -8796,6 +9451,15 @@ paths:
         name: filter[name__icontains]
         schema:
           type: string
+      - in: query
+        name: filter[name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[provider]
         schema:
@@ -8847,7 +9511,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -8855,7 +9519,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -8874,13 +9540,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -8888,7 +9556,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -8909,6 +9579,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -9010,6 +9682,15 @@ paths:
         schema:
           type: string
       - in: query
+        name: filter[uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: include
         schema:
           type: array
@@ -9093,6 +9774,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[inserted_at]
         schema:
           type: string
@@ -9115,6 +9811,15 @@ paths:
         name: filter[name__icontains]
         schema:
           type: string
+      - in: query
+        name: filter[name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[provider]
         schema:
@@ -9166,7 +9871,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -9174,7 +9879,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -9193,13 +9900,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -9207,7 +9916,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -9228,6 +9939,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -9344,6 +10057,15 @@ paths:
         schema:
           type: string
       - in: query
+        name: filter[uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[updated_at]
         schema:
           type: string
@@ -9433,6 +10155,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[name]
         schema:
           type: string
@@ -9440,6 +10177,15 @@ paths:
         name: filter[name__icontains]
         schema:
           type: string
+      - in: query
+        name: filter[name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[provider]
         schema:
@@ -9491,7 +10237,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -9499,7 +10245,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -9518,13 +10266,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -9532,7 +10282,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -9553,6 +10305,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -9653,6 +10407,15 @@ paths:
         name: filter[uid__icontains]
         schema:
           type: string
+      - in: query
+        name: filter[uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - name: sort
         required: false
         in: query
@@ -10350,7 +11113,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 2d8d323e9cc0044b
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -10358,7 +11121,9 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
+          - image
           - kubernetes
           - m365
           - mongodbatlas
@@ -10377,13 +11142,15 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 2d8d323e9cc0044b
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -10391,7 +11158,9 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
+            - image
             - kubernetes
             - m365
             - mongodbatlas
@@ -10412,6 +11181,8 @@ paths:
           * `alibabacloud` - Alibaba Cloud
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -10747,6 +11518,72 @@ paths:
           description: CSV file containing the compliance report
         '404':
           description: Compliance report not found
+  /api/v1/scans/{id}/csa:
+    get:
+      operationId: scans_csa_retrieve
+      description: Download CSA Cloud Controls Matrix (CCM) v4.0 compliance report
+        as a PDF file.
+      summary: Retrieve CSA CCM compliance report
+      parameters:
+      - in: query
+        name: fields[scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - trigger
+            - state
+            - unique_resource_count
+            - progress
+            - duration
+            - provider
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - scheduled_at
+            - next_scan_at
+            - processor
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: PDF file containing the CSA CCM compliance report
+        '202':
+          description: The task is in progress
+        '401':
+          description: API key missing or user not Authenticated
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no CSA CCM reports, or the CSA CCM report generation
+            task has not started yet
   /api/v1/scans/{id}/ens:
     get:
       operationId: scans_ens_retrieve
@@ -12475,6 +13312,68 @@ paths:
           description: ''
 components:
   schemas:
+    AttackPathsCartographySchema:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-cartography-schemas
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            provider:
+              type: string
+            cartography_version:
+              type: string
+            schema_url:
+              type: string
+              format: uri
+            raw_schema_url:
+              type: string
+              format: uri
+          required:
+          - id
+          - provider
+          - cartography_version
+          - schema_url
+          - raw_schema_url
+    AttackPathsCustomQueryRunRequestRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - attack-paths-custom-query-run-requests
+            attributes:
+              type: object
+              properties:
+                query:
+                  type: string
+                  minLength: 1
+              required:
+              - query
+      required:
+      - data
     AttackPathsNode:
       type: object
       required:
@@ -12530,16 +13429,16 @@ components:
               type: string
             description:
               type: string
+            attribution:
+              allOf:
+              - $ref: '#/components/schemas/AttackPathsQueryAttribution'
+              nullable: true
             provider:
               type: string
             parameters:
               type: array
               items:
                 $ref: '#/components/schemas/AttackPathsQueryParameter'
-            attribution:
-              allOf:
-              - $ref: '#/components/schemas/AttackPathsQueryAttribution'
-              nullable: true
           required:
           - id
           - name
@@ -12630,9 +13529,15 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/AttackPathsRelationship'
+            total_nodes:
+              type: integer
+            truncated:
+              type: boolean
           required:
           - nodes
           - relationships
+          - total_nodes
+          - truncated
     AttackPathsQueryRunRequestRequest:
       type: object
       properties:
@@ -12737,6 +13642,8 @@ components:
               type: integer
               maximum: 2147483647
               minimum: -2147483648
+            graph_data_ready:
+              type: boolean
             provider_alias:
               type: string
               readOnly: true
@@ -13298,6 +14205,87 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/FindingDynamicFilter'
+      required:
+      - data
+    FindingGroup:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - finding-groups
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            check_id:
+              type: string
+            check_title:
+              type: string
+              nullable: true
+            check_description:
+              type: string
+              nullable: true
+            severity:
+              type: string
+            status:
+              type: string
+            impacted_providers:
+              type: array
+              items:
+                type: string
+            resources_fail:
+              type: integer
+            resources_total:
+              type: integer
+            pass_count:
+              type: integer
+            fail_count:
+              type: integer
+            muted_count:
+              type: integer
+            new_count:
+              type: integer
+            changed_count:
+              type: integer
+            first_seen_at:
+              type: string
+              format: date-time
+              nullable: true
+            last_seen_at:
+              type: string
+              format: date-time
+              nullable: true
+            failing_since:
+              type: string
+              format: date-time
+              nullable: true
+          required:
+          - id
+          - check_id
+          - severity
+          - status
+          - resources_fail
+          - resources_total
+          - pass_count
+          - fail_count
+          - muted_count
+          - new_count
+          - changed_count
+    FindingGroupResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/FindingGroup'
       required:
       - data
     FindingMetadata:
@@ -16117,6 +17105,15 @@ components:
             $ref: '#/components/schemas/ComplianceWatchlistOverview'
       required:
       - data
+    PaginatedFindingGroupList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FindingGroup'
+      required:
+      - data
     PaginatedFindingList:
       type: object
       properties:
@@ -17283,6 +18280,22 @@ components:
                     required:
                     - service_account_key
                   - type: object
+                    title: Google Workspace Service Account
+                    properties:
+                      credentials_content:
+                        type: string
+                        description: The service account JSON credentials content
+                          for Google Workspace API access with domain-wide delegation
+                          enabled.
+                      delegated_user:
+                        type: string
+                        format: email
+                        description: The email address of the Google Workspace super
+                          admin user to impersonate for domain-wide delegation.
+                    required:
+                    - credentials_content
+                    - delegated_user
+                  - type: object
                     title: Kubernetes Static Credentials
                     properties:
                       kubeconfig_content:
@@ -17450,36 +18463,6 @@ components:
                     required:
                     - clouds_yaml_content
                     - clouds_yaml_cloud
-                  - type: object
-                    title: OpenStack Explicit Credentials
-                    properties:
-                      auth_url:
-                        type: string
-                        description: OpenStack Keystone authentication URL (e.g.,
-                          https://openstack.example.com:5000/v3).
-                      username:
-                        type: string
-                        description: OpenStack username for authentication.
-                      password:
-                        type: string
-                        description: OpenStack password for authentication.
-                      region_name:
-                        type: string
-                        description: OpenStack region name (e.g., RegionOne).
-                      identity_api_version:
-                        type: string
-                        description: Keystone API version (default: 3).
-                      user_domain_name:
-                        type: string
-                        description: User domain name (default: Default).
-                      project_domain_name:
-                        type: string
-                        description: Project domain name (default: Default).
-                    required:
-                    - auth_url
-                    - username
-                    - password
-                    - region_name
                   writeOnly: true
               required:
               - secret
@@ -18480,6 +19463,8 @@ components:
               - alibabacloud
               - cloudflare
               - openstack
+              - image
+              - googleworkspace
               type: string
               description: |-
                 * `aws` - AWS
@@ -18494,7 +19479,9 @@ components:
                 * `alibabacloud` - Alibaba Cloud
                 * `cloudflare` - Cloudflare
                 * `openstack` - OpenStack
-              x-spec-enum-id: 2d8d323e9cc0044b
+                * `image` - Image
+                * `googleworkspace` - Google Workspace
+              x-spec-enum-id: c0d56cad8ab9abe5
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -18612,8 +19599,10 @@ components:
               - alibabacloud
               - cloudflare
               - openstack
+              - image
+              - googleworkspace
               type: string
-              x-spec-enum-id: 2d8d323e9cc0044b
+              x-spec-enum-id: c0d56cad8ab9abe5
               description: |-
                 Type of provider to create.
 
@@ -18629,6 +19618,8 @@ components:
                 * `alibabacloud` - Alibaba Cloud
                 * `cloudflare` - Cloudflare
                 * `openstack` - OpenStack
+                * `image` - Image
+                * `googleworkspace` - Google Workspace
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -18678,8 +19669,10 @@ components:
                   - alibabacloud
                   - cloudflare
                   - openstack
+                  - image
+                  - googleworkspace
                   type: string
-                  x-spec-enum-id: 2d8d323e9cc0044b
+                  x-spec-enum-id: c0d56cad8ab9abe5
                   description: |-
                     Type of provider to create.
 
@@ -18695,6 +19688,8 @@ components:
                     * `alibabacloud` - Alibaba Cloud
                     * `cloudflare` - Cloudflare
                     * `openstack` - OpenStack
+                    * `image` - Image
+                    * `googleworkspace` - Google Workspace
                 uid:
                   type: string
                   minLength: 3
@@ -19367,6 +20362,21 @@ components:
                 required:
                 - service_account_key
               - type: object
+                title: Google Workspace Service Account
+                properties:
+                  credentials_content:
+                    type: string
+                    description: The service account JSON credentials content for
+                      Google Workspace API access with domain-wide delegation enabled.
+                  delegated_user:
+                    type: string
+                    format: email
+                    description: The email address of the Google Workspace super admin
+                      user to impersonate for domain-wide delegation.
+                required:
+                - credentials_content
+                - delegated_user
+              - type: object
                 title: Kubernetes Static Credentials
                 properties:
                   kubeconfig_content:
@@ -19529,35 +20539,6 @@ components:
                 required:
                 - clouds_yaml_content
                 - clouds_yaml_cloud
-              - type: object
-                title: OpenStack Explicit Credentials
-                properties:
-                  auth_url:
-                    type: string
-                    description: OpenStack Keystone authentication URL (e.g., https://openstack.example.com:5000/v3).
-                  username:
-                    type: string
-                    description: OpenStack username for authentication.
-                  password:
-                    type: string
-                    description: OpenStack password for authentication.
-                  region_name:
-                    type: string
-                    description: OpenStack region name (e.g., RegionOne).
-                  identity_api_version:
-                    type: string
-                    description: Keystone API version (default: 3).
-                  user_domain_name:
-                    type: string
-                    description: User domain name (default: Default).
-                  project_domain_name:
-                    type: string
-                    description: Project domain name (default: Default).
-                required:
-                - auth_url
-                - username
-                - password
-                - region_name
               writeOnly: true
           required:
           - secret_type
@@ -19791,6 +20772,22 @@ components:
                     required:
                     - service_account_key
                   - type: object
+                    title: Google Workspace Service Account
+                    properties:
+                      credentials_content:
+                        type: string
+                        description: The service account JSON credentials content
+                          for Google Workspace API access with domain-wide delegation
+                          enabled.
+                      delegated_user:
+                        type: string
+                        format: email
+                        description: The email address of the Google Workspace super
+                          admin user to impersonate for domain-wide delegation.
+                    required:
+                    - credentials_content
+                    - delegated_user
+                  - type: object
                     title: Kubernetes Static Credentials
                     properties:
                       kubeconfig_content:
@@ -19958,36 +20955,6 @@ components:
                     required:
                     - clouds_yaml_content
                     - clouds_yaml_cloud
-                  - type: object
-                    title: OpenStack Explicit Credentials
-                    properties:
-                      auth_url:
-                        type: string
-                        description: OpenStack Keystone authentication URL (e.g.,
-                          https://openstack.example.com:5000/v3).
-                      username:
-                        type: string
-                        description: OpenStack username for authentication.
-                      password:
-                        type: string
-                        description: OpenStack password for authentication.
-                      region_name:
-                        type: string
-                        description: OpenStack region name (e.g., RegionOne).
-                      identity_api_version:
-                        type: string
-                        description: Keystone API version (default: 3).
-                      user_domain_name:
-                        type: string
-                        description: User domain name (default: Default).
-                      project_domain_name:
-                        type: string
-                        description: Project domain name (default: Default).
-                    required:
-                    - auth_url
-                    - username
-                    - password
-                    - region_name
                   writeOnly: true
               required:
               - secret_type
@@ -20237,6 +21204,21 @@ components:
                 required:
                 - service_account_key
               - type: object
+                title: Google Workspace Service Account
+                properties:
+                  credentials_content:
+                    type: string
+                    description: The service account JSON credentials content for
+                      Google Workspace API access with domain-wide delegation enabled.
+                  delegated_user:
+                    type: string
+                    format: email
+                    description: The email address of the Google Workspace super admin
+                      user to impersonate for domain-wide delegation.
+                required:
+                - credentials_content
+                - delegated_user
+              - type: object
                 title: Kubernetes Static Credentials
                 properties:
                   kubeconfig_content:
@@ -20399,35 +21381,6 @@ components:
                 required:
                 - clouds_yaml_content
                 - clouds_yaml_cloud
-              - type: object
-                title: OpenStack Explicit Credentials
-                properties:
-                  auth_url:
-                    type: string
-                    description: OpenStack Keystone authentication URL (e.g., https://openstack.example.com:5000/v3).
-                  username:
-                    type: string
-                    description: OpenStack username for authentication.
-                  password:
-                    type: string
-                    description: OpenStack password for authentication.
-                  region_name:
-                    type: string
-                    description: OpenStack region name (e.g., RegionOne).
-                  identity_api_version:
-                    type: string
-                    description: Keystone API version (default: 3).
-                  user_domain_name:
-                    type: string
-                    description: User domain name (default: Default).
-                  project_domain_name:
-                    type: string
-                    description: Project domain name (default: Default).
-                required:
-                - auth_url
-                - username
-                - password
-                - region_name
               writeOnly: true
           required:
           - secret

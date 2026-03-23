@@ -3,7 +3,7 @@ from api.attack_paths.queries.types import (
     AttackPathsQueryDefinition,
     AttackPathsQueryParameterDefinition,
 )
-from tasks.jobs.attack_paths.config import PROWLER_FINDING_LABEL
+from tasks.jobs.attack_paths.config import PROVIDER_ID_PROPERTY, PROWLER_FINDING_LABEL
 
 
 # Custom Attack Path Queries
@@ -16,8 +16,7 @@ AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS = AttackPathsQueryDefinition(
     description="Detect EC2 instances with SSH exposed to the internet that can assume higher-privileged roles to read tagged sensitive S3 buckets despite bucket-level public access blocks.",
     provider="aws",
     cypher=f"""
-        CALL apoc.create.vNode(['Internet'], {{id: 'Internet', name: 'Internet'}})
-        YIELD node AS internet
+        OPTIONAL MATCH (internet:Internet {{{PROVIDER_ID_PROPERTY}: $provider_id}})
 
         MATCH path_s3 = (aws:AWSAccount {{id: $provider_uid}})--(s3:S3Bucket)--(t:AWSTag)
         WHERE toLower(t.key) = toLower($tag_key) AND toLower(t.value) = toLower($tag_value)
@@ -32,8 +31,7 @@ AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS = AttackPathsQueryDefinition(
 
         MATCH path_assume_role = (ec2)-[p:STS_ASSUMEROLE_ALLOW*1..9]-(r:AWSRole)
 
-        CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {{}}, ec2)
-        YIELD rel AS can_access
+        OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(ec2)
 
         UNWIND nodes(path_s3) + nodes(path_ec2) + nodes(path_role) + nodes(path_assume_role) as n
         OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
@@ -181,14 +179,12 @@ AWS_EC2_INSTANCES_INTERNET_EXPOSED = AttackPathsQueryDefinition(
     description="Find EC2 instances flagged as exposed to the internet within the selected account.",
     provider="aws",
     cypher=f"""
-        CALL apoc.create.vNode(['Internet'], {{id: 'Internet', name: 'Internet'}})
-        YIELD node AS internet
+        OPTIONAL MATCH (internet:Internet {{{PROVIDER_ID_PROPERTY}: $provider_id}})
 
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(ec2:EC2Instance)
         WHERE ec2.exposed_internet = true
 
-        CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {{}}, ec2)
-        YIELD rel AS can_access
+        OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(ec2)
 
         UNWIND nodes(path) as n
         OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
@@ -205,16 +201,14 @@ AWS_SECURITY_GROUPS_OPEN_INTERNET_FACING = AttackPathsQueryDefinition(
     description="Find internet-facing resources associated with security groups that allow inbound access from '0.0.0.0/0'.",
     provider="aws",
     cypher=f"""
-        CALL apoc.create.vNode(['Internet'], {{id: 'Internet', name: 'Internet'}})
-        YIELD node AS internet
+        OPTIONAL MATCH (internet:Internet {{{PROVIDER_ID_PROPERTY}: $provider_id}})
 
         // Match EC2 instances that are internet-exposed with open security groups (0.0.0.0/0)
         MATCH path_ec2 = (aws:AWSAccount {{id: $provider_uid}})--(ec2:EC2Instance)--(sg:EC2SecurityGroup)--(ipi:IpPermissionInbound)--(ir:IpRange)
         WHERE ec2.exposed_internet = true
             AND ir.range = "0.0.0.0/0"
 
-        CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {{}}, ec2)
-        YIELD rel AS can_access
+        OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(ec2)
 
         UNWIND nodes(path_ec2) as n
         OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
@@ -231,14 +225,12 @@ AWS_CLASSIC_ELB_INTERNET_EXPOSED = AttackPathsQueryDefinition(
     description="Find Classic Load Balancers exposed to the internet along with their listeners.",
     provider="aws",
     cypher=f"""
-        CALL apoc.create.vNode(['Internet'], {{id: 'Internet', name: 'Internet'}})
-        YIELD node AS internet
+        OPTIONAL MATCH (internet:Internet {{{PROVIDER_ID_PROPERTY}: $provider_id}})
 
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(elb:LoadBalancer)--(listener:ELBListener)
         WHERE elb.exposed_internet = true
 
-        CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {{}}, elb)
-        YIELD rel AS can_access
+        OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(elb)
 
         UNWIND nodes(path) as n
         OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
@@ -255,14 +247,12 @@ AWS_ELBV2_INTERNET_EXPOSED = AttackPathsQueryDefinition(
     description="Find ELBv2 load balancers exposed to the internet along with their listeners.",
     provider="aws",
     cypher=f"""
-        CALL apoc.create.vNode(['Internet'], {{id: 'Internet', name: 'Internet'}})
-        YIELD node AS internet
+        OPTIONAL MATCH (internet:Internet {{{PROVIDER_ID_PROPERTY}: $provider_id}})
 
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(elbv2:LoadBalancerV2)--(listener:ELBV2Listener)
         WHERE elbv2.exposed_internet = true
 
-        CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {{}}, elbv2)
-        YIELD rel AS can_access
+        OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(elbv2)
 
         UNWIND nodes(path) as n
         OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
@@ -279,31 +269,15 @@ AWS_PUBLIC_IP_RESOURCE_LOOKUP = AttackPathsQueryDefinition(
     description="Given a public IP address, find the related AWS resource and its adjacent node within the selected account.",
     provider="aws",
     cypher=f"""
-        CALL apoc.create.vNode(['Internet'], {{id: 'Internet', name: 'Internet'}})
-        YIELD node AS internet
+        OPTIONAL MATCH (internet:Internet {{{PROVIDER_ID_PROPERTY}: $provider_id}})
 
-        CALL () {{
-            MATCH path = (aws:AWSAccount {{id: $provider_uid}})-[r]-(x:EC2PrivateIp)-[q]-(y)
-            WHERE x.public_ip = $ip
-            RETURN path, x
+        MATCH path = (aws:AWSAccount {{id: $provider_uid}})-[r]-(x)-[q]-(y)
+        WHERE (x:EC2PrivateIp AND x.public_ip = $ip)
+           OR (x:EC2Instance AND x.publicipaddress = $ip)
+           OR (x:NetworkInterface AND x.public_ip = $ip)
+           OR (x:ElasticIPAddress AND x.public_ip = $ip)
 
-            UNION MATCH path = (aws:AWSAccount {{id: $provider_uid}})-[r]-(x:EC2Instance)-[q]-(y)
-            WHERE x.publicipaddress = $ip
-            RETURN path, x
-
-            UNION MATCH path = (aws:AWSAccount {{id: $provider_uid}})-[r]-(x:NetworkInterface)-[q]-(y)
-            WHERE x.public_ip = $ip
-            RETURN path, x
-
-            UNION MATCH path = (aws:AWSAccount {{id: $provider_uid}})-[r]-(x:ElasticIPAddress)-[q]-(y)
-            WHERE x.public_ip = $ip
-            RETURN path, x
-        }}
-
-        WITH path, x, internet
-
-        CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {{}}, x)
-        YIELD rel AS can_access
+        OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(x)
 
         UNWIND nodes(path) as n
         OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})

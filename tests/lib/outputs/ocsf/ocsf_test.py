@@ -1,6 +1,8 @@
 import json
 from datetime import datetime, timezone
 from io import StringIO
+from typing import Optional
+from uuid import UUID
 
 import requests
 from freezegun import freeze_time
@@ -19,6 +21,7 @@ from py_ocsf_models.objects.organization import Organization
 from py_ocsf_models.objects.product import Product
 from py_ocsf_models.objects.remediation import Remediation
 from py_ocsf_models.objects.resource_details import ResourceDetails
+from pydantic.v1 import BaseModel as V1BaseModel
 
 from prowler.config.config import prowler_version
 from prowler.lib.outputs.ocsf.ocsf import OCSF
@@ -62,7 +65,9 @@ class TestOCSF:
         assert output_data.finding_info.desc == findings[0].metadata.Description
         assert output_data.finding_info.title == findings[0].metadata.CheckTitle
         assert output_data.finding_info.uid == findings[0].uid
-        assert output_data.finding_info.types == ["test-type"]
+        assert output_data.finding_info.types == [
+            "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+        ]
         assert output_data.time == int(findings[0].timestamp.timestamp())
         assert output_data.time_dt == findings[0].timestamp
         assert (
@@ -99,7 +104,10 @@ class TestOCSF:
             output_data.type_name
             == f"Detection Finding: {DetectionFindingTypeID.Create.name}"
         )
-        assert output_data.unmapped == {
+        unmapped = output_data.unmapped
+        scan_id = unmapped.pop("scan_id")
+        assert UUID(scan_id)  # Valid UUID
+        assert unmapped == {
             "related_url": findings[0].metadata.RelatedUrl,
             "categories": findings[0].metadata.Categories,
             "depends_on": findings[0].metadata.DependsOn,
@@ -107,6 +115,8 @@ class TestOCSF:
             "additional_urls": findings[0].metadata.AdditionalURLs,
             "notes": findings[0].metadata.Notes,
             "compliance": findings[0].compliance,
+            "provider_uid": findings[0].account_uid,
+            "provider": findings[0].provider,
         }
 
         # Test with int timestamp (UNIX timestamp)
@@ -116,6 +126,23 @@ class TestOCSF:
         assert output_data.time_dt == datetime.fromtimestamp(
             1619600000, tz=timezone.utc
         )
+
+    def test_scan_id_is_unique_per_provider_and_account(self):
+        findings = [
+            generate_finding_output(provider="aws", account_uid="111111111111"),
+            generate_finding_output(provider="aws", account_uid="222222222222"),
+            generate_finding_output(provider="aws", account_uid="111111111111"),
+        ]
+
+        ocsf = OCSF(findings)
+
+        scan_ids = [finding.unmapped["scan_id"] for finding in ocsf.data]
+
+        assert UUID(scan_ids[0])
+        assert UUID(scan_ids[1])
+        assert UUID(scan_ids[2])
+        assert scan_ids[0] == scan_ids[2]
+        assert scan_ids[0] != scan_ids[1]
 
     def test_validate_ocsf(self):
         mock_file = StringIO()
@@ -186,8 +213,8 @@ class TestOCSF:
                 "status_detail": "status extended",
                 "status_id": 1,
                 "unmapped": {
-                    "related_url": "test-url",
-                    "categories": ["test-category"],
+                    "related_url": "",
+                    "categories": ["encryption"],
                     "depends_on": ["test-dependency"],
                     "related_to": ["test-related-to"],
                     "additional_urls": [
@@ -196,6 +223,8 @@ class TestOCSF:
                     ],
                     "notes": "test-notes",
                     "compliance": {"test-compliance": "test-compliance"},
+                    "provider_uid": "123456789012",
+                    "provider": "aws",
                 },
                 "activity_name": "Create",
                 "activity_id": 1,
@@ -205,7 +234,9 @@ class TestOCSF:
                     "desc": "check description",
                     "title": "service_test_check_id",
                     "uid": "test-unique-finding",
-                    "types": ["test-type"],
+                    "types": [
+                        "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+                    ],
                 },
                 "resources": [
                     {
@@ -237,6 +268,8 @@ class TestOCSF:
                     "org": {
                         "name": "test-organization",
                         "uid": "test-organization-id",
+                        "ou_uid": "ou-abc1-12345678",
+                        "ou_name": "Production/WebServices",
                     },
                     "provider": "aws",
                     "region": "eu-west-1",
@@ -258,7 +291,11 @@ class TestOCSF:
 
         mock_file.seek(0)
         content = mock_file.read()
-        assert json.loads(content) == expected_json_output
+        actual_output = json.loads(content)
+        # scan_id is non-deterministic (UUID7), validate and remove before comparison
+        actual_scan_id = actual_output[0]["unmapped"].pop("scan_id")
+        assert UUID(actual_scan_id)
+        assert actual_output == expected_json_output
 
     def test_batch_write_data_to_file_without_findings(self):
         assert not OCSF([])._file_descriptor
@@ -316,7 +353,10 @@ class TestOCSF:
         assert finding_ocsf.risk_details == finding_output.metadata.Risk
 
         # Unmapped Data
-        assert finding_ocsf.unmapped == {
+        unmapped = finding_ocsf.unmapped
+        scan_id = unmapped.pop("scan_id")
+        assert UUID(scan_id)  # Valid UUID
+        assert unmapped == {
             "related_url": finding_output.metadata.RelatedUrl,
             "categories": finding_output.metadata.Categories,
             "depends_on": finding_output.metadata.DependsOn,
@@ -324,6 +364,8 @@ class TestOCSF:
             "additional_urls": finding_output.metadata.AdditionalURLs,
             "notes": finding_output.metadata.Notes,
             "compliance": finding_output.compliance,
+            "provider_uid": finding_output.account_uid,
+            "provider": finding_output.provider,
         }
 
         # ResourceDetails
@@ -386,6 +428,8 @@ class TestOCSF:
         assert isinstance(cloud_organization, Organization)
         assert cloud_organization.uid == finding_output.account_organization_uid
         assert cloud_organization.name == finding_output.account_organization_name
+        assert cloud_organization.ou_uid == finding_output.account_ou_uid
+        assert cloud_organization.ou_name == finding_output.account_ou_name
 
     def test_finding_output_kubernetes(self):
         finding_output = generate_finding_output(
@@ -394,6 +438,7 @@ class TestOCSF:
             muted=True,
             region=AWS_REGION_EU_WEST_1,
             provider="kubernetes",
+            provider_uid="test-k8s-context",
         )
 
         finding_ocsf = OCSF([finding_output])
@@ -403,6 +448,8 @@ class TestOCSF:
         assert finding_ocsf.resources[0].namespace == finding_output.region.replace(
             "namespace: ", ""
         )
+        assert finding_ocsf.unmapped["provider_uid"] == "test-k8s-context"
+        assert finding_ocsf.unmapped["provider"] == "kubernetes"
 
     def test_finding_output_cloud_fail_low_not_muted(self):
         finding_output = generate_finding_output(
@@ -461,3 +508,134 @@ class TestOCSF:
     def test_suppressed_when_muted(self):
         muted = True
         assert OCSF.get_finding_status_id(muted) == StatusID.Suppressed
+
+    def test_sanitize_resource_data_plain_dict(self):
+        result = OCSF._sanitize_resource_data("details", {"key": "value"})
+        assert result == {
+            "details": "details",
+            "metadata": {"key": "value"},
+        }
+
+    def test_sanitize_resource_data_empty_dict(self):
+        result = OCSF._sanitize_resource_data("details", {})
+        assert result == {
+            "details": "details",
+            "metadata": {},
+        }
+
+    def test_sanitize_resource_data_with_pydantic_v1_models(self):
+        """Reproduces the Trail serialization bug: resource_metadata is a
+        dict[str, PydanticModel] when checks pass cloudtrail_client.trails."""
+
+        class EventSelector(V1BaseModel):
+            name: str = None
+            is_all: bool = False
+
+        class Trail(V1BaseModel):
+            name: str = None
+            region: str = "us-east-1"
+            is_logging: bool = True
+            latest_cloudwatch_delivery_time: datetime = None
+            data_events: list = []
+            tags: Optional[list] = []
+
+        trails = {
+            "arn:aws:cloudtrail:us-east-1:123456:trail/main": Trail(
+                name="main",
+                latest_cloudwatch_delivery_time=datetime(2026, 1, 15, 10, 30),
+                data_events=[EventSelector(name="s3", is_all=True)],
+            ),
+            "arn:aws:cloudtrail:eu-west-1:123456:trail/secondary": Trail(
+                name="secondary",
+            ),
+        }
+
+        result = OCSF._sanitize_resource_data("resource details", trails)
+
+        assert result["details"] == "resource details"
+        metadata = result["metadata"]
+        # Trail objects are converted to dicts, not strings
+        main_trail = metadata["arn:aws:cloudtrail:us-east-1:123456:trail/main"]
+        assert isinstance(main_trail, dict)
+        assert main_trail["name"] == "main"
+        assert main_trail["region"] == "us-east-1"
+        assert main_trail["is_logging"] is True
+        # datetime converted to string
+        assert "2026-01-15" in main_trail["latest_cloudwatch_delivery_time"]
+        # Nested models are also converted
+        assert main_trail["data_events"] == [{"name": "s3", "is_all": True}]
+
+        secondary_trail = metadata[
+            "arn:aws:cloudtrail:eu-west-1:123456:trail/secondary"
+        ]
+        assert isinstance(secondary_trail, dict)
+        assert secondary_trail["name"] == "secondary"
+        assert secondary_trail["latest_cloudwatch_delivery_time"] is None
+
+        # Entire result must be JSON-serializable
+        json.dumps(result)
+
+    def test_sanitize_resource_data_with_nested_non_serializable_types(self):
+        """Ensures datetimes and enums nested in dicts are handled."""
+        resource_metadata = {
+            "created_at": datetime(2026, 6, 15, 12, 0, 0),
+            "nested": {
+                "timestamp": datetime(2026, 1, 1),
+                "values": [1, "two", datetime(2025, 12, 31)],
+            },
+        }
+
+        result = OCSF._sanitize_resource_data("details", resource_metadata)
+
+        assert "2026-06-15" in result["metadata"]["created_at"]
+        assert "2026-01-01" in result["metadata"]["nested"]["timestamp"]
+        assert result["metadata"]["nested"]["values"][0] == 1
+        assert result["metadata"]["nested"]["values"][1] == "two"
+        assert "2025-12-31" in result["metadata"]["nested"]["values"][2]
+        json.dumps(result)
+
+    @freeze_time(datetime.now())
+    def test_batch_write_data_to_file_with_pydantic_model_in_resource_metadata(self):
+        """End-to-end test: OCSF output succeeds when resource_metadata
+        contains Pydantic v1 model objects (the Trail serialization bug)."""
+
+        class Trail(V1BaseModel):
+            name: str = None
+            region: str = "us-east-1"
+            is_logging: bool = True
+
+        finding = generate_finding_output(
+            status="FAIL",
+            severity="low",
+            muted=False,
+            region=AWS_REGION_EU_WEST_1,
+            timestamp=datetime.now(),
+            resource_details="trail details",
+            resource_name="main-trail",
+            resource_uid="arn:aws:cloudtrail:eu-west-1:123456:trail/main",
+            status_extended="CloudTrail trail is not logging",
+        )
+        # Simulate what happens when Check_Report receives
+        # resource=cloudtrail_client.trails (a dict of Trail models)
+        finding.resource_metadata = {
+            "arn:trail/main": Trail(name="main"),
+            "arn:trail/secondary": Trail(name="secondary", is_logging=False),
+        }
+
+        mock_file = StringIO()
+        output = OCSF([finding])
+        output._file_descriptor = mock_file
+
+        with patch.object(mock_file, "close", return_value=None):
+            output.batch_write_data_to_file()
+
+        mock_file.seek(0)
+        content = mock_file.read()
+        parsed = json.loads(content)
+
+        assert len(parsed) == 1
+        resource_data = parsed[0]["resources"][0]["data"]
+        assert resource_data["details"] == "trail details"
+        # Trail models should be serialized as proper dicts
+        assert resource_data["metadata"]["arn:trail/main"]["name"] == "main"
+        assert resource_data["metadata"]["arn:trail/secondary"]["is_logging"] is False

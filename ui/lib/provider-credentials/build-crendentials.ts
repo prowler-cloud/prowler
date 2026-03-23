@@ -250,6 +250,35 @@ export const buildAlibabaCloudSecret = (
   return filterEmptyValues(secret);
 };
 
+export const buildOpenStackSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]: getFormValue(
+      formData,
+      ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT,
+    ),
+    [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]: getFormValue(
+      formData,
+      ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
+export const buildGoogleWorkspaceSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT]:
+      getFormValue(
+        formData,
+        ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT,
+      ),
+    [ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER]: getFormValue(
+      formData,
+      ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 export const buildIacSecret = (formData: FormData) => {
   const secret = {
     [ProviderCredentialFields.REPOSITORY_URL]: getFormValue(
@@ -259,6 +288,32 @@ export const buildIacSecret = (formData: FormData) => {
     [ProviderCredentialFields.ACCESS_TOKEN]: getFormValue(
       formData,
       ProviderCredentialFields.ACCESS_TOKEN,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
+export const buildImageSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.REGISTRY_USERNAME]: getFormValue(
+      formData,
+      ProviderCredentialFields.REGISTRY_USERNAME,
+    ),
+    [ProviderCredentialFields.REGISTRY_PASSWORD]: getFormValue(
+      formData,
+      ProviderCredentialFields.REGISTRY_PASSWORD,
+    ),
+    [ProviderCredentialFields.REGISTRY_TOKEN]: getFormValue(
+      formData,
+      ProviderCredentialFields.REGISTRY_TOKEN,
+    ),
+    [ProviderCredentialFields.IMAGE_FILTER]: getFormValue(
+      formData,
+      ProviderCredentialFields.IMAGE_FILTER,
+    ),
+    [ProviderCredentialFields.TAG_FILTER]: getFormValue(
+      formData,
+      ProviderCredentialFields.TAG_FILTER,
     ),
   };
   return filterEmptyValues(secret);
@@ -318,6 +373,61 @@ export const buildOracleCloudSecret = (
   return filterEmptyValues(secret);
 };
 
+/**
+ * Clean a Cloudflare API token by removing common copy-paste issues:
+ * - Leading/trailing whitespace
+ * - "Bearer " prefix (if user copied the full header)
+ * - Tabs and other whitespace characters
+ */
+const cleanCloudflareToken = (token: string | null | undefined): string => {
+  if (!token) return "";
+  // Remove leading/trailing whitespace and tabs
+  let cleaned = token.trim().replace(/\t/g, "");
+  // Remove "Bearer " prefix if present (case-insensitive)
+  if (cleaned.toLowerCase().startsWith("bearer ")) {
+    cleaned = cleaned.slice(7).trim();
+  }
+  return cleaned;
+};
+
+export const buildCloudflareSecret = (formData: FormData) => {
+  // Check which authentication method is being used
+  const hasApiToken =
+    formData.get(ProviderCredentialFields.CLOUDFLARE_API_TOKEN) !== null &&
+    formData.get(ProviderCredentialFields.CLOUDFLARE_API_TOKEN) !== "";
+  const hasApiKey =
+    formData.get(ProviderCredentialFields.CLOUDFLARE_API_KEY) !== null &&
+    formData.get(ProviderCredentialFields.CLOUDFLARE_API_KEY) !== "";
+
+  if (hasApiToken) {
+    const apiToken = getFormValue(
+      formData,
+      ProviderCredentialFields.CLOUDFLARE_API_TOKEN,
+    ) as string;
+    return {
+      [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]:
+        cleanCloudflareToken(apiToken),
+    };
+  }
+
+  if (hasApiKey) {
+    const apiKey = getFormValue(
+      formData,
+      ProviderCredentialFields.CLOUDFLARE_API_KEY,
+    ) as string;
+    const apiEmail = getFormValue(
+      formData,
+      ProviderCredentialFields.CLOUDFLARE_API_EMAIL,
+    ) as string;
+    return filterEmptyValues({
+      [ProviderCredentialFields.CLOUDFLARE_API_KEY]: apiKey?.trim(),
+      [ProviderCredentialFields.CLOUDFLARE_API_EMAIL]: apiEmail?.trim(),
+    });
+  }
+
+  return {};
+};
+
 // Main function to build secret configuration
 export const buildSecretConfig = (
   formData: FormData,
@@ -357,6 +467,10 @@ export const buildSecretConfig = (
       secretType: "static",
       secret: buildIacSecret(formData),
     }),
+    image: () => ({
+      secretType: "static",
+      secret: buildImageSecret(formData),
+    }),
     oraclecloud: () => ({
       secretType: "static",
       secret: buildOracleCloudSecret(formData, providerUid),
@@ -373,6 +487,18 @@ export const buildSecretConfig = (
         secret: buildAlibabaCloudSecret(formData, isRole),
       };
     },
+    cloudflare: () => ({
+      secretType: "static",
+      secret: buildCloudflareSecret(formData),
+    }),
+    openstack: () => ({
+      secretType: "static",
+      secret: buildOpenStackSecret(formData),
+    }),
+    googleworkspace: () => ({
+      secretType: "static",
+      secret: buildGoogleWorkspaceSecret(formData),
+    }),
   };
 
   const builder = secretBuilders[providerType];

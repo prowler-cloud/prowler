@@ -662,6 +662,9 @@ class BaseComplianceReportGenerator(ABC):
             elements.append(create_status_badge(req.status))
             elements.append(Spacer(1, 0.1 * inch))
 
+            # Hook for subclasses to add extra detail (e.g., CSA attributes)
+            elements.extend(self._render_requirement_detail_extras(req, data))
+
             # Findings for this requirement
             for check_id in req.checks:
                 elements.append(Paragraph(f"Check: {check_id}", self.styles["h2"]))
@@ -700,6 +703,24 @@ class BaseComplianceReportGenerator(ABC):
             page_text = f"Page {page_num}"
 
         return page_text, "Powered by Prowler"
+
+    def _render_requirement_detail_extras(
+        self, req: RequirementData, data: ComplianceData
+    ) -> list:
+        """Hook for subclasses to render extra content in detailed findings.
+
+        Called after the status badge for each requirement in the detailed
+        findings section. Override in subclasses to add framework-specific
+        metadata (e.g., CSA CCM attributes).
+
+        Args:
+            req: The requirement being rendered.
+            data: Aggregated compliance data.
+
+        Returns:
+            List of ReportLab elements (empty by default).
+        """
+        return []
 
     # =========================================================================
     # Private Helper Methods

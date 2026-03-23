@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { lazy, Suspense } from "react";
+import { type ComponentType, lazy, Suspense } from "react";
 
 import {
   MultiSelect,
@@ -48,6 +48,11 @@ const IacProviderBadge = lazy(() =>
     default: m.IacProviderBadge,
   })),
 );
+const ImageProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.ImageProviderBadge,
+  })),
+);
 const OracleCloudProviderBadge = lazy(() =>
   import("@/components/icons/providers-badge").then((m) => ({
     default: m.OracleCloudProviderBadge,
@@ -63,6 +68,21 @@ const AlibabaCloudProviderBadge = lazy(() =>
     default: m.AlibabaCloudProviderBadge,
   })),
 );
+const CloudflareProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.CloudflareProviderBadge,
+  })),
+);
+const OpenStackProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.OpenStackProviderBadge,
+  })),
+);
+const GoogleWorkspaceProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.GoogleWorkspaceProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -72,7 +92,7 @@ const IconPlaceholder = ({ width, height }: IconProps) => (
 
 const PROVIDER_DATA: Record<
   ProviderType,
-  { label: string; icon: React.ComponentType<IconProps> }
+  { label: string; icon: ComponentType<IconProps> }
 > = {
   aws: {
     label: "Amazon Web Services",
@@ -98,9 +118,17 @@ const PROVIDER_DATA: Record<
     label: "GitHub",
     icon: GitHubProviderBadge,
   },
+  googleworkspace: {
+    label: "Google Workspace",
+    icon: GoogleWorkspaceProviderBadge,
+  },
   iac: {
     label: "Infrastructure as Code",
     icon: IacProviderBadge,
+  },
+  image: {
+    label: "Container Registry",
+    icon: ImageProviderBadge,
   },
   oraclecloud: {
     label: "Oracle Cloud Infrastructure",
@@ -113,6 +141,14 @@ const PROVIDER_DATA: Record<
   alibabacloud: {
     label: "Alibaba Cloud",
     icon: AlibabaCloudProviderBadge,
+  },
+  cloudflare: {
+    label: "Cloudflare",
+    icon: CloudflareProviderBadge,
+  },
+  openstack: {
+    label: "OpenStack",
+    icon: OpenStackProviderBadge,
   },
 };
 
@@ -168,14 +204,14 @@ export const ProviderTypeSelector = ({
     if (selectedTypes.length === 1) {
       const providerType = selectedTypes[0] as ProviderType;
       return (
-        <span className="flex items-center gap-2">
+        <span className="flex min-w-0 items-center gap-2">
           {renderIcon(providerType)}
-          <span>{PROVIDER_DATA[providerType].label}</span>
+          <span className="truncate">{PROVIDER_DATA[providerType].label}</span>
         </span>
       );
     }
     return (
-      <span className="truncate">
+      <span className="min-w-0 truncate">
         {selectedTypes.length} providers selected
       </span>
     );

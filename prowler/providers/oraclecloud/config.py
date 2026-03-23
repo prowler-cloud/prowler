@@ -13,6 +13,7 @@ OCI_USER_AGENT = "Prowler"
 
 # OCI Regions - Commercial Regions
 OCI_COMMERCIAL_REGIONS = {
+    "af-casablanca-1": "af-casablanca-1",
     "af-johannesburg-1": "af-johannesburg-1",
     "ap-batam-1": "ap-batam-1",
     "ap-chuncheon-1": "ap-chuncheon-1",
@@ -64,5 +65,16 @@ OCI_GOVERNMENT_REGIONS = {
     "us-luke-1": "US Gov East",
 }
 
+# OCI Defense Regions
+OCI_US_DOD_REGIONS = {
+    "us-gov-ashburn-1": "US DoD East (Ashburn)",
+    "us-gov-chicago-1": "US DoD North (Chicago)",
+    "us-gov-phoenix-1": "US DoD West (Phoenix)",
+}
+
 # All OCI Regions
-OCI_REGIONS = {**OCI_COMMERCIAL_REGIONS, **OCI_GOVERNMENT_REGIONS}
+OCI_REGIONS = {
+    **OCI_COMMERCIAL_REGIONS,
+    **OCI_GOVERNMENT_REGIONS,
+    **OCI_US_DOD_REGIONS,
+}

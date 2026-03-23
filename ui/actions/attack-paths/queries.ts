@@ -7,6 +7,7 @@ import { handleApiResponse } from "@/lib/server-actions-helper";
 import {
   AttackPathQueriesResponse,
   AttackPathQuery,
+  AttackPathQueryError,
   AttackPathQueryResult,
   ExecuteQueryRequest,
 } from "@/types/attack-paths";
@@ -59,7 +60,7 @@ export const executeQuery = async (
   scanId: string,
   queryId: string,
   parameters?: Record<string, string | number | boolean>,
-): Promise<AttackPathQueryResult | undefined> => {
+): Promise<AttackPathQueryResult | AttackPathQueryError | undefined> => {
   // Validate scanId is a valid UUID format to prevent request forgery
   const validatedScanId = UUIDSchema.safeParse(scanId);
   if (!validatedScanId.success) {
@@ -89,9 +90,15 @@ export const executeQuery = async (
       },
     );
 
-    return handleApiResponse(response);
+    return (await handleApiResponse(response)) as
+      | AttackPathQueryResult
+      | AttackPathQueryError;
   } catch (error) {
     console.error("Error executing query on scan:", error);
-    return undefined;
+    return {
+      error:
+        "Server is temporarily unavailable. Please try again in a few minutes.",
+      status: 503,
+    };
   }
 };

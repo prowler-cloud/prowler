@@ -1,0 +1,40 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_break_glass_account_fido2_security_key_registered",
+  "CheckTitle": "Break glass account has a FIDO2 security key registered for phishing-resistant authentication",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra break glass (emergency access) accounts should have at least one **FIDO2 security key** registered as their authentication method. These accounts are identified as users excluded from all enabled Conditional Access policies.",
+  "Risk": "Without FIDO2 security keys, break glass accounts rely on weaker authentication methods vulnerable to **phishing, credential theft, and man-in-the-middle attacks**. Compromised emergency access accounts could grant an attacker unrestricted tenant access, bypassing all Conditional Access protections.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/security-emergency-access",
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-passwordless#fido2-security-keys"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Entra admin center > Users.\n2. Select the break glass account.\n3. Go to Authentication methods > Add authentication method.\n4. Select FIDO2 Security Key and follow the registration steps.\n5. Store the physical FIDO2 key in a secure location (e.g., physical safe).",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Register at least one **FIDO2 security key** for each break glass account. Store the physical keys in a secure, offline location such as a safe. Use phishing-resistant authentication to protect emergency access accounts from credential-based attacks.",
+      "Url": "https://hub.prowler.com/check/entra_break_glass_account_fido2_security_key_registered"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_emergency_access_exclusion"
+  ],
+  "Notes": "Break glass accounts are identified as users excluded from all enabled Conditional Access policies. This check requires the entra_emergency_access_exclusion check to pass first for meaningful results."
+}

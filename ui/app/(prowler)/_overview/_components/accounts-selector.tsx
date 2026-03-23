@@ -7,12 +7,16 @@ import {
   AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
+  CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
+  GoogleWorkspaceProviderBadge,
   IacProviderBadge,
+  ImageProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
+  OpenStackProviderBadge,
   OracleCloudProviderBadge,
 } from "@/components/icons/providers-badge";
 import {
@@ -32,10 +36,14 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   kubernetes: <KS8ProviderBadge width={18} height={18} />,
   m365: <M365ProviderBadge width={18} height={18} />,
   github: <GitHubProviderBadge width={18} height={18} />,
+  googleworkspace: <GoogleWorkspaceProviderBadge width={18} height={18} />,
   iac: <IacProviderBadge width={18} height={18} />,
+  image: <ImageProviderBadge width={18} height={18} />,
   oraclecloud: <OracleCloudProviderBadge width={18} height={18} />,
   mongodbatlas: <MongoDBAtlasProviderBadge width={18} height={18} />,
   alibabacloud: <AlibabaCloudProviderBadge width={18} height={18} />,
+  cloudflare: <CloudflareProviderBadge width={18} height={18} />,
+  openstack: <OpenStackProviderBadge width={18} height={18} />,
 };
 
 interface AccountsSelectorProps {

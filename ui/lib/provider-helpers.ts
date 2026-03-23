@@ -1,9 +1,13 @@
+import { checkConnectionProvider } from "@/actions/providers/providers";
+import { getTask } from "@/actions/task/tasks";
 import {
   ProviderEntity,
   ProviderProps,
   ProvidersApiResponse,
   ProviderType,
 } from "@/types/providers";
+
+import { checkTaskStatus } from "./helper";
 
 export const extractProviderUIDs = (
   providersData: ProvidersApiResponse,
@@ -88,6 +92,7 @@ export const getProviderFormType = (
     "github",
     "m365",
     "alibabacloud",
+    "cloudflare",
   ].includes(providerType);
 
   // Show selector if no via parameter and provider needs it
@@ -129,6 +134,14 @@ export const getProviderFormType = (
     if (via === "credentials") return "credentials";
   }
 
+  // Cloudflare credential types
+  if (
+    providerType === "cloudflare" &&
+    ["api_token", "api_key"].includes(via || "")
+  ) {
+    return "credentials";
+  }
+
   // Other providers go directly to credentials form
   if (!needsSelector) {
     return "credentials";
@@ -150,8 +163,60 @@ export const requiresBackButton = (via?: string | null): boolean => {
     "github_app",
     "app_client_secret",
     "app_certificate",
+    "api_token",
+    "api_key",
   ];
   // Note: "role" is already included for AWS, now also used by AlibabaCloud
+  // "api_token" and "api_key" are used by Cloudflare
 
   return validViaTypes.includes(via);
 };
+
+export interface TestConnectionResult {
+  connected: boolean;
+  error: string | null;
+}
+
+/**
+ * Tests a provider's connection end-to-end: submits the task, polls until
+ * completion, and returns the real connection result.
+ *
+ * Used by both the Provider Wizard (single) and bulk test (via concurrency limit).
+ */
+export async function testProviderConnection(
+  providerId: string,
+): Promise<TestConnectionResult> {
+  const formData = new FormData();
+  formData.append("providerId", providerId);
+
+  const data = await checkConnectionProvider(formData);
+
+  if (data?.errors && data.errors.length > 0) {
+    return {
+      connected: false,
+      error: data.errors[0]?.detail ?? "Unknown error",
+    };
+  }
+
+  const taskId = data?.data?.id;
+  if (!taskId) {
+    return { connected: false, error: "No task ID returned" };
+  }
+
+  const taskResult = await checkTaskStatus(taskId);
+
+  if (!taskResult.completed) {
+    return {
+      connected: false,
+      error: taskResult.error ?? "Connection test timed out",
+    };
+  }
+
+  const task = await getTask(taskId);
+  const { connected, error } = task.data.attributes.result;
+
+  return {
+    connected,
+    error: connected ? null : error || "Unknown error",
+  };
+}

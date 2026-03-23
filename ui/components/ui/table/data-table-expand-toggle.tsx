@@ -7,6 +7,13 @@ import { cn } from "@/lib/utils";
 
 interface DataTableExpandToggleProps<TData> {
   row: Row<TData>;
+  /**
+   * Explicit expanded state to ensure React Compiler re-renders when state changes.
+   * TanStack Table Row instances keep stable references — getter methods like
+   * `row.getIsExpanded()` read mutable state that React Compiler cannot track.
+   * Pass this prop from the parent to break memoization.
+   */
+  isExpanded?: boolean;
 }
 
 /**
@@ -24,15 +31,19 @@ interface DataTableExpandToggleProps<TData> {
  * // In column definition:
  * {
  *   id: "expand",
- *   cell: ({ row }) => <DataTableExpandToggle row={row} />,
+ *   cell: ({ row }) => (
+ *     <DataTableExpandToggle row={row} isExpanded={row.getIsExpanded()} />
+ *   ),
  * }
  * ```
  */
 export function DataTableExpandToggle<TData>({
   row,
+  isExpanded: isExpandedProp,
 }: DataTableExpandToggleProps<TData>) {
+  const isExpanded = isExpandedProp ?? row.getIsExpanded();
+
   if (!row.getCanExpand()) {
-    // Return a spacer div for alignment when row has no sub-rows
     return <div className="w-4" />;
   }
 
@@ -40,17 +51,17 @@ export function DataTableExpandToggle<TData>({
     <button
       onClick={row.getToggleExpandedHandler()}
       className={cn(
-        "rounded p-1 transition-colors",
+        "rounded transition-colors",
         "hover:bg-prowler-white/10",
         "focus-visible:ring-border-input-primary-press focus-visible:ring-2 focus-visible:outline-none",
       )}
-      aria-label={row.getIsExpanded() ? "Collapse row" : "Expand row"}
-      aria-expanded={row.getIsExpanded()}
+      aria-label={isExpanded ? "Collapse row" : "Expand row"}
+      aria-expanded={isExpanded}
     >
       <ChevronRightIcon
         className={cn(
-          "h-4 w-4 shrink-0 transition-transform duration-200",
-          row.getIsExpanded() && "rotate-90",
+          "text-text-neutral-tertiary h-4 w-4 shrink-0 transition-transform duration-200",
+          isExpanded && "rotate-90",
         )}
       />
     </button>

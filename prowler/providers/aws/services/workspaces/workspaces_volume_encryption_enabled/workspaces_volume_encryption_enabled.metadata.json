@@ -18,7 +18,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/workspaces/latest/adminguide/encrypt-workspaces.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WorkSpaces/storage-encryption.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/WorkSpaces/storage-encryption.html"
   ],
   "Remediation": {
     "Code": {

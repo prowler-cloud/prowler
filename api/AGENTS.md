@@ -4,6 +4,8 @@
 > - [`prowler-api`](../skills/prowler-api/SKILL.md) - Models, Serializers, Views, RLS patterns
 > - [`prowler-test-api`](../skills/prowler-test-api/SKILL.md) - Testing patterns (pytest-django)
 > - [`prowler-attack-paths-query`](../skills/prowler-attack-paths-query/SKILL.md) - Attack Paths openCypher queries
+> - [`django-migration-psql`](../skills/django-migration-psql/SKILL.md) - Migration best practices for PostgreSQL
+> - [`postgresql-indexing`](../skills/postgresql-indexing/SKILL.md) - PostgreSQL indexing, EXPLAIN, monitoring, maintenance
 > - [`django-drf`](../skills/django-drf/SKILL.md) - Generic DRF patterns
 > - [`jsonapi`](../skills/jsonapi/SKILL.md) - Strict JSON:API v1.1 spec compliance
 > - [`pytest`](../skills/pytest/SKILL.md) - Generic pytest patterns
@@ -16,23 +18,36 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
 | Adding DRF pagination or permissions | `django-drf` |
+| Adding indexes or constraints to database tables | `django-migration-psql` |
 | Adding privilege escalation detection queries | `prowler-attack-paths-query` |
+| Analyzing query performance with EXPLAIN | `postgresql-indexing` |
 | Committing changes | `prowler-commit` |
 | Create PR that requires changelog entry | `prowler-changelog` |
 | Creating API endpoints | `jsonapi` |
 | Creating Attack Paths queries | `prowler-attack-paths-query` |
 | Creating ViewSets, serializers, or filters in api/ | `django-drf` |
 | Creating a git commit | `prowler-commit` |
+| Creating or modifying PostgreSQL indexes | `postgresql-indexing` |
+| Creating or reviewing Django migrations | `django-migration-psql` |
 | Creating/modifying models, views, serializers | `prowler-api` |
+| Debugging slow queries or missing indexes | `postgresql-indexing` |
+| Dropping or reindexing PostgreSQL indexes | `postgresql-indexing` |
+| Fixing bug | `tdd` |
 | Implementing JSON:API endpoints | `django-drf` |
+| Implementing feature | `tdd` |
 | Modifying API responses | `jsonapi` |
+| Modifying component | `tdd` |
+| Refactoring code | `tdd` |
 | Review changelog format and conventions | `prowler-changelog` |
 | Reviewing JSON:API compliance | `jsonapi` |
+| Running makemigrations or pgmakemigrations | `django-migration-psql` |
 | Testing RLS tenant isolation | `prowler-test-api` |
 | Update CHANGELOG.md in any component | `prowler-changelog` |
 | Updating existing Attack Paths queries | `prowler-attack-paths-query` |
+| Working on task | `tdd` |
 | Writing Prowler API tests | `prowler-test-api` |
 | Writing Python tests with pytest | `pytest` |
+| Writing data backfill or data migration | `django-migration-psql` |
 
 ---
 

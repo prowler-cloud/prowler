@@ -43,6 +43,7 @@ export type ProviderType = (typeof PROVIDER_TYPES)[keyof typeof PROVIDER_TYPES];
 export interface AttackPathScanAttributes {
   state: ScanState;
   progress: number;
+  graph_data_ready: boolean;
   provider_alias: string;
   provider_type: ProviderType;
   provider_uid: string;
@@ -172,6 +173,11 @@ export interface QueryResultData {
 
 export interface AttackPathQueryResult {
   data: QueryResultData;
+}
+
+export interface AttackPathQueryError {
+  error: string;
+  status: number;
 }
 
 // Finding severity and status constants

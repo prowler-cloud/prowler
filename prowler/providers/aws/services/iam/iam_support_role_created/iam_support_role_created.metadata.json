@@ -16,7 +16,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awssupport/latest/user/using-service-linked-roles-sup.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/support-role.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/IAM/support-role.html",
     "https://icompaas.freshdesk.com/support/solutions/articles/62000081064-ensure-a-support-role-has-been-created-to-manage-incidents-with-aws-support",
     "https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSSupportAccess.html"
   ],
