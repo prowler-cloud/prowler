@@ -374,10 +374,6 @@ export const deleteMuteRule = async (
   }
 };
 
-// Note: Adding findings to existing mute rules is not supported by the API.
-// The MuteRuleUpdateSerializer only allows updating name, reason, and enabled fields.
-// finding_ids can only be specified when creating a new mute rule.
-
 // Note: Unmute functionality is not currently supported by the API.
 // The FindingViewSet only allows GET operations, and deleting a mute rule
 // does not unmute the findings ("Previously muted findings remain muted").

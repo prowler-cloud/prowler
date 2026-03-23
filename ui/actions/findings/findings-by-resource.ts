@@ -20,6 +20,7 @@ export const resolveFindingIds = async ({
   const url = new URL(`${apiBaseUrl}/findings/latest`);
   url.searchParams.append("filter[check_id]", checkId);
   url.searchParams.append("filter[resource_uid__in]", resourceUids.join(","));
+  url.searchParams.append("filter[muted]", "false");
   url.searchParams.append("page[size]", resourceUids.length.toString());
 
   try {
@@ -48,6 +49,7 @@ export const resolveFindingIdsByCheckIds = async ({
 
   const url = new URL(`${apiBaseUrl}/findings/latest`);
   url.searchParams.append("filter[check_id__in]", checkIds.join(","));
+  url.searchParams.append("filter[muted]", "false");
   url.searchParams.append("page[size]", "500");
 
   try {
