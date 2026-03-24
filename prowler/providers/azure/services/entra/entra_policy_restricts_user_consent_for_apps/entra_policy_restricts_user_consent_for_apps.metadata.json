@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "Microsoft Entra authorization settings are evaluated to determine if the default user role permits **user consent to applications**. The check looks at permission grant policies to see whether end users can authorize apps to access organization data on their behalf, or if consent is restricted (e.g., `Do not allow user consent`).",
   "Risk": "Permitting end-user consent enables **consent phishing** and over-privileged OAuth grants. Attackers can obtain tokens to read/send mail, access files, or act as the user, causing **data exfiltration**, persistence beyond password resets/MFA changes, and abuse of connected apps, impacting confidentiality and integrity.",
@@ -31,7 +31,8 @@
     }
   },
   "Categories": [
-    "identity-access"
+    "identity-access",
+    "e3"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -32,6 +32,7 @@
       "Id": "1.1.2",
       "Description": "Emergency access or \"break glass\" accounts are limited for emergency scenarios where normal administrative accounts are unavailable. They are not assigned to a specific user and will have a combination of physical and technical controls to prevent them from being accessed outside a true emergency. These emergencies could be due to several things, including:- Technical failures of a cellular provider or Microsoft related service such as MFA.- The last remaining Global Administrator account is inaccessible.Ensure two `Emergency Access` accounts have been defined.**Note:** Microsoft provides several recommendations for these accounts and how to configure them. For more information on this, please refer to the references section. The CIS Benchmark outlines the more critical things to consider.",
       "Checks": [
+        "entra_break_glass_account_fido2_security_key_registered",
         "entra_emergency_access_exclusion"
       ],
       "Attributes": [
@@ -1214,7 +1215,8 @@
       "Id": "5.2.2.5",
       "Description": "Authentication strength is a Conditional Access control that allows administrators to specify which combination of authentication methods can be used to access a resource. For example, they can make only phishing-resistant authentication methods available to access a sensitive resource. But to access a non-sensitive resource, they can allow less secure multifactor authentication (MFA) combinations, such as password + SMS.Microsoft has 3 built-in authentication strengths. MFA strength, Passwordless MFA strength, and Phishing-resistant MFA strength. Ensure administrator roles are using a CA policy with `Phishing-resistant MFA strength`.Administrators can then enroll using one of 3 methods:- FIDO2 Security Key- Windows Hello for Business- Certificate-based authentication (Multi-Factor)**Note:** Additional steps to configure methods such as FIDO2 keys are not covered here but can be found in related MS articles in the references section. The Conditional Access policy only ensures 1 of the 3 methods is used.**Warning:** Administrators should be pre-registered for a strong authentication mechanism before this Conditional Access Policy is enforced. Additionally, as stated elsewhere in the CIS Benchmark a break-glass administrator account should be excluded from this policy to ensure unfettered access in the case of an emergency.",
       "Checks": [
-        "entra_admin_users_phishing_resistant_mfa_enabled"
+        "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_break_glass_account_fido2_security_key_registered"
       ],
       "Attributes": [
         {

@@ -543,6 +543,18 @@ def providers_fixture(tenants_fixture):
         alias="openstack_testing",
         tenant_id=tenant.id,
     )
+    provider12 = Provider.objects.create(
+        provider="googleworkspace",
+        uid="C12345678",
+        alias="googleworkspace_testing",
+        tenant_id=tenant.id,
+    )
+    provider13 = Provider.objects.create(
+        provider="vercel",
+        uid="team_abcdef1234567890ab",
+        alias="vercel_testing",
+        tenant_id=tenant.id,
+    )
 
     return (
         provider1,
@@ -556,6 +568,8 @@ def providers_fixture(tenants_fixture):
         provider9,
         provider10,
         provider11,
+        provider12,
+        provider13,
     )
 
 

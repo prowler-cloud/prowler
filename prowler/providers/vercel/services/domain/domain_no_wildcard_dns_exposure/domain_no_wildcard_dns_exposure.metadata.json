@@ -1,18 +1,20 @@
 {
   "Provider": "vercel",
   "CheckID": "domain_no_wildcard_dns_exposure",
-  "CheckTitle": "Ensure domains do not have wildcard DNS records exposing subdomains",
+  "CheckTitle": "Vercel domains do not have wildcard DNS records exposing subdomains",
   "CheckType": [],
   "ServiceName": "domain",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:domain/{resource_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VercelDomain",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Checks whether Vercel domains have wildcard DNS records (e.g., *.example.com) that could route traffic from any subdomain to the application. Wildcard records increase the attack surface by allowing arbitrary subdomains to resolve and serve content.",
-  "Risk": "Wildcard DNS records allow any subdomain to resolve to the Vercel deployment, which can be exploited for phishing, cookie scoping attacks, or bypassing Content Security Policy restrictions. Attackers may use arbitrary subdomains to create convincing phishing pages or to exploit trust relationships between subdomains.",
-  "RelatedUrl": "https://vercel.com/docs/projects/domains",
-  "AdditionalURLs": [],
+  "Description": "**Vercel domains** are assessed for **wildcard DNS exposure** by checking whether wildcard DNS records (e.g., `*.example.com`) could route traffic from any subdomain to the application. Wildcard records increase the attack surface by allowing arbitrary subdomains to resolve and serve content.",
+  "Risk": "**Wildcard DNS records** allow any subdomain to resolve to the Vercel deployment, which can be exploited for **phishing**, cookie scoping attacks, or bypassing **Content Security Policy** restrictions. Attackers may use arbitrary subdomains to create convincing phishing pages or to exploit trust relationships between subdomains.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/projects/domains"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -22,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Remove wildcard DNS records and configure explicit DNS records for each required subdomain. This limits the attack surface and prevents unauthorized subdomains from resolving to your application.",
-      "Url": "https://vercel.com/docs/projects/domains"
+      "Url": "https://hub.prowler.com/checks/vercel/domain_no_wildcard_dns_exposure"
     }
   },
   "Categories": [

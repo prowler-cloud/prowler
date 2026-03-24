@@ -1,3 +1,4 @@
+# Exceptions codes from 13000 to 13999 are reserved for Vercel exceptions
 from prowler.exceptions.exceptions import ProwlerException
 
 
@@ -7,7 +8,7 @@ class VercelBaseException(ProwlerException):
     VERCEL_ERROR_CODES = {
         (13000, "VercelCredentialsError"): {
             "message": "Vercel credentials not found or invalid.",
-            "remediation": "Set the VERCEL_TOKEN environment variable or pass --vercel-token with a valid Vercel API token. Generate one at https://vercel.com/account/tokens.",
+            "remediation": "Set the VERCEL_TOKEN environment variable with a valid Vercel API token. Generate one at https://vercel.com/account/tokens.",
         },
         (13001, "VercelAuthenticationError"): {
             "message": "Authentication to Vercel API failed.",

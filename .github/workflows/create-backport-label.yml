@@ -25,8 +25,9 @@ jobs:
       - name: Create backport label for minor releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
         run: |
-          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          RELEASE_TAG="${GITHUB_EVENT_RELEASE_TAG_NAME}"
 
           if [ -z "$RELEASE_TAG" ]; then
             echo "Error: No release tag provided"

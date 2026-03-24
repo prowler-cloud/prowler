@@ -1,18 +1,20 @@
 {
   "Provider": "vercel",
   "CheckID": "security_custom_rules_configured",
-  "CheckTitle": "Ensure custom firewall rules are configured for each project",
+  "CheckTitle": "Vercel project has custom firewall rules configured",
   "CheckType": [],
   "ServiceName": "security",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:security/{resource_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VercelFirewallConfig",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "Checks whether Vercel projects have at least one custom firewall rule configured. Custom rules allow fine-grained control over traffic based on request attributes such as path, headers, user agent, and geographic location, providing application-specific protection beyond managed rulesets.",
-  "Risk": "Without custom firewall rules, the application lacks application-specific traffic filtering. Generic managed rulesets may not cover all threat vectors unique to the application. Custom rules are needed to block known attack patterns, restrict access to sensitive paths, and enforce application-level security policies.",
-  "RelatedUrl": "https://vercel.com/docs/security/vercel-firewall/custom-rules",
-  "AdditionalURLs": [],
+  "Description": "**Vercel projects** are assessed for **custom firewall rule** configuration. Custom rules allow fine-grained control over traffic based on request attributes such as path, headers, user agent, and geographic location, providing application-specific protection beyond managed rulesets.",
+  "Risk": "Without **custom firewall rules**, the application lacks application-specific traffic filtering. Generic managed rulesets may not cover all threat vectors unique to the application. Custom rules are needed to block **known attack patterns**, restrict access to sensitive paths, and enforce application-level security policies.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/vercel-firewall/custom-rules"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -22,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Configure custom firewall rules to protect application-specific endpoints and enforce security policies. Focus on protecting admin panels, API routes, authentication endpoints, and any paths that handle sensitive data.",
-      "Url": "https://vercel.com/docs/security/vercel-firewall/custom-rules"
+      "Url": "https://hub.prowler.com/checks/vercel/security_custom_rules_configured"
     }
   },
   "Categories": [

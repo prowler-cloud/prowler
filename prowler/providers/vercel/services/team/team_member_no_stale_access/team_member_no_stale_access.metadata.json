@@ -5,14 +5,16 @@
   "CheckType": [],
   "ServiceName": "team",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:team/{team_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VercelTeam",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "Checks whether any active team members have a join date older than 90 days. Long-standing access without periodic review may indicate stale permissions that should be audited to ensure continued need and appropriate role assignment.",
-  "Risk": "Team members who have had access for extended periods without review may have accumulated unnecessary permissions or may no longer require access. Without periodic access reviews, former contractors, role-changed employees, or inactive members may retain access to production resources.",
-  "RelatedUrl": "https://vercel.com/docs/accounts/team-members-and-roles",
-  "AdditionalURLs": [],
+  "Description": "**Vercel team members** are assessed for **stale access** by checking whether any active members have a join date older than 90 days. Long-standing access without periodic review may indicate stale permissions that should be audited to ensure continued need and appropriate role assignment.",
+  "Risk": "Team members who have had access for **extended periods** without review may have accumulated unnecessary permissions or may no longer require access. Without **periodic access reviews**, former contractors, role-changed employees, or inactive members may retain access to production resources.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/accounts/team-members-and-roles"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -22,11 +24,11 @@
     },
     "Recommendation": {
       "Text": "Establish a periodic access review process (at least quarterly) to audit team membership. Verify that all members still require access, have appropriate roles for their current responsibilities, and remove access for anyone who no longer needs it.",
-      "Url": "https://vercel.com/docs/accounts/team-members-and-roles"
+      "Url": "https://hub.prowler.com/checks/vercel/team_member_no_stale_access"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [

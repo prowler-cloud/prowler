@@ -68,7 +68,11 @@ class Test_security_managed_rulesets_enabled:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "PASS"
-            assert "managed WAF rulesets enabled" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} ({PROJECT_ID}) has managed WAF rulesets enabled."
+            )
+            assert result[0].team_id == TEAM_ID
 
     def test_managed_rulesets_disabled(self):
         security_client = mock.MagicMock
@@ -105,9 +109,10 @@ class Test_security_managed_rulesets_enabled:
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "FAIL"
             assert (
-                "does not have managed WAF rulesets enabled"
-                in result[0].status_extended
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} ({PROJECT_ID}) does not have managed WAF rulesets enabled."
             )
+            assert result[0].team_id == TEAM_ID
 
     def test_managed_rulesets_plan_gated(self):
         security_client = mock.MagicMock
@@ -143,5 +148,8 @@ class Test_security_managed_rulesets_enabled:
             assert result[0].resource_id == PROJECT_ID
             assert result[0].resource_name == PROJECT_NAME
             assert result[0].status == "MANUAL"
-            assert "could not be assessed" in result[0].status_extended
-            assert "Enterprise plan" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Project {PROJECT_NAME} ({PROJECT_ID}) could not be assessed for managed rulesets. Enterprise plan required to access this feature."
+            )
+            assert result[0].team_id == TEAM_ID

@@ -23,26 +23,34 @@ from tests.providers.vercel.vercel_fixtures import (
 
 
 class TestVercelProviderSetupSession:
-    def test_setup_session_with_token(self):
-        session = VercelProvider.setup_session(api_token=API_TOKEN, team_id=TEAM_ID)
+    def test_setup_session_with_env_var(self):
+        with mock.patch.dict(os.environ, {"VERCEL_TOKEN": API_TOKEN}, clear=False):
+            session = VercelProvider.setup_session()
 
         assert isinstance(session, VercelSession)
         assert session.token == API_TOKEN
-        assert session.team_id == TEAM_ID
         assert session.http_session is not None
 
-    def test_setup_session_with_env_var(self):
-        with mock.patch.dict(os.environ, {"VERCEL_TOKEN": API_TOKEN}):
-            session = VercelProvider.setup_session()
+    def test_setup_session_with_api_token_param(self):
+        with mock.patch.dict(os.environ, {}, clear=True):
+            session = VercelProvider.setup_session(api_token=API_TOKEN)
+
+        assert isinstance(session, VercelSession)
+        assert session.token == API_TOKEN
+        assert session.http_session is not None
+
+    def test_setup_session_with_team_id_param(self):
+        with mock.patch.dict(os.environ, {}, clear=True):
+            session = VercelProvider.setup_session(api_token=API_TOKEN, team_id=TEAM_ID)
 
         assert session.token == API_TOKEN
+        assert session.team_id == TEAM_ID
 
     def test_setup_session_no_credentials_raises(self):
         with mock.patch.dict(os.environ, {}, clear=True):
-            # Ensure VERCEL_TOKEN is not in env
             os.environ.pop("VERCEL_TOKEN", None)
             with pytest.raises(VercelCredentialsError):
-                VercelProvider.setup_session(api_token=None)
+                VercelProvider.setup_session()
 
     def test_setup_session_team_from_env(self):
         with mock.patch.dict(
@@ -173,12 +181,26 @@ class TestVercelProviderTestConnection:
         )
         mock_validate.return_value = None
 
+        result = VercelProvider.test_connection(raise_on_exception=False)
+
+        assert isinstance(result, Connection)
+        assert result.is_connected is True
+
+    @patch.object(VercelProvider, "validate_credentials")
+    @patch.object(VercelProvider, "setup_session")
+    def test_successful_connection_with_params(self, mock_setup_session, mock_validate):
+        mock_setup_session.return_value = VercelSession(
+            token=API_TOKEN, team_id=TEAM_ID, http_session=MagicMock()
+        )
+        mock_validate.return_value = None
+
         result = VercelProvider.test_connection(
-            api_token=API_TOKEN, raise_on_exception=False
+            api_token=API_TOKEN, team_id=TEAM_ID, raise_on_exception=False
         )
 
         assert isinstance(result, Connection)
         assert result.is_connected is True
+        mock_setup_session.assert_called_once_with(api_token=API_TOKEN, team_id=TEAM_ID)
 
     @patch.object(VercelProvider, "setup_session")
     def test_failed_connection_no_credentials(self, mock_setup_session):
@@ -186,9 +208,7 @@ class TestVercelProviderTestConnection:
             message="No credentials"
         )
 
-        result = VercelProvider.test_connection(
-            api_token=None, raise_on_exception=False
-        )
+        result = VercelProvider.test_connection(raise_on_exception=False)
 
         assert isinstance(result, Connection)
         assert result.is_connected is False
@@ -201,4 +221,4 @@ class TestVercelProviderTestConnection:
         )
 
         with pytest.raises(VercelCredentialsError):
-            VercelProvider.test_connection(api_token=None, raise_on_exception=True)
+            VercelProvider.test_connection(raise_on_exception=True)

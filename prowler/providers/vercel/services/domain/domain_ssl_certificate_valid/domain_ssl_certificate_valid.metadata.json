@@ -1,18 +1,20 @@
 {
   "Provider": "vercel",
   "CheckID": "domain_ssl_certificate_valid",
-  "CheckTitle": "Ensure domains have a valid SSL certificate provisioned",
+  "CheckTitle": "Vercel domains have an SSL certificate provisioned",
   "CheckType": [],
   "ServiceName": "domain",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:domain/{resource_id}",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "VercelDomain",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Checks whether Vercel domains have an SSL certificate provisioned. Vercel automatically provisions and renews SSL certificates for properly configured domains. A missing SSL certificate indicates a configuration issue that leaves traffic unencrypted.",
-  "Risk": "Without an SSL certificate, traffic between users and the domain is transmitted in plain text. This exposes sensitive data such as authentication tokens, form submissions, and personal information to interception via man-in-the-middle attacks. Search engines also penalize non-HTTPS sites, reducing visibility.",
-  "RelatedUrl": "https://vercel.com/docs/security/encryption",
-  "AdditionalURLs": [],
+  "Description": "**Vercel domains** are assessed for **SSL certificate provisioning** to verify a valid certificate is in place. Vercel automatically provisions and renews SSL certificates for properly configured domains. A missing SSL certificate indicates a configuration issue that leaves traffic unencrypted.",
+  "Risk": "Without an **SSL certificate**, traffic between users and the domain is transmitted in **plain text**. This exposes sensitive data such as authentication tokens, form submissions, and personal information to interception via **man-in-the-middle attacks**. Search engines also penalize non-HTTPS sites, reducing visibility.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/encryption"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -22,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Ensure domain DNS records are properly configured to point to Vercel. Once DNS is validated, Vercel automatically provisions and renews SSL/TLS certificates. Check the domain configuration in the Vercel dashboard if the certificate is not being issued.",
-      "Url": "https://vercel.com/docs/security/encryption"
+      "Url": "https://hub.prowler.com/checks/vercel/domain_ssl_certificate_valid"
     }
   },
   "Categories": [

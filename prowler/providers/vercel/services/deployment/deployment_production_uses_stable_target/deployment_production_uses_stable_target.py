@@ -10,7 +10,9 @@ class deployment_production_uses_stable_target(Check):
     """Check if production deployments are sourced from a stable branch.
 
     This class verifies whether each Vercel production deployment originates
-    from a stable branch (main or master) rather than a feature branch.
+    from a configured stable branch rather than a feature branch. The list of
+    stable branches is configurable via audit_config key ``stable_branches``
+    (default: ``["main", "master"]``).
     """
 
     def execute(self) -> List[CheckReportVercel]:
@@ -32,8 +34,11 @@ class deployment_production_uses_stable_target(Check):
 
             report = CheckReportVercel(metadata=self.metadata(), resource=deployment)
 
-            branch = deployment.git_source.get("branch", "")
-            if branch in ("main", "master"):
+            stable_branches = deployment_client.audit_config.get(
+                "stable_branches", ["main", "master"]
+            )
+            branch = deployment.git_source.get("branch") or ""
+            if branch in stable_branches:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Production deployment {deployment.name} ({deployment.id}) "
@@ -43,7 +48,8 @@ class deployment_production_uses_stable_target(Check):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Production deployment {deployment.name} ({deployment.id}) "
-                    f"is sourced from feature branch '{branch}' instead of main or master."
+                    f"is sourced from branch '{branch}' instead of a "
+                    f"configured stable branch ({', '.join(stable_branches)})."
                 )
 
             findings.append(report)

@@ -1,18 +1,20 @@
 {
   "Provider": "vercel",
   "CheckID": "security_ip_blocking_rules_configured",
-  "CheckTitle": "Ensure IP blocking rules are configured for each project",
+  "CheckTitle": "Vercel project has IP blocking rules configured",
   "CheckType": [],
   "ServiceName": "security",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:security/{resource_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "VercelFirewallConfig",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "Checks whether Vercel projects have at least one IP blocking rule configured. IP blocking rules allow you to deny access from known malicious IP addresses or ranges, reducing the attack surface and preventing traffic from untrusted sources.",
-  "Risk": "Without IP blocking rules, all traffic is accepted regardless of source IP. Known malicious IPs, abuse networks, and previously identified attackers can freely access the application. This increases the risk of automated scanning, credential stuffing, and targeted attacks from known threat sources.",
-  "RelatedUrl": "https://vercel.com/docs/security/vercel-firewall",
-  "AdditionalURLs": [],
+  "Description": "**Vercel projects** are assessed for **IP blocking rule** configuration. IP blocking rules allow denying access from known malicious IP addresses or ranges, reducing the attack surface and preventing traffic from untrusted sources.",
+  "Risk": "Without **IP blocking rules**, all traffic is accepted regardless of source IP. Known malicious IPs, abuse networks, and previously identified attackers can freely access the application. This increases the risk of **automated scanning**, credential stuffing, and targeted attacks from known threat sources.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/vercel-firewall"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -22,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Configure IP blocking rules to deny traffic from known malicious sources. Maintain a blocklist of IPs identified through security monitoring, threat intelligence feeds, or incident investigation. Regularly review and update the blocklist.",
-      "Url": "https://vercel.com/docs/security/vercel-firewall"
+      "Url": "https://hub.prowler.com/checks/vercel/security_ip_blocking_rules_configured"
     }
   },
   "Categories": [

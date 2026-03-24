@@ -24,7 +24,15 @@ class security_waf_enabled(Check):
         for config in security_client.firewall_configs.values():
             report = CheckReportVercel(metadata=self.metadata(), resource=config)
 
-            if config.firewall_enabled:
+            if config.managed_rulesets is None:
+                # 403 — plan limitation, cannot determine WAF status
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Project {config.project_name} ({config.project_id}) "
+                    f"could not be checked for WAF status due to plan limitations. "
+                    f"Manual verification is required."
+                )
+            elif config.firewall_enabled:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Project {config.project_name} ({config.project_id}) "

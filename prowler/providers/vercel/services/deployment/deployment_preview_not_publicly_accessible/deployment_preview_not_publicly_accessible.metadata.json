@@ -1,18 +1,20 @@
 {
   "Provider": "vercel",
   "CheckID": "deployment_preview_not_publicly_accessible",
-  "CheckTitle": "Ensure preview deployments are not publicly accessible without protection",
+  "CheckTitle": "Vercel preview deployments are not publicly accessible without protection",
   "CheckType": [],
   "ServiceName": "deployment",
   "SubServiceName": "",
-  "ResourceIdTemplate": "vercel:{team_id}:deployment/{resource_id}",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "VercelDeployment",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "Checks whether Vercel preview deployments have deployment protection configured. Preview deployments without protection are publicly accessible to anyone who knows or guesses the URL, potentially exposing unreleased features, staging data, or internal endpoints.",
-  "Risk": "Without deployment protection on preview deployments, any person who obtains or guesses a preview URL can view unreleased application code, test data, or internal API endpoints. This increases the attack surface and may leak sensitive business logic or credentials embedded in preview builds.",
-  "RelatedUrl": "https://vercel.com/docs/security/deployment-protection",
-  "AdditionalURLs": [],
+  "Description": "**Vercel preview deployments** are assessed for **deployment protection** configuration. Preview deployments without protection are publicly accessible to anyone who knows or guesses the URL, potentially exposing unreleased features, staging data, or internal endpoints.",
+  "Risk": "Without **deployment protection** on preview deployments, any person who obtains or guesses a preview URL can view **unreleased application code**, test data, or internal API endpoints. This increases the attack surface and may leak sensitive business logic or credentials embedded in preview builds.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/deployment-protection"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -22,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Enable deployment protection on preview deployments to require authentication before visitors can access preview URLs. Use 'Standard Protection' for Vercel Authentication or configure trusted IP ranges for more granular control.",
-      "Url": "https://vercel.com/docs/security/deployment-protection"
+      "Url": "https://hub.prowler.com/checks/vercel/deployment_preview_not_publicly_accessible"
     }
   },
   "Categories": [

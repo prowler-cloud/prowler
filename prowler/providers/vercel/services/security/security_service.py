@@ -6,22 +6,6 @@ from prowler.lib.logger import logger
 from prowler.providers.vercel.lib.service.service import VercelService
 
 
-class VercelFirewallConfig(BaseModel):
-    """Vercel WAF/Firewall configuration per project."""
-
-    project_id: str
-    project_name: Optional[str] = None
-    team_id: Optional[str] = None
-    firewall_enabled: bool = False
-    managed_rulesets: Optional[dict] = None  # None means plan-gated (403)
-    custom_rules: list[dict] = Field(default_factory=list)
-    ip_blocking_rules: list[dict] = Field(default_factory=list)
-    rate_limiting_rules: list[dict] = Field(default_factory=list)
-    # Provide name/id for CheckReportVercel
-    name: str = ""
-    id: str = ""
-
-
 class Security(VercelService):
     """Retrieve Vercel WAF/Firewall configuration per project."""
 
@@ -125,3 +109,19 @@ class Security(VercelService):
                     if "ip" in prop.lower():
                         return True
         return False
+
+
+class VercelFirewallConfig(BaseModel):
+    """Vercel WAF/Firewall configuration per project."""
+
+    project_id: str
+    project_name: Optional[str] = None
+    team_id: Optional[str] = None
+    firewall_enabled: bool = False
+    managed_rulesets: Optional[dict] = None  # None means plan-gated (403)
+    custom_rules: list[dict] = Field(default_factory=list)
+    ip_blocking_rules: list[dict] = Field(default_factory=list)
+    rate_limiting_rules: list[dict] = Field(default_factory=list)
+    # Provide name/id for CheckReportVercel
+    name: str = ""
+    id: str = ""

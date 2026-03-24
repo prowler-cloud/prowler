@@ -6,21 +6,6 @@ from prowler.lib.logger import logger
 from prowler.providers.vercel.lib.service.service import VercelService
 
 
-class VercelDomain(BaseModel):
-    """Vercel domain representation."""
-
-    name: str
-    id: str = ""
-    apex_name: Optional[str] = None
-    verified: bool = False
-    configured: bool = False
-    ssl_certificate: Optional[dict] = None
-    redirect: Optional[str] = None
-    dns_records: list[dict] = Field(default_factory=list)
-    team_id: Optional[str] = None
-    project_id: Optional[str] = None
-
-
 class Domain(VercelService):
     """Retrieve Vercel domains with DNS and SSL information."""
 
@@ -73,7 +58,7 @@ class Domain(VercelService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _fetch_dns_records(self, domain: VercelDomain):
+    def _fetch_dns_records(self, domain: "VercelDomain"):
         """Fetch DNS records for a single domain."""
         try:
             data = self._get(f"/v4/domains/{domain.name}/records")
@@ -87,3 +72,18 @@ class Domain(VercelService):
                 f"Domain - Error fetching DNS records for {domain.name}: "
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+
+class VercelDomain(BaseModel):
+    """Vercel domain representation."""
+
+    name: str
+    id: str = ""
+    apex_name: Optional[str] = None
+    verified: bool = False
+    configured: bool = False
+    ssl_certificate: Optional[dict] = None
+    redirect: Optional[str] = None
+    dns_records: list[dict] = Field(default_factory=list)
+    team_id: Optional[str] = None
+    project_id: Optional[str] = None

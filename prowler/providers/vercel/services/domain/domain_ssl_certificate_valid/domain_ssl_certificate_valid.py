@@ -32,7 +32,7 @@ class domain_ssl_certificate_valid(Check):
             if domain.ssl_certificate is not None:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Domain {domain.name} has a valid SSL certificate provisioned."
+                    f"Domain {domain.name} has an SSL certificate provisioned."
                 )
             else:
                 report.status = "FAIL"
