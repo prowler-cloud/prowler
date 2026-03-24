@@ -118,7 +118,8 @@ export const FindingsFilters = ({
     setPending,
     applyAll,
     discardAll,
-    clearAll,
+    clearAndApply,
+    clearKeys,
     hasChanges,
     changeCount,
     getFilterValue,
@@ -252,7 +253,7 @@ export const FindingsFilters = ({
         )}
         <ClearFiltersButton
           showCount
-          onClear={clearAll}
+          onClear={clearAndApply}
           pendingCount={
             Object.entries(pendingFilters).filter(([key, values]) => {
               if (!values || values.length === 0) return false;
@@ -279,7 +280,13 @@ export const FindingsFilters = ({
       <FilterSummaryStrip
         chips={filterChips}
         onRemove={handleChipRemove}
-        onClearAll={clearAll}
+        onClearAll={() => {
+          // Collect the unique filter keys that are currently visible as chips.
+          // This intentionally excludes provider_type__in and provider_id__in
+          // (they never produce chips) so "Clear all" does not touch the selectors.
+          const chipKeys = Array.from(new Set(filterChips.map((c) => c.key)));
+          clearKeys(chipKeys);
+        }}
       />
 
       {/* Expandable filters section */}

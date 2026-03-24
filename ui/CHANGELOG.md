@@ -12,6 +12,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Findings filters now use a batch-apply pattern with an Apply Filters button, filter summary strip, and independent filter options instead of triggering API calls on every selection [(#10388)](https://github.com/prowler-cloud/prowler/pull/10388)
 
+### 🐞 Fixed
+
+- Clear Filters now resets all filters including muted findings and auto-applies, Clear all in pills only removes pill-visible sub-filters, and the discard icon is now an Undo text button
+
 ---
 
 ## [1.21.0] (Prowler v5.21.0)
