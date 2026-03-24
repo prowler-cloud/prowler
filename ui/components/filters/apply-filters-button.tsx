@@ -50,7 +50,12 @@ export const ApplyFiltersButton = ({
       </Button>
 
       {hasChanges && (
-        <Button variant="ghost" size="sm" onClick={onDiscard} aria-label="Undo pending filter changes">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onDiscard}
+          aria-label="Undo pending filter changes"
+        >
           Undo
         </Button>
       )}
