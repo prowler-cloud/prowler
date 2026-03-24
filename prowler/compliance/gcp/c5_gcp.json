@@ -136,7 +136,9 @@
           "ComplementaryCriteria": "Cloud service customers ensure through suitable controls that the guidelines and requirements for compliance with the contractual agreements with the cloud service provider (i.e., responsibilities, cooperation obligations and interfaces for reporting security incidents) are adequately defined, documented and set up."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "gemini_api_disabled"
+      ]
     },
     {
       "Id": "OIS-03.02B",
@@ -7230,7 +7232,9 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "gemini_api_disabled"
+      ]
     },
     {
       "Id": "SSO-01.02AC",
@@ -7258,7 +7262,9 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "gemini_api_disabled"
+      ]
     },
     {
       "Id": "SSO-02.02B",
