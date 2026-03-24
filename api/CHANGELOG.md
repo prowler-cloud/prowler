@@ -8,6 +8,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Finding groups list/latest now apply computed status/severity filters and finding-level prefilters (delta, region, service, category, resource group, scan, resource type), plus `check_title` support for sort/filter consistency [(#10428)](https://github.com/prowler-cloud/prowler/pull/10428)
 - Populate compliance data inside `check_metadata` for findings, which was always returned as `null` [(#10449)](https://github.com/prowler-cloud/prowler/pull/10449)
+- Filter transient Neo4j defunct connection logs in Sentry `before_send` to suppress false-positive alerts handled by `RetryableSession` retries [(#10452)](https://github.com/prowler-cloud/prowler/pull/10452)
 
 ## [1.23.0] (Prowler v5.22.0)
 
