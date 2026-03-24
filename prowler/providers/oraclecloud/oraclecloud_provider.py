@@ -145,16 +145,17 @@ class OraclecloudProvider(Provider):
         logger.info("OCI session configured successfully")
 
         # Validate credentials and get identity
+        home_region = list(region)[0]
         logger.info("Validating OCI credentials ...")
         self._identity = self.set_identity(
             session=self._session,
-            region=list(region)[0],
+            region=home_region,
             compartment_ids=compartment_ids,
         )
         logger.info("OCI credentials validated")
 
         # Get regions
-        self._regions = self.get_regions_to_audit(region)
+        self._regions = self.get_regions_to_audit(region, home_region)
         # Get compartments
         self._compartments = self.get_compartments_to_audit(
             compartment_ids, self._identity.tenancy_id
@@ -530,7 +531,7 @@ class OraclecloudProvider(Provider):
 
         return True
 
-    def get_regions_to_audit(self, region_set: set = None) -> list:
+    def get_regions_to_audit(self, region_set: set = None, home_region : str = None) -> list:
         """
         get_regions_to_audit returns the list of regions to audit.
 
@@ -541,7 +542,7 @@ class OraclecloudProvider(Provider):
             - list: The list of OCIRegion objects to audit.
         """
         regions = []
-        region_home = list(region_set)[0]
+        region_home = home_region ? home_region : list(region_set)[0]
         # Audit specific regions
         if region_set:
             for region in list(region_set):
