@@ -141,11 +141,15 @@ AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
                 OR target_policy.arn CONTAINS resource
             )
 
-        UNWIND nodes(path_principal) + nodes(path_target) as n
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
         OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
-        RETURN path_principal, path_target,
-            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
     parameters=[],
 )
@@ -153,7 +157,7 @@ AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
 
 #### Other sub-pattern `path_target` shapes
 
-The other 3 sub-patterns share the same `path_principal`, UNWIND, and RETURN as self-escalation. Only the `path_target` MATCH differs:
+The other 3 sub-patterns share the same `path_principal`, deduplication tail, and RETURN as self-escalation. Only the `path_target` MATCH differs:
 
 ```cypher
 // Lateral to user (e.g., IAM-002) - targets other IAM users
@@ -190,10 +194,15 @@ AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
         // Internet node reached via path connectivity through the resource
         OPTIONAL MATCH (internet:Internet)-[can_access:CAN_ACCESS]->(resource)
 
-        UNWIND nodes(path) as n
+        WITH collect(path) AS paths, head(collect(internet)) AS internet, collect(can_access) AS can_access
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
         OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
-        RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr,
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr,
             internet, can_access
     """,
     parameters=[],
@@ -364,18 +373,32 @@ WHERE (x:EC2PrivateIp AND x.public_ip = $ip)
 
 ### Include Prowler findings
 
+Deduplicate nodes before the ProwlerFinding lookup to avoid redundant OPTIONAL MATCH calls on nodes that appear in multiple paths:
+
 ```cypher
-UNWIND nodes(path_principal) + nodes(path_target) as n
+WITH collect(path_principal) + collect(path_target) AS paths
+UNWIND paths AS p
+UNWIND nodes(p) AS n
+
+WITH paths, collect(DISTINCT n) AS unique_nodes
+UNWIND unique_nodes AS n
 OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
-RETURN path_principal, path_target,
-    collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
 ```
 
-For network exposure queries, also return the internet node and relationship:
+For network exposure queries, aggregate the internet node and relationship alongside paths:
 
 ```cypher
-RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr,
+WITH collect(path) AS paths, head(collect(internet)) AS internet, collect(can_access) AS can_access
+UNWIND paths AS p
+UNWIND nodes(p) AS n
+
+WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
+UNWIND unique_nodes AS n
+OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr,
     internet, can_access
 ```
 
