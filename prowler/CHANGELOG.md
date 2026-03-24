@@ -2,11 +2,13 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.21.2] (Prowler UNRELEASED)
+## [5.22.0] (Prowler v5.22.0)
 
 ### 🐞 Fixed
 
-- Azure `vm_backup_enabled` and `vm_sufficient_daily_backup_retention_period` checks now compare VM names case-insensitively to avoid false negatives when Azure stores backup item names in a different case [(#10373)](https://github.com/prowler-cloud/prowler/pull/10373)
+- Azure MySQL flexible server checks now compare configuration values case-insensitively to avoid false negatives when Azure returns lowercase values [(#10396)](https://github.com/prowler-cloud/prowler/pull/10396)
+- Azure `vm_backup_enabled` and `vm_sufficient_daily_backup_retention_period` checks now compare VM names case-insensitively to avoid false negatives when Azure stores backup item names in a different case [(#10395)](https://github.com/prowler-cloud/prowler/pull/10395)
+- `entra_non_privileged_user_has_mfa` skips disabled users to avoid false positives [(#10426)](https://github.com/prowler-cloud/prowler/pull/10426)
 - Oracle Cloud `events_rule_idp_group_mapping_changes` now recognizes the CIS 3.1 `add/remove` event names to avoid false positives [(#10411)](https://github.com/prowler-cloud/prowler/issues/10411)
 
 ---

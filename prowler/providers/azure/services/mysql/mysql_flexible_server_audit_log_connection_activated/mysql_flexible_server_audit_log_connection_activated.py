@@ -21,9 +21,9 @@ class mysql_flexible_server_audit_log_connection_activated(Check):
                         "audit_log_events"
                     ].resource_id
 
-                    if "CONNECTION" in server.configurations[
+                    if "connection" in server.configurations[
                         "audit_log_events"
-                    ].value.split(","):
+                    ].value.lower().split(","):
                         report.status = "PASS"
                         report.status_extended = f"Audit log is enabled for server {server.name} in subscription {subscription_name}."
 

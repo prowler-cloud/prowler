@@ -24,10 +24,6 @@ import {
   extractSortAndKey,
   hasDateOrScanFilter,
 } from "@/lib";
-import {
-  createProviderDetailsMappingById,
-  extractProviderIds,
-} from "@/lib/provider-helpers";
 import { ScanEntity, ScanProps } from "@/types";
 import { FindingProps, SearchParamsProps } from "@/types/components";
 
@@ -124,12 +120,6 @@ export default async function Findings({
   const uniqueCategories = metadataInfoData?.data?.attributes?.categories || [];
   const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
 
-  // Extract provider IDs and details using helper functions
-  const providerIds = providersData ? extractProviderIds(providersData) : [];
-  const providerDetails = providersData
-    ? createProviderDetailsMappingById(providerIds, providersData)
-    : [];
-
   // Extract scan UUIDs with "completed" state and more than one resource
   const completedScans = scansData?.data?.filter(
     (scan: ScanProps) =>
@@ -151,9 +141,6 @@ export default async function Findings({
         <div className="mb-6">
           <FindingsFilters
             providers={providersData?.data || []}
-            providerIds={providerIds}
-            providerDetails={providerDetails}
-            completedScans={completedScans || []}
             completedScanIds={completedScanIds}
             scanDetails={scanDetails}
             uniqueRegions={uniqueRegions}
