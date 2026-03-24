@@ -155,24 +155,41 @@ class CloudFront(AWSService):
             )
 
     def _get_log_delivery_sources(self, distributions, region):
-        """Check for Standard Logging v2 via CloudWatch Logs delivery sources."""
+        """Check for Standard Logging v2 via CloudWatch Logs delivery sources.
+
+        A delivery source alone is not enough. We must also verify that an
+        active delivery exists for the source, otherwise logs are not flowing.
+        """
         logger.info("CloudFront - Checking CloudWatch Logs delivery sources...")
         try:
-            # Build a set of distribution ARNs for quick lookup
             distribution_arns = {
                 dist.arn: dist_id for dist_id, dist in distributions.items()
             }
             if not distribution_arns:
                 return
 
-            # Use a logs client in us-east-1 (CloudFront is global)
             logs_client = self.session.client("logs", region_name=region)
-            # Paginate through delivery sources
+
+            # Find delivery sources whose resourceArn matches a distribution
+            matching_sources = {}
             paginator = logs_client.get_paginator("describe_delivery_sources")
             for page in paginator.paginate():
                 for source in page.get("deliverySources", []):
                     resource_arn = source.get("resourceArn", "")
                     if resource_arn in distribution_arns:
+                        source_name = source.get("name", "")
+                        matching_sources[source_name] = resource_arn
+
+            if not matching_sources:
+                return
+
+            # Verify at least one active delivery exists per source
+            paginator = logs_client.get_paginator("describe_deliveries")
+            for page in paginator.paginate():
+                for delivery in page.get("deliveries", []):
+                    source_name = delivery.get("deliverySourceName", "")
+                    if source_name in matching_sources:
+                        resource_arn = matching_sources[source_name]
                         dist_id = distribution_arns[resource_arn]
                         distributions[dist_id].logging_v2_enabled = True
         except Exception as error:
