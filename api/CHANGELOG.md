@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.23.0] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Populate compliance data inside `check_metadata` for findings, which was always returned as `null` [(#10449)](https://github.com/prowler-cloud/prowler/pull/10449)
+
+---
+
 ## [1.23.0] (Prowler v5.22.0)
 
 ### 🚀 Added
