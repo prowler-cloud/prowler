@@ -518,6 +518,14 @@ class Identity(OCIService):
                     policies_response = domain_client.list_password_policies()
 
                     for policy in policies_response.data.resources:
+                        # Skip system-managed immutable policies that are
+                        # hidden in the OCI Console and not user-configurable
+                        if policy.id in (
+                            "SimplePasswordPolicy",
+                            "StandardPasswordPolicy",
+                        ):
+                            continue
+
                         domain.password_policies.append(
                             DomainPasswordPolicy(
                                 id=policy.id,
