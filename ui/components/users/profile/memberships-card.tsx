@@ -7,10 +7,12 @@ export const MembershipsCard = ({
   memberships,
   tenantsMap,
   isOwner,
+  sessionTenantId,
 }: {
   memberships: MembershipDetailData[];
   tenantsMap: Record<string, TenantDetailData>;
   isOwner: boolean;
+  sessionTenantId: string | undefined;
 }) => {
   return (
     <Card variant="base" padding="none" className="p-4">
@@ -34,6 +36,7 @@ export const MembershipsCard = ({
                   tenantId={tenantId}
                   tenantName={tenantsMap[tenantId]?.attributes.name}
                   isOwner={isOwner}
+                  sessionTenantId={sessionTenantId}
                 />
               );
             })}

@@ -1,27 +1,32 @@
 "use client";
 
-import { Chip } from "@heroui/chip";
 import { useState } from "react";
 
-import { Button, Card } from "@/components/shadcn";
+import { Badge, Button, Card } from "@/components/shadcn";
+import { AlertModal } from "@/components/shadcn/alert-modal/alert-modal";
 import { Modal } from "@/components/shadcn/modal";
 import { DateWithTime, InfoField } from "@/components/ui/entities";
+import { EditTenantForm } from "@/components/users/forms";
+import { SwitchTenantForm } from "@/components/users/forms/switch-tenant-form";
 import { MembershipDetailData } from "@/types/users";
-
-import { EditTenantForm } from "../forms";
 
 export const MembershipItem = ({
   membership,
   tenantName,
   tenantId,
   isOwner,
+  sessionTenantId,
 }: {
   membership: MembershipDetailData;
   tenantName: string;
   tenantId: string;
   isOwner: boolean;
+  sessionTenantId: string | undefined;
 }) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isSwitchingOpen, setIsSwitchingOpen] = useState(false);
+
+  const isActiveTenant = tenantId === sessionTenantId;
 
   return (
     <>
@@ -32,11 +37,17 @@ export const MembershipItem = ({
           setIsOpen={setIsEditOpen}
         />
       </Modal>
+      <AlertModal
+        open={isSwitchingOpen}
+        onOpenChange={setIsSwitchingOpen}
+        title="Confirm organization switch"
+        description="The session will be updated and the page will reload to apply the change."
+      >
+        <SwitchTenantForm tenantId={tenantId} setIsOpen={setIsSwitchingOpen} />
+      </AlertModal>
       <Card variant="inner" className="p-2">
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-          <Chip size="sm" variant="flat" color="secondary">
-            {membership.attributes.role}
-          </Chip>
+          <Badge variant="secondary">{membership.attributes.role}</Badge>
 
           <div className="flex flex-row flex-wrap gap-1 gap-x-4">
             <InfoField label="Name" inline variant="transparent">
@@ -53,17 +64,35 @@ export const MembershipItem = ({
             </InfoField>
           </div>
 
-          {isOwner && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsEditOpen(true)}
-              className="ml-auto"
-            >
-              Edit
-            </Button>
-          )}
+          <div className="ml-auto flex items-center gap-2">
+            {isOwner && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditOpen(true)}
+              >
+                Edit
+              </Button>
+            )}
+            {isActiveTenant ? (
+              <Badge
+                variant="outline"
+                className="border-emerald-600 text-emerald-600"
+              >
+                Active
+              </Badge>
+            ) : (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsSwitchingOpen(true)}
+              >
+                Switch
+              </Button>
+            )}
+          </div>
         </div>
       </Card>
     </>
