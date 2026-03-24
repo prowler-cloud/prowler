@@ -2,6 +2,18 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.22.0] (Prowler v5.22.0)
+
+### 🚀 Added
+
+- Attack Paths custom openCypher queries with Cartography schema guidance and clearer execution errors [(#10397)](https://github.com/prowler-cloud/prowler/pull/10397)
+
+### 🔄 Changed
+
+- Findings filters now use a batch-apply pattern with an Apply Filters button, filter summary strip, and independent filter options instead of triggering API calls on every selection [(#10388)](https://github.com/prowler-cloud/prowler/pull/10388)
+
+---
+
 ## [1.21.0] (Prowler v5.21.0)
 
 ### 🚀 Added
