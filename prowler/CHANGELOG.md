@@ -2,6 +2,26 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [5.23.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `apikeys_api_restricted_with_gemini_api` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
+- `gemini_api_disabled` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
+
+---
+
+## [5.22.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Oracle Cloud `events_rule_idp_group_mapping_changes` now recognizes the CIS 3.1 `add/remove` event names to avoid false positives [(#10411)](https://github.com/prowler-cloud/prowler/issues/10411)
+
+---
+
+>>>>>>> 435624fcd (fix(sdk): support renamed OCI IdP mapping events (#10416))
 ## [5.22.0] (Prowler v5.22.0)
 
 ### 🐞 Fixed
