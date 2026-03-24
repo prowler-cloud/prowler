@@ -95,6 +95,16 @@ export const FINDING_STATUS = {
 export type FindingStatus =
   (typeof FINDING_STATUS)[keyof typeof FINDING_STATUS];
 
+/**
+ * Maps raw finding status values to human-readable display strings.
+ * Follows the same pattern as SEVERITY_DISPLAY_NAMES in types/severities.ts.
+ */
+export const FINDING_STATUS_DISPLAY_NAMES: Record<FindingStatus, string> = {
+  PASS: "Pass",
+  FAIL: "Fail",
+  MANUAL: "Manual",
+};
+
 export const SEVERITY = {
   INFORMATIONAL: "informational",
   LOW: "low",
