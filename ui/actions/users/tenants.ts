@@ -82,3 +82,72 @@ export async function updateTenantName(_prevState: any, formData: FormData) {
     return handleApiError(error);
   }
 }
+
+const switchTenantSchema = z.object({
+  tenantId: z.uuid(),
+});
+
+interface SwitchTenantSuccess {
+  success: true;
+  accessToken: string;
+  refreshToken: string;
+}
+
+interface SwitchTenantError {
+  error: string;
+}
+
+export type SwitchTenantState = SwitchTenantSuccess | SwitchTenantError;
+
+export async function switchTenant(
+  _prevState: SwitchTenantState | null,
+  formData: FormData,
+): Promise<SwitchTenantState> {
+  const formDataObject = Object.fromEntries(formData);
+  const validatedData = switchTenantSchema.safeParse(formDataObject);
+
+  if (!validatedData.success) {
+    return { error: "Invalid tenant ID" };
+  }
+
+  const { tenantId } = validatedData.data;
+  const headers = await getAuthHeaders({ contentType: true });
+
+  const payload = {
+    data: {
+      type: "tokens-switch-tenant",
+      attributes: {
+        tenant_id: tenantId,
+      },
+    },
+  };
+
+  try {
+    const url = new URL(`${apiBaseUrl}/tokens/switch`);
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      const errorDetail =
+        errorData?.errors?.[0]?.detail ||
+        `Failed to switch tenant: ${response.statusText}`;
+      throw new Error(errorDetail);
+    }
+
+    const data = await response.json();
+    const accessToken = data?.data?.attributes?.access;
+    const refreshToken = data?.data?.attributes?.refresh;
+
+    if (!accessToken || !refreshToken) {
+      throw new Error("Missing tokens in switch tenant response");
+    }
+
+    return { success: true, accessToken, refreshToken };
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
