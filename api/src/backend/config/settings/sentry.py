@@ -87,7 +87,7 @@ def before_send(event, hint):
     # https://docs.python.org/3/library/logging.html#logrecord-objects
     if "log_record" in hint:
         log_record = hint["log_record"]
-        log_msg = log_record.msg
+        log_msg = log_record.getMessage()
         log_lvl = log_record.levelno
 
         # The Neo4j driver logs transient connection errors (defunct
