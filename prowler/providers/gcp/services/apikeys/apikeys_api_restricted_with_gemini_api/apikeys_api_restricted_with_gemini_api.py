@@ -41,7 +41,7 @@ class apikeys_api_restricted_with_gemini_api(Check):
                 report.status = "FAIL"
                 report.status_extended = f"API key {key.name} has access to Gemini (Generative Language) API as well as other APIs."
 
-            if not key_restrictions or any(
+            elif not key_restrictions or any(
                 target.get("service") == "cloudapis.googleapis.com"
                 for target in key_restrictions
             ):

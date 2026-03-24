@@ -10,7 +10,7 @@
   "ResourceType": "serviceusage.googleapis.com/Service",
   "ResourceGroup": "ai_ml",
   "Description": "The Gemini API (a.k.a. Generative Language API, `generativelanguage.googleapis.com`) should not be used. It does not adhere to GCP's general security & compliance standards.",
-  "Risk": "Parts of the API do *not* support the **GCP IAM** system for authentication & authorization, which can impact **confidentiality** of uploaded files and cached content. Furthermore, the API does *not* provide a **Service Level Agreement (SLA)**, potentially reducing service **availability**. Additionally, it is *not* covered by common compliance **certifications and attestations** such as ISO 27001, SOC 2, C5, and HIPAA. Using non-compliant services can diminish your compliance posture.",
+  "Risk": "The API does not support GCP IAM for authentication, impacting confidentiality of uploaded files and cached content. It provides no SLA, reducing availability guarantees. It is not covered by compliance certifications such as ISO 27001, SOC 2, C5, and HIPAA, which can diminish your compliance posture.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/docs/authentication/api-keys",

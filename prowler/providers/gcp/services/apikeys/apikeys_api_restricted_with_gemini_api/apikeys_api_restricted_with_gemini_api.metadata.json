@@ -6,10 +6,10 @@
   "ServiceName": "apikeys",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "critical",
+  "Severity": "high",
   "ResourceType": "apikeys.googleapis.com/Key",
   "ResourceGroup": "IAM",
-  "Description": "Google Cloud API keys traditionally did not enable authentication on their own and were not considered sensitive. However, the Gemini API (a.k.a. Generative Language API, `generativelanguage.googleapis.com`) uses them to authenticate requests for uploaded files and cached content. For projects with the Gemini API enabled, each API key should have API restrictions configured to limit access to specific services.",
+  "Description": "The Gemini API (a.k.a. Generative Language API, `generativelanguage.googleapis.com`) uses API keys to authenticate requests for uploaded files and cached content. For projects with the Gemini API enabled, each API key should have API restrictions configured to limit access to specific services.",
   "Risk": "Leaked, unrestricted API keys allow access to sensitive uploaded files and cached content, impacting their **confidentiality**. The risk of leaks is particularly high because traditionally, Google API keys were *not* considered sensitive and might be embedded in website source code, mobile apps, etc.",
   "RelatedUrl": "",
   "AdditionalURLs": [
