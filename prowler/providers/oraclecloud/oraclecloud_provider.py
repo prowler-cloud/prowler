@@ -542,7 +542,7 @@ class OraclecloudProvider(Provider):
             - list: The list of OCIRegion objects to audit.
         """
         regions = []
-        region_home = home_region ? home_region : list(region_set)[0]
+        region_home = home_region if home_region else list(region_set)[0]
         # Audit specific regions
         if region_set:
             for region in list(region_set):
