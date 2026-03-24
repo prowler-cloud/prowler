@@ -5,14 +5,9 @@ import {
   getFindingGroups,
   getLatestFindingGroups,
 } from "@/actions/finding-groups";
-import {
-  getFindingById,
-  getLatestMetadataInfo,
-  getMetadataInfo,
-} from "@/actions/findings";
+import { getLatestMetadataInfo, getMetadataInfo } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
-import { FindingDetailsSheet } from "@/components/findings";
 import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
   FindingsGroupTable,
@@ -31,7 +26,7 @@ import {
   extractProviderIds,
 } from "@/lib/provider-helpers";
 import { ScanEntity, ScanProps } from "@/types";
-import { FindingProps, SearchParamsProps } from "@/types/components";
+import { SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
   searchParams,
@@ -45,77 +40,18 @@ export default async function Findings({
   // Check if the searchParams contain any date or scan filter
   const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
 
-  // Check if there's a specific finding ID to fetch
-  const findingId = resolvedSearchParams.id?.toString();
+  // TODO: Re-implement deep link support (/findings?id=<uuid>) using the grouped view's resource detail drawer
+  // once the legacy FindingDetailsSheet is fully deprecated (still used by /resources and overview dashboard).
 
-  const [metadataInfoData, providersData, scansData, findingByIdData] =
-    await Promise.all([
-      (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
-        query,
-        sort: encodedSort,
-        filters,
-      }),
-      getProviders({ pageSize: 50 }),
-      getScans({ pageSize: 50 }),
-      findingId
-        ? getFindingById(findingId, "resources,scan.provider")
-        : Promise.resolve(null),
-    ]);
-
-  // Process the finding data to match the expected structure (for detail sheet)
-  const processedFinding = findingByIdData?.data
-    ? (() => {
-        const finding = findingByIdData.data;
-        const included = findingByIdData.included || [];
-
-        type IncludedItem = {
-          type: string;
-          id: string;
-          attributes: Record<string, unknown>;
-          relationships?: {
-            provider?: { data?: { id: string } };
-          };
-        };
-
-        const resourceDict: Record<string, unknown> = {};
-        const scanDict: Record<string, IncludedItem> = {};
-        const providerDict: Record<string, unknown> = {};
-
-        included.forEach((item: IncludedItem) => {
-          if (item.type === "resources") {
-            resourceDict[item.id] = {
-              id: item.id,
-              attributes: item.attributes,
-            };
-          } else if (item.type === "scans") {
-            scanDict[item.id] = item;
-          } else if (item.type === "providers") {
-            providerDict[item.id] = {
-              id: item.id,
-              attributes: item.attributes,
-            };
-          }
-        });
-
-        const scanId = finding.relationships?.scan?.data?.id;
-        const resourceId = finding.relationships?.resources?.data?.[0]?.id;
-        const scan = scanId ? scanDict[scanId] : undefined;
-        const providerId = scan?.relationships?.provider?.data?.id;
-        const resource = resourceId ? resourceDict[resourceId] : undefined;
-        const provider = providerId ? providerDict[providerId] : undefined;
-
-        return {
-          ...finding,
-          relationships: {
-            scan: scan
-              ? { data: scan, attributes: scan.attributes }
-              : undefined,
-            resource: resource,
-            provider: provider,
-          },
-        } as FindingProps;
-      })()
-    : null;
+  const [metadataInfoData, providersData, scansData] = await Promise.all([
+    (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
+      query,
+      sort: encodedSort,
+      filters,
+    }),
+    getProviders({ pageSize: 50 }),
+    getScans({ pageSize: 50 }),
+  ]);
 
   // Extract unique regions, services, categories, groups from the new endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
@@ -168,7 +104,6 @@ export default async function Findings({
           <SSRDataTable searchParams={resolvedSearchParams} />
         </Suspense>
       </FilterTransitionWrapper>
-      {processedFinding && <FindingDetailsSheet finding={processedFinding} />}
     </ContentLayout>
   );
 }

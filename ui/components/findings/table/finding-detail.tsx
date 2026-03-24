@@ -1,3 +1,5 @@
+// TODO: Legacy component — used by /resources page and overview dashboard.
+// Migrate those consumers to the new resource-detail-drawer, then delete this file.
 "use client";
 
 import { ExternalLink, Link, VolumeX, X } from "lucide-react";
