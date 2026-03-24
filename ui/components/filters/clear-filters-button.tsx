@@ -2,7 +2,6 @@
 
 import { XCircle } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback } from "react";
 
 import { Button } from "../shadcn";
 
@@ -52,7 +51,7 @@ export const ClearFiltersButton = ({
   const filterCount = activeFilters.length;
 
   // Clear all filters except excluded ones (muted, search)
-  const clearFiltersPreservingExcluded = useCallback(() => {
+  const clearFiltersPreservingExcluded = () => {
     const params = new URLSearchParams(searchParams.toString());
     Array.from(params.keys()).forEach((key) => {
       if (
@@ -64,7 +63,7 @@ export const ClearFiltersButton = ({
     });
     params.delete("page");
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [router, searchParams, pathname]);
+  };
 
   // In batch mode: use pendingCount if provided; otherwise fall back to URL count.
   // In instant mode: always use URL count.

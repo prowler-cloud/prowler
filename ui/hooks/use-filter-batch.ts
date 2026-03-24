@@ -177,20 +177,19 @@ export const useFilterBatch = (
     });
   };
 
-  const applyAll = () => {
-    // Start from the current URL params to preserve non-batch params.
-    // Only filter[search] is excluded from batch management and preserved from the URL as-is.
+  /** Private helper — builds URLSearchParams from a pending state and pushes. */
+  const buildAndPush = (nextPending: PendingFilters) => {
     const params = new URLSearchParams(searchParams.toString());
 
-    // Remove all existing batch-managed filter params
+    // Remove all batch-managed filter params
     Array.from(params.keys()).forEach((key) => {
       if (key.startsWith("filter[") && !EXCLUDED_FROM_BATCH.includes(key)) {
         params.delete(key);
       }
     });
 
-    // Write the pending state
-    Object.entries(pendingFilters).forEach(([key, values]) => {
+    // Re-apply the given pending filters
+    Object.entries(nextPending).forEach(([key, values]) => {
       const nonEmpty = values.filter(Boolean);
       if (nonEmpty.length > 0) {
         params.set(key, nonEmpty.join(","));
@@ -214,6 +213,10 @@ export const useFilterBatch = (
     const queryString = params.toString();
     const targetUrl = queryString ? `${pathname}?${queryString}` : pathname;
     router.push(targetUrl, { scroll: false });
+  };
+
+  const applyAll = () => {
+    buildAndPush(pendingFilters);
   };
 
   const discardAll = () => {
@@ -253,36 +256,8 @@ export const useFilterBatch = (
    * defaultParams (e.g. filter[muted]=false) are applied as usual.
    */
   const clearAndApply = () => {
-    // Build params starting from the current URL (preserves non-batch params like filter[search])
-    const params = new URLSearchParams(searchParams.toString());
-
-    // Remove all batch-managed filter params
-    Array.from(params.keys()).forEach((key) => {
-      if (key.startsWith("filter[") && !EXCLUDED_FROM_BATCH.includes(key)) {
-        params.delete(key);
-      }
-    });
-
-    // Apply caller-supplied defaults for any params not already set
-    if (options?.defaultParams) {
-      Object.entries(options.defaultParams).forEach(([key, value]) => {
-        if (!params.has(key)) {
-          params.set(key, value);
-        }
-      });
-    }
-
-    // Reset pagination
-    if (params.has("page")) {
-      params.set("page", "1");
-    }
-
-    // Clear pending state so the UI updates immediately
     setPendingFilters({});
-
-    const queryString = params.toString();
-    const targetUrl = queryString ? `${pathname}?${queryString}` : pathname;
-    router.push(targetUrl, { scroll: false });
+    buildAndPush({});
   };
 
   /**
@@ -296,51 +271,12 @@ export const useFilterBatch = (
     const normalizedKeys = keys.map((k) =>
       k.startsWith("filter[") ? k : `filter[${k}]`,
     );
-
-    // Build the next pending state by removing the specified keys
     const nextPending: PendingFilters = { ...pendingFilters };
     normalizedKeys.forEach((k) => {
       delete nextPending[k];
     });
-
-    // Update local state so the UI reflects the cleared filters immediately
     setPendingFilters(nextPending);
-
-    // Build the target URL from the updated pending state
-    const params = new URLSearchParams(searchParams.toString());
-
-    // Remove all batch-managed filter params from the URL first
-    Array.from(params.keys()).forEach((key) => {
-      if (key.startsWith("filter[") && !EXCLUDED_FROM_BATCH.includes(key)) {
-        params.delete(key);
-      }
-    });
-
-    // Re-apply the remaining (non-cleared) pending filters
-    Object.entries(nextPending).forEach(([key, values]) => {
-      const nonEmpty = values.filter(Boolean);
-      if (nonEmpty.length > 0) {
-        params.set(key, nonEmpty.join(","));
-      }
-    });
-
-    // Apply caller-supplied defaults for any params not already set
-    if (options?.defaultParams) {
-      Object.entries(options.defaultParams).forEach(([key, value]) => {
-        if (!params.has(key)) {
-          params.set(key, value);
-        }
-      });
-    }
-
-    // Reset pagination
-    if (params.has("page")) {
-      params.set("page", "1");
-    }
-
-    const queryString = params.toString();
-    const targetUrl = queryString ? `${pathname}?${queryString}` : pathname;
-    router.push(targetUrl, { scroll: false });
+    buildAndPush(nextPending);
   };
 
   const getFilterValue = (key: string): string[] => {
