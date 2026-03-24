@@ -351,10 +351,14 @@ class ResourcesTools(BaseTool):
         ),
         lookback_days: int = Field(
             default=90,
+            ge=1,
+            le=90,
             description="How many days back to search for events. Range: 1-90. Default: 90.",
         ),
         page_size: int = Field(
             default=50,
+            ge=1,
+            le=50,
             description="Number of events to return. Range: 1-50. Default: 50.",
         ),
         include_read_events: bool = Field(
@@ -384,16 +388,6 @@ class ResourcesTools(BaseTool):
         1. Resource browsing: prowler_app_list_resources → find resource → this tool for event history
         2. Incident investigation: prowler_app_get_finding_details → get resource ID from finding → this tool to identify who caused the issue, what they changed, and when
         """
-        # Validate lookback_days range
-        if lookback_days < 1 or lookback_days > 90:
-            raise ValueError("lookback_days must be between 1 and 90 (inclusive).")
-
-        # Validate page_size range (CloudTrail max is 50)
-        if page_size < 1 or page_size > 50:
-            raise ValueError(
-                "page_size must be between 1 and 50 (inclusive). CloudTrail limits results to 50 per request."
-            )
-
         params = {
             "lookback_days": lookback_days,
             "page[size]": page_size,
