@@ -159,10 +159,7 @@ export const addProviderFormSchema = z
       z.object({
         providerType: z.literal("vercel"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z
-        .string()
-        .trim()
-        .min(1, "Team ID is required"),
+        providerUid: z.string().trim().min(1, "Team ID is required"),
       }),
     ]),
   );
@@ -386,10 +383,10 @@ export const addCredentialsFormSchema = (
                                     }
                                   : providerType === "vercel"
                                     ? {
-                                      [ProviderCredentialFields.VERCEL_API_TOKEN]:
-                                      z
-                                        .string()
-                                        .min(1, "API Token is required"),
+                                        [ProviderCredentialFields.VERCEL_API_TOKEN]:
+                                          z
+                                            .string()
+                                            .min(1, "API Token is required"),
                                       }
                                     : {}),
     })

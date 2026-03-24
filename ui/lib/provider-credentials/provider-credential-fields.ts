@@ -91,7 +91,6 @@ export const ProviderCredentialFields = {
 
   // Vercel fields
   VERCEL_API_TOKEN: "api_token",
-
 } as const;
 
 // Type for credential field values
