@@ -15,17 +15,33 @@ class events_rule_idp_group_mapping_changes(Check):
         """Execute the events_rule_idp_group_mapping_changes check."""
         findings = []
 
-        # Required event types for IdP group mapping changes
-        required_event_types = [
+        # OCI CIS 3.1 renamed create/delete to add/remove. Accept both to keep
+        # compatibility with rules that still use the legacy event names.
+        current_required_event_types = [
+            "com.oraclecloud.identitycontrolplane.addidpgroupmapping",
+            "com.oraclecloud.identitycontrolplane.removeidpgroupmapping",
+            "com.oraclecloud.identitycontrolplane.updateidpgroupmapping",
+        ]
+        legacy_required_event_types = [
             "com.oraclecloud.identitycontrolplane.createidpgroupmapping",
             "com.oraclecloud.identitycontrolplane.deleteidpgroupmapping",
             "com.oraclecloud.identitycontrolplane.updateidpgroupmapping",
         ]
 
         # Filter rules that monitor IdP group mapping changes
-        matching_rules = filter_rules_by_event_types(
-            events_client.rules, required_event_types
-        )
+        matching_rules = []
+        seen_rule_ids = set()
+        for required_event_types in (
+            current_required_event_types,
+            legacy_required_event_types,
+        ):
+            for rule, condition in filter_rules_by_event_types(
+                events_client.rules, required_event_types
+            ):
+                rule_id = getattr(rule, "id", None) or id(rule)
+                if rule_id not in seen_rule_ids:
+                    matching_rules.append((rule, condition))
+                    seen_rule_ids.add(rule_id)
 
         # Create findings for each matching rule
         for rule, _ in matching_rules:
