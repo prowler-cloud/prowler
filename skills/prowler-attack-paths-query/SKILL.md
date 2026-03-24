@@ -32,7 +32,7 @@ This skill covers two types of queries with different isolation mechanisms:
 | | Predefined queries | Custom queries |
 |---|---|---|
 | **Where they live** | `api/src/backend/api/attack_paths/queries/{provider}.py` | User/LLM-supplied via the custom query API endpoint |
-| **Provider isolation** | `AWSAccount {id: $provider_uid}` anchor + path connectivity | Automatic `_Provider_{uuid}` label injection via `cypher_rewriter.py` |
+| **Provider isolation** | `AWSAccount {id: $provider_uid}` anchor + path connectivity | Automatic `_Provider_{uuid}` label injection via `cypher_sanitizer.py` |
 | **What to write** | Chain every MATCH from the `aws` variable | Plain Cypher, no isolation boilerplate needed |
 | **Internal labels** | Never use (`_ProviderResource`, `_Tenant_*`, `_Provider_*`) | Never use (injected automatically by the system) |
 

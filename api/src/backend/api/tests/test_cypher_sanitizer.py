@@ -1,25 +1,30 @@
-"""Unit tests for the Cypher query rewriter (provider-label injection)."""
+"""Unit tests for the Cypher sanitizer (validation + provider-label injection)."""
 
 from unittest.mock import patch
 
 import pytest
 
-from api.attack_paths.cypher_rewriter import inject_provider_label
+from rest_framework.exceptions import ValidationError
+
+from api.attack_paths.cypher_sanitizer import (
+    inject_provider_label,
+    validate_custom_query,
+)
 
 PROVIDER_ID = "019c41ee-7df3-7dec-a684-d839f95619f8"
 LABEL = "_Provider_019c41ee7df37deca684d839f95619f8"
 
 
 def _inject(cypher: str) -> str:
-    """Shortcut that patches ``get_provider_label`` to avoid config imports."""
+    """Shortcut that patches `get_provider_label` to avoid config imports."""
     with patch(
-        "api.attack_paths.cypher_rewriter.get_provider_label", return_value=LABEL
+        "api.attack_paths.cypher_sanitizer.get_provider_label", return_value=LABEL
     ):
         return inject_provider_label(cypher, PROVIDER_ID)
 
 
 # ---------------------------------------------------------------------------
-# Pass A – Labeled node patterns (all clauses)
+# Pass A - Labeled node patterns (all clauses)
 # ---------------------------------------------------------------------------
 
 
@@ -67,7 +72,7 @@ class TestLabeledNodes:
 
 
 # ---------------------------------------------------------------------------
-# Pass B – Bare node patterns (MATCH/OPTIONAL MATCH only)
+# Pass B - Bare node patterns (MATCH/OPTIONAL MATCH only)
 # ---------------------------------------------------------------------------
 
 
@@ -92,13 +97,13 @@ class TestBareNodes:
         result = _inject(cypher)
         # The labeled (n:AWSRole) gets the label, but the bare (n) in RETURN should not
         assert f"(n:AWSRole:{LABEL})" in result
-        # Count how many times the label appears – should be 1 (from MATCH only)
+        # Count how many times the label appears - should be 1 (from MATCH only)
         assert result.count(LABEL) == 1
 
     def test_bare_not_injected_in_where(self):
         cypher = "MATCH (n:AWSRole) WHERE (n.x > 1) RETURN n"
         result = _inject(cypher)
-        # (n.x > 1) is an expression group, not a node pattern – should be untouched
+        # (n.x > 1) is an expression group, not a node pattern - should be untouched
         assert "(n.x > 1)" in result
 
     def test_bare_not_injected_in_with(self):
@@ -340,3 +345,71 @@ class TestEdgeCases:
         second = _inject(first)
         # The label appears twice (stacked)
         assert second.count(LABEL) == 2
+
+
+# ---------------------------------------------------------------------------
+# Validation
+# ---------------------------------------------------------------------------
+
+
+class TestValidation:
+    @pytest.mark.parametrize(
+        "cypher",
+        [
+            "LOAD CSV FROM 'http://169.254.169.254/' AS x RETURN x",
+            "load csv from 'http://evil.com' as row return row",
+            "CALL apoc.load.json('http://evil.com/') YIELD value RETURN value",
+            "CALL apoc.load.csvParams('http://evil.com/', {}, null) YIELD list RETURN list",
+            "CALL apoc.import.csv([{fileName: 'f'}], [], {}) YIELD node RETURN node",
+            "CALL apoc.export.csv.all('file.csv', {})",
+            "CALL apoc.cypher.run('CREATE (n)', {}) YIELD value RETURN value",
+            "CALL apoc.systemdb.graph() YIELD nodes RETURN nodes",
+            "CALL apoc.config.list() YIELD key, value RETURN key, value",
+            "CALL apoc.periodic.iterate('MATCH (n) RETURN n', 'DELETE n', {batchSize: 100})",
+            "CALL apoc.do.when(true, 'CREATE (n) RETURN n', '', {}) YIELD value RETURN value",
+            "CALL apoc.trigger.add('t', 'RETURN 1', {phase: 'before'})",
+            "CALL apoc.custom.asProcedure('myProc', 'RETURN 1')",
+        ],
+        ids=[
+            "LOAD_CSV",
+            "LOAD_CSV_lowercase",
+            "apoc.load.json",
+            "apoc.load.csvParams",
+            "apoc.import.csv",
+            "apoc.export.csv",
+            "apoc.cypher.run",
+            "apoc.systemdb.graph",
+            "apoc.config.list",
+            "apoc.periodic.iterate",
+            "apoc.do.when",
+            "apoc.trigger.add",
+            "apoc.custom.asProcedure",
+        ],
+    )
+    def test_rejects_blocked_patterns(self, cypher):
+        with pytest.raises(ValidationError) as exc:
+            validate_custom_query(cypher)
+
+        assert "blocked operation" in str(exc.value.detail)
+
+    @pytest.mark.parametrize(
+        "cypher",
+        [
+            "MATCH (n:AWSAccount) RETURN n LIMIT 10",
+            "MATCH (a)-[r]->(b) RETURN a, r, b",
+            "MATCH (n) WHERE n.name CONTAINS 'load' RETURN n",
+            "CALL apoc.create.vNode(['Label'], {}) YIELD node RETURN node",
+            "MATCH (n) WHERE n.name = 'apoc.load.json' RETURN n",
+            'MATCH (n) WHERE n.description = "LOAD CSV is cool" RETURN n',
+        ],
+        ids=[
+            "simple_match",
+            "traversal",
+            "contains_load_substring",
+            "apoc_virtual_node",
+            "apoc_load_inside_single_quotes",
+            "load_csv_inside_double_quotes",
+        ],
+    )
+    def test_allows_clean_queries(self, cypher):
+        validate_custom_query(cypher)

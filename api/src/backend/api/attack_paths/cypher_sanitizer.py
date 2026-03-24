@@ -1,35 +1,38 @@
 """
-Cypher query rewriter for provider-scoped label injection.
+Cypher sanitizer for custom (user-supplied) Attack Paths queries.
 
-Injects a dynamic ``_Provider_{uuid}`` label into every node pattern of a
-Cypher query so that Neptune (or Neo4j) can use its native label index for
-provider isolation.  Used exclusively for **custom** (user-supplied) queries
-where we don't control the Cypher text.
+Two responsibilities:
 
-The five-step pipeline:
+1. **Validation** - reject queries containing SSRF or dangerous procedure
+   patterns (defense-in-depth; the primary control is ``neo4j.READ_ACCESS``).
+
+2. **Provider-scoped label injection** - inject a dynamic
+   ``_Provider_{uuid}`` label into every node pattern so the database can
+   use its native label index for provider isolation.
+
+Label-injection pipeline:
 
 1. **Protect** string literals and line comments (placeholder replacement).
 2. **Split** by top-level clause keywords to track clause context.
-3. **Pass A** – inject into *labeled* node patterns in ALL segments.
-4. **Pass B** – inject into *bare* node patterns in MATCH segments only.
+3. **Pass A** - inject into *labeled* node patterns in ALL segments.
+4. **Pass B** - inject into *bare* node patterns in MATCH segments only.
 5. **Restore** protected regions.
 """
 
 import re
 
+from rest_framework.exceptions import ValidationError
+
 from tasks.jobs.attack_paths.config import get_provider_label
 
-# ---------------------------------------------------------------------------
-# Step 1 – String / comment protection
-# ---------------------------------------------------------------------------
+
+# Step 1 - String / comment protection
 # Single combined regex: strings first, then line comments.
-# The regex engine finds the leftmost match, so a string like 'https://x.com'
+# The regex engine finds the leftmost match, so a string like 'https://prowler.com'
 # is consumed as a string before the // inside it can match as a comment.
 _PROTECTED_RE = re.compile(r"'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"|//[^\n]*")
 
-# ---------------------------------------------------------------------------
-# Step 2 – Clause splitting
-# ---------------------------------------------------------------------------
+# Step 2 - Clause splitting
 # OPTIONAL MATCH must come before MATCH to avoid partial matching.
 _CLAUSE_RE = re.compile(
     r"\b(OPTIONAL\s+MATCH|MATCH|WHERE|RETURN|WITH|ORDER\s+BY"
@@ -37,11 +40,9 @@ _CLAUSE_RE = re.compile(
     re.IGNORECASE,
 )
 
-# ---------------------------------------------------------------------------
-# Pass A – Labeled node patterns (all segments)
-# ---------------------------------------------------------------------------
+# Pass A - Labeled node patterns (all segments)
 # Matches node patterns that have at least one :Label.
-# (?<!\w)\(  – open paren NOT preceded by a word char (excludes function calls).
+# (?<!\w)\(  - open paren NOT preceded by a word char (excludes function calls).
 # Group 1:  optional variable + one or more :Label
 # Group 2:  optional {properties} + closing paren
 _LABELED_NODE_RE = re.compile(
@@ -56,9 +57,7 @@ _LABELED_NODE_RE = re.compile(
     r")"
 )
 
-# ---------------------------------------------------------------------------
-# Pass B – Bare node patterns (MATCH segments only)
-# ---------------------------------------------------------------------------
+# Pass B - Bare node patterns (MATCH segments only)
 # Matches (identifier) or (identifier {properties}) without any :Label.
 # Only applied in MATCH/OPTIONAL MATCH segments.
 _BARE_NODE_RE = re.compile(
@@ -74,7 +73,7 @@ def _inject_labeled(segment: str, label: str) -> str:
 
 
 def _inject_bare(segment: str, label: str) -> str:
-    """Inject provider label into bare ``(identifier)`` node patterns."""
+    """Inject provider label into bare `(identifier)` node patterns."""
 
     def _replace(match):
         var = match.group(1)
@@ -92,10 +91,10 @@ def inject_provider_label(cypher: str, provider_id: str) -> str:
     Args:
         cypher: The original Cypher query string.
         provider_id: The provider UUID (will be converted to a label via
-            ``get_provider_label``).
+            `get_provider_label`).
 
     Returns:
-        The rewritten Cypher with ``:_Provider_{uuid}`` appended to every
+        The rewritten Cypher with `:_Provider_{uuid}` appended to every
         node pattern.
     """
     label = get_provider_label(provider_id)
@@ -118,11 +117,11 @@ def inject_provider_label(cypher: str, provider_id: str) -> str:
 
     for i, part in enumerate(parts):
         if i % 2 == 1:
-            # Keyword token – normalize for clause tracking
+            # Keyword token - normalize for clause tracking
             current_clause = re.sub(r"\s+", " ", part.strip()).upper()
             result.append(part)
         else:
-            # Content segment – apply injection based on clause context
+            # Content segment - apply injection based on clause context
             part = _inject_labeled(part, label)
             if current_clause in _MATCH_CLAUSES:
                 part = _inject_bare(part, label)
@@ -135,3 +134,37 @@ def inject_provider_label(cypher: str, provider_id: str) -> str:
         work = work.replace(f"\x00P{i}\x00", original)
 
     return work
+
+
+# ---------------------------------------------------------------------------
+# Validation
+# ---------------------------------------------------------------------------
+
+# Patterns that indicate SSRF or dangerous procedure calls
+# Defense-in-depth layer - the primary control is `neo4j.READ_ACCESS`
+_BLOCKED_PATTERNS = [
+    re.compile(r"\bLOAD\s+CSV\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.load\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.import\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.export\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.cypher\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.systemdb\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.config\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.periodic\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.do\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.trigger\b", re.IGNORECASE),
+    re.compile(r"\bapoc\.custom\b", re.IGNORECASE),
+]
+
+
+def validate_custom_query(cypher: str) -> None:
+    """Reject queries containing known SSRF or dangerous procedure patterns.
+
+    Raises ValidationError if a blocked pattern is found.
+    String literals and comments are stripped before matching to avoid
+    false positives.
+    """
+    stripped = _PROTECTED_RE.sub("", cypher)
+    for pattern in _BLOCKED_PATTERNS:
+        if pattern.search(stripped):
+            raise ValidationError({"query": "Query contains a blocked operation"})
