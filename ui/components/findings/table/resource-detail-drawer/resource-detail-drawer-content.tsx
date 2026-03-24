@@ -255,31 +255,33 @@ export function ResourceDetailDrawerContent({
         ) : (
           <>
             {/* Account, Resource, Service, Region, Actions */}
-            <div className="flex items-center justify-between">
-              <EntityInfo
-                cloudProvider={f.providerType}
-                entityAlias={f.providerAlias}
-                entityId={f.providerUid}
-              />
-              <EntityInfo
-                entityAlias={f.resourceType}
-                entityId={f.resourceUid}
-                idLabel="UID"
-              />
-              <InfoField label="Service" variant="compact">
-                {f.resourceService}
-              </InfoField>
-              <InfoField label="Region" variant="compact">
-                <span className="flex items-center gap-1.5">
-                  {getRegionFlag(f.resourceRegion) && (
-                    <span className="translate-y-px text-base leading-none">
-                      {getRegionFlag(f.resourceRegion)}
-                    </span>
-                  )}
-                  {f.resourceRegion}
-                </span>
-              </InfoField>
-              <div>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <EntityInfo
+                  cloudProvider={f.providerType}
+                  entityAlias={f.providerAlias}
+                  entityId={f.providerUid}
+                />
+                <EntityInfo
+                  entityAlias={f.resourceType}
+                  entityId={f.resourceUid}
+                  idLabel="UID"
+                />
+                <InfoField label="Service" variant="compact">
+                  {f.resourceService}
+                </InfoField>
+                <InfoField label="Region" variant="compact">
+                  <span className="flex items-center gap-1.5">
+                    {getRegionFlag(f.resourceRegion) && (
+                      <span className="translate-y-px text-base leading-none">
+                        {getRegionFlag(f.resourceRegion)}
+                      </span>
+                    )}
+                    {f.resourceRegion}
+                  </span>
+                </InfoField>
+              </div>
+              <div className="shrink-0">
                 <ActionDropdown ariaLabel="Resource actions">
                   <ActionDropdownItem
                     icon={
@@ -303,7 +305,7 @@ export function ResourceDetailDrawerContent({
             </div>
 
             {/* Dates row */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <InfoField label="Last detected" variant="compact">
                 <DateWithTime inline dateTime={f.updatedAt || "-"} />
               </InfoField>
@@ -316,7 +318,7 @@ export function ResourceDetailDrawerContent({
             </div>
 
             {/* IDs row */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <InfoField label="Check ID" variant="compact">
                 <CodeSnippet
                   value={checkMeta.checkId}
@@ -605,7 +607,7 @@ export function ResourceDetailDrawerContent({
                     </Link>
                   </Button>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <InfoField label="Scan Name" variant="compact">
                     {f.scan.name || "N/A"}
                   </InfoField>
@@ -616,7 +618,7 @@ export function ResourceDetailDrawerContent({
                     {f.scan.progress}%
                   </InfoField>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <InfoField label="Trigger" variant="compact">
                     {f.scan.trigger}
                   </InfoField>
@@ -627,7 +629,7 @@ export function ResourceDetailDrawerContent({
                     {formatDuration(f.scan.duration)}
                   </InfoField>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <InfoField label="Started At" variant="compact">
                     <DateWithTime
                       inline
@@ -641,7 +643,7 @@ export function ResourceDetailDrawerContent({
                     />
                   </InfoField>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <InfoField label="Launched At" variant="compact">
                     <DateWithTime
                       inline
