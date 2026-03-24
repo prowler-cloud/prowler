@@ -541,7 +541,7 @@ class OraclecloudProvider(Provider):
             - list: The list of OCIRegion objects to audit.
         """
         regions = []
-
+        region_home = list(region_set)[0]
         # Audit specific regions
         if region_set:
             for region in list(region_set):
@@ -550,7 +550,7 @@ class OraclecloudProvider(Provider):
                         OCIRegion(
                             key=region,
                             name=OCI_REGIONS[region],
-                            is_home_region=True,
+                            is_home_region= region == region_home,
                         )
                     )
                 else:
