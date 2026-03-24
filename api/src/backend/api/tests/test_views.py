@@ -45,6 +45,7 @@ from api.models import (
     ComplianceRequirementOverview,
     DailySeveritySummary,
     Finding,
+    FindingGroupDailySummary,
     Integration,
     Invitation,
     LighthouseProviderConfiguration,
@@ -14689,10 +14690,16 @@ class TestMuteRuleViewSet:
         assert len(data) == 2
         assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.chain")
+    @patch("api.v1.views.aggregate_finding_group_summaries_task.si")
+    @patch("api.v1.views.mute_historical_findings_task.si")
+    @patch("api.v1.views.transaction.on_commit", side_effect=lambda fn: fn())
     def test_mute_rules_create_valid(
         self,
-        mock_task,
+        _mock_on_commit,
+        mock_mute_signature,
+        mock_aggregate_signature,
+        mock_chain,
         authenticated_client,
         findings_fixture,
         create_test_user,
@@ -14730,8 +14737,14 @@ class TestMuteRuleViewSet:
         assert finding.muted_at is not None
         assert finding.muted_reason == "Security exception approved"
 
-        # Verify background task was called
-        mock_task.assert_called_once()
+        # Verify background task chain was called
+        mock_mute_signature.assert_called_once()
+        mock_aggregate_signature.assert_called_once()
+        mock_chain.assert_called_once_with(
+            mock_mute_signature.return_value,
+            mock_aggregate_signature.return_value,
+        )
+        mock_chain.return_value.apply_async.assert_called_once()
 
     @patch("tasks.tasks.mute_historical_findings_task.apply_async")
     def test_mute_rules_create_converts_finding_ids_to_uids(
@@ -15526,6 +15539,22 @@ class TestFindingGroupViewSet:
         assert len(response.json()["data"]) == 1
         assert "bucket" in response.json()["data"][0]["id"].lower()
 
+    def test_finding_groups_check_title_icontains(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test searching check titles with icontains."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_title.icontains]": "public access",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "s3_bucket_public_access"
+
     def test_resources_not_found(self, authenticated_client):
         """Test 404 returned for nonexistent check_id."""
         response = authenticated_client.get(
@@ -15823,6 +15852,48 @@ class TestFindingGroupViewSet:
         data = response.json()["data"]
         assert len(data) == 1
         assert data[0]["id"] == "cloudtrail_enabled"
+
+    def test_finding_groups_latest_aggregates_latest_per_provider(
+        self, authenticated_client, providers_fixture
+    ):
+        """Test /latest aggregates latest summary from each provider for the same check."""
+        provider1 = providers_fixture[0]
+        provider2 = providers_fixture[1]
+
+        check_id = "cross_provider_latest_resources_total"
+        now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+
+        FindingGroupDailySummary.objects.create(
+            tenant_id=provider1.tenant_id,
+            provider=provider1,
+            check_id=check_id,
+            inserted_at=now - timedelta(days=1),
+            resources_total=20,
+            resources_fail=20,
+            fail_count=20,
+        )
+        FindingGroupDailySummary.objects.create(
+            tenant_id=provider2.tenant_id,
+            provider=provider2,
+            check_id=check_id,
+            inserted_at=now,
+            resources_total=7,
+            resources_fail=7,
+            fail_count=7,
+        )
+
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[check_id]": check_id},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+        assert attrs["resources_total"] == 27
+        assert attrs["resources_fail"] == 27
+        assert attrs["fail_count"] == 27
 
     def test_finding_groups_latest_provider_type_filter(
         self, authenticated_client, finding_groups_fixture
