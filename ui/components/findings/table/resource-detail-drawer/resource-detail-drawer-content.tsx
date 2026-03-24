@@ -30,6 +30,7 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
+import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
@@ -54,6 +55,20 @@ import { cn } from "@/lib/utils";
 import { Muted } from "../../muted";
 import { NotificationIndicator } from "../notification-indicator";
 import type { CheckMeta } from "./use-resource-detail-drawer";
+
+const formatDuration = (seconds: number) => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+
+  const parts = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (remainingSeconds > 0 || parts.length === 0)
+    parts.push(`${remainingSeconds}s`);
+
+  return parts.join(" ");
+};
 
 interface ResourceDetailDrawerContentProps {
   isLoading: boolean;
@@ -335,6 +350,8 @@ export function ResourceDetailDrawerContent({
               <TabsTrigger value="other-findings">
                 Other Findings For This Resource
               </TabsTrigger>
+              <TabsTrigger value="scans">Scans</TabsTrigger>
+              <TabsTrigger value="events">Events</TabsTrigger>
             </TabsList>
           </div>
 
@@ -564,6 +581,78 @@ export function ResourceDetailDrawerContent({
                 </Table>
               </>
             )}
+          </TabsContent>
+
+          {/* Scans Tab */}
+          <TabsContent value="scans" className="flex flex-col gap-4">
+            {f?.scan ? (
+              <>
+                <div className="grid grid-cols-3 gap-4">
+                  <InfoField label="Scan Name" variant="compact">
+                    {f.scan.name || "N/A"}
+                  </InfoField>
+                  <InfoField label="Resources Scanned" variant="compact">
+                    {f.scan.uniqueResourceCount}
+                  </InfoField>
+                  <InfoField label="Progress" variant="compact">
+                    {f.scan.progress}%
+                  </InfoField>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <InfoField label="Trigger" variant="compact">
+                    {f.scan.trigger}
+                  </InfoField>
+                  <InfoField label="State" variant="compact">
+                    {f.scan.state}
+                  </InfoField>
+                  <InfoField label="Duration" variant="compact">
+                    {formatDuration(f.scan.duration)}
+                  </InfoField>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <InfoField label="Started At" variant="compact">
+                    <DateWithTime
+                      inline
+                      dateTime={f.scan.startedAt || "-"}
+                    />
+                  </InfoField>
+                  <InfoField label="Completed At" variant="compact">
+                    <DateWithTime
+                      inline
+                      dateTime={f.scan.completedAt || "-"}
+                    />
+                  </InfoField>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <InfoField label="Launched At" variant="compact">
+                    <DateWithTime
+                      inline
+                      dateTime={f.scan.insertedAt || "-"}
+                    />
+                  </InfoField>
+                  {f.scan.scheduledAt && (
+                    <InfoField label="Scheduled At" variant="compact">
+                      <DateWithTime inline dateTime={f.scan.scheduledAt} />
+                    </InfoField>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="text-text-neutral-tertiary text-sm">
+                Scan information is not available.
+              </p>
+            )}
+          </TabsContent>
+
+          {/* Events Tab */}
+          <TabsContent
+            value="events"
+            className="flex min-h-0 flex-1 flex-col gap-4"
+          >
+            <EventsTimeline
+              resourceId={f?.resourceId}
+              isAwsProvider={f?.providerType === "aws"}
+            />
           </TabsContent>
         </Tabs>
       </div>

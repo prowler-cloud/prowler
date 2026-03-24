@@ -18,6 +18,19 @@ export interface Remediation {
   code: RemediationCode;
 }
 
+export interface ScanInfo {
+  name: string;
+  trigger: string;
+  state: string;
+  uniqueResourceCount: number;
+  progress: number;
+  duration: number;
+  startedAt: string | null;
+  completedAt: string | null;
+  insertedAt: string | null;
+  scheduledAt: string | null;
+}
+
 /**
  * Flattened finding for the resource detail drawer.
  * Merges data from the finding attributes, its check_metadata,
@@ -36,6 +49,7 @@ export interface ResourceDrawerFinding {
   firstSeenAt: string | null;
   updatedAt: string | null;
   // Resource
+  resourceId: string;
   resourceUid: string;
   resourceName: string;
   resourceService: string;
@@ -53,6 +67,8 @@ export interface ResourceDrawerFinding {
   categories: string[];
   remediation: Remediation;
   additionalUrls: string[];
+  // Scan
+  scan: ScanInfo | null;
 }
 
 /**
@@ -141,6 +157,7 @@ export function adaptFindingsByResourceResponse(
       firstSeenAt: attrs.first_seen_at || null,
       updatedAt: attrs.updated_at || null,
       // Resource
+      resourceId: resourceRel?.id || "",
       resourceUid: resourceAttrs.uid || "-",
       resourceName: resourceAttrs.name || "-",
       resourceService: resourceAttrs.service || "-",
@@ -172,6 +189,21 @@ export function adaptFindingsByResourceResponse(
         },
       },
       additionalUrls: meta.additionalurls || [],
+      // Scan
+      scan: scan?.attributes
+        ? {
+            name: scan.attributes.name || "",
+            trigger: scan.attributes.trigger || "",
+            state: scan.attributes.state || "",
+            uniqueResourceCount: scan.attributes.unique_resource_count || 0,
+            progress: scan.attributes.progress || 0,
+            duration: scan.attributes.duration || 0,
+            startedAt: scan.attributes.started_at || null,
+            completedAt: scan.attributes.completed_at || null,
+            insertedAt: scan.attributes.inserted_at || null,
+            scheduledAt: scan.attributes.scheduled_at || null,
+          }
+        : null,
     };
   });
 }
