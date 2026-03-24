@@ -4,10 +4,12 @@ import {
   CircleArrowRight,
   CircleChevronLeft,
   CircleChevronRight,
+  ExternalLink,
   VolumeOff,
   VolumeX,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 
 import type { ResourceDrawerFinding } from "@/actions/findings";
@@ -18,6 +20,7 @@ import { getComplianceIcon } from "@/components/icons";
 import { JiraIcon } from "@/components/icons/services/IconServices";
 import {
   Badge,
+  Button,
   InfoField,
   Tabs,
   TabsContent,
@@ -587,6 +590,17 @@ export function ResourceDetailDrawerContent({
           <TabsContent value="scans" className="flex flex-col gap-4">
             {f?.scan ? (
               <>
+                <div className="flex items-center justify-between">
+                  <p className="text-text-neutral-secondary text-xs">
+                    Showing the latest scan that evaluated this finding
+                  </p>
+                  <Button variant="link" size="link-sm" asChild>
+                    <Link href={`/scans?id=${f.scan.id}`}>
+                      View scan
+                      <ExternalLink className="size-3" />
+                    </Link>
+                  </Button>
+                </div>
                 <div className="grid grid-cols-3 gap-4">
                   <InfoField label="Scan Name" variant="compact">
                     {f.scan.name || "N/A"}

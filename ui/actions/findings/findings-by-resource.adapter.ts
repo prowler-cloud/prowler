@@ -19,6 +19,7 @@ export interface Remediation {
 }
 
 export interface ScanInfo {
+  id: string;
   name: string;
   trigger: string;
   state: string;
@@ -192,6 +193,7 @@ export function adaptFindingsByResourceResponse(
       // Scan
       scan: scan?.attributes
         ? {
+            id: scanRel?.id || "",
             name: scan.attributes.name || "",
             trigger: scan.attributes.trigger || "",
             state: scan.attributes.state || "",
