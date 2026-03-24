@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_no_cross_cloud_escalation",
+  "CheckTitle": "AI Agent Must Not Have a Cross-Cloud Identity Chain Enabling Privilege Escalation",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "attack_paths",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Attack Path**. Detects whether an AI agent's identity in one cloud provider can be used to assume a higher-privileged role in another cloud provider, creating a cross-cloud privilege escalation path. An attacker who compromises the agent can silently pivot between clouds, bypassing the least-privilege controls of each environment in isolation.",
+  "Risk": "A cross-cloud escalation path allows an attacker with initial access to the agent's lower-privileged identity in one cloud to obtain administrative or broad permissions in a second cloud. This renders the security boundaries of both clouds ineffective and can result in full multi-cloud environment compromise from a single initial foothold.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Audit all trust relationships and federation configurations between cloud identities used by this agent.\n2. Remove or tighten cross-cloud trust policies (e.g., AWS IAM OIDC provider conditions, GCP Workload Identity Pool conditions).\n3. Enforce the principle of least privilege independently in every cloud; do not allow a low-privilege identity in Cloud A to assume a high-privilege role in Cloud B.\n4. Implement explicit deny conditions on cross-cloud AssumeRole / impersonation calls that exceed the agent's declared permission scope.\n5. Alert on any new cross-cloud federation configuration changes via CSPM or CIEM tooling.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove cross-cloud identity trust relationships that allow the agent to escalate privileges beyond its declared scope. Apply equivalent least-privilege constraints to every cloud the agent interacts with, and monitor federation configuration changes continuously.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_no_cross_cloud_escalation"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-096 attack path check from the Prowler ASPM check suite."
+}

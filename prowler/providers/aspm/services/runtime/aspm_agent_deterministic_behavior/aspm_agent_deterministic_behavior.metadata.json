@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_deterministic_behavior",
+  "CheckTitle": "AI Agent Must Produce Deterministic, Reproducible Behaviour for Audit",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "runtime",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "medium",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Runtime Security**. Verifies that each AI agent is designed to produce deterministic and reproducible behaviour. Non-deterministic agents cannot be reliably audited, replayed for incident investigation, or compared against a known-good baseline. Determinism requires fixed random seeds, pinned model versions, and idempotent tool implementations.",
+  "Risk": "Non-deterministic agents produce different outputs for identical inputs, making it impossible to reproduce a specific sequence of actions for forensic analysis after a security incident. Regulators and auditors increasingly require that AI system decisions be explainable and reproducible. Non-determinism also makes automated testing unreliable, allowing regressions in safety controls to go undetected.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Set temperature=0 (or equivalent) and a fixed seed in all LLM API calls to maximise output consistency.\n2. Pin the exact model version in API calls (e.g., gpt-4o-2024-11-20, not gpt-4o) to prevent silent model updates from changing behaviour.\n3. Design agent tools to be idempotent: the same input should always produce the same state change.\n4. Log full request/response payloads (with masking for PII) to enable replay and audit of past decisions.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set temperature=0 and pin exact model versions in all LLM calls. Design agent tools to be idempotent and log complete request/response payloads to enable forensic replay.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_deterministic_behavior"
+    }
+  },
+  "Categories": [
+    "infrastructure-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-065 check from the Prowler ASPM check suite."
+}

@@ -1,0 +1,40 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_permission_boundary_enforced",
+  "CheckTitle": "AI agent IAM role must have a permission boundary enforced",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "permissions",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Permissions**. Checks that each AI agent IAM role has a permission boundary attached. A permission boundary is a managed policy that sets a hard cap on the maximum permissions an IAM entity can exercise, regardless of the identity-based policies attached to it. Without a boundary, a single misconfigured or malicious policy addition can expand the agent's effective permissions.",
+  "Risk": "Without a permission boundary, any principal with `iam:AttachRolePolicy` or `iam:PutRolePolicy` on the agent role can expand its permissions up to the account maximum. This includes the agent itself if it has IAM write permissions. A permission boundary acts as an immutable ceiling that cannot be exceeded even if an attacker attaches a new policy.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Create a permission boundary policy that allows only the services and actions required by agent roles.\n2. Attach the boundary: `aws iam put-role-permissions-boundary --role-name <role> --permissions-boundary arn:aws:iam::<account>:policy/<boundary-policy>`.\n3. Verify the effective permissions with `aws iam simulate-principal-policy` — actions denied by the boundary should not be executable.\n4. Add an SCP that requires agent roles to have the boundary attached before they can be created or modified.\n5. Use AWS Config rule `iam-role-no-boundary-policy` to detect roles missing a boundary.\n6. Update the agent manifest to reflect `has_permission_boundary: true`.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Define an organization-wide AI agent permission boundary policy that restricts agents to the services they are authorized to use. Attach this boundary to every agent IAM role at provisioning time via IaC templates. Use SCPs to prevent the boundary from being removed without a privileged approval workflow. Monitor boundary-denied events in CloudTrail.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_permission_boundary_enforced"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_no_privilege_escalation_path",
+    "aspm_agent_permissions_no_overprivilege"
+  ],
+  "Notes": "ASPM-022 check from the Prowler ASPM check suite."
+}

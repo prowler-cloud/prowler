@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_container_not_privileged",
+  "CheckTitle": "AI Agent Container Must Not Run Privileged or as Root",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "runtime",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Runtime Security**. Verifies that AI agent containers do not run as root, are not privileged, and have both a seccomp profile and an AppArmor/SELinux policy applied. Running as root or in privileged mode with no mandatory access controls removes all container isolation boundaries and allows an attacker who compromises the agent process to take over the host node.",
+  "Risk": "A privileged or root-running container can escape to the host kernel, modify host filesystems, and reach adjacent containers or cloud metadata services. Combined with the absence of seccomp and AppArmor/SELinux, the full attack surface of the Linux kernel is exposed to the agent process.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Set runAsNonRoot: true and runAsUser: <non-zero UID> in the container securityContext.\n2. Remove privileged: true from all container specs.\n3. Apply a seccomp profile (RuntimeDefault or a custom profile) via seccompProfile in the pod security context.\n4. Enable AppArmor or SELinux via the appropriate annotation or securityContext field.\n5. Enforce these settings cluster-wide with Kubernetes Pod Security Standards (Restricted profile).",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce non-root execution, remove privileged flags, and apply both seccomp and AppArmor/SELinux profiles to every agent container. Use Pod Security Standards or a policy engine (OPA/Gatekeeper) to prevent regressions.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_container_not_privileged"
+    }
+  },
+  "Categories": [
+    "infrastructure-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-058 check from the Prowler ASPM check suite."
+}

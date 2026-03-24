@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_license_compliance",
+  "CheckTitle": "AI Agent Model and Library Licenses Must Be Documented and Compliant",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "supply_chain",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Supply Chain Security**. Validates that all model weights and third-party libraries used by AI agents have documented, reviewed, and organisationally compliant licenses. Copyleft licenses (GPL, AGPL) in commercial products and unlicensed components create significant legal exposure.",
+  "Risk": "Using components with incompatible or undocumented licenses can result in forced open-sourcing of proprietary code, legal injunctions, and significant financial penalties. AI model licenses often have usage restrictions that commercial deployments may violate.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Run license scanning (FOSSA, LicenseChecker, pip-licenses) on every dependency and model.\n2. Maintain a Software Bill of Materials (SBOM) with license data for all components.\n3. Define an approved license policy and fail CI/CD on non-compliant licenses.\n4. Consult legal counsel before using GPL/AGPL-licensed components in commercial products.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Integrate license scanning into the CI/CD pipeline and maintain an SBOM. Define and enforce an approved license policy that excludes incompatible copyleft licenses for commercial use.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_license_compliance"
+    }
+  },
+  "Categories": [
+    "software-and-configuration-checks"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-074 check from the Prowler ASPM check suite."
+}

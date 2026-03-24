@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_output_validated",
+  "CheckTitle": "AI Agent Outputs Must Be Validated and Redacted for Sensitive Data",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "data_access",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Data Access**. Ensures that all agent outputs are scanned and redacted for sensitive data (PII, credentials, internal tokens) before being delivered to users or downstream systems. LLM outputs can inadvertently echo back sensitive context data.",
+  "Risk": "Unvalidated agent outputs can leak PII, API keys, or internal system information that was included in the LLM context. This creates direct data breach exposure and regulatory liability.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Implement an output validation layer that inspects all agent responses before delivery.\n2. Apply regex patterns and DLP scanning to detect and redact PII, secrets, and internal references.\n3. Log redaction events for audit and tune detection rules regularly.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Add an output validation and redaction step to the agent pipeline that runs on every response before delivery. Test with known sensitive data patterns to verify effectiveness.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_output_validated"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-056 check from the Prowler ASPM check suite."
+}

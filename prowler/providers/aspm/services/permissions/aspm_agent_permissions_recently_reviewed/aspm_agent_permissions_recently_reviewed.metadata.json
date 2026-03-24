@@ -1,0 +1,40 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_permissions_recently_reviewed",
+  "CheckTitle": "AI agent permissions must be reviewed within the past 90 days",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "permissions",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "medium",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Permissions**. Verifies that the AI agent's IAM permissions were last formally reviewed within the past 90 days. Regular reviews catch privilege creep — incremental permission grants that accumulate over time as feature requirements evolve — and ensure the permission set remains aligned with the agent's current operating requirements.",
+  "Risk": "Permissions that have not been reviewed may contain stale grants from earlier development phases, test permissions that were never removed, or over-broad grants that were accepted as temporary workarounds. Each unreviewed permission is a potential attack surface that has not been risk-accepted under current conditions.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Use IAM Access Advisor (`aws iam get-service-last-accessed-details`) to identify unused services.\n2. Use IAM Access Analyzer to generate a policy based on recent CloudTrail activity.\n3. Compare the current policy against the generated least-privilege policy.\n4. Remove permissions for services not accessed in the past 90 days.\n5. Document the review in the agent's change record and update `permissions_last_reviewed_days` in the manifest.\n6. Schedule the next review within 90 days using a calendar reminder or automated workflow.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Establish a quarterly permission review cadence for all AI agent roles. Use IAM Access Advisor and IAM Access Analyzer to identify and remove unused permissions. Record reviews in the agent manifest file and in your ITSM system. Automate reminders when a review is overdue.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_permissions_recently_reviewed"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_permission_changes_approved"
+  ],
+  "Notes": "ASPM-018 check from the Prowler ASPM check suite."
+}

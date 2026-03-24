@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_third_party_vendors_assessed",
+  "CheckTitle": "Third-party vendors used by the AI agent must be security-assessed (SOC 2, ISO 27001)",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "compliance",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Compliance**. Verifies that all third-party vendors (LLM API providers, tool integrations, data processors) used by each AI agent have been formally security-assessed, with valid SOC 2 Type II reports, ISO 27001 certificates, or equivalent assurance documentation on file.",
+  "Risk": "Third-party vendors with inadequate security controls can compromise the confidentiality, integrity, and availability of data processed by the agent. Supply-chain attacks against AI service providers are increasingly common. Without vendor assessments, organisations cannot make informed risk decisions about the third-party dependencies their agents rely on.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Maintain an inventory of all third-party vendors used by each AI agent.\n2. For each vendor, obtain and review current SOC 2 Type II reports, ISO 27001 certificates, or equivalent assurance documentation.\n3. Assess vendor security posture against your organisation's third-party risk criteria.\n4. Document assessment results, findings, and accepted residual risks.\n5. Establish contractual security requirements (DPA, security addendum) with each vendor.\n6. Schedule annual re-assessment and monitor for vendor security incidents.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Maintain an assessed vendor inventory for each AI agent. Obtain SOC 2 Type II or ISO 27001 assurance for all significant third-party dependencies and conduct annual re-assessments.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_third_party_vendors_assessed"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-094 check from the Prowler ASPM check suite."
+}

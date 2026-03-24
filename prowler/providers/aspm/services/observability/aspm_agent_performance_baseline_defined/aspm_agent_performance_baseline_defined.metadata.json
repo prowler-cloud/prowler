@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_performance_baseline_defined",
+  "CheckTitle": "AI Agent Must Have a Performance Baseline with Deviation Alerting",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "observability",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "medium",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Observability**. Verifies that a performance baseline is defined for the AI agent and that significant deviation from that baseline triggers automated alerts. Performance degradation can indicate a compromised agent, resource exhaustion attack, or denial of service condition that would otherwise go undetected.",
+  "Risk": "Without a defined performance baseline, gradual degradation in agent performance — which may indicate compromise, cryptomining activity, or a resource starvation attack — cannot be distinguished from normal operational variance. This creates an opportunity for attackers to operate undetected within degraded agent performance.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Measure agent performance under normal load for at least 7 days to establish a statistical baseline.\n2. Define alert thresholds for: p99 latency > 2x baseline, error rate > 3x baseline, CPU/memory > 1.5x baseline.\n3. Configure automated alerts when thresholds are exceeded for more than 5 consecutive minutes.\n4. Review and update baselines after planned deployments or traffic pattern changes.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Define a performance baseline for each AI agent deployment based on observed normal behaviour. Configure automated alerting when key performance indicators deviate significantly from baseline, enabling early detection of compromise or resource attacks.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_performance_baseline_defined"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-086 check from the Prowler ASPM check suite."
+}

@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_audit_logs_immutable",
+  "CheckTitle": "AI Agent Audit Logs Must Be Immutable and Integrity-Protected",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "observability",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Observability**. Verifies that AI agent audit logs are immutable, integrity-protected, and centrally retained. Mutable audit logs can be altered by an attacker after a breach to conceal their actions, destroying forensic evidence and potentially violating regulatory requirements.",
+  "Risk": "If an attacker gains access to agent infrastructure, mutable logs can be deleted or modified to cover their tracks. This destroys forensic evidence needed for incident response, regulatory reporting, and legal proceedings. Many compliance frameworks (SOC 2, PCI-DSS, HIPAA) mandate immutable audit logs.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Ship audit logs to an immutable log store (AWS CloudTrail with S3 Object Lock, Azure Immutable Blob Storage, Google Cloud Log Buckets with retention locks).\n2. Enable log integrity validation and cryptographic signing.\n3. Restrict log deletion permissions to a separate break-glass role not held by agent service accounts.\n4. Configure centralised log retention with a minimum 90-day retention period.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Store agent audit logs in an immutable, write-once log store with cryptographic integrity protection. Separate log write and delete permissions and enforce centralised retention policies aligned with regulatory requirements.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_audit_logs_immutable"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-080 check from the Prowler ASPM check suite."
+}

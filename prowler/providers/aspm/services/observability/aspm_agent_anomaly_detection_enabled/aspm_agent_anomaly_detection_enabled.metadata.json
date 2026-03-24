@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_anomaly_detection_enabled",
+  "CheckTitle": "AI Agent Must Have Anomaly Detection Monitoring Enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "observability",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Observability**. Verifies that anomaly detection monitoring is enabled for AI agent behaviour. Without anomaly detection, compromised agents exhibiting unusual patterns such as unexpected tool usage, abnormal data access volumes, or atypical execution times go undetected.",
+  "Risk": "A compromised or manipulated AI agent may behave differently from its baseline without triggering any alerts. Anomaly detection is the primary mechanism for detecting novel attacks, prompt injection successes, and insider threats that bypass rule-based controls.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Establish a behavioural baseline for the agent during normal operations.\n2. Deploy anomaly detection on key signals: API call rate, tool invocation frequency, data volume accessed, error rate, and execution duration.\n3. Configure alerts when metrics deviate more than 2-3 standard deviations from baseline.\n4. Integrate anomaly alerts with the security operations centre.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Deploy behavioural anomaly detection on agent operational metrics. Establish baselines and configure automated alerting when agent behaviour deviates significantly from normal patterns.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_anomaly_detection_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-078 check from the Prowler ASPM check suite."
+}

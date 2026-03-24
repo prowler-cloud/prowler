@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_llm_context_sanitized",
+  "CheckTitle": "AI Agent LLM Context Windows Must Be Sanitised of Sensitive Data",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "data_access",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Data Access**. Ensures that sensitive data (credentials, PII, internal tokens) is stripped or redacted before being included in LLM context windows. Unsanitised context can expose sensitive data to the model provider and through prompt injection attacks.",
+  "Risk": "Credentials or PII included in LLM context can be extracted via prompt injection, leaked in model logs at the provider, or exposed in agent conversation histories. This is a primary vector for LLM-specific data exfiltration.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Implement a context sanitisation layer that scans all data before it is added to the LLM prompt.\n2. Use regex or DLP APIs to detect and redact secrets, PII, and internal tokens.\n3. Log sanitisation events for audit purposes without storing the sensitive values.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Implement a mandatory sanitisation step in the agent pipeline that removes or redacts sensitive data before constructing LLM prompts. Test with adversarial prompt injection scenarios.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_llm_context_sanitized"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-054 check from the Prowler ASPM check suite."
+}

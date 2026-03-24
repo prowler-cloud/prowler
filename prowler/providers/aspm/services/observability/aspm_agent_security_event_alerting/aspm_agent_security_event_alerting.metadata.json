@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_security_event_alerting",
+  "CheckTitle": "AI Agent Security Events Must Trigger Alerts Within 5 Minutes",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "observability",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Observability**. Verifies that AI agent security events trigger automated alerts within 5 minutes. Without timely alerting, security incidents involving AI agents may go unnoticed for extended periods, dramatically increasing the blast radius and recovery cost of a breach.",
+  "Risk": "Delayed detection of security events allows attackers extended dwell time to exfiltrate data, escalate privileges, or cause further harm. AI agents with access to sensitive systems and data require near-real-time alerting to limit the impact of compromises, prompt injection attacks, or credential abuse.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Define security events to alert on: authentication failures, permission denials, anomalous API call rates, detected injection attempts, and policy violations.\n2. Configure alerting pipelines with a maximum 5-minute detection-to-alert latency.\n3. Route alerts to the security operations centre (SOC) or on-call team via PagerDuty, OpsGenie, or equivalent.\n4. Test alert pipelines monthly with simulated security events.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Implement automated security event alerting for all AI agent security-relevant events with a maximum 5-minute latency. Route alerts to an on-call security operations team and test alert pipelines regularly.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_security_event_alerting"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-082 check from the Prowler ASPM check suite."
+}

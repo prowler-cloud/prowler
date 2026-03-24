@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_data_access_no_downstream_compromise",
+  "CheckTitle": "AI Agent Must Not Be Able to Access Data That Enables Downstream System or Human Compromise",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "attack_paths",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Attack Path**. Verifies that data stores accessible to the AI agent do not contain credentials, API keys, internal tokens, or social-engineering material (employee PII, org charts, internal process documentation). When an agent can read such material, an adversary who manipulates the agent's reasoning — via prompt injection or a poisoned knowledge base — can exfiltrate high-value secrets and use them to compromise downstream systems or people.",
+  "Risk": "An agent with access to credential-rich or socially-exploitable data becomes a one-stop reconnaissance tool. An attacker who achieves even read-level influence over the agent can harvest database passwords, internal API keys, employee contact details, and internal playbooks — enabling cascading compromise far beyond the agent's own cloud permissions.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Apply DLP (Data Loss Prevention) scanning to all data stores the agent reads to detect and block credentials and PII.\n2. Restrict the agent's read permissions to only the specific data objects it needs — avoid granting access to entire buckets, databases, or document libraries.\n3. Redact or tokenize sensitive fields (passwords, API keys, SSNs) before they are included in agent context windows or RAG retrievals.\n4. Implement output filtering to prevent the agent from returning raw credential strings or PII in its responses.\n5. Regularly audit the agent's accessible data scope using CSPM and CIEM tooling.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Scope the agent's data access to the minimum required objects and apply DLP controls to detect and block sensitive material from entering or leaving the agent's context. Redact credentials and PII at the data layer before they reach the agent.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_data_access_no_downstream_compromise"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-098 attack path check from the Prowler ASPM check suite."
+}

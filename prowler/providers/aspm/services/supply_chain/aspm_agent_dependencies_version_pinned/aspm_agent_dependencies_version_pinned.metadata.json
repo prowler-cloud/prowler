@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_dependencies_version_pinned",
+  "CheckTitle": "AI Agent Dependencies Must Use Exact Pinned Versions with Lock Files",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "supply_chain",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Supply Chain Security**. Validates that all agent dependencies are pinned to exact versions using lock files (poetry.lock, requirements.txt with hashes, package-lock.json). Floating versions allow dependency confusion and typosquatting attacks.",
+  "Risk": "Unpinned or range-based dependency versions can resolve to different package versions across builds. Attackers can exploit this through dependency confusion, typosquatting, or by publishing a malicious patch version that satisfies a floating constraint.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Use a lock file (poetry.lock, package-lock.json, Pipfile.lock) and commit it to version control.\n2. Pin all direct and transitive dependencies to exact versions.\n3. Enable hash-checking mode in pip (--require-hashes) or equivalent.\n4. Audit lock files on every merge with tools such as pip-audit or npm audit.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Pin all dependencies to exact versions and commit lock files to version control. Enable hash verification during installation to prevent dependency substitution attacks.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_dependencies_version_pinned"
+    }
+  },
+  "Categories": [
+    "software-and-configuration-checks"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-071 check from the Prowler ASPM check suite."
+}

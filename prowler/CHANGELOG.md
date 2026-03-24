@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.22.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- New `aspm` provider for Agent Security Posture Management with 101 checks across 10 categories covering identity, permissions, credentials, network, data access, runtime, supply chain, observability, compliance, and attack path analysis for AI agent deployments
+
+---
+
 ## [5.21.0] (Prowler v5.21.0)
 
 ### 🚀 Added

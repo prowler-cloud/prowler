@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_centralized_dashboard",
+  "CheckTitle": "AI Agent Must Be Visible in a Centralised Security Posture Dashboard",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "observability",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "medium",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Observability**. Verifies that every AI agent is represented in a centralised security posture dashboard. Agents not visible in a centralised dashboard require manual, error-prone tracking of their security status and cannot be included in automated compliance reporting or fleet-wide security assessments.",
+  "Risk": "Without centralised visibility, security teams cannot efficiently assess the overall security posture of the agent fleet. Shadow agents operating outside the visibility of security tooling accumulate unreviewed risks and may not receive security updates, creating persistent vulnerabilities across the organisation.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Register all agents in the organisation's ASPM platform or CMDB.\n2. Configure agent telemetry to feed into the centralised security dashboard.\n3. Include per-agent security health indicators: check pass rate, open findings, last assessment date.\n4. Implement alerting when an agent is deployed without appearing in the dashboard within 24 hours.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure all AI agents are registered and visible in a centralised security posture dashboard. Automate agent registration as part of the deployment pipeline and alert on agents that fall outside central visibility.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_centralized_dashboard"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-084 check from the Prowler ASPM check suite."
+}

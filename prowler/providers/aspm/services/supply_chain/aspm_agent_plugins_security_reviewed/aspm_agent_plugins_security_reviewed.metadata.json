@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_plugins_security_reviewed",
+  "CheckTitle": "AI Agent Plugins and Tools Must Be Security-Reviewed Before Deployment",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "supply_chain",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Supply Chain Security**. Validates that all plugins and tools registered with an AI agent have undergone a security review before being permitted in production. Unreviewed plugins represent an unvalidated code execution path that can be triggered by the LLM.",
+  "Risk": "Plugins and tools extend agent capabilities with arbitrary code execution. Malicious or vulnerable plugins can be triggered by prompt injection, leading to data exfiltration, privilege escalation, or lateral movement within cloud infrastructure.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Establish a plugin approval process with mandatory security review before any plugin is added to production.\n2. Maintain an allowlist of approved plugins and reject unregistered ones at runtime.\n3. Apply static analysis and dependency scanning to all plugin code.\n4. Sandbox plugin execution with minimal permissions.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Implement a mandatory security review gate for all agent plugins and tools. Maintain an approved-plugin registry and enforce it at runtime to prevent unreviewed code execution.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_plugins_security_reviewed"
+    }
+  },
+  "Categories": [
+    "software-and-configuration-checks"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-070 check from the Prowler ASPM check suite."
+}

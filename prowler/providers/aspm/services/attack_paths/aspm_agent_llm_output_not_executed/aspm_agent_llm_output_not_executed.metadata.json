@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_llm_output_not_executed",
+  "CheckTitle": "AI Agent Must Not Execute LLM Output Directly in System Calls or eval()",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "attack_paths",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Attack Path**. Detects whether the AI agent passes raw LLM-generated text directly to code-execution primitives such as eval(), exec(), subprocess.run(shell=True), os.system(), or equivalent functions without sanitisation and structural allow-listing. When LLM output is executed verbatim, a successful prompt injection — delivered via a poisoned document, a malicious tool response, or an adversarial user prompt — becomes a Remote Code Execution (RCE) vulnerability running under the agent's cloud identity.",
+  "Risk": "Direct execution of LLM output converts every successful prompt injection into full Remote Code Execution on the agent host. An attacker who controls any input that reaches the LLM — retrieved document, user message, tool response — can instruct the model to emit a payload that the agent will execute verbatim. The resulting RCE runs under the agent's cloud identity, granting the attacker access to all cloud resources, secrets, and downstream systems the agent can reach.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Never pass raw LLM output to eval(), exec(), subprocess, or shell commands — treat all LLM output as untrusted user input.\n2. Use structured output formats (JSON with a strict schema) instead of free-form text when the agent must drive code execution.\n3. Validate and allow-list LLM-generated structured payloads against a predefined schema before any execution step.\n4. Route all code execution through a sandboxed execution environment (gVisor, Firecracker, WebAssembly) with no network access and scoped file system access.\n5. Implement prompt injection detection on all LLM inputs (user messages, retrieved documents, tool responses) and refuse execution when injection patterns are detected.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Treat LLM output as untrusted input. Never pass it directly to code-execution primitives. Require structured, schema-validated payloads for any execution step, run code in isolated sandboxes, and implement prompt injection detection to prevent adversarial payloads from reaching the execution layer.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_llm_output_not_executed"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-101 attack path check from the Prowler ASPM check suite."
+}

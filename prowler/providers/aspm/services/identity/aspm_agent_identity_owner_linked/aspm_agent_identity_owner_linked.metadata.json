@@ -1,0 +1,38 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_identity_owner_linked",
+  "CheckTitle": "AI Agent Identity Must Be Linked to a Documented Owner Team",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "identity",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Identity**. Confirms that the AI agent's cloud identity has an owner tag that links the identity to a responsible team. Owner attribution is a prerequisite for periodic access reviews, incident response escalation, and deprovisioning workflows.",
+  "Risk": "Agent identities without owner attribution become ungoverned. No team receives security alerts for the agent, no one performs access reviews, and permission drift is undetected. In an incident, responders cannot quickly determine who to contact to disable the agent.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Add an 'owner' tag to the agent's IAM role, managed identity, or service account with the value set to the responsible team's identifier (e.g., team-ai-platform).\n2. Enforce owner tag presence via AWS Tag Policies, Azure Policy, or GCP Organization Policy.\n3. Include owner attribution as a mandatory field in the agent registration process.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Require an owner tag on all agent identities as a deployment prerequisite. Enforce this through IaC templates, tag policies, and the agent manifest schema.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_identity_owner_linked"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_identity_tagged_and_inventoried",
+    "aspm_agent_identity_deprovisioning_record"
+  ],
+  "Notes": "ASPM-009 check from the Prowler ASPM check suite."
+}

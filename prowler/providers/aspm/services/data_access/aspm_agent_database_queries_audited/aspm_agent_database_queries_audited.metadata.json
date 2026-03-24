@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_database_queries_audited",
+  "CheckTitle": "AI Agent Database Queries Must Be Fully Audited",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "data_access",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Data Access**. Confirms that all database queries executed by the agent are captured in an audit log including query text, agent identity, timestamp, and result size. Without this, forensic investigation of data breaches is severely hampered.",
+  "Risk": "Without database query auditing, data exfiltration via SQL queries cannot be detected or investigated. Organisations lose the ability to meet forensic requirements and demonstrate regulatory compliance.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Enable database audit logging at the engine level (e.g., AWS RDS audit log, PostgreSQL pgaudit, MySQL general_log).\n2. Ensure logs capture query text, source identity, and result row counts.\n3. Forward logs to a centralised SIEM and set up alerts for anomalous query patterns.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable comprehensive database query auditing on all databases accessed by the agent. Store logs in an immutable, centralised location and review them regularly.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_database_queries_audited"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-052 check from the Prowler ASPM check suite."
+}

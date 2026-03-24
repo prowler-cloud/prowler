@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_model_has_model_card",
+  "CheckTitle": "AI Agent Model Must Have a Documented Model Card",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "data_access",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "medium",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Data Access**. Verifies that the underlying model used by the agent has a published model card documenting its training data sources, intended use cases, known limitations, and bias assessments. Model cards are a prerequisite for responsible AI governance.",
+  "Risk": "Using models without model cards makes it impossible to assess training data provenance, detect biases, or understand the model's limitations. This prevents regulatory compliance under the EU AI Act and responsible AI frameworks.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Obtain or create a model card for every model used in production agents.\n2. Include: training data description, evaluation metrics, known biases, intended use, and out-of-scope use cases.\n3. Publish the model card in the organisation's model registry and link it from the agent manifest.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Require a model card for every model before it is approved for use in production agents. Include training data, bias assessments, and intended use documentation.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_model_has_model_card"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-055 check from the Prowler ASPM check suite."
+}

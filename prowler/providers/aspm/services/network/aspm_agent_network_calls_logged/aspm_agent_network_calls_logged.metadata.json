@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_network_calls_logged",
+  "CheckTitle": "AI Agent Network Calls Must Be Logged with Agent Identity and Destination",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Network Security**. Verifies that every AI agent logs all outbound and inbound network calls, including the agent identity, destination host, HTTP method, response code, and timestamp. Without this logging, it is impossible to reconstruct an agent's network activity during a security incident.",
+  "Risk": "Without network call logging, incident responders cannot determine what external services an agent contacted, what data was sent, or whether an agent was manipulated by prompt injection to exfiltrate information. This creates an unacceptable blind spot in forensic investigations.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Set network_calls_logged: true in the agent manifest.\n2. Instrument the agent's HTTP client with a logging middleware that captures agent ID, destination, method, status code, and latency.\n3. Ship logs to a centralised SIEM and set up alerts for anomalous destinations or high error rates.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Log all agent network calls including agent identity, destination URL, HTTP method, and response status. Centralise logs in a tamper-resistant store and create detection rules for suspicious destinations.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_network_calls_logged"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-044 check from the Prowler ASPM check suite."
+}

@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_container_image_scanned",
+  "CheckTitle": "AI Agent Container Image Must Be Scanned for Vulnerabilities Before Deployment",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "runtime",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Runtime Security**. Verifies that the container image used by each AI agent has been scanned for known CVEs before it is deployed. Unscanned images may carry critical or high-severity vulnerabilities in base OS packages, language runtimes, or agent framework libraries that an attacker can exploit remotely.",
+  "Risk": "Deploying unscanned container images means known exploitable CVEs may be running in production. AI agent containers often include Python runtimes, LLM client libraries, and network utilities that regularly receive CVE advisories. A single exploitable vulnerability in the image can give an attacker code execution inside the container.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Integrate a container image scanner (Trivy, Snyk, AWS Inspector, Google Artifact Analysis) into the CI/CD pipeline.\n2. Block deployment of images with critical or high-severity CVEs until they are patched.\n3. Configure a scheduled re-scan of images already deployed to detect newly published CVEs.\n4. Use Binary Authorization or OPA to admit only images that carry a valid scan attestation.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Scan all agent container images for CVEs as a CI/CD gate before deployment and periodically after deployment. Block images with critical findings and enforce this with an admission controller.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_container_image_scanned"
+    }
+  },
+  "Categories": [
+    "infrastructure-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-060 check from the Prowler ASPM check suite."
+}

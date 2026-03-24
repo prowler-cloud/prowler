@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_network_isolated",
+  "CheckTitle": "AI Agent Must Run in an Isolated Network Segment",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Network Security**. Verifies that every AI agent runs in a dedicated, isolated network segment (VPC, subnet, or namespace) separate from unrelated workloads. Co-locating agents with other services increases the blast radius of a compromise and provides an attacker with lateral movement opportunities.",
+  "Risk": "An agent running in a shared network segment can reach databases, internal APIs, and other workloads that were not intended to be accessible to it. A compromised or manipulated agent can use this access to escalate privileges or exfiltrate data from adjacent systems.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Set network_isolated: true in the agent manifest.\n2. Deploy the agent in a dedicated VPC subnet or Kubernetes namespace with NetworkPolicy deny-all ingress/egress as the default.\n3. Use micro-segmentation tools (e.g., Calico, Cilium) to enforce workload-level isolation.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Deploy each AI agent in a dedicated network segment with deny-all default policies. Only open the specific ports and protocols required for the agent's approved integrations.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_network_isolated"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-041 check from the Prowler ASPM check suite."
+}

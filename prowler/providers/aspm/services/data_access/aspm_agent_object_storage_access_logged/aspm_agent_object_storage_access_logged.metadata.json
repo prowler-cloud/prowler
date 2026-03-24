@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_object_storage_access_logged",
+  "CheckTitle": "AI Agent Object Storage Access Must Be Logged",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "data_access",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Data Access**. Verifies that all object storage operations (GET, PUT, DELETE) performed by the agent are captured in access logs along with the agent identity. Object storage is a common exfiltration target and must be fully auditable.",
+  "Risk": "Without object storage access logs, data exfiltration via bulk GET or covert PUT operations cannot be detected or investigated after the fact, making forensic analysis impossible.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Enable server access logging on all S3 buckets / Azure Blob containers / GCS buckets used by the agent.\n2. Ensure logs include requester identity, operation type, object key, and timestamp.\n3. Forward logs to a centralised SIEM and configure alerts for unusual access patterns.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable access logging on all object storage resources used by the agent. Include requester identity in logs and set up anomaly alerts for bulk downloads.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_object_storage_access_logged"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-053 check from the Prowler ASPM check suite."
+}

@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_distributed_tracing_enabled",
+  "CheckTitle": "AI Agent Must Use Distributed Tracing with W3C Trace Context",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "observability",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "medium",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Observability**. Verifies that AI agents propagate W3C trace context (traceparent/tracestate headers) across all service calls. Without distributed tracing, it is impossible to reconstruct end-to-end request timelines across multi-agent systems, making incident investigation extremely difficult.",
+  "Risk": "Multi-agent systems involve chains of service calls across multiple components. Without distributed tracing, security teams cannot reconstruct the sequence of events during an incident, identify which agent initiated a malicious chain, or determine the full scope of data access across a complex agent workflow.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Integrate an OpenTelemetry SDK into the agent and configure trace export to a tracing backend (Jaeger, Zipkin, AWS X-Ray, Datadog APM).\n2. Propagate W3C traceparent and tracestate headers on all outbound HTTP/gRPC calls.\n3. Include agent ID, tool name, and LLM model in trace span attributes.\n4. Configure trace sampling at 100% for security-sensitive operations.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Implement OpenTelemetry-based distributed tracing with W3C trace context propagation across all AI agent service calls. Export traces to a centralised tracing backend for incident investigation and performance analysis.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_distributed_tracing_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-083 check from the Prowler ASPM check suite."
+}

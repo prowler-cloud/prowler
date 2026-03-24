@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_tools_cannot_escalate",
+  "CheckTitle": "AI Agent Tools Must Not Be Abusable to Escalate Beyond Declared Permissions",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "attack_paths",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Attack Path**. Verifies that the tools granted to an AI agent cannot be chained together or individually abused to perform actions beyond the agent's declared IAM/permission scope. Tool abuse includes prompt injection that redirects tool calls, SSRF through HTTP-fetching tools, insecure deserialization via file-parsing tools, and shell-escape vulnerabilities in code-execution sandboxes.",
+  "Risk": "When agent tools can be abused, an attacker who controls any part of the agent's input (prompt, retrieved document, API response) can coerce the agent into executing arbitrary commands, exfiltrating data, or invoking cloud APIs far beyond the agent's intended scope — all under the agent's legitimate identity and without triggering IAM-level alerts.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Enumerate every tool available to the agent and perform a tool-specific threat model (SSRF, shell injection, insecure deserialization).\n2. Apply input validation and allowlisting to all tool parameters before execution.\n3. Run code-execution tools in strict sandboxes (gVisor, Firecracker, seccomp profiles) with no network access unless explicitly required.\n4. Implement tool call signing and validation so the orchestration layer can detect tampered tool invocations.\n5. Log all tool invocations with full parameter payloads and alert on anomalous combinations.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Perform a threat model for every tool granted to the agent. Apply strict input validation, sandboxing, and allowlisted tool parameters. Log and alert on all tool invocations to detect abuse chains at runtime.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_tools_cannot_escalate"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-097 attack path check from the Prowler ASPM check suite."
+}

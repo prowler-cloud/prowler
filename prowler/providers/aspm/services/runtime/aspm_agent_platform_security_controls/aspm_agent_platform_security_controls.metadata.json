@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_platform_security_controls",
+  "CheckTitle": "AI Agent Must Use Platform-Native Security Controls",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "runtime",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Runtime Security**. Verifies that AI agents use platform-native security controls such as Kubernetes Pod Security Standards (Restricted profile), GKE Binary Authorization, AWS ECS task security profiles, or equivalent mechanisms. These controls enforce a hardened baseline at the platform level, independent of application-level settings, reducing the risk of misconfiguration.",
+  "Risk": "AI agents deployed without platform-native security controls rely entirely on application-level configurations that are easily misconfigured or bypassed. Platform controls such as Pod Security Standards, Binary Authorization, and task-level security policies provide an independent enforcement layer that limits the impact of misconfigurations in individual agent manifests.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. For Kubernetes: enable Pod Security Standards at the Restricted level on all namespaces running agent workloads (kubectl label namespace <ns> pod-security.kubernetes.io/enforce=restricted).\n2. For GKE: enable Binary Authorization to require signed image attestations before deployment.\n3. For AWS ECS: apply task security profiles and enable container-level seccomp via ECS task definition.\n4. For Azure AKS: use Azure Policy for Kubernetes to enforce Pod Security Standards.\n5. Regularly audit policy exceptions and exceptions must be time-limited and approved.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable platform-native security controls (Kubernetes Pod Security Standards Restricted profile, Binary Authorization, or equivalent) on all namespaces and clusters running agent workloads. Audit and minimise policy exceptions.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_platform_security_controls"
+    }
+  },
+  "Categories": [
+    "infrastructure-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-067 check from the Prowler ASPM check suite."
+}

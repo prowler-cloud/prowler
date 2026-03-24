@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_eu_ai_act_controls",
+  "CheckTitle": "AI agent deployed in the EU must have documented EU AI Act compliance controls",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "compliance",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Compliance**. Verifies that each AI agent has documented compliance controls aligned with the EU AI Act, including transparency obligations, human oversight mechanisms, risk management systems, and conformity assessments where required for high-risk AI systems.",
+  "Risk": "The EU AI Act imposes binding obligations on providers and deployers of AI systems in the EU market. Non-compliance with requirements for high-risk AI systems can result in fines of up to 3% of global annual turnover (or EUR 15M, whichever is higher), enforcement action, and mandatory market withdrawal.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Classify the AI agent under the EU AI Act risk tiers (unacceptable, high, limited, minimal).\n2. For high-risk systems, implement conformity assessment procedures per Annex VI or VII.\n3. Document transparency obligations: inform users they are interacting with an AI system.\n4. Implement human oversight mechanisms allowing intervention and override.\n5. Establish a risk management system covering the entire AI lifecycle.\n6. Maintain technical documentation as required by Article 11 and Annex IV.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Classify each AI agent under the EU AI Act, implement required controls for the applicable risk tier, and maintain documentation demonstrating conformity. Engage a qualified legal and technical team to perform a gap analysis.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_eu_ai_act_controls"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-088 check from the Prowler ASPM check suite."
+}

@@ -1,0 +1,37 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_identity_naming_convention",
+  "CheckTitle": "AI Agent Identity Must Follow Organisational Naming Convention",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "identity",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "medium",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Identity**. Validates that the agent's cloud identity (IAM role, managed identity, service account) adheres to the organisation's naming standard. A predictable naming scheme enables automated policy scoping (e.g., SCPs, Azure Policy) and simplifies incident investigation.",
+  "Risk": "Non-compliant names can circumvent name-based IAM policies or SCPs, allowing the agent to bypass intended permission boundaries. They also make it harder to identify rogue or shadow-AI deployments during security reviews.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Rename the IAM role / service account to match the agreed naming pattern (e.g., agent-<team>-<purpose>-<env>).\n2. Update all trust policies, permission boundaries, and code references to the new name.\n3. Enforce naming via a CI/CD policy gate or IaC linting rule.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Define and enforce an agent identity naming standard through IaC templates and CI/CD gates. Validate names before deployment.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_identity_naming_convention"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_identity_tagged_and_inventoried"
+  ],
+  "Notes": "ASPM-002 check from the Prowler ASPM check suite."
+}

@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_tls_certificate_validation",
+  "CheckTitle": "AI Agent Must Fully Validate TLS Certificates on All HTTPS Calls",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Network Security**. Verifies that every AI agent fully validates TLS certificates — including certificate chain, hostname matching, and expiry — on all outbound HTTPS calls. Disabled or partial certificate validation makes TLS encryption worthless against a network-level adversary.",
+  "Risk": "If an agent disables TLS certificate validation (e.g., verify=False, InsecureSkipVerify), a network attacker can present a self-signed certificate and intercept all HTTPS traffic, exfiltrating credentials, API keys, and sensitive payloads sent by the agent.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Set validates_tls_certificates: true in the agent manifest.\n2. Remove any verify=False, ssl_verify=False, or InsecureSkipVerify=true settings from the agent's HTTP client configuration.\n3. Use a trusted CA bundle and ensure certificates are renewed before expiry using automated certificate management (e.g., cert-manager, ACM).",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable full TLS certificate validation in the agent's HTTP client. Never disable verification in production. Use automated certificate management to prevent expiry-related failures that tempt developers to skip validation.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_tls_certificate_validation"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-043 check from the Prowler ASPM check suite."
+}

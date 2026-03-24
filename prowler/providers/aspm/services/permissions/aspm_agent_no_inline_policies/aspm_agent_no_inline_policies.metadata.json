@@ -1,0 +1,39 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_no_inline_policies",
+  "CheckTitle": "AI agent roles must not use inline IAM policies",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "permissions",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Permissions**. Checks that AI agent IAM roles and service accounts do not have inline policies attached. Inline policies are embedded directly in an IAM identity, do not appear in the managed-policy inventory, and are not subject to standard versioning or approval workflows.",
+  "Risk": "Inline policies are invisible to policy-lifecycle tooling (Access Analyzer, Config rules, CSPM). They can be silently added or modified without triggering change-management controls, allowing an attacker with `iam:PutRolePolicy` to expand permissions without detection.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. List inline policies: `aws iam list-role-policies --role-name <role>`.\n2. Retrieve each inline policy: `aws iam get-role-policy --role-name <role> --policy-name <name>`.\n3. Create equivalent customer-managed policies with `aws iam create-policy`.\n4. Attach the managed policies: `aws iam attach-role-policy`.\n5. Delete the inline policies: `aws iam delete-role-policy`.\n6. Verify the role's effective permissions are unchanged.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Convert all inline policies to versioned customer-managed policies. Enforce the prohibition on inline policies via an SCP or IAM permission boundary that denies `iam:PutRolePolicy`. Audit for inline policy additions with AWS Config rule `iam-no-inline-policy-check`.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_no_inline_policies"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_permission_changes_approved"
+  ],
+  "Notes": "ASPM-014 check from the Prowler ASPM check suite."
+}

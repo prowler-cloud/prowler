@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_configuration_drift_tracked",
+  "CheckTitle": "AI Agent Configuration Changes Must Be Tracked and Drift Detected",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "observability",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Observability**. Verifies that AI agent configuration changes are tracked and drift from the approved baseline is detected. Untracked configuration changes may weaken security controls, introduce vulnerabilities, or enable privilege escalation that would otherwise be caught during change review.",
+  "Risk": "Unauthorised or accidental configuration changes to AI agents can silently disable security controls such as input validation, output filtering, or rate limiting. Without drift detection, these changes may persist indefinitely, creating a window for exploitation that grows with each passing day.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Store agent configuration in version control and treat configuration as code.\n2. Deploy a configuration drift detection tool (AWS Config, Azure Policy, Terraform drift detection) against the agent's infrastructure.\n3. Alert on any configuration deviation from the approved baseline within 15 minutes.\n4. Require change tickets for all configuration modifications and validate post-change compliance automatically.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Implement configuration drift detection for all AI agent deployments. Store approved configurations as baselines and alert immediately when unauthorised changes are detected. Integrate drift detection into the CI/CD pipeline and change management process.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_configuration_drift_tracked"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-085 check from the Prowler ASPM check suite."
+}

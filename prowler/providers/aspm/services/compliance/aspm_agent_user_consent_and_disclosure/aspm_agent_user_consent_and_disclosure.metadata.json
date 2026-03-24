@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_user_consent_and_disclosure",
+  "CheckTitle": "AI agent must disclose its actions to users and obtain appropriate consent",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "compliance",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Compliance**. Verifies that each AI agent discloses to users that they are interacting with or delegating to an AI system, clearly communicates what actions the agent will take on their behalf, and obtains appropriate and documented consent prior to performing consequential actions.",
+  "Risk": "Agents acting on behalf of users without disclosure or consent violate privacy regulations (GDPR, CCPA), sector-specific rules (EU AI Act transparency requirements), and ethical AI principles. Users who are unaware of agent actions cannot exercise meaningful oversight, and undisclosed AI interactions can result in regulatory enforcement and significant reputational harm.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Implement a disclosure mechanism that clearly identifies the agent as an AI system to users before or at the start of an interaction.\n2. For consequential actions (sending emails, making purchases, modifying data), present the proposed action to the user and obtain explicit confirmation before execution.\n3. Log consent events with timestamp, user identifier, and action scope.\n4. Provide users with a mechanism to review and revoke previously granted agent permissions.\n5. Review disclosure language and consent flows with legal counsel to ensure regulatory compliance.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Implement clear AI disclosure and informed consent mechanisms for each agent. Ensure users can review, approve, and revoke agent actions, and that consent events are logged for audit purposes.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_user_consent_and_disclosure"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-095 check from the Prowler ASPM check suite."
+}

@@ -1,0 +1,41 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_no_privilege_escalation_path",
+  "CheckTitle": "AI agent must not have privilege escalation paths to human admin roles",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "permissions",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Permissions**. Verifies that AI agents cannot escalate their privileges to human administrator roles. Privilege escalation paths include permissions such as `iam:PassRole`, `sts:AssumeRole` to admin-trust roles, `iam:AttachRolePolicy`, or `iam:CreatePolicyVersion` that could allow the agent to grant itself or another identity elevated access.",
+  "Risk": "A compromised agent with privilege escalation capabilities can promote itself to administrator level, breaking the fundamental separation between machine and human trust tiers. This can lead to full account takeover, backdoor creation, and persistent unauthorized access that survives remediation of the original compromise.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [
+    "https://bishopfox.com/blog/privilege-escalation-in-aws",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Use IAM Access Analyzer to enumerate escalation paths from the agent role.\n2. Remove permissions that enable escalation: `iam:PassRole`, `iam:CreatePolicyVersion`, `iam:AttachRolePolicy`, `iam:PutRolePolicy`.\n3. Restrict `sts:AssumeRole` to specific non-admin roles using resource conditions.\n4. Attach a permission boundary that explicitly denies all IAM write actions.\n5. Add an SCP denying escalation permissions for agent OUs.\n6. Continuously monitor with IAM Access Analyzer for new escalation paths.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove all IAM actions that enable privilege escalation from agent policies. Enforce a permission boundary that denies IAM management actions. Use AWS Organizations SCPs to prevent agent roles from assuming human admin roles. Monitor for escalation paths with IAM Access Analyzer and alert on any `iam:PassRole` or `sts:AssumeRole` to privileged roles.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_no_privilege_escalation_path"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_permission_boundary_enforced",
+    "aspm_agent_permissions_no_overprivilege"
+  ],
+  "Notes": "ASPM-015 check from the Prowler ASPM check suite."
+}

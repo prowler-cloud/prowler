@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_dpia_completed",
+  "CheckTitle": "AI agent processing personal data must have a completed Data Privacy Impact Assessment",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "compliance",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Compliance**. Verifies that each AI agent that processes personal data has a completed and documented Data Privacy Impact Assessment (DPIA), identifying privacy risks, documenting mitigations, and demonstrating compliance with GDPR Article 35, CCPA, and equivalent privacy regulations.",
+  "Risk": "Processing personal data without a DPIA exposes the organisation to GDPR enforcement action including fines of up to 4% of global annual turnover (or EUR 20M, whichever is higher). AI agents often process sensitive personal data as part of their normal operation, making DPIA completion a critical compliance obligation.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Determine whether the agent's processing activities meet the GDPR Article 35 threshold for mandatory DPIA (large-scale processing, systematic monitoring, sensitive categories).\n2. Conduct a DPIA using a structured methodology (e.g. CNIL PIA tool, ICO DPIA template).\n3. Document: processing purposes, necessity and proportionality, risks to data subjects, and mitigations.\n4. Consult with your Data Protection Officer (DPO) and, if required, the supervisory authority.\n5. Review and update the DPIA whenever the processing nature or risks change significantly.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Complete and document a DPIA for each AI agent that processes personal data before deployment. Involve your Data Protection Officer, document all identified risks and mitigations, and refresh the DPIA on significant changes.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_dpia_completed"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-091 check from the Prowler ASPM check suite."
+}
