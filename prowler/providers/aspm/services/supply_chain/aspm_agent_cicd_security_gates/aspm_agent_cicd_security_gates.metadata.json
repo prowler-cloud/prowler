@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_cicd_security_gates",
+  "CheckTitle": "AI Agent CI/CD Pipeline Must Include Security Gates",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "supply_chain",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Supply Chain Security**. Validates that the CI/CD pipeline for each AI agent includes mandatory security gates covering secret scanning, static application security testing (SAST), and dependency vulnerability scanning. Without these gates, vulnerable or secret-leaking code can reach production.",
+  "Risk": "A CI/CD pipeline without security gates is the most common path for introducing vulnerabilities into production. Hardcoded secrets, known-vulnerable dependencies, and insecure code patterns can be deployed undetected, providing attackers with persistent footholds.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Add secret scanning (Gitleaks, Trufflehog, GitHub secret scanning) as a pre-merge gate.\n2. Integrate SAST (Semgrep, Bandit, CodeQL) and fail the pipeline on high-severity findings.\n3. Add dependency vulnerability scanning (pip-audit, npm audit, Snyk) as a required check.\n4. Block merges that fail any security gate and require manual sign-off for exceptions.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Add secret scanning, SAST, and dependency scanning as mandatory CI/CD gates that block merges on failure. Treat security findings as build-breaking defects.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_cicd_security_gates"
+    }
+  },
+  "Categories": [
+    "software-and-configuration-checks"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-073 check from the Prowler ASPM check suite."
+}

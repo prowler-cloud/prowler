@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_llm_model_provenance_verified",
+  "CheckTitle": "AI Agent LLM Model Provenance Must Be Verified",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "supply_chain",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Supply Chain Security**. Validates that the LLM model used by each AI agent has verified provenance through checksums and a trusted model registry. Without provenance verification, a tampered or backdoored model can be silently substituted.",
+  "Risk": "A model without provenance verification is susceptible to model poisoning and substitution attacks. An adversary who replaces the model file can cause the agent to execute malicious instructions while appearing to function normally.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Record the SHA-256 checksum of each approved model artefact in a trusted registry.\n2. Verify the checksum at container start-up before loading the model.\n3. Download models only from signed, trusted sources (Hugging Face with signed commits, internal model registry).\n4. Implement SLSA provenance attestations for model artefacts.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Verify LLM model checksums at deployment time and download models exclusively from trusted, signed registries. Implement SLSA provenance attestations to detect substitution or tampering.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_llm_model_provenance_verified"
+    }
+  },
+  "Categories": [
+    "software-and-configuration-checks"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-069 check from the Prowler ASPM check suite."
+}

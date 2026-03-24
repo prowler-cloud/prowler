@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_compromise_blast_radius_contained",
+  "CheckTitle": "AI Agent Compromise Blast Radius Must Be Contained — Full Account Takeover Must Not Be Possible",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "attack_paths",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Attack Path**. Evaluates whether compromising the AI agent's credential chain could allow an attacker to achieve full cloud account takeover. This occurs when the agent's permissions — either directly or through role chaining — reach account-administrative actions such as creating IAM principals, modifying SCPs, disabling audit trails, or deleting critical infrastructure. A well-scoped agent should have a contained blast radius limited strictly to its functional domain.",
+  "Risk": "An agent with an unbounded blast radius transforms every prompt injection, supply-chain attack, or runtime exploit targeting the agent into a potential full account takeover. A single compromised agent can be used to create backdoor IAM users, disable CloudTrail, exfiltrate all secrets, and destroy production resources — all under the agent's legitimate identity with no immediate IAM-level alert.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Apply a permission boundary to the agent's IAM role that prevents any account-administrative action (iam:CreateUser, iam:AttachRolePolicy, cloudtrail:StopLogging, organizations:*).\n2. Remove all attached admin or power-user managed policies and replace with a narrow functional policy.\n3. Enable AWS Service Control Policies (SCPs) or Azure Policy assignments that deny high-risk actions from agent identities.\n4. Conduct a blast-radius analysis using CIEM tooling (e.g., Wiz, Orca, Ermetic) and remediate all paths to account-level impact.\n5. Implement break-glass alerting: any attempt by the agent identity to call account-administrative APIs should page on-call immediately.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Apply permission boundaries and SCPs to hard-cap the agent's maximum achievable permissions at the account level. Remove any direct or indirect path to account-administrative actions. Validate the blast radius using CIEM tooling after every permission change.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_compromise_blast_radius_contained"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-100 attack path check from the Prowler ASPM check suite."
+}

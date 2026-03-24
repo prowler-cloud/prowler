@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_dependency_checksums_verified",
+  "CheckTitle": "AI Agent Package Checksums Must Be Verified on Every Dependency Download",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "supply_chain",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Supply Chain Security**. Validates that package checksums or signatures are verified on every dependency download during the build and deployment process. Without checksum verification, typosquatting packages, mirror compromises, or registry hijacks can silently introduce malicious code.",
+  "Risk": "Downloading dependencies without checksum verification is the primary vector for typosquatting, mirror compromise, and registry hijack attacks. A single malicious package can compromise the entire agent, its credentials, and all data it can access.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Enable hash-checking mode for pip (--require-hashes) using a requirements file with recorded hashes.\n2. Use poetry with a committed poetry.lock that includes content hashes.\n3. For npm, use `npm ci` with a committed package-lock.json that records integrity hashes.\n4. Configure private package mirrors with signature verification and allowlisting.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable checksum verification for all package managers (--require-hashes for pip, npm ci with lock files, poetry with poetry.lock). Use private package mirrors with signature enforcement to prevent registry hijacking.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_dependency_checksums_verified"
+    }
+  },
+  "Categories": [
+    "software-and-configuration-checks"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-076 check from the Prowler ASPM check suite."
+}

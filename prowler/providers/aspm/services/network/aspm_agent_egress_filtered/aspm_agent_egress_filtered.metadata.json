@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_egress_filtered",
+  "CheckTitle": "AI Agent Outbound Network Access Must Be Filtered by Destination",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Network Security**. Verifies that every AI agent has egress filtering in place to restrict outbound network connections to an approved set of destinations. Agents that can reach arbitrary internet endpoints are a data-exfiltration vector if compromised or manipulated via prompt injection.",
+  "Risk": "An agent with unrestricted egress can be instructed by a prompt injection attack to exfiltrate sensitive data (PII, secrets, embeddings) to an attacker-controlled server. Without egress filtering there is no network-layer control to prevent this.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Set has_egress_filtering: true in the agent manifest.\n2. Apply network policies (Kubernetes NetworkPolicy, AWS Security Groups, GCP VPC firewall rules) to allow only required outbound destinations.\n3. Route all egress through a forward proxy (e.g., Squid, AWS Network Firewall) with a domain allow-list.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict agent egress to a minimal allow-list of required endpoints using cloud-native network policies and a forward proxy. Deny all outbound traffic by default and alert on policy violations.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_egress_filtered"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-040 check from the Prowler ASPM check suite."
+}

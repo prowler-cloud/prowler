@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_model_update_cadence",
+  "CheckTitle": "AI Agent LLM Model Must Receive Security Updates Within 30 Days",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "supply_chain",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Supply Chain Security**. Validates that the LLM model used by each AI agent has a defined update cadence of 30 days or fewer. Stale models may contain known vulnerabilities, alignment regressions, or unpatched prompt injection weaknesses that have been fixed in newer versions.",
+  "Risk": "An LLM model without a defined or enforced update cadence will accumulate security debt. Newly discovered vulnerabilities in model weights, tokenizers, or inference code may remain exploitable indefinitely if no update process is defined.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Define a formal model update policy with a maximum cadence of 30 days.\n2. Subscribe to security advisories for the model provider or open-source repository.\n3. Automate model version checks in the CI/CD pipeline and alert when a newer secure version is available.\n4. Test updated models against a regression suite before promoting to production.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Establish a model update policy with a maximum 30-day cadence. Subscribe to model security advisories and automate update checks in the deployment pipeline.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_model_update_cadence"
+    }
+  },
+  "Categories": [
+    "software-and-configuration-checks"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-075 check from the Prowler ASPM check suite."
+}

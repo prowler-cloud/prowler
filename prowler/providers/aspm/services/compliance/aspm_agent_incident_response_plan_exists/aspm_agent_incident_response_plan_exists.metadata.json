@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_incident_response_plan_exists",
+  "CheckTitle": "AI agent must have a tested, agent-specific incident response plan",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "compliance",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Compliance**. Verifies that each AI agent has a documented and tested incident response plan covering agent-specific failure modes such as prompt injection attacks, model misbehaviour, autonomous action errors, and credential compromise, including containment, eradication, and recovery procedures.",
+  "Risk": "Generic IT incident response plans rarely cover AI-specific failure modes. Without an agent-specific plan, teams facing a prompt injection attack or autonomous action incident have no playbook to follow, leading to delayed containment, extended impact, and potentially irreversible consequences from autonomous agent actions.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Identify AI-specific incident scenarios: prompt injection, model hallucination causing harm, autonomous action abuse, data exfiltration via LLM output, credential compromise.\n2. For each scenario, document detection signals, containment steps (including agent shutdown procedures), eradication, and recovery.\n3. Define roles and responsibilities, escalation paths, and communication templates.\n4. Integrate the plan with the organisation's overarching incident response procedure.\n5. Conduct tabletop exercises at least annually to validate the plan.\n6. Update the plan after every significant incident or architectural change.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Develop and test an agent-specific incident response plan covering AI failure modes. Conduct annual tabletop exercises and update the plan after incidents or significant architectural changes.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_incident_response_plan_exists"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-093 check from the Prowler ASPM check suite."
+}

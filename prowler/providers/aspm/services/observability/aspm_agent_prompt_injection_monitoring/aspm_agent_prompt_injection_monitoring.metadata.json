@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_prompt_injection_monitoring",
+  "CheckTitle": "AI Agent LLM Inputs Must Be Monitored for Prompt Injection",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "observability",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Observability**. Verifies that LLM inputs to the AI agent are monitored for prompt injection and jailbreak attempts. Prompt injection is the top attack vector against LLM-based agents (OWASP LLM01) and can redirect agents to perform unauthorised actions on behalf of an attacker.",
+  "Risk": "Without prompt injection monitoring, attackers can inject malicious instructions into agent inputs via user-controlled content, tool outputs, or retrieved documents. Successful injection can cause data exfiltration, privilege escalation, or execution of unauthorised actions while evading traditional security controls.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Deploy a prompt injection detection layer (e.g., Lakera Guard, Rebuff, or custom classifiers) on all LLM inputs.\n2. Log all detected injection attempts with the original prompt, detection confidence, and action taken.\n3. Configure alerts for injection attempts above a confidence threshold.\n4. Implement input sanitisation and context separation to reduce injection surface.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Implement prompt injection monitoring on all LLM inputs including user messages, tool outputs, and retrieved context. Log and alert on detected injection attempts and implement input sanitisation controls.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_prompt_injection_monitoring"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-079 check from the Prowler ASPM check suite."
+}

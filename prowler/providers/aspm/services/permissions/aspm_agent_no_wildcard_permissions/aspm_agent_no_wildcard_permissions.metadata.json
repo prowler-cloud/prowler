@@ -1,0 +1,40 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_no_wildcard_permissions",
+  "CheckTitle": "AI agent policies must not contain wildcard actions or resource ARNs",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "permissions",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Permissions**. Checks both policy action statements and resource ARN statements for wildcard entries. Wildcard actions (`s3:*`, `*:*`) allow every operation in a service or across all services. Wildcard resource ARNs (`*`) allow the action on every resource in the account. Both must be replaced with explicit enumerations.",
+  "Risk": "Wildcard actions combined with wildcard resources grant unrestricted access equivalent to an administrator policy. A single agent compromise can result in mass data exfiltration, resource destruction, or lateral movement to any service in the account.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_resource.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Use IAM Access Analyzer policy generation to derive a minimal policy from CloudTrail activity.\n2. Replace `Action: '*'` and `Action: '<service>:*'` with the specific actions observed in CloudTrail.\n3. Replace `Resource: '*'` with the ARNs of specific resources the agent needs to access.\n4. Validate with `aws iam simulate-principal-policy` that all legitimate operations still work.\n5. Deploy the scoped policy and monitor CloudTrail for any access-denied errors.\n6. Re-run this check to confirm the wildcard entries are gone.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enumerate all actions and resource ARNs required by the agent and replace wildcards with explicit lists. Use IAM Access Analyzer policy generation to produce a policy based on observed CloudTrail activity. Enforce a permission boundary that blocks any wildcard-action grants from taking effect.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_no_wildcard_permissions"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_permissions_no_overprivilege"
+  ],
+  "Notes": "ASPM-016 check from the Prowler ASPM check suite."
+}

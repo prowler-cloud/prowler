@@ -1,0 +1,38 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_api_key_rotation_policy",
+  "CheckTitle": "AI Agent API Keys Must Have a Rotation Policy of 90 Days or Less",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "identity",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Identity**. Validates that API keys used by AI agents are covered by a rotation policy of 90 days or less, and that the current credential age does not exceed the policy window. Long-lived API keys are the most commonly exfiltrated credential type and are difficult to detect once compromised.",
+  "Risk": "API keys without rotation policies remain valid indefinitely. A single exfiltrated key can provide persistent, stealthy access to cloud resources or third-party APIs. The average time-to-detection of a compromised API key is measured in months.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Define a key rotation policy of ≤ 90 days in the secrets manager (AWS Secrets Manager, Azure Key Vault, GCP Secret Manager).\n2. Enable automatic rotation and update all consumers to retrieve keys dynamically.\n3. Immediately rotate any keys that have exceeded the maximum age.\n4. Prefer OIDC/Workload Identity to eliminate API keys entirely.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure automatic API key rotation at 90-day intervals using your cloud provider's secrets manager. Prefer OIDC Workload Identity Federation over API keys to eliminate long-lived credentials entirely.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_api_key_rotation_policy"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_credential_age",
+    "aspm_agent_oidc_workload_identity"
+  ],
+  "Notes": "ASPM-004 check from the Prowler ASPM check suite."
+}

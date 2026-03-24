@@ -1,0 +1,40 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_cross_account_access_restricted",
+  "CheckTitle": "AI agent cross-account access must not exceed 3 accounts",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "permissions",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Permissions**. Checks whether an AI agent has cross-account trust relationships and, if so, whether the number of accessible accounts exceeds three. Cross-account access multiplies the blast radius of a compromised agent — each additional account the agent can reach is a potential lateral-movement target.",
+  "Risk": "An agent with cross-account access to many accounts can be leveraged as a pivot point to compromise the entire AWS organization. A prompt-injection or supply-chain attack against one agent could trigger data exfiltration or resource destruction across dozens of accounts simultaneously.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/tutorial_cross-account-with-roles.html",
+    "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. List all roles the agent can assume cross-account: review trust policies and SCPs.\n2. Identify the business justification for each cross-account relationship.\n3. Remove trust relationships to accounts that are not strictly required.\n4. Limit remaining trust relationships to specific roles via the `Principal` condition.\n5. Add an `aws:PrincipalAccount` condition to restrict which accounts can be assumed.\n6. Monitor cross-account assume-role events via CloudTrail and alert on unexpected account targets.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict cross-account trust to the minimum set of accounts required (three or fewer). Use AWS Organizations SCPs to deny `sts:AssumeRole` to accounts outside an approved allowlist. Add `aws:PrincipalAccount` and `aws:PrincipalOrgID` conditions to all cross-account trust policies. Audit cross-account relationships quarterly.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_cross_account_access_restricted"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_no_privilege_escalation_path"
+  ],
+  "Notes": "ASPM-017 check from the Prowler ASPM check suite."
+}

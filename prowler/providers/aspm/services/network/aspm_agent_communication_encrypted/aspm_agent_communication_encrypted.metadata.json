@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_communication_encrypted",
+  "CheckTitle": "AI Agent Communication Must Be Encrypted with TLS and mTLS",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Network Security**. Verifies that every AI agent uses HTTPS-only communication for all outbound and inbound traffic, and that mutual TLS (mTLS) is enforced within the service mesh. Agents that communicate over plaintext or without peer authentication are vulnerable to eavesdropping, MITM attacks, and session hijacking.",
+  "Risk": "Without TLS and mTLS, agent traffic can be intercepted in transit, credentials and tool call payloads can be exfiltrated, and malicious actors can impersonate services that the agent trusts.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Set uses_https_only: true in the agent manifest to enforce HTTPS-only outbound calls.\n2. Deploy a service mesh (Istio, Linkerd) and enable mTLS in strict mode for all agent workloads.\n3. Redirect any port-80 listeners to port 443 and reject plaintext connections at the load balancer.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable HTTPS-only mode for all agent network calls and enforce mTLS across the service mesh. Use a sidecar proxy or eBPF-based enforcement to prevent plaintext traffic from leaving the agent pod.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_communication_encrypted"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-037 check from the Prowler ASPM check suite."
+}

@@ -1,0 +1,40 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_session_duration_restricted",
+  "CheckTitle": "AI agent assumed-role sessions must not exceed 1 hour",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "permissions",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Permissions**. Checks that AI agent assumed-role sessions are configured with a maximum duration of 3600 seconds (1 hour) or less. Short-lived credentials limit the window of opportunity for a stolen token to be exploited. A session with no explicit limit or a duration longer than one hour represents an unnecessarily extended exposure window.",
+  "Risk": "Long-lived session tokens obtained by an attacker through prompt injection, SSRF, or metadata endpoint access remain valid for the full session duration. A 12-hour session token stolen at the start of a workday gives an attacker an extended operational window with no need to re-authenticate or rotate the credential.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session",
+    "https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Update the maximum session duration on the role: `aws iam update-role --role-name <role> --max-session-duration 3600`.\n2. If the agent uses `sts:AssumeRole` directly, ensure the `DurationSeconds` parameter is set to 3600 or less in the assume-role call.\n3. Verify the change: `aws iam get-role --role-name <role> --query Role.MaxSessionDuration`.\n4. Review all code paths that call `sts:AssumeRole` to confirm they specify an explicit duration.\n5. Update the agent manifest `session_duration_seconds` field to reflect the new maximum.\n6. Monitor CloudTrail for `AssumeRole` calls requesting durations beyond 3600 seconds.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set the IAM role `MaxSessionDuration` to 3600 seconds for all AI agent roles. Design agents to refresh their credentials before expiry rather than requesting long-lived tokens. Use instance profiles or ECS task roles where possible, as these automatically rotate credentials. Alert on any `AssumeRole` call requesting more than 3600 seconds.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_session_duration_restricted"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_permission_boundary_enforced"
+  ],
+  "Notes": "ASPM-024 check from the Prowler ASPM check suite."
+}

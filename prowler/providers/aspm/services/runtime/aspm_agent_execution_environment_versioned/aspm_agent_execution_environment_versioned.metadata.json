@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_execution_environment_versioned",
+  "CheckTitle": "AI Agent Execution Environment Must Use Pinned Base Images and Versioned IaC",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "runtime",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Runtime Security**. Verifies that each AI agent's execution environment is fully versioned: container base images reference a pinned digest or tag and the infrastructure is defined in version-controlled IaC. Floating image tags (e.g., 'latest') mean the runtime can change silently between deployments, making incident investigation and rollback unreliable.",
+  "Risk": "Unversioned execution environments cannot be reproduced for forensics, rolled back after a failed deployment, or compared against a known-good baseline. Silent runtime changes can introduce vulnerabilities or alter agent behaviour in ways that are impossible to detect retrospectively.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Pin all container image references to a specific digest (sha256:...) or an immutable tag.\n2. Define all infrastructure (compute, networking, storage) in version-controlled IaC (Terraform, Pulumi, CDK).\n3. Use a GitOps workflow to ensure the deployed state always matches the versioned definition.\n4. Store image build provenance (SBOM, build attestation) alongside the image in the registry.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Pin all agent container images to immutable digests and define the complete execution environment in version-controlled IaC. Enforce immutable image references with an admission controller.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_execution_environment_versioned"
+    }
+  },
+  "Categories": [
+    "infrastructure-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-062 check from the Prowler ASPM check suite."
+}

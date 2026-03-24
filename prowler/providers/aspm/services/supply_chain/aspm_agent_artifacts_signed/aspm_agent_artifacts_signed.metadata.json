@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_artifacts_signed",
+  "CheckTitle": "AI Agent Container Images and Artifacts Must Be Cryptographically Signed",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "supply_chain",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Supply Chain Security**. Validates that container images and other deployment artifacts used by AI agents are cryptographically signed using tools such as cosign or SLSA attestations. Unsigned artifacts cannot be verified as authentic before deployment.",
+  "Risk": "Without artifact signing, an attacker who gains write access to a container registry or artifact store can replace a legitimate image with a backdoored one. The deployment pipeline has no mechanism to detect the substitution.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign all container images with cosign (keyless or key-based) as part of the CI/CD pipeline.\n2. Generate SLSA provenance attestations for build artefacts.\n3. Enforce signature verification at deployment time using admission controllers (Kyverno, OPA Gatekeeper).\n4. Store signatures in a transparency log (Rekor) for auditability.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Sign all container images and deployment artefacts with cosign or equivalent tooling. Enforce signature verification at deployment time via admission control policies.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_artifacts_signed"
+    }
+  },
+  "Categories": [
+    "software-and-configuration-checks"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-072 check from the Prowler ASPM check suite."
+}

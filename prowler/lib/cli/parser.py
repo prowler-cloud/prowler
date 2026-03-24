@@ -29,10 +29,10 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel,dashboard,iac,image,llm} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel,dashboard,iac,image,llm,aspm} ...",
             epilog="""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes,m365,github,googleworkspace,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel}
+  {aws,azure,gcp,kubernetes,m365,github,googleworkspace,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel,aspm}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
@@ -47,6 +47,7 @@ Available Cloud Providers:
     iac                 IaC Provider
     llm                 LLM Provider (Beta)
     image               Container Image Provider
+    aspm                Agent Security Posture Management (ASPM) Provider (Beta)
     nhn                 NHN Provider (Unofficial)
     mongodbatlas        MongoDB Atlas Provider
     vercel              Vercel Provider
@@ -450,4 +451,32 @@ Detailed documentation at https://docs.prowler.com
             "--slack",
             action="store_true",
             help="Send a summary of the execution with a Slack APP in your channel. Environment variables SLACK_API_TOKEN and SLACK_CHANNEL_NAME are required (see more in https://docs.prowler.com/user-guide/cli/tutorials/integrations#configuration-of-the-integration-with-slack/).",
+        )
+        # Datadog Integration
+        datadog_subparser = self.common_providers_parser.add_argument_group(
+            "Datadog Integration"
+        )
+        datadog_subparser.add_argument(
+            "--datadog",
+            action="store_true",
+            help="Send findings to Datadog via the Logs API. Requires --datadog-api-key or the DATADOG_API_KEY environment variable.",
+        )
+        datadog_subparser.add_argument(
+            "--datadog-api-key",
+            nargs="?",
+            default=None,
+            metavar="DATADOG_API_KEY",
+            help="Datadog API key. Can also be set via the DATADOG_API_KEY environment variable.",
+        )
+        datadog_subparser.add_argument(
+            "--datadog-site",
+            nargs="?",
+            default="datadoghq.com",
+            metavar="DATADOG_SITE",
+            help="Datadog site to send findings to (default: datadoghq.com). Options: datadoghq.com, us3.datadoghq.com, us5.datadoghq.com, datadoghq.eu, ap1.datadoghq.com, ddog-gov.com.",
+        )
+        datadog_subparser.add_argument(
+            "--send-dd-only-fails",
+            action="store_true",
+            help="Send only FAIL findings to Datadog.",
         )

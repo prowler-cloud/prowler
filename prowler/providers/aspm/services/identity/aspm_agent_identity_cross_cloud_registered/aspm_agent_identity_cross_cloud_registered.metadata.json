@@ -1,0 +1,37 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_identity_cross_cloud_registered",
+  "CheckTitle": "AI Agent Identity Must Be Registered Across All Target Cloud Providers",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "identity",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Identity**. Ensures that multi-cloud AI agents have a consistent, federated identity registered in every target cloud provider. Without cross-cloud registration agents fall back to static credentials for inter-cloud authentication, creating long-lived secret exposure.",
+  "Risk": "Agents that are not registered across clouds must use static API keys or access tokens to authenticate to secondary cloud providers. These long-lived credentials are a high-value target for attackers and are difficult to rotate automatically.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Configure OIDC Workload Identity Federation between the primary cloud and each secondary cloud.\n2. For AWS-to-GCP: set up GCP Workload Identity Pool with the AWS IAM OIDC provider.\n3. For AWS-to-Azure: configure Azure AD Federated Identity Credentials trusting the AWS IAM OIDC issuer.\n4. Remove static cross-cloud credentials once federation is established.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use OIDC Workload Identity Federation to provide agents with short-lived tokens for each cloud provider, eliminating the need for static cross-cloud credentials.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_identity_cross_cloud_registered"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_oidc_workload_identity"
+  ],
+  "Notes": "ASPM-003 check from the Prowler ASPM check suite."
+}
