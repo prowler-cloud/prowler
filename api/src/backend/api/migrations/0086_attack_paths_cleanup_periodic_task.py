@@ -40,7 +40,7 @@ def delete_periodic_task(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0084_googleworkspace_provider"),
+        ("api", "0085_finding_group_daily_summary_trgm_indexes"),
         ("django_celery_beat", "0019_alter_periodictasks_options"),
     ]
 
