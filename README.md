@@ -243,15 +243,7 @@ pnpm start
 
 Some pre-commit hooks require tools installed on your system:
 
-1. **Install [TruffleHog](https://github.com/trufflesecurity/trufflehog)** (secret scanning):
-
-    ```console
-    # Homebrew (macOS / Linux)
-    brew install trufflehog
-
-    # Or via install script
-    curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
-    ```
+1. **Install [TruffleHog](https://github.com/trufflesecurity/trufflehog#install)** (secret scanning) — see the [official installation options](https://github.com/trufflesecurity/trufflehog#install).
 
 2. **Install [Safety](https://github.com/pyupio/safety)** (dependency vulnerability checking):
 
