@@ -17,6 +17,19 @@ export interface ClearFiltersButtonProps {
   showCount?: boolean;
   /** Use link style (text only, no button background) */
   variant?: "link" | "default";
+  /**
+   * Optional callback for batch mode. When provided, this is called INSTEAD
+   * of pushing URL params directly. Useful for clearing pending filter state
+   * without immediately navigating.
+   */
+  onClear?: () => void;
+  /**
+   * In batch mode, the number of pending filter keys that have non-empty values.
+   * When provided alongside `onClear`, overrides the URL-based count shown by
+   * `showCount`. This ensures the displayed count reflects the pending state
+   * (not the last-applied URL state) while the user is editing filters.
+   */
+  pendingCount?: number;
 }
 
 export const ClearFiltersButton = ({
@@ -24,6 +37,8 @@ export const ClearFiltersButton = ({
   ariaLabel = "Reset",
   showCount = false,
   variant = "link",
+  onClear,
+  pendingCount,
 }: ClearFiltersButtonProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -51,17 +66,27 @@ export const ClearFiltersButton = ({
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [router, searchParams, pathname]);
 
-  // Only show button if there are filters other than the excluded ones
-  if (filterCount === 0) {
+  // In batch mode: use pendingCount if provided; otherwise fall back to URL count.
+  // In instant mode: always use URL count.
+  const displayCount =
+    onClear && pendingCount !== undefined ? pendingCount : filterCount;
+
+  // In instant mode: hide when no URL filters exist
+  if (!onClear && filterCount === 0) {
     return null;
   }
 
-  const displayText = showCount ? `Clear Filters (${filterCount})` : text;
+  // In batch mode: hide when there are no pending or URL filters to clear
+  if (onClear && displayCount === 0) {
+    return null;
+  }
+
+  const displayText = showCount ? `Clear Filters (${displayCount})` : text;
 
   return (
     <Button
       aria-label={ariaLabel}
-      onClick={clearFiltersPreservingExcluded}
+      onClick={onClear ?? clearFiltersPreservingExcluded}
       variant={variant}
     >
       <XCircle className="mr-0.5 size-4" />
