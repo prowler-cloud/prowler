@@ -3,6 +3,7 @@
 import { ExternalLink, Link, VolumeX, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
+
 import {
   Button,
   Drawer,
