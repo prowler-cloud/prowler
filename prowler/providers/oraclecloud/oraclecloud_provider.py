@@ -126,7 +126,7 @@ class OraclecloudProvider(Provider):
         """
 
         logger.info("Initializing OCI provider ...")
-        
+
         # Check if the configuration is just scanning a single region
         single_region = None
         if region:
@@ -562,7 +562,7 @@ class OraclecloudProvider(Provider):
 
             # Check if auditing specific regions or all
             regions_check = region_set if region_set else [sub.region_name for sub in region_subscriptions]
-            
+
             for region_sub in region_subscriptions:
                 if region_sub.region_name in regions_check:
                     regions.append(
@@ -588,7 +588,7 @@ class OraclecloudProvider(Provider):
                     is_home_region=True,
                 )
             )
-        
+
         return regions
 
     def get_compartments_to_audit(
