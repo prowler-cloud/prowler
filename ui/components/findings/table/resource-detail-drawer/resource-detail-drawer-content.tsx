@@ -595,7 +595,11 @@ export function ResourceDetailDrawerContent({
                     Showing the latest scan that evaluated this finding
                   </p>
                   <Button variant="link" size="link-sm" asChild>
-                    <Link href={`/scans?id=${f.scan.id}`}>
+                    <Link
+                      href={`/scans?id=${f.scan.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       View scan
                       <ExternalLink className="size-3" />
                     </Link>

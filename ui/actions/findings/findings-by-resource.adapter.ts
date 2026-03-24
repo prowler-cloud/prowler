@@ -193,7 +193,7 @@ export function adaptFindingsByResourceResponse(
       // Scan
       scan: scan?.attributes
         ? {
-            id: scanRel?.id || "",
+            id: scan.id || "",
             name: scan.attributes.name || "",
             trigger: scan.attributes.trigger || "",
             state: scan.attributes.state || "",
