@@ -23,7 +23,7 @@ export interface ApplyFiltersButtonProps {
  *
  * - Shows the count of pending changes when `hasChanges` is true.
  * - The apply button is disabled (and visually muted) when there are no changes.
- * - The discard (X) button only appears when there are pending changes.
+ * - The Undo button only appears when there are pending changes.
  * - Uses Prowler's shadcn `Button` component.
  */
 export const ApplyFiltersButton = ({
