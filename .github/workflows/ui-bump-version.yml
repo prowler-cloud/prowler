@@ -89,7 +89,7 @@ jobs:
         run: |
           set -e
 
-          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${NEXT_MINOR_VERSION}|" .env
+          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=.*|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${NEXT_MINOR_VERSION}|" .env
 
           echo "Files modified:"
           git --no-pager diff
@@ -143,7 +143,7 @@ jobs:
         run: |
           set -e
 
-          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${FIRST_PATCH_VERSION}|" .env
+          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=.*|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${FIRST_PATCH_VERSION}|" .env
 
           echo "Files modified:"
           git --no-pager diff
@@ -208,7 +208,7 @@ jobs:
         run: |
           set -e
 
-          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${NEXT_PATCH_VERSION}|" .env
+          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=.*|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${NEXT_PATCH_VERSION}|" .env
 
           echo "Files modified:"
           git --no-pager diff

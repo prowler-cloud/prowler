@@ -1411,7 +1411,9 @@ class TestProcessFindingMicroBatch:
         assert created_finding.status == StatusChoices.PASS
         assert created_finding.delta == Finding.DeltaChoices.NEW
         assert created_finding.muted is False
-        assert created_finding.check_metadata == finding.metadata
+        expected_metadata = {**finding.metadata, "compliance": finding.compliance}
+        assert created_finding.check_metadata == expected_metadata
+        assert created_finding.check_metadata["compliance"] == finding.compliance
         assert created_finding.resource_regions == [finding.region]
         assert created_finding.resource_services == [finding.service_name]
         assert created_finding.resource_types == [finding.resource_type]
