@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.22.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Findings grouped view with drill-down table showing resources per check, resource detail drawer, infinite scroll pagination, and bulk mute support [(#10425)](https://github.com/prowler-cloud/prowler/pull/10425)
+
+---
+
 ## [1.21.0] (Prowler v5.21.0 UNRELEASED)
 
 ### 🚀 Added
