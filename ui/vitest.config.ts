@@ -3,11 +3,23 @@ import { playwright } from "@vitest/browser-playwright";
 import path from "path";
 import { defineConfig } from "vitest/config";
 
+const aliases = {
+  "@": path.resolve(__dirname, "./"),
+  "next/cache": path.resolve(__dirname, "./__mocks__/next-cache.ts"),
+  "next/server": path.resolve(__dirname, "./__mocks__/next-server.ts"),
+  "next/router": path.resolve(__dirname, "./__mocks__/next-router.ts"),
+  "@stripe/stripe-js": path.resolve(__dirname, "./__mocks__/stripe-js.ts"),
+};
+
 export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
+    restoreMocks: true,
+    mockReset: true,
+    unstubEnvs: true,
+    unstubGlobals: true,
     exclude: [
       "node_modules",
       ".next",
@@ -63,12 +75,6 @@ export default defineConfig({
     ],
   },
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./"),
-      "next/cache": path.resolve(__dirname, "./__mocks__/next-cache.ts"),
-      "next/server": path.resolve(__dirname, "./__mocks__/next-server.ts"),
-      "next/router": path.resolve(__dirname, "./__mocks__/next-router.ts"),
-      "@stripe/stripe-js": path.resolve(__dirname, "./__mocks__/stripe-js.ts"),
-    },
+    alias: aliases,
   },
 });

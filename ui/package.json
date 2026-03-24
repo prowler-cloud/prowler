@@ -15,8 +15,13 @@
     "format:check": "./node_modules/.bin/prettier --check ./app",
     "format:write": "./node_modules/.bin/prettier --config .prettierrc.json --write ./app",
     "prepare": "husky",
-    "test": "vitest",
-    "test:run": "vitest run",
+    "test": "vitest --project unit --project browser",
+    "test:run": "vitest run --project unit --project browser",
+    "test:unit": "vitest --project unit",
+    "test:unit:run": "vitest run --project unit",
+    "test:browser": "vitest --project browser",
+    "test:browser:run": "vitest run --project browser",
+    "test:browser:headed": "vitest --project browser --browser.headless=false",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test --project=auth --project=sign-up --project=providers --project=invitations --project=scans",
     "test:e2e:ui": "playwright test --project=auth --project=sign-up --project=providers --project=invitations --project=scans --ui",
@@ -153,6 +158,7 @@
     "husky": "9.1.7",
     "jsdom": "27.4.0",
     "lint-staged": "15.5.2",
+    "msw": "2.12.14",
     "postcss": "8.4.38",
     "prettier": "3.6.2",
     "prettier-plugin-tailwindcss": "0.6.14",
@@ -190,5 +196,10 @@
     }
   },
   "version": "0.0.1",
-  "packageManager": "pnpm@10.24.0+sha512.01ff8ae71b4419903b65c60fb2dc9d34cf8bb6e06d03bde112ef38f7a34d6904c424ba66bea5cdcf12890230bf39f9580473140ed9c946fef328b6e5238a345a"
+  "packageManager": "pnpm@10.24.0+sha512.01ff8ae71b4419903b65c60fb2dc9d34cf8bb6e06d03bde112ef38f7a34d6904c424ba66bea5cdcf12890230bf39f9580473140ed9c946fef328b6e5238a345a",
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
 }

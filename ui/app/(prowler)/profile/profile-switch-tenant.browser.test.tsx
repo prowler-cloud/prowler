@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, vi } from "vitest";
 import { render } from "vitest-browser-react";
 
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
+import { expect, test } from "@/testing/test-extend";
 
 import { ProfileSwitchTenantHarness } from "./profile-switch-tenant.harness";
 
@@ -78,7 +79,7 @@ function renderProfileOrganizations() {
 // as useActionState + vi.fn() mocks don't integrate with React 19's form action
 // mechanism in browser mode.
 describe("Profile page — Organization switch", () => {
-  it("shows Active badge on current org and Switch button on other orgs", async () => {
+  test("shows Active badge on current org and Switch button on other orgs", async () => {
     const h = new ProfileSwitchTenantHarness();
     renderProfileOrganizations();
 
@@ -88,7 +89,7 @@ describe("Profile page — Organization switch", () => {
     await expect.element(h.orgName("Another Org")).toBeVisible();
   });
 
-  it("opens confirmation dialog when clicking Switch", async () => {
+  test("opens confirmation dialog when clicking Switch", async () => {
     const h = new ProfileSwitchTenantHarness();
     renderProfileOrganizations();
 
@@ -100,7 +101,7 @@ describe("Profile page — Organization switch", () => {
     await expect.element(h.cancelButton()).toBeVisible();
   });
 
-  it("closes dialog without switching when clicking Cancel", async () => {
+  test("closes dialog without switching when clicking Cancel", async () => {
     const h = new ProfileSwitchTenantHarness();
     renderProfileOrganizations();
 
