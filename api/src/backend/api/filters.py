@@ -265,6 +265,13 @@ class CommonFindingFilters(FilterSet):
             )
         return queryset.filter(overall_query).distinct()
 
+    def filter_check_title_icontains(self, queryset, name, value):
+        return queryset.filter(
+            Q(check_metadata__CheckTitle__icontains=value)
+            | Q(check_metadata__checktitle__icontains=value)
+            | Q(check_metadata__Checktitle__icontains=value)
+        )
+
 
 class TenantFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
@@ -804,9 +811,7 @@ class FindingGroupFilter(CommonFindingFilters):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
-    check_title__icontains = CharFilter(
-        field_name="check_metadata__CheckTitle", lookup_expr="icontains"
-    )
+    check_title__icontains = CharFilter(method="filter_check_title_icontains")
     scan = UUIDFilter(field_name="scan_id", lookup_expr="exact")
     scan__in = UUIDInFilter(field_name="scan_id", lookup_expr="in")
 
@@ -902,9 +907,7 @@ class LatestFindingGroupFilter(CommonFindingFilters):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
-    check_title__icontains = CharFilter(
-        field_name="check_metadata__CheckTitle", lookup_expr="icontains"
-    )
+    check_title__icontains = CharFilter(method="filter_check_title_icontains")
     scan = UUIDFilter(field_name="scan_id", lookup_expr="exact")
     scan__in = UUIDInFilter(field_name="scan_id", lookup_expr="in")
 
