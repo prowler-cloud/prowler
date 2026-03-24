@@ -186,6 +186,109 @@ cd ui && pnpm run build
 cd ui && pnpm start
 ```
 
+## Batch vs Instant Component API (REQUIRED)
+
+When a component supports both **batch** (deferred, submit-based) and **instant** (immediate callback) behavior, model the coupling with a discriminated union — never as independent optionals. Coupled props must be all-or-nothing.
+
+```typescript
+// ❌ NEVER: Independent optionals — allows invalid half-states
+interface FilterProps {
+  onBatchApply?: (values: string[]) => void;
+  onInstantChange?: (value: string) => void;
+  isBatchMode?: boolean;
+}
+
+// ✅ ALWAYS: Discriminated union — one valid shape per mode
+type BatchProps = {
+  mode: "batch";
+  onApply: (values: string[]) => void;
+  onCancel: () => void;
+};
+
+type InstantProps = {
+  mode: "instant";
+  onChange: (value: string) => void;
+  // onApply/onCancel are forbidden here via structural exclusion
+  onApply?: never;
+  onCancel?: never;
+};
+
+type FilterProps = BatchProps | InstantProps;
+```
+
+This makes invalid prop combinations a compile error, not a runtime surprise.
+
+## Reuse Shared Display Utilities First (REQUIRED)
+
+Before adding **local** display maps (labels, provider names, status strings, category formatters), search `ui/types/*` and `ui/lib/*` for existing helpers.
+
+```typescript
+// ✅ CHECK THESE FIRST before creating a new map:
+// ui/lib/utils.ts            → general formatters
+// ui/types/providers.ts      → provider display names, icons
+// ui/types/findings.ts       → severity/status display maps
+// ui/types/compliance.ts     → category/group formatters
+
+// ❌ NEVER add a local map that already exists:
+const SEVERITY_LABELS: Record<string, string> = {
+  critical: "Critical",
+  high: "High",
+  // ...duplicating an existing shared map
+};
+
+// ✅ Import and reuse instead:
+import { severityLabel } from "@/types/findings";
+```
+
+If a helper doesn't exist and will be used in 2+ places, add it to `ui/lib/` or `ui/types/` and reuse it. Keep local only if used in exactly one place.
+
+## Derived State Rule (REQUIRED)
+
+Avoid `useState` + `useEffect` patterns that mirror props or searchParams — they create sync bugs and unnecessary re-renders. Derive values directly from the source of truth.
+
+```typescript
+// ❌ NEVER: Mirror props into state via effect
+const [localFilter, setLocalFilter] = useState(filter);
+useEffect(() => { setLocalFilter(filter); }, [filter]);
+
+// ✅ ALWAYS: Derive directly
+const localFilter = filter; // or compute inline
+```
+
+If local state is genuinely needed (e.g., optimistic UI, pending edits before submit), add a short comment:
+
+```typescript
+// Local state needed: user edits are buffered until "Apply" is clicked
+const [pending, setPending] = useState(initialValues);
+```
+
+## Strict Key Typing for Label Maps (REQUIRED)
+
+Avoid `Record<string, string>` when the key set is known. Use an explicit union type or a const-key object so typos are caught at compile time.
+
+```typescript
+// ❌ Loose — typos compile silently
+const STATUS_LABELS: Record<string, string> = {
+  actve: "Active",   // typo, no error
+};
+
+// ✅ Tight — union key
+type Status = "active" | "inactive" | "pending";
+const STATUS_LABELS: Record<Status, string> = {
+  active: "Active",
+  inactive: "Inactive",
+  pending: "Pending",
+  // actve: "Active"  ← compile error
+};
+
+// ✅ Also fine — const satisfies
+const STATUS_LABELS = {
+  active: "Active",
+  inactive: "Inactive",
+  pending: "Pending",
+} as const satisfies Record<Status, string>;
+```
+
 ## QA Checklist Before Commit
 
 - [ ] `pnpm run typecheck` passes
@@ -198,6 +301,15 @@ cd ui && pnpm start
 - [ ] Server-side validation present (don't trust client)
 - [ ] Accessibility: keyboard navigation, ARIA labels
 - [ ] Mobile responsive (if applicable)
+
+## Pre-Re-Review Checklist (Review Thread Hygiene)
+
+Before requesting re-review from a reviewer:
+
+- [ ] Every unresolved inline thread has been either fixed or explicitly answered with a rationale
+- [ ] If you agreed with a comment: the change is committed and the commit hash is mentioned in the reply
+- [ ] If you disagreed: the reply explains why with clear reasoning — do not leave threads silently open
+- [ ] Re-request review only after all threads are in a clean state
 
 ## Migrations Reference
 
