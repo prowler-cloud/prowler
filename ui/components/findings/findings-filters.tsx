@@ -201,8 +201,15 @@ export const FindingsFilters = ({
 
   // Handler for clearing all chips: clears only the filter keys visible as chips,
   // without touching provider/account selectors.
+  const PROVIDER_KEYS = new Set([
+    "filter[provider_type__in]",
+    "filter[provider_id__in]",
+  ]);
+
   const handleClearAllChips = () => {
-    const chipKeys = Array.from(new Set(filterChips.map((c) => c.key)));
+    const chipKeys = Array.from(new Set(filterChips.map((c) => c.key))).filter(
+      (k) => !PROVIDER_KEYS.has(k),
+    );
     clearKeys(chipKeys);
   };
 
