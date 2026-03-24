@@ -1,5 +1,6 @@
 """OCI Kms Service Module."""
 
+from datetime import datetime
 from typing import Optional
 
 import oci
@@ -78,6 +79,25 @@ class Kms(OCIService):
                                         key_id=key_summary.id
                                     ).data
 
+                                    # Fetch current key version to get its creation time
+                                    current_key_version_time_created = None
+                                    if (
+                                        hasattr(key_details, "current_key_version")
+                                        and key_details.current_key_version
+                                    ):
+                                        try:
+                                            key_version = kms_management_client.get_key_version(
+                                                key_id=key_details.id,
+                                                key_version_id=key_details.current_key_version,
+                                            ).data
+                                            current_key_version_time_created = (
+                                                key_version.time_created
+                                            )
+                                        except Exception as version_error:
+                                            logger.warning(
+                                                f"Could not fetch key version for {key_details.id}: {version_error}"
+                                            )
+
                                     self.keys.append(
                                         Key(
                                             id=key_details.id,
@@ -110,6 +130,7 @@ class Kms(OCIService):
                                                 )
                                                 else None
                                             ),
+                                            current_key_version_time_created=current_key_version_time_created,
                                         )
                                     )
                 except Exception as error:
@@ -134,3 +155,4 @@ class Key(BaseModel):
     lifecycle_state: str
     is_auto_rotation_enabled: bool = False
     rotation_interval_in_days: Optional[int] = None
+    current_key_version_time_created: Optional[datetime] = None
