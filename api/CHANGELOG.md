@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.24.0] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Finding groups list/latest now apply computed status/severity filters and finding-level prefilters (delta, region, service, category, resource group, scan, resource type), plus `check_title` support for sort/filter consistency [(#10428)](https://github.com/prowler-cloud/prowler/pull/10428)
+
 ## [1.23.0] (Prowler v5.22.0)
 
 ### 🚀 Added
