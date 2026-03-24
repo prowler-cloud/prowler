@@ -239,6 +239,27 @@ pnpm start
 
 > Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
 
+**Pre-commit Hooks Setup**
+
+Some pre-commit hooks require tools installed on your system:
+
+1. **Install [TruffleHog](https://github.com/trufflesecurity/trufflehog)** (secret scanning):
+
+    ```console
+    # Homebrew (macOS / Linux)
+    brew install trufflehog
+
+    # Or via install script
+    curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+    ```
+
+2. **Install [Safety](https://github.com/pyupio/safety)** (dependency vulnerability checking):
+
+    ```console
+    # Requires a Python environment (e.g. via pyenv)
+    pip install safety
+    ```
+
 ## Prowler CLI
 ### Pip package
 Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/). Consequently, it can be installed using pip with Python >3.9.1, <3.13:
