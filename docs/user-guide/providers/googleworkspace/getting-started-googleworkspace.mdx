@@ -4,16 +4,16 @@ title: 'Getting Started With Google Workspace on Prowler'
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
 
-Prowler for Google Workspace audits your organization's Google Workspace environment for security misconfigurations, including super administrator account hygiene, domain settings, and more.
+Prowler for Google Workspace audits the organization's Google Workspace environment for security misconfigurations, including super administrator account hygiene, domain settings, and more.
 
 ## Prerequisites
 
 Set up authentication for Google Workspace with the [Google Workspace Authentication](/user-guide/providers/googleworkspace/authentication) guide before starting either path:
 
-- Create a Service Account in a GCP project with Domain-Wide Delegation enabled
-- Authorize the required read-only OAuth scopes in the Google Workspace Admin Console
-- Identify the Google Workspace **Customer ID** to use as the provider identifier
-- Have the email of a **super administrator** to use as the delegated user
+- **Service Account:** Create a Service Account in a GCP project with Domain-Wide Delegation enabled.
+- **OAuth Scopes:** Authorize the required read-only OAuth scopes in the Google Workspace Admin Console.
+- **Customer ID:** Identify the Google Workspace Customer ID to use as the provider identifier.
+- **Delegated User:** Have the email of a super administrator to use as the delegated user.
 
 <CardGroup cols={2}>
   <Card title="Prowler Cloud" icon="cloud" href="#prowler-cloud">
@@ -31,7 +31,7 @@ Set up authentication for Google Workspace with the [Google Workspace Authentica
 ### Step 1: Locate the Customer ID
 
 1. Log into the [Google Workspace Admin Console](https://admin.google.com).
-2. Navigate to **Account** > **Account Settings**.
+2. Navigate to "Account" > "Account Settings".
 3. Find the **Customer ID** on the Account Settings page.
 
     ![Google Workspace Customer ID](/images/providers/googleworkspace-customer-id.png)
@@ -62,7 +62,7 @@ The Customer ID starts with the letter "C" followed by alphanumeric characters (
     ![Google Workspace Customer ID Form](/images/providers/googleworkspace-customer-id-form.png)
 
 2. Paste the **Service Account JSON** credentials content.
-3. Enter the **Delegated User Email** (a super administrator in your Google Workspace organization).
+3. Enter the "Delegated User Email" (a super administrator in the Google Workspace organization).
 
     ![Google Workspace Credentials Form](/images/providers/googleworkspace-credentials-form.png)
 
@@ -72,7 +72,7 @@ The Service Account JSON is the full content of the key file downloaded when cre
 
 ### Step 4: Check Connection
 
-1. Click **Check Connection** to verify that the credentials and Domain-Wide Delegation are configured correctly.
+1. Click "Check Connection" to verify that the credentials and Domain-Wide Delegation are configured correctly.
 2. Prowler will test the Service Account impersonation and Admin SDK access.
 
     ![Check Connection](/images/providers/googleworkspace-check-connection.png)
@@ -84,7 +84,7 @@ If the connection test fails, verify that Domain-Wide Delegation is properly con
 ### Step 5: Launch the Scan
 
 1. Review the summary.
-2. Click **Launch Scan** to start auditing Google Workspace.
+2. Click "Launch Scan" to start auditing Google Workspace.
 
     ![Launch Scan](/images/providers/googleworkspace-launch-scan.png)
 
@@ -118,7 +118,7 @@ Run a baseline scan after credentials are configured:
 prowler googleworkspace
 ```
 
-Prowler authenticates as the delegated user and runs all available security checks against your Google Workspace organization.
+Prowler authenticates as the delegated user and runs all available security checks against the Google Workspace organization.
 
 ### Step 3: Use a Custom Configuration (Optional)
 
