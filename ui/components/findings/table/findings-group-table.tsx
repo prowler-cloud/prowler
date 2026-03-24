@@ -2,7 +2,7 @@
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 import { resolveFindingIdsByCheckIds } from "@/actions/findings/findings-by-resource";
 import { DataTable } from "@/components/ui/table";
@@ -30,24 +30,8 @@ export function FindingsGroupTable({
   );
   const [isDrillingDown, setIsDrillingDown] = useState(false);
 
-  // Track finding group IDs to detect data changes (e.g., after muting)
-  const currentIds = (data ?? []).map((g) => g.id).join(",");
-  const previousIdsRef = useRef(currentIds);
-
-  // Reset selection when page changes
-  useEffect(() => {
-    setRowSelection({});
-  }, [metadata?.pagination?.page]);
-
-  // Reset selection and collapse drill-down when data changes (e.g., filters)
-  useEffect(() => {
-    if (previousIdsRef.current !== currentIds) {
-      setRowSelection({});
-      setExpandedCheckId(null);
-      setExpandedGroup(null);
-      previousIdsRef.current = currentIds;
-    }
-  }, [currentIds]);
+  // State resets (selection, drill-down) are handled by the parent via
+  // key={groupKey} — when data changes, the component remounts with fresh state.
 
   const safeData = data ?? [];
 

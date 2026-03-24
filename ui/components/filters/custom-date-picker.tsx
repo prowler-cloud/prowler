@@ -3,7 +3,7 @@
 import { format } from "date-fns";
 import { CalendarIcon, ChevronDown } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Calendar } from "@/components/shadcn/calendar";
 import {
@@ -19,42 +19,23 @@ export const CustomDatePicker = () => {
   const { updateFilter } = useUrlFilters();
   const [open, setOpen] = useState(false);
 
-  const [date, setDate] = useState<Date | undefined>(() => {
-    const dateParam = searchParams.get("filter[inserted_at]");
+  // Derive date directly from URL — no local state needed (no debounce)
+  const dateParam = searchParams.get("filter[inserted_at]");
+  const date = (() => {
     if (!dateParam) return undefined;
     try {
       return new Date(dateParam);
     } catch {
       return undefined;
     }
-  });
+  })();
 
-  const applyDateFilter = (selectedDate: Date | undefined) => {
-    if (selectedDate) {
-      // Format as YYYY-MM-DD for the API
-      updateFilter("inserted_at", format(selectedDate, "yyyy-MM-dd"));
+  const handleDateSelect = (newDate: Date | undefined) => {
+    if (newDate) {
+      updateFilter("inserted_at", format(newDate, "yyyy-MM-dd"));
     } else {
       updateFilter("inserted_at", null);
     }
-  };
-
-  // Sync local state with URL params (e.g., when Clear Filters is clicked)
-  useEffect(() => {
-    const dateParam = searchParams.get("filter[inserted_at]");
-    if (!dateParam) {
-      setDate(undefined);
-    } else {
-      try {
-        setDate(new Date(dateParam));
-      } catch {
-        setDate(undefined);
-      }
-    }
-  }, [searchParams]);
-
-  const handleDateSelect = (newDate: Date | undefined) => {
-    setDate(newDate);
-    applyDateFilter(newDate);
     setOpen(false);
   };
 

@@ -204,6 +204,8 @@ const SSRDataTable = async ({
 
   // Transform API response to FindingGroupRow[]
   const groups = adaptFindingGroupsResponse(findingGroupsData);
+  // Key resets all client state (selection, drill-down) when data changes
+  const groupKey = groups.map((g) => g.id).join(",");
 
   return (
     <>
@@ -213,7 +215,11 @@ const SSRDataTable = async ({
           <p>{findingGroupsData.errors[0].detail}</p>
         </div>
       )}
-      <FindingsGroupTable data={groups} metadata={findingGroupsData?.meta} />
+      <FindingsGroupTable
+        key={groupKey}
+        data={groups}
+        metadata={findingGroupsData?.meta}
+      />
     </>
   );
 };

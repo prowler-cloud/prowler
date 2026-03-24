@@ -2,7 +2,7 @@
 
 import { ExternalLink, Link, VolumeX, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import {
   Button,
@@ -85,12 +85,6 @@ export const FindingDetail = ({
   const searchParams = useSearchParams();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
 
-  const [activeTab, setActiveTab] = useState("general");
-
-  useEffect(() => {
-    setActiveTab("general");
-  }, [findingDetails.id]);
-
   const copyFindingUrl = () => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("id", findingDetails.id);
@@ -171,7 +165,7 @@ export const FindingDetail = ({
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs key={findingDetails.id} defaultValue="general" className="w-full">
         <div className="mb-4 flex items-center justify-between">
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
