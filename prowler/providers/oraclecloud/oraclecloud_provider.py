@@ -237,7 +237,7 @@ class OraclecloudProvider(Provider):
         key_file: str = None,
         key_content: str = None,
         tenancy: str = None,
-        region: set = None,
+        region: str = None,
         pass_phrase: str = None,
     ) -> OCISession:
         """
