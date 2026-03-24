@@ -12,10 +12,11 @@ import {
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import {
-  ATTACK_PATH_QUERY_IDS,
   type AttackPathQuery,
   QUERY_PARAMETER_INPUT_TYPES,
 } from "@/types/attack-paths";
+
+import { QueryCodeEditor } from "./query-code-editor";
 
 interface QueryParametersFormProps {
   selectedQuery: AttackPathQuery | null | undefined;
@@ -88,19 +89,17 @@ export const QueryParametersForm = ({
 
               const isTextarea =
                 param.input_type === QUERY_PARAMETER_INPUT_TYPES.TEXTAREA;
-              const isCustomCodeEditor =
-                selectedQuery.id === ATTACK_PATH_QUERY_IDS.CUSTOM &&
-                param.name === "query" &&
-                isTextarea;
+              const isCodeEditor =
+                param.input_type === QUERY_PARAMETER_INPUT_TYPES.CODE_EDITOR;
 
               return (
                 <FormItem
                   className={cn(
                     "flex flex-col gap-1.5",
-                    isTextarea && "md:col-span-2",
+                    (isTextarea || isCodeEditor) && "md:col-span-2",
                   )}
                 >
-                  {!isCustomCodeEditor && (
+                  {!isCodeEditor && (
                     <FormLabel className="text-text-neutral-tertiary text-xs font-medium">
                       {param.label}
                       {param.required && (
@@ -108,42 +107,19 @@ export const QueryParametersForm = ({
                       )}
                     </FormLabel>
                   )}
-                  {isCustomCodeEditor ? (
-                    <div
-                      data-testid="query-code-editor"
-                      className={cn(
-                        "border-border-neutral-secondary bg-bg-neutral-primary overflow-hidden rounded-xl border",
-                        fieldState.invalid && "border-border-error-primary",
-                      )}
-                    >
-                      <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex items-center justify-between border-b px-4 py-2">
-                        <span className="text-text-neutral-secondary text-xs font-medium">
-                          {param.label}
-                          {param.required && (
-                            <span className="text-text-error-primary">*</span>
-                          )}
-                        </span>
-                        <span className="text-text-neutral-tertiary text-[11px]">
-                          Read-only
-                        </span>
-                      </div>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          aria-label={param.label}
-                          variant="ghost"
-                          textareaSize="lg"
-                          placeholder={placeholder}
-                          value={field.value ?? ""}
-                          rows={14}
-                          spellCheck={false}
-                          autoComplete="off"
-                          autoCorrect="off"
-                          autoCapitalize="none"
-                          className="minimal-scrollbar min-h-[320px] rounded-none border-0 bg-transparent font-mono text-xs leading-6 hover:bg-transparent focus:bg-transparent focus:ring-0"
-                        />
-                      </FormControl>
-                    </div>
+                  {isCodeEditor ? (
+                    <FormControl>
+                      <QueryCodeEditor
+                        ariaLabel={param.label}
+                        language={param.editor_language}
+                        value={String(field.value ?? "")}
+                        placeholder={placeholder}
+                        invalid={fieldState.invalid}
+                        requirementBadge={param.requirement_badge}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                      />
+                    </FormControl>
                   ) : (
                     <FormControl>
                       {isTextarea ? (

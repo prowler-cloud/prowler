@@ -22,7 +22,7 @@ const getValidationSchema = (query?: AttackPathQuery) => {
     const isCustomQueryParameter =
       query.id === ATTACK_PATH_QUERY_IDS.CUSTOM &&
       param.name === "query" &&
-      param.input_type === QUERY_PARAMETER_INPUT_TYPES.TEXTAREA;
+      param.input_type === QUERY_PARAMETER_INPUT_TYPES.CODE_EDITOR;
 
     let fieldSchema: z.ZodTypeAny = isCustomQueryParameter
       ? customAttackPathQuerySchema

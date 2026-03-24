@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.23.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Attack Paths custom openCypher queries now use a Lighthouse-themed code editor with syntax highlighting, line numbers, and a read-only requirement badge
+
+---
 ## [1.22.0] (Prowler v5.22.0)
 
 ### 🚀 Added
