@@ -64,6 +64,7 @@ class OCIService:
             iterator (list, optional): A list of items to process. Defaults to regional clients.
         """
         # Use the provided iterator, or default to self.regional_clients
+        logger.info(f"iterator is {iterator}")
         items = (
             iterator if iterator is not None else list(self.regional_clients.values())
         )

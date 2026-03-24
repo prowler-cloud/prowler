@@ -561,7 +561,11 @@ class OraclecloudProvider(Provider):
             ).data
 
             # Check if auditing specific regions or all
-            regions_check = region_set if region_set else [sub.region_name for sub in region_subscriptions]
+            regions_check = (
+                region_set
+                if region_set
+                else [sub.region_name for sub in region_subscriptions]
+            )
 
             for region_sub in region_subscriptions:
                 if region_sub.region_name in regions_check:
@@ -1006,7 +1010,7 @@ class OraclecloudProvider(Provider):
                     logger.error(
                         f"Error creating {service} client for region {region.key}: {error}"
                     )
-
+            logger.info(f"Regional clients = {regional_clients}")
             return regional_clients
 
         except Exception as error:

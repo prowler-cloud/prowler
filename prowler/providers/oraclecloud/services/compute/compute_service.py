@@ -34,9 +34,10 @@ class Compute(OCIService):
             Compute client instance
         """
         client_region = self.regional_clients.get(region)
-        if client_region:
+        if not client_region:
+            logger.warn("Regional client not found, creating compute client")
             return self._create_oci_client(oci.core.ComputeClient)
-        return None
+        return client_region.client
 
     def __list_instances__(self, regional_client):
         """

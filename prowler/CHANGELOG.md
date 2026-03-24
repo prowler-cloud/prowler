@@ -27,7 +27,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Azure `vm_backup_enabled` and `vm_sufficient_daily_backup_retention_period` checks now compare VM names case-insensitively to avoid false negatives when Azure stores backup item names in a different case [(#10395)](https://github.com/prowler-cloud/prowler/pull/10395)
 - `entra_non_privileged_user_has_mfa` skips disabled users to avoid false positives [(#10426)](https://github.com/prowler-cloud/prowler/pull/10426)
 - Update oraclecloud to support space separated region list [(#10435)](https://github.com/prowler-cloud/prowler/pull/10436)
-
+- Update oraclecloud to support compute and block volume resources outside home region [(#10455)](https://github.com/prowler-cloud/prowler/pull/10436)
 ---
 
 ## [5.21.0] (Prowler v5.21.0)
