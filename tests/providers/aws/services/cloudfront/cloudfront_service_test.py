@@ -313,7 +313,7 @@ class Test_CloudFront_Service:
         mock_paginator_sources.paginate.return_value = [
             {
                 "deliverySources": [
-                    {"name": "cf-source-1", "resourceArn": DISTRIBUTION_ARN},
+                    {"name": "cf-source-1", "resourceArns": [DISTRIBUTION_ARN]},
                 ]
             }
         ]
@@ -369,7 +369,7 @@ class Test_CloudFront_Service:
         mock_paginator_sources.paginate.return_value = [
             {
                 "deliverySources": [
-                    {"name": "cf-source-1", "resourceArn": DISTRIBUTION_ARN},
+                    {"name": "cf-source-1", "resourceArns": [DISTRIBUTION_ARN]},
                 ]
             }
         ]
@@ -417,7 +417,7 @@ class Test_CloudFront_Service:
                 "deliverySources": [
                     {
                         "name": "other-source",
-                        "resourceArn": "arn:aws:some:other:resource",
+                        "resourceArns": ["arn:aws:some:other:resource"],
                     },
                 ]
             }

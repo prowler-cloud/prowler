@@ -168,17 +168,20 @@ class CloudFront(AWSService):
             if not distribution_arns:
                 return
 
-            logs_client = self.session.client("logs", region_name=region)
+            # CloudFront delivery sources live in the global region (us-east-1),
+            # not the profile's default region.
+            global_region = self.provider.get_global_region()
+            logs_client = self.session.client("logs", region_name=global_region)
 
-            # Find delivery sources whose resourceArn matches a distribution
+            # Find delivery sources whose resourceArns match a distribution
             matching_sources = {}
             paginator = logs_client.get_paginator("describe_delivery_sources")
             for page in paginator.paginate():
                 for source in page.get("deliverySources", []):
-                    resource_arn = source.get("resourceArn", "")
-                    if resource_arn in distribution_arns:
-                        source_name = source.get("name", "")
-                        matching_sources[source_name] = resource_arn
+                    for resource_arn in source.get("resourceArns", []):
+                        if resource_arn in distribution_arns:
+                            source_name = source.get("name", "")
+                            matching_sources[source_name] = resource_arn
 
             if not matching_sources:
                 return
