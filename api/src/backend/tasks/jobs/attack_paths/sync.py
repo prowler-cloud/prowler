@@ -12,6 +12,7 @@ import neo4j
 from celery.utils.log import get_task_logger
 
 from api.attack_paths import database as graph_database
+from api.attack_paths import local_database as local_graph_database
 from tasks.jobs.attack_paths.config import (
     PROVIDER_ISOLATION_PROPERTIES,
     PROVIDER_RESOURCE_LABEL,
@@ -85,7 +86,7 @@ def sync_nodes(
     Also adds dynamic `_Tenant_{id}` and `_Provider_{id}` isolation labels.
 
     Source and target sessions are opened sequentially per batch to avoid
-    holding two Bolt connections simultaneously for the entire sync duration.
+    holding connections for the entire sync duration.
     """
     last_id = -1
     total_synced = 0
@@ -94,7 +95,7 @@ def sync_nodes(
         grouped: dict[tuple[str, ...], list[dict[str, Any]]] = defaultdict(list)
         batch_count = 0
 
-        with graph_database.get_session(source_database) as source_session:
+        with local_graph_database.get_session(source_database) as source_session:
             result = source_session.run(
                 NODE_FETCH_QUERY,
                 {"last_id": last_id, "batch_size": SYNC_BATCH_SIZE},
@@ -146,7 +147,7 @@ def sync_relationships(
     Adds `_provider_id` property to all relationships.
 
     Source and target sessions are opened sequentially per batch to avoid
-    holding two Bolt connections simultaneously for the entire sync duration.
+    holding connections for the entire sync duration.
     """
     last_id = -1
     total_synced = 0
@@ -155,7 +156,7 @@ def sync_relationships(
         grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
         batch_count = 0
 
-        with graph_database.get_session(source_database) as source_session:
+        with local_graph_database.get_session(source_database) as source_session:
             result = source_session.run(
                 RELATIONSHIPS_FETCH_QUERY,
                 {"last_id": last_id, "batch_size": SYNC_BATCH_SIZE},

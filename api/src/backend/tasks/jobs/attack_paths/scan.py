@@ -2,13 +2,13 @@
 Attack Paths scan orchestrator.
 
 Runs the full scan lifecycle for a single provider, called from a Celery task.
-The idea is simple: ingest everything into a throwaway Neo4j database, enrich
-it with Prowler-specific data, then swap it into the tenant's long-lived
-database so queries never see a half-built graph.
+The idea is simple: ingest everything into a throwaway embedded database,
+enrich it with Prowler-specific data, then swap it into the tenant's
+long-lived Neo4j database so queries never see a half-built graph.
 
 Two databases are involved:
-- Temporary (db-tmp-scan-<attack_paths_scan_id>): short-lived, single-provider, dropped after sync.
-- Tenant (db-tenant-<tenant_uuid>): long-lived, multi-provider, what the API queries against.
+- Temporary (local embedded via local_database): short-lived, single-provider, deleted after sync.
+- Tenant (db-tenant-<tenant_uuid> on Neo4j): long-lived, multi-provider, what the API queries against.
 
 Pipeline steps:
 
@@ -16,7 +16,7 @@ Pipeline steps:
    Retrieve or create the AttackPathsScan row. Exit early if the provider
    type has no ingestion function (only AWS is supported today).
 
-2. Create a fresh temporary Neo4j database and set up Cartography indexes
+2. Create a fresh temporary embedded database and set up Cartography indexes
    plus ProwlerFinding indexes before writing any data.
 
 3. Run the provider-specific Cartography ingestion (e.g. aws.start_aws_ingestion).
@@ -46,9 +46,9 @@ Pipeline steps:
      properties for multi-provider isolation.
    - Set graph_data_ready back to True.
 
-8. Drop the temporary database, mark the AttackPathsScan as COMPLETED.
+8. Delete the temporary database, mark the AttackPathsScan as COMPLETED.
 
-On failure the temp database is dropped, the scan is marked FAILED, and the
+On failure the temp database is deleted, the scan is marked FAILED, and the
 exception propagates to Celery.
 
 """
@@ -64,8 +64,10 @@ from cartography.intel import ontology as cartography_ontology
 from celery.utils.log import get_task_logger
 from tasks.jobs.attack_paths import db_utils, findings, internet, sync, utils
 from tasks.jobs.attack_paths.config import get_cartography_ingestion_function
+from tasks.jobs.attack_paths.indexes import create_local_indexes
 
 from api.attack_paths import database as graph_database
+from api.attack_paths import local_database as local_graph_database
 from api.db_utils import rls_transaction
 from api.models import Provider as ProwlerAPIProvider
 from api.models import StateChoices
@@ -150,22 +152,18 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
     try:
         logger.info(
-            f"Creating Neo4j database {tmp_cartography_config.neo4j_database} for tenant {prowler_api_provider.tenant_id}"
+            f"Creating temporary database {tmp_database_name} for tenant {prowler_api_provider.tenant_id}"
         )
 
-        graph_database.create_database(tmp_cartography_config.neo4j_database)
+        local_graph_database.create_database(tmp_database_name)
+        create_local_indexes(tmp_database_name)
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 1)
 
         logger.info(
             f"Starting Cartography ({attack_paths_scan.id}) for "
             f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
-        with graph_database.get_session(
-            tmp_cartography_config.neo4j_database
-        ) as tmp_neo4j_session:
-            # Indexes creation
-            cartography_create_indexes.run(tmp_neo4j_session, tmp_cartography_config)
-            findings.create_findings_indexes(tmp_neo4j_session)
+        with local_graph_database.get_session(tmp_database_name) as tmp_neo4j_session:
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 2)
 
             # The real scan, where iterates over cloud services
@@ -195,9 +193,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             logger.info(
                 f"Creating Internet graph for AWS account {prowler_api_provider.uid}"
             )
-            internet.analysis(
-                tmp_neo4j_session, prowler_api_provider, tmp_cartography_config
-            )
+            internet.analysis(tmp_neo4j_session, prowler_api_provider, tmp_cartography_config)
 
             # Adding Prowler Finding nodes and relationships
             logger.info(
@@ -207,11 +203,6 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
                 tmp_neo4j_session, prowler_api_provider, scan_id, tmp_cartography_config
             )
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 97)
-
-        logger.info(
-            f"Clearing Neo4j cache for database {tmp_cartography_config.neo4j_database}"
-        )
-        graph_database.clear_cache(tmp_cartography_config.neo4j_database)
 
         logger.info(
             f"Ensuring tenant database {tenant_database_name}, and its indexes, exists for tenant {prowler_api_provider.tenant_id}"
@@ -255,8 +246,8 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
 
-        logger.info(f"Dropping temporary Neo4j database {tmp_database_name}")
-        graph_database.drop_database(tmp_database_name)
+        logger.info(f"Dropping temporary database {tmp_database_name}")
+        local_graph_database.drop_database(tmp_database_name)
 
         db_utils.finish_attack_paths_scan(
             attack_paths_scan, StateChoices.COMPLETED, ingestion_exceptions
@@ -285,11 +276,11 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
         # Dropping the temporary database if it still exists
         try:
-            graph_database.drop_database(tmp_cartography_config.neo4j_database)
+            local_graph_database.drop_database(tmp_database_name)
 
         except Exception as e:
             logger.error(
-                f"Failed to drop temporary Neo4j database `{tmp_cartography_config.neo4j_database}` during cleanup: {e}",
+                f"Failed to drop temporary database `{tmp_database_name}` during cleanup: {e}",
                 exc_info=True,
             )
 

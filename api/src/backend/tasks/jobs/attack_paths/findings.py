@@ -26,6 +26,7 @@ from tasks.jobs.attack_paths.indexes import IndexType, create_indexes
 from tasks.jobs.attack_paths.queries import (
     ADD_RESOURCE_LABEL_TEMPLATE,
     CLEANUP_FINDINGS_TEMPLATE,
+    COUNT_UNLABELED_TEMPLATE,
     INSERT_FINDING_TEMPLATE,
     render_cypher_template,
 )
@@ -81,7 +82,6 @@ def _to_neo4j_dict(record: dict[str, Any], resource_uid: str) -> dict[str, Any]:
 
 
 # Public API
-# ----------
 
 
 def create_findings_indexes(neo4j_session: neo4j.Session) -> None:
@@ -110,44 +110,40 @@ def analysis(
 
 def add_resource_label(
     neo4j_session: neo4j.Session, provider_type: str, provider_uid: str
-) -> int:
+) -> None:
     """
     Add a common resource label to all nodes connected to the provider account.
 
     This enables index usage for resource lookups in the findings query,
     since Cartography nodes don't have a common parent label.
-
-    Returns the total number of nodes labeled.
     """
-    query = render_cypher_template(
-        ADD_RESOURCE_LABEL_TEMPLATE,
-        {
-            "__ROOT_LABEL__": get_root_node_label(provider_type),
-            "__RESOURCE_LABEL__": get_provider_resource_label(provider_type),
-        },
-    )
+    replacements = {
+        "__ROOT_LABEL__": get_root_node_label(provider_type),
+        "__RESOURCE_LABEL__": get_provider_resource_label(provider_type),
+    }
+    set_query = render_cypher_template(ADD_RESOURCE_LABEL_TEMPLATE, replacements)
+    count_query = render_cypher_template(COUNT_UNLABELED_TEMPLATE, replacements)
 
     logger.info(
         f"Adding {get_provider_resource_label(provider_type)} label to all resources for {provider_uid}"
     )
 
     total_labeled = 0
-    labeled_count = 1
+    remaining = 1
 
-    while labeled_count > 0:
-        result = neo4j_session.run(
-            query,
+    while remaining > 0:
+        neo4j_session.run(
+            set_query,
             {"provider_uid": provider_uid, "batch_size": BATCH_SIZE},
         )
-        labeled_count = result.single().get("labeled_count", 0)
-        total_labeled += labeled_count
+        result = neo4j_session.run(count_query, {"provider_uid": provider_uid})
+        remaining = result.single().get("remaining", 0)
+        total_labeled += BATCH_SIZE
 
-        if labeled_count > 0:
+        if remaining > 0:
             logger.info(
-                f"Labeled {total_labeled} nodes with {get_provider_resource_label(provider_type)}"
+                f"Labeled batch, {remaining} nodes remaining for {get_provider_resource_label(provider_type)}"
             )
-
-    return total_labeled
 
 
 def load_findings(
@@ -213,7 +209,6 @@ def cleanup_findings(
 
 
 # Findings Streaming (Generator-based)
-# -------------------------------------
 
 
 def stream_findings_with_resources(
@@ -289,7 +284,6 @@ def _fetch_findings_batch(
 
 
 # Batch Enrichment
-# -----------------
 
 
 def _enrich_batch_with_resources(

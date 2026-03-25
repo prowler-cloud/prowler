@@ -22,14 +22,18 @@ def render_cypher_template(template: str, replacements: dict[str, str]) -> str:
 
 
 # Findings queries (used by findings.py)
-# ---------------------------------------
 
 ADD_RESOURCE_LABEL_TEMPLATE = """
     MATCH (account:__ROOT_LABEL__ {id: $provider_uid})-->(r)
     WHERE NOT r:__ROOT_LABEL__ AND NOT r:__RESOURCE_LABEL__
     WITH r LIMIT $batch_size
     SET r:__RESOURCE_LABEL__
-    RETURN COUNT(r) AS labeled_count
+"""
+
+COUNT_UNLABELED_TEMPLATE = """
+    MATCH (account:__ROOT_LABEL__ {id: $provider_uid})-->(r)
+    WHERE NOT r:__ROOT_LABEL__ AND NOT r:__RESOURCE_LABEL__
+    RETURN count(r) AS remaining
 """
 
 INSERT_FINDING_TEMPLATE = f"""
@@ -95,7 +99,6 @@ CLEANUP_FINDINGS_TEMPLATE = f"""
 """
 
 # Internet queries (used by internet.py)
-# ---------------------------------------
 
 CREATE_INTERNET_NODE = f"""
     MERGE (internet:{INTERNET_NODE_LABEL} {{id: 'Internet'}})
@@ -126,11 +129,10 @@ CREATE_CAN_ACCESS_RELATIONSHIPS_TEMPLATE = f"""
 """
 
 # Sync queries (used by sync.py)
-# -------------------------------
 
 NODE_FETCH_QUERY = """
     MATCH (n)
-    WHERE id(n) > $last_id
+    WHERE id(n) > $last_id AND size(labels(n)) > 0
     RETURN id(n) AS internal_id,
            elementId(n) AS element_id,
            labels(n) AS labels,
@@ -140,12 +142,12 @@ NODE_FETCH_QUERY = """
 """
 
 RELATIONSHIPS_FETCH_QUERY = """
-    MATCH ()-[r]->()
+    MATCH (s)-[r]->(t)
     WHERE id(r) > $last_id
     RETURN id(r) AS internal_id,
            type(r) AS rel_type,
-           elementId(startNode(r)) AS start_element_id,
-           elementId(endNode(r)) AS end_element_id,
+           elementId(s) AS start_element_id,
+           elementId(t) AS end_element_id,
            properties(r) AS props
     ORDER BY internal_id
     LIMIT $batch_size

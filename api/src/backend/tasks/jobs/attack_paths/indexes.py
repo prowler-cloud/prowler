@@ -4,7 +4,6 @@ import neo4j
 
 from cartography.client.core.tx import run_write_query
 from celery.utils.log import get_task_logger
-
 from tasks.jobs.attack_paths.config import (
     INTERNET_NODE_LABEL,
     PROWLER_FINDING_LABEL,
@@ -67,3 +66,36 @@ def create_all_indexes(neo4j_session: neo4j.Session) -> None:
     """Create all indexes (both findings and sync)."""
     create_indexes(neo4j_session, IndexType.FINDINGS)
     create_indexes(neo4j_session, IndexType.SYNC)
+
+
+# Local (embedded) database indexes
+# Grafeo indexes are property-level (not label-scoped like Neo4j).
+# This list combines Cartography and Prowler properties used in queries.
+LOCAL_DB_INDEXED_PROPERTIES = [
+    # Cartography (from cartography/data/indexes.cypher)
+    "id",
+    "lastupdated",
+    "arn",
+    "name",
+    "email",
+    "key",
+    "ip",
+    "dnsname",
+    "keyfingerprint",
+    "cve_id",
+    "host_info_local_ip",
+    # Prowler findings
+    "provider_uid",
+    "status",
+]
+
+
+def create_local_indexes(database_name: str) -> None:
+    """Create property indexes on a local embedded graph database."""
+    from api.attack_paths.local_database import _resolve_path
+
+    from grafeo import GrafeoDB
+
+    db = GrafeoDB(_resolve_path(database_name))
+    for prop in LOCAL_DB_INDEXED_PROPERTIES:
+        db.create_property_index(prop)

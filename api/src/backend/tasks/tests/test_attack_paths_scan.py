@@ -24,7 +24,7 @@ from prowler.lib.check.models import Severity
 @pytest.mark.django_db
 class TestAttackPathsRun:
     # Patching with decorators as we got a `SyntaxError: too many statically nested blocks` error if we use context managers
-    @patch("tasks.jobs.attack_paths.scan.graph_database.drop_database")
+    @patch("tasks.jobs.attack_paths.scan.local_database.drop_database")
     @patch(
         "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
         side_effect=lambda fn, *a, **kw: fn(*a, **kw),
@@ -45,6 +45,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
+    @patch("tasks.jobs.attack_paths.scan.local_database.create_database")
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.get_uri",
         return_value="bolt://neo4j",
@@ -61,6 +62,7 @@ class TestAttackPathsRun:
         self,
         mock_init_provider,
         mock_get_uri,
+        mock_local_create_db,
         mock_create_db,
         mock_clear_cache,
         mock_cartography_indexes,
@@ -111,9 +113,13 @@ class TestAttackPathsRun:
                 side_effect=["db-scan-id", "tenant-db"],
             ) as mock_get_db_name,
             patch(
+                "tasks.jobs.attack_paths.scan.local_database.get_session",
+                return_value=session_ctx,
+            ),
+            patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_session",
                 return_value=session_ctx,
-            ) as mock_get_session,
+            ),
             patch(
                 "tasks.jobs.attack_paths.scan.db_utils.retrieve_attack_paths_scan",
                 return_value=attack_paths_scan,
@@ -134,12 +140,11 @@ class TestAttackPathsRun:
             [call(attack_paths_scan.id, temporary=True), call(provider.tenant_id)]
         )
 
-        mock_create_db.assert_has_calls([call("db-scan-id"), call("tenant-db")])
-        mock_get_session.assert_has_calls([call("db-scan-id"), call("tenant-db")])
-        assert mock_cartography_indexes.call_count == 2
-        mock_findings_indexes.assert_has_calls([call(mock_session), call(mock_session)])
+        mock_local_create_db.assert_called_once_with("db-scan-id")
+        mock_create_db.assert_called_once_with("tenant-db")
+        mock_cartography_indexes.assert_called_once()
+        mock_findings_indexes.assert_called_once_with(mock_session)
         mock_sync_indexes.assert_called_once_with(mock_session)
-        # These use tmp_cartography_config (neo4j_database="db-scan-id")
         mock_cartography_analysis.assert_called_once()
         mock_cartography_ontology.assert_called_once()
         mock_internet_analysis.assert_called_once()
@@ -178,7 +183,7 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
         side_effect=lambda fn, *a, **kw: fn(*a, **kw),
     )
-    @patch("tasks.jobs.attack_paths.scan.graph_database.drop_database")
+    @patch("tasks.jobs.attack_paths.scan.local_database.drop_database")
     @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
@@ -189,7 +194,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
-    @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
+    @patch("tasks.jobs.attack_paths.scan.local_database.create_database")
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
         return_value="db-scan-id",
@@ -208,7 +213,7 @@ class TestAttackPathsRun:
         mock_init_provider,
         mock_get_uri,
         mock_get_db_name,
-        mock_create_db,
+        mock_local_create_db,
         mock_cartography_indexes,
         mock_cartography_analysis,
         mock_findings_indexes,
@@ -249,7 +254,7 @@ class TestAttackPathsRun:
 
         with (
             patch(
-                "tasks.jobs.attack_paths.scan.graph_database.get_session",
+                "tasks.jobs.attack_paths.scan.local_database.get_session",
                 return_value=session_ctx,
             ),
             patch(
@@ -277,7 +282,7 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
         side_effect=lambda fn, *a, **kw: fn(*a, **kw),
     )
-    @patch("tasks.jobs.attack_paths.scan.graph_database.drop_database")
+    @patch("tasks.jobs.attack_paths.scan.local_database.drop_database")
     @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
@@ -288,7 +293,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
-    @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
+    @patch("tasks.jobs.attack_paths.scan.local_database.create_database")
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
         return_value="db-scan-id",
@@ -307,7 +312,7 @@ class TestAttackPathsRun:
         mock_init_provider,
         mock_get_uri,
         mock_get_db_name,
-        mock_create_db,
+        mock_local_create_db,
         mock_cartography_indexes,
         mock_cartography_analysis,
         mock_findings_indexes,
@@ -350,7 +355,7 @@ class TestAttackPathsRun:
 
         with (
             patch(
-                "tasks.jobs.attack_paths.scan.graph_database.get_session",
+                "tasks.jobs.attack_paths.scan.local_database.get_session",
                 return_value=session_ctx,
             ),
             patch(
@@ -378,8 +383,8 @@ class TestAttackPathsRun:
         side_effect=lambda fn, *a, **kw: fn(*a, **kw),
     )
     @patch(
-        "tasks.jobs.attack_paths.scan.graph_database.drop_database",
-        side_effect=ConnectionError("neo4j down"),
+        "tasks.jobs.attack_paths.scan.local_database.drop_database",
+        side_effect=ConnectionError("cleanup failed"),
     )
     @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready")
@@ -391,7 +396,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
-    @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
+    @patch("tasks.jobs.attack_paths.scan.local_database.create_database")
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
         return_value="db-scan-id",
@@ -410,7 +415,7 @@ class TestAttackPathsRun:
         mock_init_provider,
         mock_get_uri,
         mock_get_db_name,
-        mock_create_db,
+        mock_local_create_db,
         mock_cartography_indexes,
         mock_cartography_analysis,
         mock_findings_indexes,
@@ -451,7 +456,7 @@ class TestAttackPathsRun:
 
         with (
             patch(
-                "tasks.jobs.attack_paths.scan.graph_database.get_session",
+                "tasks.jobs.attack_paths.scan.local_database.get_session",
                 return_value=session_ctx,
             ),
             patch(
@@ -479,7 +484,7 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
         side_effect=lambda fn, *a, **kw: fn(*a, **kw),
     )
-    @patch("tasks.jobs.attack_paths.scan.graph_database.drop_database")
+    @patch("tasks.jobs.attack_paths.scan.local_database.drop_database")
     @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
@@ -499,6 +504,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
+    @patch("tasks.jobs.attack_paths.scan.local_database.create_database")
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.get_uri",
         return_value="bolt://neo4j",
@@ -515,6 +521,7 @@ class TestAttackPathsRun:
         self,
         mock_init_provider,
         mock_get_uri,
+        mock_local_create_db,
         mock_create_db,
         mock_clear_cache,
         mock_cartography_indexes,
@@ -562,6 +569,10 @@ class TestAttackPathsRun:
             patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
                 side_effect=["db-scan-id", "tenant-db"],
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.local_database.get_session",
+                return_value=session_ctx,
             ),
             patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_session",
@@ -592,7 +603,7 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
         side_effect=lambda fn, *a, **kw: fn(*a, **kw),
     )
-    @patch("tasks.jobs.attack_paths.scan.graph_database.drop_database")
+    @patch("tasks.jobs.attack_paths.scan.local_database.drop_database")
     @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
@@ -612,6 +623,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
+    @patch("tasks.jobs.attack_paths.scan.local_database.create_database")
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.get_uri",
         return_value="bolt://neo4j",
@@ -628,6 +640,7 @@ class TestAttackPathsRun:
         self,
         mock_init_provider,
         mock_get_uri,
+        mock_local_create_db,
         mock_create_db,
         mock_clear_cache,
         mock_cartography_indexes,
@@ -675,6 +688,10 @@ class TestAttackPathsRun:
             patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
                 side_effect=["db-scan-id", "tenant-db"],
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.local_database.get_session",
+                return_value=session_ctx,
             ),
             patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_session",
@@ -705,7 +722,7 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
         side_effect=lambda fn, *a, **kw: fn(*a, **kw),
     )
-    @patch("tasks.jobs.attack_paths.scan.graph_database.drop_database")
+    @patch("tasks.jobs.attack_paths.scan.local_database.drop_database")
     @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
     @patch(
         "tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready",
@@ -725,6 +742,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
+    @patch("tasks.jobs.attack_paths.scan.local_database.create_database")
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.get_uri",
         return_value="bolt://neo4j",
@@ -741,6 +759,7 @@ class TestAttackPathsRun:
         self,
         mock_init_provider,
         mock_get_uri,
+        mock_local_create_db,
         mock_create_db,
         mock_clear_cache,
         mock_cartography_indexes,
@@ -788,6 +807,10 @@ class TestAttackPathsRun:
             patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
                 side_effect=["db-scan-id", "tenant-db"],
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.local_database.get_session",
+                return_value=session_ctx,
             ),
             patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_session",
@@ -823,7 +846,7 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.utils.call_within_event_loop",
         side_effect=lambda fn, *a, **kw: fn(*a, **kw),
     )
-    @patch("tasks.jobs.attack_paths.scan.graph_database.drop_database")
+    @patch("tasks.jobs.attack_paths.scan.local_database.drop_database")
     @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
@@ -843,6 +866,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
+    @patch("tasks.jobs.attack_paths.scan.local_database.create_database")
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.get_uri",
         return_value="bolt://neo4j",
@@ -859,6 +883,7 @@ class TestAttackPathsRun:
         self,
         mock_init_provider,
         mock_get_uri,
+        mock_local_create_db,
         mock_create_db,
         mock_clear_cache,
         mock_cartography_indexes,
@@ -912,6 +937,10 @@ class TestAttackPathsRun:
             patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
                 side_effect=["db-scan-id", "tenant-db"],
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.local_database.get_session",
+                return_value=session_ctx,
             ),
             patch(
                 "tasks.jobs.attack_paths.scan.graph_database.get_session",
@@ -1727,19 +1756,25 @@ class TestAddResourceLabel:
     def test_add_resource_label_applies_private_label(self):
         mock_session = MagicMock()
 
-        first_result = MagicMock()
-        first_result.single.return_value = {"labeled_count": 5}
-        second_result = MagicMock()
-        second_result.single.return_value = {"labeled_count": 0}
-        mock_session.run.side_effect = [first_result, second_result]
+        # SET query returns are ignored; COUNT queries return remaining
+        set_result = MagicMock()
+        count_result_more = MagicMock()
+        count_result_more.single.return_value = {"remaining": 5}
+        count_result_done = MagicMock()
+        count_result_done.single.return_value = {"remaining": 0}
+        mock_session.run.side_effect = [
+            set_result,  # 1st SET (labels a batch)
+            count_result_more,  # 1st COUNT (5 remaining)
+            set_result,  # 2nd SET (labels another batch)
+            count_result_done,  # 2nd COUNT (0 remaining, loop ends)
+        ]
 
-        total = findings_module.add_resource_label(mock_session, "aws", "123456789012")
+        findings_module.add_resource_label(mock_session, "aws", "123456789012")
 
-        assert total == 5
-        assert mock_session.run.call_count == 2
-        query = mock_session.run.call_args_list[0].args[0]
-        assert "_AWSResource" in query
-        assert "AWSResource" not in query.replace("_AWSResource", "")
+        assert mock_session.run.call_count == 4
+        set_query = mock_session.run.call_args_list[0].args[0]
+        assert "_AWSResource" in set_query
+        assert "AWSResource" not in set_query.replace("_AWSResource", "")
 
 
 def _make_session_ctx(session, call_order=None, name=None):
@@ -1773,13 +1808,18 @@ class TestSyncNodes:
         mock_source_2 = MagicMock()
         mock_source_2.run.return_value = []
 
-        with patch(
-            "tasks.jobs.attack_paths.sync.graph_database.get_session",
-            side_effect=[
-                _make_session_ctx(mock_source_1),
-                _make_session_ctx(mock_target),
-                _make_session_ctx(mock_source_2),
-            ],
+        with (
+            patch(
+                "tasks.jobs.attack_paths.sync.local_database.get_session",
+                side_effect=[
+                    _make_session_ctx(mock_source_1),
+                    _make_session_ctx(mock_source_2),
+                ],
+            ),
+            patch(
+                "tasks.jobs.attack_paths.sync.graph_database.get_session",
+                side_effect=[_make_session_ctx(mock_target)],
+            ),
         ):
             total = sync_module.sync_nodes(
                 "source-db", "target-db", "tenant-1", "prov-1"
@@ -1807,13 +1847,18 @@ class TestSyncNodes:
         src_2 = MagicMock()
         src_2.run.return_value = []
 
-        with patch(
-            "tasks.jobs.attack_paths.sync.graph_database.get_session",
-            side_effect=[
-                _make_session_ctx(src_1, call_order, "source1"),
-                _make_session_ctx(tgt, call_order, "target"),
-                _make_session_ctx(src_2, call_order, "source2"),
-            ],
+        with (
+            patch(
+                "tasks.jobs.attack_paths.sync.local_database.get_session",
+                side_effect=[
+                    _make_session_ctx(src_1, call_order, "source1"),
+                    _make_session_ctx(src_2, call_order, "source2"),
+                ],
+            ),
+            patch(
+                "tasks.jobs.attack_paths.sync.graph_database.get_session",
+                side_effect=[_make_session_ctx(tgt, call_order, "target")],
+            ),
         ):
             sync_module.sync_nodes("src-db", "tgt-db", "t-1", "p-1")
 
@@ -1844,13 +1889,18 @@ class TestSyncNodes:
 
         with (
             patch(
-                "tasks.jobs.attack_paths.sync.graph_database.get_session",
+                "tasks.jobs.attack_paths.sync.local_database.get_session",
                 side_effect=[
                     _make_session_ctx(src_1),
-                    _make_session_ctx(tgt_1),
                     _make_session_ctx(src_2),
-                    _make_session_ctx(tgt_2),
                     _make_session_ctx(src_3),
+                ],
+            ),
+            patch(
+                "tasks.jobs.attack_paths.sync.graph_database.get_session",
+                side_effect=[
+                    _make_session_ctx(tgt_1),
+                    _make_session_ctx(tgt_2),
                 ],
             ),
             patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 1),
@@ -1866,13 +1916,13 @@ class TestSyncNodes:
         src.run.return_value = []
 
         with patch(
-            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            "tasks.jobs.attack_paths.sync.local_database.get_session",
             side_effect=[_make_session_ctx(src)],
-        ) as mock_get_session:
+        ) as mock_local_get_session:
             total = sync_module.sync_nodes("src", "tgt", "t-1", "p-1")
 
         assert total == 0
-        assert mock_get_session.call_count == 1
+        assert mock_local_get_session.call_count == 1
 
 
 class TestSyncRelationships:
@@ -1893,13 +1943,18 @@ class TestSyncRelationships:
         src_2 = MagicMock()
         src_2.run.return_value = []
 
-        with patch(
-            "tasks.jobs.attack_paths.sync.graph_database.get_session",
-            side_effect=[
-                _make_session_ctx(src_1, call_order, "source1"),
-                _make_session_ctx(tgt, call_order, "target"),
-                _make_session_ctx(src_2, call_order, "source2"),
-            ],
+        with (
+            patch(
+                "tasks.jobs.attack_paths.sync.local_database.get_session",
+                side_effect=[
+                    _make_session_ctx(src_1, call_order, "source1"),
+                    _make_session_ctx(src_2, call_order, "source2"),
+                ],
+            ),
+            patch(
+                "tasks.jobs.attack_paths.sync.graph_database.get_session",
+                side_effect=[_make_session_ctx(tgt, call_order, "target")],
+            ),
         ):
             sync_module.sync_relationships("src", "tgt", "p-1")
 
@@ -1932,13 +1987,18 @@ class TestSyncRelationships:
 
         with (
             patch(
-                "tasks.jobs.attack_paths.sync.graph_database.get_session",
+                "tasks.jobs.attack_paths.sync.local_database.get_session",
                 side_effect=[
                     _make_session_ctx(src_1),
-                    _make_session_ctx(tgt_1),
                     _make_session_ctx(src_2),
-                    _make_session_ctx(tgt_2),
                     _make_session_ctx(src_3),
+                ],
+            ),
+            patch(
+                "tasks.jobs.attack_paths.sync.graph_database.get_session",
+                side_effect=[
+                    _make_session_ctx(tgt_1),
+                    _make_session_ctx(tgt_2),
                 ],
             ),
             patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 1),
@@ -1954,13 +2014,13 @@ class TestSyncRelationships:
         src.run.return_value = []
 
         with patch(
-            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            "tasks.jobs.attack_paths.sync.local_database.get_session",
             side_effect=[_make_session_ctx(src)],
-        ) as mock_get_session:
+        ) as mock_local_get_session:
             total = sync_module.sync_relationships("src", "tgt", "p-1")
 
         assert total == 0
-        assert mock_get_session.call_count == 1
+        assert mock_local_get_session.call_count == 1
 
 
 class TestInternetAnalysis:
