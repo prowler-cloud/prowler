@@ -71,8 +71,7 @@ class entra_conditional_access_policy_device_registration_mfa(Check):
                     device_reg_enforced = True
                     device_reg_policy = policy
                 elif (
-                    policy.state
-                    == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING
+                    policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING
                     and device_reg_reporting_policy is None
                 ):
                     device_reg_reporting_policy = policy
@@ -108,8 +107,7 @@ class entra_conditional_access_policy_device_registration_mfa(Check):
                     intune_enforced = True
                     intune_policy = policy
                 elif (
-                    policy.state
-                    == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING
+                    policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING
                     and intune_reporting_policy is None
                 ):
                     intune_reporting_policy = policy
@@ -137,9 +135,7 @@ class entra_conditional_access_policy_device_registration_mfa(Check):
                         f"reports MFA for device registration but does not enforce it"
                     )
                 else:
-                    issues.append(
-                        "no policy requires MFA for device registration"
-                    )
+                    issues.append("no policy requires MFA for device registration")
             if not intune_enforced:
                 if intune_reporting_policy:
                     issues.append(
@@ -152,9 +148,7 @@ class entra_conditional_access_policy_device_registration_mfa(Check):
                         "frequency for Intune enrollment"
                     )
             report.status_extended = (
-                "Conditional Access Policy gap: "
-                + "; ".join(issues)
-                + "."
+                "Conditional Access Policy gap: " + "; ".join(issues) + "."
             )
 
         findings.append(report)
