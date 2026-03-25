@@ -9,6 +9,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `apikeys_api_restricted_with_gemini_api` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
 - `gemini_api_disabled` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
 
+### 🔄 Changed
+
+- Minimum Python version from 3.9 to 3.10 and pinned `markdown` to 3.10.2, `marshmallow` to 3.26.2 [(#10464)](https://github.com/prowler-cloud/prowler/pull/10464)
+
 ---
 
 ## [5.22.1] (Prowler UNRELEASED)
