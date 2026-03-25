@@ -563,7 +563,7 @@ class OraclecloudProvider(Provider):
                 self._identity.tenancy_id
             ).data
 
-            #Check if auditing specific region or all
+            # Check if auditing specific region or all
             regions_check = (
                 region_set
                 if region_set
