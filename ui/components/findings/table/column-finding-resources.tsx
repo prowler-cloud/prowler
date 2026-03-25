@@ -31,15 +31,11 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
 
-  const {
-    selectedFindingIds,
-    clearSelection,
-    resolveMuteIds,
-    onMuteComplete,
-  } = useContext(FindingsSelectionContext) || {
-    selectedFindingIds: [],
-    clearSelection: () => {},
-  };
+  const { selectedFindingIds, clearSelection, resolveMuteIds, onMuteComplete } =
+    useContext(FindingsSelectionContext) || {
+      selectedFindingIds: [],
+      clearSelection: () => {},
+    };
 
   const isCurrentSelected = selectedFindingIds.includes(resource.findingId);
   const hasMultipleSelected = selectedFindingIds.length > 1;
