@@ -71,7 +71,7 @@ class OraclecloudProvider(Provider):
         self,
         oci_config_file: str = None,
         profile: str = None,
-        region: str = None,
+        region: set = set(),
         compartment_ids: list = None,
         config_path: str = None,
         config_content: dict = None,
@@ -238,7 +238,7 @@ class OraclecloudProvider(Provider):
         key_file: str = None,
         key_content: str = None,
         tenancy: str = None,
-        region: set = set(),
+        region: str = None,
         pass_phrase: str = None,
     ) -> OCISession:
         """
@@ -571,7 +571,7 @@ class OraclecloudProvider(Provider):
             )
 
             for region_sub in region_subscriptions:
-                if region_sub in regions_check:
+                if region_sub.region_name in regions_check:
                     regions.append(
                         OCIRegion(
                             key=region_sub.region_name,
