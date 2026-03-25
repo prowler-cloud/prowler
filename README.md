@@ -252,6 +252,8 @@ Some pre-commit hooks require tools installed on your system:
     pip install safety
     ```
 
+3. **Install [Hadolint](https://github.com/hadolint/hadolint#install)** (Dockerfile linting) — see the [official installation options](https://github.com/hadolint/hadolint#install).
+
 ## Prowler CLI
 ### Pip package
 Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/). Consequently, it can be installed using pip with Python >3.9.1, <3.13:
