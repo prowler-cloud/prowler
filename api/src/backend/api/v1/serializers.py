@@ -4180,6 +4180,7 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
     severity = serializers.CharField()
     first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     last_seen_at = serializers.DateTimeField(required=False, allow_null=True)
+    muted_reason = serializers.CharField(required=False, allow_null=True)
 
     class JSONAPIMeta:
         resource_name = "finding-group-resources"
