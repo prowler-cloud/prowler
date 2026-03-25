@@ -48,6 +48,7 @@ from django.db.models import (
     When,
     Window,
 )
+from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast, Coalesce, DenseRank, RowNumber
 from django.http import HttpResponse, QueryDict
 from django.shortcuts import redirect
@@ -83,7 +84,6 @@ from tasks.beat import schedule_provider_scan
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
-    aggregate_finding_group_summaries_task,
     backfill_compliance_summaries_task,
     backfill_scan_resource_summaries_task,
     check_integration_connection_task,
@@ -95,6 +95,7 @@ from tasks.tasks import (
     jira_integration_task,
     mute_historical_findings_task,
     perform_scan_task,
+    reaggregate_all_finding_group_summaries_task,
     refresh_lighthouse_provider_models_task,
 )
 
@@ -6728,23 +6729,15 @@ class MuteRuleViewSet(BaseRLSViewSet):
             muted_reason=mute_rule.reason,
         )
 
-        # Launch background task for historical muting
-        latest_scan_id = (
-            Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("-completed_at", "-inserted_at")
-            .values_list("id", flat=True)
-            .first()
-        )
-
+        # Launch background task for historical muting + reaggregation
         transaction.on_commit(
             lambda: chain(
                 mute_historical_findings_task.si(
                     tenant_id=tenant_id,
                     mute_rule_id=str(mute_rule.id),
                 ),
-                aggregate_finding_group_summaries_task.si(
+                reaggregate_all_finding_group_summaries_task.si(
                     tenant_id=tenant_id,
-                    scan_id=str(latest_scan_id),
                 ),
             ).apply_async()
         )
@@ -7001,13 +6994,13 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 "first_seen_at", filter=Q(status="FAIL", muted=False)
             ),
             check_title=Coalesce(
-                Max(Cast("check_metadata__CheckTitle", CharField())),
-                Max(Cast("check_metadata__checktitle", CharField())),
-                Max(Cast("check_metadata__Checktitle", CharField())),
+                Max(KeyTextTransform("checktitle", "check_metadata")),
+                Max(KeyTextTransform("CheckTitle", "check_metadata")),
+                Max(KeyTextTransform("Checktitle", "check_metadata")),
             ),
             check_description=Coalesce(
-                Max(Cast("check_metadata__Description", CharField())),
-                Max(Cast("check_metadata__description", CharField())),
+                Max(KeyTextTransform("description", "check_metadata")),
+                Max(KeyTextTransform("Description", "check_metadata")),
             ),
         )
 
@@ -7015,7 +7008,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
         self, params: QueryDict
     ) -> tuple[QueryDict, QueryDict]:
         """Split finding filters from computed aggregate filters."""
-        computed_keys = {"status", "status__in", "severity", "severity__in"}
+        computed_keys = {"status", "status__in", "severity", "severity__in", "muted"}
         finding_params = QueryDict(mutable=True)
         computed_params = QueryDict(mutable=True)
 

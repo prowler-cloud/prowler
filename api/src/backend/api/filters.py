@@ -1065,7 +1065,7 @@ class LatestFindingGroupSummaryFilter(FilterSet):
 
 
 class FindingGroupAggregatedComputedFilter(FilterSet):
-    """Filter aggregated finding-group rows by computed status/severity."""
+    """Filter aggregated finding-group rows by computed status/severity/muted."""
 
     STATUS_CHOICES = (
         ("FAIL", "Fail"),
@@ -1077,6 +1077,7 @@ class FindingGroupAggregatedComputedFilter(FilterSet):
     status__in = CharInFilter(method="filter_status_in", lookup_expr="in")
     severity = ChoiceFilter(method="filter_severity", choices=SeverityChoices)
     severity__in = CharInFilter(method="filter_severity_in", lookup_expr="in")
+    muted = BooleanFilter(method="filter_muted")
 
     def filter_status(self, queryset, name, value):
         return queryset.filter(aggregated_status=value)
@@ -1147,6 +1148,15 @@ class FindingGroupAggregatedComputedFilter(FilterSet):
             return queryset
 
         return queryset.filter(severity_order__in=orders)
+
+    def filter_muted(self, queryset, name, value):
+        if value is True:
+            # Show all finding groups, including fully-muted ones
+            return queryset
+        # muted=false: hide finding groups where all findings are muted
+        return queryset.filter(
+            Q(fail_count__gt=0) | Q(pass_count__gt=0) | Q(muted_count__gt=0)
+        )
 
 
 class ProviderSecretFilter(FilterSet):
