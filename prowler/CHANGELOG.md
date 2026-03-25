@@ -8,7 +8,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `apikeys_api_restricted_with_gemini_api` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
 - `gemini_api_disabled` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
-
+- Add in the ability to pass multiple regions to the OCI Provider 
 ---
 
 ## [5.22.1] (Prowler UNRELEASED)
