@@ -322,6 +322,12 @@ Detailed documentation at https://docs.prowler.com
             default=[],
             # TODO: Pending validate choices
         )
+        group.add_argument(
+            "--resource-group",
+            nargs="+",
+            help="List of resource groups to be executed.",
+            default=[],
+        )
         common_checks_parser.add_argument(
             "--checks-folder",
             "-x",
@@ -332,7 +338,7 @@ Detailed documentation at https://docs.prowler.com
     def __init_list_checks_parser__(self):
         # List checks options
         list_checks_parser = self.common_providers_parser.add_argument_group(
-            "List checks/services/categories/compliance-framework checks"
+            "List checks/services/categories/resource-groups/compliance-framework checks"
         )
         list_group = list_checks_parser.add_mutually_exclusive_group()
         list_group.add_argument(
@@ -364,6 +370,11 @@ Detailed documentation at https://docs.prowler.com
             "--list-categories",
             action="store_true",
             help="List the available check's categories",
+        )
+        list_group.add_argument(
+            "--list-resource-groups",
+            action="store_true",
+            help="List the available check's resource groups",
         )
         list_group.add_argument(
             "--list-fixer",

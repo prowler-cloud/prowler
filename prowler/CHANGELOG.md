@@ -2,6 +2,15 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [Unreleased] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `--resource-group` CLI flag to filter checks by resource group across all providers
+- `--list-resource-groups` CLI flag to list available resource groups
+
+---
+
 ## [5.22.0] (Prowler v5.22.0)
 
 ### 🐞 Fixed
