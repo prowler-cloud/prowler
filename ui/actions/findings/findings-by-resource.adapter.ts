@@ -75,11 +75,13 @@ export interface ResourceDrawerFinding {
 /**
  * Extracts unique compliance framework names from available data.
  *
- * Supports two shapes:
- * 1. check_metadata.compliance — array of { Framework, Version, ... } objects
- *    e.g. [{ Framework: "CIS-AWS", Version: "1.4" }, { Framework: "PCI-DSS" }]
- * 2. finding.compliance — dict with versioned keys (when API exposes it)
- *    e.g. {"CIS-AWS-1.4": ["2.1"], "PCI-DSS-3.2": ["6.2"]}
+ * Supports three shapes:
+ * 1a. check_metadata.compliance — array of { Framework, Version, ... } objects
+ *     e.g. [{ Framework: "CIS-AWS", Version: "1.4" }, { Framework: "PCI-DSS" }]
+ * 1b. check_metadata.compliance — dict with framework keys and control arrays
+ *     e.g. {"CIS-1.4": ["1.6"], "GDPR": ["article_25"], "HIPAA": ["164_312_d"]}
+ * 2.  finding.compliance — dict with versioned keys (when API exposes it)
+ *     e.g. {"CIS-AWS-1.4": ["2.1"], "PCI-DSS-3.2": ["6.2"]}
  */
 function extractComplianceFrameworks(
   metaCompliance: unknown,
@@ -87,12 +89,19 @@ function extractComplianceFrameworks(
 ): string[] {
   const frameworks = new Set<string>();
 
-  // Source 1: check_metadata.compliance — array of objects with Framework field
+  // Source 1a: check_metadata.compliance — array of objects with Framework field
   if (Array.isArray(metaCompliance)) {
     for (const entry of metaCompliance) {
       if (entry?.Framework || entry?.framework) {
         frameworks.add(entry.Framework || entry.framework);
       }
+    }
+  }
+  // Source 1b: check_metadata.compliance — dict keyed by framework name
+  else if (metaCompliance && typeof metaCompliance === "object") {
+    for (const key of Object.keys(metaCompliance as Record<string, unknown>)) {
+      const base = key.replace(/-\d+(\.\d+)*$/, "");
+      frameworks.add(base);
     }
   }
 
@@ -104,7 +113,9 @@ function extractComplianceFrameworks(
     }
   }
 
-  return Array.from(frameworks);
+  return Array.from(frameworks).sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: "base" }),
+  );
 }
 
 /**
