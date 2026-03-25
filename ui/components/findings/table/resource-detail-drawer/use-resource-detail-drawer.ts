@@ -57,6 +57,8 @@ interface UseResourceDetailDrawerReturn {
   closeDrawer: () => void;
   navigatePrev: () => void;
   navigateNext: () => void;
+  /** Clear cache for current resource and re-fetch (e.g. after muting). */
+  refetchCurrent: () => void;
 }
 
 /**
@@ -129,6 +131,14 @@ export function useResourceDetailDrawer({
     setIsOpen(false);
   };
 
+  const refetchCurrent = () => {
+    const resource = resources[currentIndex];
+    if (!resource) return;
+    cacheRef.current.delete(resource.resourceUid);
+    setIsNavigating(true);
+    fetchFindings(resource.resourceUid);
+  };
+
   const navigateTo = (index: number) => {
     const resource = resources[index];
     if (!resource) return;
@@ -178,5 +188,6 @@ export function useResourceDetailDrawer({
     closeDrawer,
     navigatePrev,
     navigateNext,
+    refetchCurrent,
   };
 }

@@ -25,6 +25,8 @@ interface UseInfiniteResourcesOptions {
 
 interface UseInfiniteResourcesReturn {
   sentinelRef: (node: HTMLDivElement | null) => void;
+  /** Reset pagination and re-fetch page 1 (e.g. after muting). */
+  refresh: () => void;
 }
 
 /**
@@ -180,6 +182,19 @@ export function useInfiniteResources({
     }
   }
 
+  /** Imperatively reset and re-fetch page 1 without changing deps. */
+  function refresh() {
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
+    pageRef.current = 1;
+    hasMoreRef.current = true;
+    isLoadingRef.current = false;
+
+    fetchPage(1, false, currentCheckIdRef.current, controller.signal);
+  }
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -189,5 +204,5 @@ export function useInfiniteResources({
     };
   }, []);
 
-  return { sentinelRef };
+  return { sentinelRef, refresh };
 }

@@ -8,7 +8,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronLeft } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { resolveFindingIds } from "@/actions/findings/findings-by-resource";
@@ -45,7 +45,6 @@ export function FindingsGroupDrillDown({
   group,
   onCollapse,
 }: FindingsGroupDrillDownProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [resources, setResources] = useState<FindingResourceRow[]>([]);
@@ -83,7 +82,7 @@ export function FindingsGroupDrillDown({
     setIsLoading(loading);
   };
 
-  const { sentinelRef } = useInfiniteResources({
+  const { sentinelRef, refresh } = useInfiniteResources({
     checkId: group.checkId,
     hasDateOrScanFilter: hasDateOrScan,
     filters,
@@ -99,8 +98,8 @@ export function FindingsGroupDrillDown({
   });
 
   const handleDrawerMuteComplete = () => {
-    drawer.closeDrawer();
-    router.refresh();
+    drawer.refetchCurrent();
+    refresh();
   };
 
   // Selection logic — tracks by findingId (resource_id) for checkbox consistency
@@ -137,7 +136,7 @@ export function FindingsGroupDrillDown({
 
   const handleMuteComplete = () => {
     clearSelection();
-    router.refresh();
+    refresh();
   };
 
   const columns = getColumnFindingResources({
@@ -178,6 +177,7 @@ export function FindingsGroupDrillDown({
         clearSelection,
         isSelected,
         resolveMuteIds: resolveResourceIds,
+        onMuteComplete: handleMuteComplete,
       }}
     >
       <div
