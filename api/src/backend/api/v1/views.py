@@ -39,7 +39,6 @@ from django.db.models import (
     IntegerField,
     Max,
     Min,
-    OuterRef,
     Prefetch,
     Q,
     QuerySet,
@@ -50,7 +49,7 @@ from django.db.models import (
     Window,
 )
 from django.db.models.fields.json import KeyTextTransform
-from django.db.models.functions import Cast, Coalesce, DenseRank, RowNumber
+from django.db.models.functions import Cast, Coalesce, RowNumber
 from django.http import HttpResponse, QueryDict
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -7021,24 +7020,18 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         return finding_params, computed_params
 
-    def _get_latest_findings_per_check_provider(self, filtered_queryset):
-        """Keep all findings from the latest scan per (check_id, provider)."""
-        latest_ids = (
-            filtered_queryset.annotate(
-                scan_rank=Window(
-                    expression=DenseRank(),
-                    partition_by=[F("check_id"), F("scan__provider_id")],
-                    order_by=[
-                        F("scan__completed_at").desc(nulls_last=True),
-                        F("scan_id").desc(),
-                    ],
-                )
+    def _get_latest_findings_per_provider(self, filtered_queryset):
+        """Keep only findings from each provider's most recent completed scan."""
+        latest_scan_ids = (
+            Scan.objects.filter(
+                tenant_id=self.request.tenant_id,
+                state=StateChoices.COMPLETED,
             )
-            .filter(scan_rank=1)
+            .order_by("provider_id", "-completed_at", "-inserted_at")
+            .distinct("provider_id")
             .values("id")
         )
-
-        return filtered_queryset.filter(id__in=Subquery(latest_ids))
+        return filtered_queryset.filter(scan_id__in=latest_scan_ids)
 
     def _post_process_aggregation(self, aggregated_data):
         """
@@ -7282,7 +7275,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 raise ValidationError(filterset.errors)
             filtered_queryset = filterset.qs
             if latest:
-                filtered_queryset = self._get_latest_findings_per_check_provider(
+                filtered_queryset = self._get_latest_findings_per_provider(
                     filtered_queryset
                 )
             return self._aggregate_findings(filtered_queryset)
@@ -7293,18 +7286,14 @@ class FindingGroupViewSet(BaseRLSViewSet):
             raise ValidationError(filterset.errors)
         filtered_queryset = filterset.qs
         # Only include summaries from each provider's most recent date
-        # (within the filtered range). This prevents inflated resource counts
-        # when multiple days of summaries exist for the same provider.
-        latest_date_sq = Subquery(
-            filtered_queryset.filter(
-                provider_id=OuterRef("provider_id"),
-            )
-            .order_by("-inserted_at")
-            .values("inserted_at")[:1]
-        )
+        # (within the filtered range). Window MAX is a single pass — no
+        # correlated subquery.
         filtered_queryset = filtered_queryset.annotate(
-            _latest_provider_date=latest_date_sq,
-        ).filter(inserted_at=F("_latest_provider_date"))
+            _max_provider_date=Window(
+                expression=Max("inserted_at"),
+                partition_by=[F("provider_id")],
+            ),
+        ).filter(inserted_at=F("_max_provider_date"))
         return self._aggregate_daily_summaries(filtered_queryset)
 
     def _sorted_paginated_response(self, request, aggregated_queryset):
