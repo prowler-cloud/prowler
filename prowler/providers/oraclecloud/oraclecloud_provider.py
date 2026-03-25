@@ -536,7 +536,7 @@ class OraclecloudProvider(Provider):
 
         return True
 
-    def get_regions_to_audit(self, region_set : set = None) -> list:
+    def get_regions_to_audit(self, region_set: set = None) -> list:
         """
         get_regions_to_audit returns the list of regions to audit.
 
