@@ -31,14 +31,14 @@ import {
 } from "@/components/shadcn";
 import { Card } from "@/components/shadcn/card/card";
 import {
+  ActionDropdown,
+  ActionDropdownItem,
+} from "@/components/shadcn/dropdown";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import {
-  ActionDropdown,
-  ActionDropdownItem,
-} from "@/components/shadcn/dropdown";
 import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
@@ -197,34 +197,34 @@ export function ResourceDetailDrawerContent({
               Compliance Frameworks:
             </span>
             <div className="flex flex-wrap items-center gap-2">
-            {checkMeta.complianceFrameworks.map((framework) => {
-              const icon = getComplianceIcon(framework);
-              return icon ? (
-                <Tooltip key={framework}>
-                  <TooltipTrigger asChild>
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
-                      <Image
-                        src={icon}
-                        alt={framework}
-                        width={20}
-                        height={20}
-                        className="size-5 object-contain"
-                      />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>{framework}</TooltipContent>
-                </Tooltip>
-              ) : (
-                <Tooltip key={framework}>
-                  <TooltipTrigger asChild>
-                    <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
-                      {framework}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>{framework}</TooltipContent>
-                </Tooltip>
-              );
-            })}
+              {checkMeta.complianceFrameworks.map((framework) => {
+                const icon = getComplianceIcon(framework);
+                return icon ? (
+                  <Tooltip key={framework}>
+                    <TooltipTrigger asChild>
+                      <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
+                        <Image
+                          src={icon}
+                          alt={framework}
+                          width={20}
+                          height={20}
+                          className="size-5 object-contain"
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>{framework}</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Tooltip key={framework}>
+                    <TooltipTrigger asChild>
+                      <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
+                        {framework}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>{framework}</TooltipContent>
+                  </Tooltip>
+                );
+              })}
             </div>
           </div>
         )}
@@ -246,7 +246,7 @@ export function ResourceDetailDrawerContent({
             className="hover:bg-bg-neutral-tertiary disabled:text-text-neutral-tertiary flex size-8 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent"
             aria-label="Previous resource"
           >
-            <CircleChevronLeft className="size-5" />
+            <CircleChevronLeft className="text-text-neutral-secondary size-5" />
           </button>
           <button
             type="button"
@@ -255,7 +255,7 @@ export function ResourceDetailDrawerContent({
             className="hover:bg-bg-neutral-tertiary disabled:text-text-neutral-tertiary flex size-8 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent"
             aria-label="Next resource"
           >
-            <CircleChevronRight className="size-5" />
+            <CircleChevronRight className="text-text-neutral-secondary size-5" />
           </button>
         </div>
       </div>
@@ -269,10 +269,75 @@ export function ResourceDetailDrawerContent({
           </div>
         ) : (
           <>
-            {/* Actions dropdown — pinned top-right */}
-            <div className="relative">
-              <div className="absolute top-0 right-0">
-                <ActionDropdown ariaLabel="Resource actions">
+            <div className="flex items-start gap-4">
+              {/* Resource info grid — 4 data columns */}
+              <div className="grid min-w-0 flex-1 grid-cols-1 gap-4 md:grid-cols-4 md:gap-x-8 md:gap-y-4">
+                {/* Row 1: Account, Resource, Service, Region */}
+                <EntityInfo
+                  cloudProvider={f.providerType}
+                  nameIcon={<Box className="size-4" />}
+                  entityAlias={f.providerAlias}
+                  entityId={f.providerUid}
+                />
+                <EntityInfo
+                  nameIcon={<Container className="size-4" />}
+                  entityAlias={f.resourceType}
+                  entityId={f.resourceUid}
+                  idLabel="UID"
+                />
+                <InfoField label="Service" variant="compact">
+                  {f.resourceService}
+                </InfoField>
+                <InfoField label="Region" variant="compact">
+                  <span className="flex items-center gap-1.5">
+                    {getRegionFlag(f.resourceRegion) && (
+                      <span className="translate-y-px text-base leading-none">
+                        {getRegionFlag(f.resourceRegion)}
+                      </span>
+                    )}
+                    {f.resourceRegion}
+                  </span>
+                </InfoField>
+
+                {/* Row 2: Dates */}
+                <InfoField label="Last detected" variant="compact">
+                  <DateWithTime inline dateTime={f.updatedAt || "-"} />
+                </InfoField>
+                <InfoField label="First seen" variant="compact">
+                  <DateWithTime inline dateTime={f.firstSeenAt || "-"} />
+                </InfoField>
+                <InfoField label="Failing for" variant="compact">
+                  {getFailingForLabel(f.firstSeenAt) || "-"}
+                </InfoField>
+                <div className="hidden md:block" />
+
+                {/* Row 3: IDs */}
+                <InfoField label="Check ID" variant="compact">
+                  <CodeSnippet
+                    value={checkMeta.checkId}
+                    transparent
+                    className="max-w-full text-sm"
+                  />
+                </InfoField>
+                <InfoField label="Finding ID" variant="compact">
+                  <CodeSnippet
+                    value={f.id}
+                    transparent
+                    className="max-w-full text-sm"
+                  />
+                </InfoField>
+                <InfoField label="Finding UID" variant="compact">
+                  <CodeSnippet
+                    value={f.uid}
+                    transparent
+                    className="max-w-full text-sm"
+                  />
+                </InfoField>
+              </div>
+
+              {/* Actions button — fixed size, aligned with row 1 */}
+              <div className="shrink-0">
+                <ActionDropdown variant="bordered" ariaLabel="Resource actions">
                   <ActionDropdownItem
                     icon={
                       f.isMuted ? (
@@ -293,79 +358,13 @@ export function ResourceDetailDrawerContent({
                 </ActionDropdown>
               </div>
             </div>
-
-            {/* Resource info grid — 4 columns, rows 2-3 span first 3 */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-4 md:gap-x-16 md:gap-y-4">
-              {/* Row 1: Account, Resource, Service, Region */}
-              <EntityInfo
-                cloudProvider={f.providerType}
-                nameIcon={<Box className="size-4" />}
-                entityAlias={f.providerAlias}
-                entityId={f.providerUid}
-              />
-              <EntityInfo
-                nameIcon={<Container className="size-4" />}
-                entityAlias={f.resourceType}
-                entityId={f.resourceUid}
-                idLabel="UID"
-              />
-              <InfoField label="Service" variant="compact">
-                {f.resourceService}
-              </InfoField>
-              <InfoField label="Region" variant="compact">
-                <span className="flex items-center gap-1.5">
-                  {getRegionFlag(f.resourceRegion) && (
-                    <span className="translate-y-px text-base leading-none">
-                      {getRegionFlag(f.resourceRegion)}
-                    </span>
-                  )}
-                  {f.resourceRegion}
-                </span>
-              </InfoField>
-
-              {/* Row 2: Dates — span first 3 columns */}
-              <InfoField label="Last detected" variant="compact">
-                <DateWithTime inline dateTime={f.updatedAt || "-"} />
-              </InfoField>
-              <InfoField label="First seen" variant="compact">
-                <DateWithTime inline dateTime={f.firstSeenAt || "-"} />
-              </InfoField>
-              <InfoField label="Failing for" variant="compact">
-                {getFailingForLabel(f.firstSeenAt) || "-"}
-              </InfoField>
-              {/* Empty 4th column */}
-              <div className="hidden md:block" />
-
-              {/* Row 3: IDs — span first 3 columns */}
-              <InfoField label="Check ID" variant="compact">
-                <CodeSnippet
-                  value={checkMeta.checkId}
-                  transparent
-                  className="max-w-full text-sm"
-                />
-              </InfoField>
-              <InfoField label="Finding ID" variant="compact">
-                <CodeSnippet
-                  value={f.id}
-                  transparent
-                  className="max-w-full text-sm"
-                />
-              </InfoField>
-              <InfoField label="Finding UID" variant="compact">
-                <CodeSnippet
-                  value={f.uid}
-                  transparent
-                  className="max-w-full text-sm"
-                />
-              </InfoField>
-            </div>
           </>
         )}
 
         {/* Tabs */}
         <Tabs
           defaultValue="overview"
-          className="flex min-h-fit w-full flex-1 flex-col md:min-h-0"
+          className="mt-2 flex min-h-fit w-full flex-1 flex-col md:min-h-0"
         >
           <div className="mb-4 flex items-center justify-between">
             <TabsList>
