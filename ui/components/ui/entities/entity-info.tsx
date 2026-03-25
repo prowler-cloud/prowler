@@ -15,6 +15,8 @@ import { getProviderLogo } from "./get-provider-logo";
 interface EntityInfoProps {
   cloudProvider?: ProviderType;
   icon?: ReactNode;
+  /** Small icon rendered inline before the entity alias text */
+  nameIcon?: ReactNode;
   entityAlias?: string;
   entityId?: string;
   badge?: string;
@@ -32,6 +34,7 @@ interface EntityInfoProps {
 export const EntityInfo = ({
   cloudProvider,
   icon,
+  nameIcon,
   entityAlias,
   entityId,
   badge,
@@ -48,6 +51,11 @@ export const EntityInfo = ({
         {renderedIcon && <div className="shrink-0">{renderedIcon}</div>}
         <div className="flex min-w-0 flex-col gap-0.5">
           <div className="flex min-w-0 items-center gap-1.5">
+            {nameIcon && (
+              <span className="text-text-neutral-tertiary shrink-0">
+                {nameIcon}
+              </span>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="truncate font-medium">

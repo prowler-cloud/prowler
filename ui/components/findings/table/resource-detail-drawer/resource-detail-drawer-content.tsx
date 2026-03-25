@@ -1,9 +1,11 @@
 "use client";
 
 import {
+  Box,
   CircleArrowRight,
   CircleChevronLeft,
   CircleChevronRight,
+  Container,
   ExternalLink,
   VolumeOff,
   VolumeX,
@@ -28,6 +30,11 @@ import {
   TabsTrigger,
 } from "@/components/shadcn";
 import { Card } from "@/components/shadcn/card/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import {
   ActionDropdown,
   ActionDropdownItem,
@@ -185,31 +192,39 @@ export function ResourceDetailDrawerContent({
         </h2>
 
         {checkMeta.complianceFrameworks.length > 0 && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-1.5">
             <span className="text-text-neutral-tertiary text-xs font-medium">
               Compliance Frameworks:
             </span>
-            <div className="flex items-center gap-1.5">
-              {checkMeta.complianceFrameworks.map((framework) => {
-                const icon = getComplianceIcon(framework);
-                return icon ? (
-                  <Image
-                    key={framework}
-                    src={icon}
-                    alt={framework}
-                    width={20}
-                    height={20}
-                    className="shrink-0"
-                  />
-                ) : (
-                  <span
-                    key={framework}
-                    className="text-text-neutral-secondary text-xs"
-                  >
-                    {framework}
-                  </span>
-                );
-              })}
+            <div className="flex flex-wrap items-center gap-2">
+            {checkMeta.complianceFrameworks.map((framework) => {
+              const icon = getComplianceIcon(framework);
+              return icon ? (
+                <Tooltip key={framework}>
+                  <TooltipTrigger asChild>
+                    <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
+                      <Image
+                        src={icon}
+                        alt={framework}
+                        width={20}
+                        height={20}
+                        className="size-5 object-contain"
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>{framework}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <Tooltip key={framework}>
+                  <TooltipTrigger asChild>
+                    <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
+                      {framework}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{framework}</TooltipContent>
+                </Tooltip>
+              );
+            })}
             </div>
           </div>
         )}
@@ -246,7 +261,7 @@ export function ResourceDetailDrawerContent({
       </div>
 
       {/* Resource card */}
-      <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg border p-4">
+      <div className="border-border-neutral-secondary bg-bg-neutral-secondary minimal-scrollbar flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto rounded-lg border p-4">
         {/* Resource info — shows loading when currentFinding is not yet available */}
         {!f || isNavigating ? (
           <div className="flex items-center justify-center py-6">
@@ -254,34 +269,9 @@ export function ResourceDetailDrawerContent({
           </div>
         ) : (
           <>
-            {/* Account, Resource, Service, Region, Actions */}
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <EntityInfo
-                  cloudProvider={f.providerType}
-                  entityAlias={f.providerAlias}
-                  entityId={f.providerUid}
-                />
-                <EntityInfo
-                  entityAlias={f.resourceType}
-                  entityId={f.resourceUid}
-                  idLabel="UID"
-                />
-                <InfoField label="Service" variant="compact">
-                  {f.resourceService}
-                </InfoField>
-                <InfoField label="Region" variant="compact">
-                  <span className="flex items-center gap-1.5">
-                    {getRegionFlag(f.resourceRegion) && (
-                      <span className="translate-y-px text-base leading-none">
-                        {getRegionFlag(f.resourceRegion)}
-                      </span>
-                    )}
-                    {f.resourceRegion}
-                  </span>
-                </InfoField>
-              </div>
-              <div className="shrink-0">
+            {/* Actions dropdown — pinned top-right */}
+            <div className="relative">
+              <div className="absolute top-0 right-0">
                 <ActionDropdown ariaLabel="Resource actions">
                   <ActionDropdownItem
                     icon={
@@ -304,8 +294,36 @@ export function ResourceDetailDrawerContent({
               </div>
             </div>
 
-            {/* Dates row */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {/* Resource info grid — 4 columns, rows 2-3 span first 3 */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4 md:gap-x-16 md:gap-y-4">
+              {/* Row 1: Account, Resource, Service, Region */}
+              <EntityInfo
+                cloudProvider={f.providerType}
+                nameIcon={<Box className="size-4" />}
+                entityAlias={f.providerAlias}
+                entityId={f.providerUid}
+              />
+              <EntityInfo
+                nameIcon={<Container className="size-4" />}
+                entityAlias={f.resourceType}
+                entityId={f.resourceUid}
+                idLabel="UID"
+              />
+              <InfoField label="Service" variant="compact">
+                {f.resourceService}
+              </InfoField>
+              <InfoField label="Region" variant="compact">
+                <span className="flex items-center gap-1.5">
+                  {getRegionFlag(f.resourceRegion) && (
+                    <span className="translate-y-px text-base leading-none">
+                      {getRegionFlag(f.resourceRegion)}
+                    </span>
+                  )}
+                  {f.resourceRegion}
+                </span>
+              </InfoField>
+
+              {/* Row 2: Dates — span first 3 columns */}
               <InfoField label="Last detected" variant="compact">
                 <DateWithTime inline dateTime={f.updatedAt || "-"} />
               </InfoField>
@@ -315,10 +333,10 @@ export function ResourceDetailDrawerContent({
               <InfoField label="Failing for" variant="compact">
                 {getFailingForLabel(f.firstSeenAt) || "-"}
               </InfoField>
-            </div>
+              {/* Empty 4th column */}
+              <div className="hidden md:block" />
 
-            {/* IDs row */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {/* Row 3: IDs — span first 3 columns */}
               <InfoField label="Check ID" variant="compact">
                 <CodeSnippet
                   value={checkMeta.checkId}
@@ -347,7 +365,7 @@ export function ResourceDetailDrawerContent({
         {/* Tabs */}
         <Tabs
           defaultValue="overview"
-          className="flex min-h-0 w-full flex-1 flex-col"
+          className="flex min-h-fit w-full flex-1 flex-col md:min-h-0"
         >
           <div className="mb-4 flex items-center justify-between">
             <TabsList>
