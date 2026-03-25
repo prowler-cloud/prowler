@@ -219,3 +219,48 @@ export async function createTenant(
     return handleApiError(error);
   }
 }
+
+const deleteTenantSchema = z.object({
+  tenantId: z.uuid(),
+});
+
+export interface DeleteTenantState {
+  success?: boolean;
+  error?: string;
+}
+
+export async function deleteTenant(
+  _prevState: DeleteTenantState | null,
+  formData: FormData,
+): Promise<DeleteTenantState> {
+  const formDataObject = Object.fromEntries(formData);
+  const validatedData = deleteTenantSchema.safeParse(formDataObject);
+
+  if (!validatedData.success) {
+    return { error: "Invalid tenant ID" };
+  }
+
+  const { tenantId } = validatedData.data;
+  const headers = await getAuthHeaders({ contentType: false });
+
+  try {
+    const url = new URL(`${apiBaseUrl}/tenants/${tenantId}`);
+    const response = await fetch(url.toString(), {
+      method: "DELETE",
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      const errorDetail =
+        errorData?.errors?.[0]?.detail ||
+        `Failed to delete tenant: ${response.statusText}`;
+      throw new Error(errorDetail);
+    }
+
+    revalidatePath("/profile");
+    return { success: true };
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
