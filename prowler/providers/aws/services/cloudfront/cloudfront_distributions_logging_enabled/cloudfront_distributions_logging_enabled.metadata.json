@@ -13,7 +13,7 @@
   "ResourceType": "AwsCloudFrontDistribution",
   "ResourceGroup": "network",
   "Description": "**CloudFront distributions** record viewer requests using **standard access logs** (S3), **real-time log configurations**, or **Standard Logging v2** via CloudWatch Logs delivery sources.\n\nThe finding evaluates whether at least one logging mechanism is active so request metadata is captured for each distribution.",
-  "Risk": "Missing **CloudFront logs** blinds monitoring of edge requests, impeding detection of bot abuse, credential stuffing, and cache-bypass attempts. This delays incident response and weakens forensic evidence. A delivery source without an active delivery does not count as enabled.",
+  "Risk": "Missing **CloudFront logs** blinds monitoring of edge requests, impeding detection of bot abuse, credential stuffing, and cache-bypass attempts.\n\nThis delays incident response and weakens forensic evidence. A delivery source without an active delivery does not count as enabled.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html",
