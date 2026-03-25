@@ -7,7 +7,6 @@ import { useContext, useState } from "react";
 
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
 import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
-import { VerticalDotsIcon } from "@/components/icons";
 import { JiraIcon } from "@/components/icons/services/IconServices";
 import {
   ActionDropdown,
@@ -151,21 +150,7 @@ export function DataTableRowActions<T extends FindingRowData>({
       />
 
       <div className="flex items-center justify-end">
-        <ActionDropdown
-          trigger={
-            <button
-              type="button"
-              aria-label="Finding actions"
-              className="hover:bg-bg-neutral-tertiary rounded-md p-1 transition-colors"
-            >
-              <VerticalDotsIcon
-                size={20}
-                className="text-text-neutral-secondary"
-              />
-            </button>
-          }
-          ariaLabel="Finding actions"
-        >
+        <ActionDropdown ariaLabel="Finding actions">
           <ActionDropdownItem
             icon={
               isMuted ? (

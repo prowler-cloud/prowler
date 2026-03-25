@@ -1,8 +1,8 @@
 "use client";
 
+import { EllipsisVertical } from "lucide-react";
 import { ComponentProps, ReactNode } from "react";
 
-import { VerticalDotsIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 import {
@@ -13,9 +13,19 @@ import {
   DropdownMenuTrigger,
 } from "./dropdown";
 
+const ACTION_TRIGGER_STYLES = {
+  table: "hover:bg-bg-neutral-tertiary rounded-full p-1 transition-colors",
+  bordered:
+    "hover:bg-bg-neutral-tertiary rounded-full border border-text-neutral-secondary p-2 transition-colors",
+} as const;
+
+type ActionDropdownVariant = keyof typeof ACTION_TRIGGER_STYLES;
+
 interface ActionDropdownProps {
   /** The dropdown trigger element. Defaults to a vertical dots icon button */
   trigger?: ReactNode;
+  /** Trigger style variant. "table" = no border, "bordered" = circular border */
+  variant?: ActionDropdownVariant;
   /** Alignment of the dropdown content */
   align?: "start" | "center" | "end";
   /** Additional className for the content */
@@ -27,6 +37,7 @@ interface ActionDropdownProps {
 
 export function ActionDropdown({
   trigger,
+  variant = "table",
   align = "end",
   className,
   ariaLabel = "Open actions menu",
@@ -39,12 +50,9 @@ export function ActionDropdown({
           <button
             type="button"
             aria-label={ariaLabel}
-            className="hover:bg-bg-neutral-tertiary rounded-md p-1 transition-colors"
+            className={ACTION_TRIGGER_STYLES[variant]}
           >
-            <VerticalDotsIcon
-              size={20}
-              className="text-text-neutral-secondary"
-            />
+            <EllipsisVertical className="text-text-neutral-secondary size-6" />
           </button>
         )}
       </DropdownMenuTrigger>

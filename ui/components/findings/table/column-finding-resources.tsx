@@ -5,7 +5,6 @@ import { CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
 import { useContext, useState } from "react";
 
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
-import { VerticalDotsIcon } from "@/components/icons";
 import { Checkbox } from "@/components/shadcn";
 import {
   ActionDropdown,
@@ -94,21 +93,7 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
         className="flex items-center justify-end"
         onClick={(e) => e.stopPropagation()}
       >
-        <ActionDropdown
-          trigger={
-            <button
-              type="button"
-              aria-label="Resource actions"
-              className="hover:bg-bg-neutral-tertiary rounded-md p-1 transition-colors"
-            >
-              <VerticalDotsIcon
-                size={20}
-                className="text-text-neutral-secondary"
-              />
-            </button>
-          }
-          ariaLabel="Resource actions"
-        >
+        <ActionDropdown ariaLabel="Resource actions">
           <ActionDropdownItem
             icon={
               resource.isMuted ? (
