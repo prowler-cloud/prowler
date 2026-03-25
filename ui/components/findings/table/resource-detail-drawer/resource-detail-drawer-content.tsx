@@ -243,19 +243,19 @@ export function ResourceDetailDrawerContent({
             type="button"
             disabled={!hasPrev}
             onClick={onNavigatePrev}
-            className="hover:bg-bg-neutral-tertiary disabled:text-text-neutral-tertiary flex size-8 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            className="text-text-neutral-secondary hover:bg-bg-neutral-tertiary disabled:text-text-neutral-tertiary flex size-8 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent"
             aria-label="Previous resource"
           >
-            <CircleChevronLeft className="text-text-neutral-secondary size-5" />
+            <CircleChevronLeft className="size-5" />
           </button>
           <button
             type="button"
             disabled={!hasNext}
             onClick={onNavigateNext}
-            className="hover:bg-bg-neutral-tertiary disabled:text-text-neutral-tertiary flex size-8 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            className="text-text-neutral-secondary hover:bg-bg-neutral-tertiary disabled:text-text-neutral-tertiary flex size-8 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:hover:bg-transparent"
             aria-label="Next resource"
           >
-            <CircleChevronRight className="text-text-neutral-secondary size-5" />
+            <CircleChevronRight className="size-5" />
           </button>
         </div>
       </div>
