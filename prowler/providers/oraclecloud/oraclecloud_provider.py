@@ -571,7 +571,7 @@ class OraclecloudProvider(Provider):
             )
 
             for region_sub in region_subscriptions:
-                if region_sub in region_subscriptions:
+                if region_sub in regions_check:
                     regions.append(
                         OCIRegion(
                             key=region_sub.region_name,
