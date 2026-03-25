@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.23.0] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Clear Filters now resets all filters including muted findings and auto-applies, Clear all in pills only removes pill-visible sub-filters, and the discard icon is now an Undo text button [(#10446)](https://github.com/prowler-cloud/prowler/pull/10446)
+
+---
+
 ## [1.22.0] (Prowler v5.22.0)
 
 ### 🚀 Added
