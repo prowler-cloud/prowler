@@ -677,6 +677,7 @@ def _process_finding_micro_batch(
 
         # Create finding object (don't save yet)
         check_metadata = finding.get_metadata()
+        check_metadata["compliance"] = finding.compliance
         finding_instance = Finding(
             tenant_id=tenant_id,
             uid=finding_uid,
