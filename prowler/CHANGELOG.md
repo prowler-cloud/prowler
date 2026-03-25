@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.23.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- CIS Google Workspace Foundations Benchmark v1.3.0 compliance [(#10462)](https://github.com/prowler-cloud/prowler/pull/10462)
+
+---
+
 ## [5.22.0] (Prowler v5.22.0)
 
 ### 🐞 Fixed
