@@ -1,5 +1,6 @@
 import os
 import tempfile
+from argparse import Namespace
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
@@ -1124,3 +1125,63 @@ class TestScanPerImage:
             list(provider.scan_per_image())
 
         mock_cleanup.assert_called_once()
+
+
+class TestInitGlobalProviderRegistryArgs:
+    """Regression test for registry arguments being passed through
+    init_global_provider to ImageProvider.
+
+    PR #9985 added registry scan support. PR #10128 accidentally removed
+    the registry kwargs from the init_global_provider call, so --registry
+    and related CLI flags were parsed but never forwarded to ImageProvider.
+    """
+
+    @patch("prowler.providers.common.provider.load_and_validate_config_file")
+    def test_registry_args_passed_to_image_provider(self, mock_load_config):
+        """Verify that init_global_provider passes registry-related arguments
+        to the ImageProvider constructor."""
+        mock_load_config.return_value = {}
+
+        # Simulate the parsed CLI arguments for `prowler image --registry ...`
+        arguments = Namespace(
+            provider="image",
+            config_file=None,
+            fixer_config=None,
+            images=None,
+            image_list_file=None,
+            scanners=["vuln"],
+            image_config_scanners=None,
+            trivy_severity=None,
+            ignore_unfixed=False,
+            timeout="5m",
+            registry="myregistry.example.com",
+            image_filter="myorg/",
+            tag_filter="latest",
+            max_images=100,
+            registry_insecure=True,
+            registry_list_images=False,
+        )
+
+        from prowler.providers.common.provider import Provider
+
+        # Ensure the isinstance check doesn't short-circuit
+        saved_global = Provider._global
+        Provider._global = None
+
+        try:
+            with patch.object(
+                ImageProvider, "__init__", return_value=None
+            ) as mock_init:
+                Provider.init_global_provider(arguments)
+
+                mock_init.assert_called_once()
+                call_kwargs = mock_init.call_args[1]
+
+                assert call_kwargs["registry"] == "myregistry.example.com"
+                assert call_kwargs["image_filter"] == "myorg/"
+                assert call_kwargs["tag_filter"] == "latest"
+                assert call_kwargs["max_images"] == 100
+                assert call_kwargs["registry_insecure"] is True
+                assert call_kwargs["registry_list_images"] is False
+        finally:
+            Provider._global = saved_global
