@@ -17,7 +17,6 @@ from tasks.jobs.attack_paths.config import (
     get_provider_label,
     get_tenant_label,
 )
-from tasks.jobs.attack_paths.indexes import IndexType, create_indexes
 from tasks.jobs.attack_paths.queries import (
     NODE_FETCH_QUERY,
     NODE_SYNC_TEMPLATE,
@@ -29,11 +28,6 @@ from tasks.jobs.attack_paths.queries import (
 from api.attack_paths import database as graph_database
 
 logger = get_task_logger(__name__)
-
-
-def create_sync_indexes(neo4j_session) -> None:
-    """Create indexes for provider resource sync operations."""
-    create_indexes(neo4j_session, IndexType.SYNC)
 
 
 def sync_graph(

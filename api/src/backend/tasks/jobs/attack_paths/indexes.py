@@ -1,5 +1,3 @@
-from enum import Enum
-
 import neo4j
 
 from cartography.client.core.tx import run_write_query
@@ -13,13 +11,6 @@ from tasks.jobs.attack_paths.config import (
 )
 
 logger = get_task_logger(__name__)
-
-
-class IndexType(Enum):
-    """Types of indexes that can be created."""
-
-    FINDINGS = "findings"
-    SYNC = "sync"
 
 
 # Indexes for Prowler findings and resource lookups
@@ -41,26 +32,15 @@ SYNC_INDEX_STATEMENTS = [
 ]
 
 
-def create_indexes(neo4j_session: neo4j.Session, index_type: IndexType) -> None:
-    """
-    Create indexes for the specified type.
-
-    Args:
-        `neo4j_session`: The Neo4j session to use
-        `index_type`: The type of indexes to create (FINDINGS or SYNC)
-    """
-    if index_type == IndexType.FINDINGS:
-        logger.info("Creating indexes for Prowler Findings node types")
-        for statement in FINDINGS_INDEX_STATEMENTS:
-            run_write_query(neo4j_session, statement)
-
-    elif index_type == IndexType.SYNC:
-        logger.info("Ensuring ProviderResource indexes exist")
-        for statement in SYNC_INDEX_STATEMENTS:
-            neo4j_session.run(statement)
+def create_findings_indexes(neo4j_session: neo4j.Session) -> None:
+    """Create indexes for Prowler findings and resource lookups."""
+    logger.info("Creating indexes for Prowler Findings node types")
+    for statement in FINDINGS_INDEX_STATEMENTS:
+        run_write_query(neo4j_session, statement)
 
 
-def create_all_indexes(neo4j_session: neo4j.Session) -> None:
-    """Create all indexes (both findings and sync)."""
-    create_indexes(neo4j_session, IndexType.FINDINGS)
-    create_indexes(neo4j_session, IndexType.SYNC)
+def create_sync_indexes(neo4j_session: neo4j.Session) -> None:
+    """Create indexes for provider resource sync operations."""
+    logger.info("Ensuring ProviderResource indexes exist")
+    for statement in SYNC_INDEX_STATEMENTS:
+        neo4j_session.run(statement)
