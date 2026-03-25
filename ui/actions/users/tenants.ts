@@ -2,6 +2,8 @@
 
 import { z } from "zod";
 
+import { revalidatePath } from "next/cache";
+
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
@@ -147,6 +149,72 @@ export async function switchTenant(
     }
 
     return { success: true, accessToken, refreshToken };
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+const createTenantSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, { message: "Name is required" })
+    .max(100, { message: "Name must be 100 characters or less" }),
+});
+
+export interface CreateTenantState {
+  success?: boolean;
+  tenantId?: string;
+  error?: string;
+}
+
+export async function createTenant(
+  _prevState: CreateTenantState | null,
+  formData: FormData,
+): Promise<CreateTenantState> {
+  const formDataObject = Object.fromEntries(formData);
+  const validatedData = createTenantSchema.safeParse(formDataObject);
+
+  if (!validatedData.success) {
+    const fieldErrors = validatedData.error.flatten().fieldErrors;
+    return { error: fieldErrors?.name?.[0] || "Invalid input" };
+  }
+
+  const { name } = validatedData.data;
+  const headers = await getAuthHeaders({ contentType: true });
+
+  const payload = {
+    data: {
+      type: "tenants",
+      attributes: { name },
+    },
+  };
+
+  try {
+    const url = new URL(`${apiBaseUrl}/tenants`);
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      const errorDetail =
+        errorData?.errors?.[0]?.detail ||
+        `Failed to create tenant: ${response.statusText}`;
+      throw new Error(errorDetail);
+    }
+
+    const data = await response.json();
+    const tenantId = data?.data?.id;
+
+    if (!tenantId) {
+      throw new Error("Missing tenant ID in create response");
+    }
+
+    revalidatePath("/profile");
+    return { success: true, tenantId };
   } catch (error) {
     return handleApiError(error);
   }
