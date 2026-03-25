@@ -21,6 +21,8 @@ vi.mock("@/components/ui", () => ({
 vi.mock("@/actions/users/tenants", () => ({
   switchTenant: vi.fn(),
   updateTenantName: vi.fn(),
+  createTenant: vi.fn(),
+  deleteTenant: vi.fn(),
 }));
 
 // Test data: two orgs, one active
@@ -69,6 +71,7 @@ function renderProfileOrganizations() {
       memberships={memberships}
       tenantsMap={tenantsMap}
       isOwner={true}
+      hasManageAccount={true}
       sessionTenantId={ACTIVE_TENANT_ID}
     />,
   );

@@ -14,6 +14,7 @@ vi.mock("@/auth.config", () => ({
 vi.mock("@/actions/users/tenants", () => ({
   switchTenant: vi.fn(),
   updateTenantName: vi.fn(),
+  deleteTenant: vi.fn(),
 }));
 
 vi.mock("@/components/ui", () => ({
@@ -39,12 +40,12 @@ describe("MembershipItem", () => {
         tenantId="tenant-1"
         isOwner={false}
         sessionTenantId="different-tenant"
+        availableTenants={[]}
+        membershipCount={1}
       />,
     );
 
-    expect(
-      screen.getByRole("button", { name: /switch/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /switch/i })).toBeInTheDocument();
     expect(screen.queryByText("Active")).not.toBeInTheDocument();
   });
 
@@ -56,6 +57,8 @@ describe("MembershipItem", () => {
         tenantId="tenant-1"
         isOwner={false}
         sessionTenantId="tenant-1"
+        availableTenants={[]}
+        membershipCount={1}
       />,
     );
 
@@ -73,6 +76,8 @@ describe("MembershipItem", () => {
         tenantId="tenant-1"
         isOwner={true}
         sessionTenantId="tenant-1"
+        availableTenants={[]}
+        membershipCount={1}
       />,
     );
 
@@ -87,6 +92,8 @@ describe("MembershipItem", () => {
         tenantId="tenant-1"
         isOwner={false}
         sessionTenantId="tenant-1"
+        availableTenants={[]}
+        membershipCount={1}
       />,
     );
 
@@ -103,6 +110,8 @@ describe("MembershipItem", () => {
         tenantId="tenant-1"
         isOwner={false}
         sessionTenantId="tenant-1"
+        availableTenants={[]}
+        membershipCount={1}
       />,
     );
 

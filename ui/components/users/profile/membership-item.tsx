@@ -7,6 +7,7 @@ import { AlertModal } from "@/components/shadcn/alert-modal/alert-modal";
 import { Modal } from "@/components/shadcn/modal";
 import { DateWithTime, InfoField } from "@/components/ui/entities";
 import { EditTenantForm } from "@/components/users/forms";
+import { DeleteTenantForm } from "@/components/users/forms/delete-tenant-form";
 import { SwitchTenantForm } from "@/components/users/forms/switch-tenant-form";
 import { MembershipDetailData } from "@/types/users";
 
@@ -16,17 +17,23 @@ export const MembershipItem = ({
   tenantId,
   isOwner,
   sessionTenantId,
+  availableTenants,
+  membershipCount,
 }: {
   membership: MembershipDetailData;
   tenantName: string;
   tenantId: string;
   isOwner: boolean;
   sessionTenantId: string | undefined;
+  availableTenants: Array<{ id: string; name: string }>;
+  membershipCount: number;
 }) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSwitchingOpen, setIsSwitchingOpen] = useState(false);
+  const [isDeletingOpen, setIsDeletingOpen] = useState(false);
 
   const isActiveTenant = tenantId === sessionTenantId;
+  const canDelete = isOwner && membershipCount > 1;
 
   return (
     <>
@@ -44,6 +51,20 @@ export const MembershipItem = ({
         description="The session will be updated and the page will reload to apply the change."
       >
         <SwitchTenantForm tenantId={tenantId} setIsOpen={setIsSwitchingOpen} />
+      </AlertModal>
+      <AlertModal
+        open={isDeletingOpen}
+        onOpenChange={setIsDeletingOpen}
+        title="Delete organization"
+        description="This will permanently delete the organization and all its data. Users with no other organizations will lose access. This action cannot be undone."
+      >
+        <DeleteTenantForm
+          tenantId={tenantId}
+          tenantName={tenantName}
+          isActiveTenant={isActiveTenant}
+          availableTenants={availableTenants}
+          setIsOpen={setIsDeletingOpen}
+        />
       </AlertModal>
       <Card variant="inner" className="p-2">
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
@@ -73,6 +94,17 @@ export const MembershipItem = ({
                 onClick={() => setIsEditOpen(true)}
               >
                 Edit
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setIsDeletingOpen(true)}
+              >
+                Delete
               </Button>
             )}
             {isActiveTenant ? (

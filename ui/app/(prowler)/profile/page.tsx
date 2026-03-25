@@ -120,6 +120,7 @@ const SSRDataUser = async ({
             memberships={membershipsIncluded}
             tenantsMap={tenantsMap}
             isOwner={isOwner && hasManageAccount}
+            hasManageAccount={hasManageAccount}
             sessionTenantId={session?.tenantId || ""}
           />
           {hasManageAccount && <ApiKeysCard searchParams={searchParams} />}
