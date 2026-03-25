@@ -59,26 +59,13 @@ import {
   StatusFindingBadge,
 } from "@/components/ui/table/status-finding-badge";
 import { getFailingForLabel } from "@/lib/date-utils";
+import { formatDuration } from "@/lib/date-utils";
 import { getRegionFlag } from "@/lib/region-flags";
 import { cn } from "@/lib/utils";
 
 import { Muted } from "../../muted";
 import { NotificationIndicator } from "../notification-indicator";
 import type { CheckMeta } from "./use-resource-detail-drawer";
-
-const formatDuration = (seconds: number) => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = seconds % 60;
-
-  const parts = [];
-  if (hours > 0) parts.push(`${hours}h`);
-  if (minutes > 0) parts.push(`${minutes}m`);
-  if (remainingSeconds > 0 || parts.length === 0)
-    parts.push(`${remainingSeconds}s`);
-
-  return parts.join(" ");
-};
 
 interface ResourceDetailDrawerContentProps {
   isLoading: boolean;

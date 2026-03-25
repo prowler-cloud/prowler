@@ -1,3 +1,34 @@
+import { formatDistanceToNow } from "date-fns";
+
+/**
+ * Formats a duration in seconds to a human-readable string like "2h 5m 30s".
+ */
+export function formatDuration(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+
+  const parts = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (remainingSeconds > 0 || parts.length === 0)
+    parts.push(`${remainingSeconds}s`);
+
+  return parts.join(" ");
+}
+
+/**
+ * Formats a date string to a relative time like "3 days ago".
+ * Returns the fallback string if the date is null.
+ */
+export function formatRelativeTime(
+  date: string | null,
+  fallback = "Never",
+): string {
+  if (!date) return fallback;
+  return formatDistanceToNow(new Date(date), { addSuffix: true });
+}
+
 /**
  * Computes a human-readable "failing for" duration from first_seen_at to now.
  * Returns null if the date is invalid or not provided.

@@ -34,6 +34,7 @@ import {
   FindingStatus,
   StatusFindingBadge,
 } from "@/components/ui/table/status-finding-badge";
+import { formatDuration } from "@/lib/date-utils";
 import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/iac-utils";
 import { cn } from "@/lib/utils";
 import { FindingProps, ProviderType } from "@/types";
@@ -45,21 +46,6 @@ import { DeltaIndicator } from "./delta-indicator";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
-};
-
-// Add new utility function for duration formatting
-const formatDuration = (seconds: number) => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = seconds % 60;
-
-  const parts = [];
-  if (hours > 0) parts.push(`${hours}h`);
-  if (minutes > 0) parts.push(`${minutes}m`);
-  if (remainingSeconds > 0 || parts.length === 0)
-    parts.push(`${remainingSeconds}s`);
-
-  return parts.join(" ");
 };
 
 interface FindingDetailProps {
