@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, X } from "lucide-react";
+import { Check } from "lucide-react";
 
 import { Button } from "@/components/shadcn";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ export interface ApplyFiltersButtonProps {
   changeCount: number;
   /** Called when the user clicks "Apply Filters" */
   onApply: () => void;
-  /** Called when the user clicks the discard (X) action */
+  /** Called when the user clicks the discard (Undo) action */
   onDiscard: () => void;
   /** Optional extra class names for the outer wrapper */
   className?: string;
@@ -23,7 +23,7 @@ export interface ApplyFiltersButtonProps {
  *
  * - Shows the count of pending changes when `hasChanges` is true.
  * - The apply button is disabled (and visually muted) when there are no changes.
- * - The discard (X) button only appears when there are pending changes.
+ * - The Undo button only appears when there are pending changes.
  * - Uses Prowler's shadcn `Button` component.
  */
 export const ApplyFiltersButton = ({
@@ -52,11 +52,11 @@ export const ApplyFiltersButton = ({
       {hasChanges && (
         <Button
           variant="ghost"
-          size="icon-sm"
+          size="sm"
           onClick={onDiscard}
-          aria-label="Discard pending filter changes"
+          aria-label="Undo pending filter changes"
         >
-          <X className="size-4" />
+          Undo
         </Button>
       )}
     </div>

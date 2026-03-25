@@ -4,9 +4,16 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.24.0] (Prowler UNRELEASED)
 
+### 🔐 Security
+
+- Pin all unpinned dependencies to exact versions to prevent supply chain attacks and ensure reproducible builds [(#10469)](https://github.com/prowler-cloud/prowler/pull/10469)
+
 ### 🐞 Fixed
 
 - Finding groups list/latest now apply computed status/severity filters and finding-level prefilters (delta, region, service, category, resource group, scan, resource type), plus `check_title` support for sort/filter consistency [(#10428)](https://github.com/prowler-cloud/prowler/pull/10428)
+- Populate compliance data inside `check_metadata` for findings, which was always returned as `null` [(#10449)](https://github.com/prowler-cloud/prowler/pull/10449)
+- 403 error for admin users listing tenants due to roles query not using the admin database connection [(#10460)](https://github.com/prowler-cloud/prowler/pull/10460)
+- Filter transient Neo4j defunct connection logs in Sentry `before_send` to suppress false-positive alerts handled by `RetryableSession` retries [(#10452)](https://github.com/prowler-cloud/prowler/pull/10452)
 
 ## [1.23.0] (Prowler v5.22.0)
 
