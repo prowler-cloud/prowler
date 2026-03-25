@@ -6,6 +6,7 @@ export * from "./organizations";
 export * from "./processors";
 export * from "./provider-wizard";
 export * from "./providers";
+export * from "./providers-table";
 export * from "./resources";
 export * from "./scans";
 export * from "./tree";

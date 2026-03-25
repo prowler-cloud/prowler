@@ -1,7 +1,7 @@
-from tasks.jobs.attack_paths.config import DEPRECATED_PROVIDER_RESOURCE_LABEL
+from tasks.jobs.attack_paths.config import PROVIDER_ID_PROPERTY, PROVIDER_RESOURCE_LABEL
 
 CARTOGRAPHY_SCHEMA_METADATA = f"""
-    MATCH (n:{DEPRECATED_PROVIDER_RESOURCE_LABEL} {{provider_id: $provider_id}})
+    MATCH (n:{PROVIDER_RESOURCE_LABEL} {{{PROVIDER_ID_PROPERTY}: $provider_id}})
     WHERE n._module_name STARTS WITH 'cartography:'
       AND NOT n._module_name IN ['cartography:ontology', 'cartography:prowler']
       AND n._module_version IS NOT NULL

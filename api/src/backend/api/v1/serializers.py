@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
@@ -959,6 +960,26 @@ class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
             },
         }
 
+    def create(self, validated_data):
+        try:
+            return super().create(validated_data)
+        except DjangoValidationError as e:
+            if "unique_provider_uids" in str(e):
+                raise ConflictException(
+                    detail="Provider already exists.",
+                    pointer="/data/attributes/uid",
+                )
+            raise
+        except IntegrityError as e:
+            # Handle race conditions where the unique constraint is enforced at the DB level
+            # after validation has already passed.
+            if "unique_provider_uids" in str(e):
+                raise ConflictException(
+                    detail="Provider already exists.",
+                    pointer="/data/attributes/uid",
+                )
+            raise
+
 
 class ProviderUpdateSerializer(BaseWriteSerializer):
     """
@@ -1220,7 +1241,7 @@ class AttackPathsQueryRunRequestSerializer(BaseSerializerV1):
 
 
 class AttackPathsCustomQueryRunRequestSerializer(BaseSerializerV1):
-    query = serializers.CharField()
+    query = serializers.CharField(max_length=10000, min_length=1, trim_whitespace=True)
 
     class JSONAPIMeta:
         resource_name = "attack-paths-custom-query-run-requests"
@@ -1520,6 +1541,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = AzureProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GCP.value:
                 serializer = GCPProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
+                serializer = GoogleWorkspaceProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GITHUB.value:
                 serializer = GithubProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.IAC.value:
@@ -1650,6 +1673,14 @@ class GCPProviderSecret(serializers.Serializer):
 
 class GCPServiceAccountProviderSecret(serializers.Serializer):
     service_account_key = serializers.JSONField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class GoogleWorkspaceProviderSecret(serializers.Serializer):
+    credentials_content = serializers.CharField()
+    delegated_user = serializers.EmailField()
 
     class Meta:
         resource_name = "provider-secrets"
@@ -4149,6 +4180,7 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
     severity = serializers.CharField()
     first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     last_seen_at = serializers.DateTimeField(required=False, allow_null=True)
+    muted_reason = serializers.CharField(required=False, allow_null=True)
 
     class JSONAPIMeta:
         resource_name = "finding-group-resources"

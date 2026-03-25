@@ -61,7 +61,9 @@ class AWSService:
         # Get a single region and client if the service needs it (e.g. AWS Global Service)
         # We cannot include this within an else because some services needs both the regional_clients
         # and a single client like S3
-        self.region = provider.get_default_region(self.service)
+        self.region = provider.get_default_region(
+            self.service, global_service=global_service
+        )
         self.client = self.session.client(self.service, self.region)
 
         # Thread pool for __threading_call__

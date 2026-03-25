@@ -1,10 +1,15 @@
-import { ProviderConnectionStatus, ProviderEntity } from "./providers";
+import {
+  GroupFilterEntity,
+  ProviderConnectionStatus,
+  ProviderEntity,
+} from "./providers";
 import { ScanEntity } from "./scans";
 
 export type FilterEntity =
   | ProviderEntity
   | ScanEntity
-  | ProviderConnectionStatus;
+  | ProviderConnectionStatus
+  | GroupFilterEntity;
 
 export interface FilterOption {
   key: string;
@@ -37,3 +42,36 @@ export enum FilterType {
   CATEGORY = "category__in",
   RESOURCE_GROUPS = "resource_groups__in",
 }
+
+/**
+ * Controls the filter dispatch behavior of DataTableFilterCustom.
+ * - "instant": every selection immediately updates the URL (legacy/default behavior)
+ * - "batch":   selections accumulate in pending state; URL only updates on explicit apply
+ */
+export const DATA_TABLE_FILTER_MODE = {
+  INSTANT: "instant",
+  BATCH: "batch",
+} as const;
+
+export type DataTableFilterMode =
+  (typeof DATA_TABLE_FILTER_MODE)[keyof typeof DATA_TABLE_FILTER_MODE];
+
+/**
+ * Exhaustive union of all URL filter param keys used in Findings filters.
+ * Use this instead of `string` to ensure FILTER_KEY_LABELS and other
+ * param-keyed records stay in sync with the actual filter surface.
+ */
+export type FilterParam =
+  | "filter[provider_type__in]"
+  | "filter[provider_id__in]"
+  | "filter[severity__in]"
+  | "filter[status__in]"
+  | "filter[delta__in]"
+  | "filter[region__in]"
+  | "filter[service__in]"
+  | "filter[resource_type__in]"
+  | "filter[category__in]"
+  | "filter[resource_groups__in]"
+  | "filter[scan__in]"
+  | "filter[inserted_at]"
+  | "filter[muted]";

@@ -1,7 +1,7 @@
 {
   "Provider": "gcp",
   "CheckID": "compute_instance_group_multiple_zones",
-  "CheckTitle": "Ensure Managed Instance Groups span multiple zones for high availability",
+  "CheckTitle": "Managed Instance Groups span multiple zones for high availability",
   "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",

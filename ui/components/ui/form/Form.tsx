@@ -100,7 +100,10 @@ const FormLabel = React.forwardRef<
   return (
     <Label
       ref={ref}
-      className={cn(error && "text-text-error max-w-full text-xs", className)}
+      className={cn(
+        error && "text-text-error-primary max-w-full text-xs",
+        className,
+      )}
       htmlFor={formItemId}
       {...props}
     />
@@ -164,7 +167,7 @@ const FormMessage = React.forwardRef<
       ref={ref}
       id={formMessageId}
       className={cn(
-        "text-text-error max-w-full text-xs font-medium",
+        "text-text-error-primary max-w-full text-xs font-medium",
         className,
       )}
       {...props}

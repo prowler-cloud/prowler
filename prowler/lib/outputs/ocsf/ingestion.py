@@ -21,9 +21,9 @@ def send_ocsf_to_api(
 
     Args:
         file_path: Path to the OCSF JSON file to upload.
-        base_url: API base URL. Falls back to PROWLER_CLOUD_API_BASE env var,
+        base_url: API base URL. Falls back to PROWLER_CLOUD_API_BASE_URL env var,
                   then to https://api.prowler.com.
-        api_key: API key. Falls back to PROWLER_API_KEY env var.
+        api_key: API key. Falls back to PROWLER_CLOUD_API_KEY env var.
         timeout: Request timeout in seconds.
 
     Returns:
@@ -42,7 +42,9 @@ def send_ocsf_to_api(
 
     api_key = api_key or cloud_api_key
     if not api_key:
-        raise ValueError("Missing API key. Set PROWLER_API_KEY environment variable.")
+        raise ValueError(
+            "Missing API key. Set PROWLER_CLOUD_API_KEY environment variable."
+        )
 
     base_url = base_url or cloud_api_base_url
     base_url = base_url.rstrip("/")

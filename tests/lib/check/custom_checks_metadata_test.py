@@ -27,7 +27,9 @@ S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_REMEDIATION_OTHER = "https://github.com/clou
 S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_REMEDIATION_TEXT = (
     "Enable the S3 bucket level public access block."
 )
-S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_REMEDIATION_URL = "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
+S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_REMEDIATION_URL = (
+    "https://hub.prowler.com/check/s3_bucket_level_public_access_block"
+)
 
 
 class TestCustomChecksMetadata:
@@ -36,7 +38,7 @@ class TestCustomChecksMetadata:
             Provider="aws",
             CheckID=S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME,
             CheckTitle="Check S3 Bucket Level Public Access Block.",
-            CheckType=["Data Protection"],
+            CheckType=["Sensitive Data Identifications/PII"],
             CheckAliases=[],
             ServiceName="s3",
             SubServiceName="",
@@ -45,7 +47,7 @@ class TestCustomChecksMetadata:
             ResourceType="AwsS3Bucket",
             Description="Check S3 Bucket Level Public Access Block.",
             Risk="Public access policies may be applied to sensitive data buckets.",
-            RelatedUrl="https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+            RelatedUrl="",
             Remediation=Remediation(
                 Code=Code(
                     NativeIaC="",

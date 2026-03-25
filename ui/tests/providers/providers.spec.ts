@@ -27,6 +27,9 @@ import {
   AlibabaCloudProviderData,
   AlibabaCloudProviderCredential,
   ALIBABACLOUD_CREDENTIAL_OPTIONS,
+  GoogleWorkspaceProviderData,
+  GoogleWorkspaceProviderCredential,
+  GOOGLEWORKSPACE_CREDENTIAL_OPTIONS,
 } from "./providers-page";
 import { ScansPage } from "../scans/scans-page";
 import fs from "fs";
@@ -1345,6 +1348,90 @@ test.describe("Add Provider", () => {
 
         // Verify scan status is "Scheduled scan"
         await scansPage.verifyScheduledScanStatus(accountId);
+      },
+    );
+  });
+
+  test.describe.serial("Add Google Workspace Provider", () => {
+    let providersPage: ProvidersPage;
+    let scansPage: ScansPage;
+
+    const customerId = process.env.E2E_GOOGLEWORKSPACE_CUSTOMER_ID ?? "";
+    const serviceAccountJson =
+      process.env.E2E_GOOGLEWORKSPACE_SERVICE_ACCOUNT_JSON ?? "";
+    const delegatedUser = process.env.E2E_GOOGLEWORKSPACE_DELEGATED_USER ?? "";
+
+    test.beforeEach(async ({ page }) => {
+      test.skip(
+        !customerId || !serviceAccountJson || !delegatedUser,
+        "Google Workspace E2E env vars are not set",
+      );
+      providersPage = new ProvidersPage(page);
+      await deleteProviderIfExists(providersPage, customerId!);
+    });
+
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should add a new Google Workspace provider with service account credentials",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@googleworkspace",
+          "@serial",
+          "@PROVIDER-E2E-017",
+        ],
+      },
+      async ({ page }) => {
+        const googleWorkspaceProviderData: GoogleWorkspaceProviderData = {
+          customerId: customerId,
+          alias: "Test E2E Google Workspace - Service Account",
+        };
+
+        const googleWorkspaceCredentials: GoogleWorkspaceProviderCredential = {
+          type: GOOGLEWORKSPACE_CREDENTIAL_OPTIONS.GOOGLEWORKSPACE_SERVICE_ACCOUNT,
+          serviceAccountJson: serviceAccountJson,
+          delegatedUser: delegatedUser,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select Google Workspace provider
+        await providersPage.selectGoogleWorkspaceProvider();
+
+        // Fill provider details (customer ID and alias)
+        await providersPage.fillGoogleWorkspaceProviderDetails(
+          googleWorkspaceProviderData,
+        );
+        await providersPage.clickNext();
+
+        // Verify credentials page is loaded
+        await providersPage.verifyGoogleWorkspaceCredentialsPageLoaded();
+
+        // Fill credentials
+        await providersPage.fillGoogleWorkspaceCredentials(
+          googleWorkspaceCredentials,
+        );
+        await providersPage.clickNext();
+
+        // Launch scan
+        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.clickNext();
+
+        // Wait for redirect to scan page
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
+
+        // Verify scan status is "Scheduled scan"
+        await scansPage.verifyScheduledScanStatus(customerId);
       },
     );
   });

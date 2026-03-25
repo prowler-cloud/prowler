@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
+import {
+  OrganizationListResponse,
+  OrganizationUnitListResponse,
+} from "@/types";
 
 const PATH_IDENTIFIER_PATTERN = /^[A-Za-z0-9_-]+$/;
 
@@ -35,6 +39,24 @@ function hasActionError(result: unknown): result is { error: unknown } {
       (result as Record<string, unknown>).error !== null &&
       (result as Record<string, unknown>).error !== undefined,
   );
+}
+
+async function fetchOptionalCollection<T extends { data: unknown[] }>(
+  url: URL,
+): Promise<T> {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  try {
+    const response = await fetch(url.toString(), { headers });
+
+    if (!response.ok) {
+      return { data: [] } as unknown as T;
+    }
+
+    return (await handleApiResponse(response)) as T;
+  } catch {
+    return { data: [] } as unknown as T;
+  }
 }
 
 /**
@@ -71,6 +93,59 @@ export const createOrganization = async (formData: FormData) => {
 };
 
 /**
+ * Updates an AWS Organization's name.
+ * PATCH /api/v1/organizations/{id}
+ */
+export const updateOrganizationName = async (
+  organizationId: string,
+  name: string,
+) => {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    return { error: "Organization name cannot be empty." };
+  }
+
+  const headers = await getAuthHeaders({ contentType: true });
+
+  const idValidation = validatePathIdentifier(
+    organizationId,
+    "Organization ID is required",
+    "Invalid organization ID",
+  );
+  if ("error" in idValidation) {
+    return idValidation;
+  }
+
+  const url = new URL(
+    `${apiBaseUrl}/organizations/${encodeURIComponent(idValidation.value)}`,
+  );
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({
+        data: {
+          type: "organizations",
+          id: idValidation.value,
+          attributes: {
+            name: trimmed,
+          },
+        },
+      }),
+    });
+
+    const result = await handleApiResponse(response);
+    if (!hasActionError(result)) {
+      revalidatePath("/providers");
+    }
+    return result;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+/**
  * Lists AWS Organizations filtered by external ID.
  * GET /api/v1/organizations?filter[external_id]={externalId}&filter[org_type]=aws
  */
@@ -82,11 +157,61 @@ export const listOrganizationsByExternalId = async (externalId: string) => {
 
   try {
     const response = await fetch(url.toString(), { headers });
-    return handleApiResponse(response);
+    return await handleApiResponse(response);
   } catch (error) {
     return handleApiError(error);
   }
 };
+
+/**
+ * Lists AWS organizations available for the current tenant.
+ * GET /api/v1/organizations?filter[org_type]=aws
+ */
+export const listOrganizations = async () => {
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/organizations`);
+  url.searchParams.set("filter[org_type]", "aws");
+
+  try {
+    const response = await fetch(url.toString(), { headers });
+    return await handleApiResponse(response);
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const listOrganizationsSafe =
+  async (): Promise<OrganizationListResponse> => {
+    const url = new URL(`${apiBaseUrl}/organizations`);
+    url.searchParams.set("filter[org_type]", "aws");
+    url.searchParams.set("page[size]", "100");
+
+    return fetchOptionalCollection<OrganizationListResponse>(url);
+  };
+
+/**
+ * Lists organization units available for the current tenant.
+ * GET /api/v1/organizational-units
+ */
+export const listOrganizationUnits = async () => {
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/organizational-units`);
+
+  try {
+    const response = await fetch(url.toString(), { headers });
+    return await handleApiResponse(response);
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const listOrganizationUnitsSafe =
+  async (): Promise<OrganizationUnitListResponse> => {
+    const url = new URL(`${apiBaseUrl}/organizational-units`);
+    url.searchParams.set("page[size]", "100");
+
+    return fetchOptionalCollection<OrganizationUnitListResponse>(url);
+  };
 
 /**
  * Creates an organization secret (role-based credentials).
@@ -196,6 +321,72 @@ export const listOrganizationSecretsByOrganizationId = async (
   try {
     const response = await fetch(url.toString(), { headers });
     return handleApiResponse(response);
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+/**
+ * Deletes an AWS Organization resource.
+ * DELETE /api/v1/organizations/{id}
+ */
+export const deleteOrganization = async (organizationId: string) => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const organizationIdValidation = validatePathIdentifier(
+    organizationId,
+    "Organization ID is required",
+    "Invalid organization ID",
+  );
+  if ("error" in organizationIdValidation) {
+    return organizationIdValidation;
+  }
+
+  const url = new URL(
+    `${apiBaseUrl}/organizations/${encodeURIComponent(organizationIdValidation.value)}`,
+  );
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "DELETE",
+      headers,
+    });
+
+    return handleApiResponse(response, "/providers");
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+/**
+ * Deletes an organizational unit.
+ * DELETE /api/v1/organizational-units/{id}
+ */
+export const deleteOrganizationalUnit = async (
+  organizationalUnitId: string,
+) => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const idValidation = validatePathIdentifier(
+    organizationalUnitId,
+    "Organizational unit ID is required",
+    "Invalid organizational unit ID",
+  );
+  if ("error" in idValidation) {
+    return idValidation;
+  }
+
+  const url = new URL(
+    `${apiBaseUrl}/organizational-units/${encodeURIComponent(idValidation.value)}`,
+  );
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "DELETE",
+      headers,
+    });
+
+    return handleApiResponse(response, "/providers");
   } catch (error) {
     return handleApiError(error);
   }

@@ -27,6 +27,9 @@ if TYPE_CHECKING:
     from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
     from prowler.providers.gcp.gcp_provider import GcpProvider
     from prowler.providers.github.github_provider import GithubProvider
+    from prowler.providers.googleworkspace.googleworkspace_provider import (
+        GoogleworkspaceProvider,
+    )
     from prowler.providers.iac.iac_provider import IacProvider
     from prowler.providers.image.image_provider import ImageProvider
     from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
@@ -83,6 +86,7 @@ def return_prowler_provider(
     | CloudflareProvider
     | GcpProvider
     | GithubProvider
+    | GoogleworkspaceProvider
     | IacProvider
     | ImageProvider
     | KubernetesProvider
@@ -97,7 +101,7 @@ def return_prowler_provider(
         provider (Provider): The provider object containing the provider type and associated secrets.
 
     Returns:
-        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | IacProvider | ImageProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OpenstackProvider | OraclecloudProvider: The corresponding provider class.
+        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | GoogleworkspaceProvider | IacProvider | ImageProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OpenstackProvider | OraclecloudProvider: The corresponding provider class.
 
     Raises:
         ValueError: If the provider type specified in `provider.provider` is not supported.
@@ -111,6 +115,12 @@ def return_prowler_provider(
             from prowler.providers.gcp.gcp_provider import GcpProvider
 
             prowler_provider = GcpProvider
+        case Provider.ProviderChoices.GOOGLEWORKSPACE.value:
+            from prowler.providers.googleworkspace.googleworkspace_provider import (
+                GoogleworkspaceProvider,
+            )
+
+            prowler_provider = GoogleworkspaceProvider
         case Provider.ProviderChoices.AZURE.value:
             from prowler.providers.azure.azure_provider import AzureProvider
 
@@ -263,6 +273,7 @@ def initialize_prowler_provider(
     | CloudflareProvider
     | GcpProvider
     | GithubProvider
+    | GoogleworkspaceProvider
     | IacProvider
     | ImageProvider
     | KubernetesProvider
@@ -278,7 +289,7 @@ def initialize_prowler_provider(
         mutelist_processor (Processor): The mutelist processor object containing the mutelist configuration.
 
     Returns:
-        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | IacProvider | ImageProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OpenstackProvider | OraclecloudProvider: An instance of the corresponding provider class
+        AlibabacloudProvider | AwsProvider | AzureProvider | CloudflareProvider | GcpProvider | GithubProvider | GoogleworkspaceProvider | IacProvider | ImageProvider | KubernetesProvider | M365Provider | MongodbatlasProvider | OpenstackProvider | OraclecloudProvider: An instance of the corresponding provider class
             initialized with the provider's secrets.
     """
     prowler_provider = return_prowler_provider(provider)

@@ -32,6 +32,7 @@
       "Id": "1.1.2",
       "Description": "Emergency access or 'break glass' accounts are limited for emergency scenarios where normal administrative accounts are unavailable. They are not assigned to a specific user and will have a combination of physical and technical controls to prevent them from being accessed outside a true emergency. Ensure two Emergency Access accounts have been defined.",
       "Checks": [
+        "entra_break_glass_account_fido2_security_key_registered",
         "entra_emergency_access_exclusion"
       ],
       "Attributes": [
@@ -1446,7 +1447,8 @@
       "Id": "5.2.2.5",
       "Description": "Authentication strength is a Conditional Access control that allows administrators to specify which combination of authentication methods can be used to access a resource. Ensure administrator roles are using a CA policy with Phishing-resistant MFA strength.",
       "Checks": [
-        "entra_admin_users_phishing_resistant_mfa_enabled"
+        "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_break_glass_account_fido2_security_key_registered"
       ],
       "Attributes": [
         {
@@ -1604,7 +1606,9 @@
     {
       "Id": "5.2.2.12",
       "Description": "The Microsoft identity platform supports the device authorization grant, which allows users to sign in to input-constrained devices such as a smart TV, IoT device, or a printer. Ensure the device code sign-in flow is blocked.",
-      "Checks": [],
+      "Checks": [
+        "entra_conditional_access_policy_device_code_flow_blocked"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",

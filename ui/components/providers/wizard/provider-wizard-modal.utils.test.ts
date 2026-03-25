@@ -58,7 +58,7 @@ describe("getProviderWizardDocsDestination", () => {
       "https://goto.prowler.com/provider-aws",
     );
 
-    expect(destination).toBe("aws");
+    expect(destination).toBe("AWS");
   });
 
   it("returns a compact destination label for long docs links", () => {
@@ -66,6 +66,6 @@ describe("getProviderWizardDocsDestination", () => {
       "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
     );
 
-    expect(destination).toBe("aws-organizations");
+    expect(destination).toBe("AWS Organizations");
   });
 });
