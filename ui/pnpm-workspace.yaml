@@ -1,0 +1,27 @@
+# Reference: https://pnpm.io/supply-chain-security
+
+packages: []
+
+# --- Level 1: Minimum Release Age ---
+# Packages must be published for at least 1 day before they can be installed.
+# Prevents installing compromised packages during the detection window.
+minimumReleaseAge: 1440
+
+# --- Level 2: Explicit Build Script Allow-list ---
+# Only these packages may run install/postinstall lifecycle scripts.
+# Any unlisted package with lifecycle scripts will have them silently skipped.
+onlyBuiltDependencies:
+  - sharp
+  - "@sentry/cli"
+  - esbuild
+  - "@heroui/shared-utils"
+  - unrs-resolver
+  - msw
+
+# --- Level 3: Trust Policy + Exotic Subdeps ---
+# Fail when a package's trust evidence is downgraded (e.g., new publisher).
+trustPolicy: no-downgrade
+trustPolicyExclude: []
+
+# Block transitive dependencies from using exotic specifiers (git URLs, tarballs).
+blockExoticSubdeps: true
