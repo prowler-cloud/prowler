@@ -313,7 +313,11 @@ class Test_CloudFront_Service:
         mock_paginator_sources.paginate.return_value = [
             {
                 "deliverySources": [
-                    {"name": "cf-source-1", "resourceArns": [DISTRIBUTION_ARN]},
+                    {
+                        "name": "cf-source-1",
+                        "service": "cloudfront",
+                        "resourceArns": [DISTRIBUTION_ARN],
+                    },
                 ]
             }
         ]
@@ -339,6 +343,7 @@ class Test_CloudFront_Service:
         mock_logs_client.get_paginator.side_effect = paginator_side_effect
 
         service = mock.MagicMock()
+        service.service = "cloudfront"
         service.session.client.return_value = mock_logs_client
 
         CloudFront._get_log_delivery_sources(service, distributions, REGION)
@@ -369,7 +374,11 @@ class Test_CloudFront_Service:
         mock_paginator_sources.paginate.return_value = [
             {
                 "deliverySources": [
-                    {"name": "cf-source-1", "resourceArns": [DISTRIBUTION_ARN]},
+                    {
+                        "name": "cf-source-1",
+                        "service": "cloudfront",
+                        "resourceArns": [DISTRIBUTION_ARN],
+                    },
                 ]
             }
         ]
@@ -385,6 +394,7 @@ class Test_CloudFront_Service:
         mock_logs_client.get_paginator.side_effect = paginator_side_effect
 
         service = mock.MagicMock()
+        service.service = "cloudfront"
         service.session.client.return_value = mock_logs_client
 
         CloudFront._get_log_delivery_sources(service, distributions, REGION)
@@ -417,6 +427,7 @@ class Test_CloudFront_Service:
                 "deliverySources": [
                     {
                         "name": "other-source",
+                        "service": "VPC",
                         "resourceArns": ["arn:aws:some:other:resource"],
                     },
                 ]
@@ -426,6 +437,7 @@ class Test_CloudFront_Service:
         mock_logs_client.get_paginator.return_value = mock_paginator_sources
 
         service = mock.MagicMock()
+        service.service = "cloudfront"
         service.session.client.return_value = mock_logs_client
 
         CloudFront._get_log_delivery_sources(service, distributions, REGION)

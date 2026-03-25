@@ -178,6 +178,8 @@ class CloudFront(AWSService):
             paginator = logs_client.get_paginator("describe_delivery_sources")
             for page in paginator.paginate():
                 for source in page.get("deliverySources", []):
+                    if source.get("service") != self.service:
+                        continue
                     for resource_arn in source.get("resourceArns", []):
                         if resource_arn in distribution_arns:
                             source_name = source.get("name", "")

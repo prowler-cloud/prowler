@@ -17,10 +17,15 @@ class cloudfront_distributions_logging_enabled(Check):
             has_v2_logging = distribution.logging_v2_enabled
 
             if has_legacy_logging or has_realtime_logging or has_v2_logging:
+                methods = []
+                if has_legacy_logging:
+                    methods.append("standard")
+                if has_realtime_logging:
+                    methods.append("real-time")
+                if has_v2_logging:
+                    methods.append("v2/CloudWatch")
                 report.status = "PASS"
-                report.status_extended = (
-                    f"CloudFront Distribution {distribution.id} has logging enabled."
-                )
+                report.status_extended = f"CloudFront Distribution {distribution.id} has logging enabled via {', '.join(methods)}."
             else:
                 report.status = "FAIL"
                 report.status_extended = (

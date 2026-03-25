@@ -64,7 +64,7 @@ class Test_cloudfront_distributions_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled via standard."
             )
 
     def test_one_distribution_logging_disabled_realtime_disabled(self):
@@ -145,7 +145,7 @@ class Test_cloudfront_distributions_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled via real-time."
             )
             assert result[0].resource_tags == []
 
@@ -186,7 +186,7 @@ class Test_cloudfront_distributions_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled via standard, real-time."
             )
             assert result[0].resource_tags == []
 
@@ -228,6 +228,6 @@ class Test_cloudfront_distributions_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled via v2/CloudWatch."
             )
             assert result[0].resource_tags == []
