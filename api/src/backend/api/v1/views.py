@@ -1210,6 +1210,17 @@ class TenantViewSet(BaseTenantViewset):
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_ACCOUNT]
 
+    def set_required_permissions(self):
+        """
+        Returns the required permissions based on the request method.
+        """
+        if self.action in ("list", "create"):
+            # No permissions required for listing or creating tenants
+            self.required_permissions = []
+        else:
+            # Require MANAGE_ACCOUNT for update and delete
+            self.required_permissions = [Permissions.MANAGE_ACCOUNT]
+
     def get_queryset(self):
         queryset = Tenant.objects.filter(membership__user=self.request.user)
         return queryset.prefetch_related("memberships")
