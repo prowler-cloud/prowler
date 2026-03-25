@@ -7,8 +7,10 @@ Description: |
   Contains two AWS managed policies (SecurityAudit and ViewOnlyAccess) and an inline policy.
   This template is designed to be used in Prowler Cloud, but can also be used in other Prowler deployments.
 
+  If you are deploying this template to be used in Prowler Cloud please do not edit the AccountId, IAMPrincipal and ExternalId parameters.
+
 Parameters:
-  # Core Prowler Parameters
+  # Core Prowler IAM Role Parameters
   ExternalId:
     Description: |
       This is the External ID that Prowler will use to assume the ProwlerScan IAM Role.
@@ -86,7 +88,7 @@ Parameters:
       - false
 
   # StackSet Configuration Parameters
-  pAWSOrgUnit:
+  AWSOrganizationalUnitId:
     Description: |
       AWS Organizations OU to deploy this stackset to (e.g., ou-xxxx-yyyyyyyy or r-xxxx for root).
       Only required if DeployStackSet is true.
@@ -124,6 +126,15 @@ Conditions:
   DeployLocalRoleEnabled: !Equals [!Ref DeployLocalRole, true]
   UseDelegatedAdmin: !Equals [!Ref DeployFromDelegatedAdmin, true]
 
+Rules:
+  S3IntegrationRequiresParams:
+    RuleCondition: !Equals [!Ref EnableS3Integration, "true"]
+    Assertions:
+      - Assert: !Not [!Equals [!Ref S3IntegrationBucketName, ""]]
+        AssertDescription: "S3IntegrationBucketName is required when EnableS3Integration is true."
+      - Assert: !Not [!Equals [!Ref S3IntegrationBucketAccountId, ""]]
+        AssertDescription: "S3IntegrationBucketAccountId is required when EnableS3Integration is true."
+
 Resources:
   # Local ProwlerScan Role (deployed in this account)
   ProwlerScan:
@@ -145,8 +156,8 @@ Resources:
                 "aws:PrincipalArn": !Sub "arn:${AWS::Partition}:iam::${AccountId}:${IAMPrincipal}"
       MaxSessionDuration: 3600
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/SecurityAudit"
-        - "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/SecurityAudit"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/job-function/ViewOnlyAccess"
       Policies:
         - PolicyName: ProwlerScan
           PolicyDocument:
@@ -159,6 +170,7 @@ Resources:
                   - "appstream:Describe*"
                   - "appstream:List*"
                   - "backup:List*"
+                  - "backup:Get*"
                   - "bedrock:List*"
                   - "bedrock:Get*"
                   - "cloudtrail:GetInsightSelectors"
@@ -181,6 +193,7 @@ Resources:
                   - "glue:GetConnections"
                   - "glue:GetSecurityConfiguration*"
                   - "glue:SearchTables"
+                  - "glue:GetMLTransforms"
                   - "lambda:GetFunction*"
                   - "logs:FilterLogEvents"
                   - "lightsail:GetRelationalDatabases"
@@ -189,7 +202,6 @@ Resources:
                   - "s3:GetAccountPublicAccessBlock"
                   - "shield:DescribeProtection"
                   - "shield:GetSubscriptionState"
-                  - "securityhub:BatchImportFindings"
                   - "securityhub:GetFindings"
                   - "servicecatalog:Describe*"
                   - "servicecatalog:List*"
@@ -200,13 +212,18 @@ Resources:
                   - "tag:GetTagKeys"
                   - "wellarchitected:List*"
                 Resource: "*"
+              - Sid: AllowSecurityHubImportFindings
+                Effect: Allow
+                Action:
+                  - "securityhub:BatchImportFindings"
+                Resource: "*"
               - Sid: AllowAPIGatewayReadOnly
                 Effect: Allow
                 Action:
                   - "apigateway:GET"
                 Resource:
-                  - "arn:*:apigateway:*::/restapis/*"
-                  - "arn:*:apigateway:*::/apis/*"
+                  - !Sub "arn:${AWS::Partition}:apigateway:*::/restapis/*"
+                  - !Sub "arn:${AWS::Partition}:apigateway:*::/apis/*"
         - !If
           - OrganizationsEnabled
           - PolicyName: ProwlerOrganizations
@@ -228,8 +245,12 @@ Resources:
                   Effect: Allow
                   Action:
                     - "organizations:RegisterDelegatedAdministrator"
-                    - "iam:CreateServiceLinkedRole"
                   Resource: "*"
+                - Sid: AllowCreateStackSetSLR
+                  Effect: Allow
+                  Action:
+                    - "iam:CreateServiceLinkedRole"
+                  Resource: !Sub "arn:${AWS::Partition}:iam::*:role/aws-service-role/member.org.stacksets.cloudformation.amazonaws.com/*"
           - !Ref AWS::NoValue
         - !If
           - S3IntegrationEnabled
@@ -287,7 +308,7 @@ Resources:
         Enabled: True
         RetainStacksOnAccountRemoval: !Ref RetainStacksOnAccountRemoval
       OperationPreferences:
-        FailureTolerancePercentage: 100
+        FailureTolerancePercentage: 10
         MaxConcurrentPercentage: 100
       Parameters:
         - ParameterKey: ExternalId
@@ -307,7 +328,7 @@ Resources:
       StackInstancesGroup:
         - DeploymentTargets:
             OrganizationalUnitIds:
-              - !Ref pAWSOrgUnit
+              - !Ref AWSOrganizationalUnitId
           Regions:
             - us-east-1
       TemplateBody: |
@@ -397,8 +418,8 @@ Resources:
                         "aws:PrincipalArn": !Sub "arn:${AWS::Partition}:iam::${AccountId}:${IAMPrincipal}"
               MaxSessionDuration: 3600
               ManagedPolicyArns:
-                - "arn:aws:iam::aws:policy/SecurityAudit"
-                - "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess"
+                - !Sub "arn:${AWS::Partition}:iam::aws:policy/SecurityAudit"
+                - !Sub "arn:${AWS::Partition}:iam::aws:policy/job-function/ViewOnlyAccess"
               Policies:
                 - PolicyName: ProwlerScan
                   PolicyDocument:
@@ -411,6 +432,7 @@ Resources:
                           - "appstream:Describe*"
                           - "appstream:List*"
                           - "backup:List*"
+                          - "backup:Get*"
                           - "bedrock:List*"
                           - "bedrock:Get*"
                           - "cloudtrail:GetInsightSelectors"
@@ -433,6 +455,7 @@ Resources:
                           - "glue:GetConnections"
                           - "glue:GetSecurityConfiguration*"
                           - "glue:SearchTables"
+                          - "glue:GetMLTransforms"
                           - "lambda:GetFunction*"
                           - "logs:FilterLogEvents"
                           - "lightsail:GetRelationalDatabases"
@@ -441,7 +464,6 @@ Resources:
                           - "s3:GetAccountPublicAccessBlock"
                           - "shield:DescribeProtection"
                           - "shield:GetSubscriptionState"
-                          - "securityhub:BatchImportFindings"
                           - "securityhub:GetFindings"
                           - "servicecatalog:Describe*"
                           - "servicecatalog:List*"
@@ -452,13 +474,18 @@ Resources:
                           - "tag:GetTagKeys"
                           - "wellarchitected:List*"
                         Resource: "*"
+                      - Sid: AllowSecurityHubImportFindings
+                        Effect: Allow
+                        Action:
+                          - "securityhub:BatchImportFindings"
+                        Resource: "*"
                       - Sid: AllowAPIGatewayReadOnly
                         Effect: Allow
                         Action:
                           - "apigateway:GET"
                         Resource:
-                          - "arn:*:apigateway:*::/restapis/*"
-                          - "arn:*:apigateway:*::/apis/*"
+                          - !Sub "arn:${AWS::Partition}:apigateway:*::/restapis/*"
+                          - !Sub "arn:${AWS::Partition}:apigateway:*::/apis/*"
                 - !If
                   - OrganizationsEnabled
                   - PolicyName: ProwlerOrganizations
@@ -480,8 +507,12 @@ Resources:
                           Effect: Allow
                           Action:
                             - "organizations:RegisterDelegatedAdministrator"
-                            - "iam:CreateServiceLinkedRole"
                           Resource: "*"
+                        - Sid: AllowCreateStackSetSLR
+                          Effect: Allow
+                          Action:
+                            - "iam:CreateServiceLinkedRole"
+                          Resource: !Sub "arn:${AWS::Partition}:iam::*:role/aws-service-role/member.org.stacksets.cloudformation.amazonaws.com/*"
                   - !Ref AWS::NoValue
                 - !If
                   - S3IntegrationEnabled
@@ -555,7 +586,7 @@ Metadata:
       - Label:
           default: StackSet Configuration (Required if DeployStackSet is true)
         Parameters:
-          - pAWSOrgUnit
+          - AWSOrganizationalUnitId
           - DeployFromDelegatedAdmin
           - RetainStacksOnAccountRemoval
 
