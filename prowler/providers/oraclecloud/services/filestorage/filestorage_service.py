@@ -21,9 +21,9 @@ class Filestorage(OCIService):
     def __get_client__(self, region):
         """Get the Filestorage client for a region."""
         client_region = self.regional_clients.get(region)
-        if client_region:
+        if not client_region:
             return self._create_oci_client(oci.file_storage.FileStorageClient)
-        return None
+        return client_region.client
 
     def __list_file_systems__(self, regional_client):
         """List all file_systems."""
