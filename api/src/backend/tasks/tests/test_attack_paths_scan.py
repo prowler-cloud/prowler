@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 from tasks.jobs.attack_paths import findings as findings_module
+from tasks.jobs.attack_paths import indexes as indexes_module
 from tasks.jobs.attack_paths import internet as internet_module
 from tasks.jobs.attack_paths import sync as sync_module
 from tasks.jobs.attack_paths.scan import run as attack_paths_run
@@ -39,7 +40,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.sync.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.findings.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
+    @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
@@ -186,7 +187,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.findings.analysis")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
+    @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
@@ -285,7 +286,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.findings.analysis")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
+    @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
@@ -388,7 +389,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.findings.analysis")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
+    @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
@@ -493,7 +494,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.sync.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.findings.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
+    @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
@@ -606,7 +607,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.sync.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.findings.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
+    @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
@@ -719,7 +720,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.sync.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.findings.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
+    @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
@@ -837,7 +838,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.sync.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.findings.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.create_findings_indexes")
+    @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
@@ -1265,7 +1266,7 @@ class TestAttackPathsFindingsHelpers:
     def test_create_findings_indexes_executes_all_statements(self):
         mock_session = MagicMock()
         with patch("tasks.jobs.attack_paths.indexes.run_write_query") as mock_run_write:
-            findings_module.create_findings_indexes(mock_session)
+            indexes_module.create_findings_indexes(mock_session)
 
         from tasks.jobs.attack_paths.indexes import FINDINGS_INDEX_STATEMENTS
 

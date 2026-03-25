@@ -62,7 +62,7 @@ from cartography.intel import analysis as cartography_analysis
 from cartography.intel import create_indexes as cartography_create_indexes
 from cartography.intel import ontology as cartography_ontology
 from celery.utils.log import get_task_logger
-from tasks.jobs.attack_paths import db_utils, findings, internet, sync, utils
+from tasks.jobs.attack_paths import db_utils, findings, indexes, internet, sync, utils
 from tasks.jobs.attack_paths.config import get_cartography_ingestion_function
 
 from api.attack_paths import database as graph_database
@@ -165,7 +165,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         ) as tmp_neo4j_session:
             # Indexes creation
             cartography_create_indexes.run(tmp_neo4j_session, tmp_cartography_config)
-            findings.create_findings_indexes(tmp_neo4j_session)
+            indexes.create_findings_indexes(tmp_neo4j_session)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 2)
 
             # The real scan, where iterates over cloud services
@@ -221,7 +221,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             cartography_create_indexes.run(
                 tenant_neo4j_session, tenant_cartography_config
             )
-            findings.create_findings_indexes(tenant_neo4j_session)
+            indexes.create_findings_indexes(tenant_neo4j_session)
             sync.create_sync_indexes(tenant_neo4j_session)
 
         logger.info(f"Deleting existing provider graph in {tenant_database_name}")
