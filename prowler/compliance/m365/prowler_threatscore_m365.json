@@ -388,7 +388,7 @@
       "Description": "Enable Identity Protection user risk policies",
       "Checks": [
         "defenderxdr_endpoint_privileged_user_exposed_credentials",
-        "entra_conditional_access_policy_block_insider_risk_o365",
+        "entra_conditional_access_policy_block_o365_insider_risk",
         "entra_identity_protection_user_risk_enabled"
       ],
       "Attributes": [

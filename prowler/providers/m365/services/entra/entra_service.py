@@ -272,18 +272,19 @@ class Entra(M365Service):
                                 [],
                             )
                         ],
+                        # Guard: getattr returns None when the attribute
+                        # is absent; the walrus operator assigns the result
+                        # once and the ternary prevents calling .value on
+                        # None while converting the MS Graph SDK enum to
+                        # our InsiderRiskLevel.
                         insider_risk_levels=(
-                            InsiderRiskLevel(
-                                getattr(
+                            InsiderRiskLevel(raw_insider_risk.value)
+                            if (
+                                raw_insider_risk := getattr(
                                     policy.conditions,
                                     "insider_risk_levels",
                                     None,
-                                ).value
-                            )
-                            if getattr(
-                                policy.conditions,
-                                "insider_risk_levels",
-                                None,
+                                )
                             )
                             is not None
                             else None

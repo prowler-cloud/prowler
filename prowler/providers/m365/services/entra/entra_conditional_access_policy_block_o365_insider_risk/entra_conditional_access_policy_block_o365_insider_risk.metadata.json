@@ -1,6 +1,6 @@
 {
   "Provider": "m365",
-  "CheckID": "entra_conditional_access_policy_block_insider_risk_o365",
+  "CheckID": "entra_conditional_access_policy_block_o365_insider_risk",
   "CheckTitle": "Conditional Access policy blocks Office 365 access for users with elevated insider risk",
   "CheckType": [],
   "ServiceName": "entra",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Configure a Conditional Access policy to **block** Office 365 access for users with **elevated insider risk** levels. This leverages Microsoft Purview Adaptive Protection signals to dynamically restrict access based on user behavior analysis.\n\nEnsure Insider Risk Management and Adaptive Protection are configured in Microsoft Purview as prerequisites.",
-      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_block_insider_risk_o365"
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_block_o365_insider_risk"
     }
   },
   "Categories": [

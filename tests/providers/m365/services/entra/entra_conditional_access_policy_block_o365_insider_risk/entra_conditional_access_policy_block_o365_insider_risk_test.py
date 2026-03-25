@@ -18,7 +18,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
-class Test_entra_conditional_access_policy_block_insider_risk_o365:
+class Test_entra_conditional_access_policy_block_o365_insider_risk:
     def test_no_conditional_access_policies(self):
         """Test FAIL when no conditional access policies exist."""
         entra_client = mock.MagicMock
@@ -31,17 +31,17 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365 import (
-                entra_conditional_access_policy_block_insider_risk_o365,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk import (
+                entra_conditional_access_policy_block_o365_insider_risk,
             )
 
             entra_client.conditional_access_policies = {}
 
-            check = entra_conditional_access_policy_block_insider_risk_o365()
+            check = entra_conditional_access_policy_block_o365_insider_risk()
             result = check.execute()
 
             assert len(result) == 1
@@ -69,12 +69,12 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365 import (
-                entra_conditional_access_policy_block_insider_risk_o365,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk import (
+                entra_conditional_access_policy_block_o365_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -122,7 +122,7 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 )
             }
 
-            check = entra_conditional_access_policy_block_insider_risk_o365()
+            check = entra_conditional_access_policy_block_o365_insider_risk()
             result = check.execute()
 
             assert len(result) == 1
@@ -150,12 +150,12 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365 import (
-                entra_conditional_access_policy_block_insider_risk_o365,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk import (
+                entra_conditional_access_policy_block_o365_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -203,7 +203,7 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 )
             }
 
-            check = entra_conditional_access_policy_block_insider_risk_o365()
+            check = entra_conditional_access_policy_block_o365_insider_risk()
             result = check.execute()
 
             assert len(result) == 1
@@ -230,12 +230,12 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365 import (
-                entra_conditional_access_policy_block_insider_risk_o365,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk import (
+                entra_conditional_access_policy_block_o365_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -283,7 +283,7 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 )
             }
 
-            check = entra_conditional_access_policy_block_insider_risk_o365()
+            check = entra_conditional_access_policy_block_o365_insider_risk()
             result = check.execute()
 
             assert len(result) == 1
@@ -311,12 +311,12 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365 import (
-                entra_conditional_access_policy_block_insider_risk_o365,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk import (
+                entra_conditional_access_policy_block_o365_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -364,7 +364,7 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 )
             }
 
-            check = entra_conditional_access_policy_block_insider_risk_o365()
+            check = entra_conditional_access_policy_block_o365_insider_risk()
             result = check.execute()
 
             assert len(result) == 1
@@ -392,12 +392,12 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365 import (
-                entra_conditional_access_policy_block_insider_risk_o365,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk import (
+                entra_conditional_access_policy_block_o365_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -445,7 +445,7 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 )
             }
 
-            check = entra_conditional_access_policy_block_insider_risk_o365()
+            check = entra_conditional_access_policy_block_o365_insider_risk()
             result = check.execute()
 
             assert len(result) == 1
@@ -473,12 +473,12 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365 import (
-                entra_conditional_access_policy_block_insider_risk_o365,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk import (
+                entra_conditional_access_policy_block_o365_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -526,7 +526,7 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 )
             }
 
-            check = entra_conditional_access_policy_block_insider_risk_o365()
+            check = entra_conditional_access_policy_block_o365_insider_risk()
             result = check.execute()
 
             assert len(result) == 1
@@ -554,12 +554,12 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365 import (
-                entra_conditional_access_policy_block_insider_risk_o365,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk import (
+                entra_conditional_access_policy_block_o365_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -607,7 +607,7 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 )
             }
 
-            check = entra_conditional_access_policy_block_insider_risk_o365()
+            check = entra_conditional_access_policy_block_o365_insider_risk()
             result = check.execute()
 
             assert len(result) == 1
@@ -635,12 +635,12 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365 import (
-                entra_conditional_access_policy_block_insider_risk_o365,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk import (
+                entra_conditional_access_policy_block_o365_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -688,7 +688,7 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 )
             }
 
-            check = entra_conditional_access_policy_block_insider_risk_o365()
+            check = entra_conditional_access_policy_block_o365_insider_risk()
             result = check.execute()
 
             assert len(result) == 1
@@ -699,6 +699,126 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
             )
             assert result[0].resource_name == display_name
             assert result[0].resource_id == id
+            assert result[0].location == "global"
+
+    def test_mixed_policies_report_only_and_enabled_pass(self):
+        """Test PASS when both a report-only and an enabled policy exist."""
+        report_only_id = str(uuid4())
+        enabled_id = str(uuid4())
+        enabled_display_name = "Block Insider Risk O365 Enabled"
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk import (
+                entra_conditional_access_policy_block_o365_insider_risk,
+            )
+            from prowler.providers.m365.services.entra.entra_service import (
+                ConditionalAccessPolicy,
+            )
+
+            entra_client.conditional_access_policies = {
+                report_only_id: ConditionalAccessPolicy(
+                    id=report_only_id,
+                    display_name="Block Insider Risk O365 Report Only",
+                    conditions=Conditions(
+                        application_conditions=ApplicationsConditions(
+                            included_applications=["Office365"],
+                            excluded_applications=[],
+                            included_user_actions=[],
+                        ),
+                        user_conditions=UsersConditions(
+                            included_groups=[],
+                            excluded_groups=[],
+                            included_users=["All"],
+                            excluded_users=[],
+                            included_roles=[],
+                            excluded_roles=[],
+                        ),
+                        client_app_types=[],
+                        user_risk_levels=[],
+                        insider_risk_levels=InsiderRiskLevel.ELEVATED,
+                    ),
+                    grant_controls=GrantControls(
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                        operator=GrantControlOperator.OR,
+                        authentication_strength=None,
+                    ),
+                    session_controls=SessionControls(
+                        persistent_browser=PersistentBrowser(
+                            is_enabled=False, mode="always"
+                        ),
+                        sign_in_frequency=SignInFrequency(
+                            is_enabled=False,
+                            frequency=None,
+                            type=None,
+                            interval=SignInFrequencyInterval.TIME_BASED,
+                        ),
+                    ),
+                    state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
+                ),
+                enabled_id: ConditionalAccessPolicy(
+                    id=enabled_id,
+                    display_name=enabled_display_name,
+                    conditions=Conditions(
+                        application_conditions=ApplicationsConditions(
+                            included_applications=["Office365"],
+                            excluded_applications=[],
+                            included_user_actions=[],
+                        ),
+                        user_conditions=UsersConditions(
+                            included_groups=[],
+                            excluded_groups=[],
+                            included_users=["All"],
+                            excluded_users=[],
+                            included_roles=[],
+                            excluded_roles=[],
+                        ),
+                        client_app_types=[],
+                        user_risk_levels=[],
+                        insider_risk_levels=InsiderRiskLevel.ELEVATED,
+                    ),
+                    grant_controls=GrantControls(
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                        operator=GrantControlOperator.OR,
+                        authentication_strength=None,
+                    ),
+                    session_controls=SessionControls(
+                        persistent_browser=PersistentBrowser(
+                            is_enabled=False, mode="always"
+                        ),
+                        sign_in_frequency=SignInFrequency(
+                            is_enabled=False,
+                            frequency=None,
+                            type=None,
+                            interval=SignInFrequencyInterval.TIME_BASED,
+                        ),
+                    ),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                ),
+            }
+
+            check = entra_conditional_access_policy_block_o365_insider_risk()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Conditional Access Policy '{enabled_display_name}' blocks Office 365 access for users with elevated insider risk."
+            )
+            assert result[0].resource_name == enabled_display_name
+            assert result[0].resource_id == enabled_id
             assert result[0].location == "global"
 
     def test_policy_all_apps_pass(self):
@@ -715,12 +835,12 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 return_value=set_mocked_m365_provider(),
             ),
             mock.patch(
-                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365.entra_client",
+                "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_insider_risk_o365.entra_conditional_access_policy_block_insider_risk_o365 import (
-                entra_conditional_access_policy_block_insider_risk_o365,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_o365_insider_risk.entra_conditional_access_policy_block_o365_insider_risk import (
+                entra_conditional_access_policy_block_o365_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -768,7 +888,7 @@ class Test_entra_conditional_access_policy_block_insider_risk_o365:
                 )
             }
 
-            check = entra_conditional_access_policy_block_insider_risk_o365()
+            check = entra_conditional_access_policy_block_o365_insider_risk()
             result = check.execute()
 
             assert len(result) == 1
