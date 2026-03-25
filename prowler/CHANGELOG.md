@@ -9,6 +9,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `apikeys_api_restricted_with_gemini_api` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
 - `gemini_api_disabled` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
 - CISA SCuBA Google Workspace Baselines compliance [(#10466)](https://github.com/prowler-cloud/prowler/pull/10466)
+- `cloudfront_distributions_logging_enabled` detects Standard Logging v2 via CloudWatch Log Delivery [(#10090)](https://github.com/prowler-cloud/prowler/pull/10090)
 
 ---
 
@@ -18,6 +19,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Oracle Cloud `events_rule_idp_group_mapping_changes` now recognizes the CIS 3.1 `add/remove` event names to avoid false positives [(#10416)](https://github.com/prowler-cloud/prowler/pull/10416)
 - Oracle Cloud password policy checks now exclude immutable system-managed policies (`SimplePasswordPolicy`, `StandardPasswordPolicy`) to avoid false positives [(#10453)](https://github.com/prowler-cloud/prowler/pull/10453)
+- Oracle Cloud `kms_key_rotation_enabled` now checks current key version age to avoid false positives on vaults without auto-rotation support [(#10450)](https://github.com/prowler-cloud/prowler/pull/10450)
 
 ---
 
