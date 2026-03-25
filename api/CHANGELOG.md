@@ -4,6 +4,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.24.0] (Prowler UNRELEASED)
 
+### 🔐 Security
+
+- Pin all unpinned dependencies to exact versions to prevent supply chain attacks and ensure reproducible builds [(#10469)](https://github.com/prowler-cloud/prowler/pull/10469)
+
 ### 🐞 Fixed
 
 - Finding groups list/latest now apply computed status/severity filters and finding-level prefilters (delta, region, service, category, resource group, scan, resource type), plus `check_title` support for sort/filter consistency [(#10428)](https://github.com/prowler-cloud/prowler/pull/10428)
