@@ -41,14 +41,14 @@ class kms_key_rotation_enabled(Check):
             ):
                 report.status = "PASS"
                 if key.is_auto_rotation_enabled:
-                    report.status_extended = f"KMS key '{key.name}' has auto-rotation enabled with interval of {key.rotation_interval_in_days} days."
+                    report.status_extended = f"KMS key {key.name} has auto-rotation enabled with interval of {key.rotation_interval_in_days} days."
                 elif manually_rotated_recently:
-                    report.status_extended = f"KMS key '{key.name}' was manually rotated within the last 365 days."
+                    report.status_extended = f"KMS key {key.name} was manually rotated within the last 365 days."
                 else:
-                    report.status_extended = f"KMS key '{key.name}' has rotation interval set to {key.rotation_interval_in_days} days."
+                    report.status_extended = f"KMS key {key.name} has rotation interval set to {key.rotation_interval_in_days} days."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"KMS key '{key.name}' has not been rotated within the last 365 days and does not have auto-rotation enabled."
+                report.status_extended = f"KMS key {key.name} has not been rotated within the last 365 days and does not have auto-rotation enabled."
 
             findings.append(report)
 
