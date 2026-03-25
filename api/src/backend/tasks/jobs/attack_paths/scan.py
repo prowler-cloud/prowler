@@ -222,7 +222,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
                 tenant_neo4j_session, tenant_cartography_config
             )
             indexes.create_findings_indexes(tenant_neo4j_session)
-            sync.create_sync_indexes(tenant_neo4j_session)
+            indexes.create_sync_indexes(tenant_neo4j_session)
 
         logger.info(f"Deleting existing provider graph in {tenant_database_name}")
         db_utils.set_provider_graph_data_ready(attack_paths_scan, False)

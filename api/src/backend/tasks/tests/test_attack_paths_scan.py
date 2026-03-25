@@ -37,7 +37,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.sync.sync_graph")
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph")
-    @patch("tasks.jobs.attack_paths.scan.sync.create_sync_indexes")
+    @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.findings.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
@@ -491,7 +491,7 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.graph_database.drop_subgraph",
         side_effect=RuntimeError("drop failed"),
     )
-    @patch("tasks.jobs.attack_paths.scan.sync.create_sync_indexes")
+    @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.findings.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
@@ -604,7 +604,7 @@ class TestAttackPathsRun:
         side_effect=RuntimeError("sync failed"),
     )
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph")
-    @patch("tasks.jobs.attack_paths.scan.sync.create_sync_indexes")
+    @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.findings.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
@@ -717,7 +717,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.sync.sync_graph")
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph")
-    @patch("tasks.jobs.attack_paths.scan.sync.create_sync_indexes")
+    @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.findings.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
@@ -835,7 +835,7 @@ class TestAttackPathsRun:
         "tasks.jobs.attack_paths.scan.graph_database.drop_subgraph",
         side_effect=RuntimeError("drop failed"),
     )
-    @patch("tasks.jobs.attack_paths.scan.sync.create_sync_indexes")
+    @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.findings.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
