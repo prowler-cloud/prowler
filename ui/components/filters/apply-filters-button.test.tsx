@@ -5,7 +5,6 @@ import { describe, expect, it, vi } from "vitest";
 // Mock lucide-react to avoid SVG rendering issues in jsdom
 vi.mock("lucide-react", () => ({
   Check: () => <svg data-testid="check-icon" />,
-  X: () => <svg data-testid="x-icon" />,
 }));
 
 // Mock @/components/shadcn to avoid next-auth import chain
@@ -74,7 +73,7 @@ describe("ApplyFiltersButton", () => {
       expect(applyButton).toBeDisabled();
     });
 
-    it("should NOT render the discard (X) button when there are no changes", () => {
+    it("should NOT render the Undo button when there are no changes", () => {
       // Given / When
       render(
         <ApplyFiltersButton
@@ -88,7 +87,7 @@ describe("ApplyFiltersButton", () => {
       // Then
       expect(
         screen.queryByRole("button", {
-          name: /discard/i,
+          name: /undo/i,
         }),
       ).not.toBeInTheDocument();
     });
@@ -166,7 +165,7 @@ describe("ApplyFiltersButton", () => {
       ).toBeInTheDocument();
     });
 
-    it("should render the discard (X) button", () => {
+    it("should render the Undo button", () => {
       // Given / When
       render(
         <ApplyFiltersButton
@@ -179,7 +178,7 @@ describe("ApplyFiltersButton", () => {
 
       // Then
       expect(
-        screen.getByRole("button", { name: /discard pending filter changes/i }),
+        screen.getByRole("button", { name: /undo pending filter changes/i }),
       ).toBeInTheDocument();
     });
   });
@@ -237,7 +236,7 @@ describe("ApplyFiltersButton", () => {
   // ── onDiscard interaction ────────────────────────────────────────────────
 
   describe("onDiscard", () => {
-    it("should call onDiscard when the Discard button is clicked", async () => {
+    it("should call onDiscard when the Undo button is clicked", async () => {
       // Given
       const user = userEvent.setup();
       const onApply = vi.fn();
@@ -254,7 +253,7 @@ describe("ApplyFiltersButton", () => {
 
       // When
       await user.click(
-        screen.getByRole("button", { name: /discard pending filter changes/i }),
+        screen.getByRole("button", { name: /undo pending filter changes/i }),
       );
 
       // Then
