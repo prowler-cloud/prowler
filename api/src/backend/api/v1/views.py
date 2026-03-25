@@ -39,6 +39,7 @@ from django.db.models import (
     IntegerField,
     Max,
     Min,
+    OuterRef,
     Prefetch,
     Q,
     QuerySet,
@@ -7291,15 +7292,19 @@ class FindingGroupViewSet(BaseRLSViewSet):
         if not filterset.is_valid():
             raise ValidationError(filterset.errors)
         filtered_queryset = filterset.qs
-        if latest:
-            latest_per_check_ids = (
-                filtered_queryset.order_by("check_id", "provider_id", "-inserted_at")
-                .distinct("check_id", "provider_id")
-                .values("id")
+        # Only include summaries from each provider's most recent date
+        # (within the filtered range). This prevents inflated resource counts
+        # when multiple days of summaries exist for the same provider.
+        latest_date_sq = Subquery(
+            filtered_queryset.filter(
+                provider_id=OuterRef("provider_id"),
             )
-            filtered_queryset = filtered_queryset.filter(
-                id__in=Subquery(latest_per_check_ids)
-            )
+            .order_by("-inserted_at")
+            .values("inserted_at")[:1]
+        )
+        filtered_queryset = filtered_queryset.annotate(
+            _latest_provider_date=latest_date_sq,
+        ).filter(inserted_at=F("_latest_provider_date"))
         return self._aggregate_daily_summaries(filtered_queryset)
 
     def _sorted_paginated_response(self, request, aggregated_queryset):
