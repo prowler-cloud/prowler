@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
-## [0.5.0] (Prowler v5.20.0 UNRELEASED)
+## [0.5.0] (Prowler v5.21.0)
 
 ### 🚀 Added
 

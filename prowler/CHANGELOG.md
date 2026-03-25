@@ -2,7 +2,37 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.21.0] (Prowler UNRELEASED)
+## [5.23.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `apikeys_api_restricted_with_gemini_api` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
+- `gemini_api_disabled` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
+- `cloudfront_distributions_logging_enabled` detects Standard Logging v2 via CloudWatch Log Delivery [(#10090)](https://github.com/prowler-cloud/prowler/pull/10090)
+
+---
+
+## [5.22.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Oracle Cloud `events_rule_idp_group_mapping_changes` now recognizes the CIS 3.1 `add/remove` event names to avoid false positives [(#10416)](https://github.com/prowler-cloud/prowler/pull/10416)
+- Oracle Cloud password policy checks now exclude immutable system-managed policies (`SimplePasswordPolicy`, `StandardPasswordPolicy`) to avoid false positives [(#10453)](https://github.com/prowler-cloud/prowler/pull/10453)
+- Oracle Cloud `kms_key_rotation_enabled` now checks current key version age to avoid false positives on vaults without auto-rotation support [(#10450)](https://github.com/prowler-cloud/prowler/pull/10450)
+
+---
+
+## [5.22.0] (Prowler v5.22.0)
+
+### 🐞 Fixed
+
+- Azure MySQL flexible server checks now compare configuration values case-insensitively to avoid false negatives when Azure returns lowercase values [(#10396)](https://github.com/prowler-cloud/prowler/pull/10396)
+- Azure `vm_backup_enabled` and `vm_sufficient_daily_backup_retention_period` checks now compare VM names case-insensitively to avoid false negatives when Azure stores backup item names in a different case [(#10395)](https://github.com/prowler-cloud/prowler/pull/10395)
+- `entra_non_privileged_user_has_mfa` skips disabled users to avoid false positives [(#10426)](https://github.com/prowler-cloud/prowler/pull/10426)
+
+---
+
+## [5.21.0] (Prowler v5.21.0)
 
 ### 🚀 Added
 
@@ -10,7 +40,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_conditional_access_policy_device_code_flow_blocked` check for M365 provider [(#10218)](https://github.com/prowler-cloud/prowler/pull/10218)
 - RBI compliance for the Azure provider [(#10339)](https://github.com/prowler-cloud/prowler/pull/10339)
 -`entra_conditional_access_policy_require_mfa_for_admin_portals` check for Azure provider and update CIS compliance [(#10330)](https://github.com/prowler-cloud/prowler/pull/10330)
-- CheckMetadata Pydantic validators [(#8584)](https://github.com/prowler-cloud/prowler/pull/8583)
+- CheckMetadata Pydantic validators [(#8583)](https://github.com/prowler-cloud/prowler/pull/8583)
 - `organization_repository_deletion_limited` check for GitHub provider [(#10185)](https://github.com/prowler-cloud/prowler/pull/10185)
 - SecNumCloud 3.2 for the GCP provider [(#10364)](https://github.com/prowler-cloud/prowler/pull/10364)
 - SecNumCloud 3.2 for the Azure provider [(#10358)](https://github.com/prowler-cloud/prowler/pull/10358)
@@ -26,16 +56,17 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update M365 Teams service metadata to new format [(#9685)](https://github.com/prowler-cloud/prowler/pull/9685)
 - Update M365 Entra ID service metadata to new format [(#9682)](https://github.com/prowler-cloud/prowler/pull/9682)
 - Update ResourceType and Categories for Azure Entra ID service metadata [(#10334)](https://github.com/prowler-cloud/prowler/pull/10334)
-
-### 🔐 Security
-
-- Bump `multipart` to 1.3.1 to fix [GHSA-p2m9-wcp5-6qw3](https://github.com/defnull/multipart/security/advisories/GHSA-p2m9-wcp5-6qw3) [(#10331)](https://github.com/prowler-cloud/prowler/pull/10331)
+- Update OCI Regions to include US DoD regions [(#10375)](https://github.com/prowler-cloud/prowler/pull/10376)
 
 ### 🐞 Fixed
 
 - Route53 dangling IP check false positive when using `--region` flag [(#9952)](https://github.com/prowler-cloud/prowler/pull/9952)
 - RBI compliance framework support on Prowler Dashboard for the Azure provider [(#10360)](https://github.com/prowler-cloud/prowler/pull/10360)
 - CheckMetadata strict validators rejecting valid external tool provider data (image, iac, llm) [(#10363)](https://github.com/prowler-cloud/prowler/pull/10363)
+
+### 🔐 Security
+
+- Bump `multipart` to 1.3.1 to fix [GHSA-p2m9-wcp5-6qw3](https://github.com/defnull/multipart/security/advisories/GHSA-p2m9-wcp5-6qw3) [(#10331)](https://github.com/prowler-cloud/prowler/pull/10331)
 
 ---
 

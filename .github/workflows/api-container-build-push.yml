@@ -99,6 +99,12 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Pin prowler SDK to latest master commit
+        if: github.event_name == 'push'
+        run: |
+          LATEST_SHA=$(git ls-remote https://github.com/prowler-cloud/prowler.git refs/heads/master | cut -f1)
+          sed -i "s|prowler-cloud/prowler.git@master|prowler-cloud/prowler.git@${LATEST_SHA}|" api/pyproject.toml
+
       - name: Login to DockerHub
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
