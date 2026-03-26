@@ -33,7 +33,6 @@
     "@codemirror/commands": "6.10.3",
     "@codemirror/language": "6.12.2",
     "@codemirror/state": "6.6.0",
-    "@codemirror/stream-parser": "0.19.9",
     "@codemirror/view": "6.40.0",
     "@extractus/feed-extractor": "7.1.7",
     "@heroui/react": "2.8.4",
