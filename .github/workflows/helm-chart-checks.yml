@@ -21,9 +21,6 @@ concurrency:
 env:
   CHART_PATH: contrib/k8s/helm/prowler-app
 
-permissions:
-  contents: read
-
 jobs:
   helm-lint:
     if: github.repository == 'prowler-cloud/prowler'

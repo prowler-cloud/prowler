@@ -45,6 +45,8 @@ jobs:
       has-sdk-tests: ${{ steps.set-flags.outputs.has-sdk-tests }}
       has-api-tests: ${{ steps.set-flags.outputs.has-api-tests }}
       has-ui-e2e: ${{ steps.set-flags.outputs.has-ui-e2e }}
+    permissions:
+      contents: read
 
     steps:
       - name: Harden the runner (Audit all outbound calls)

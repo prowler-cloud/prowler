@@ -12,9 +12,6 @@ concurrency:
 env:
   PYTHON_VERSION: '3.12'
 
-permissions:
-  contents: read
-
 jobs:
   refresh-oci-regions:
     if: github.repository == 'prowler-cloud/prowler'

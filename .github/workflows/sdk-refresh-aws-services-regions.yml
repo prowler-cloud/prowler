@@ -13,9 +13,6 @@ env:
   PYTHON_VERSION: '3.12'
   AWS_REGION: 'us-east-1'
 
-permissions:
-  contents: read
-
 jobs:
   refresh-aws-regions:
     if: github.repository == 'prowler-cloud/prowler'

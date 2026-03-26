@@ -17,9 +17,6 @@ concurrency:
 env:
   PROWLER_VERSION: ${{ inputs.prowler_version }}
 
-permissions:
-  contents: read
-
 jobs:
   prepare-release:
     if: github.event_name == 'workflow_dispatch' && github.repository == 'prowler-cloud/prowler'

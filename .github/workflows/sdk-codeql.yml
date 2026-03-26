@@ -30,9 +30,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-
 jobs:
   sdk-analyze:
     if: github.repository == 'prowler-cloud/prowler'

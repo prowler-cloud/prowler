@@ -14,9 +14,6 @@ env:
   PYTHON_VERSION: "3.12"
   WORKING_DIRECTORY: ./mcp_server
 
-permissions:
-  contents: read
-
 jobs:
   validate-release:
     if: github.repository == 'prowler-cloud/prowler'
