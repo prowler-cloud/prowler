@@ -135,6 +135,12 @@ const openCypherLanguage = StreamLanguage.define<OpenCypherParserState>({
         }
       }
 
+      // OpenCypher only supports single-line strings — reset at EOL so an
+      // unclosed quote does not bleed into subsequent lines.
+      if (stream.eol()) {
+        state.inString = null;
+      }
+
       return "string";
     }
 
@@ -226,114 +232,73 @@ const darkHighlightStyle = HighlightStyle.define([
   { tag: tags.punctuation, color: "#8b949e" },
 ]);
 
+const MONO_FONT =
+  'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace';
+
+const baseThemeRules: Record<string, Record<string, string>> = {
+  "&": {
+    backgroundColor: "transparent",
+    color: "var(--text-neutral-primary)",
+    fontFamily: MONO_FONT,
+    fontSize: "12px",
+  },
+  "&.cm-focused": {
+    outline: "none",
+  },
+  ".cm-scroller": {
+    minHeight: "320px",
+    overflow: "auto",
+    fontFamily: MONO_FONT,
+    lineHeight: "1.5rem",
+  },
+  ".cm-content": {
+    padding: "16px",
+    caretColor: "var(--text-neutral-primary)",
+  },
+  ".cm-line": {
+    padding: "0 0 0 8px",
+  },
+  ".cm-gutters": {
+    backgroundColor: "var(--bg-neutral-secondary)",
+    color: "var(--text-neutral-tertiary)",
+    borderRight: "1px solid var(--border-neutral-secondary)",
+    minWidth: "44px",
+  },
+  ".cm-lineNumbers .cm-gutterElement": {
+    padding: "0 10px 0 12px",
+  },
+  ".cm-activeLineGutter": {
+    backgroundColor: "var(--bg-neutral-secondary)",
+    color: "var(--text-neutral-secondary)",
+  },
+  ".cm-activeLine": {
+    backgroundColor: "transparent",
+  },
+  ".cm-cursor, .cm-dropCursor": {
+    borderLeftColor: "var(--text-neutral-primary)",
+  },
+  ".cm-placeholder": {
+    color: "var(--text-neutral-tertiary)",
+  },
+};
+
+const LIGHT_SELECTION_BG = "rgba(9, 105, 218, 0.18)";
+const DARK_SELECTION_BG = "rgba(121, 192, 255, 0.18)";
+
 const lightTheme = EditorView.theme(
   {
-    "&": {
-      backgroundColor: "transparent",
-      color: "var(--text-neutral-primary)",
-      fontFamily:
-        'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
-      fontSize: "12px",
-    },
-    "&.cm-focused": {
-      outline: "none",
-    },
-    ".cm-scroller": {
-      minHeight: "320px",
-      overflow: "auto",
-      fontFamily:
-        'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
-      lineHeight: "1.5rem",
-    },
-    ".cm-content": {
-      padding: "16px",
-      caretColor: "var(--text-neutral-primary)",
-    },
-    ".cm-line": {
-      padding: "0 0 0 8px",
-    },
-    ".cm-gutters": {
-      backgroundColor: "var(--bg-neutral-secondary)",
-      color: "var(--text-neutral-tertiary)",
-      borderRight: "1px solid var(--border-neutral-secondary)",
-      minWidth: "44px",
-    },
-    ".cm-lineNumbers .cm-gutterElement": {
-      padding: "0 10px 0 12px",
-    },
-    ".cm-activeLineGutter": {
-      backgroundColor: "var(--bg-neutral-secondary)",
-      color: "var(--text-neutral-secondary)",
-    },
-    ".cm-activeLine": {
-      backgroundColor: "transparent",
-    },
+    ...baseThemeRules,
     ".cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection":
-      {
-        backgroundColor: "rgba(9, 105, 218, 0.18)",
-      },
-    ".cm-cursor, .cm-dropCursor": {
-      borderLeftColor: "var(--text-neutral-primary)",
-    },
-    ".cm-placeholder": {
-      color: "var(--text-neutral-tertiary)",
-    },
+      { backgroundColor: LIGHT_SELECTION_BG },
   },
   { dark: false },
 );
 
 const darkTheme = EditorView.theme(
   {
-    "&": {
-      backgroundColor: "transparent",
-      color: "var(--text-neutral-primary)",
-      fontFamily:
-        'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
-      fontSize: "12px",
-    },
-    "&.cm-focused": {
-      outline: "none",
-    },
-    ".cm-scroller": {
-      minHeight: "320px",
-      overflow: "auto",
-      fontFamily:
-        'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
-      lineHeight: "1.5rem",
-    },
-    ".cm-content": {
-      padding: "16px",
-      caretColor: "var(--text-neutral-primary)",
-    },
-    ".cm-line": {
-      padding: "0 0 0 8px",
-    },
-    ".cm-gutters": {
-      backgroundColor: "var(--bg-neutral-secondary)",
-      color: "var(--text-neutral-tertiary)",
-      borderRight: "1px solid var(--border-neutral-secondary)",
-      minWidth: "44px",
-    },
-    ".cm-lineNumbers .cm-gutterElement": {
-      padding: "0 10px 0 12px",
-    },
-    ".cm-activeLineGutter": {
-      backgroundColor: "var(--bg-neutral-secondary)",
-      color: "var(--text-neutral-secondary)",
-    },
-    ".cm-activeLine": {
-      backgroundColor: "transparent",
-    },
+    ...baseThemeRules,
     ".cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection":
-      {
-        backgroundColor: "rgba(121, 192, 255, 0.18)",
-      },
-    ".cm-cursor, .cm-dropCursor": {
-      borderLeftColor: "var(--text-neutral-primary)",
-    },
-    ".cm-placeholder": {
-      color: "var(--text-neutral-tertiary)",
-    },
+      { backgroundColor: DARK_SELECTION_BG },
   },
   { dark: true },
 );
