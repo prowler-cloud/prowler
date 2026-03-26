@@ -186,6 +186,7 @@ class Provider(ABC):
                         tenant_id=arguments.tenant_id,
                         region=arguments.azure_region,
                         subscription_ids=arguments.subscription_id,
+                        resource_groups=arguments.resource_groups,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

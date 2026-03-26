@@ -20,6 +20,7 @@ class AzureService:
         )
 
         self.subscriptions = provider.identity.subscriptions
+        self.resource_groups = provider.resource_groups
         self.locations = provider.locations
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
