@@ -34,6 +34,7 @@ import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import {
   Tooltip,
@@ -65,6 +66,7 @@ import { getRegionFlag } from "@/lib/region-flags";
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
 import { NotificationIndicator } from "../notification-indicator";
+import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
 
 interface ResourceDetailDrawerContentProps {
@@ -98,11 +100,27 @@ export function ResourceDetailDrawerContent({
   // Initial load — no check metadata yet
   if (!checkMeta && isLoading) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-2 py-16">
-        <Spinner className="size-6" />
-        <span className="text-text-neutral-tertiary text-sm">
-          Loading finding details...
-        </span>
+      <div className="flex h-full min-w-0 flex-col gap-4 overflow-hidden">
+        {/* Header skeleton */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-6 w-14 rounded-md" />
+            <Skeleton className="h-6 w-16 rounded-md" />
+          </div>
+          <Skeleton className="h-6 w-3/4 rounded" />
+        </div>
+        {/* Navigation skeleton */}
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-7 w-48 rounded" />
+          <div className="flex gap-1">
+            <Skeleton className="size-8 rounded-md" />
+            <Skeleton className="size-8 rounded-md" />
+          </div>
+        </div>
+        {/* Resource card skeleton */}
+        <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex min-h-0 flex-1 flex-col gap-4 rounded-lg border p-4">
+          <ResourceDetailSkeleton />
+        </div>
       </div>
     );
   }
@@ -244,9 +262,7 @@ export function ResourceDetailDrawerContent({
       <div className="border-border-neutral-secondary bg-bg-neutral-secondary minimal-scrollbar flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto rounded-lg border p-4">
         {/* Resource info — shows loading when currentFinding is not yet available */}
         {!f || isNavigating ? (
-          <div className="flex items-center justify-center py-6">
-            <Spinner className="size-5" />
-          </div>
+          <ResourceDetailSkeleton />
         ) : (
           <>
             <div className="flex items-start gap-4">
