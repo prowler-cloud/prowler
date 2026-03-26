@@ -732,7 +732,7 @@ class Test_Parser:
         assert category_2 in parsed.category
 
     def test_checks_parser_resource_groups(self):
-        argument = "--resource-groups"
+        argument = "--resource-group"
         resource_group = "storage"
         command = [prowler_command, argument, resource_group]
         parsed = self.parser.parse(command)
@@ -740,7 +740,7 @@ class Test_Parser:
         assert resource_group in parsed.resource_group
 
     def test_checks_parser_resource_groups_two(self):
-        argument = "--resource-groups"
+        argument = "--resource-group"
         resource_group_1 = "storage"
         resource_group_2 = "compute"
         command = [prowler_command, argument, resource_group_1, resource_group_2]
