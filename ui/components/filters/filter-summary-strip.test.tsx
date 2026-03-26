@@ -38,7 +38,6 @@ import {
 // TODO (E2E): Full filter strip flow should be covered in Playwright tests:
 // - Filter chips appear after staging selections in the findings page
 // - Removing a chip via the X button un-stages that filter value
-// - "Clear all" removes all staged filter chips at once
 // - Chips disappear after applying filters (pending state resets to URL state)
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -55,14 +54,12 @@ describe("FilterSummaryStrip", () => {
     it("should not render anything", () => {
       // Given
       const onRemove = vi.fn();
-      const onClearAll = vi.fn();
 
       // When
       const { container } = render(
         <FilterSummaryStrip
           chips={[]}
           onRemove={onRemove}
-          onClearAll={onClearAll}
         />,
       );
 
@@ -77,14 +74,12 @@ describe("FilterSummaryStrip", () => {
     it("should render a chip for each filter value", () => {
       // Given
       const onRemove = vi.fn();
-      const onClearAll = vi.fn();
 
       // When
       render(
         <FilterSummaryStrip
           chips={mockChips}
           onRemove={onRemove}
-          onClearAll={onClearAll}
         />,
       );
 
@@ -95,7 +90,6 @@ describe("FilterSummaryStrip", () => {
     it("should display the label and value text for each chip", () => {
       // Given
       const onRemove = vi.fn();
-      const onClearAll = vi.fn();
 
       // When
       render(
@@ -108,7 +102,6 @@ describe("FilterSummaryStrip", () => {
             },
           ]}
           onRemove={onRemove}
-          onClearAll={onClearAll}
         />,
       );
 
@@ -120,7 +113,6 @@ describe("FilterSummaryStrip", () => {
     it("should display displayValue when provided instead of value", () => {
       // Given
       const onRemove = vi.fn();
-      const onClearAll = vi.fn();
 
       // When
       render(
@@ -134,7 +126,6 @@ describe("FilterSummaryStrip", () => {
             },
           ]}
           onRemove={onRemove}
-          onClearAll={onClearAll}
         />,
       );
 
@@ -143,37 +134,15 @@ describe("FilterSummaryStrip", () => {
       expect(screen.queryByText("FAIL")).not.toBeInTheDocument();
     });
 
-    it("should render a 'Clear all' button", () => {
-      // Given
-      const onRemove = vi.fn();
-      const onClearAll = vi.fn();
-
-      // When
-      render(
-        <FilterSummaryStrip
-          chips={mockChips}
-          onRemove={onRemove}
-          onClearAll={onClearAll}
-        />,
-      );
-
-      // Then
-      expect(
-        screen.getByRole("button", { name: "Clear all" }),
-      ).toBeInTheDocument();
-    });
-
     it("should render an aria-label region for accessibility", () => {
       // Given
       const onRemove = vi.fn();
-      const onClearAll = vi.fn();
 
       // When
       render(
         <FilterSummaryStrip
           chips={mockChips}
           onRemove={onRemove}
-          onClearAll={onClearAll}
         />,
       );
 
@@ -191,7 +160,6 @@ describe("FilterSummaryStrip", () => {
       // Given
       const user = userEvent.setup();
       const onRemove = vi.fn();
-      const onClearAll = vi.fn();
 
       render(
         <FilterSummaryStrip
@@ -203,7 +171,6 @@ describe("FilterSummaryStrip", () => {
             },
           ]}
           onRemove={onRemove}
-          onClearAll={onClearAll}
         />,
       );
 
@@ -222,13 +189,11 @@ describe("FilterSummaryStrip", () => {
       // Given
       const user = userEvent.setup();
       const onRemove = vi.fn();
-      const onClearAll = vi.fn();
 
       render(
         <FilterSummaryStrip
           chips={mockChips}
           onRemove={onRemove}
-          onClearAll={onClearAll}
         />,
       );
 
@@ -244,29 +209,4 @@ describe("FilterSummaryStrip", () => {
     });
   });
 
-  // ── onClearAll interaction ───────────────────────────────────────────────
-
-  describe("onClearAll", () => {
-    it("should call onClearAll when 'Clear all' is clicked", async () => {
-      // Given
-      const user = userEvent.setup();
-      const onRemove = vi.fn();
-      const onClearAll = vi.fn();
-
-      render(
-        <FilterSummaryStrip
-          chips={mockChips}
-          onRemove={onRemove}
-          onClearAll={onClearAll}
-        />,
-      );
-
-      // When
-      await user.click(screen.getByRole("button", { name: "Clear all" }));
-
-      // Then
-      expect(onClearAll).toHaveBeenCalledTimes(1);
-      expect(onRemove).not.toHaveBeenCalled();
-    });
-  });
 });

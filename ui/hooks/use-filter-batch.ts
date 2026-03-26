@@ -38,13 +38,6 @@ export interface UseFilterBatchReturn {
    * avoids the async state gap between the two calls.
    */
   clearAndApply: () => void;
-  /**
-   * Clear only the specified filter keys from pending state and immediately
-   * navigate (router.push) with the remaining pending filters + defaultParams.
-   * Used by "Clear all" in the pills strip to remove only pill-visible filters
-   * without touching provider/account selectors.
-   */
-  clearKeys: (keys: string[]) => void;
   /** Remove a single filter key from pending state */
   removePending: (key: string) => void;
   /** Whether pending state differs from the current URL */
@@ -260,25 +253,6 @@ export const useFilterBatch = (
     buildAndPush({});
   };
 
-  /**
-   * Removes only the specified filter keys from pending state and immediately
-   * navigates (router.push) with the remaining filters + defaultParams.
-   *
-   * Used by the pills strip "Clear all" to remove pill-visible filters (severity,
-   * status, delta, region, service, etc.) without touching provider/account selectors.
-   */
-  const clearKeys = (keys: string[]) => {
-    const normalizedKeys = keys.map((k) =>
-      k.startsWith("filter[") ? k : `filter[${k}]`,
-    );
-    const nextPending: PendingFilters = { ...pendingFilters };
-    normalizedKeys.forEach((k) => {
-      delete nextPending[k];
-    });
-    setPendingFilters(nextPending);
-    buildAndPush(nextPending);
-  };
-
   const getFilterValue = (key: string): string[] => {
     const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
     return pendingFilters[filterKey] ?? [];
@@ -299,7 +273,6 @@ export const useFilterBatch = (
     discardAll,
     clearAll,
     clearAndApply,
-    clearKeys,
     removePending,
     hasChanges,
     changeCount,
