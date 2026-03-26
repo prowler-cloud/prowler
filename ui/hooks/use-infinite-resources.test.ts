@@ -123,9 +123,7 @@ describe("useInfiniteResources", () => {
 
       // When
       renderHook(() =>
-        useInfiniteResources(
-          defaultOptions({ onSetResources, onSetLoading }),
-        ),
+        useInfiniteResources(defaultOptions({ onSetResources, onSetLoading })),
       );
       await flushAsync();
 
@@ -154,9 +152,7 @@ describe("useInfiniteResources", () => {
 
       // When
       renderHook(() =>
-        useInfiniteResources(
-          defaultOptions({ hasDateOrScanFilter: true }),
-        ),
+        useInfiniteResources(defaultOptions({ hasDateOrScanFilter: true })),
       );
       await flushAsync();
 
@@ -210,9 +206,7 @@ describe("useInfiniteResources", () => {
       // Then — only page 1 was fetched, never page 2
       const calls =
         findingGroupActionsMock.getLatestFindingGroupResources.mock.calls;
-      const pageNumbers = calls.map(
-        (c: { page: number }[]) => c[0].page,
-      );
+      const pageNumbers = calls.map((c: { page: number }[]) => c[0].page);
       expect(pageNumbers.every((p: number) => p === 1)).toBe(true);
     });
   });
@@ -248,9 +242,7 @@ describe("useInfiniteResources", () => {
 
       // When — mount, abort (simulating cleanup), remount
       const { unmount } = renderHook(() =>
-        useInfiniteResources(
-          defaultOptions({ onSetResources, onSetLoading }),
-        ),
+        useInfiniteResources(defaultOptions({ onSetResources, onSetLoading })),
       );
 
       // Simulate Strict Mode: unmount triggers abort
@@ -380,17 +372,13 @@ describe("useInfiniteResources", () => {
       };
 
       // When
-      renderHook(() =>
-        useInfiniteResources(defaultOptions({ filters })),
-      );
+      renderHook(() => useInfiniteResources(defaultOptions({ filters })));
       await flushAsync();
 
       // Then
       expect(
         findingGroupActionsMock.getLatestFindingGroupResources,
-      ).toHaveBeenCalledWith(
-        expect.objectContaining({ filters }),
-      );
+      ).toHaveBeenCalledWith(expect.objectContaining({ filters }));
     });
   });
 });

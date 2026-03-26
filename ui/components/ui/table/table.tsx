@@ -110,7 +110,7 @@ const TableCell = forwardRef<
     ref={ref}
     className={cn(
       "relative px-1.5 py-2 align-middle first:pl-3 last:pr-3 [&:has([role=checkbox])]:pr-0",
-      "after:bg-border-input-primary after:absolute after:-bottom-2 after:right-0 after:left-0 after:h-px",
+      "after:bg-border-input-primary after:absolute after:right-0 after:-bottom-2 after:left-0 after:h-px",
       className,
     )}
     {...props}
