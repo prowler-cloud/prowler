@@ -11,6 +11,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronsDown } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { resolveFindingIds } from "@/actions/findings/findings-by-resource";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
@@ -216,7 +217,7 @@ export function InlineResourceContainer({
                   className="max-h-[440px] overflow-y-auto pl-6"
                 >
                   {/* Resource rows */}
-                  <table className="w-full border-separate border-spacing-y-4 [&_td]:after:-bottom-2">
+                  <table className="mt-[-10] w-full border-separate border-spacing-y-4">
                     <tbody>
                       {rows.length > 0
                         ? rows.map((row) => (
@@ -291,34 +292,39 @@ export function InlineResourceContainer({
         </td>
       </tr>
 
-      {selectedFindingIds.length > 0 && (
-        <FloatingMuteButton
-          selectedCount={selectedFindingIds.length}
-          selectedFindingIds={selectedFindingIds}
-          onBeforeOpen={async () => {
-            return resolveResourceIds(selectedFindingIds);
-          }}
-          onComplete={handleMuteComplete}
-          isBulkOperation
-        />
-      )}
+      {selectedFindingIds.length > 0 &&
+        createPortal(
+          <FloatingMuteButton
+            selectedCount={selectedFindingIds.length}
+            selectedFindingIds={selectedFindingIds}
+            onBeforeOpen={async () => {
+              return resolveResourceIds(selectedFindingIds);
+            }}
+            onComplete={handleMuteComplete}
+            isBulkOperation
+          />,
+          document.body,
+        )}
 
-      <ResourceDetailDrawer
-        open={drawer.isOpen}
-        onOpenChange={(open) => {
-          if (!open) drawer.closeDrawer();
-        }}
-        isLoading={drawer.isLoading}
-        isNavigating={drawer.isNavigating}
-        checkMeta={drawer.checkMeta}
-        currentIndex={drawer.currentIndex}
-        totalResources={drawer.totalResources}
-        currentFinding={drawer.currentFinding}
-        otherFindings={drawer.otherFindings}
-        onNavigatePrev={drawer.navigatePrev}
-        onNavigateNext={drawer.navigateNext}
-        onMuteComplete={handleDrawerMuteComplete}
-      />
+      {createPortal(
+        <ResourceDetailDrawer
+          open={drawer.isOpen}
+          onOpenChange={(open) => {
+            if (!open) drawer.closeDrawer();
+          }}
+          isLoading={drawer.isLoading}
+          isNavigating={drawer.isNavigating}
+          checkMeta={drawer.checkMeta}
+          currentIndex={drawer.currentIndex}
+          totalResources={drawer.totalResources}
+          currentFinding={drawer.currentFinding}
+          otherFindings={drawer.otherFindings}
+          onNavigatePrev={drawer.navigatePrev}
+          onNavigateNext={drawer.navigateNext}
+          onMuteComplete={handleDrawerMuteComplete}
+        />,
+        document.body,
+      )}
     </FindingsSelectionContext.Provider>
   );
 }
