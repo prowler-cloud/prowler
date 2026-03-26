@@ -32,15 +32,6 @@ def _create_role(iam_client):
     )["Role"]["Arn"]
 
 
-def _create_layer(lambda_client, region, layer_name="test-layer"):
-    resp = lambda_client.publish_layer_version(
-        LayerName=layer_name,
-        Content={"ZipFile": b"layer content"},
-        CompatibleRuntimes=["python3.11"],
-    )
-    return resp["LayerVersionArn"]
-
-
 class Test_awslambda_function_using_cross_account_layers:
     def test_no_functions(self):
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
@@ -123,15 +114,16 @@ class Test_awslambda_function_using_cross_account_layers:
             Code={"ZipFile": b"file not used"},
         )["FunctionArn"]
 
-        from prowler.providers.aws.services.awslambda.awslambda_service import Lambda, Layer
+        from prowler.providers.aws.services.awslambda.awslambda_service import (
+            Lambda,
+            Layer,
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         lambda_service = Lambda(aws_provider)
 
         # moto does not return Layers in list_functions; inject an own-account layer.
-        own_layer_arn = (
-            f"arn:aws:lambda:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:layer:my-layer:1"
-        )
+        own_layer_arn = f"arn:aws:lambda:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:layer:my-layer:1"
         lambda_service.functions[function_arn].layers = [Layer(arn=own_layer_arn)]
 
         with (
@@ -171,11 +163,12 @@ class Test_awslambda_function_using_cross_account_layers:
             Code={"ZipFile": b"file not used"},
         )["FunctionArn"]
 
-        from prowler.providers.aws.services.awslambda.awslambda_service import Lambda, Layer
-
-        cross_layer_arn = (
-            f"arn:aws:lambda:{AWS_REGION_EU_WEST_1}:{EXTERNAL_ACCOUNT}:layer:ext-layer:1"
+        from prowler.providers.aws.services.awslambda.awslambda_service import (
+            Lambda,
+            Layer,
         )
+
+        cross_layer_arn = f"arn:aws:lambda:{AWS_REGION_EU_WEST_1}:{EXTERNAL_ACCOUNT}:layer:ext-layer:1"
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         lambda_service = Lambda(aws_provider)
 
