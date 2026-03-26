@@ -26,6 +26,7 @@ export interface FindingRowData {
   };
   // Flat shape for FindingGroupRow
   rowType?: string;
+  checkId?: string;
   checkTitle?: string;
   mutedCount?: number;
   resourcesTotal?: number;
@@ -77,16 +78,20 @@ export function DataTableRowActions<T extends FindingRowData>({
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
 
+  // For group rows, use checkId (for the resolve API); for regular findings, use id (UUID).
+  const isGroup = finding.rowType === "group";
+  const muteKey = isGroup ? finding.checkId ?? finding.id : finding.id;
+
   // If current finding is selected and there are multiple selections, mute all
   // Otherwise, just mute this single finding
-  const isCurrentSelected = selectedFindingIds.includes(finding.id);
+  const isCurrentSelected = selectedFindingIds.includes(muteKey);
   const hasMultipleSelected = selectedFindingIds.length > 1;
 
   const getDisplayIds = (): string[] => {
     if (isCurrentSelected && hasMultipleSelected) {
       return selectedFindingIds;
     }
-    return [finding.id];
+    return [muteKey];
   };
 
   const getMuteLabel = () => {
@@ -127,8 +132,6 @@ export function DataTableRowActions<T extends FindingRowData>({
 
     router.refresh();
   };
-
-  const isGroup = finding.rowType === "group";
 
   return (
     <>

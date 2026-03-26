@@ -36,10 +36,10 @@ export function FindingsGroupTable({
 
   const safeData = data ?? [];
 
-  // Get selected group IDs (only non-fully-muted groups can be selected)
-  const selectedFindingIds = Object.keys(rowSelection)
+  // Get selected check IDs (not UUIDs) — resolveFindingIdsByCheckIds expects check_id values
+  const selectedCheckIds = Object.keys(rowSelection)
     .filter((key) => rowSelection[key])
-    .map((idx) => safeData[parseInt(idx)]?.id)
+    .map((idx) => safeData[parseInt(idx)]?.checkId)
     .filter(Boolean);
 
   const selectedFindings = Object.keys(rowSelection)
@@ -62,7 +62,7 @@ export function FindingsGroupTable({
   };
 
   const isSelected = (id: string) => {
-    return selectedFindingIds.includes(id);
+    return selectedCheckIds.includes(id);
   };
 
   /** Shared resolver for row action dropdowns (via context). */
@@ -111,7 +111,7 @@ export function FindingsGroupTable({
   return (
     <FindingsSelectionContext.Provider
       value={{
-        selectedFindingIds,
+        selectedFindingIds: selectedCheckIds,
         selectedFindings,
         clearSelection,
         isSelected,
@@ -131,13 +131,13 @@ export function FindingsGroupTable({
         isLoading={isDrillingDown}
       />
 
-      {selectedFindingIds.length > 0 && (
+      {selectedCheckIds.length > 0 && (
         <FloatingMuteButton
-          selectedCount={selectedFindingIds.length}
-          selectedFindingIds={selectedFindingIds}
+          selectedCount={selectedCheckIds.length}
+          selectedFindingIds={selectedCheckIds}
           onBeforeOpen={async () => {
             return resolveFindingIdsByCheckIds({
-              checkIds: selectedFindingIds,
+              checkIds: selectedCheckIds,
             });
           }}
           onComplete={handleMuteComplete}
