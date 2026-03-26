@@ -51,13 +51,29 @@ class entra_conditional_access_policy_block_o365_insider_risk(Check):
             ):
                 continue
 
-            if policy.conditions.insider_risk_levels != InsiderRiskLevel.ELEVATED:
-                continue
-
             if (
                 ConditionalAccessGrantControl.BLOCK
                 not in policy.grant_controls.built_in_controls
             ):
+                continue
+
+            # Policy targets all users, O365/All apps, and blocks access.
+            # Now check if Adaptive Protection is providing insider risk signals.
+            if policy.conditions.insider_risk_levels is None:
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource=policy,
+                    resource_name=policy.display_name,
+                    resource_id=policy.id,
+                )
+                report.status = "FAIL"
+                if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
+                    report.status_extended = f"Conditional Access Policy {policy.display_name} is configured in report-only mode to block Office 365 and Microsoft Purview Adaptive Protection is not providing insider risk signals."
+                else:
+                    report.status_extended = f"Conditional Access Policy {policy.display_name} is configured to block Office 365 and Microsoft Purview Adaptive Protection is not providing insider risk signals."
+                continue
+
+            if policy.conditions.insider_risk_levels != InsiderRiskLevel.ELEVATED:
                 continue
 
             report = CheckReportM365(
@@ -68,10 +84,10 @@ class entra_conditional_access_policy_block_o365_insider_risk(Check):
             )
             if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
                 report.status = "FAIL"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' reports blocking Office 365 for elevated insider risk users but does not enforce it."
+                report.status_extended = f"Conditional Access Policy {policy.display_name} reports blocking Office 365 for elevated insider risk users but does not enforce it."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' blocks Office 365 access for users with elevated insider risk."
+                report.status_extended = f"Conditional Access Policy {policy.display_name} blocks Office 365 access for users with elevated insider risk."
                 break
 
         findings.append(report)
