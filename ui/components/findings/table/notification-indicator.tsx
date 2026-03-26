@@ -34,13 +34,17 @@ export const NotificationIndicator = ({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="ml-1 flex cursor-pointer items-center justify-center">
+          <div
+            className="ml-1 flex cursor-pointer items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
             <MutedIcon className="text-bg-data-muted size-2" />
           </div>
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent onClick={(e) => e.stopPropagation()}>
           <Link
             href="/mutelist"
+            onClick={(e) => e.stopPropagation()}
             className="text-button-tertiary hover:text-button-tertiary-hover flex items-center gap-1 text-xs underline-offset-4"
           >
             {/* TODO: always show rule name once the API returns muted_reason in finding-group-resources */}
@@ -66,6 +70,7 @@ export const NotificationIndicator = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <div
+            onClick={(e) => e.stopPropagation()}
             className={cn(
               "ml-1 size-1.5 cursor-pointer rounded-full",
               delta === DeltaValues.NEW

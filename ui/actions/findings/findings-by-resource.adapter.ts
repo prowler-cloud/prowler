@@ -56,6 +56,7 @@ export interface ResourceDrawerFinding {
   resourceService: string;
   resourceRegion: string;
   resourceType: string;
+  resourceGroup: string;
   // Provider
   providerType: ProviderType;
   providerAlias: string;
@@ -175,6 +176,7 @@ export function adaptFindingsByResourceResponse(
       resourceService: resourceAttrs.service || "-",
       resourceRegion: resourceAttrs.region || "-",
       resourceType: resourceAttrs.type || "-",
+      resourceGroup: meta.resourcegroup || "-",
       // Provider
       providerType: (providerAttrs.provider || "aws") as ProviderType,
       providerAlias: providerAttrs.alias || "",

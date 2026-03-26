@@ -261,7 +261,7 @@ export function ResourceDetailDrawerContent({
                 />
                 <EntityInfo
                   nameIcon={<Container className="size-4" />}
-                  entityAlias={f.resourceType}
+                  entityAlias={f.resourceGroup}
                   entityId={f.resourceUid}
                   idLabel="UID"
                 />
