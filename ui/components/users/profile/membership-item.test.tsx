@@ -117,4 +117,55 @@ describe("MembershipItem", () => {
 
     expect(screen.getByText("owner")).toBeInTheDocument();
   });
+
+  it("shows Delete button when isOwner and membershipCount > 1", () => {
+    render(
+      <MembershipItem
+        membership={baseMembership}
+        tenantName="Test Org"
+        tenantId="tenant-1"
+        isOwner={true}
+        sessionTenantId="tenant-1"
+        availableTenants={[{ id: "tenant-2", name: "Other Org" }]}
+        membershipCount={2}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: /delete/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides Delete button when membershipCount === 1", () => {
+    render(
+      <MembershipItem
+        membership={baseMembership}
+        tenantName="Test Org"
+        tenantId="tenant-1"
+        isOwner={true}
+        sessionTenantId="tenant-1"
+        availableTenants={[]}
+        membershipCount={1}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: /delete/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides Delete button when not isOwner", () => {
+    render(
+      <MembershipItem
+        membership={baseMembership}
+        tenantName="Test Org"
+        tenantId="tenant-1"
+        isOwner={false}
+        sessionTenantId="tenant-1"
+        availableTenants={[{ id: "tenant-2", name: "Other Org" }]}
+        membershipCount={2}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: /delete/i }),
+    ).not.toBeInTheDocument();
+  });
 });
