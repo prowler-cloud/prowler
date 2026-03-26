@@ -171,13 +171,17 @@ export function useResourceDetailDrawer({
   };
 
   const navigateNext = () => {
+    const total = totalResourceCount ?? resources.length;
+    if (currentIndex >= total - 1) return;
+
+    // Pre-fetch more resources when nearing the end of loaded data
+    if (currentIndex >= resources.length - 3) {
+      onRequestMoreResources?.();
+    }
+
+    // Navigate if the next resource is already loaded
     if (currentIndex < resources.length - 1) {
       navigateTo(currentIndex + 1);
-
-      // Pre-fetch more resources when nearing the end
-      if (currentIndex >= resources.length - 3) {
-        onRequestMoreResources?.();
-      }
     }
   };
 

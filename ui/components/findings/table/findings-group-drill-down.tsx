@@ -82,7 +82,7 @@ export function FindingsGroupDrillDown({
     setIsLoading(loading);
   };
 
-  const { sentinelRef, refresh } = useInfiniteResources({
+  const { sentinelRef, refresh, loadMore } = useInfiniteResources({
     checkId: group.checkId,
     hasDateOrScanFilter: hasDateOrScan,
     filters,
@@ -96,6 +96,7 @@ export function FindingsGroupDrillDown({
     resources,
     checkId: group.checkId,
     totalResourceCount: group.resourcesTotal,
+    onRequestMoreResources: loadMore,
   });
 
   const handleDrawerMuteComplete = () => {

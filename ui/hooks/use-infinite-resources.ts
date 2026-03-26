@@ -30,6 +30,8 @@ interface UseInfiniteResourcesReturn {
   sentinelRef: (node: HTMLDivElement | null) => void;
   /** Reset pagination and re-fetch page 1 (e.g. after muting). */
   refresh: () => void;
+  /** Imperatively load the next page (e.g. from drawer navigation). */
+  loadMore: () => void;
 }
 
 /**
@@ -200,5 +202,5 @@ export function useInfiniteResources({
     fetchPage(1, false, currentCheckIdRef.current, controller.signal);
   }
 
-  return { sentinelRef, refresh };
+  return { sentinelRef, refresh, loadMore: loadNextPage };
 }
