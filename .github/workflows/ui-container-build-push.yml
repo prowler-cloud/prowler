@@ -35,6 +35,9 @@ env:
   # Build args
   NEXT_PUBLIC_API_BASE_URL: http://prowler-api:8080/api/v1
 
+permissions:
+  contents: read
+
 jobs:
   setup:
     if: github.repository == 'prowler-cloud/prowler'

@@ -15,6 +15,9 @@ on:
       - 'ui/**'
       - 'api/**'  # API changes can affect UI E2E
 
+permissions:
+  contents: read
+
 jobs:
   # First, analyze which tests need to run
   impact-analysis:

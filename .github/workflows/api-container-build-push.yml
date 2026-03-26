@@ -33,6 +33,9 @@ env:
   PROWLERCLOUD_DOCKERHUB_REPOSITORY: prowlercloud
   PROWLERCLOUD_DOCKERHUB_IMAGE: prowler-api
 
+permissions:
+  contents: read
+
 jobs:
   setup:
     if: github.repository == 'prowler-cloud/prowler'

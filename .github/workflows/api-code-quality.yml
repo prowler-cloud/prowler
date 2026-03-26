@@ -17,6 +17,9 @@ concurrency:
 env:
   API_WORKING_DIR: ./api
 
+permissions:
+  contents: read
+
 jobs:
   api-code-quality:
     runs-on: ubuntu-latest
