@@ -358,6 +358,110 @@ class Test_entra_conditional_access_policy_mdm_compliant_device_required:
         )
         assert result[0].resource == policy.dict()
 
+    def test_disabled_policy_is_ignored(self):
+        """Disabled policy is properly ignored, resulting in generic FAIL."""
+        policy = build_policy(state=ConditionalAccessPolicyState.DISABLED)
+
+        result = self._run_check({policy.id: policy}, build_intune_client())
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "No Conditional Access Policy requires an MDM-compliant device for all cloud app access."
+        )
+        assert result[0].resource == {}
+        assert result[0].resource_name == "Conditional Access Policies"
+        assert result[0].resource_id == "conditionalAccessPolicies"
+
+    def test_policy_without_compliant_device_grant_is_skipped(self):
+        """Policy without COMPLIANT_DEVICE grant control is skipped."""
+        policy = build_policy(
+            built_in_controls=[ConditionalAccessGrantControl.MFA],
+        )
+
+        result = self._run_check({policy.id: policy}, build_intune_client())
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "No Conditional Access Policy requires an MDM-compliant device for all cloud app access."
+        )
+
+    def test_policy_targeting_specific_apps_is_skipped(self):
+        """Policy targeting specific apps instead of All is skipped."""
+        policy = build_policy(included_applications=["specific-app-id"])
+
+        result = self._run_check({policy.id: policy}, build_intune_client())
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "No Conditional Access Policy requires an MDM-compliant device for all cloud app access."
+        )
+
+    def test_noncompliant_mdm_device_does_not_count(self):
+        """MDM-managed device with compliance_state='noncompliant' doesn't count as compliant."""
+        policy = build_policy()
+
+        result = self._run_check(
+            {policy.id: policy},
+            build_intune_client(
+                managed_devices=[
+                    SimpleNamespace(
+                        id=str(uuid4()),
+                        device_name="Noncompliant MDM Device",
+                        compliance_state="noncompliant",
+                        management_agent="mdm",
+                    )
+                ]
+            ),
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == f"Conditional Access Policy '{policy.display_name}' requires an MDM-compliant device for all cloud app access, but Microsoft Intune does not currently report any compliant MDM-managed devices."
+        )
+        assert result[0].resource == policy.dict()
+
+    def test_reporting_policy_ignored_when_enabled_policy_exists(self):
+        """Report-only policy is ignored when a valid enabled policy also exists."""
+        reporting_policy = build_policy(
+            state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
+            display_name="Reporting Policy",
+        )
+        enabled_policy = build_policy(
+            state=ConditionalAccessPolicyState.ENABLED,
+            display_name="Enabled Policy",
+        )
+
+        result = self._run_check(
+            {reporting_policy.id: reporting_policy, enabled_policy.id: enabled_policy},
+            build_intune_client(),
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert "Enabled Policy" in result[0].status_extended
+        assert result[0].resource == enabled_policy.dict()
+
+    def test_mixed_assigned_unassigned_compliance_policies_pass(self):
+        """Mixed assigned/unassigned compliance policies (e.g. [0, 1]) still pass."""
+        policy = build_policy()
+
+        result = self._run_check(
+            {policy.id: policy},
+            build_intune_client(assignment_counts=[0, 1]),
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert result[0].resource == policy.dict()
+
     def test_enabled_policy_with_intune_prerequisites_passes(self):
         policy = build_policy(
             built_in_controls=[
