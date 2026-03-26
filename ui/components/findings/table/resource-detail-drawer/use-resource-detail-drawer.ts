@@ -80,8 +80,14 @@ export function useResourceDetailDrawer({
 
   const cacheRef = useRef<Map<string, ResourceDrawerFinding[]>>(new Map());
   const checkMetaRef = useRef<CheckMeta | null>(null);
+  const fetchControllerRef = useRef<AbortController | null>(null);
 
   const fetchFindings = async (resourceUid: string) => {
+    // Abort any in-flight request to prevent stale data from out-of-order responses
+    fetchControllerRef.current?.abort();
+    const controller = new AbortController();
+    fetchControllerRef.current = controller;
+
     // Check cache first
     const cached = cacheRef.current.get(resourceUid);
     if (cached) {
@@ -98,6 +104,10 @@ export function useResourceDetailDrawer({
     setIsLoading(true);
     try {
       const response = await getLatestFindingsByResourceUid({ resourceUid });
+
+      // Discard stale response if a newer request was started
+      if (controller.signal.aborted) return;
+
       const adapted = adaptFindingsByResourceResponse(response);
       cacheRef.current.set(resourceUid, adapted);
 
@@ -109,11 +119,15 @@ export function useResourceDetailDrawer({
 
       setFindings(adapted);
     } catch (error) {
-      console.error("Error fetching findings for resource:", error);
-      // Don't clear findings — keep previous data as fallback during navigation
+      if (!controller.signal.aborted) {
+        console.error("Error fetching findings for resource:", error);
+        // Don't clear findings — keep previous data as fallback during navigation
+      }
     } finally {
-      setIsLoading(false);
-      setIsNavigating(false);
+      if (!controller.signal.aborted) {
+        setIsLoading(false);
+        setIsNavigating(false);
+      }
     }
   };
 
