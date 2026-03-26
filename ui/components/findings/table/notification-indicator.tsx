@@ -35,7 +35,7 @@ export const NotificationIndicator = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <div
-            className="ml-1 flex cursor-pointer items-center justify-center"
+            className="flex w-2 shrink-0 cursor-pointer items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
             <MutedIcon className="text-bg-data-muted size-2" />
@@ -54,9 +54,10 @@ export const NotificationIndicator = ({
                 <span className="max-w-[150px] truncate">{mutedReason}</span>
               </>
             ) : (
-              <span className="text-text-neutral-primary">
-                Muted — view rules
-              </span>
+              <>
+                <span className="text-text-neutral-primary">Mute rule:</span>
+                <span>view rules</span>
+              </>
             )}
           </Link>
         </TooltipContent>
@@ -71,13 +72,17 @@ export const NotificationIndicator = ({
         <TooltipTrigger asChild>
           <div
             onClick={(e) => e.stopPropagation()}
-            className={cn(
-              "ml-1 size-1.5 cursor-pointer rounded-full",
-              delta === DeltaValues.NEW
-                ? "bg-system-severity-high"
-                : "bg-system-severity-low",
-            )}
-          />
+            className="flex w-2 shrink-0 cursor-pointer items-center justify-center"
+          >
+            <div
+              className={cn(
+                "size-1.5 rounded-full",
+                delta === DeltaValues.NEW
+                  ? "bg-system-severity-high"
+                  : "bg-system-severity-low",
+              )}
+            />
+          </div>
         </TooltipTrigger>
         <TooltipContent>
           <div className="flex items-center gap-1 text-xs">
@@ -108,5 +113,5 @@ export const NotificationIndicator = ({
   }
 
   // No indicator - return minimal width placeholder
-  return <div className="w-2" />;
+  return <div className="w-2 shrink-0" />;
 };
