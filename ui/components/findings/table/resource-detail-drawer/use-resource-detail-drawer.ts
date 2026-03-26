@@ -40,6 +40,7 @@ function extractCheckMeta(finding: ResourceDrawerFinding): CheckMeta {
 interface UseResourceDetailDrawerOptions {
   resources: FindingResourceRow[];
   checkId: string;
+  totalResourceCount?: number;
   onRequestMoreResources?: () => void;
 }
 
@@ -70,6 +71,7 @@ interface UseResourceDetailDrawerReturn {
 export function useResourceDetailDrawer({
   resources,
   checkId,
+  totalResourceCount,
   onRequestMoreResources,
 }: UseResourceDetailDrawerOptions): UseResourceDetailDrawerReturn {
   const [isOpen, setIsOpen] = useState(false);
@@ -194,7 +196,7 @@ export function useResourceDetailDrawer({
     isNavigating,
     checkMeta: checkMetaRef.current,
     currentIndex,
-    totalResources: resources.length,
+    totalResources: totalResourceCount ?? resources.length,
     currentFinding,
     otherFindings,
     allFindings: findings,

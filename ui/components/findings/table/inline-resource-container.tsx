@@ -109,6 +109,7 @@ export function InlineResourceContainer({
   const drawer = useResourceDetailDrawer({
     resources,
     checkId: group.checkId,
+    totalResourceCount: group.resourcesTotal,
   });
 
   const handleDrawerMuteComplete = () => {
@@ -210,7 +211,10 @@ export function InlineResourceContainer({
               className="overflow-hidden"
             >
               <div className="relative">
-                <div ref={combinedScrollRef} className="max-h-[440px] overflow-y-auto pl-6">
+                <div
+                  ref={combinedScrollRef}
+                  className="max-h-[440px] overflow-y-auto pl-6"
+                >
                   {/* Resource rows */}
                   <table className="w-full border-separate border-spacing-y-4 [&_td]:after:-bottom-2">
                     <tbody>
@@ -267,8 +271,8 @@ export function InlineResourceContainer({
                 </div>
 
                 {/* Gradients rendered after scroll container so they paint on top */}
-                <div className="pointer-events-none absolute top-0 right-0 left-6 z-20 h-6 bg-gradient-to-b from-bg-neutral-secondary to-transparent" />
-                <div className="pointer-events-none absolute right-0 bottom-0 left-6 z-20 h-6 bg-gradient-to-t from-bg-neutral-secondary to-transparent" />
+                <div className="from-bg-neutral-secondary pointer-events-none absolute top-0 right-0 left-6 z-20 h-6 bg-gradient-to-b to-transparent" />
+                <div className="from-bg-neutral-secondary pointer-events-none absolute right-0 bottom-0 left-6 z-20 h-6 bg-gradient-to-t to-transparent" />
 
                 {/* Scroll hint */}
                 {showScrollHint && (

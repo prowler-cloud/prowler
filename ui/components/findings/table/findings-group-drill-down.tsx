@@ -95,6 +95,7 @@ export function FindingsGroupDrillDown({
   const drawer = useResourceDetailDrawer({
     resources,
     checkId: group.checkId,
+    totalResourceCount: group.resourcesTotal,
   });
 
   const handleDrawerMuteComplete = () => {
