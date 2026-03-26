@@ -15,6 +15,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Minimum Python version from 3.9 to 3.10 and updated classifiers to reflect supported versions (3.10, 3.11, 3.12) [(#10464)](https://github.com/prowler-cloud/prowler/pull/10464)
 
+### 🐞 Fixed
+
+- Kubernetes OCSF `provider_uid` now uses the cluster name instead of the context name, so `--cluster-name` is correctly reflected in findings [(#10483)](https://github.com/prowler-cloud/prowler/pull/10483)
+
 ---
 
 ## [5.22.1] (Prowler UNRELEASED)
