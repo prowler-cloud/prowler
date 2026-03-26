@@ -63,9 +63,7 @@ class Lambda(AWSService):
                             self.functions[lambda_arn].layers = [
                                 Layer(arn=layer["Arn"]) for layer in function["Layers"]
                             ]
-                        dlq_arn = (
-                            function.get("DeadLetterConfig", {}).get("TargetArn")
-                        )
+                        dlq_arn = function.get("DeadLetterConfig", {}).get("TargetArn")
                         if dlq_arn:
                             self.functions[lambda_arn].dead_letter_config = (
                                 DeadLetterConfig(target_arn=dlq_arn)

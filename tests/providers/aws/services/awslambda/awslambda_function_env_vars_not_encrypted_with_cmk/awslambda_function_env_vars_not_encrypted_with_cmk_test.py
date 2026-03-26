@@ -152,7 +152,9 @@ class Test_awslambda_function_env_vars_not_encrypted_with_cmk:
 
         lambda_client = client("lambda", region_name=AWS_REGION_EU_WEST_1)
         function_name = "test-fn-env-with-kms"
-        key_arn = f"arn:aws:kms:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:key/test-key-id"
+        key_arn = (
+            f"arn:aws:kms:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:key/test-key-id"
+        )
         function_arn = lambda_client.create_function(
             FunctionName=function_name,
             Runtime="python3.11",
