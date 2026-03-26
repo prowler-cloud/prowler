@@ -30,13 +30,21 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip(Check):
                     security_group_arn,
                 ):
                     for ingress_rule in security_group.ingress_rules:
-                        # any_address=False means any globally routable IP triggers it,
-                        # not just 0.0.0.0/0 or ::/0
-                        if check_security_group(
+                        # Skip rules that only contain 0.0.0.0/0 or ::/0
+                        # (already covered by other SG checks)
+                        wildcard_cidrs = ("0.0.0.0/0", "::/0")
+                        has_specific_ip = any(
+                            r["CidrIp"] not in wildcard_cidrs
+                            for r in ingress_rule.get("IpRanges", [])
+                        ) or any(
+                            r["CidrIpv6"] not in wildcard_cidrs
+                            for r in ingress_rule.get("Ipv6Ranges", [])
+                        )
+                        if has_specific_ip and check_security_group(
                             ingress_rule, "-1", any_address=False, all_ports=True
                         ):
                             report.status = "FAIL"
-                            report.status_extended = f"Security group {security_group.name} ({security_group.id}) has a port open to a public IP address in ingress rule."
+                            report.status_extended = f"Security group {security_group.name} ({security_group.id}) has a port open to a specific public IP address in ingress rule."
                             break
                 else:
                     report.status_extended = f"Security group {security_group.name} ({security_group.id}) has all ports open to the Internet and therefore was not checked against specific public IP ingress rules."

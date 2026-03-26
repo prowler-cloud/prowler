@@ -121,7 +121,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip:
                     assert sg.region == AWS_REGION_US_EAST_1
                     assert (
                         sg.status_extended
-                        == f"Security group {default_sg_name} ({default_sg_id}) has a port open to a public IP address in ingress rule."
+                        == f"Security group {default_sg_name} ({default_sg_id}) has a port open to a specific public IP address in ingress rule."
                     )
                     assert sg.resource_details == default_sg_name
 
@@ -251,7 +251,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip:
                     assert sg.status == "FAIL"
                     assert (
                         sg.status_extended
-                        == f"Security group {default_sg_name} ({default_sg_id}) has a port open to a public IP address in ingress rule."
+                        == f"Security group {default_sg_name} ({default_sg_id}) has a port open to a specific public IP address in ingress rule."
                     )
 
     @mock_aws
@@ -378,6 +378,76 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip:
             assert len(result) == 0
 
     @mock_aws
+    def test_sg_with_wildcard_cidr_on_specific_port(self):
+        """SG with 0.0.0.0/0 on a specific port should PASS (covered by other checks)."""
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        vpc_response = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        vpc_id = vpc_response["Vpc"]["VpcId"]
+
+        subnet_response = ec2_client.create_subnet(
+            VpcId=vpc_id, CidrBlock="10.0.1.0/24"
+        )
+        subnet_id = subnet_response["Subnet"]["SubnetId"]
+
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+
+        # Add 0.0.0.0/0 on a specific port
+        ec2_client.authorize_security_group_ingress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                    "Ipv6Ranges": [],
+                    "ToPort": 443,
+                }
+            ],
+        )
+
+        # Create Network Interface
+        ec2_client.create_network_interface(
+            SubnetId=subnet_id,
+            Groups=[default_sg_id],
+            Description="Test ENI",
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                f"{CHECK_MODULE}.ec2_client",
+                new=EC2(aws_provider),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE}.vpc_client",
+                new=VPC(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip.ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip import (
+                ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip,
+            )
+
+            check = ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip()
+            result = check.execute()
+
+            for sg in result:
+                if sg.resource_id == default_sg_id:
+                    assert sg.status == "PASS"
+
+    @mock_aws
     def test_sg_with_ipv6_public_address(self):
         """SG with a specific public IPv6 address should FAIL."""
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -447,5 +517,5 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip:
                     assert sg.status == "FAIL"
                     assert (
                         sg.status_extended
-                        == f"Security group {default_sg_name} ({default_sg_id}) has a port open to a public IP address in ingress rule."
+                        == f"Security group {default_sg_name} ({default_sg_id}) has a port open to a specific public IP address in ingress rule."
                     )

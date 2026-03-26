@@ -12,7 +12,7 @@
   "Severity": "medium",
   "ResourceType": "AwsEc2SecurityGroup",
   "ResourceGroup": "network",
-  "Description": "EC2 security groups with inbound rules allowing traffic from specific globally routable IP addresses to any port or protocol. This covers cases where developers add personal or third-party IPs directly to security groups, which may persist after access is no longer needed.",
+  "Description": "EC2 security groups with inbound rules allowing traffic from specific globally routable IP addresses to any port or protocol. Wildcard CIDRs (0.0.0.0/0 and ::/0) are excluded as they are covered by the related checks. This targets cases where developers add personal or third-party IPs directly to security groups.",
   "Risk": "Ingress rules with specific public IPs can become stale when personnel change or access requirements expire. An attacker with compromised AWS credentials could also add narrow IP rules to gain access on any port, bypassing checks that only look for 0.0.0.0/0 or ::/0.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -34,6 +34,9 @@
     "internet-exposed"
   ],
   "DependsOn": [],
-  "RelatedTo": [],
+  "RelatedTo": [
+    "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+    "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+  ],
   "Notes": ""
 }
