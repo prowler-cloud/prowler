@@ -14747,14 +14747,14 @@ class TestMuteRuleViewSet:
         assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
 
     @patch("api.v1.views.chain")
-    @patch("api.v1.views.aggregate_finding_group_summaries_task.si")
+    @patch("api.v1.views.reaggregate_all_finding_group_summaries_task.si")
     @patch("api.v1.views.mute_historical_findings_task.si")
     @patch("api.v1.views.transaction.on_commit", side_effect=lambda fn: fn())
     def test_mute_rules_create_valid(
         self,
         _mock_on_commit,
         mock_mute_signature,
-        mock_aggregate_signature,
+        mock_reaggregate_signature,
         mock_chain,
         authenticated_client,
         findings_fixture,
@@ -14793,12 +14793,12 @@ class TestMuteRuleViewSet:
         assert finding.muted_at is not None
         assert finding.muted_reason == "Security exception approved"
 
-        # Verify background task chain was called
+        # Verify background task chain was called: mute → reaggregate all
         mock_mute_signature.assert_called_once()
-        mock_aggregate_signature.assert_called_once()
+        mock_reaggregate_signature.assert_called_once()
         mock_chain.assert_called_once_with(
             mock_mute_signature.return_value,
-            mock_aggregate_signature.return_value,
+            mock_reaggregate_signature.return_value,
         )
         mock_chain.return_value.apply_async.assert_called_once()
 
