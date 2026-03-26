@@ -50,6 +50,8 @@ export const resolveFindingIdsByCheckIds = async ({
   const url = new URL(`${apiBaseUrl}/findings/latest`);
   url.searchParams.append("filter[check_id__in]", checkIds.join(","));
   url.searchParams.append("filter[muted]", "false");
+  // TODO: If a check group has >500 non-muted findings, this silently truncates
+  // the resolved IDs. Consider paginating or surfacing a warning to the user.
   url.searchParams.append("page[size]", "500");
 
   try {
