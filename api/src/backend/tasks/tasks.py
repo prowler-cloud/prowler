@@ -773,6 +773,11 @@ def reaggregate_all_finding_group_summaries_task(tenant_id: str):
         .values_list("id", flat=True)
     )
     if latest_scan_ids:
+        logger.info(
+            "Reaggregating finding group summaries for %d scans: %s",
+            len(latest_scan_ids),
+            latest_scan_ids,
+        )
         group(
             aggregate_finding_group_summaries_task.si(
                 tenant_id=tenant_id, scan_id=str(scan_id)

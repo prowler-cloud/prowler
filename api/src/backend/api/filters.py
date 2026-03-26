@@ -1151,12 +1151,10 @@ class FindingGroupAggregatedComputedFilter(FilterSet):
 
     def filter_muted(self, queryset, name, value):
         if value is True:
-            # Show all finding groups, including fully-muted ones
-            return queryset
-        # muted=false: hide finding groups where all findings are muted
-        return queryset.filter(
-            Q(fail_count__gt=0) | Q(pass_count__gt=0) | Q(muted_count__gt=0)
-        )
+            # Only fully-muted groups: all findings muted, none passing/failing
+            return queryset.filter(fail_count=0, pass_count=0, muted_count__gt=0)
+        # muted=false: groups with at least one non-muted finding
+        return queryset.filter(Q(fail_count__gt=0) | Q(pass_count__gt=0))
 
 
 class ProviderSecretFilter(FilterSet):
