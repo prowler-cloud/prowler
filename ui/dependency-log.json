@@ -993,6 +993,14 @@
   },
   {
     "section": "devDependencies",
+    "name": "msw",
+    "from": "2.12.14",
+    "to": "2.12.14",
+    "strategy": "installed",
+    "generatedAt": "2026-03-26T10:11:26.868Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "postcss",
     "from": "8.4.38",
     "to": "8.4.38",
