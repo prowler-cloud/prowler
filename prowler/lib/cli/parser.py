@@ -324,6 +324,7 @@ Detailed documentation at https://docs.prowler.com
         )
         group.add_argument(
             "--resource-group",
+            "--resource-groups",
             nargs="+",
             help="List of resource groups to be executed.",
             default=[],
