@@ -4,7 +4,7 @@ import { VolumeX } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/shadcn";
-import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 
 import { MuteFindingsModal } from "./mute-findings-modal";
 
@@ -68,7 +68,7 @@ export function FloatingMuteButton({
           className="shadow-lg"
         >
           {isResolving ? (
-            <TreeSpinner className="size-5" />
+            <Spinner className="size-5" />
           ) : (
             <VolumeX className="size-5" />
           )}

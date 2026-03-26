@@ -20,7 +20,7 @@ import {
   Checkbox,
   InfoField,
 } from "@/components/shadcn";
-import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { cn } from "@/lib/utils";
 import { ResourceEventProps } from "@/types";
@@ -128,7 +128,7 @@ export const EventsTimeline = ({
   if (isPending && !hasFetched) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-12">
-        <TreeSpinner className="size-6" />
+        <Spinner className="size-6" />
         <p className="text-text-neutral-secondary text-sm">
           Fetching CloudTrail events...
         </p>
@@ -181,7 +181,7 @@ export const EventsTimeline = ({
           </span>
         </label>
         <div className="flex items-center gap-2">
-          {isPending && <TreeSpinner className="size-4" />}
+          {isPending && <Spinner className="size-4" />}
           <span className="text-text-neutral-tertiary text-xs">
             {events.length} event{events.length !== 1 && "s"}
           </span>

@@ -22,7 +22,7 @@ import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
-import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { useToast } from "@/components/ui";
 import { Form } from "@/components/ui/form";
 import {
@@ -284,7 +284,7 @@ export function OrgSetupForm({
         {setupPhase === ORG_SETUP_PHASE.ACCESS && isSubmitting && (
           <div className="flex min-h-[220px] items-center justify-center">
             <div className="flex items-center gap-3 py-2">
-              <TreeSpinner className="size-6" />
+              <Spinner className="size-6" />
               <p className="text-sm font-medium">Gathering AWS Accounts...</p>
             </div>
           </div>

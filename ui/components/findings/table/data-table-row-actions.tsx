@@ -12,7 +12,7 @@ import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
-import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 
 import { FindingsSelectionContext } from "./findings-selection-context";
 
@@ -156,7 +156,7 @@ export function DataTableRowActions<T extends FindingRowData>({
               isMuted ? (
                 <VolumeOff className="size-5" />
               ) : isResolving ? (
-                <TreeSpinner className="size-5" />
+                <Spinner className="size-5" />
               ) : (
                 <VolumeX className="size-5" />
               )

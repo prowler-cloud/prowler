@@ -12,7 +12,7 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { resolveFindingIds } from "@/actions/findings/findings-by-resource";
-import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import {
   Table,
   TableBody,
@@ -262,7 +262,7 @@ export function FindingsGroupDrillDown({
                   </TableRow>
                 ))
               ) : !isLoading ? (
-                <TableRow>
+                <TableRow className="hover:bg-transparent">
                   <TableCell
                     colSpan={columns.length}
                     className="h-24 text-center"
@@ -277,7 +277,7 @@ export function FindingsGroupDrillDown({
           {/* Loading indicator */}
           {isLoading && (
             <div className="flex items-center justify-center gap-2 py-8">
-              <TreeSpinner className="size-6" />
+              <Spinner className="size-6" />
               <span className="text-text-neutral-tertiary text-sm">
                 Loading resources...
               </span>

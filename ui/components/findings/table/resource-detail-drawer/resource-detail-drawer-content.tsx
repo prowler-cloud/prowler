@@ -34,12 +34,12 @@ import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
@@ -61,9 +61,9 @@ import {
 import { getFailingForLabel } from "@/lib/date-utils";
 import { formatDuration } from "@/lib/date-utils";
 import { getRegionFlag } from "@/lib/region-flags";
-import { cn } from "@/lib/utils";
 
 import { Muted } from "../../muted";
+import { DeltaIndicator } from "../delta-indicator";
 import { NotificationIndicator } from "../notification-indicator";
 import type { CheckMeta } from "./use-resource-detail-drawer";
 
@@ -99,7 +99,7 @@ export function ResourceDetailDrawerContent({
   if (!checkMeta && isLoading) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 py-16">
-        <TreeSpinner className="size-6" />
+        <Spinner className="size-6" />
         <span className="text-text-neutral-tertiary text-sm">
           Loading finding details...
         </span>
@@ -153,14 +153,7 @@ export function ResourceDetailDrawerContent({
           {f && <SeverityBadge severity={f.severity} />}
           {f?.delta && (
             <div className="flex items-center gap-1 capitalize">
-              <div
-                className={cn(
-                  "size-2 rounded-full",
-                  f.delta === "new"
-                    ? "bg-system-severity-high"
-                    : "bg-system-severity-low",
-                )}
-              />
+              <DeltaIndicator delta={f.delta} />
               <span className="text-text-neutral-secondary text-xs">
                 {f.delta}
               </span>
@@ -252,7 +245,7 @@ export function ResourceDetailDrawerContent({
         {/* Resource info — shows loading when currentFinding is not yet available */}
         {!f || isNavigating ? (
           <div className="flex items-center justify-center py-6">
-            <TreeSpinner className="size-5" />
+            <Spinner className="size-5" />
           </div>
         ) : (
           <>
@@ -532,7 +525,7 @@ export function ResourceDetailDrawerContent({
           >
             {!f || isNavigating ? (
               <div className="flex items-center justify-center py-8">
-                <TreeSpinner className="size-5" />
+                <Spinner className="size-5" />
               </div>
             ) : (
               <>

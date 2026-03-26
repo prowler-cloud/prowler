@@ -10,7 +10,7 @@ import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
-import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { DateWithTime } from "@/components/ui/entities";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { SeverityBadge } from "@/components/ui/table";
@@ -95,7 +95,7 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
               resource.isMuted ? (
                 <VolumeOff className="size-5" />
               ) : isResolving ? (
-                <TreeSpinner className="size-5" />
+                <Spinner className="size-5" />
               ) : (
                 <VolumeX className="size-5" />
               )
