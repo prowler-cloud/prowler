@@ -19,7 +19,7 @@ class awslambda_function_using_cross_account_layers(Check):
                 )
             elif cross_account_layers:
                 report.status = "FAIL"
-                layer_arns = ", ".join(l.arn for l in cross_account_layers)
+                layer_arns = ", ".join(layer.arn for layer in cross_account_layers)
                 report.status_extended = (
                     f"Lambda function {function.name} uses cross-account "
                     f"layer(s): {layer_arns}."
