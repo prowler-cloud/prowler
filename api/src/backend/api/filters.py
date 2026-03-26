@@ -44,6 +44,7 @@ from api.models import (
     ProviderGroup,
     ProviderSecret,
     Resource,
+    ResourceFindingMapping,
     ResourceTag,
     Role,
     Scan,
@@ -197,17 +198,13 @@ class CommonFindingFilters(FilterSet):
         field_name="resource_services", lookup_expr="icontains"
     )
 
-    resource_uid = CharFilter(field_name="resources__uid")
-    resource_uid__in = CharInFilter(field_name="resources__uid", lookup_expr="in")
-    resource_uid__icontains = CharFilter(
-        field_name="resources__uid", lookup_expr="icontains"
-    )
+    resource_uid = CharFilter(method="filter_resource_uid")
+    resource_uid__in = CharInFilter(method="filter_resource_uid_in")
+    resource_uid__icontains = CharFilter(method="filter_resource_uid_icontains")
 
-    resource_name = CharFilter(field_name="resources__name")
-    resource_name__in = CharInFilter(field_name="resources__name", lookup_expr="in")
-    resource_name__icontains = CharFilter(
-        field_name="resources__name", lookup_expr="icontains"
-    )
+    resource_name = CharFilter(method="filter_resource_name")
+    resource_name__in = CharInFilter(method="filter_resource_name_in")
+    resource_name__icontains = CharFilter(method="filter_resource_name_icontains")
 
     resource_type = CharFilter(method="filter_resource_type")
     resource_type__in = CharInFilter(field_name="resource_types", lookup_expr="overlap")
@@ -266,10 +263,49 @@ class CommonFindingFilters(FilterSet):
         return queryset.filter(overall_query).distinct()
 
     def filter_check_title_icontains(self, queryset, name, value):
+        matching_check_ids = (
+            queryset.filter(
+                Q(check_metadata__CheckTitle__icontains=value)
+                | Q(check_metadata__checktitle__icontains=value)
+                | Q(check_metadata__Checktitle__icontains=value)
+            )
+            .values_list("check_id", flat=True)
+            .distinct()
+        )
+        return queryset.filter(check_id__in=matching_check_ids)
+
+    # --- Resource subquery filters ---
+    # Resolve resource → RFM → finding_ids first, then filter findings
+    # by id__in.  This avoids a 3-way JOIN driven from the (huge)
+    # findings side and lets PostgreSQL start from the resources
+    # unique-constraint index instead.
+
+    @staticmethod
+    def _finding_ids_for_resources(**lookup):
+        return ResourceFindingMapping.objects.filter(
+            resource__in=Resource.objects.filter(**lookup).values("id")
+        ).values("finding_id")
+
+    def filter_resource_uid(self, queryset, name, value):
+        return queryset.filter(id__in=self._finding_ids_for_resources(uid=value))
+
+    def filter_resource_uid_in(self, queryset, name, value):
+        return queryset.filter(id__in=self._finding_ids_for_resources(uid__in=value))
+
+    def filter_resource_uid_icontains(self, queryset, name, value):
         return queryset.filter(
-            Q(check_metadata__CheckTitle__icontains=value)
-            | Q(check_metadata__checktitle__icontains=value)
-            | Q(check_metadata__Checktitle__icontains=value)
+            id__in=self._finding_ids_for_resources(uid__icontains=value)
+        )
+
+    def filter_resource_name(self, queryset, name, value):
+        return queryset.filter(id__in=self._finding_ids_for_resources(name=value))
+
+    def filter_resource_name_in(self, queryset, name, value):
+        return queryset.filter(id__in=self._finding_ids_for_resources(name__in=value))
+
+    def filter_resource_name_icontains(self, queryset, name, value):
+        return queryset.filter(
+            id__in=self._finding_ids_for_resources(name__icontains=value)
         )
 
 
@@ -919,7 +955,19 @@ class LatestFindingGroupFilter(CommonFindingFilters):
         }
 
 
-class FindingGroupSummaryFilter(FilterSet):
+class _CheckTitleToCheckIdMixin:
+    """Resolve check_title search to check_ids so all provider rows are kept."""
+
+    def filter_check_title_to_check_ids(self, queryset, name, value):
+        matching_check_ids = (
+            queryset.filter(check_title__icontains=value)
+            .values_list("check_id", flat=True)
+            .distinct()
+        )
+        return queryset.filter(check_id__in=matching_check_ids)
+
+
+class FindingGroupSummaryFilter(_CheckTitleToCheckIdMixin, FilterSet):
     """
     Filter for FindingGroupDailySummary queries.
 
@@ -942,9 +990,7 @@ class FindingGroupSummaryFilter(FilterSet):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
-    check_title__icontains = CharFilter(
-        field_name="check_title", lookup_expr="icontains"
-    )
+    check_title__icontains = CharFilter(method="filter_check_title_to_check_ids")
 
     # Provider filters
     provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
@@ -1032,7 +1078,7 @@ class FindingGroupSummaryFilter(FilterSet):
         return dt
 
 
-class LatestFindingGroupSummaryFilter(FilterSet):
+class LatestFindingGroupSummaryFilter(_CheckTitleToCheckIdMixin, FilterSet):
     """
     Filter for FindingGroupDailySummary /latest endpoint.
 
@@ -1044,9 +1090,7 @@ class LatestFindingGroupSummaryFilter(FilterSet):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
-    check_title__icontains = CharFilter(
-        field_name="check_title", lookup_expr="icontains"
-    )
+    check_title__icontains = CharFilter(method="filter_check_title_to_check_ids")
 
     # Provider filters
     provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
