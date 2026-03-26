@@ -13,6 +13,9 @@ env:
   PROWLER_VERSION: ${{ github.event.release.tag_name }}
   BASE_BRANCH: master
 
+permissions:
+  contents: read
+
 jobs:
   detect-release-type:
     runs-on: ubuntu-latest
@@ -26,6 +29,11 @@ jobs:
       minor_version: ${{ steps.detect.outputs.minor_version }}
       patch_version: ${{ steps.detect.outputs.patch_version }}
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Detect release type and parse version
         id: detect
         run: |
@@ -66,6 +74,11 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -175,6 +188,11 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:

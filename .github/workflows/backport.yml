@@ -17,6 +17,9 @@ env:
   BACKPORT_LABEL_PREFIX: backport-to-
   BACKPORT_LABEL_IGNORE: was-backported
 
+permissions:
+  contents: read
+
 jobs:
   backport:
     if: github.event.pull_request.merged == true && !(contains(github.event.pull_request.labels.*.name, 'backport')) && !(contains(github.event.pull_request.labels.*.name, 'was-backported'))
@@ -27,6 +30,11 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Check labels
         id: label_check
         uses: agilepathway/label-checker@c3d16ad512e7cea5961df85ff2486bb774caf3c5 # v1.6.65
