@@ -253,7 +253,7 @@ class Finding(BaseModel):
                 output_data["account_uid"] = get_nested_attribute(
                     provider, "identity.cluster"
                 )
-                output_data["provider_uid"] = provider.identity.context
+                output_data["provider_uid"] = provider.identity.cluster
                 output_data["region"] = f"namespace: {check_output.namespace}"
 
             elif provider.type == "github":
