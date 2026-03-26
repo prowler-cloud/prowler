@@ -56,17 +56,15 @@ export const MembershipsCardClient = ({
               Organizations this user is associated with
             </p>
           </div>
-          {hasManageAccount && (
-            <CardAction>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => setIsCreateOpen(true)}
-              >
-                Create organization
-              </Button>
-            </CardAction>
-          )}
+          <CardAction>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setIsCreateOpen(true)}
+            >
+              Create organization
+            </Button>
+          </CardAction>
         </CardHeader>
         <CardContent>
           {memberships.length === 0 ? (
