@@ -68,11 +68,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: [
-      "vitest-browser-react",
-      "next-auth/react",
-      "@sentry/nextjs",
-    ],
+    include: ["vitest-browser-react", "next-auth/react", "@sentry/nextjs"],
   },
   resolve: {
     alias: aliases,

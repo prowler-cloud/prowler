@@ -27,9 +27,7 @@ describe("SwitchTenantForm", () => {
     expect(
       screen.getByRole("button", { name: /confirm/i }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /cancel/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
   });
 
   it("includes hidden tenantId input", () => {

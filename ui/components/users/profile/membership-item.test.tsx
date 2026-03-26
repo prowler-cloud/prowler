@@ -130,9 +130,7 @@ describe("MembershipItem", () => {
         membershipCount={2}
       />,
     );
-    expect(
-      screen.getByRole("button", { name: /delete/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
   });
 
   it("hides Delete button when membershipCount === 1", () => {

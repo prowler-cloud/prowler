@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import {
   Dispatch,
   SetStateAction,
@@ -7,7 +8,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import { useSession } from "next-auth/react";
 
 import {
   deleteTenant,
@@ -84,8 +84,7 @@ export const DeleteTenantForm = ({
           // Non-active tenant — simple delete
           toast({
             title: "Organization deleted",
-            description:
-              "The organization has been permanently deleted.",
+            description: "The organization has been permanently deleted.",
           });
           setIsOpen(false);
         }
@@ -122,8 +121,8 @@ export const DeleteTenantForm = ({
       {isActiveTenant && (
         <div className="flex flex-col gap-2">
           <div className="text-sm">
-            This is your active organization. Select which organization to switch
-            to after deletion:
+            This is your active organization. Select which organization to
+            switch to after deletion:
           </div>
           <Select value={targetTenantId} onValueChange={setTargetTenantId}>
             <SelectTrigger>

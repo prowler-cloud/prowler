@@ -1,11 +1,11 @@
-import { render } from "vitest-browser-react";
 import { describe, vi } from "vitest";
+import { render } from "vitest-browser-react";
+
+import { expect, test } from "@/testing/test-extend";
 
 import { MembershipItem } from "./membership-item";
 import { MembershipsCardClient } from "./memberships-card-client";
 import { OrganizationManagementHarness } from "./organization-management.harness";
-
-import { expect, test } from "@/testing/test-extend";
 
 // Mocks
 vi.mock("next-auth/react", () => ({
@@ -79,9 +79,7 @@ describe("Organization Management (browser)", () => {
           sessionTenantId="tenant-1"
         />,
       );
-      await expect
-        .element(h.createButton())
-        .not.toBeInTheDocument();
+      await expect.element(h.createButton()).not.toBeInTheDocument();
     });
 
     test("opens create modal on button click", async () => {
@@ -130,9 +128,7 @@ describe("Organization Management (browser)", () => {
           membershipCount={1}
         />,
       );
-      await expect
-        .element(h.deleteButton())
-        .not.toBeInTheDocument();
+      await expect.element(h.deleteButton()).not.toBeInTheDocument();
     });
 
     test("opens delete modal and requires name confirmation", async () => {
@@ -152,14 +148,10 @@ describe("Organization Management (browser)", () => {
       await expect.element(h.modal()).toBeVisible();
 
       // Submit should be disabled until name matches
-      await expect
-        .element(h.submitButton(/delete/i))
-        .toBeDisabled();
+      await expect.element(h.submitButton(/delete/i)).toBeDisabled();
 
       await h.fillConfirmation("My Org");
-      await expect
-        .element(h.submitButton(/delete/i))
-        .toBeEnabled();
+      await expect.element(h.submitButton(/delete/i)).toBeEnabled();
     });
   });
 });

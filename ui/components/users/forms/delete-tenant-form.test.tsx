@@ -34,15 +34,9 @@ const baseProps = {
 describe("DeleteTenantForm", () => {
   it("renders confirmation input and form buttons", () => {
     render(<DeleteTenantForm {...baseProps} />);
-    expect(
-      screen.getByPlaceholderText("My Organization"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /delete/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /cancel/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("My Organization")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
   });
 
   it("submit button is disabled until name matches exactly", async () => {
@@ -52,10 +46,7 @@ describe("DeleteTenantForm", () => {
     const submitBtn = screen.getByRole("button", { name: /delete/i });
     expect(submitBtn).toBeDisabled();
 
-    await user.type(
-      screen.getByPlaceholderText("My Organization"),
-      "My Org",
-    );
+    await user.type(screen.getByPlaceholderText("My Organization"), "My Org");
     expect(submitBtn).toBeDisabled();
 
     await user.clear(screen.getByPlaceholderText("My Organization"));
@@ -85,12 +76,8 @@ describe("DeleteTenantForm", () => {
   });
 
   it("shows target tenant select for active tenant", () => {
-    render(
-      <DeleteTenantForm {...baseProps} isActiveTenant={true} />,
-    );
-    expect(
-      screen.getByText(/switch to after deletion/i),
-    ).toBeInTheDocument();
+    render(<DeleteTenantForm {...baseProps} isActiveTenant={true} />);
+    expect(screen.getByText(/switch to after deletion/i)).toBeInTheDocument();
   });
 
   it("closes modal on cancel click", async () => {

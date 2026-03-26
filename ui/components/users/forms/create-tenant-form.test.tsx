@@ -28,15 +28,9 @@ describe("CreateTenantForm", () => {
 
   it("renders name input and form buttons", () => {
     render(<CreateTenantForm setIsOpen={setIsOpen} />);
-    expect(
-      screen.getByLabelText(/organization name/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /create/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /cancel/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/organization name/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
   });
 
   it("closes modal on cancel click", async () => {
