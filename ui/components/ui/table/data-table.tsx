@@ -16,7 +16,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { AnimatePresence } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 
 import {
   Table,
@@ -98,6 +98,10 @@ interface DataTableProviderProps<TData, TValue> {
   isLoading?: boolean;
   /** Custom placeholder text for the search input */
   searchPlaceholder?: string;
+  /** Render additional content after each row (e.g., inline expansion) */
+  renderAfterRow?: (row: Row<TData>) => React.ReactNode;
+  /** Badge shown inside the search input (e.g., active drill-down group) */
+  searchBadge?: { label: string; onDismiss: () => void };
 }
 
 export function DataTable<TData, TValue>({
@@ -124,6 +128,8 @@ export function DataTable<TData, TValue>({
   onPageSizeChange,
   isLoading = false,
   searchPlaceholder,
+  renderAfterRow,
+  searchBadge,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -217,6 +223,7 @@ export function DataTable<TData, TValue>({
                 controlledValue={controlledSearch}
                 onSearchChange={onSearchChange}
                 placeholder={searchPlaceholder}
+                badge={searchBadge}
               />
             )}
           </div>
@@ -266,19 +273,19 @@ export function DataTable<TData, TValue>({
                     isSomeSelected={row.getIsSomeSelected()}
                   />
                 ) : (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
+                  <Fragment key={row.id}>
+                    <TableRow data-state={row.getIsSelected() && "selected"}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                    {renderAfterRow?.(row)}
+                  </Fragment>
                 ),
               )
             ) : (

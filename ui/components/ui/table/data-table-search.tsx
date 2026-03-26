@@ -1,10 +1,16 @@
 "use client";
 
-import { LoaderCircleIcon, SearchIcon } from "lucide-react";
+import { LoaderCircleIcon, SearchIcon, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 
+import { Badge } from "@/components/shadcn/badge/badge";
 import { Input } from "@/components/shadcn/input/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +28,8 @@ interface DataTableSearchProps {
   controlledValue?: string;
   onSearchChange?: (value: string) => void;
   placeholder?: string;
+  /** Badge shown inside the search input (e.g., active drill-down group title) */
+  badge?: { label: string; onDismiss: () => void };
 }
 
 export const DataTableSearch = ({
@@ -29,6 +37,7 @@ export const DataTableSearch = ({
   controlledValue,
   onSearchChange,
   placeholder = "Search...",
+  badge,
 }: DataTableSearchProps) => {
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -49,6 +58,9 @@ export const DataTableSearch = ({
   // For display: use displayValue in controlled mode (for responsive typing), internalValue otherwise
   const value = isControlled ? displayValue : internalValue;
 
+  // Force expanded when badge is present
+  const hasBadge = !!badge;
+
   // Sync displayValue when controlledValue changes externally (e.g., clear filters)
   useEffect(() => {
     if (isControlled) {
@@ -60,8 +72,8 @@ export const DataTableSearch = ({
   const searchParam = paramPrefix ? `${paramPrefix}Search` : "filter[search]";
   const pageParam = paramPrefix ? `${paramPrefix}Page` : "page";
 
-  // Keep expanded if there's a value or input is focused
-  const shouldStayExpanded = value.length > 0 || isFocused;
+  // Keep expanded if there's a value or input is focused or badge is present
+  const shouldStayExpanded = value.length > 0 || isFocused || hasBadge;
 
   // Sync with URL on mount (only for uncontrolled mode)
   useEffect(() => {
@@ -154,7 +166,7 @@ export const DataTableSearch = ({
 
   const handleBlur = () => {
     setIsFocused(false);
-    if (!value) {
+    if (!value && !hasBadge) {
       setIsExpanded(false);
     }
   };
@@ -167,11 +179,13 @@ export const DataTableSearch = ({
     }, 50);
   };
 
+  const effectiveExpanded = isExpanded || hasBadge;
+
   return (
     <div
       className={cn(
         "relative flex items-center transition-all duration-300 ease-in-out",
-        isExpanded ? "w-64" : "w-10",
+        effectiveExpanded ? (hasBadge ? "w-[28rem]" : "w-64") : "w-10",
       )}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -182,39 +196,73 @@ export const DataTableSearch = ({
         onClick={handleIconClick}
         className={cn(
           "border-border-neutral-tertiary bg-bg-neutral-tertiary absolute left-0 flex size-10 items-center justify-center rounded-md border transition-opacity duration-200",
-          isExpanded ? "pointer-events-none opacity-0" : "opacity-100",
+          effectiveExpanded ? "pointer-events-none opacity-0" : "opacity-100",
         )}
         aria-label="Open search"
       >
         <SearchIcon className="text-text-neutral-tertiary size-4" />
       </button>
 
-      {/* Expanded state - full input */}
+      {/* Expanded state - full input with optional badge */}
       <div
         className={cn(
           "relative w-full transition-opacity duration-200",
-          isExpanded ? "opacity-100" : "pointer-events-none opacity-0",
+          effectiveExpanded ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       >
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-          <SearchIcon className="text-text-neutral-tertiary size-4" />
-        </div>
-        <Input
-          ref={inputRef}
-          id={id}
-          type="search"
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => handleChange(e.target.value)}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          className="border-border-neutral-tertiary bg-bg-neutral-tertiary focus:border-border-input-primary-pressed pr-9 pl-9 focus:ring-0 focus:ring-offset-0 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
-        />
-        {isLoading && (
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-            <LoaderCircleIcon className="text-text-neutral-tertiary size-4 animate-spin" />
+        <div
+          className={cn(
+            "border-border-neutral-tertiary bg-bg-neutral-tertiary hover:bg-bg-neutral-secondary flex items-center gap-1.5 rounded-md border transition-colors",
+            isFocused && "border-border-input-primary-pressed",
+          )}
+        >
+          <div className="flex shrink-0 items-center pl-3">
+            <SearchIcon className="text-text-neutral-tertiary size-4" />
           </div>
-        )}
+
+          {hasBadge && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge
+                  variant="tag"
+                  className="max-w-[200px] shrink-0 cursor-default gap-1 truncate"
+                >
+                  <span className="truncate">{badge.label}</span>
+                  <button
+                    type="button"
+                    aria-label="Dismiss filter"
+                    className="hover:text-text-neutral-primary ml-0.5 shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      badge.onDismiss();
+                    }}
+                  >
+                    <X className="size-3" />
+                  </button>
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>{badge.label}</TooltipContent>
+            </Tooltip>
+          )}
+
+          <Input
+            ref={inputRef}
+            id={id}
+            type="search"
+            placeholder={placeholder}
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            className="h-9 min-w-0 flex-1 border-0 bg-transparent pr-9 shadow-none hover:bg-transparent focus:border-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
+          />
+
+          {isLoading && (
+            <div className="flex shrink-0 items-center pr-3">
+              <LoaderCircleIcon className="text-text-neutral-tertiary size-4 animate-spin" />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
