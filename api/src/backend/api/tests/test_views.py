@@ -14689,10 +14689,16 @@ class TestMuteRuleViewSet:
         assert len(data) == 2
         assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.chain")
+    @patch("api.v1.views.aggregate_finding_group_summaries_task.si")
+    @patch("api.v1.views.mute_historical_findings_task.si")
+    @patch("api.v1.views.transaction.on_commit", side_effect=lambda fn: fn())
     def test_mute_rules_create_valid(
         self,
-        mock_task,
+        _mock_on_commit,
+        mock_mute_signature,
+        mock_aggregate_signature,
+        mock_chain,
         authenticated_client,
         findings_fixture,
         create_test_user,
@@ -14730,8 +14736,14 @@ class TestMuteRuleViewSet:
         assert finding.muted_at is not None
         assert finding.muted_reason == "Security exception approved"
 
-        # Verify background task was called
-        mock_task.assert_called_once()
+        # Verify background task chain was called
+        mock_mute_signature.assert_called_once()
+        mock_aggregate_signature.assert_called_once()
+        mock_chain.assert_called_once_with(
+            mock_mute_signature.return_value,
+            mock_aggregate_signature.return_value,
+        )
+        mock_chain.return_value.apply_async.assert_called_once()
 
     @patch("tasks.tasks.mute_historical_findings_task.apply_async")
     def test_mute_rules_create_converts_finding_ids_to_uids(
@@ -15204,6 +15216,29 @@ class TestFindingGroupViewSet:
         # ec2_instance_public_ip has 1 PASS and 1 FAIL, should aggregate to FAIL
         assert data[0]["attributes"]["status"] == "FAIL"
 
+    def test_finding_groups_region_filter_reaggregates_metrics(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test finding-level filters recompute group metrics from matching findings."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "ec2_instance_public_ip",
+                "filter[region]": "us-east-1",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+
+        attrs = data[0]["attributes"]
+        assert attrs["status"] == "PASS"
+        assert attrs["pass_count"] == 1
+        assert attrs["fail_count"] == 0
+        assert attrs["resources_total"] == 1
+        assert attrs["resources_fail"] == 0
+
     def test_finding_groups_status_pass_when_no_fail(
         self, authenticated_client, finding_groups_fixture
     ):
@@ -15231,6 +15266,182 @@ class TestFindingGroupViewSet:
         assert len(data) == 1
         # rds_encryption has all muted findings
         assert data[0]["attributes"]["status"] == "MUTED"
+
+    def test_finding_groups_status_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test finding groups can be filtered by aggregated status."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[status]": "FAIL"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["status"] == "FAIL" for item in data)
+
+    def test_finding_groups_status_in_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test finding groups support status__in filter on aggregated status."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[status__in]": "FAIL,PASS"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["status"] in {"FAIL", "PASS"} for item in data)
+
+    def test_finding_groups_severity_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test finding groups can be filtered by aggregated severity."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[severity]": "critical"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["severity"] == "critical" for item in data)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_combined_region_and_status_filters(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """Test combined region + aggregated status filters."""
+        params = {"filter[region]": "us-east-1", "filter[status]": "FAIL"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_ids = {item["id"] for item in data}
+        assert check_ids == {"s3_bucket_public_access", "cloudtrail_enabled"}
+        assert all(item["attributes"]["status"] == "FAIL" for item in data)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_combined_delta_and_severity_filters(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """Test combined delta + aggregated severity filters."""
+        params = {"filter[delta]": "new", "filter[severity]": "critical"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_ids = {item["id"] for item in data}
+        assert check_ids == {"s3_bucket_public_access", "cloudtrail_enabled"}
+        assert all(item["attributes"]["severity"] == "critical" for item in data)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    @pytest.mark.parametrize(
+        "filter_key,filter_value",
+        [
+            ("status", "INVALID_STATUS"),
+            ("severity", "INVALID_SEVERITY"),
+        ],
+    )
+    def test_finding_groups_invalid_status_or_severity_returns_400(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+        filter_key,
+        filter_value,
+    ):
+        """Test invalid aggregated status/severity values are rejected."""
+        params = {f"filter[{filter_key}]": filter_value}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    @pytest.mark.parametrize(
+        "filter_key,filter_value,expected_detail",
+        [
+            ("status__in", "FAIL,INVALID_STATUS", "invalid status filter"),
+            ("severity__in", "critical,INVALID_SEVERITY", "invalid severity filter"),
+        ],
+    )
+    def test_finding_groups_invalid_in_filters_return_400(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+        filter_key,
+        filter_value,
+        expected_detail,
+    ):
+        """Test invalid values in status__in/severity__in are rejected."""
+        params = {f"filter[{filter_key}]": filter_value}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert errors[0]["code"] == "invalid"
+        assert expected_detail in errors[0]["detail"]
+
+    @pytest.mark.parametrize(
+        "filter_name,filter_value",
+        [
+            ("region", "__region_does_not_exist__"),
+            ("service", "__service_does_not_exist__"),
+            ("category", "__category_does_not_exist__"),
+            ("resource_groups", "__group_does_not_exist__"),
+            ("resource_type", "__type_does_not_exist__"),
+            ("scan", "00000000-0000-7000-8000-000000000001"),
+        ],
+    )
+    def test_finding_groups_finding_level_filters_are_applied(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        filter_name,
+        filter_value,
+    ):
+        """Test finding-level filters are applied in /finding-groups aggregation."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, f"filter[{filter_name}]": filter_value},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+
+    def test_finding_groups_delta_filter_is_applied(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test delta filter is applied in /finding-groups aggregation."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[delta]": "new"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["new_count"] > 0 for item in data)
 
     def test_finding_groups_provider_aggregation(
         self, authenticated_client, finding_groups_fixture
@@ -15525,6 +15736,22 @@ class TestFindingGroupViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 1
         assert "bucket" in response.json()["data"][0]["id"].lower()
+
+    def test_finding_groups_check_title_icontains(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test searching check titles with icontains."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_title.icontains]": "public access",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "s3_bucket_public_access"
 
     def test_resources_not_found(self, authenticated_client):
         """Test 404 returned for nonexistent check_id."""
@@ -15824,6 +16051,258 @@ class TestFindingGroupViewSet:
         assert len(data) == 1
         assert data[0]["id"] == "cloudtrail_enabled"
 
+    def test_finding_groups_latest_status_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest supports status filter on aggregated status."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[status]": "FAIL"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["status"] == "FAIL" for item in data)
+
+    def test_finding_groups_latest_region_filter_reaggregates_metrics(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest recomputes metrics from findings matching region filter."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {
+                "filter[check_id]": "ec2_instance_public_ip",
+                "filter[region]": "us-east-1",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+
+        attrs = data[0]["attributes"]
+        assert attrs["status"] == "PASS"
+        assert attrs["pass_count"] == 1
+        assert attrs["fail_count"] == 0
+        assert attrs["resources_total"] == 1
+        assert attrs["resources_fail"] == 0
+
+    def test_finding_groups_latest_status_in_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest supports status__in filter on aggregated status."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[status__in]": "FAIL,PASS"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["status"] in {"FAIL", "PASS"} for item in data)
+
+    def test_finding_groups_latest_severity_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest supports severity filter on aggregated severity."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[severity]": "critical"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["severity"] == "critical" for item in data)
+
+    @pytest.mark.parametrize(
+        "filter_name,filter_value",
+        [
+            ("region", "__region_does_not_exist__"),
+            ("service", "__service_does_not_exist__"),
+            ("category", "__category_does_not_exist__"),
+            ("resource_groups", "__group_does_not_exist__"),
+            ("resource_type", "__type_does_not_exist__"),
+            ("scan", "00000000-0000-7000-8000-000000000001"),
+        ],
+    )
+    def test_finding_groups_latest_finding_level_filters_are_applied(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        filter_name,
+        filter_value,
+    ):
+        """Test finding-level filters are applied in /finding-groups/latest aggregation."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {f"filter[{filter_name}]": filter_value},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+
+    def test_finding_groups_check_title_filter_applies_with_delta(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test check_title filter is honored when finding-level path is used."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[delta]": "new",
+                "filter[check_title.icontains]": "__missing_check_title__",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+
+    def test_finding_groups_latest_check_title_filter_applies_with_delta(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest check_title filter is honored on finding-level path."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {
+                "filter[delta]": "new",
+                "filter[check_title.icontains]": "__missing_check_title__",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+
+    def test_finding_groups_latest_delta_filter_is_applied(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test delta filter is applied in /finding-groups/latest aggregation."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[delta]": "new"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["new_count"] > 0 for item in data)
+
+    def test_finding_groups_latest_aggregates_latest_per_provider(
+        self,
+        authenticated_client,
+        providers_fixture,
+        resources_fixture,
+    ):
+        """Test /latest keeps all findings from the latest scan per provider.
+
+        Verifies that when the latest scan produces multiple findings for the
+        same check_id (e.g. one per resource), all of them are included in the
+        aggregation — not just one.
+        """
+        provider1 = providers_fixture[0]
+        provider2 = providers_fixture[1]
+        resource1 = resources_fixture[0]
+        resource2 = resources_fixture[1]
+        resource3 = resources_fixture[2]
+        check_id = "cross_provider_latest_resources_total"
+
+        latest_scan_provider1 = Scan.objects.create(
+            tenant_id=provider1.tenant_id,
+            provider=provider1,
+            state=StateChoices.COMPLETED,
+            trigger=Scan.TriggerChoices.MANUAL,
+            completed_at=datetime.now(timezone.utc),
+        )
+
+        latest_scan_provider2 = Scan.objects.create(
+            tenant_id=provider2.tenant_id,
+            provider=provider2,
+            state=StateChoices.COMPLETED,
+            trigger=Scan.TriggerChoices.MANUAL,
+            completed_at=datetime.now(timezone.utc),
+        )
+
+        older_scan_provider1 = Scan.objects.create(
+            tenant_id=provider1.tenant_id,
+            provider=provider1,
+            state=StateChoices.COMPLETED,
+            trigger=Scan.TriggerChoices.MANUAL,
+            completed_at=datetime.now(timezone.utc) - timedelta(days=1),
+        )
+
+        # Older scan — these should be excluded from /latest
+        Finding.objects.create(
+            tenant_id=provider1.tenant_id,
+            uid="old_cross_provider_1",
+            scan=older_scan_provider1,
+            delta="new",
+            status="FAIL",
+            severity="high",
+            impact="high",
+            check_id=check_id,
+            check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
+            first_seen_at=datetime.now(timezone.utc) - timedelta(days=2),
+            muted=False,
+        )
+
+        # Latest scan provider1: TWO findings (PASS + FAIL) for the same check
+        latest_p1_pass = Finding.objects.create(
+            tenant_id=provider1.tenant_id,
+            uid="latest_cross_provider_1_pass",
+            scan=latest_scan_provider1,
+            delta="new",
+            status="PASS",
+            severity="high",
+            impact="high",
+            check_id=check_id,
+            check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
+            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            muted=False,
+        )
+        latest_p1_pass.add_resources([resource1])
+
+        latest_p1_fail = Finding.objects.create(
+            tenant_id=provider1.tenant_id,
+            uid="latest_cross_provider_1_fail",
+            scan=latest_scan_provider1,
+            delta="new",
+            status="FAIL",
+            severity="high",
+            impact="high",
+            check_id=check_id,
+            check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
+            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            muted=False,
+        )
+        latest_p1_fail.add_resources([resource2])
+
+        # Latest scan provider2: one finding
+        latest_p2 = Finding.objects.create(
+            tenant_id=provider2.tenant_id,
+            uid="latest_cross_provider_2",
+            scan=latest_scan_provider2,
+            delta="new",
+            status="FAIL",
+            severity="high",
+            impact="high",
+            check_id=check_id,
+            check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
+            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            muted=False,
+        )
+        latest_p2.add_resources([resource3])
+
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[check_id]": check_id, "filter[delta]": "new"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+        # 3 findings total: 2 from provider1 latest + 1 from provider2 latest
+        assert attrs["pass_count"] == 1
+        assert attrs["fail_count"] == 2
+        assert attrs["resources_total"] == 3
+        assert attrs["resources_fail"] == 2
+
     def test_finding_groups_latest_provider_type_filter(
         self, authenticated_client, finding_groups_fixture
     ):
@@ -15862,6 +16341,44 @@ class TestFindingGroupViewSet:
         data = response.json()["data"]
         check_ids = [item["id"] for item in data]
         assert check_ids == sorted(check_ids)
+
+    def test_finding_groups_latest_sort_by_check_title(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest supports sorting by check_title."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"sort": "check_title"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_titles = [item["attributes"]["check_title"] for item in data]
+        assert check_titles == sorted(check_titles)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    @pytest.mark.parametrize(
+        "sort_field",
+        ["first_seen_at", "-first_seen_at", "last_seen_at", "failing_since"],
+    )
+    def test_finding_groups_sort_by_time_fields(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+        sort_field,
+    ):
+        """Test sorting by aggregated time fields (first_seen_at, last_seen_at, failing_since)."""
+        params = {"sort": sort_field}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
 
     def test_finding_groups_latest_ignores_date_filters(
         self, authenticated_client, finding_groups_fixture

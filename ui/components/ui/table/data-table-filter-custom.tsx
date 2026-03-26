@@ -22,6 +22,7 @@ import {
   ProviderEntity,
   ScanEntity,
 } from "@/types";
+import { DATA_TABLE_FILTER_MODE, DataTableFilterMode } from "@/types/filters";
 import { ProviderConnectionStatus } from "@/types/providers";
 
 export interface DataTableFilterCustomProps {
@@ -30,12 +31,33 @@ export interface DataTableFilterCustomProps {
   prependElement?: React.ReactNode;
   /** Hide the clear filters button and active badges (useful when parent manages this) */
   hideClearButton?: boolean;
+  /**
+   * Controls when filter selections are pushed to the URL.
+   * - "instant" (default): each selection immediately updates the URL (legacy behavior, backward-compatible).
+   * - "batch": selections accumulate in pending state; caller manages when to push URL.
+   */
+  mode?: DataTableFilterMode;
+  /**
+   * Called in "batch" mode when a filter value changes.
+   * The key is the raw filter key (e.g. "filter[severity__in]" or "severity__in").
+   * Only invoked when mode === "batch".
+   */
+  onBatchChange?: (filterKey: string, values: string[]) => void;
+  /**
+   * Returns the current selected values for a filter in "batch" mode.
+   * Replaces reading from URL searchParams when mode === "batch".
+   * Only used when mode === "batch".
+   */
+  getFilterValue?: (filterKey: string) => string[];
 }
 
 export const DataTableFilterCustom = ({
   filters,
   prependElement,
   hideClearButton = false,
+  mode = DATA_TABLE_FILTER_MODE.INSTANT,
+  onBatchChange,
+  getFilterValue,
 }: DataTableFilterCustomProps) => {
   const { updateFilter } = useUrlFilters();
   const searchParams = useSearchParams();
@@ -109,6 +131,13 @@ export const DataTableFilterCustom = ({
   };
 
   const pushDropdownFilter = (filter: FilterOption, values: string[]) => {
+    if (mode === DATA_TABLE_FILTER_MODE.BATCH && onBatchChange) {
+      // In batch mode, notify the caller instead of updating the URL
+      onBatchChange(filter.key, values);
+      return;
+    }
+
+    // Instant mode (default): push to URL immediately
     // If this filter defaults to "all selected" and the user selected all items,
     // clear the URL param to represent "no specific filter" (i.e., all).
     const allSelected =
@@ -123,6 +152,12 @@ export const DataTableFilterCustom = ({
   };
 
   const getSelectedValues = (filter: FilterOption): string[] => {
+    if (mode === DATA_TABLE_FILTER_MODE.BATCH && getFilterValue) {
+      // In batch mode, read from pending state provided by the caller
+      return getFilterValue(filter.key);
+    }
+
+    // Instant mode (default): read from URL searchParams
     const filterKey = filter.key.startsWith("filter[")
       ? filter.key
       : `filter[${filter.key}]`;
