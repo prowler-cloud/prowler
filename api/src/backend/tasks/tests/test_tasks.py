@@ -2390,9 +2390,7 @@ class TestReaggregateAllFindingGroupSummaries:
     @patch("tasks.tasks.group")
     @patch("tasks.tasks.Scan.objects.filter")
     def test_no_completed_scans_skips_dispatch(self, mock_scan_filter, mock_group):
-        mock_scan_filter.return_value.order_by.return_value.distinct.return_value.values_list.return_value = (
-            []
-        )
+        mock_scan_filter.return_value.order_by.return_value.distinct.return_value.values_list.return_value = []
 
         result = reaggregate_all_finding_group_summaries_task(tenant_id=self.tenant_id)
 
