@@ -4,7 +4,7 @@ from django.db.models import Count, Q
 
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
-from api.models import Finding, StatusChoices
+from api.models import Finding, Scan, StatusChoices
 from prowler.lib.outputs.finding import Finding as FindingOutput
 
 logger = get_task_logger(__name__)
@@ -35,25 +35,26 @@ def _aggregate_requirement_statistics_from_database(
         }
     """
     requirement_statistics_by_check_id = {}
-    # TODO: take into account that now the relation is 1 finding == 1 resource, review this when the logic changes
+    # TODO: review when finding-resource relation changes from 1:1
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        # Pre-check: skip if the scan's provider is deleted (avoids JOINs in the main query)
+        if Scan.all_objects.filter(id=scan_id, provider__is_deleted=True).exists():
+            return requirement_statistics_by_check_id
+
         aggregated_statistics_queryset = (
             Finding.all_objects.filter(
                 tenant_id=tenant_id,
                 scan_id=scan_id,
                 muted=False,
-                resources__provider__is_deleted=False,
             )
             .values("check_id")
             .annotate(
                 total_findings=Count(
                     "id",
-                    distinct=True,
                     filter=Q(status__in=[StatusChoices.PASS, StatusChoices.FAIL]),
                 ),
                 passed_findings=Count(
                     "id",
-                    distinct=True,
                     filter=Q(status=StatusChoices.PASS),
                 ),
             )

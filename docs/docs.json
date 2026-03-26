@@ -311,6 +311,13 @@
             "pages": [
               "user-guide/compliance/tutorials/threatscore"
             ]
+          },
+          {
+            "group": "Cookbooks",
+            "pages": [
+              "user-guide/cookbooks/kubernetes-in-cluster",
+              "user-guide/cookbooks/cicd-pipeline"
+            ]
           }
         ]
       },

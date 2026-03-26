@@ -5,15 +5,28 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import type { AttackPathQuery } from "@/types/attack-paths";
+import {
+  CUSTOM_ATTACK_PATH_QUERY_READ_ONLY_ERROR_MESSAGE,
+  customAttackPathQuerySchema,
+} from "@/lib/attack-paths/custom-query";
+import {
+  ATTACK_PATH_QUERY_IDS,
+  type AttackPathQuery,
+  QUERY_PARAMETER_INPUT_TYPES,
+} from "@/types/attack-paths";
 
 const getValidationSchema = (query?: AttackPathQuery) => {
   const schemaObject: Record<string, z.ZodTypeAny> = {};
 
   query?.attributes.parameters.forEach((param) => {
-    let fieldSchema: z.ZodTypeAny = z
-      .string()
-      .min(1, `${param.label} is required`);
+    const isCustomQueryParameter =
+      query.id === ATTACK_PATH_QUERY_IDS.CUSTOM &&
+      param.name === "query" &&
+      param.input_type === QUERY_PARAMETER_INPUT_TYPES.TEXTAREA;
+
+    let fieldSchema: z.ZodTypeAny = isCustomQueryParameter
+      ? customAttackPathQuerySchema
+      : z.string().min(1, `${param.label} is required`);
 
     if (param.data_type === "number") {
       fieldSchema = z.coerce.number().refine((val) => val >= 0, {
@@ -93,6 +106,11 @@ export const useQueryBuilder = (availableQueries: AttackPathQuery[]) => {
     return form.formState.isValid;
   };
 
+  const isExecutionBlocked =
+    selectedQueryData?.id === ATTACK_PATH_QUERY_IDS.CUSTOM &&
+    form.formState.errors.query?.message ===
+      CUSTOM_ATTACK_PATH_QUERY_READ_ONLY_ERROR_MESSAGE;
+
   return {
     selectedQuery,
     selectedQueryData,
@@ -101,5 +119,6 @@ export const useQueryBuilder = (availableQueries: AttackPathQuery[]) => {
     handleQueryChange,
     getQueryParameters,
     isFormValid,
+    isExecutionBlocked,
   };
 };
