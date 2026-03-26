@@ -14,6 +14,7 @@ import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { resolveFindingIds } from "@/actions/findings/findings-by-resource";
+import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { useInfiniteResources } from "@/hooks/use-infinite-resources";
@@ -42,6 +43,75 @@ interface InlineResourceContainerProps {
 // children would require syncing state with infinite scroll (resources load 10 at
 // a time), causing cascading setState during render and confusing partial selections.
 // Resource-level checkboxes are for selecting a specific subset independently.
+
+/** Max skeleton rows that fit in the 440px scroll container */
+const MAX_SKELETON_ROWS = 7;
+
+function ResourceSkeletonRow() {
+  return (
+    <TableRow className="hover:bg-transparent">
+      {/* Select: indicator + corner arrow + checkbox */}
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-1.5 rounded-full" />
+          <Skeleton className="size-4 rounded" />
+          <div className="bg-bg-input-primary border-border-input-primary size-5 rounded-sm border shadow-[0_1px_2px_0_rgba(0,0,0,0.1)]" />
+        </div>
+      </TableCell>
+      {/* Resource: icon + name + uid */}
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-4 rounded" />
+          <div className="space-y-1">
+            <Skeleton className="h-3.5 w-32 rounded" />
+            <Skeleton className="h-3 w-20 rounded" />
+          </div>
+        </div>
+      </TableCell>
+      {/* Status */}
+      <TableCell>
+        <Skeleton className="h-6 w-11 rounded-md" />
+      </TableCell>
+      {/* Service */}
+      <TableCell>
+        <Skeleton className="h-4 w-16 rounded" />
+      </TableCell>
+      {/* Region */}
+      <TableCell>
+        <Skeleton className="h-4 w-20 rounded" />
+      </TableCell>
+      {/* Severity */}
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-2 rounded-full" />
+          <Skeleton className="h-4 w-12 rounded" />
+        </div>
+      </TableCell>
+      {/* Account: provider icon + alias + uid */}
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-4 rounded" />
+          <div className="space-y-1">
+            <Skeleton className="h-3.5 w-24 rounded" />
+            <Skeleton className="h-3 w-16 rounded" />
+          </div>
+        </div>
+      </TableCell>
+      {/* Last seen */}
+      <TableCell>
+        <Skeleton className="h-4 w-24 rounded" />
+      </TableCell>
+      {/* Failing for */}
+      <TableCell>
+        <Skeleton className="h-4 w-16 rounded" />
+      </TableCell>
+      {/* Actions */}
+      <TableCell>
+        <Skeleton className="size-6 rounded" />
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export function InlineResourceContainer({
   group,
@@ -224,42 +294,49 @@ export function InlineResourceContainer({
                   ref={combinedScrollRef}
                   className="max-h-[440px] overflow-y-auto pl-6"
                 >
-                  {/* Resource rows */}
+                  {/* Resource rows or skeleton placeholder */}
                   <table className="mt-[-10] w-full border-separate border-spacing-y-4">
                     <tbody>
-                      {rows.length > 0
-                        ? rows.map((row) => (
-                            <TableRow
-                              key={row.id}
-                              data-state={row.getIsSelected() && "selected"}
-                              className="cursor-pointer"
-                              onClick={() => drawer.openDrawer(row.index)}
-                            >
-                              {row.getVisibleCells().map((cell) => (
-                                <TableCell key={cell.id}>
-                                  {flexRender(
-                                    cell.column.columnDef.cell,
-                                    cell.getContext(),
-                                  )}
-                                </TableCell>
-                              ))}
-                            </TableRow>
-                          ))
-                        : !isLoading && (
-                            <TableRow className="hover:bg-transparent">
-                              <TableCell
-                                colSpan={columns.length}
-                                className="h-24 text-center"
-                              >
-                                No resources found.
+                      {isLoading && rows.length === 0 ? (
+                        Array.from({
+                          length: Math.min(
+                            group.resourcesTotal,
+                            MAX_SKELETON_ROWS,
+                          ),
+                        }).map((_, i) => <ResourceSkeletonRow key={i} />)
+                      ) : rows.length > 0 ? (
+                        rows.map((row) => (
+                          <TableRow
+                            key={row.id}
+                            data-state={row.getIsSelected() && "selected"}
+                            className="cursor-pointer"
+                            onClick={() => drawer.openDrawer(row.index)}
+                          >
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCell key={cell.id}>
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext(),
+                                )}
                               </TableCell>
-                            </TableRow>
-                          )}
+                            ))}
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow className="hover:bg-transparent">
+                          <TableCell
+                            colSpan={columns.length}
+                            className="h-24 text-center"
+                          >
+                            No resources found.
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </tbody>
                   </table>
 
-                  {/* Loading indicator */}
-                  {isLoading && (
+                  {/* Spinner for infinite scroll (subsequent pages only) */}
+                  {isLoading && rows.length > 0 && (
                     <div className="flex items-center justify-center gap-2 py-8">
                       <Spinner className="size-6" />
                       <span className="text-text-neutral-tertiary text-sm">
