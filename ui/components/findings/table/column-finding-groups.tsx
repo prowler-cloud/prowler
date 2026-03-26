@@ -22,6 +22,8 @@ interface GetColumnFindingGroupsOptions {
   selectableRowCount: number;
   onDrillDown: (checkId: string, group: FindingGroupRow) => void;
   expandedCheckId?: string | null;
+  /** True when the expanded group has individually selected resources */
+  hasResourceSelection?: boolean;
 }
 
 export function getColumnFindingGroups({
@@ -29,6 +31,7 @@ export function getColumnFindingGroups({
   selectableRowCount,
   onDrillDown,
   expandedCheckId,
+  hasResourceSelection = false,
 }: GetColumnFindingGroupsOptions): ColumnDef<FindingGroupRow>[] {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -95,10 +98,23 @@ export function getColumnFindingGroups({
             </button>
             <Checkbox
               size="sm"
-              checked={!!rowSelection[row.id]}
-              onCheckedChange={(checked) =>
-                row.toggleSelected(checked === true)
+              checked={
+                rowSelection[row.id] && isExpanded && hasResourceSelection
+                  ? "indeterminate"
+                  : !!rowSelection[row.id]
               }
+              onCheckedChange={(checked) => {
+                // When indeterminate (resources selected), clicking deselects the group
+                if (
+                  rowSelection[row.id] &&
+                  isExpanded &&
+                  hasResourceSelection
+                ) {
+                  row.toggleSelected(false);
+                } else {
+                  row.toggleSelected(checked === true);
+                }
+              }}
               onClick={(e) => e.stopPropagation()}
               aria-label="Select row"
             />

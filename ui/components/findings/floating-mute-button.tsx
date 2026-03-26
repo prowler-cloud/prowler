@@ -16,6 +16,8 @@ interface FloatingMuteButtonProps {
   onBeforeOpen?: () => Promise<string[]>;
   /** When true, the toast warns that processing may take a few minutes */
   isBulkOperation?: boolean;
+  /** Custom button label. Defaults to "Mute ({selectedCount})" */
+  label?: string;
 }
 
 export function FloatingMuteButton({
@@ -24,6 +26,7 @@ export function FloatingMuteButton({
   onComplete,
   onBeforeOpen,
   isBulkOperation = false,
+  label,
 }: FloatingMuteButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
@@ -72,7 +75,7 @@ export function FloatingMuteButton({
           ) : (
             <VolumeX className="size-5" />
           )}
-          Mute ({selectedCount})
+          {label ?? `Mute (${selectedCount})`}
         </Button>
       </div>
     </>

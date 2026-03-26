@@ -4,7 +4,10 @@ import { Row, RowSelectionState } from "@tanstack/react-table";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-import { resolveFindingIdsByCheckIds } from "@/actions/findings/findings-by-resource";
+import {
+  resolveFindingIds,
+  resolveFindingIdsByCheckIds,
+} from "@/actions/findings/findings-by-resource";
 import { DataTable } from "@/components/ui/table";
 import { FindingGroupRow, MetaDataProps } from "@/types";
 
@@ -12,6 +15,19 @@ import { FloatingMuteButton } from "../floating-mute-button";
 import { getColumnFindingGroups } from "./column-finding-groups";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import { InlineResourceContainer } from "./inline-resource-container";
+
+function buildMuteLabel(groupCount: number, resourceCount: number): string {
+  const parts: string[] = [];
+  if (groupCount > 0) {
+    parts.push(`${groupCount} ${groupCount === 1 ? "Group" : "Groups"}`);
+  }
+  if (resourceCount > 0) {
+    parts.push(
+      `${resourceCount} ${resourceCount === 1 ? "Resource" : "Resources"}`,
+    );
+  }
+  return `Mute ${parts.join(" and ")}`;
+}
 
 interface FindingsGroupTableProps {
   data: FindingGroupRow[];
@@ -30,18 +46,24 @@ export function FindingsGroupTable({
     null,
   );
   const [resourceSearch, setResourceSearch] = useState("");
-  const [_resourceSelection, setResourceSelection] = useState<string[]>([]);
+  const [resourceSelection, setResourceSelection] = useState<string[]>([]);
 
   // State resets (selection, drill-down) are handled by the parent via
   // key={groupKey} — when data changes, the component remounts with fresh state.
 
   const safeData = data ?? [];
+  const hasResourceSelection = resourceSelection.length > 0;
 
-  // Get selected check IDs (not UUIDs) — resolveFindingIdsByCheckIds expects check_id values
+  // Get selected check IDs (not UUIDs) — resolveFindingIdsByCheckIds expects check_id values.
+  // When the expanded group has individual resource selections, exclude it from
+  // group-level mute targets — the resource-level FloatingMuteButton handles those.
   const selectedCheckIds = Object.keys(rowSelection)
     .filter((key) => rowSelection[key])
     .map((idx) => safeData[parseInt(idx)]?.checkId)
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter(
+      (checkId) => !(hasResourceSelection && checkId === expandedCheckId),
+    );
 
   const selectedFindings = Object.keys(rowSelection)
     .filter((key) => rowSelection[key])
@@ -72,6 +94,7 @@ export function FindingsGroupTable({
 
   const handleMuteComplete = () => {
     clearSelection();
+    setResourceSelection([]);
     router.refresh();
   };
 
@@ -85,7 +108,6 @@ export function FindingsGroupTable({
     setExpandedGroup(group);
     setResourceSearch("");
     setResourceSelection([]);
-    setRowSelection({});
   };
 
   const handleCollapse = () => {
@@ -100,6 +122,7 @@ export function FindingsGroupTable({
     selectableRowCount,
     onDrillDown: handleDrillDown,
     expandedCheckId,
+    hasResourceSelection,
   });
 
   const renderAfterRow = (row: Row<FindingGroupRow>) => {
@@ -149,14 +172,27 @@ export function FindingsGroupTable({
         renderAfterRow={renderAfterRow}
       />
 
-      {selectedCheckIds.length > 0 && (
+      {(selectedCheckIds.length > 0 || hasResourceSelection) && (
         <FloatingMuteButton
-          selectedCount={selectedCheckIds.length}
-          selectedFindingIds={selectedCheckIds}
+          selectedCount={selectedCheckIds.length + resourceSelection.length}
+          selectedFindingIds={[...selectedCheckIds, ...resourceSelection]}
+          label={buildMuteLabel(
+            selectedCheckIds.length,
+            resourceSelection.length,
+          )}
           onBeforeOpen={async () => {
-            return resolveFindingIdsByCheckIds({
-              checkIds: selectedCheckIds,
-            });
+            const [groupIds, resourceIds] = await Promise.all([
+              selectedCheckIds.length > 0
+                ? resolveFindingIdsByCheckIds({ checkIds: selectedCheckIds })
+                : Promise.resolve([]),
+              hasResourceSelection && expandedCheckId
+                ? resolveFindingIds({
+                    checkId: expandedCheckId,
+                    resourceUids: resourceSelection,
+                  })
+                : Promise.resolve([]),
+            ]);
+            return [...groupIds, ...resourceIds];
           }}
           onComplete={handleMuteComplete}
           isBulkOperation

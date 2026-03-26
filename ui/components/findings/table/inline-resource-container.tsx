@@ -21,7 +21,6 @@ import { useScrollHint } from "@/hooks/use-scroll-hint";
 import { hasDateOrScanFilter } from "@/lib";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
 
-import { FloatingMuteButton } from "../floating-mute-button";
 import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
@@ -33,8 +32,16 @@ interface InlineResourceContainerProps {
   group: FindingGroupRow;
   resourceSearch: string;
   columnCount: number;
-  onResourceSelectionChange: (ids: string[]) => void;
+  /** Called with selected resource UIDs (not finding IDs) for parent-level mute resolution */
+  onResourceSelectionChange: (resourceUids: string[]) => void;
 }
+
+// NOTE: We intentionally do NOT auto-select child resources when a parent group
+// is selected. Selecting a group already covers all its resources server-side
+// (resolveFindingIdsByCheckIds resolves the full set by checkId). Auto-selecting
+// children would require syncing state with infinite scroll (resources load 10 at
+// a time), causing cascading setState during render and confusing partial selections.
+// Resource-level checkboxes are for selecting a specific subset independently.
 
 export function InlineResourceContainer({
   group,
@@ -165,11 +172,11 @@ export function InlineResourceContainer({
       typeof updater === "function" ? updater(rowSelection) : updater;
     setRowSelection(newSelection);
 
-    const newIds = Object.keys(newSelection)
+    const newResourceUids = Object.keys(newSelection)
       .filter((key) => newSelection[key])
-      .map((idx) => resources[parseInt(idx)]?.findingId)
+      .map((idx) => resources[parseInt(idx)]?.resourceUid)
       .filter(Boolean);
-    onResourceSelectionChange(newIds);
+    onResourceSelectionChange(newResourceUids);
   };
 
   const columns = getColumnFindingResources({
@@ -292,20 +299,6 @@ export function InlineResourceContainer({
           </AnimatePresence>
         </td>
       </tr>
-
-      {selectedFindingIds.length > 0 &&
-        createPortal(
-          <FloatingMuteButton
-            selectedCount={selectedFindingIds.length}
-            selectedFindingIds={selectedFindingIds}
-            onBeforeOpen={async () => {
-              return resolveResourceIds(selectedFindingIds);
-            }}
-            onComplete={handleMuteComplete}
-            isBulkOperation
-          />,
-          document.body,
-        )}
 
       {createPortal(
         <ResourceDetailDrawer
