@@ -13,7 +13,7 @@ const Table = forwardRef<HTMLTableElement, HTMLAttributes<HTMLTableElement>>(
       <table
         ref={ref}
         className={cn(
-          "w-full caption-bottom border-separate border-spacing-y-1 text-sm",
+          "w-full caption-bottom border-separate border-spacing-y-4 text-sm",
           className,
         )}
         {...props}
@@ -39,7 +39,11 @@ const TableBody = forwardRef<
   HTMLTableSectionElement,
   HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <tbody ref={ref} className={cn("", className)} {...props} />
+  <tbody
+    ref={ref}
+    className={cn("[&>tr:last-child>td]:after:hidden", className)}
+    {...props}
+  />
 ));
 TableBody.displayName = "TableBody";
 
@@ -105,7 +109,8 @@ const TableCell = forwardRef<
   <td
     ref={ref}
     className={cn(
-      "px-1.5 py-2 align-middle first:pl-3 last:pr-3 [&:has([role=checkbox])]:pr-0",
+      "relative px-1.5 py-2 align-middle first:pl-3 last:pr-3 [&:has([role=checkbox])]:pr-0",
+      "after:bg-border-input-primary after:absolute after:-bottom-2 after:right-0 after:left-0 after:h-px",
       className,
     )}
     {...props}
