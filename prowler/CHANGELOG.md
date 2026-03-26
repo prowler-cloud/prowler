@@ -11,6 +11,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `glue_etl_jobs_no_secrets_in_arguments` check for plaintext secrets in AWS Glue ETL job arguments [(#10368)](https://github.com/prowler-cloud/prowler/pull/10368)
 - `awslambda_function_no_dead_letter_queue`, `awslambda_function_using_cross_account_layers`, and `awslambda_function_env_vars_not_encrypted_with_cmk` checks for AWS Lambda [(#10381)](https://github.com/prowler-cloud/prowler/pull/10381)
 - `entra_conditional_access_policy_mdm_compliant_device_required` check for M365 provider [(#10220)](https://github.com/prowler-cloud/prowler/pull/10220)
+- `ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip` check for AWS provider using `ipaddress.is_global` for accurate public IP detection [(#10335)](https://github.com/prowler-cloud/prowler/pull/10335)
 
 ### 🔄 Changed
 
@@ -53,7 +54,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - SecNumCloud 3.2 for the Azure provider [(#10358)](https://github.com/prowler-cloud/prowler/pull/10358)
 - SecNumCloud 3.2 for the Alibaba Cloud provider [(#10370)](https://github.com/prowler-cloud/prowler/pull/10370)
 - SecNumCloud 3.2 for the Oracle Cloud provider [(#10371)](https://github.com/prowler-cloud/prowler/pull/10371)
-- `ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip` check using `ipaddress.is_global` for accurate public IP detection [(#10335)](https://github.com/prowler-cloud/prowler/pull/10335)
 
 ### 🔄 Changed
 
