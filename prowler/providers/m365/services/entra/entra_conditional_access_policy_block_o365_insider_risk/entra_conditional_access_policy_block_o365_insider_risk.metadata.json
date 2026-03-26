@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Conditional Access Policy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "A Conditional Access policy configured to **block** Office 365 access for users flagged with **elevated insider risk** by Microsoft Purview Adaptive Protection.\n\nThis control uses behavioral signals to restrict access when a user's risk level indicates potential insider threat activity.",
   "Risk": "Without a policy blocking Office 365 for elevated insider risk users, compromised or malicious insiders can continue accessing email, SharePoint, OneDrive, and Teams.\n\nThis may lead to **data exfiltration**, unauthorized sharing of sensitive information, or tampering with critical business communications.",
