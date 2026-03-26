@@ -1214,8 +1214,8 @@ class TenantViewSet(BaseTenantViewset):
         """
         Returns the required permissions based on the request method.
         """
-        if self.action in ("list", "create"):
-            # No permissions required for listing or creating tenants
+        if self.action in ("list", "retrieve", "create"):
+            # No permissions required for listing, retrieving or creating tenants
             self.required_permissions = []
         else:
             # Require MANAGE_ACCOUNT for update and delete

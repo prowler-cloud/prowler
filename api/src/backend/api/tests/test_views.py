@@ -813,6 +813,15 @@ class TestTenantViewSet:
         response = authenticated_client_no_permissions_rbac.get(reverse("tenant-list"))
         assert response.status_code == status.HTTP_200_OK
 
+    def test_tenants_retrieve_no_permissions(
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
+    ):
+        tenant1, *_ = tenants_fixture
+        response = authenticated_client_no_permissions_rbac.get(
+            reverse("tenant-detail", kwargs={"pk": tenant1.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+
     def test_tenants_create_no_permissions(
         self, authenticated_client_no_permissions_rbac, valid_tenant_payload
     ):
