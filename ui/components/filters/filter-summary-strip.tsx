@@ -50,7 +50,7 @@ export const FilterSummaryStrip = ({
       {chips.map((chip) => (
         <Badge
           key={`${chip.key}-${chip.value}`}
-          variant="outline"
+          variant="tag"
           className="flex items-center gap-1 pr-1"
         >
           <span className="text-text-neutral-primary text-xs">
