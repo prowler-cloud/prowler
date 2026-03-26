@@ -7008,7 +7008,13 @@ class FindingGroupViewSet(BaseRLSViewSet):
         self, params: QueryDict
     ) -> tuple[QueryDict, QueryDict]:
         """Split finding filters from computed aggregate filters."""
-        computed_keys = {"status", "status__in", "severity", "severity__in", "muted"}
+        computed_keys = {
+            "status",
+            "status__in",
+            "severity",
+            "severity__in",
+            "include_muted",
+        }
         finding_params = QueryDict(mutable=True)
         computed_params = QueryDict(mutable=True)
 
@@ -7130,6 +7136,10 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     output_field=CharField(),
                 )
             )
+
+        # Exclude fully-muted groups by default unless include_muted is set
+        if "include_muted" not in computed_params:
+            queryset = queryset.exclude(fail_count=0, pass_count=0, muted_count__gt=0)
 
         filterset = FindingGroupAggregatedComputedFilter(
             computed_params, queryset=queryset
