@@ -8104,6 +8104,8 @@ class TestUserRoleRelationshipViewSet:
             manage_scans=False,
             unlimited_visibility=False,
         )
+        # Assign the role to the user
+        UserRoleRelationship.objects.create(user=user, role=only_role, tenant=tenant)
 
         # Switch token to this tenant
         serializer = TokenSerializer(
