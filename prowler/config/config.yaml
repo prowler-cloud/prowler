@@ -617,3 +617,11 @@ vercel:
   stable_branches:
     - "main"
     - "master"
+  # vercel.authentication_token_not_expired
+  # Number of days before expiration to flag a token as about to expire
+  days_to_expire_threshold: 7
+  # vercel.team_member_role_least_privilege
+  # Maximum percentage of team members that can have the OWNER role
+  max_owner_percentage: 20
+  # Maximum number of owners allowed (overrides percentage for large teams)
+  max_owners: 3

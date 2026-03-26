@@ -32,8 +32,8 @@
   ],
   "DependsOn": [],
   "RelatedTo": [
-    "project_environment_sensitive_vars_encrypted",
+    "project_environment_no_secrets_in_plain_type",
     "project_environment_no_overly_broad_target"
   ],
-  "Notes": "This check only inspects variables with type 'secret' or 'encrypted' since these are the ones most likely to contain actual credentials. Plain-text variables with sensitive names should be caught by the project_environment_sensitive_vars_encrypted check."
+  "Notes": "This check only inspects variables with type 'secret' or 'encrypted' since these are the ones most likely to contain actual credentials. Plain-text variables with sensitive names should be caught by the project_environment_no_secrets_in_plain_type check."
 }
