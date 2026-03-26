@@ -80,7 +80,7 @@ export function DataTableRowActions<T extends FindingRowData>({
 
   // For group rows, use checkId (for the resolve API); for regular findings, use id (UUID).
   const isGroup = finding.rowType === "group";
-  const muteKey = isGroup ? finding.checkId ?? finding.id : finding.id;
+  const muteKey = isGroup ? (finding.checkId ?? finding.id) : finding.id;
 
   // If current finding is selected and there are multiple selections, mute all
   // Otherwise, just mute this single finding
