@@ -263,11 +263,11 @@ class CommonFindingFilters(FilterSet):
         return queryset.filter(overall_query).distinct()
 
     def filter_check_title_icontains(self, queryset, name, value):
+        # Resolve from the summary table (has check_title column + trigram
+        # GIN index) instead of scanning JSON in the findings table.
         matching_check_ids = (
-            queryset.filter(
-                Q(check_metadata__CheckTitle__icontains=value)
-                | Q(check_metadata__checktitle__icontains=value)
-                | Q(check_metadata__Checktitle__icontains=value)
+            FindingGroupDailySummary.objects.filter(
+                check_title__icontains=value,
             )
             .values_list("check_id", flat=True)
             .distinct()

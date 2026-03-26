@@ -15851,6 +15851,25 @@ class TestFindingGroupViewSet:
             assert resource.get("region"), "resource.region must not be empty"
             assert resource.get("type"), "resource.type must not be empty"
 
+    def test_resources_resource_group(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test resource_group is extracted from check_metadata.resourcegroup."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        for item in data:
+            resource = item["attributes"]["resource"]
+            assert (
+                resource["resource_group"] == "storage"
+            ), "resource_group must be 'storage'"
+
     def test_resources_provider_info(
         self, authenticated_client, finding_groups_fixture
     ):
