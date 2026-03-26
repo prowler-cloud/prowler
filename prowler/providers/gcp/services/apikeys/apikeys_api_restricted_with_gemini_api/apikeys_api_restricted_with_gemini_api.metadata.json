@@ -1,0 +1,41 @@
+{
+  "Provider": "gcp",
+  "CheckID": "apikeys_api_restricted_with_gemini_api",
+  "CheckTitle": "API key is restricted to specific Google APIs when the Gemini (Generative Language) API is enabled",
+  "CheckType": [],
+  "ServiceName": "apikeys",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "apikeys.googleapis.com/Key",
+  "ResourceGroup": "IAM",
+  "Description": "The Gemini API (a.k.a. Generative Language API, `generativelanguage.googleapis.com`) uses API keys to authenticate requests for uploaded files and cached content. For projects with the Gemini API enabled, each API key should have API restrictions configured to limit access to specific services.",
+  "Risk": "Leaked, unrestricted API keys allow access to sensitive uploaded files and cached content, impacting their **confidentiality**. The risk of leaks is particularly high because traditionally, Google API keys were *not* considered sensitive and might be embedded in website source code, mobile apps, etc.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://trufflesecurity.com/blog/google-api-keys-werent-secrets-but-then-gemini-changed-the-rules",
+    "https://cloud.google.com/docs/authentication/api-keys"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud services api-keys update <KEY_ID> --api-target=service=<SERVICE_NAME>",
+      "NativeIaC": "",
+      "Other": "1. In Google Cloud Console, go to APIs & Services > Credentials\n2. Click the API key name to edit it\n3. In API restrictions, select \"Restrict key\"\n4. Choose only the specific API(s) needed (do not select \"All Google APIs\" and select \"Generative Language API\" only if specifically required)\n5. Click Save",
+      "Terraform": "```hcl\nresource \"google_apikeys_key\" \"key\" {\n  display_name = \"<example_resource_name>\"\n\n  restrictions {\n    api_targets {\n      service = \"<SERVICE_NAME>\" # Critical: restricts the key to a specific API, removing any \"All Google APIs\" (cloudapis.googleapis.com)\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply **API restrictions** so that each key only has access to specific APIs. Do *not* allow access to the \"Generative Language API\" in particular.\nIf access to the \"Generative Language API\" is required, be aware of the consequences. Only use the key for this specific purpose and ensure adequate **secrets storage**.\n\nAlternatively, completely disable the Gemini API (a.k.a. Generative Language API, `generativelanguage.googleapis.com`) in the project's enabled services.",
+      "Url": "https://hub.prowler.com/check/apikeys_api_restricted_with_gemini_api"
+    }
+  },
+  "Categories": [
+    "secrets",
+    "gen-ai",
+    "identity-access"
+  ],
+  "DependsOn": [
+    "apikeys_api_restrictions_configured"
+  ],
+  "RelatedTo": [],
+  "Notes": ""
+}
