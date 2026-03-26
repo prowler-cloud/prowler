@@ -17,7 +17,6 @@ export const SwitchTenantForm = ({
   const [state, formAction] = useActionState(switchTenant, null);
   const { update } = useSession();
   const { toast } = useToast();
-
   useEffect(() => {
     if (!state) return;
 
@@ -43,7 +42,8 @@ export const SwitchTenantForm = ({
     };
 
     handleSwitch();
-  }, [state, update, toast, setIsOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   return (
     <form action={formAction}>

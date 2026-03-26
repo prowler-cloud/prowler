@@ -42,7 +42,6 @@ export const DeleteTenantForm = ({
   const [state, formAction] = useActionState(deleteTenant, null);
   const { update } = useSession();
   const { toast } = useToast();
-
   const [confirmName, setConfirmName] = useState("");
   const [targetTenantId, setTargetTenantId] = useState("");
 
@@ -98,7 +97,8 @@ export const DeleteTenantForm = ({
     };
 
     handleDelete();
-  }, [state, isActiveTenant, targetTenantId, update, toast, setIsOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

@@ -20,7 +20,6 @@ export const CreateTenantForm = ({
   const [state, formAction] = useActionState(createTenant, null);
   const { update } = useSession();
   const { toast } = useToast();
-
   useEffect(() => {
     if (!state) return;
 
@@ -62,7 +61,8 @@ export const CreateTenantForm = ({
     };
 
     handleCreate();
-  }, [state, update, toast, setIsOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
