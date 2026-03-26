@@ -7307,8 +7307,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
             raise ValidationError(filterset.errors)
         filtered_queryset = filterset.qs
         # Only include summaries from each provider's most recent date
-        # (within the filtered range). Window MAX is a single pass — no
-        # correlated subquery.
+        # (within the filtered range)
         filtered_queryset = filtered_queryset.annotate(
             _max_provider_date=Window(
                 expression=Max("inserted_at"),
