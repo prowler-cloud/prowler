@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
-import { CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
+import { Container, CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
 import { useContext, useState } from "react";
 
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
@@ -10,6 +10,7 @@ import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { DateWithTime } from "@/components/ui/entities";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
@@ -180,10 +181,13 @@ export function getColumnFindingResources({
         <DataTableColumnHeader column={column} title="Resource" />
       ),
       cell: ({ row }) => (
-        <EntityInfo
-          entityAlias={row.original.resourceName}
-          entityId={row.original.resourceUid}
-        />
+        <div className="max-w-[240px]">
+          <EntityInfo
+            nameIcon={<Container className="size-4" />}
+            entityAlias={row.original.resourceName}
+            entityId={row.original.resourceUid}
+          />
+        </div>
       ),
       enableSorting: false,
     },
@@ -257,7 +261,11 @@ export function getColumnFindingResources({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Last seen" />
       ),
-      cell: ({ row }) => <DateWithTime dateTime={row.original.lastSeenAt} />,
+      cell: ({ row }) => (
+        <InfoField label="Last seen" variant="compact">
+          <DateWithTime dateTime={row.original.lastSeenAt} inline />
+        </InfoField>
+      ),
       enableSorting: false,
     },
     // Failing for — duration since first_seen_at
@@ -267,9 +275,11 @@ export function getColumnFindingResources({
         <DataTableColumnHeader column={column} title="Failing for" />
       ),
       cell: ({ row }) => {
-        const label = getFailingForLabel(row.original.firstSeenAt);
+        const duration = getFailingForLabel(row.original.firstSeenAt);
         return (
-          <p className="text-text-neutral-primary text-sm">{label || "-"}</p>
+          <InfoField label="Failing for" variant="compact">
+            {duration || "-"}
+          </InfoField>
         );
       },
       enableSorting: false,
