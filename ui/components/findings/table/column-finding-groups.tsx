@@ -9,6 +9,7 @@ import {
   SeverityBadge,
   StatusFindingBadge,
 } from "@/components/ui/table";
+import { cn } from "@/lib";
 import { FindingGroupRow, ProviderType } from "@/types";
 
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -20,12 +21,14 @@ interface GetColumnFindingGroupsOptions {
   rowSelection: RowSelectionState;
   selectableRowCount: number;
   onDrillDown: (checkId: string, group: FindingGroupRow) => void;
+  expandedCheckId?: string | null;
 }
 
 export function getColumnFindingGroups({
   rowSelection,
   selectableRowCount,
   onDrillDown,
+  expandedCheckId,
 }: GetColumnFindingGroupsOptions): ColumnDef<FindingGroupRow>[] {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -65,6 +68,7 @@ export function getColumnFindingGroups({
         const group = row.original;
         const allMuted =
           group.mutedCount > 0 && group.mutedCount === group.resourcesTotal;
+        const isExpanded = expandedCheckId === group.checkId;
 
         const delta =
           group.newCount > 0
@@ -82,7 +86,12 @@ export function getColumnFindingGroups({
               className="hover:bg-bg-neutral-tertiary flex size-4 shrink-0 items-center justify-center rounded-md transition-colors"
               onClick={() => onDrillDown(group.checkId, group)}
             >
-              <ChevronRight className="text-text-neutral-secondary size-4" />
+              <ChevronRight
+                className={cn(
+                  "text-text-neutral-secondary size-4 transition-transform duration-200",
+                  isExpanded && "rotate-90",
+                )}
+              />
             </button>
             <Checkbox
               size="sm"
