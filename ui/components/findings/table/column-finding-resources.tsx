@@ -184,7 +184,7 @@ export function getColumnFindingResources({
         <div className="max-w-[240px]">
           <EntityInfo
             nameIcon={<Container className="size-4" />}
-            entityAlias={row.original.resourceName}
+            entityAlias={row.original.resourceGroup}
             entityId={row.original.resourceUid}
           />
         </div>

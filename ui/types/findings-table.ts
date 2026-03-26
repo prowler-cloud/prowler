@@ -34,6 +34,7 @@ export interface FindingResourceRow {
   providerAlias: string;
   providerUid: string;
   resourceName: string;
+  resourceGroup: string;
   resourceUid: string;
   service: string;
   region: string;

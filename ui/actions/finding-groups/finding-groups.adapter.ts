@@ -79,6 +79,7 @@ interface ResourceInfo {
   service: string;
   region: string;
   type: string;
+  resource_group: string;
 }
 
 interface ProviderInfo {
@@ -124,6 +125,7 @@ export function adaptFindingGroupResourcesResponse(
     providerAlias: item.attributes.provider?.alias || "",
     providerUid: item.attributes.provider?.uid || "",
     resourceName: item.attributes.resource?.name || "-",
+    resourceGroup: item.attributes.resource?.resource_group || "-",
     resourceUid: item.attributes.resource?.uid || "-",
     service: item.attributes.resource?.service || "-",
     region: item.attributes.resource?.region || "-",
