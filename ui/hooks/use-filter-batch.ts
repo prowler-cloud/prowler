@@ -32,6 +32,19 @@ export interface UseFilterBatchReturn {
    * Includes provider/account keys and all batch-managed filter keys.
    */
   clearAll: () => void;
+  /**
+   * Clear all batch-managed filters and immediately navigate (router.push)
+   * with defaultParams applied. Equivalent to clearAll() + applyAll() but
+   * avoids the async state gap between the two calls.
+   */
+  clearAndApply: () => void;
+  /**
+   * Clear only the specified filter keys from pending state and immediately
+   * navigate (router.push) with the remaining pending filters + defaultParams.
+   * Used by "Clear all" in the pills strip to remove only pill-visible filters
+   * without touching provider/account selectors.
+   */
+  clearKeys: (keys: string[]) => void;
   /** Remove a single filter key from pending state */
   removePending: (key: string) => void;
   /** Whether pending state differs from the current URL */
@@ -164,20 +177,19 @@ export const useFilterBatch = (
     });
   };
 
-  const applyAll = () => {
-    // Start from the current URL params to preserve non-batch params.
-    // Only filter[search] is excluded from batch management and preserved from the URL as-is.
+  /** Private helper — builds URLSearchParams from a pending state and pushes. */
+  const buildAndPush = (nextPending: PendingFilters) => {
     const params = new URLSearchParams(searchParams.toString());
 
-    // Remove all existing batch-managed filter params
+    // Remove all batch-managed filter params
     Array.from(params.keys()).forEach((key) => {
       if (key.startsWith("filter[") && !EXCLUDED_FROM_BATCH.includes(key)) {
         params.delete(key);
       }
     });
 
-    // Write the pending state
-    Object.entries(pendingFilters).forEach(([key, values]) => {
+    // Re-apply the given pending filters
+    Object.entries(nextPending).forEach(([key, values]) => {
       const nonEmpty = values.filter(Boolean);
       if (nonEmpty.length > 0) {
         params.set(key, nonEmpty.join(","));
@@ -201,6 +213,10 @@ export const useFilterBatch = (
     const queryString = params.toString();
     const targetUrl = queryString ? `${pathname}?${queryString}` : pathname;
     router.push(targetUrl, { scroll: false });
+  };
+
+  const applyAll = () => {
+    buildAndPush(pendingFilters);
   };
 
   const discardAll = () => {
@@ -230,6 +246,39 @@ export const useFilterBatch = (
     setPendingFilters({});
   };
 
+  /**
+   * Clears ALL batch-managed filters and immediately navigates (router.push).
+   *
+   * Works around the async gap between clearAll() + applyAll(): instead of
+   * setting pending to `{}` and then calling applyAll() (which would still
+   * read the old pendingFilters from the closure), this function builds the
+   * target URL directly from an empty pending state and pushes it in one step.
+   * defaultParams (e.g. filter[muted]=false) are applied as usual.
+   */
+  const clearAndApply = () => {
+    setPendingFilters({});
+    buildAndPush({});
+  };
+
+  /**
+   * Removes only the specified filter keys from pending state and immediately
+   * navigates (router.push) with the remaining filters + defaultParams.
+   *
+   * Used by the pills strip "Clear all" to remove pill-visible filters (severity,
+   * status, delta, region, service, etc.) without touching provider/account selectors.
+   */
+  const clearKeys = (keys: string[]) => {
+    const normalizedKeys = keys.map((k) =>
+      k.startsWith("filter[") ? k : `filter[${k}]`,
+    );
+    const nextPending: PendingFilters = { ...pendingFilters };
+    normalizedKeys.forEach((k) => {
+      delete nextPending[k];
+    });
+    setPendingFilters(nextPending);
+    buildAndPush(nextPending);
+  };
+
   const getFilterValue = (key: string): string[] => {
     const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
     return pendingFilters[filterKey] ?? [];
@@ -249,6 +298,8 @@ export const useFilterBatch = (
     applyAll,
     discardAll,
     clearAll,
+    clearAndApply,
+    clearKeys,
     removePending,
     hasChanges,
     changeCount,

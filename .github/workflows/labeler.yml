@@ -65,7 +65,7 @@ jobs:
             "RosaRivasProwler"
             "StylusFrost"
             "toniblyx"
-            "vicferpoy"
+            "davidm4r"
           )
 
           echo "Checking if $AUTHOR is a member of prowler-cloud organization"

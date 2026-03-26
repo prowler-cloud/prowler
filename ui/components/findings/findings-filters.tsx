@@ -118,7 +118,8 @@ export const FindingsFilters = ({
     setPending,
     applyAll,
     discardAll,
-    clearAll,
+    clearAndApply,
+    clearKeys,
     hasChanges,
     changeCount,
     getFilterValue,
@@ -198,6 +199,20 @@ export const FindingsFilters = ({
     setPending(filterKey, nextValues);
   };
 
+  // Handler for clearing all chips: clears only the filter keys visible as chips,
+  // without touching provider/account selectors.
+  const PROVIDER_KEYS = new Set([
+    "filter[provider_type__in]",
+    "filter[provider_id__in]",
+  ]);
+
+  const handleClearAllChips = () => {
+    const chipKeys = Array.from(new Set(filterChips.map((c) => c.key))).filter(
+      (k) => !PROVIDER_KEYS.has(k),
+    );
+    clearKeys(chipKeys);
+  };
+
   // Derive pending muted state for the checkbox.
   // Note: "filter[muted]" participates in batch mode — applyAll includes it
   // when present in pending state, and the defaultParams option ensures
@@ -252,7 +267,7 @@ export const FindingsFilters = ({
         )}
         <ClearFiltersButton
           showCount
-          onClear={clearAll}
+          onClear={clearAndApply}
           pendingCount={
             Object.entries(pendingFilters).filter(([key, values]) => {
               if (!values || values.length === 0) return false;
@@ -279,7 +294,7 @@ export const FindingsFilters = ({
       <FilterSummaryStrip
         chips={filterChips}
         onRemove={handleChipRemove}
-        onClearAll={clearAll}
+        onClearAll={handleClearAllChips}
       />
 
       {/* Expandable filters section */}
