@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Conditional Access Policy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "Conditional Access policies requiring **multifactor authentication** for device registration and Intune enrollment prevent unauthorized users from registering rogue devices or enrolling into device management with stolen credentials.",
   "Risk": "Without MFA for device registration, an attacker with stolen credentials could register rogue devices into the directory, gaining persistent access and bypassing compliance-based Conditional Access policies.\n\nWithout MFA for Intune enrollment, compromised credentials may be used to enroll unauthorized devices, enabling lateral movement and data exfiltration.",

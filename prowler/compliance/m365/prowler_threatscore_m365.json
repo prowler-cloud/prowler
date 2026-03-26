@@ -117,7 +117,6 @@
       "Id": "1.1.7",
       "Description": "Ensure a managed device is required for MFA registration",
       "Checks": [
-        "entra_conditional_access_policy_device_registration_mfa",
         "entra_managed_device_required_for_mfa_registration"
       ],
       "Attributes": [
