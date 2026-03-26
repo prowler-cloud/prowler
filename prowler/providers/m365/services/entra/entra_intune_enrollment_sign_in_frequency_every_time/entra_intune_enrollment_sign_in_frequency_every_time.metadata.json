@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Conditional Access Policy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "Ensure that Conditional Access policies enforce sign-in frequency to Every time for Microsoft Intune Enrollment Application.",
   "Risk": "If not enforced, attackers with compromised credentials may enroll a new device into Intune and gain persistent and elevated access through a bypass of compliance-based Conditional Access rules.",
@@ -29,6 +29,8 @@
     "e5"
   ],
   "DependsOn": [],
-  "RelatedTo": [],
+  "RelatedTo": [
+    "entra_conditional_access_policy_intune_enrollment_mfa"
+  ],
   "Notes": ""
 }
