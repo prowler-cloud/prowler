@@ -1,7 +1,7 @@
 "use client";
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { resolveFindingIdsByCheckIds } from "@/actions/findings/findings-by-resource";
@@ -23,6 +23,7 @@ export function FindingsGroupTable({
   metadata,
 }: FindingsGroupTableProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [expandedCheckId, setExpandedCheckId] = useState<string | null>(null);
   const [expandedGroup, setExpandedGroup] = useState<FindingGroupRow | null>(
@@ -99,6 +100,7 @@ export function FindingsGroupTable({
   if (expandedCheckId && expandedGroup) {
     return (
       <FindingsGroupDrillDown
+        key={`${expandedGroup.checkId}|${searchParams.toString()}`}
         group={expandedGroup}
         onCollapse={handleCollapse}
       />
