@@ -15810,6 +15810,50 @@ class TestFindingGroupViewSet:
         assert len(data) == 1
         assert data[0]["id"] == "s3_bucket_public_access"
 
+    @pytest.mark.parametrize(
+        "extra_filters",
+        [
+            {},
+            {"filter[muted]": "include"},
+        ],
+        ids=["summary_path", "finding_level_path"],
+    )
+    def test_check_title_icontains_includes_all_title_variants(
+        self,
+        authenticated_client,
+        finding_groups_title_variants_fixture,
+        extra_filters,
+    ):
+        """
+        Regression: two providers report the same check_id with different
+        checktitle values (e.g. after a Prowler version upgrade).  Filtering
+        by check_title__icontains with a term that matches only ONE variant
+        must still return the finding group with counts from BOTH providers.
+
+        Parametrized to cover both aggregation paths:
+        - summary_path: default, uses _CheckTitleToCheckIdMixin on summaries
+        - finding_level_path: filter[muted]=include forces CommonFindingFilters
+        """
+        params = {
+            "filter[inserted_at]": TODAY,
+            "filter[check_title.icontains]": "Ensure repository",
+            **extra_filters,
+        }
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            params,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "github_secret_scanning_enabled"
+        attrs = data[0]["attributes"]
+        # Both providers' findings must be counted
+        assert attrs["fail_count"] == 2, (
+            "fail_count must include findings from both providers, "
+            "regardless of which title variant matches the search"
+        )
+
     def test_resources_not_found(self, authenticated_client):
         """Test 404 returned for nonexistent check_id."""
         response = authenticated_client.get(
@@ -15869,6 +15913,25 @@ class TestFindingGroupViewSet:
             assert (
                 resource["resource_group"] == "storage"
             ), "resource_group must be 'storage'"
+
+    def test_resources_name_icontains(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test resource_name__icontains filters resources by name substring."""
+        # s3_bucket_public_access has "My Instance 1" and "My Instance 2"
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[resource_name.icontains]": "Instance 1",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert "Instance 1" in data[0]["attributes"]["resource"]["name"]
 
     def test_resources_provider_info(
         self, authenticated_client, finding_groups_fixture

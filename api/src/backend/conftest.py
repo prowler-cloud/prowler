@@ -2236,6 +2236,89 @@ def finding_groups_fixture(
     return findings
 
 
+@pytest.fixture
+def finding_groups_title_variants_fixture(
+    tenants_fixture, providers_fixture, scans_fixture, resources_fixture
+):
+    """
+    Two providers report the same check_id with different checktitle values.
+
+    Simulates a Prowler version upgrade where the check title changed but the
+    check_id stayed the same.  Used to verify that check_title__icontains
+    resolves to check_id first, so results include all providers regardless
+    of which title variant matches the search term.
+    """
+    tenant = tenants_fixture[0]
+    provider1, provider2, *_ = providers_fixture
+    scan1, scan2, *_ = scans_fixture
+    resource1, resource2, *_ = resources_fixture
+
+    findings = []
+
+    # Provider 1 — OLD title variant
+    finding_old = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_title_variant_old",
+        scan=scan1,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="Secret scanning not enabled",
+        impact=Severity.high,
+        impact_extended="High risk",
+        severity=Severity.high,
+        raw_result={"status": Status.FAIL, "severity": Severity.high},
+        tags={},
+        check_id="github_secret_scanning_enabled",
+        check_metadata={
+            "CheckId": "github_secret_scanning_enabled",
+            "checktitle": "Ensure repository has secret scanning enabled",
+            "Description": "Checks if secret scanning is enabled.",
+        },
+        first_seen_at="2024-01-01T00:00:00Z",
+        muted=False,
+    )
+    finding_old.add_resources([resource1])
+    findings.append(finding_old)
+
+    # Provider 2 — NEW title variant (same check_id, different checktitle)
+    finding_new = Finding.objects.create(
+        tenant_id=tenant.id,
+        uid="fg_title_variant_new",
+        scan=scan2,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="Secret scanning not enabled on repo",
+        impact=Severity.high,
+        impact_extended="High risk",
+        severity=Severity.high,
+        raw_result={"status": Status.FAIL, "severity": Severity.high},
+        tags={},
+        check_id="github_secret_scanning_enabled",
+        check_metadata={
+            "CheckId": "github_secret_scanning_enabled",
+            "checktitle": "Check if secret scanning is enabled in GitHub",
+            "Description": "Checks if secret scanning is enabled.",
+        },
+        first_seen_at="2024-01-02T00:00:00Z",
+        muted=False,
+    )
+    finding_new.add_resources([resource2])
+    findings.append(finding_new)
+
+    from tasks.jobs.scan import aggregate_finding_group_summaries
+
+    aggregate_finding_group_summaries(
+        tenant_id=str(tenant.id),
+        scan_id=str(scan1.id),
+    )
+    aggregate_finding_group_summaries(
+        tenant_id=str(tenant.id),
+        scan_id=str(scan2.id),
+    )
+
+    return findings
+
+
 def pytest_collection_modifyitems(items):
     """Ensure test_rbac.py is executed first."""
     items.sort(key=lambda item: 0 if "test_rbac.py" in item.nodeid else 1)

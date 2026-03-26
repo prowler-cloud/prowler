@@ -7244,10 +7244,9 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 ),
                 first_seen_at=Min("finding__first_seen_at"),
                 last_seen_at=Max("finding__inserted_at"),
-                # Max() picks an arbitrary reason when a resource has multiple
-                # muted findings; this is acceptable because mute rules are
-                # applied per-check so all findings for the same resource
-                # share the same muted_reason in practice.
+                # Max() on muted_reason / check_metadata is safe because
+                # all findings for the same resource+check share identical
+                # values (mute rules and metadata are applied per-check).
                 muted_reason=Max("finding__muted_reason"),
                 resource_group=Max(
                     KeyTextTransform("resourcegroup", "finding__check_metadata")
