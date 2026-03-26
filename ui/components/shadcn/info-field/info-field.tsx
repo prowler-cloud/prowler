@@ -65,7 +65,7 @@ export function InfoField({
   const isCompact = variant === "compact";
 
   const labelClassName = isCompact
-    ? "text-text-neutral-secondary text-[10px]"
+    ? "text-text-neutral-secondary text-[10px] whitespace-nowrap"
     : "text-text-neutral-tertiary text-xs font-bold";
 
   return (

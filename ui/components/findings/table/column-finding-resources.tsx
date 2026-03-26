@@ -247,11 +247,13 @@ export function getColumnFindingResources({
         <DataTableColumnHeader column={column} title="Account" />
       ),
       cell: ({ row }) => (
-        <EntityInfo
-          cloudProvider={row.original.providerType}
-          entityAlias={row.original.providerAlias}
-          entityId={row.original.providerUid}
-        />
+        <div className="max-w-[240px]">
+          <EntityInfo
+            cloudProvider={row.original.providerType}
+            entityAlias={row.original.providerAlias}
+            entityId={row.original.providerUid}
+          />
+        </div>
       ),
       enableSorting: false,
     },
