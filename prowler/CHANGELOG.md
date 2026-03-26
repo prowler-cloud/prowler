@@ -6,8 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- `apikeys_api_restricted_with_gemini_api` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
-- `gemini_api_disabled` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
+- `apikeys_api_restricted_with_gemini_api` and `gemini_api_disabled`checks for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
 - `cloudfront_distributions_logging_enabled` detects Standard Logging v2 via CloudWatch Log Delivery [(#10090)](https://github.com/prowler-cloud/prowler/pull/10090)
 - `glue_etl_jobs_no_secrets_in_arguments` check for plaintext secrets in AWS Glue ETL job arguments [(#10368)](https://github.com/prowler-cloud/prowler/pull/10368)
 - `awslambda_function_no_dead_letter_queue`, `awslambda_function_using_cross_account_layers`, and `awslambda_function_env_vars_not_encrypted_with_cmk` checks for AWS Lambda [(#10381)](https://github.com/prowler-cloud/prowler/pull/10381)
