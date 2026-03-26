@@ -20,6 +20,7 @@ from tasks.tasks import (
     generate_outputs_task,
     perform_attack_paths_scan_task,
     perform_scheduled_scan_task,
+    reaggregate_all_finding_group_summaries_task,
     refresh_lighthouse_provider_models_task,
     s3_integration_task,
     security_hub_integration_task,
@@ -2351,3 +2352,47 @@ class TestPerformScheduledScanTask:
             ).count()
             == 1
         )
+
+
+@pytest.mark.django_db
+class TestReaggregateAllFindingGroupSummaries:
+    def setup_method(self):
+        self.tenant_id = str(uuid.uuid4())
+
+    @patch("tasks.tasks.group")
+    @patch("tasks.tasks.aggregate_finding_group_summaries_task")
+    @patch("tasks.tasks.Scan.objects.filter")
+    def test_dispatches_subtasks_for_each_provider(
+        self, mock_scan_filter, mock_agg_task, mock_group
+    ):
+        scan_id_1 = uuid.uuid4()
+        scan_id_2 = uuid.uuid4()
+        mock_group_result = MagicMock()
+        mock_group.side_effect = lambda gen: (list(gen), mock_group_result)[1]
+
+        mock_scan_filter.return_value.order_by.return_value.distinct.return_value.values_list.return_value = [
+            scan_id_1,
+            scan_id_2,
+        ]
+
+        result = reaggregate_all_finding_group_summaries_task(tenant_id=self.tenant_id)
+
+        assert result == {"scans_reaggregated": 2}
+        assert mock_agg_task.si.call_count == 2
+        mock_agg_task.si.assert_any_call(
+            tenant_id=self.tenant_id, scan_id=str(scan_id_1)
+        )
+        mock_agg_task.si.assert_any_call(
+            tenant_id=self.tenant_id, scan_id=str(scan_id_2)
+        )
+        mock_group_result.apply_async.assert_called_once()
+
+    @patch("tasks.tasks.group")
+    @patch("tasks.tasks.Scan.objects.filter")
+    def test_no_completed_scans_skips_dispatch(self, mock_scan_filter, mock_group):
+        mock_scan_filter.return_value.order_by.return_value.distinct.return_value.values_list.return_value = []
+
+        result = reaggregate_all_finding_group_summaries_task(tenant_id=self.tenant_id)
+
+        assert result == {"scans_reaggregated": 0}
+        mock_group.assert_not_called()
