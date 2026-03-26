@@ -1,0 +1,320 @@
+"use client";
+
+import {
+  flexRender,
+  getCoreRowModel,
+  Row,
+  RowSelectionState,
+  useReactTable,
+} from "@tanstack/react-table";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronsDown } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useRef, useState } from "react";
+
+import { resolveFindingIds } from "@/actions/findings/findings-by-resource";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { TableCell, TableRow } from "@/components/ui/table";
+import { useInfiniteResources } from "@/hooks/use-infinite-resources";
+import { useScrollHint } from "@/hooks/use-scroll-hint";
+import { hasDateOrScanFilter } from "@/lib";
+import { FindingGroupRow, FindingResourceRow } from "@/types";
+
+import { FloatingMuteButton } from "../floating-mute-button";
+import { getColumnFindingResources } from "./column-finding-resources";
+import { FindingsSelectionContext } from "./findings-selection-context";
+import {
+  ResourceDetailDrawer,
+  useResourceDetailDrawer,
+} from "./resource-detail-drawer";
+
+interface InlineResourceContainerProps {
+  group: FindingGroupRow;
+  resourceSearch: string;
+  columnCount: number;
+  onResourceSelectionChange: (ids: string[]) => void;
+}
+
+export function InlineResourceContainer({
+  group,
+  resourceSearch,
+  columnCount,
+  onResourceSelectionChange,
+}: InlineResourceContainerProps) {
+  const searchParams = useSearchParams();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [resources, setResources] = useState<FindingResourceRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Scroll hint: shows "scroll for more" when content overflows
+  const {
+    containerRef: scrollHintContainerRef,
+    sentinelRef: scrollHintSentinelRef,
+    showScrollHint,
+  } = useScrollHint({ refreshToken: resources.length });
+
+  // Combine scrollContainerRef (for IntersectionObserver root) with scrollHintContainerRef
+  const combinedScrollRef = (node: HTMLDivElement | null) => {
+    scrollContainerRef.current = node;
+    scrollHintContainerRef(node);
+  };
+
+  // Derive hasDateOrScan from current URL params
+  const currentParams = Object.fromEntries(searchParams.entries());
+  const hasDateOrScan = hasDateOrScanFilter(currentParams);
+
+  // Extract filter params from search params, merge with local resource search
+  const filters: Record<string, string> = {};
+  searchParams.forEach((value, key) => {
+    if (key.startsWith("filter[") || key.includes("__in")) {
+      filters[key] = value;
+    }
+  });
+  if (resourceSearch) {
+    filters["filter[name__icontains]"] = resourceSearch;
+  }
+
+  const handleSetResources = (
+    newResources: FindingResourceRow[],
+    _hasMore: boolean,
+  ) => {
+    setResources(newResources);
+    setIsLoading(false);
+  };
+
+  const handleAppendResources = (
+    newResources: FindingResourceRow[],
+    _hasMore: boolean,
+  ) => {
+    setResources((prev) => [...prev, ...newResources]);
+    setIsLoading(false);
+  };
+
+  const handleSetLoading = (loading: boolean) => {
+    setIsLoading(loading);
+  };
+
+  const { sentinelRef, refresh } = useInfiniteResources({
+    checkId: group.checkId,
+    hasDateOrScanFilter: hasDateOrScan,
+    filters,
+    onSetResources: handleSetResources,
+    onAppendResources: handleAppendResources,
+    onSetLoading: handleSetLoading,
+    scrollContainerRef,
+  });
+
+  // Resource detail drawer
+  const drawer = useResourceDetailDrawer({
+    resources,
+    checkId: group.checkId,
+  });
+
+  const handleDrawerMuteComplete = () => {
+    drawer.refetchCurrent();
+    refresh();
+  };
+
+  // Selection logic
+  const selectedFindingIds = Object.keys(rowSelection)
+    .filter((key) => rowSelection[key])
+    .map((idx) => resources[parseInt(idx)]?.findingId)
+    .filter(Boolean);
+
+  const resolveResourceIds = async (ids: string[]) => {
+    const resourceUids = ids
+      .map((id) => resources.find((r) => r.findingId === id)?.resourceUid)
+      .filter(Boolean) as string[];
+    if (resourceUids.length === 0) return [];
+    return resolveFindingIds({
+      checkId: group.checkId,
+      resourceUids,
+    });
+  };
+
+  const selectableRowCount = resources.filter((r) => !r.isMuted).length;
+
+  const getRowCanSelect = (row: Row<FindingResourceRow>): boolean => {
+    return !row.original.isMuted;
+  };
+
+  const clearSelection = () => {
+    setRowSelection({});
+    onResourceSelectionChange([]);
+  };
+
+  const isSelected = (id: string) => {
+    return selectedFindingIds.includes(id);
+  };
+
+  const handleMuteComplete = () => {
+    clearSelection();
+    refresh();
+  };
+
+  const handleRowSelectionChange = (
+    updater:
+      | RowSelectionState
+      | ((prev: RowSelectionState) => RowSelectionState),
+  ) => {
+    const newSelection =
+      typeof updater === "function" ? updater(rowSelection) : updater;
+    setRowSelection(newSelection);
+
+    const newIds = Object.keys(newSelection)
+      .filter((key) => newSelection[key])
+      .map((idx) => resources[parseInt(idx)]?.findingId)
+      .filter(Boolean);
+    onResourceSelectionChange(newIds);
+  };
+
+  const columns = getColumnFindingResources({
+    rowSelection,
+    selectableRowCount,
+  });
+
+  const table = useReactTable({
+    data: resources,
+    columns,
+    enableRowSelection: getRowCanSelect,
+    getCoreRowModel: getCoreRowModel(),
+    onRowSelectionChange: handleRowSelectionChange,
+    manualPagination: true,
+    state: {
+      rowSelection,
+    },
+  });
+
+  const rows = table.getRowModel().rows;
+
+  return (
+    <FindingsSelectionContext.Provider
+      value={{
+        selectedFindingIds,
+        selectedFindings: [],
+        clearSelection,
+        isSelected,
+        resolveMuteIds: resolveResourceIds,
+        onMuteComplete: handleMuteComplete,
+      }}
+    >
+      <tr>
+        <td colSpan={columnCount} className="p-0">
+          <AnimatePresence initial>
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="overflow-hidden"
+            >
+              <div className="relative">
+                <div ref={combinedScrollRef} className="max-h-[440px] overflow-y-auto pl-6">
+                  {/* Resource rows */}
+                  <table className="w-full border-separate border-spacing-y-4 [&_td]:after:-bottom-2">
+                    <tbody>
+                      {rows.length > 0
+                        ? rows.map((row) => (
+                            <TableRow
+                              key={row.id}
+                              data-state={row.getIsSelected() && "selected"}
+                              className="cursor-pointer"
+                              onClick={() => drawer.openDrawer(row.index)}
+                            >
+                              {row.getVisibleCells().map((cell) => (
+                                <TableCell key={cell.id}>
+                                  {flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext(),
+                                  )}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          ))
+                        : !isLoading && (
+                            <TableRow className="hover:bg-transparent">
+                              <TableCell
+                                colSpan={columns.length}
+                                className="h-24 text-center"
+                              >
+                                No resources found.
+                              </TableCell>
+                            </TableRow>
+                          )}
+                    </tbody>
+                  </table>
+
+                  {/* Loading indicator */}
+                  {isLoading && (
+                    <div className="flex items-center justify-center gap-2 py-8">
+                      <Spinner className="size-6" />
+                      <span className="text-text-neutral-tertiary text-sm">
+                        Loading resources...
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Sentinel for scroll hint detection */}
+                  <div
+                    ref={scrollHintSentinelRef}
+                    aria-hidden
+                    className="h-px shrink-0"
+                  />
+
+                  {/* Sentinel for infinite scroll */}
+                  <div ref={sentinelRef} className="h-1" />
+                </div>
+
+                {/* Gradients rendered after scroll container so they paint on top */}
+                <div className="pointer-events-none absolute top-0 right-0 left-6 z-20 h-6 bg-gradient-to-b from-bg-neutral-secondary to-transparent" />
+                <div className="pointer-events-none absolute right-0 bottom-0 left-6 z-20 h-6 bg-gradient-to-t from-bg-neutral-secondary to-transparent" />
+
+                {/* Scroll hint */}
+                {showScrollHint && (
+                  <div className="pointer-events-none absolute right-0 bottom-0 left-6 z-30">
+                    <div className="absolute inset-x-0 bottom-2 flex justify-center">
+                      <div className="bg-bg-neutral-tertiary text-text-neutral-secondary animate-bounce rounded-full px-3 py-1 text-xs shadow-md">
+                        <ChevronsDown className="inline size-3.5" /> Scroll for
+                        more
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </td>
+      </tr>
+
+      {selectedFindingIds.length > 0 && (
+        <FloatingMuteButton
+          selectedCount={selectedFindingIds.length}
+          selectedFindingIds={selectedFindingIds}
+          onBeforeOpen={async () => {
+            return resolveResourceIds(selectedFindingIds);
+          }}
+          onComplete={handleMuteComplete}
+          isBulkOperation
+        />
+      )}
+
+      <ResourceDetailDrawer
+        open={drawer.isOpen}
+        onOpenChange={(open) => {
+          if (!open) drawer.closeDrawer();
+        }}
+        isLoading={drawer.isLoading}
+        isNavigating={drawer.isNavigating}
+        checkMeta={drawer.checkMeta}
+        currentIndex={drawer.currentIndex}
+        totalResources={drawer.totalResources}
+        currentFinding={drawer.currentFinding}
+        otherFindings={drawer.otherFindings}
+        onNavigatePrev={drawer.navigatePrev}
+        onNavigateNext={drawer.navigateNext}
+        onMuteComplete={handleDrawerMuteComplete}
+      />
+    </FindingsSelectionContext.Provider>
+  );
+}

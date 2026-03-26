@@ -10,8 +10,8 @@ import { FindingGroupRow, MetaDataProps } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
 import { getColumnFindingGroups } from "./column-finding-groups";
-import { FindingsGroupDrillDown } from "./findings-group-drill-down";
 import { FindingsSelectionContext } from "./findings-selection-context";
+import { InlineResourceContainer } from "./inline-resource-container";
 
 interface FindingsGroupTableProps {
   data: FindingGroupRow[];
@@ -29,7 +29,8 @@ export function FindingsGroupTable({
   const [expandedGroup, setExpandedGroup] = useState<FindingGroupRow | null>(
     null,
   );
-  const [isDrillingDown, setIsDrillingDown] = useState(false);
+  const [resourceSearch, setResourceSearch] = useState("");
+  const [_resourceSelection, setResourceSelection] = useState<string[]>([]);
 
   // State resets (selection, drill-down) are handled by the parent via
   // key={groupKey} — when data changes, the component remounts with fresh state.
@@ -75,39 +76,47 @@ export function FindingsGroupTable({
   };
 
   const handleDrillDown = (checkId: string, group: FindingGroupRow) => {
-    setIsDrillingDown(true);
+    // Toggle: same group = collapse, different = switch
+    if (expandedCheckId === checkId) {
+      handleCollapse();
+      return;
+    }
+    setExpandedCheckId(checkId);
+    setExpandedGroup(group);
+    setResourceSearch("");
+    setResourceSelection([]);
     setRowSelection({});
-    // Brief loading state before switching to drill-down view
-    setTimeout(() => {
-      setExpandedCheckId(checkId);
-      setExpandedGroup(group);
-      setIsDrillingDown(false);
-    }, 150);
   };
 
   const handleCollapse = () => {
     setExpandedCheckId(null);
     setExpandedGroup(null);
+    setResourceSearch("");
+    setResourceSelection([]);
   };
 
   const columns = getColumnFindingGroups({
     rowSelection,
     selectableRowCount,
     onDrillDown: handleDrillDown,
+    expandedCheckId,
   });
 
-  // Drill-down mode: show sticky header + resources table
-  if (expandedCheckId && expandedGroup) {
+  const renderAfterRow = (row: Row<FindingGroupRow>) => {
+    const group = row.original;
+    if (group.checkId !== expandedCheckId || !expandedGroup) return null;
+
     return (
-      <FindingsGroupDrillDown
-        key={`${expandedGroup.checkId}|${searchParams.toString()}`}
+      <InlineResourceContainer
+        key={`${group.checkId}|${searchParams.toString()}|${resourceSearch}`}
         group={expandedGroup}
-        onCollapse={handleCollapse}
+        resourceSearch={resourceSearch}
+        columnCount={columns.length}
+        onResourceSelectionChange={setResourceSelection}
       />
     );
-  }
+  };
 
-  // Normal mode: show finding groups table
   return (
     <FindingsSelectionContext.Provider
       value={{
@@ -127,8 +136,17 @@ export function FindingsGroupTable({
         onRowSelectionChange={setRowSelection}
         getRowCanSelect={getRowCanSelect}
         showSearch
-        searchPlaceholder="Search by Check ID"
-        isLoading={isDrillingDown}
+        searchPlaceholder={
+          expandedCheckId ? "Search resources..." : "Search by name"
+        }
+        controlledSearch={expandedCheckId ? resourceSearch : undefined}
+        onSearchChange={expandedCheckId ? setResourceSearch : undefined}
+        searchBadge={
+          expandedGroup
+            ? { label: expandedGroup.checkTitle, onDismiss: handleCollapse }
+            : undefined
+        }
+        renderAfterRow={renderAfterRow}
       />
 
       {selectedCheckIds.length > 0 && (
