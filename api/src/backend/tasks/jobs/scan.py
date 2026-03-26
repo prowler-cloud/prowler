@@ -677,6 +677,7 @@ def _process_finding_micro_batch(
 
         # Create finding object (don't save yet)
         check_metadata = finding.get_metadata()
+        check_metadata["compliance"] = finding.compliance
         finding_instance = Finding(
             tenant_id=tenant_id,
             uid=finding_uid,
@@ -1887,7 +1888,8 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
                     inserted_at=summary_timestamp,
                     updated_at=updated_at,
                     check_title=metadata.get("checktitle", ""),
-                    check_description=metadata.get("Description", ""),
+                    check_description=metadata.get("description", "")
+                    or metadata.get("Description", ""),
                     severity_order=row["severity_order"] or 1,
                     pass_count=row["pass_count"],
                     fail_count=row["fail_count"],

@@ -15,6 +15,7 @@ from django_filters.rest_framework import (
 from rest_framework_json_api.django_filters.backends import DjangoFilterBackend
 from rest_framework_json_api.serializers import ValidationError
 
+from api.constants import SEVERITY_ORDER
 from api.db_utils import (
     FindingDeltaEnumField,
     InvitationStateEnumField,
@@ -263,6 +264,13 @@ class CommonFindingFilters(FilterSet):
                 resources__tags__value__icontains=tag_value,
             )
         return queryset.filter(overall_query).distinct()
+
+    def filter_check_title_icontains(self, queryset, name, value):
+        return queryset.filter(
+            Q(check_metadata__CheckTitle__icontains=value)
+            | Q(check_metadata__checktitle__icontains=value)
+            | Q(check_metadata__Checktitle__icontains=value)
+        )
 
 
 class TenantFilter(FilterSet):
@@ -803,11 +811,15 @@ class FindingGroupFilter(CommonFindingFilters):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+    check_title__icontains = CharFilter(method="filter_check_title_icontains")
+    scan = UUIDFilter(field_name="scan_id", lookup_expr="exact")
+    scan__in = UUIDInFilter(field_name="scan_id", lookup_expr="in")
 
     class Meta:
         model = Finding
         fields = {
             "check_id": ["exact", "in", "icontains"],
+            "scan": ["exact", "in"],
         }
 
     def filter_queryset(self, queryset):
@@ -895,11 +907,15 @@ class LatestFindingGroupFilter(CommonFindingFilters):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+    check_title__icontains = CharFilter(method="filter_check_title_icontains")
+    scan = UUIDFilter(field_name="scan_id", lookup_expr="exact")
+    scan__in = UUIDInFilter(field_name="scan_id", lookup_expr="in")
 
     class Meta:
         model = Finding
         fields = {
             "check_id": ["exact", "in", "icontains"],
+            "scan": ["exact", "in"],
         }
 
 
@@ -926,6 +942,9 @@ class FindingGroupSummaryFilter(FilterSet):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+    check_title__icontains = CharFilter(
+        field_name="check_title", lookup_expr="icontains"
+    )
 
     # Provider filters
     provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
@@ -1025,6 +1044,9 @@ class LatestFindingGroupSummaryFilter(FilterSet):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+    check_title__icontains = CharFilter(
+        field_name="check_title", lookup_expr="icontains"
+    )
 
     # Provider filters
     provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
@@ -1040,6 +1062,98 @@ class LatestFindingGroupSummaryFilter(FilterSet):
             "check_id": ["exact", "in", "icontains"],
             "provider_id": ["exact", "in"],
         }
+
+
+class FindingGroupAggregatedComputedFilter(FilterSet):
+    """Filter aggregated finding-group rows by computed status/severity/muted."""
+
+    STATUS_CHOICES = (
+        ("FAIL", "Fail"),
+        ("PASS", "Pass"),
+        ("MUTED", "Muted"),
+    )
+
+    status = ChoiceFilter(method="filter_status", choices=STATUS_CHOICES)
+    status__in = CharInFilter(method="filter_status_in", lookup_expr="in")
+    severity = ChoiceFilter(method="filter_severity", choices=SeverityChoices)
+    severity__in = CharInFilter(method="filter_severity_in", lookup_expr="in")
+    include_muted = BooleanFilter(method="filter_include_muted")
+
+    def filter_status(self, queryset, name, value):
+        return queryset.filter(aggregated_status=value)
+
+    def filter_status_in(self, queryset, name, value):
+        values = value
+        if isinstance(value, str):
+            values = [part.strip() for part in value.split(",") if part.strip()]
+
+        allowed = {choice[0] for choice in self.STATUS_CHOICES}
+        invalid = [
+            status_value for status_value in values if status_value not in allowed
+        ]
+        if invalid:
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"invalid status filter: {invalid[0]}",
+                        "status": "400",
+                        "source": {"pointer": "/data"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        if not values:
+            return queryset
+
+        return queryset.filter(aggregated_status__in=values)
+
+    def filter_severity(self, queryset, name, value):
+        severity_order = SEVERITY_ORDER.get(value)
+        if severity_order is None:
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"invalid severity filter: {value}",
+                        "status": "400",
+                        "source": {"pointer": "/data"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+        return queryset.filter(severity_order=severity_order)
+
+    def filter_severity_in(self, queryset, name, value):
+        values = value
+        if isinstance(value, str):
+            values = [part.strip() for part in value.split(",") if part.strip()]
+
+        orders = []
+        for severity_value in values:
+            severity_order = SEVERITY_ORDER.get(severity_value)
+            if severity_order is None:
+                raise ValidationError(
+                    [
+                        {
+                            "detail": f"invalid severity filter: {severity_value}",
+                            "status": "400",
+                            "source": {"pointer": "/data"},
+                            "code": "invalid",
+                        }
+                    ]
+                )
+            orders.append(severity_order)
+
+        if not orders:
+            return queryset
+
+        return queryset.filter(severity_order__in=orders)
+
+    def filter_include_muted(self, queryset, name, value):
+        if value is True:
+            return queryset
+        # include_muted=false: exclude fully-muted groups
+        return queryset.exclude(fail_count=0, pass_count=0, muted_count__gt=0)
 
 
 class ProviderSecretFilter(FilterSet):

@@ -87,6 +87,7 @@ const ALLOWED_TOOLS = new Set([
   "prowler_app_list_attack_paths_queries",
   "prowler_app_list_attack_paths_scans",
   "prowler_app_run_attack_paths_query",
+  "prowler_app_get_attack_paths_cartography_schema",
 ]);
 
 /**
