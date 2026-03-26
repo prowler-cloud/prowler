@@ -119,6 +119,15 @@ Parameters:
       - true
       - false
 
+  FailureTolerancePercentage:
+    Description: |
+      The percentage of accounts in which stack operations can fail before CloudFormation stops the operation.
+      Only applies when DeployStackSet is true.
+    Type: Number
+    Default: 10
+    MinValue: 0
+    MaxValue: 100
+
 Conditions:
   OrganizationsEnabled: !Equals [!Ref EnableOrganizations, true]
   S3IntegrationEnabled: !Equals [!Ref EnableS3Integration, true]
@@ -308,7 +317,7 @@ Resources:
         Enabled: True
         RetainStacksOnAccountRemoval: !Ref RetainStacksOnAccountRemoval
       OperationPreferences:
-        FailureTolerancePercentage: 10
+        FailureTolerancePercentage: !Ref FailureTolerancePercentage
         MaxConcurrentPercentage: 100
       Parameters:
         - ParameterKey: ExternalId
@@ -589,6 +598,7 @@ Metadata:
           - AWSOrganizationalUnitId
           - DeployFromDelegatedAdmin
           - RetainStacksOnAccountRemoval
+          - FailureTolerancePercentage
 
 Outputs:
   LocalProwlerScanRoleArn:
