@@ -20,4 +20,28 @@ export const handlers = [
       },
     });
   }),
+
+  // Create tenant
+  http.post(`${API_BASE}/tenants`, async ({ request }) => {
+    const body = (await request.json()) as any;
+    return HttpResponse.json({
+      data: {
+        id: "new-tenant-id",
+        type: "tenants",
+        attributes: { name: body?.data?.attributes?.name ?? "New Org" },
+      },
+    });
+  }),
+
+  // Update tenant name
+  http.patch(`${API_BASE}/tenants/:tenantId`, () => {
+    return HttpResponse.json({
+      data: { type: "tenants", attributes: { name: "Updated" } },
+    });
+  }),
+
+  // Delete tenant
+  http.delete(`${API_BASE}/tenants/:tenantId`, () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
 ];
