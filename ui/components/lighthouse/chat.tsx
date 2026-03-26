@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { Plus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { getLighthouseModelIds } from "@/actions/lighthouse/lighthouse";
 import {
@@ -37,6 +37,7 @@ import {
 } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
 import { CustomLink } from "@/components/ui/custom/custom-link";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 import type { LighthouseProvider } from "@/types/lighthouse";
 
 interface Model {
@@ -145,12 +146,11 @@ export const Chat = ({
   selectedModelRef.current = selectedModel;
 
   // Load models for all providers on mount
-  useEffect(() => {
+  useMountEffect(() => {
     initialProviders.forEach((provider) => {
       loadModelsForProvider(provider.id);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  });
 
   // Load all models for a specific provider
   const loadModelsForProvider = async (providerType: LighthouseProvider) => {
@@ -310,12 +310,12 @@ export const Chat = ({
 
   // Auto-send initial prompt from URL (e.g., finding context from drawer)
   const initialPromptSentRef = useRef(false);
-  useEffect(() => {
+  useMountEffect(() => {
     if (initialPrompt && !initialPromptSentRef.current) {
       initialPromptSentRef.current = true;
       sendMessage({ text: initialPrompt });
     }
-  }, [initialPrompt, sendMessage]);
+  });
 
   // Handlers
   const handleNewChat = () => {

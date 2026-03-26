@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 import {
   adaptFindingGroupResourcesResponse,
   getFindingGroupResources,
   getLatestFindingGroupResources,
 } from "@/actions/finding-groups";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 import { FindingResourceRow } from "@/types";
 
 const RESOURCES_PAGE_SIZE = 20;
@@ -33,8 +34,8 @@ interface UseInfiniteResourcesReturn {
  * Hook for paginated infinite-scroll loading of finding group resources.
  *
  * Uses refs for all mutable state to avoid dependency chains that
- * cause infinite re-render loops. `checkId` and `filtersKey` trigger
- * a new initial fetch via useEffect.
+ * cause infinite re-render loops. The parent component remounts this
+ * hook via key-prop when checkId or filters change.
  */
 export function useInfiniteResources({
   checkId,
@@ -44,17 +45,13 @@ export function useInfiniteResources({
   onAppendResources,
   onSetLoading,
 }: UseInfiniteResourcesOptions): UseInfiniteResourcesReturn {
-  // Stable serialization of filters for dependency tracking
-  const filtersKey = JSON.stringify(
-    Object.entries(filters)
-      .filter(([, v]) => v !== undefined)
-      .sort(([a], [b]) => a.localeCompare(b)),
-  );
-
   // All mutable state in refs to break dependency chains
   const pageRef = useRef(1);
   const hasMoreRef = useRef(true);
-  const isLoadingRef = useRef(false);
+  // Start as `true` to block the IntersectionObserver from calling loadNextPage
+  // before the initial fetch runs. Ref callbacks fire during commit (sync),
+  // but useMountEffect fires after paint — the observer can sneak in between.
+  const isLoadingRef = useRef(true);
   const currentCheckIdRef = useRef(checkId);
   const controllerRef = useRef<AbortController | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -127,22 +124,22 @@ export function useInfiniteResources({
     }
   }
 
-  // Fetch first page when checkId or filters change
-  useEffect(() => {
-    // Abort any in-flight requests from previous checkId/filters
-    controllerRef.current?.abort();
+  // Fetch first page on mount — parent remounts via key-prop on checkId/filter changes
+  useMountEffect(() => {
     const controller = new AbortController();
     controllerRef.current = controller;
 
-    currentCheckIdRef.current = checkId;
-    pageRef.current = 1;
-    hasMoreRef.current = true;
+    // Release the loading guard so fetchPage can proceed.
+    // This is synchronous with the fetchPage call below, so the observer
+    // cannot sneak in between these two lines.
     isLoadingRef.current = false;
-
     fetchPage(1, false, checkId, controller.signal);
 
-    return () => controller.abort();
-  }, [checkId, filtersKey]);
+    return () => {
+      controller.abort();
+      observerRef.current?.disconnect();
+    };
+  });
 
   function loadNextPage() {
     const signal = controllerRef.current?.signal;
@@ -194,15 +191,6 @@ export function useInfiniteResources({
 
     fetchPage(1, false, currentCheckIdRef.current, controller.signal);
   }
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, []);
 
   return { sentinelRef, refresh };
 }
