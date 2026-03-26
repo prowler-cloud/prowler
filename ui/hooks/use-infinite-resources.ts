@@ -10,7 +10,7 @@ import {
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { FindingResourceRow } from "@/types";
 
-const RESOURCES_PAGE_SIZE = 20;
+const RESOURCES_PAGE_SIZE = 10;
 
 interface UseInfiniteResourcesOptions {
   checkId: string;
@@ -22,6 +22,8 @@ interface UseInfiniteResourcesOptions {
     hasMore: boolean,
   ) => void;
   onSetLoading: (loading: boolean) => void;
+  /** Scroll container element for IntersectionObserver root. Defaults to viewport. */
+  scrollContainerRef?: React.RefObject<HTMLElement | null>;
 }
 
 interface UseInfiniteResourcesReturn {
@@ -44,6 +46,7 @@ export function useInfiniteResources({
   onSetResources,
   onAppendResources,
   onSetLoading,
+  scrollContainerRef,
 }: UseInfiniteResourcesOptions): UseInfiniteResourcesReturn {
   // All mutable state in refs to break dependency chains
   const pageRef = useRef(1);
@@ -94,9 +97,8 @@ export function useInfiniteResources({
         filters: filtersRef.current,
       });
 
-      // Discard stale response if checkId or filters changed during fetch
+      // Discard stale response if aborted (e.g. Strict Mode remount)
       if (signal.aborted) {
-        onSetLoadingRef.current(false);
         return;
       }
 
@@ -120,7 +122,12 @@ export function useInfiniteResources({
         onSetLoadingRef.current(false);
       }
     } finally {
-      isLoadingRef.current = false;
+      // Only release the loading guard if this fetch wasn't aborted.
+      // An aborted fetch (e.g. Strict Mode cleanup) must NOT reset the flag
+      // while a subsequent fetch from the remount is still in flight.
+      if (!signal.aborted) {
+        isLoadingRef.current = false;
+      }
     }
   }
 
@@ -173,6 +180,7 @@ export function useInfiniteResources({
 
     if (node) {
       observerRef.current = new IntersectionObserver(handleIntersection, {
+        root: scrollContainerRef?.current ?? null,
         rootMargin: "200px",
       });
       observerRef.current.observe(node);
