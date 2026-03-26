@@ -807,6 +807,63 @@ class TestTenantViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    def test_tenants_list_no_permissions(
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
+    ):
+        response = authenticated_client_no_permissions_rbac.get(reverse("tenant-list"))
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_tenants_retrieve_no_permissions(
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
+    ):
+        tenant1, *_ = tenants_fixture
+        response = authenticated_client_no_permissions_rbac.get(
+            reverse("tenant-detail", kwargs={"pk": tenant1.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_tenants_create_no_permissions(
+        self, authenticated_client_no_permissions_rbac, valid_tenant_payload
+    ):
+        response = authenticated_client_no_permissions_rbac.post(
+            reverse("tenant-list"),
+            data=valid_tenant_payload,
+            format="json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+    def test_tenants_partial_update_no_permissions(
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
+    ):
+        tenant1, *_ = tenants_fixture
+        payload = {
+            "data": {
+                "type": "tenants",
+                "id": str(tenant1.id),
+                "attributes": {"name": "Unauthorized update"},
+            },
+        }
+        response = authenticated_client_no_permissions_rbac.patch(
+            reverse("tenant-detail", kwargs={"pk": tenant1.id}),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @patch("api.v1.views.delete_tenant_task.apply_async")
+    def test_tenants_delete_no_permissions(
+        self,
+        delete_tenant_mock,
+        authenticated_client_no_permissions_rbac,
+        tenants_fixture,
+    ):
+        tenant1, *_ = tenants_fixture
+        response = authenticated_client_no_permissions_rbac.delete(
+            reverse("tenant-detail", kwargs={"pk": tenant1.id})
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        delete_tenant_mock.assert_not_called()
+
 
 @pytest.mark.django_db
 class TestMembershipViewSet:
@@ -14690,14 +14747,14 @@ class TestMuteRuleViewSet:
         assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
 
     @patch("api.v1.views.chain")
-    @patch("api.v1.views.aggregate_finding_group_summaries_task.si")
+    @patch("api.v1.views.reaggregate_all_finding_group_summaries_task.si")
     @patch("api.v1.views.mute_historical_findings_task.si")
     @patch("api.v1.views.transaction.on_commit", side_effect=lambda fn: fn())
     def test_mute_rules_create_valid(
         self,
         _mock_on_commit,
         mock_mute_signature,
-        mock_aggregate_signature,
+        mock_reaggregate_signature,
         mock_chain,
         authenticated_client,
         findings_fixture,
@@ -14736,12 +14793,12 @@ class TestMuteRuleViewSet:
         assert finding.muted_at is not None
         assert finding.muted_reason == "Security exception approved"
 
-        # Verify background task chain was called
+        # Verify background task chain was called: mute → reaggregate all
         mock_mute_signature.assert_called_once()
-        mock_aggregate_signature.assert_called_once()
+        mock_reaggregate_signature.assert_called_once()
         mock_chain.assert_called_once_with(
             mock_mute_signature.return_value,
-            mock_aggregate_signature.return_value,
+            mock_reaggregate_signature.return_value,
         )
         mock_chain.return_value.apply_async.assert_called_once()
 

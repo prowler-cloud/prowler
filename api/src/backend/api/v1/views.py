@@ -48,7 +48,8 @@ from django.db.models import (
     When,
     Window,
 )
-from django.db.models.functions import Cast, Coalesce, DenseRank, RowNumber
+from django.db.models.fields.json import KeyTextTransform
+from django.db.models.functions import Cast, Coalesce, RowNumber
 from django.http import HttpResponse, QueryDict
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -83,7 +84,6 @@ from tasks.beat import schedule_provider_scan
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
-    aggregate_finding_group_summaries_task,
     backfill_compliance_summaries_task,
     backfill_scan_resource_summaries_task,
     check_integration_connection_task,
@@ -95,6 +95,7 @@ from tasks.tasks import (
     jira_integration_task,
     mute_historical_findings_task,
     perform_scan_task,
+    reaggregate_all_finding_group_summaries_task,
     refresh_lighthouse_provider_models_task,
 )
 
@@ -1209,6 +1210,17 @@ class TenantViewSet(BaseTenantViewset):
     ordering_fields = ["name", "inserted_at", "updated_at"]
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_ACCOUNT]
+
+    def set_required_permissions(self):
+        """
+        Returns the required permissions based on the request method.
+        """
+        if self.action in ("list", "retrieve", "create"):
+            # No permissions required for listing, retrieving or creating tenants
+            self.required_permissions = []
+        else:
+            # Require MANAGE_ACCOUNT for update and delete
+            self.required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
         queryset = Tenant.objects.filter(membership__user=self.request.user)
@@ -6728,23 +6740,15 @@ class MuteRuleViewSet(BaseRLSViewSet):
             muted_reason=mute_rule.reason,
         )
 
-        # Launch background task for historical muting
-        latest_scan_id = (
-            Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("-completed_at", "-inserted_at")
-            .values_list("id", flat=True)
-            .first()
-        )
-
+        # Launch background task for historical muting + reaggregation
         transaction.on_commit(
             lambda: chain(
                 mute_historical_findings_task.si(
                     tenant_id=tenant_id,
                     mute_rule_id=str(mute_rule.id),
                 ),
-                aggregate_finding_group_summaries_task.si(
+                reaggregate_all_finding_group_summaries_task.si(
                     tenant_id=tenant_id,
-                    scan_id=str(latest_scan_id),
                 ),
             ).apply_async()
         )
@@ -7001,13 +7005,13 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 "first_seen_at", filter=Q(status="FAIL", muted=False)
             ),
             check_title=Coalesce(
-                Max(Cast("check_metadata__CheckTitle", CharField())),
-                Max(Cast("check_metadata__checktitle", CharField())),
-                Max(Cast("check_metadata__Checktitle", CharField())),
+                Max(KeyTextTransform("checktitle", "check_metadata")),
+                Max(KeyTextTransform("CheckTitle", "check_metadata")),
+                Max(KeyTextTransform("Checktitle", "check_metadata")),
             ),
             check_description=Coalesce(
-                Max(Cast("check_metadata__Description", CharField())),
-                Max(Cast("check_metadata__description", CharField())),
+                Max(KeyTextTransform("description", "check_metadata")),
+                Max(KeyTextTransform("Description", "check_metadata")),
             ),
         )
 
@@ -7015,7 +7019,13 @@ class FindingGroupViewSet(BaseRLSViewSet):
         self, params: QueryDict
     ) -> tuple[QueryDict, QueryDict]:
         """Split finding filters from computed aggregate filters."""
-        computed_keys = {"status", "status__in", "severity", "severity__in"}
+        computed_keys = {
+            "status",
+            "status__in",
+            "severity",
+            "severity__in",
+            "include_muted",
+        }
         finding_params = QueryDict(mutable=True)
         computed_params = QueryDict(mutable=True)
 
@@ -7027,24 +7037,18 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         return finding_params, computed_params
 
-    def _get_latest_findings_per_check_provider(self, filtered_queryset):
-        """Keep all findings from the latest scan per (check_id, provider)."""
-        latest_ids = (
-            filtered_queryset.annotate(
-                scan_rank=Window(
-                    expression=DenseRank(),
-                    partition_by=[F("check_id"), F("scan__provider_id")],
-                    order_by=[
-                        F("scan__completed_at").desc(nulls_last=True),
-                        F("scan_id").desc(),
-                    ],
-                )
+    def _get_latest_findings_per_provider(self, filtered_queryset):
+        """Keep only findings from each provider's most recent completed scan."""
+        latest_scan_ids = (
+            Scan.objects.filter(
+                tenant_id=self.request.tenant_id,
+                state=StateChoices.COMPLETED,
             )
-            .filter(scan_rank=1)
+            .order_by("provider_id", "-completed_at", "-inserted_at")
+            .distinct("provider_id")
             .values("id")
         )
-
-        return filtered_queryset.filter(id__in=Subquery(latest_ids))
+        return filtered_queryset.filter(scan_id__in=latest_scan_ids)
 
     def _post_process_aggregation(self, aggregated_data):
         """
@@ -7143,6 +7147,10 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     output_field=CharField(),
                 )
             )
+
+        # Exclude fully-muted groups by default unless include_muted is set
+        if "include_muted" not in computed_params:
+            queryset = queryset.exclude(fail_count=0, pass_count=0, muted_count__gt=0)
 
         filterset = FindingGroupAggregatedComputedFilter(
             computed_params, queryset=queryset
@@ -7288,7 +7296,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 raise ValidationError(filterset.errors)
             filtered_queryset = filterset.qs
             if latest:
-                filtered_queryset = self._get_latest_findings_per_check_provider(
+                filtered_queryset = self._get_latest_findings_per_provider(
                     filtered_queryset
                 )
             return self._aggregate_findings(filtered_queryset)
@@ -7298,15 +7306,14 @@ class FindingGroupViewSet(BaseRLSViewSet):
         if not filterset.is_valid():
             raise ValidationError(filterset.errors)
         filtered_queryset = filterset.qs
-        if latest:
-            latest_per_check_ids = (
-                filtered_queryset.order_by("check_id", "provider_id", "-inserted_at")
-                .distinct("check_id", "provider_id")
-                .values("id")
-            )
-            filtered_queryset = filtered_queryset.filter(
-                id__in=Subquery(latest_per_check_ids)
-            )
+        # Only include summaries from each provider's most recent date
+        # (within the filtered range)
+        filtered_queryset = filtered_queryset.annotate(
+            _max_provider_date=Window(
+                expression=Max("inserted_at"),
+                partition_by=[F("provider_id")],
+            ),
+        ).filter(inserted_at=F("_max_provider_date"))
         return self._aggregate_daily_summaries(filtered_queryset)
 
     def _sorted_paginated_response(self, request, aggregated_queryset):
