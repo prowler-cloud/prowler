@@ -1,36 +1,30 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "securitycenter_all_assets_agent_installed",
-  "CheckTitle": "All assets are installed with security agent",
-  "CheckType": [
-    "Suspicious process",
-    "Webshell",
-    "Unusual logon",
-    "Sensitive file tampering",
-    "Malicious software"
-  ],
+  "CheckTitle": "All assets have the Security Center agent installed",
+  "CheckType": [],
   "ServiceName": "securitycenter",
   "SubServiceName": "",
-  "ResourceIdTemplate": "acs:sas:region:account-id:machine/{machine-id}",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AlibabaCloudSecurityCenterMachine",
+  "ResourceType": "ALIYUN::SAS::Instance",
   "ResourceGroup": "security",
-  "Description": "The endpoint protection of **Security Center** requires an agent to be installed on the endpoint to work. Such an agent-based approach allows the security center to provide comprehensive endpoint intrusion detection and protection capabilities.\n\nThis includes remote logon detection, **webshell detection** and removal, **anomaly detection** (detection of abnormal process behaviors and network connections), and detection of changes in key files and suspicious accounts.",
-  "Risk": "Assets without **Security Center agent** installed are not protected by endpoint intrusion detection and protection capabilities, leaving them vulnerable to security threats.\n\nUnprotected assets become blind spots in your security monitoring.",
+  "Description": "**Alibaba Cloud Security Center** requires an agent to be installed on each endpoint to provide comprehensive endpoint intrusion detection and protection capabilities. The agent enables remote logon detection, **webshell detection** and removal, **anomaly detection** of abnormal process behaviors and network connections, and monitoring of changes to key files and suspicious accounts.",
+  "Risk": "Assets without the **Security Center agent** installed become blind spots in security monitoring, as they are not protected by endpoint intrusion detection capabilities. This leaves them vulnerable to **malware infections**, **unauthorized access**, **webshell attacks**, and **anomalous process execution** without any alerts being generated.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/doc-detail/111650.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SecurityCenter/install-security-agent.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SecurityCenter/install-security-agent.html"
   ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun sas InstallUninstallAegis --InstanceIds <instance_id_1>,<instance_id_2>",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Log on to the **Security Center Console**\n2. Select **Settings**\n3. Click **Agent**\n4. On the `Client to be installed` tab, select all items on the list\n5. Click **One-click installation** to install the agent on all assets",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "1. Log on to the **Security Center Console**\n2. Select **Settings**\n3. Click **Agent**\n4. On the `Client to be installed` tab, select all items on the list\n5. Click **One-click installation** to install the agent on all assets",
+      "Text": "Install the Security Center agent on all assets to enable comprehensive endpoint intrusion detection and protection, including webshell detection, anomaly detection, and remote logon monitoring.",
       "Url": "https://hub.prowler.com/check/securitycenter_all_assets_agent_installed"
     }
   },

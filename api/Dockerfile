@@ -1,4 +1,4 @@
-FROM python:3.12.10-slim-bookworm AS build
+FROM python:3.12.10-slim-bookworm@sha256:fd95fa221297a88e1cf49c55ec1828edd7c5a428187e67b5d1805692d11588db AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
@@ -23,13 +23,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxslt1-dev \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
-
-# Cartography depends on `dockerfile` which has no pre-built arm64 wheel and requires Go to compile
-# hadolint ignore=DL3008
-RUN if [ "$(uname -m)" = "aarch64" ]; then \
-        apt-get update && apt-get install -y --no-install-recommends golang-go \
-        && rm -rf /var/lib/apt/lists/* ; \
-    fi
 
 # Install PowerShell
 RUN ARCH=$(uname -m) && \

@@ -22,6 +22,9 @@ env:
   POSTGRES_USER: prowler_user
   POSTGRES_PASSWORD: prowler
   POSTGRES_DB: postgres-db
+  VALKEY_SCHEME: redis
+  VALKEY_USERNAME: ""
+  VALKEY_PASSWORD: ""
   VALKEY_HOST: localhost
   VALKEY_PORT: 6379
   VALKEY_DB: 0
@@ -72,15 +75,20 @@ jobs:
           --health-retries 5
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           # zizmor: ignore[artipacked]
           persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
 
       - name: Check for API changes
         id: check-changes
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
         with:
           files: |
             api/**

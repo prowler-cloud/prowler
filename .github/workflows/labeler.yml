@@ -24,6 +24,11 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Apply labels to PR
         uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1
         with:
@@ -38,6 +43,11 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Check if author is org member
         id: check_membership
         env:
@@ -65,7 +75,7 @@ jobs:
             "RosaRivasProwler"
             "StylusFrost"
             "toniblyx"
-            "vicferpoy"
+            "davidm4r"
           )
 
           echo "Checking if $AUTHOR is a member of prowler-cloud organization"

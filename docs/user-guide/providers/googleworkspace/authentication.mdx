@@ -2,9 +2,13 @@
 title: 'Google Workspace Authentication in Prowler'
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.19.0" />
+
 Prowler for Google Workspace uses a **Service Account with Domain-Wide Delegation** to authenticate to the Google Workspace Admin SDK. This allows Prowler to read directory data on behalf of a super administrator without requiring an interactive login.
 
-## Required OAuth Scopes
+## Required Open Authorization (OAuth) Scopes
 
 Prowler requests the following read-only OAuth 2.0 scopes from the Google Workspace Admin SDK:
 
@@ -20,16 +24,16 @@ The delegated user must be a **super administrator** in your Google Workspace or
 
 ## Setup Steps
 
-### Step 1: Create a GCP Project (if needed)
+### Step 1: Create a Google Cloud Platform (GCP) Project (if Needed)
 
-If you don't have a GCP project, create one at [https://console.cloud.google.com](https://console.cloud.google.com).
+If no GCP project exists, create one at [https://console.cloud.google.com](https://console.cloud.google.com).
 
 The project is only used to host the Service Account — it does not need to have any Google Workspace data in it.
 
 ### Step 2: Enable the Admin SDK API
 
-1. Go to the [Google Cloud Console](https://console.cloud.google.com)
-2. Select your project
+1. Navigate to the [Google Cloud Console](https://console.cloud.google.com)
+2. Select the target project
 3. Navigate to **APIs & Services → Library**
 4. Search for **Admin SDK API**
 5. Click **Enable**
@@ -48,8 +52,8 @@ The Service Account does not need any GCP IAM roles. Its access to Google Worksp
 
 ### Step 4: Generate a JSON Key
 
-1. Click on the Service Account you just created
-2. Go to the **Keys** tab
+1. Click the newly created Service Account
+2. Navigate to the **Keys** tab
 3. Click **Add Key → Create new key**
 4. Select **JSON** format
 5. Click **Create** — the key file will download automatically
@@ -61,7 +65,7 @@ This JSON key grants access to your Google Workspace organization. Never commit 
 
 ### Step 5: Configure Domain-Wide Delegation in Google Workspace
 
-1. Go to the [Google Workspace Admin Console](https://admin.google.com)
+1. Navigate to the [Google Workspace Admin Console](https://admin.google.com)
 2. Navigate to **Security → Access and data control → API controls**
 3. Click **Manage Domain Wide Delegation**
 4. Click **Add new**
@@ -78,23 +82,26 @@ https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.google
 Domain-Wide Delegation must be configured by a Google Workspace **super administrator**. It may take a few minutes to propagate after saving.
 </Note>
 
-### Step 6: Store Credentials Securely
+### Step 6: Provide Credentials to Prowler
 
-Set your credentials as environment variables:
+- **Prowler Cloud:** Paste the Service Account JSON content and enter the delegated user email in the credentials form when configuring the Google Workspace provider.
+- **Prowler CLI:** Export the credentials as environment variables:
 
-```bash
+```console
 export GOOGLEWORKSPACE_CREDENTIALS_FILE="/path/to/googleworkspace-sa.json"
 export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
+prowler googleworkspace
 ```
 
-Alternatively, if you need to pass credentials as a string (e.g., in CI/CD pipelines):
+Alternatively, to pass credentials as a string (e.g., in CI/CD pipelines):
 
-```bash
+```console
 export GOOGLEWORKSPACE_CREDENTIALS_CONTENT=$(cat /path/to/googleworkspace-sa.json)
 export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
+prowler googleworkspace
 ```
 
-## Credential Lookup Order
+## How Prowler Resolves Credentials
 
 Prowler resolves credentials in the following order:
 
@@ -147,7 +154,7 @@ The Service Account cannot impersonate the delegated user. This usually means Do
 - All three required OAuth scopes are included
 - The delegated user is a super administrator
 
-### Permission Denied on Admin SDK calls
+### Permission Denied on Admin SDK Calls
 
 If Prowler connects but returns empty results or permission errors for specific API calls:
 

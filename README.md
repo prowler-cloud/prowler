@@ -109,14 +109,16 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 | GCP | 100 | 13 | 15 | 11 | Official | UI, API, CLI |
 | Kubernetes | 83 | 7 | 7 | 9 | Official | UI, API, CLI |
 | GitHub | 21 | 2 | 1 | 2 | Official | UI, API, CLI |
-| M365 | 75 | 7 | 4 | 4 | Official | UI, API, CLI |
-| OCI | 51 | 13 | 3 | 12 | Official | UI, API, CLI |
+| M365 | 89 | 9 | 4 | 5 | Official | UI, API, CLI |
+| OCI | 48 | 13 | 3 | 10 | Official | UI, API, CLI |
 | Alibaba Cloud | 61 | 9 | 3 | 9 | Official | UI, API, CLI |
-| Cloudflare | 29 | 2 | 0 | 5 | Official | CLI, API |
+| Cloudflare | 29 | 2 | 0 | 5 | Official | UI, API, CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
-| MongoDB Atlas | 10 | 3 | 0 | 3 | Official | UI, API, CLI |
+| MongoDB Atlas | 10 | 3 | 0 | 8 | Official | UI, API, CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
-| OpenStack | 1 | 1 | 0 | 2 | Official | CLI |
+| Image | N/A | N/A | N/A | N/A | Official | CLI, API |
+| Google Workspace | 1 | 1 | 0 | 1 | Official | CLI |
+| OpenStack | 27 | 4 | 0 | 8 | Official | UI, API, CLI |
 | NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
 
 > [!Note]

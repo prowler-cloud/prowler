@@ -336,7 +336,6 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
         for req in data.requirements:
             if req.status == StatusChoices.MANUAL:
                 continue
-
             m = get_requirement_metadata(req.id, data.attributes_by_requirement_id)
             if m:
                 marco = getattr(m, "Marco", "Otros")
@@ -365,9 +364,12 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
                 elements.append(Paragraph(f"{categoria_name}", self.styles["h3"]))
 
                 for req in reqs:
-                    status_indicator = (
-                        "✓" if req["status"] == StatusChoices.PASS else "✗"
-                    )
+                    if req["status"] == StatusChoices.PASS:
+                        status_indicator = "✓"
+                    elif req["status"] == StatusChoices.MANUAL:
+                        status_indicator = "⊙"
+                    else:
+                        status_indicator = "✗"
                     nivel_badge = f"[{req['nivel'].upper()}]" if req["nivel"] else ""
                     elements.append(
                         Paragraph(
@@ -841,11 +843,14 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
             elements.append(Spacer(1, 0.15 * inch))
 
             # Status and Nivel badges row
-            status_color = COLOR_HIGH_RISK  # FAIL
+            status_text = str(req.status).upper()
+            status_color = (
+                COLOR_HIGH_RISK if req.status == StatusChoices.FAIL else COLOR_GRAY
+            )
             nivel_color = nivel_colors.get(nivel, COLOR_GRAY)
 
             badges_row1 = [
-                ["State:", "FAIL", "", f"Nivel: {nivel.upper()}"],
+                ["State:", status_text, "", f"Nivel: {nivel.upper()}"],
             ]
             badges_table1 = Table(
                 badges_row1,

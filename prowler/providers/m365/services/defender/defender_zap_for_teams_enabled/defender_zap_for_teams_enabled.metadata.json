@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Teams Protection Policy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Zero-hour auto purge (ZAP) is a protection feature that retroactively detects and neutralizes **malware** and **high confidence phishing** in Teams messages.\n\nWhen ZAP blocks a message, it is blocked for everyone in the chat. The initial block happens right after delivery, but ZAP can occur up to 48 hours after delivery.",
-  "Risk": "Without ZAP enabled, malicious content delivered to Teams chats remains accessible to users for up to 48 hours after delivery, even after being identified as harmful.\n\nThis extended exposure window could lead to:\n- **Malware infections** from weaponized attachments or links\n- **Phishing attacks** compromising user credentials and MFA tokens\n- **Lateral movement** as attackers exploit compromised accounts within the organization",
+  "Description": "**Microsoft Defender for Office 365 Zero-hour auto purge (ZAP)** is a protection feature that retroactively detects and neutralizes **malware** and **high confidence phishing** in Teams messages.\n\nWhen ZAP blocks a message, it is blocked for everyone in the chat. The initial block happens right after delivery, but ZAP can occur up to 48 hours after delivery.",
+  "Risk": "Without ZAP enabled, malicious content in Teams chats remains accessible for up to 48 hours after delivery, even after being identified as harmful. This extended exposure enables **malware infections**, **phishing attacks** compromising credentials and MFA tokens, and **lateral movement** via compromised accounts.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/defender-office-365/zero-hour-auto-purge?view=o365-worldwide#zero-hour-auto-purge-zap-in-microsoft-teams",

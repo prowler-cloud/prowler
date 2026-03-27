@@ -7,9 +7,9 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Conditional Access Policy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Conditional Access policy with **application enforced restrictions** limits access to SharePoint, OneDrive, and Exchange content from unmanaged devices.\n\nThis control helps prevent data exfiltration by restricting download, print, and sync capabilities on devices that are not managed by the organization.",
+  "Description": "Microsoft Entra **Conditional Access** policy with **application enforced restrictions** limits access to SharePoint, OneDrive, and Exchange content from unmanaged devices.\n\nThis control helps prevent data exfiltration by restricting download, print, and sync capabilities on devices that are not managed by the organization.",
   "Risk": "Without application enforced restrictions, users accessing SharePoint, OneDrive, and Exchange from unmanaged devices can:\n\n- **Download** sensitive files to personal devices\n- **Print** confidential documents\n- **Sync** corporate data to uncontrolled locations\n\nThis increases the risk of data leakage and unauthorized access to sensitive information.",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -7,9 +7,9 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Authorization Policy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "This check verifies that the **default app management policy** in Microsoft Entra ID has the required **credential restrictions** configured for applications: **block password addition**, **restrict max password lifetime**, **block custom passwords**, and **restrict max certificate lifetime**.",
+  "Description": "Microsoft Entra ID **default app management policy** is verified to have the required **credential restrictions** configured for applications: **block password addition**, **restrict max password lifetime**, **block custom passwords**, and **restrict max certificate lifetime**.",
   "Risk": "Without the required credential restrictions, applications and service principals can use **insecure credential configurations**, including **long-lived secrets**, **custom passwords**, or **unrestricted certificates**, increasing the risk of **credential compromise** and **unauthorized access**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
