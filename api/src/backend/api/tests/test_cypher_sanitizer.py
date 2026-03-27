@@ -311,6 +311,20 @@ class TestEdgeCases:
         assert "()" in result  # empty parens untouched
         assert f"(m:AWSRole:{LABEL})" in result
 
+    def test_fully_anonymous_query_bypasses_injection(self):
+        """All-anonymous patterns bypass injection entirely.
+
+        MATCH ()--()--() has no labels and no variables, so neither Pass A
+        (labeled) nor Pass B (bare identifier) can inject the provider label.
+        This is safe because _serialize_graph() (Layer 3) filters every
+        returned node by provider label, dropping cross-provider data before
+        it reaches the user.
+        """
+        cypher = "MATCH ()--()--() RETURN *"
+        result = _inject(cypher)
+        assert result == cypher  # completely unmodified
+        assert LABEL not in result
+
     def test_relationship_patterns_untouched(self):
         cypher = "MATCH (a:X)-[r:REL_TYPE {x: 1}]->(b:Y) RETURN a"
         result = _inject(cypher)

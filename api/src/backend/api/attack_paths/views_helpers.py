@@ -144,6 +144,13 @@ def execute_custom_query(
     cypher: str,
     provider_id: str,
 ) -> dict[str, Any]:
+    # Defense-in-depth for custom queries:
+    # 1. neo4j.READ_ACCESS — prevents mutations at the driver level
+    # 2. inject_provider_label() — regex-based label injection scopes node patterns
+    # 3. _serialize_graph() — post-query filter drops nodes without the provider label
+    #
+    # Layer 2 is best-effort (regex can't fully parse Cypher);
+    # layer 3 is the safety net that guarantees provider isolation.
     validate_custom_query(cypher)
     cypher = inject_provider_label(cypher, provider_id)
 
