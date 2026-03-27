@@ -13,6 +13,7 @@ from tasks.jobs.attack_paths import (
     can_provider_run_attack_paths_scan,
 )
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
+from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
     backfill_daily_severity_summaries,
@@ -404,6 +405,11 @@ def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
     return attack_paths_scan(
         tenant_id=tenant_id, scan_id=scan_id, task_id=self.request.id
     )
+
+
+@shared_task(name="attack-paths-cleanup-stale-scans", queue="attack-paths-scans")
+def cleanup_stale_attack_paths_scans_task():
+    return cleanup_stale_attack_paths_scans()
 
 
 @shared_task(name="tenant-deletion", queue="deletion", autoretry_for=(Exception,))

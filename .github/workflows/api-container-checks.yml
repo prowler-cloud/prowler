@@ -86,6 +86,7 @@ jobs:
             production.cloudflare.docker.com:443
             debian.map.fastlydns.net:80
             release-assets.githubusercontent.com:443
+            objects.githubusercontent.com:443
             pypi.org:443
             files.pythonhosted.org:443
             www.powershellgallery.com:443
@@ -93,7 +94,7 @@ jobs:
             cdn.powershellgallery.com:443
             _http._tcp.deb.debian.org:443
             powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net:443
-
+            get.trivy.dev:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
