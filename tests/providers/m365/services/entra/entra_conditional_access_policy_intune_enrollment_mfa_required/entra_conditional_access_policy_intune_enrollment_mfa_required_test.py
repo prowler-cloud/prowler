@@ -17,7 +17,7 @@ from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 INTUNE_ENROLLMENT_APP_ID = "d4ebce55-015a-49b5-a083-c84d1797ae8c"
 MICROSOFT_INTUNE_APP_ID = "0000000a-0000-0000-c000-000000000000"
-CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_conditional_access_policy_intune_enrollment_mfa.entra_conditional_access_policy_intune_enrollment_mfa"
+CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_conditional_access_policy_intune_enrollment_mfa_required.entra_conditional_access_policy_intune_enrollment_mfa_required"
 
 
 def build_policy(
@@ -71,7 +71,7 @@ def build_policy(
     )
 
 
-class Test_entra_conditional_access_policy_intune_enrollment_mfa:
+class Test_entra_conditional_access_policy_intune_enrollment_mfa_required:
     def test_no_conditional_access_policies(self):
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
@@ -84,13 +84,15 @@ class Test_entra_conditional_access_policy_intune_enrollment_mfa:
             ),
             mock.patch(f"{CHECK_MODULE_PATH}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_intune_enrollment_mfa.entra_conditional_access_policy_intune_enrollment_mfa import (
-                entra_conditional_access_policy_intune_enrollment_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_intune_enrollment_mfa_required.entra_conditional_access_policy_intune_enrollment_mfa_required import (
+                entra_conditional_access_policy_intune_enrollment_mfa_required,
             )
 
             entra_client.conditional_access_policies = {}
 
-            result = entra_conditional_access_policy_intune_enrollment_mfa().execute()
+            result = (
+                entra_conditional_access_policy_intune_enrollment_mfa_required().execute()
+            )
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -111,8 +113,8 @@ class Test_entra_conditional_access_policy_intune_enrollment_mfa:
             ),
             mock.patch(f"{CHECK_MODULE_PATH}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_intune_enrollment_mfa.entra_conditional_access_policy_intune_enrollment_mfa import (
-                entra_conditional_access_policy_intune_enrollment_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_intune_enrollment_mfa_required.entra_conditional_access_policy_intune_enrollment_mfa_required import (
+                entra_conditional_access_policy_intune_enrollment_mfa_required,
             )
 
             policy = build_policy(
@@ -123,13 +125,15 @@ class Test_entra_conditional_access_policy_intune_enrollment_mfa:
             )
             entra_client.conditional_access_policies = {policy.id: policy}
 
-            result = entra_conditional_access_policy_intune_enrollment_mfa().execute()
+            result = (
+                entra_conditional_access_policy_intune_enrollment_mfa_required().execute()
+            )
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Conditional Access Policy 'Intune enrollment MFA' enforces MFA for Intune enrollment."
+                == "Conditional Access Policy 'Intune enrollment MFA' requires MFA for Intune enrollment."
             )
 
     def test_enabled_policy_with_microsoft_intune_app_id_passes(self):
@@ -144,8 +148,8 @@ class Test_entra_conditional_access_policy_intune_enrollment_mfa:
             ),
             mock.patch(f"{CHECK_MODULE_PATH}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_intune_enrollment_mfa.entra_conditional_access_policy_intune_enrollment_mfa import (
-                entra_conditional_access_policy_intune_enrollment_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_intune_enrollment_mfa_required.entra_conditional_access_policy_intune_enrollment_mfa_required import (
+                entra_conditional_access_policy_intune_enrollment_mfa_required,
             )
 
             policy = build_policy(
@@ -156,13 +160,15 @@ class Test_entra_conditional_access_policy_intune_enrollment_mfa:
             )
             entra_client.conditional_access_policies = {policy.id: policy}
 
-            result = entra_conditional_access_policy_intune_enrollment_mfa().execute()
+            result = (
+                entra_conditional_access_policy_intune_enrollment_mfa_required().execute()
+            )
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Conditional Access Policy 'Microsoft Intune MFA' enforces MFA for Intune enrollment."
+                == "Conditional Access Policy 'Microsoft Intune MFA' requires MFA for Intune enrollment."
             )
 
     def test_reporting_only_policy_fails(self):
@@ -177,8 +183,8 @@ class Test_entra_conditional_access_policy_intune_enrollment_mfa:
             ),
             mock.patch(f"{CHECK_MODULE_PATH}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_intune_enrollment_mfa.entra_conditional_access_policy_intune_enrollment_mfa import (
-                entra_conditional_access_policy_intune_enrollment_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_intune_enrollment_mfa_required.entra_conditional_access_policy_intune_enrollment_mfa_required import (
+                entra_conditional_access_policy_intune_enrollment_mfa_required,
             )
 
             policy = build_policy(
@@ -189,13 +195,15 @@ class Test_entra_conditional_access_policy_intune_enrollment_mfa:
             )
             entra_client.conditional_access_policies = {policy.id: policy}
 
-            result = entra_conditional_access_policy_intune_enrollment_mfa().execute()
+            result = (
+                entra_conditional_access_policy_intune_enrollment_mfa_required().execute()
+            )
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Conditional Access Policy 'Intune enrollment MFA' reports MFA for Intune enrollment but does not enforce it."
+                == "Conditional Access Policy 'Intune enrollment MFA' reports MFA for Intune enrollment but does not require it."
             )
 
     def test_policy_excluding_intune_fails(self):
@@ -210,8 +218,8 @@ class Test_entra_conditional_access_policy_intune_enrollment_mfa:
             ),
             mock.patch(f"{CHECK_MODULE_PATH}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_intune_enrollment_mfa.entra_conditional_access_policy_intune_enrollment_mfa import (
-                entra_conditional_access_policy_intune_enrollment_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_intune_enrollment_mfa_required.entra_conditional_access_policy_intune_enrollment_mfa_required import (
+                entra_conditional_access_policy_intune_enrollment_mfa_required,
             )
 
             policy = build_policy(
@@ -223,7 +231,47 @@ class Test_entra_conditional_access_policy_intune_enrollment_mfa:
             )
             entra_client.conditional_access_policies = {policy.id: policy}
 
-            result = entra_conditional_access_policy_intune_enrollment_mfa().execute()
+            result = (
+                entra_conditional_access_policy_intune_enrollment_mfa_required().execute()
+            )
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "No Conditional Access Policy requires MFA for Intune enrollment."
+            )
+
+    def test_policy_with_or_controls_does_not_require_mfa(self):
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(f"{CHECK_MODULE_PATH}.entra_client", new=entra_client),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_intune_enrollment_mfa_required.entra_conditional_access_policy_intune_enrollment_mfa_required import (
+                entra_conditional_access_policy_intune_enrollment_mfa_required,
+            )
+
+            policy = build_policy(
+                display_name="Intune MFA or managed device",
+                state=ConditionalAccessPolicyState.ENABLED,
+                included_applications=["All"],
+                built_in_controls=[
+                    ConditionalAccessGrantControl.MFA,
+                    ConditionalAccessGrantControl.DOMAIN_JOINED_DEVICE,
+                ],
+            )
+            entra_client.conditional_access_policies = {policy.id: policy}
+
+            result = (
+                entra_conditional_access_policy_intune_enrollment_mfa_required().execute()
+            )
 
             assert len(result) == 1
             assert result[0].status == "FAIL"

@@ -3,13 +3,14 @@ from prowler.providers.m365.services.entra.entra_client import entra_client
 from prowler.providers.m365.services.entra.entra_service import (
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
+    GrantControlOperator,
 )
 
 INTUNE_ENROLLMENT_APP_ID = "d4ebce55-015a-49b5-a083-c84d1797ae8c"
 MICROSOFT_INTUNE_APP_ID = "0000000a-0000-0000-c000-000000000000"
 
 
-class entra_conditional_access_policy_intune_enrollment_mfa(Check):
+class entra_conditional_access_policy_intune_enrollment_mfa_required(Check):
     """Ensure MFA is required for Intune enrollment."""
 
     def execute(self) -> list[CheckReportM365]:
@@ -60,6 +61,14 @@ class entra_conditional_access_policy_intune_enrollment_mfa(Check):
             ):
                 continue
 
+            # "Require MFA" means MFA must always be satisfied. Policies using
+            # OR with additional controls make MFA optional and should not pass.
+            if (
+                policy.grant_controls.operator == GrantControlOperator.OR
+                and len(policy.grant_controls.built_in_controls) > 1
+            ):
+                continue
+
             if policy.state == ConditionalAccessPolicyState.ENABLED:
                 report = CheckReportM365(
                     metadata=self.metadata(),
@@ -69,7 +78,7 @@ class entra_conditional_access_policy_intune_enrollment_mfa(Check):
                 )
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Conditional Access Policy '{policy.display_name}' enforces MFA "
+                    f"Conditional Access Policy '{policy.display_name}' requires MFA "
                     "for Intune enrollment."
                 )
                 break
@@ -83,7 +92,7 @@ class entra_conditional_access_policy_intune_enrollment_mfa(Check):
         if report.status == "FAIL" and reporting_policy:
             report.status_extended = (
                 f"Conditional Access Policy '{reporting_policy.display_name}' reports "
-                "MFA for Intune enrollment but does not enforce it."
+                "MFA for Intune enrollment but does not require it."
             )
 
         findings.append(report)

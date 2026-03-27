@@ -34,7 +34,7 @@
   ],
   "DependsOn": [],
   "RelatedTo": [
-    "entra_conditional_access_policy_intune_enrollment_mfa"
+    "entra_conditional_access_policy_intune_enrollment_mfa_required"
   ],
   "Notes": ""
 }
