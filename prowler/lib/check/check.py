@@ -228,6 +228,28 @@ def print_categories(categories: set):
     print(message)
 
 
+def list_resource_groups(bulk_checks_metadata: dict) -> set:
+    available_resource_groups = set()
+    for check in bulk_checks_metadata.values():
+        if check.ResourceGroup:
+            available_resource_groups.add(check.ResourceGroup)
+    return available_resource_groups
+
+
+def print_resource_groups(resource_groups: set):
+    rg_num = len(resource_groups)
+    plural_string = f"\nThere are {Fore.YELLOW}{rg_num}{Style.RESET_ALL} available resource groups.\n"
+    singular_string = (
+        f"\nThere is {Fore.YELLOW}{rg_num}{Style.RESET_ALL} available resource group.\n"
+    )
+
+    message = plural_string if rg_num > 1 else singular_string
+    for rg in sorted(resource_groups):
+        print(f"- {rg}")
+
+    print(message)
+
+
 def print_services(service_list: set):
     services_num = len(service_list)
     plural_string = f"\nThere are {Fore.YELLOW}{services_num}{Style.RESET_ALL} available services.\n"
