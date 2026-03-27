@@ -21,12 +21,9 @@ class Kms(OCIService):
 
     def __get_client__(self, region):
         """Get the Kms client for a region."""
-        client_region = self.regional_clients.get(region)
-        if not client_region:
-            return self._create_oci_client(
-                oci.key_management.KmsVaultClient, config_overrides={"region": region}
-            )
-        return client_region.client
+        return self._create_oci_client(
+            oci.key_management.KmsVaultClient, config_overrides={"region": region}
+        )
 
     def __list_keys__(self, regional_client):
         """List all keys."""
