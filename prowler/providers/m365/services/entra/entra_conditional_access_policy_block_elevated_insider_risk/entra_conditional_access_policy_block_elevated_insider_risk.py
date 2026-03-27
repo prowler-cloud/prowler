@@ -7,16 +7,16 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 
 
-class entra_conditional_access_policy_block_purview_elevated_insider_risk(Check):
-    """Check if a Conditional Access policy blocks all cloud app access for elevated Purview insider risk users.
+class entra_conditional_access_policy_block_elevated_insider_risk(Check):
+    """Check if a Conditional Access policy blocks all cloud app access for elevated insider risk users.
 
     This check verifies that at least one enabled Conditional Access policy
     blocks access to all cloud applications for users with an elevated insider
     risk level, as determined by Microsoft Purview Insider Risk Management
     and Adaptive Protection.
 
-    - PASS: An enabled CA policy blocks all cloud app access for elevated Purview insider risk users.
-    - FAIL: No enabled CA policy blocks broad cloud app access based on Purview insider risk signals.
+    - PASS: An enabled CA policy blocks all cloud app access for elevated insider risk users.
+    - FAIL: No enabled CA policy blocks broad cloud app access based on insider risk signals.
     """
 
     def execute(self) -> list[CheckReportM365]:

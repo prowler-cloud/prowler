@@ -17,10 +17,10 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
-CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_purview_elevated_insider_risk.entra_conditional_access_policy_block_purview_elevated_insider_risk"
+CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_conditional_access_policy_block_elevated_insider_risk.entra_conditional_access_policy_block_elevated_insider_risk"
 
 
-class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
+class Test_entra_conditional_access_policy_block_elevated_insider_risk:
     def test_no_conditional_access_policies(self):
         """Test FAIL when there are no Conditional Access policies."""
         entra_client = mock.MagicMock
@@ -36,15 +36,13 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_purview_elevated_insider_risk.entra_conditional_access_policy_block_purview_elevated_insider_risk import (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_elevated_insider_risk.entra_conditional_access_policy_block_elevated_insider_risk import (
+                entra_conditional_access_policy_block_elevated_insider_risk,
             )
 
             entra_client.conditional_access_policies = {}
 
-            check = (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk()
-            )
+            check = entra_conditional_access_policy_block_elevated_insider_risk()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -75,8 +73,8 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_purview_elevated_insider_risk.entra_conditional_access_policy_block_purview_elevated_insider_risk import (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_elevated_insider_risk.entra_conditional_access_policy_block_elevated_insider_risk import (
+                entra_conditional_access_policy_block_elevated_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -124,9 +122,7 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 )
             }
 
-            check = (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk()
-            )
+            check = entra_conditional_access_policy_block_elevated_insider_risk()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -157,8 +153,8 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_purview_elevated_insider_risk.entra_conditional_access_policy_block_purview_elevated_insider_risk import (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_elevated_insider_risk.entra_conditional_access_policy_block_elevated_insider_risk import (
+                entra_conditional_access_policy_block_elevated_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -206,9 +202,7 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 )
             }
 
-            check = (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk()
-            )
+            check = entra_conditional_access_policy_block_elevated_insider_risk()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -242,8 +236,8 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_purview_elevated_insider_risk.entra_conditional_access_policy_block_purview_elevated_insider_risk import (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_elevated_insider_risk.entra_conditional_access_policy_block_elevated_insider_risk import (
+                entra_conditional_access_policy_block_elevated_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -287,9 +281,7 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 )
             }
 
-            check = (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk()
-            )
+            check = entra_conditional_access_policy_block_elevated_insider_risk()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -320,8 +312,8 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_purview_elevated_insider_risk.entra_conditional_access_policy_block_purview_elevated_insider_risk import (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_elevated_insider_risk.entra_conditional_access_policy_block_elevated_insider_risk import (
+                entra_conditional_access_policy_block_elevated_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -369,9 +361,7 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 )
             }
 
-            check = (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk()
-            )
+            check = entra_conditional_access_policy_block_elevated_insider_risk()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -402,8 +392,8 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_purview_elevated_insider_risk.entra_conditional_access_policy_block_purview_elevated_insider_risk import (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_elevated_insider_risk.entra_conditional_access_policy_block_elevated_insider_risk import (
+                entra_conditional_access_policy_block_elevated_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -451,9 +441,7 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 )
             }
 
-            check = (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk()
-            )
+            check = entra_conditional_access_policy_block_elevated_insider_risk()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -484,8 +472,8 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_purview_elevated_insider_risk.entra_conditional_access_policy_block_purview_elevated_insider_risk import (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_elevated_insider_risk.entra_conditional_access_policy_block_elevated_insider_risk import (
+                entra_conditional_access_policy_block_elevated_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -533,9 +521,7 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 )
             }
 
-            check = (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk()
-            )
+            check = entra_conditional_access_policy_block_elevated_insider_risk()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -566,8 +552,8 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_purview_elevated_insider_risk.entra_conditional_access_policy_block_purview_elevated_insider_risk import (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_elevated_insider_risk.entra_conditional_access_policy_block_elevated_insider_risk import (
+                entra_conditional_access_policy_block_elevated_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -615,9 +601,7 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 )
             }
 
-            check = (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk()
-            )
+            check = entra_conditional_access_policy_block_elevated_insider_risk()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -648,8 +632,8 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_purview_elevated_insider_risk.entra_conditional_access_policy_block_purview_elevated_insider_risk import (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_elevated_insider_risk.entra_conditional_access_policy_block_elevated_insider_risk import (
+                entra_conditional_access_policy_block_elevated_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -697,9 +681,7 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 )
             }
 
-            check = (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk()
-            )
+            check = entra_conditional_access_policy_block_elevated_insider_risk()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -733,8 +715,8 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_purview_elevated_insider_risk.entra_conditional_access_policy_block_purview_elevated_insider_risk import (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_elevated_insider_risk.entra_conditional_access_policy_block_elevated_insider_risk import (
+                entra_conditional_access_policy_block_elevated_insider_risk,
             )
             from prowler.providers.m365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -785,9 +767,7 @@ class Test_entra_conditional_access_policy_block_purview_elevated_insider_risk:
                 )
             }
 
-            check = (
-                entra_conditional_access_policy_block_purview_elevated_insider_risk()
-            )
+            check = entra_conditional_access_policy_block_elevated_insider_risk()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
