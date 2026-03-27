@@ -3483,7 +3483,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             request,
             filtered_queryset,
             manager=Finding.all_objects,
-            select_related=["scan"],
+            select_related=["scan__provider"],
             prefetch_related=["resources"],
         )
 
@@ -3653,7 +3653,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
-        latest_scan_ids = (
+        latest_scan_ids = list(
             Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
@@ -3667,7 +3667,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             request,
             filtered_queryset,
             manager=Finding.all_objects,
-            select_related=["scan"],
+            select_related=["scan__provider"],
             prefetch_related=["resources"],
         )
 
@@ -6878,8 +6878,15 @@ class FindingGroupViewSet(BaseRLSViewSet):
         "resource_type__icontains": "type__icontains",
     }
 
+    # Fields accepted directly by LatestResourceFilter (no translation needed)
+    _RESOURCE_FILTER_FIELDS = {
+        f"{field}__{lookup}"
+        for field, lookups in LatestResourceFilter.Meta.fields.items()
+        for lookup in lookups
+    } | set(LatestResourceFilter.Meta.fields.keys())
+
     def _split_resource_filters(self, params: QueryDict) -> tuple[QueryDict, QueryDict]:
-        resource_keys = set(self.RESOURCE_FILTER_MAP)
+        resource_keys = set(self.RESOURCE_FILTER_MAP) | self._RESOURCE_FILTER_FIELDS
         finding_params = QueryDict(mutable=True)
         resource_params = QueryDict(mutable=True)
         for key, values in params.lists():
@@ -6900,11 +6907,16 @@ class FindingGroupViewSet(BaseRLSViewSet):
             queryset = queryset.filter(tenant_id=tenant_id)
 
         filter_params = QueryDict(mutable=True)
-        for key, mapped_key in self.RESOURCE_FILTER_MAP.items():
-            if key not in params:
+        for key, values in params.lists():
+            # Translate resource_* prefixed keys via the map
+            if key in self.RESOURCE_FILTER_MAP:
+                mapped_key = self.RESOURCE_FILTER_MAP[key]
+            elif key in self._RESOURCE_FILTER_FIELDS:
+                mapped_key = key
+            else:
                 continue
+
             if key == "resources" or key.endswith("__in"):
-                values = params.getlist(key)
                 items: list[str] = []
                 for value in values:
                     if value is None:
@@ -7232,11 +7244,13 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 ),
                 first_seen_at=Min("finding__first_seen_at"),
                 last_seen_at=Max("finding__inserted_at"),
-                # Max() picks an arbitrary reason when a resource has multiple
-                # muted findings; this is acceptable because mute rules are
-                # applied per-check so all findings for the same resource
-                # share the same muted_reason in practice.
+                # Max() on muted_reason / check_metadata is safe because
+                # all findings for the same resource+check share identical
+                # values (mute rules and metadata are applied per-check).
                 muted_reason=Max("finding__muted_reason"),
+                resource_group=Max(
+                    KeyTextTransform("resourcegroup", "finding__check_metadata")
+                ),
             )
             .filter(resource_id__isnull=False)
             .order_by("resource_id")
@@ -7273,6 +7287,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     "first_seen_at": row["first_seen_at"],
                     "last_seen_at": row["last_seen_at"],
                     "muted_reason": row.get("muted_reason"),
+                    "resource_group": row.get("resource_group", ""),
                 }
             )
 
@@ -7307,14 +7322,19 @@ class FindingGroupViewSet(BaseRLSViewSet):
             raise ValidationError(filterset.errors)
         filtered_queryset = filterset.qs
         # Only include summaries from each provider's most recent date
-        # (within the filtered range)
-        filtered_queryset = filtered_queryset.annotate(
+        # (within the filtered range).
+        # We use a subquery to strip the Window annotation so it does not
+        # leak into the GROUP BY of _aggregate_daily_summaries.
+        latest_per_provider = filtered_queryset.annotate(
             _max_provider_date=Window(
                 expression=Max("inserted_at"),
                 partition_by=[F("provider_id")],
             ),
         ).filter(inserted_at=F("_max_provider_date"))
-        return self._aggregate_daily_summaries(filtered_queryset)
+        clean_queryset = FindingGroupDailySummary.objects.filter(
+            pk__in=latest_per_provider.values("pk")
+        )
+        return self._aggregate_daily_summaries(clean_queryset)
 
     def _sorted_paginated_response(self, request, aggregated_queryset):
         """Apply ordering, pagination, post-processing, and return the Response."""
