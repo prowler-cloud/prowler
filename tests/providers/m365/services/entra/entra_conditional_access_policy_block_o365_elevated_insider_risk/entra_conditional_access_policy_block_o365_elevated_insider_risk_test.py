@@ -298,7 +298,7 @@ class Test_entra_conditional_access_policy_block_o365_elevated_insider_risk:
             assert result[0].location == "global"
 
     def test_policy_no_insider_risk_levels_adaptive_protection_not_configured(self):
-        """Test FAIL when policy matches but Adaptive Protection is not configured (insider_risk_levels is None)."""
+        """Test FAIL with generic message when policy has no insider risk levels."""
         id = str(uuid4())
         display_name = "Block O365 No Insider Risk"
         entra_client = mock.MagicMock
@@ -371,14 +371,15 @@ class Test_entra_conditional_access_policy_block_o365_elevated_insider_risk:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy {display_name} is configured to block Office 365 and Microsoft Purview Adaptive Protection is not providing insider risk signals."
+                == "No Conditional Access Policy blocks Office 365 access for users with elevated insider risk."
             )
-            assert result[0].resource_name == display_name
-            assert result[0].resource_id == id
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
     def test_policy_report_only_adaptive_protection_not_configured(self):
-        """Test FAIL when policy is report-only and Adaptive Protection is not configured."""
+        """Test FAIL with generic message when report-only policy has no insider risk levels."""
         id = str(uuid4())
         display_name = "Block O365 Report Only No Purview"
         entra_client = mock.MagicMock
@@ -451,10 +452,11 @@ class Test_entra_conditional_access_policy_block_o365_elevated_insider_risk:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy {display_name} is configured in report-only mode to block Office 365 and Microsoft Purview Adaptive Protection is not providing insider risk signals."
+                == "No Conditional Access Policy blocks Office 365 access for users with elevated insider risk."
             )
-            assert result[0].resource_name == display_name
-            assert result[0].resource_id == id
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
     def test_policy_not_targeting_all_users(self):
