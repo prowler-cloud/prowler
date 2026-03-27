@@ -10,7 +10,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronsDown } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useImperativeHandle, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { resolveFindingIds } from "@/actions/findings/findings-by-resource";
@@ -29,12 +29,20 @@ import {
   useResourceDetailDrawer,
 } from "./resource-detail-drawer";
 
+export interface InlineResourceContainerHandle {
+  /** Soft-refresh resources (re-fetch page 1 without skeletons). */
+  refresh: () => void;
+  /** Clear internal row selection and notify parent. */
+  clearSelection: () => void;
+}
+
 interface InlineResourceContainerProps {
   group: FindingGroupRow;
   resourceSearch: string;
   columnCount: number;
   /** Called with selected resource UIDs (not finding IDs) for parent-level mute resolution */
   onResourceSelectionChange: (resourceUids: string[]) => void;
+  ref?: React.Ref<InlineResourceContainerHandle>;
 }
 
 // NOTE: We intentionally do NOT auto-select child resources when a parent group
@@ -118,6 +126,7 @@ export function InlineResourceContainer({
   resourceSearch,
   columnCount,
   onResourceSelectionChange,
+  ref,
 }: InlineResourceContainerProps) {
   const searchParams = useSearchParams();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -223,6 +232,8 @@ export function InlineResourceContainer({
     setRowSelection({});
     onResourceSelectionChange([]);
   };
+
+  useImperativeHandle(ref, () => ({ refresh, clearSelection }));
 
   const isSelected = (id: string) => {
     return selectedFindingIds.includes(id);

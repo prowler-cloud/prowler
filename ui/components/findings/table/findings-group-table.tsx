@@ -2,19 +2,23 @@
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import {
   resolveFindingIds,
   resolveFindingIdsByCheckIds,
 } from "@/actions/findings/findings-by-resource";
 import { DataTable } from "@/components/ui/table";
+import { hasDateOrScanFilter } from "@/lib";
 import { FindingGroupRow, MetaDataProps } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
 import { getColumnFindingGroups } from "./column-finding-groups";
 import { FindingsSelectionContext } from "./findings-selection-context";
-import { InlineResourceContainer } from "./inline-resource-container";
+import {
+  InlineResourceContainer,
+  InlineResourceContainerHandle,
+} from "./inline-resource-container";
 
 function buildMuteLabel(groupCount: number, resourceCount: number): string {
   const parts: string[] = [];
@@ -47,12 +51,22 @@ export function FindingsGroupTable({
   );
   const [resourceSearch, setResourceSearch] = useState("");
   const [resourceSelection, setResourceSelection] = useState<string[]>([]);
+  const inlineRef = useRef<InlineResourceContainerHandle>(null);
 
   // State resets (selection, drill-down) are handled by the parent via
   // key={groupKey} — when data changes, the component remounts with fresh state.
 
   const safeData = data ?? [];
   const hasResourceSelection = resourceSelection.length > 0;
+  const currentParams = Object.fromEntries(searchParams.entries());
+  const hasDateOrScan = hasDateOrScanFilter(currentParams);
+
+  const filters: Record<string, string> = {};
+  searchParams.forEach((value, key) => {
+    if (key.startsWith("filter[")) {
+      filters[key] = value;
+    }
+  });
 
   // Get selected check IDs (not UUIDs) — resolveFindingIdsByCheckIds expects check_id values.
   // When the expanded group has individual resource selections, exclude it from
@@ -90,11 +104,17 @@ export function FindingsGroupTable({
 
   /** Shared resolver for row action dropdowns (via context). */
   const resolveMuteIds = async (checkIds: string[]) =>
-    resolveFindingIdsByCheckIds({ checkIds });
+    resolveFindingIdsByCheckIds({
+      checkIds,
+      filters,
+      hasDateOrScanFilter: hasDateOrScan,
+    });
 
   const handleMuteComplete = () => {
     clearSelection();
     setResourceSelection([]);
+    inlineRef.current?.clearSelection();
+    inlineRef.current?.refresh();
     router.refresh();
   };
 
@@ -131,6 +151,7 @@ export function FindingsGroupTable({
 
     return (
       <InlineResourceContainer
+        ref={inlineRef}
         key={`${group.checkId}|${searchParams.toString()}|${resourceSearch}`}
         group={expandedGroup}
         resourceSearch={resourceSearch}
@@ -183,7 +204,11 @@ export function FindingsGroupTable({
           onBeforeOpen={async () => {
             const [groupIds, resourceIds] = await Promise.all([
               selectedCheckIds.length > 0
-                ? resolveFindingIdsByCheckIds({ checkIds: selectedCheckIds })
+                ? resolveFindingIdsByCheckIds({
+                    checkIds: selectedCheckIds,
+                    filters,
+                    hasDateOrScanFilter: hasDateOrScan,
+                  })
                 : Promise.resolve([]),
               hasResourceSelection && expandedCheckId
                 ? resolveFindingIds({
@@ -195,7 +220,9 @@ export function FindingsGroupTable({
             return [...groupIds, ...resourceIds];
           }}
           onComplete={handleMuteComplete}
-          isBulkOperation
+          isBulkOperation={
+            selectedCheckIds.length > 0 || resourceSelection.length > 1
+          }
         />
       )}
     </FindingsSelectionContext.Provider>
