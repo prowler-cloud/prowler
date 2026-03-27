@@ -2,6 +2,8 @@ from urllib.parse import quote
 
 from config.env import env
 
+_VALID_SCHEMES = {"redis", "rediss"}
+
 
 def _build_celery_broker_url(
     scheme: str,
@@ -11,6 +13,11 @@ def _build_celery_broker_url(
     port: str,
     db: str,
 ) -> str:
+    if scheme not in _VALID_SCHEMES:
+        raise ValueError(
+            f"Invalid VALKEY_SCHEME '{scheme}'. Must be one of: {', '.join(sorted(_VALID_SCHEMES))}"
+        )
+
     encoded_username = quote(username, safe="") if username else ""
     encoded_password = quote(password, safe="") if password else ""
 
