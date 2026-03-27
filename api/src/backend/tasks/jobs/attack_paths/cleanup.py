@@ -4,7 +4,7 @@ from celery import current_app, states
 from celery.utils.log import get_task_logger
 from config.django.base import ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES
 from tasks.jobs.attack_paths.db_utils import (
-    finish_attack_paths_scan,
+    _mark_scan_finished,
     recover_graph_data_ready,
 )
 
@@ -125,10 +125,10 @@ def _cleanup_scan(scan, task_result, reason: str) -> bool:
     except Exception:
         logger.exception(f"Failed to drop temp database {tmp_db_name}")
 
-    # 2. Re-fetch within RLS (race guard against normal completion)
+    # 2. Lock row, verify still EXECUTING, mark FAILED — all atomic
     with rls_transaction(str(scan.tenant_id)):
         try:
-            fresh_scan = AttackPathsScan.objects.get(id=scan.id)
+            fresh_scan = AttackPathsScan.objects.select_for_update().get(id=scan.id)
         except AttackPathsScan.DoesNotExist:
             logger.warning(f"Scan {scan_id_str} no longer exists, skipping")
             return False
@@ -137,19 +137,15 @@ def _cleanup_scan(scan, task_result, reason: str) -> bool:
             logger.info(f"Scan {scan_id_str} is now {fresh_scan.state}, skipping")
             return False
 
-    # 3. Mark `AttackPathsScan` as `FAILED`
-    finish_attack_paths_scan(
-        fresh_scan,
-        StateChoices.FAILED,
-        {"global_error": reason},
-    )
+        _mark_scan_finished(fresh_scan, StateChoices.FAILED, {"global_error": reason})
 
-    # 4. Mark `TaskResult` as `FAILURE`
+    # 3. Mark `TaskResult` as `FAILURE` (not RLS-protected, outside lock)
     if task_result:
         task_result.status = states.FAILURE
+        task_result.date_done = datetime.now(tz=timezone.utc)
         task_result.save(update_fields=["status", "date_done"])
 
-    # 5. Recover graph_data_ready if provider data still exists
+    # 4. Recover graph_data_ready if provider data still exists
     recover_graph_data_ready(fresh_scan)
 
     logger.info(f"Cleaned up stale scan {scan_id_str}: {reason}")

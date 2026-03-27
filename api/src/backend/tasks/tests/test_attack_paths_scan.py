@@ -1006,9 +1006,6 @@ class TestFailAttackPathsScan:
             patch(
                 "tasks.jobs.attack_paths.db_utils.graph_database.drop_database"
             ) as mock_drop_db,
-            patch(
-                "tasks.jobs.attack_paths.db_utils.finish_attack_paths_scan"
-            ) as mock_finish,
             patch("tasks.jobs.attack_paths.db_utils.recover_graph_data_ready"),
         ):
             fail_attack_paths_scan(str(tenant.id), str(scan.id), "setup exploded")
@@ -1016,11 +1013,12 @@ class TestFailAttackPathsScan:
         mock_retrieve.assert_called_once_with(str(tenant.id), str(scan.id))
         expected_tmp_db = f"db-tmp-scan-{str(attack_paths_scan.id).lower()}"
         mock_drop_db.assert_called_once_with(expected_tmp_db)
-        mock_finish.assert_called_once_with(
-            attack_paths_scan,
-            StateChoices.FAILED,
-            {"global_error": "setup exploded"},
-        )
+
+        attack_paths_scan.refresh_from_db()
+        assert attack_paths_scan.state == StateChoices.FAILED
+        assert attack_paths_scan.ingestion_exceptions == {
+            "global_error": "setup exploded"
+        }
 
     def test_drops_temp_database_even_when_drop_fails(
         self, tenants_fixture, providers_fixture, scans_fixture
@@ -1051,18 +1049,12 @@ class TestFailAttackPathsScan:
                 "tasks.jobs.attack_paths.db_utils.graph_database.drop_database",
                 side_effect=Exception("Neo4j unreachable"),
             ),
-            patch(
-                "tasks.jobs.attack_paths.db_utils.finish_attack_paths_scan"
-            ) as mock_finish,
             patch("tasks.jobs.attack_paths.db_utils.recover_graph_data_ready"),
         ):
             fail_attack_paths_scan(str(tenant.id), str(scan.id), "setup exploded")
 
-        mock_finish.assert_called_once_with(
-            attack_paths_scan,
-            StateChoices.FAILED,
-            {"global_error": "setup exploded"},
-        )
+        attack_paths_scan.refresh_from_db()
+        assert attack_paths_scan.state == StateChoices.FAILED
 
     def test_skips_already_failed_scan(
         self, tenants_fixture, providers_fixture, scans_fixture
@@ -1092,32 +1084,24 @@ class TestFailAttackPathsScan:
             patch(
                 "tasks.jobs.attack_paths.db_utils.graph_database.drop_database"
             ) as mock_drop_db,
-            patch(
-                "tasks.jobs.attack_paths.db_utils.finish_attack_paths_scan"
-            ) as mock_finish,
         ):
             fail_attack_paths_scan(str(tenant.id), str(scan.id), "setup exploded")
 
-        mock_drop_db.assert_not_called()
-        mock_finish.assert_not_called()
+        mock_drop_db.assert_called_once()
+
+        attack_paths_scan.refresh_from_db()
+        assert attack_paths_scan.state == StateChoices.FAILED
 
     def test_skips_when_no_scan_found(self, tenants_fixture):
         from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
         tenant = tenants_fixture[0]
 
-        with (
-            patch(
-                "tasks.jobs.attack_paths.db_utils.retrieve_attack_paths_scan",
-                return_value=None,
-            ),
-            patch(
-                "tasks.jobs.attack_paths.db_utils.finish_attack_paths_scan"
-            ) as mock_finish,
+        with patch(
+            "tasks.jobs.attack_paths.db_utils.retrieve_attack_paths_scan",
+            return_value=None,
         ):
             fail_attack_paths_scan(str(tenant.id), "nonexistent", "setup exploded")
-
-        mock_finish.assert_not_called()
 
     def test_fail_recovers_graph_data_ready_when_data_exists(
         self, tenants_fixture, providers_fixture, scans_fixture
@@ -1145,7 +1129,6 @@ class TestFailAttackPathsScan:
                 return_value=attack_paths_scan,
             ),
             patch("tasks.jobs.attack_paths.db_utils.graph_database.drop_database"),
-            patch("tasks.jobs.attack_paths.db_utils.finish_attack_paths_scan"),
             patch(
                 "tasks.jobs.attack_paths.db_utils.graph_database.has_provider_data",
                 return_value=True,
@@ -1184,7 +1167,6 @@ class TestFailAttackPathsScan:
                 return_value=attack_paths_scan,
             ),
             patch("tasks.jobs.attack_paths.db_utils.graph_database.drop_database"),
-            patch("tasks.jobs.attack_paths.db_utils.finish_attack_paths_scan"),
             patch(
                 "tasks.jobs.attack_paths.db_utils.graph_database.has_provider_data",
                 return_value=False,
@@ -2355,7 +2337,6 @@ class TestCleanupStaleAttackPathsScans:
         return ap_scan, task_result
 
     @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
-    @patch("tasks.jobs.attack_paths.cleanup.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
     @patch(
         "tasks.jobs.attack_paths.cleanup.rls_transaction",
@@ -2366,7 +2347,6 @@ class TestCleanupStaleAttackPathsScans:
         self,
         mock_alive,
         mock_drop_db,
-        mock_finish,
         mock_recover,
         tenants_fixture,
         providers_fixture,
@@ -2389,15 +2369,21 @@ class TestCleanupStaleAttackPathsScans:
         assert result["cleaned_up_count"] == 1
         assert str(ap_scan.id) in result["scan_ids"]
         mock_drop_db.assert_called_once()
-        mock_finish.assert_called_once()
-        assert mock_finish.call_args[0][1] == StateChoices.FAILED
         mock_recover.assert_called_once()
+
+        ap_scan.refresh_from_db()
+        assert ap_scan.state == StateChoices.FAILED
+        assert ap_scan.progress == 100
+        assert ap_scan.completed_at is not None
+        assert ap_scan.ingestion_exceptions == {
+            "global_error": "Worker dead — cleaned up by periodic task"
+        }
 
         task_result.refresh_from_db()
         assert task_result.status == "FAILURE"
+        assert task_result.date_done is not None
 
     @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
-    @patch("tasks.jobs.attack_paths.cleanup.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
     @patch(
         "tasks.jobs.attack_paths.cleanup.rls_transaction",
@@ -2410,7 +2396,6 @@ class TestCleanupStaleAttackPathsScans:
         mock_alive,
         mock_revoke,
         mock_drop_db,
-        mock_finish,
         mock_recover,
         tenants_fixture,
         providers_fixture,
@@ -2432,11 +2417,12 @@ class TestCleanupStaleAttackPathsScans:
 
         assert result["cleaned_up_count"] == 1
         mock_revoke.assert_called_once_with(task_result)
-        mock_finish.assert_called_once()
         mock_recover.assert_called_once()
 
+        ap_scan.refresh_from_db()
+        assert ap_scan.state == StateChoices.FAILED
+
     @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
-    @patch("tasks.jobs.attack_paths.cleanup.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
     @patch(
         "tasks.jobs.attack_paths.cleanup.rls_transaction",
@@ -2447,7 +2433,6 @@ class TestCleanupStaleAttackPathsScans:
         self,
         mock_alive,
         mock_drop_db,
-        mock_finish,
         mock_recover,
         tenants_fixture,
         providers_fixture,
@@ -2467,11 +2452,9 @@ class TestCleanupStaleAttackPathsScans:
 
         assert result["cleaned_up_count"] == 0
         mock_drop_db.assert_not_called()
-        mock_finish.assert_not_called()
         mock_recover.assert_not_called()
 
     @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
-    @patch("tasks.jobs.attack_paths.cleanup.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
     @patch(
         "tasks.jobs.attack_paths.cleanup.rls_transaction",
@@ -2480,7 +2463,6 @@ class TestCleanupStaleAttackPathsScans:
     def test_ignores_completed_and_failed_scans(
         self,
         mock_drop_db,
-        mock_finish,
         mock_recover,
         tenants_fixture,
         providers_fixture,
@@ -2508,10 +2490,8 @@ class TestCleanupStaleAttackPathsScans:
 
         assert result["cleaned_up_count"] == 0
         mock_drop_db.assert_not_called()
-        mock_finish.assert_not_called()
 
     @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
-    @patch("tasks.jobs.attack_paths.cleanup.finish_attack_paths_scan")
     @patch(
         "tasks.jobs.attack_paths.cleanup.graph_database.drop_database",
         side_effect=Exception("Neo4j unreachable"),
@@ -2525,7 +2505,6 @@ class TestCleanupStaleAttackPathsScans:
         self,
         mock_alive,
         mock_drop_db,
-        mock_finish,
         mock_recover,
         tenants_fixture,
         providers_fixture,
@@ -2544,10 +2523,8 @@ class TestCleanupStaleAttackPathsScans:
 
         assert result["cleaned_up_count"] == 1
         mock_drop_db.assert_called_once()
-        mock_finish.assert_called_once()
 
     @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
-    @patch("tasks.jobs.attack_paths.cleanup.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
     @patch(
         "tasks.jobs.attack_paths.cleanup.rls_transaction",
@@ -2558,7 +2535,6 @@ class TestCleanupStaleAttackPathsScans:
         self,
         mock_alive,
         mock_drop_db,
-        mock_finish,
         mock_recover,
         tenants_fixture,
         providers_fixture,
@@ -2578,17 +2554,24 @@ class TestCleanupStaleAttackPathsScans:
             tenant_id=tenant2.id,
         )
 
-        self._create_executing_scan(tenant1, provider1, worker="dead-worker-1@host")
-        self._create_executing_scan(tenant2, provider2, worker="dead-worker-2@host")
+        ap_scan1, _ = self._create_executing_scan(
+            tenant1, provider1, worker="dead-worker-1@host"
+        )
+        ap_scan2, _ = self._create_executing_scan(
+            tenant2, provider2, worker="dead-worker-2@host"
+        )
 
         result = cleanup_stale_attack_paths_scans()
 
         assert result["cleaned_up_count"] == 2
-        assert mock_finish.call_count == 2
         assert mock_recover.call_count == 2
 
+        ap_scan1.refresh_from_db()
+        ap_scan2.refresh_from_db()
+        assert ap_scan1.state == StateChoices.FAILED
+        assert ap_scan2.state == StateChoices.FAILED
+
     @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
-    @patch("tasks.jobs.attack_paths.cleanup.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
     @patch(
         "tasks.jobs.attack_paths.cleanup.rls_transaction",
@@ -2599,7 +2582,6 @@ class TestCleanupStaleAttackPathsScans:
         self,
         mock_alive,
         mock_drop_db,
-        mock_finish,
         mock_recover,
         tenants_fixture,
         providers_fixture,
@@ -2623,7 +2605,6 @@ class TestCleanupStaleAttackPathsScans:
         assert recovered_scan.id == ap_scan.id
 
     @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
-    @patch("tasks.jobs.attack_paths.cleanup.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
     @patch(
         "tasks.jobs.attack_paths.cleanup.rls_transaction",
@@ -2632,7 +2613,6 @@ class TestCleanupStaleAttackPathsScans:
     def test_fallback_to_time_heuristic_when_no_worker_field(
         self,
         mock_drop_db,
-        mock_finish,
         mock_recover,
         tenants_fixture,
         providers_fixture,
@@ -2647,7 +2627,7 @@ class TestCleanupStaleAttackPathsScans:
 
         # Old scan with no Task/TaskResult
         old_start = datetime.now(tz=timezone.utc) - timedelta(hours=49)
-        AttackPathsScan.objects.create(
+        ap_scan = AttackPathsScan.objects.create(
             tenant_id=tenant.id,
             provider=provider,
             state=StateChoices.EXECUTING,
@@ -2657,5 +2637,39 @@ class TestCleanupStaleAttackPathsScans:
         result = cleanup_stale_attack_paths_scans()
 
         assert result["cleaned_up_count"] == 1
-        mock_finish.assert_called_once()
-        assert mock_finish.call_args[0][1] == StateChoices.FAILED
+
+        ap_scan.refresh_from_db()
+        assert ap_scan.state == StateChoices.FAILED
+
+    @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
+    @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
+    @patch(
+        "tasks.jobs.attack_paths.cleanup.rls_transaction",
+        new=lambda *args, **kwargs: nullcontext(),
+    )
+    @patch("tasks.jobs.attack_paths.cleanup._is_worker_alive", return_value=False)
+    def test_shared_worker_is_pinged_only_once(
+        self,
+        mock_alive,
+        mock_drop_db,
+        mock_recover,
+        tenants_fixture,
+        providers_fixture,
+        scans_fixture,
+    ):
+        from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+
+        # Two scans on the same dead worker
+        self._create_executing_scan(tenant, provider, worker="shared-worker@host")
+        self._create_executing_scan(tenant, provider, worker="shared-worker@host")
+
+        result = cleanup_stale_attack_paths_scans()
+
+        assert result["cleaned_up_count"] == 2
+        # Worker should be pinged exactly once — cache prevents second ping
+        mock_alive.assert_called_once_with("shared-worker@host")
