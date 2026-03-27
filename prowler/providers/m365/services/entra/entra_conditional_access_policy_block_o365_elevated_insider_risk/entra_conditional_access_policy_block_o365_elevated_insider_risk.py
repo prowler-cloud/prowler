@@ -9,7 +9,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 OFFICE365_APP_ID = "Office365"
 
 
-class entra_conditional_access_policy_block_o365_insider_risk(Check):
+class entra_conditional_access_policy_block_o365_elevated_insider_risk(Check):
     """Check if a Conditional Access policy blocks Office 365 access for elevated insider risk users.
 
     This check verifies that at least one enabled Conditional Access policy blocks

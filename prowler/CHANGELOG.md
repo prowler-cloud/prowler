@@ -12,6 +12,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `awslambda_function_no_dead_letter_queue`, `awslambda_function_using_cross_account_layers`, and `awslambda_function_env_vars_not_encrypted_with_cmk` checks for AWS Lambda [(#10381)](https://github.com/prowler-cloud/prowler/pull/10381)
 - `entra_conditional_access_policy_mdm_compliant_device_required` check for M365 provider [(#10220)](https://github.com/prowler-cloud/prowler/pull/10220)
 - `ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip` check for AWS provider using `ipaddress.is_global` for accurate public IP detection [(#10335)](https://github.com/prowler-cloud/prowler/pull/10335)
+- `entra_conditional_access_policy_block_o365_elevated_insider_risk` check for M365 provider [(#10232)](https://github.com/prowler-cloud/prowler/pull/10232)
 
 ### 🔄 Changed
 
@@ -124,7 +125,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- `entra_conditional_access_policy_block_o365_insider_risk` check for M365 provider [(#10232)](https://github.com/prowler-cloud/prowler/pull/10232)
 - `entra_authentication_method_sms_voice_disabled` check for M365 provider [(#10212)](https://github.com/prowler-cloud/prowler/pull/10212)
 - `Google Workspace` provider support with Directory service including 1 security check [(#10022)](https://github.com/prowler-cloud/prowler/pull/10022)
 - `entra_conditional_access_policy_app_enforced_restrictions` check for M365 provider [(#10058)](https://github.com/prowler-cloud/prowler/pull/10058)
