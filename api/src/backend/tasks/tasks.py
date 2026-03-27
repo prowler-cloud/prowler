@@ -11,8 +11,8 @@ from django_celery_beat.models import PeriodicTask
 from tasks.jobs.attack_paths import (
     attack_paths_scan,
     can_provider_run_attack_paths_scan,
-    db_utils as attack_paths_db_utils,
 )
+from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
@@ -764,6 +764,33 @@ def aggregate_daily_severity_task(tenant_id: str, scan_id: str):
 def aggregate_finding_group_summaries_task(tenant_id: str, scan_id: str):
     """Aggregate findings by check_id into FindingGroupDailySummary for finding-groups endpoint."""
     return aggregate_finding_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(
+    base=RLSTask, name="reaggregate-all-finding-group-summaries", queue="overview"
+)
+@set_tenant(keep_tenant=True)
+def reaggregate_all_finding_group_summaries_task(tenant_id: str):
+    """Reaggregate finding group summaries for all providers' latest completed scans."""
+    latest_scan_ids = list(
+        Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+        .order_by("provider_id", "-completed_at", "-inserted_at")
+        .distinct("provider_id")
+        .values_list("id", flat=True)
+    )
+    if latest_scan_ids:
+        logger.info(
+            "Reaggregating finding group summaries for %d scans: %s",
+            len(latest_scan_ids),
+            latest_scan_ids,
+        )
+        group(
+            aggregate_finding_group_summaries_task.si(
+                tenant_id=tenant_id, scan_id=str(scan_id)
+            )
+            for scan_id in latest_scan_ids
+        ).apply_async()
+    return {"scans_reaggregated": len(latest_scan_ids)}
 
 
 @shared_task(base=RLSTask, name="lighthouse-connection-check")
