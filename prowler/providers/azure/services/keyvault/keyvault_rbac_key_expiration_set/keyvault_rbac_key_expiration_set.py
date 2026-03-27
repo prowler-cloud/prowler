@@ -9,11 +9,13 @@ class keyvault_rbac_key_expiration_set(Check):
             for keyvault in key_vaults:
                 if keyvault.properties.enable_rbac_authorization:
                     for key in keyvault.keys or []:
+                        if not key.enabled:
+                            continue
                         report = Check_Report_Azure(
                             metadata=self.metadata(), resource=key
                         )
                         report.subscription = subscription
-                        if not key.attributes.expires and key.enabled:
+                        if not key.attributes.expires:
                             report.status = "FAIL"
                             report.status_extended = f"Key {key.name} in Key Vault {keyvault.name} from subscription {subscription} does not have an expiration date set."
                         else:
