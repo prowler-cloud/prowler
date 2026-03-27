@@ -2,7 +2,6 @@ import { http, HttpResponse } from "msw";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://some-api-server/api/v1";
-1;
 /**
  * Default MSW handlers for the prowler backend API.
  * These provide sensible defaults for server action tests.
