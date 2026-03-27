@@ -276,10 +276,7 @@ export const FindingsFilters = ({
       </div>
 
       {/* Summary strip: shown below filter bar when there are pending changes */}
-      <FilterSummaryStrip
-        chips={filterChips}
-        onRemove={handleChipRemove}
-      />
+      <FilterSummaryStrip chips={filterChips} onRemove={handleChipRemove} />
 
       {/* Expandable filters section */}
       {hasCustomFilters && (

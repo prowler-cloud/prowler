@@ -57,10 +57,7 @@ describe("FilterSummaryStrip", () => {
 
       // When
       const { container } = render(
-        <FilterSummaryStrip
-          chips={[]}
-          onRemove={onRemove}
-        />,
+        <FilterSummaryStrip chips={[]} onRemove={onRemove} />,
       );
 
       // Then
@@ -76,12 +73,7 @@ describe("FilterSummaryStrip", () => {
       const onRemove = vi.fn();
 
       // When
-      render(
-        <FilterSummaryStrip
-          chips={mockChips}
-          onRemove={onRemove}
-        />,
-      );
+      render(<FilterSummaryStrip chips={mockChips} onRemove={onRemove} />);
 
       // Then — 3 chips should be visible (2 severity + 1 status)
       expect(screen.getAllByTestId("badge")).toHaveLength(3);
@@ -139,12 +131,7 @@ describe("FilterSummaryStrip", () => {
       const onRemove = vi.fn();
 
       // When
-      render(
-        <FilterSummaryStrip
-          chips={mockChips}
-          onRemove={onRemove}
-        />,
-      );
+      render(<FilterSummaryStrip chips={mockChips} onRemove={onRemove} />);
 
       // Then
       expect(
@@ -190,12 +177,7 @@ describe("FilterSummaryStrip", () => {
       const user = userEvent.setup();
       const onRemove = vi.fn();
 
-      render(
-        <FilterSummaryStrip
-          chips={mockChips}
-          onRemove={onRemove}
-        />,
-      );
+      render(<FilterSummaryStrip chips={mockChips} onRemove={onRemove} />);
 
       // When — click the X button for "high" severity
       const removeHighButton = screen.getByRole("button", {
@@ -208,5 +190,4 @@ describe("FilterSummaryStrip", () => {
       expect(onRemove).toHaveBeenCalledTimes(1);
     });
   });
-
 });

@@ -518,5 +518,4 @@ describe("useFilterBatch", () => {
       expect(calledUrl).toContain("page=1");
     });
   });
-
 });
