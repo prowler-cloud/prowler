@@ -23,6 +23,10 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Install pinned pnpm so build uses the exact version from package.json.
+# Alternative: move COPY package.json + corepack install to base stage to avoid
+# re-downloading, at the cost of invalidating all stages on any package.json change.
+RUN corepack install
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
