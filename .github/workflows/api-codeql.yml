@@ -46,8 +46,9 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
-            github.com:443
             api.github.com:443
+            github.com:443
+            release-assets.githubusercontent.com:443
             uploads.github.com:443
 
       - name: Checkout repository

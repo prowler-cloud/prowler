@@ -39,6 +39,25 @@ jobs:
             files.pythonhosted.org:443
             api.github.com:443
             release-assets.githubusercontent.com:443
+            amazonaws.com:443
+            googleapis.com:443
+            schema.ocsf.io:443
+            registry-1.docker.io:443
+            production.cloudflare.docker.com:443
+            powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net:443
+            o26192.ingest.us.sentry.io:443
+            management.azure.com:443
+            login.microsoftonline.com:443
+            keybase.io:443
+            ingest.codecov.io:443
+            graph.microsoft.com:443
+            dc.services.visualstudio.com:443
+            cloud.mongodb.com:443
+            cli.codecov.io:443
+            auth.docker.io:443
+            api.vercel.com:443
+            api.atlassian.com:443
+            aka.ms:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
