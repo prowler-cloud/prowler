@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Conditional Access Policy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "This check verifies that at least one **enabled** Conditional Access policy **blocks access** to all cloud applications for users flagged with an **elevated insider risk** level by Microsoft Purview Insider Risk Management and Adaptive Protection.",
   "Risk": "Without blocking elevated insider risk users, compromised or malicious insiders retain **full access** to cloud applications. This enables data exfiltration, unauthorized modifications, and lateral movement, directly impacting **confidentiality** and **integrity**.",
