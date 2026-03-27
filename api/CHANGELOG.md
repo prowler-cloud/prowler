@@ -4,9 +4,9 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.24.0] (Prowler UNRELEASED)
 
-### 🔐 Security
+### 🚀 Added
 
-- Pin all unpinned dependencies to exact versions to prevent supply chain attacks and ensure reproducible builds [(#10469)](https://github.com/prowler-cloud/prowler/pull/10469)
+- `VALKEY_SCHEME`, `VALKEY_USERNAME`, and `VALKEY_PASSWORD` environment variables to configure Celery broker TLS/auth connection details for Valkey/ElastiCache [(#10420)](https://github.com/prowler-cloud/prowler/pull/10420)
 
 ### 🐞 Fixed
 
@@ -15,6 +15,14 @@ All notable changes to the **Prowler API** are documented in this file.
 - 403 error for admin users listing tenants due to roles query not using the admin database connection [(#10460)](https://github.com/prowler-cloud/prowler/pull/10460)
 - Filter transient Neo4j defunct connection logs in Sentry `before_send` to suppress false-positive alerts handled by `RetryableSession` retries [(#10452)](https://github.com/prowler-cloud/prowler/pull/10452)
 - `MANAGE_ACCOUNT` permission no longer required for listing and creating tenants [(#10468)](https://github.com/prowler-cloud/prowler/pull/10468)
+- Finding groups muted filter, counters, metadata extraction and mute reaggregation [(#10477)](https://github.com/prowler-cloud/prowler/pull/10477)
+- Finding groups `check_title__icontains` resolution, `name__icontains` resource filter and `resource_group` field in `/resources` response [(#10486)](https://github.com/prowler-cloud/prowler/pull/10486)
+
+### 🔐 Security
+
+- Pin all unpinned dependencies to exact versions to prevent supply chain attacks and ensure reproducible builds [(#10469)](https://github.com/prowler-cloud/prowler/pull/10469)
+
+---
 
 ## [1.23.0] (Prowler v5.22.0)
 
