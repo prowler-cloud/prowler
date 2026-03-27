@@ -3,7 +3,7 @@ FROM node:24.13.0-alpine@sha256:cd6fb7efa6490f039f3471a189214d5f548c11df1ff9e5b1
 LABEL maintainer="https://github.com/prowler-cloud"
 
 # Enable corepack for pnpm
-RUN corepack enable && corepack prepare pnpm@10 --activate
+RUN corepack enable
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -15,7 +15,7 @@ WORKDIR /app
 # Install dependencies based on the preferred package manager
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY scripts ./scripts
-RUN pnpm install --frozen-lockfile
+RUN corepack install && pnpm install --frozen-lockfile
 
 
 # Rebuild the source code only when needed
