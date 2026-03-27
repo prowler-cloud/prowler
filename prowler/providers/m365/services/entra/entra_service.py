@@ -555,7 +555,7 @@ class Entra(M365Service):
             A list of InsiderRiskLevel enum values present in the raw value.
         """
         if raw_value is None:
-            return []
+            return None
         raw_str = str(raw_value).lower()
         return [
             InsiderRiskLevel(level)
@@ -1035,7 +1035,7 @@ class Conditions(BaseModel):
     client_app_types: Optional[List[ClientAppType]]
     user_risk_levels: List[RiskLevel] = []
     sign_in_risk_levels: List[RiskLevel] = []
-    insider_risk_levels: List[InsiderRiskLevel] = []
+    insider_risk_levels: Optional[List[InsiderRiskLevel]] = None
     platform_conditions: Optional[PlatformConditions] = None
     authentication_flows: Optional[AuthenticationFlows] = None
 
