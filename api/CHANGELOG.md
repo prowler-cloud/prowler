@@ -7,6 +7,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🔐 Security
 
 - Pin all unpinned dependencies to exact versions to prevent supply chain attacks and ensure reproducible builds [(#10469)](https://github.com/prowler-cloud/prowler/pull/10469)
+- Filter RBAC role lookup by `tenant_id` to prevent cross-tenant privilege leak [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
 
 ### 🐞 Fixed
 
