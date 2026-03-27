@@ -1582,7 +1582,6 @@
       "Id": "5.2.2.11",
       "Description": "Sign-in frequency defines the time period before a user is asked to sign in again when attempting to access a resource. Ensure sign-in frequency for Intune Enrollment is set to 'Every time'.",
       "Checks": [
-        "entra_conditional_access_policy_intune_enrollment_mfa",
         "entra_intune_enrollment_sign_in_frequency_every_time"
       ],
       "Attributes": [
