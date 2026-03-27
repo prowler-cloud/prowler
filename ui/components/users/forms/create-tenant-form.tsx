@@ -8,10 +8,10 @@ import {
   switchTenant,
   SwitchTenantState,
 } from "@/actions/users/tenants";
-import { reloadPage } from "@/lib/navigation";
 import { useToast } from "@/components/ui";
 import { CustomServerInput } from "@/components/ui/custom";
 import { FormButtons } from "@/components/ui/form";
+import { reloadPage } from "@/lib/navigation";
 
 export const CreateTenantForm = ({
   setIsOpen,

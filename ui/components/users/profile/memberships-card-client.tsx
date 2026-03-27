@@ -28,7 +28,6 @@ export const MembershipsCardClient = ({
   memberships,
   tenantsMap,
   isOwner,
-  hasManageAccount,
   sessionTenantId,
 }: MembershipsCardClientProps) => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);

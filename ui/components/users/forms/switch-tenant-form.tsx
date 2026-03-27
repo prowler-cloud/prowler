@@ -4,9 +4,9 @@ import { useSession } from "next-auth/react";
 import { Dispatch, SetStateAction, useActionState, useEffect } from "react";
 
 import { switchTenant } from "@/actions/users/tenants";
-import { reloadPage } from "@/lib/navigation";
 import { useToast } from "@/components/ui";
 import { FormButtons } from "@/components/ui/form";
+import { reloadPage } from "@/lib/navigation";
 
 export const SwitchTenantForm = ({
   tenantId,
