@@ -255,7 +255,12 @@ export function DataTable<TData, TValue>({
             {rows?.length ? (
               rows.map((row) =>
                 getSubRows && row.depth > 0 ? (
-                  <DataTableAnimatedRow key={row.id} row={row} />
+                  <DataTableAnimatedRow
+                    key={row.id}
+                    row={row}
+                    isSelected={row.getIsSelected()}
+                    isSomeSelected={row.getIsSomeSelected()}
+                  />
                 ) : (
                   <TableRow
                     key={row.id}

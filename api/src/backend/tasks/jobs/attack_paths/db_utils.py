@@ -3,15 +3,13 @@ from typing import Any
 
 from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
+from tasks.jobs.attack_paths.config import is_provider_available
 
 from api.attack_paths import database as graph_database
 from api.db_utils import rls_transaction
-from api.models import (
-    AttackPathsScan as ProwlerAPIAttackPathsScan,
-    Provider as ProwlerAPIProvider,
-    StateChoices,
-)
-from tasks.jobs.attack_paths.config import is_provider_available
+from api.models import AttackPathsScan as ProwlerAPIAttackPathsScan
+from api.models import Provider as ProwlerAPIProvider
+from api.models import StateChoices
 
 logger = get_task_logger(__name__)
 
@@ -155,6 +153,37 @@ def set_provider_graph_data_ready(
         attack_paths_scan.refresh_from_db(fields=["graph_data_ready"])
 
 
+def recover_graph_data_ready(
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
+) -> None:
+    """
+    Best-effort recovery of `graph_data_ready` after a scan failure.
+
+    Queries Neo4j to check if the provider still has data in the tenant
+    database. If data exists, restores `graph_data_ready=True` for all scans
+    of this provider. Never raises.
+
+    Trade-off: if the worker crashed mid-sync, partial data may exist and
+    this will re-enable queries against it. We accept that because leaving
+    `graph_data_ready=False` permanently (blocking all queries until the
+    next successful scan) is a worse outcome for the user.
+    """
+    try:
+        tenant_db = graph_database.get_database_name(attack_paths_scan.tenant_id)
+        if graph_database.has_provider_data(
+            tenant_db, str(attack_paths_scan.provider_id)
+        ):
+            set_provider_graph_data_ready(attack_paths_scan, True)
+            logger.info(
+                f"Recovered `graph_data_ready` for provider {attack_paths_scan.provider_id}"
+            )
+
+    except Exception:
+        logger.exception(
+            f"Failed to recover `graph_data_ready` for provider {attack_paths_scan.provider_id}"
+        )
+
+
 def fail_attack_paths_scan(
     tenant_id: str,
     scan_id: str,
@@ -185,3 +214,5 @@ def fail_attack_paths_scan(
             StateChoices.FAILED,
             {"global_error": error},
         )
+
+        recover_graph_data_ready(attack_paths_scan)

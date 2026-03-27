@@ -18,6 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
+import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import {
@@ -133,6 +134,11 @@ export const ResourceDetailContent = ({
   const resourceId = resource.id;
   const attributes = resource.attributes;
   const providerData = resource.relationships.provider.data.attributes;
+
+  // Reset to overview tab when switching resources
+  useEffect(() => {
+    setActiveTab("overview");
+  }, [resourceId]);
 
   // Cleanup abort controller on unmount
   useEffect(() => {
@@ -409,6 +415,7 @@ export const ResourceDetailContent = ({
           <TabsTrigger value="findings">
             Findings {totalFindings > 0 && `(${totalFindings})`}
           </TabsTrigger>
+          <TabsTrigger value="events">Events</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -534,6 +541,14 @@ export const ResourceDetailContent = ({
               )}
             </>
           )}
+        </TabsContent>
+
+        {/* Events Tab */}
+        <TabsContent value="events" className="flex flex-col gap-4">
+          <EventsTimeline
+            resourceId={resourceId}
+            isAwsProvider={providerData.provider === "aws"}
+          />
         </TabsContent>
       </Tabs>
     </div>

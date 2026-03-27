@@ -32,8 +32,8 @@ export const MembershipItem = ({
           setIsOpen={setIsEditOpen}
         />
       </Modal>
-      <Card variant="inner" className="min-w-[320px] p-2">
-        <div className="flex w-full items-center gap-4">
+      <Card variant="inner" className="p-2">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <Chip size="sm" variant="flat" color="secondary">
             {membership.attributes.role}
           </Chip>

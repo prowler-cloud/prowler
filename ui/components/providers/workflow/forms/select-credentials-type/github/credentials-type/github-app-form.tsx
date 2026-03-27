@@ -2,7 +2,10 @@
 
 import { Control } from "react-hook-form";
 
-import { CustomInput, CustomTextarea } from "@/components/ui/custom";
+import {
+  WizardInputField,
+  WizardTextareaField,
+} from "@/components/providers/workflow/forms/fields";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
 export const GitHubAppForm = ({ control }: { control: Control<any> }) => {
@@ -16,7 +19,7 @@ export const GitHubAppForm = ({ control }: { control: Control<any> }) => {
           Please provide your GitHub App ID and private key.
         </div>
       </div>
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.GITHUB_APP_ID}
         type="text"
@@ -26,7 +29,7 @@ export const GitHubAppForm = ({ control }: { control: Control<any> }) => {
         variant="bordered"
         isRequired
       />
-      <CustomTextarea
+      <WizardTextareaField
         control={control}
         name={ProviderCredentialFields.GITHUB_APP_KEY}
         label="GitHub App Private Key"

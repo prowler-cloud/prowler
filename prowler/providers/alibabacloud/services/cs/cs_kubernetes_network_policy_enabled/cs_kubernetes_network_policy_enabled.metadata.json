@@ -1,33 +1,30 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "cs_kubernetes_network_policy_enabled",
-  "CheckTitle": "Network policy is enabled on Kubernetes Engine Clusters",
-  "CheckType": [
-    "Threat detection during container runtime",
-    "Suspicious network connection"
-  ],
+  "CheckTitle": "Kubernetes cluster has Network policy enabled",
+  "CheckType": [],
   "ServiceName": "cs",
   "SubServiceName": "",
-  "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AlibabaCloudKubernetesCluster",
+  "ResourceType": "ALIYUN::CS::ManagedKubernetesCluster",
   "ResourceGroup": "container",
-  "Description": "A **Network Policy** is a specification of how groups of pods are allowed to communicate with each other and other network endpoints.\n\n`NetworkPolicy` resources use labels to select pods and define rules which specify what traffic is allowed. By default, pods are non-isolated and accept traffic from any source. Pods become isolated by having a NetworkPolicy that selects them.",
-  "Risk": "Without **Network Policies**, all pods in a Kubernetes cluster can communicate with each other freely. This open communication model allows an attacker who compromises a single pod to potentially move **laterally** within the cluster and access sensitive services or data.\n\nNetwork Policies are essential for implementing **defense in depth** and **least privilege** networking.",
+  "Description": "**Alibaba Cloud Kubernetes Engine** clusters should enable **Network Policy** via the **Terway** plugin. A `NetworkPolicy` defines how pods communicate using label-based rules. By default, pods accept traffic from any source; NetworkPolicy restricts traffic to explicitly allowed connections, enforcing least privilege at the network level.",
+  "Risk": "Without **Network Policies**, all pods communicate freely, creating an unrestricted flat network. An attacker who compromises a single pod can move **laterally**, accessing sensitive services, databases, and secrets. The absence of network segmentation undermines **defense in depth** and increases the blast radius of any compromise, impacting **confidentiality** and **integrity** of workloads.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://help.aliyun.com/document_detail/97621.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/enable-network-policy-support.html"
+    "https://www.alibabacloud.com/help/en/ack/",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/enable-network-policy-support.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "Network Policy support (Terway) must be selected during cluster creation.",
+      "CLI": "aliyun cs GET /clusters/<cluster_id> --header 'Content-Type=application/json' | jq '.parameters.Network'",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. When creating a new cluster in the **ACK Console**, select **Terway** in the `Network Plugin` option to enable Network Policy support.\n2. Note that existing clusters using **Flannel** cannot be migrated to **Terway**.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Only the **Terway** network plugin supports the Network Policy feature. When creating a new cluster, select **Terway** in the `Network Plugin` option.\n\n**Note:** Existing clusters using Flannel cannot be migrated to Terway.",
+      "Text": "Select the **Terway** network plugin during cluster creation to enable Network Policy support. Existing clusters using **Flannel** cannot be migrated to Terway and must be recreated.",
       "Url": "https://hub.prowler.com/check/cs_kubernetes_network_policy_enabled"
     }
   },

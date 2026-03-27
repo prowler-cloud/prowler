@@ -12,7 +12,7 @@ export const WorkflowAttackPaths = () => {
   const pathname = usePathname();
 
   // Determine current step based on pathname
-  const isQueryBuilderStep = pathname.includes("query-builder");
+  const isQueryBuilderStep = pathname.includes("/attack-paths");
 
   const currentStep = isQueryBuilderStep ? 1 : 0; // 0-indexed
 

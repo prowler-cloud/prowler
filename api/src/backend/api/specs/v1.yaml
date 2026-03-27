@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.20.0
+  version: 1.24.0
   description: |-
     Prowler API specification.
 
@@ -356,7 +356,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -364,6 +364,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -385,13 +386,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -399,6 +401,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -422,6 +425,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -723,7 +727,7 @@ paths:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
             text/plain:
               schema:
-                type: string
+                $ref: '#/components/schemas/AttackPathsQueryResult'
           description: ''
         '403':
           description: Read-only queries are enforced
@@ -769,7 +773,7 @@ paths:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
             text/plain:
               schema:
-                type: string
+                $ref: '#/components/schemas/AttackPathsQueryResult'
           description: ''
         '400':
           description: Bad request (e.g., Unknown Attack Paths query for the selected
@@ -1331,7 +1335,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -1339,6 +1343,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -1360,6 +1365,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1805,7 +1811,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -1813,6 +1819,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -1834,13 +1841,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -1848,6 +1856,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -1871,6 +1880,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -2403,7 +2413,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -2411,6 +2421,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -2432,13 +2443,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -2446,6 +2458,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -2469,6 +2482,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -2909,7 +2923,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -2917,6 +2931,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -2938,13 +2953,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -2952,6 +2968,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -2975,6 +2992,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -3413,7 +3431,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -3421,6 +3439,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -3442,13 +3461,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -3456,6 +3476,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -3479,6 +3500,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -3905,7 +3927,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -3913,6 +3935,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -3934,13 +3957,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -3948,6 +3972,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -3971,6 +3996,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -5738,7 +5764,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -5746,6 +5772,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -5767,13 +5794,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -5781,6 +5809,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -5804,6 +5833,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - name: filter[search]
@@ -5909,7 +5939,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -5917,6 +5947,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -5938,13 +5969,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -5952,6 +5984,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -5975,6 +6008,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - name: filter[search]
@@ -6077,6 +6111,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -6098,6 +6133,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6111,6 +6147,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -6134,6 +6171,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - name: filter[search]
@@ -6260,7 +6298,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -6268,6 +6306,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -6289,13 +6328,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -6303,6 +6343,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -6326,6 +6367,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -6465,7 +6507,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -6473,6 +6515,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -6494,13 +6537,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -6508,6 +6552,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -6531,6 +6576,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -6672,6 +6718,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -6693,6 +6740,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6706,6 +6754,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -6729,6 +6778,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - name: filter[search]
@@ -6904,7 +6954,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -6912,6 +6962,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -6933,13 +6984,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -6947,6 +6999,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -6970,6 +7023,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -7074,7 +7128,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -7082,6 +7136,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -7103,13 +7158,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -7117,6 +7173,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -7140,6 +7197,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -7268,7 +7326,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -7276,6 +7334,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -7297,13 +7356,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -7311,6 +7371,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -7334,6 +7395,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -8103,7 +8165,7 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -8111,6 +8173,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -8132,13 +8195,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -8146,6 +8210,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -8169,13 +8234,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -8183,6 +8249,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -8204,13 +8271,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -8218,6 +8286,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -8241,6 +8310,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - name: filter[search]
@@ -8894,7 +8964,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -8902,6 +8972,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -8923,13 +8994,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -8937,6 +9009,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -8960,6 +9033,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -9437,7 +9511,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -9445,6 +9519,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -9466,13 +9541,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -9480,6 +9556,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -9503,6 +9580,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -9793,7 +9871,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -9801,6 +9879,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -9822,13 +9901,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -9836,6 +9916,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -9859,6 +9940,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -10155,7 +10237,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -10163,6 +10245,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -10184,13 +10267,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -10198,6 +10282,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -10221,6 +10306,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -11027,7 +11113,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7ae539a3796eb30a
+          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -11035,6 +11121,7 @@ paths:
           - cloudflare
           - gcp
           - github
+          - googleworkspace
           - iac
           - image
           - kubernetes
@@ -11056,13 +11143,14 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7ae539a3796eb30a
+            x-spec-enum-id: c0d56cad8ab9abe5
             enum:
             - alibabacloud
             - aws
@@ -11070,6 +11158,7 @@ paths:
             - cloudflare
             - gcp
             - github
+            - googleworkspace
             - iac
             - image
             - kubernetes
@@ -11093,6 +11182,7 @@ paths:
           * `cloudflare` - Cloudflare
           * `openstack` - OpenStack
           * `image` - Image
+          * `googleworkspace` - Google Workspace
         explode: false
         style: form
       - in: query
@@ -18190,6 +18280,22 @@ components:
                     required:
                     - service_account_key
                   - type: object
+                    title: Google Workspace Service Account
+                    properties:
+                      credentials_content:
+                        type: string
+                        description: The service account JSON credentials content
+                          for Google Workspace API access with domain-wide delegation
+                          enabled.
+                      delegated_user:
+                        type: string
+                        format: email
+                        description: The email address of the Google Workspace super
+                          admin user to impersonate for domain-wide delegation.
+                    required:
+                    - credentials_content
+                    - delegated_user
+                  - type: object
                     title: Kubernetes Static Credentials
                     properties:
                       kubeconfig_content:
@@ -19358,6 +19464,7 @@ components:
               - cloudflare
               - openstack
               - image
+              - googleworkspace
               type: string
               description: |-
                 * `aws` - AWS
@@ -19373,7 +19480,8 @@ components:
                 * `cloudflare` - Cloudflare
                 * `openstack` - OpenStack
                 * `image` - Image
-              x-spec-enum-id: 7ae539a3796eb30a
+                * `googleworkspace` - Google Workspace
+              x-spec-enum-id: c0d56cad8ab9abe5
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -19492,8 +19600,9 @@ components:
               - cloudflare
               - openstack
               - image
+              - googleworkspace
               type: string
-              x-spec-enum-id: 7ae539a3796eb30a
+              x-spec-enum-id: c0d56cad8ab9abe5
               description: |-
                 Type of provider to create.
 
@@ -19510,6 +19619,7 @@ components:
                 * `cloudflare` - Cloudflare
                 * `openstack` - OpenStack
                 * `image` - Image
+                * `googleworkspace` - Google Workspace
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -19560,8 +19670,9 @@ components:
                   - cloudflare
                   - openstack
                   - image
+                  - googleworkspace
                   type: string
-                  x-spec-enum-id: 7ae539a3796eb30a
+                  x-spec-enum-id: c0d56cad8ab9abe5
                   description: |-
                     Type of provider to create.
 
@@ -19578,6 +19689,7 @@ components:
                     * `cloudflare` - Cloudflare
                     * `openstack` - OpenStack
                     * `image` - Image
+                    * `googleworkspace` - Google Workspace
                 uid:
                   type: string
                   minLength: 3
@@ -20250,6 +20362,21 @@ components:
                 required:
                 - service_account_key
               - type: object
+                title: Google Workspace Service Account
+                properties:
+                  credentials_content:
+                    type: string
+                    description: The service account JSON credentials content for
+                      Google Workspace API access with domain-wide delegation enabled.
+                  delegated_user:
+                    type: string
+                    format: email
+                    description: The email address of the Google Workspace super admin
+                      user to impersonate for domain-wide delegation.
+                required:
+                - credentials_content
+                - delegated_user
+              - type: object
                 title: Kubernetes Static Credentials
                 properties:
                   kubeconfig_content:
@@ -20644,6 +20771,22 @@ components:
                         description: The service account key for GCP.
                     required:
                     - service_account_key
+                  - type: object
+                    title: Google Workspace Service Account
+                    properties:
+                      credentials_content:
+                        type: string
+                        description: The service account JSON credentials content
+                          for Google Workspace API access with domain-wide delegation
+                          enabled.
+                      delegated_user:
+                        type: string
+                        format: email
+                        description: The email address of the Google Workspace super
+                          admin user to impersonate for domain-wide delegation.
+                    required:
+                    - credentials_content
+                    - delegated_user
                   - type: object
                     title: Kubernetes Static Credentials
                     properties:
@@ -21060,6 +21203,21 @@ components:
                     description: The service account key for GCP.
                 required:
                 - service_account_key
+              - type: object
+                title: Google Workspace Service Account
+                properties:
+                  credentials_content:
+                    type: string
+                    description: The service account JSON credentials content for
+                      Google Workspace API access with domain-wide delegation enabled.
+                  delegated_user:
+                    type: string
+                    format: email
+                    description: The email address of the Google Workspace super admin
+                      user to impersonate for domain-wide delegation.
+                required:
+                - credentials_content
+                - delegated_user
               - type: object
                 title: Kubernetes Static Credentials
                 properties:

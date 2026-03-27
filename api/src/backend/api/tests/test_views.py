@@ -807,6 +807,63 @@ class TestTenantViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    def test_tenants_list_no_permissions(
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
+    ):
+        response = authenticated_client_no_permissions_rbac.get(reverse("tenant-list"))
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_tenants_retrieve_no_permissions(
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
+    ):
+        tenant1, *_ = tenants_fixture
+        response = authenticated_client_no_permissions_rbac.get(
+            reverse("tenant-detail", kwargs={"pk": tenant1.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_tenants_create_no_permissions(
+        self, authenticated_client_no_permissions_rbac, valid_tenant_payload
+    ):
+        response = authenticated_client_no_permissions_rbac.post(
+            reverse("tenant-list"),
+            data=valid_tenant_payload,
+            format="json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+    def test_tenants_partial_update_no_permissions(
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
+    ):
+        tenant1, *_ = tenants_fixture
+        payload = {
+            "data": {
+                "type": "tenants",
+                "id": str(tenant1.id),
+                "attributes": {"name": "Unauthorized update"},
+            },
+        }
+        response = authenticated_client_no_permissions_rbac.patch(
+            reverse("tenant-detail", kwargs={"pk": tenant1.id}),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @patch("api.v1.views.delete_tenant_task.apply_async")
+    def test_tenants_delete_no_permissions(
+        self,
+        delete_tenant_mock,
+        authenticated_client_no_permissions_rbac,
+        tenants_fixture,
+    ):
+        tenant1, *_ = tenants_fixture
+        response = authenticated_client_no_permissions_rbac.delete(
+            reverse("tenant-detail", kwargs={"pk": tenant1.id})
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        delete_tenant_mock.assert_not_called()
+
 
 @pytest.mark.django_db
 class TestMembershipViewSet:
@@ -1190,6 +1247,26 @@ class TestProviderViewSet:
                     "uid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                     "alias": "OpenStack Project",
                 },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C01234abc",
+                    "alias": "Google Workspace Customer",
+                },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C12345678",
+                    "alias": "Google Workspace All Digits",
+                },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "CABCDEF123",
+                    "alias": "Google Workspace Uppercase",
+                },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C12",
+                    "alias": "Google Workspace Minimum Length",
+                },
             ]
         ),
     )
@@ -1342,7 +1419,11 @@ class TestProviderViewSet:
         response = authenticated_client.post(
             reverse("provider-list"), data=provider_json_payload, format="json"
         )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_409_CONFLICT
+        error = response.json()["errors"][0]
+        assert error["detail"] == "Provider already exists."
+        assert error["code"] == "conflict"
+        assert error["source"]["pointer"] == "/data/attributes/uid"
 
         mock_delete_task.reset_mock()
         mock_delete_task.return_value = task_mock
@@ -1634,6 +1715,36 @@ class TestProviderViewSet:
                     "min_length",
                     "uid",
                 ),
+                # Google Workspace UID validation - missing 'C' prefix
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "01234abc",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - contains special characters
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "C0123-abc",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - lowercase 'c' prefix
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "c12345678",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -1807,21 +1918,21 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    10,
+                    11,
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 11),
+                ("inserted_at", TODAY, 12),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    11,
+                    12,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    11,
+                    12,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2435,6 +2546,15 @@ class TestProviderSecretViewSet:
                 {
                     "clouds_yaml_content": "clouds:\n  mycloud:\n    auth:\n      auth_url: https://openstack.example.com:5000/v3\n",
                     "clouds_yaml_cloud": "mycloud",
+                },
+            ),
+            # Google Workspace with service account credentials
+            (
+                Provider.ProviderChoices.GOOGLEWORKSPACE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "credentials_content": '{"type": "service_account", "project_id": "test-project", "private_key_id": "key123", "private_key": "-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----\\n", "client_email": "test@test-project.iam.gserviceaccount.com", "client_id": "123456789"}',
+                    "delegated_user": "admin@example.com",
                 },
             ),
         ],
@@ -3747,6 +3867,12 @@ class TestTaskViewSet:
 
 @pytest.mark.django_db
 class TestAttackPathsScanViewSet:
+    @pytest.fixture(autouse=True)
+    def _clear_throttle_cache(self):
+        from django.core.cache import cache
+
+        cache.clear()
+
     @staticmethod
     def _run_payload(query_id="aws-rds", parameters=None):
         return {
@@ -4348,8 +4474,6 @@ class TestAttackPathsScanViewSet:
             }
         }
 
-    # TODO: Remove skip once queries/custom and schema endpoints are unblocked
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_run_custom_query_returns_graph(
         self,
         authenticated_client,
@@ -4407,7 +4531,6 @@ class TestAttackPathsScanViewSet:
         assert attributes["total_nodes"] == 1
         assert attributes["truncated"] is False
 
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_run_custom_query_returns_text_when_accept_text_plain(
         self,
         authenticated_client,
@@ -4462,7 +4585,6 @@ class TestAttackPathsScanViewSet:
         assert "## Relationships (0)" in body
         assert "## Summary" in body
 
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_run_custom_query_returns_404_when_no_nodes(
         self,
         authenticated_client,
@@ -4504,7 +4626,6 @@ class TestAttackPathsScanViewSet:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_run_custom_query_returns_400_when_graph_not_ready(
         self,
         authenticated_client,
@@ -4531,7 +4652,6 @@ class TestAttackPathsScanViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "not available" in response.json()["errors"][0]["detail"]
 
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_run_custom_query_returns_403_for_write_query(
         self,
         authenticated_client,
@@ -4569,9 +4689,343 @@ class TestAttackPathsScanViewSet:
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
+    # -- SSRF blocklist (HTTP level) ----------------------------------------------
+
+    @pytest.mark.parametrize(
+        "cypher",
+        [
+            "LOAD CSV FROM 'http://169.254.169.254/' AS x RETURN x",
+            "CALL apoc.load.json('http://evil.com/') YIELD value RETURN value",
+            "CALL apoc.import.csv([{fileName: 'f'}], [], {}) YIELD node RETURN node",
+            "CALL apoc.export.csv.all('file.csv', {})",
+            "CALL apoc.cypher.run('CREATE (n)', {}) YIELD value RETURN value",
+            "CALL apoc.systemdb.graph() YIELD nodes RETURN nodes",
+        ],
+        ids=[
+            "LOAD_CSV",
+            "apoc.load",
+            "apoc.import",
+            "apoc.export",
+            "apoc.cypher.run",
+            "apoc.systemdb",
+        ],
+    )
+    def test_run_custom_query_rejects_ssrf_patterns(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+        cypher,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with patch(
+            "api.v1.views.graph_database.get_database_name",
+            return_value="db-test",
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(cypher),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "blocked" in response.json()["errors"][0]["detail"].lower()
+
+    # -- Cross-tenant isolation ---------------------------------------------------
+
+    def test_run_custom_query_returns_404_for_foreign_tenant(
+        self,
+        authenticated_client,
+        create_attack_paths_scan,
+    ):
+        from api.models import Provider, Tenant
+
+        foreign_tenant = Tenant.objects.create(name="foreign-tenant")
+        foreign_provider = Provider.objects.create(
+            tenant=foreign_tenant,
+            provider="aws",
+            uid="123456789999",
+        )
+        attack_paths_scan = create_attack_paths_scan(
+            foreign_provider,
+            graph_data_ready=True,
+        )
+
+        with patch(
+            "api.v1.views.graph_database.get_database_name",
+            return_value="db-test",
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_cartography_schema_returns_404_for_foreign_tenant(
+        self,
+        authenticated_client,
+        create_attack_paths_scan,
+    ):
+        from api.models import Provider, Tenant
+
+        foreign_tenant = Tenant.objects.create(name="foreign-tenant-schema")
+        foreign_provider = Provider.objects.create(
+            tenant=foreign_tenant,
+            provider="aws",
+            uid="123456789998",
+        )
+        attack_paths_scan = create_attack_paths_scan(
+            foreign_provider,
+            graph_data_ready=True,
+        )
+
+        response = authenticated_client.get(
+            reverse(
+                "attack-paths-scans-schema",
+                kwargs={"pk": attack_paths_scan.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    # -- Authentication / authorization -------------------------------------------
+
+    def test_run_custom_query_returns_401_unauthenticated(
+        self,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        from rest_framework.test import APIClient
+
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        unauthenticated = APIClient()
+        response = unauthenticated.post(
+            reverse(
+                "attack-paths-scans-queries-custom",
+                kwargs={"pk": attack_paths_scan.id},
+            ),
+            data=self._custom_query_payload(),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_cartography_schema_returns_401_unauthenticated(
+        self,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        from rest_framework.test import APIClient
+
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        unauthenticated = APIClient()
+        response = unauthenticated.get(
+            reverse(
+                "attack-paths-scans-schema",
+                kwargs={"pk": attack_paths_scan.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_run_custom_query_returns_403_no_manage_scans(
+        self,
+        authenticated_client_no_permissions_rbac,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        response = authenticated_client_no_permissions_rbac.post(
+            reverse(
+                "attack-paths-scans-queries-custom",
+                kwargs={"pk": attack_paths_scan.id},
+            ),
+            data=self._custom_query_payload(),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    # -- Error leakage ------------------------------------------------------------
+
+    def test_run_custom_query_does_not_leak_internals_on_error(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        from rest_framework.exceptions import APIException
+
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                side_effect=APIException(
+                    "Attack Paths query execution failed due to a database error"
+                ),
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        body = json.dumps(response.json()).lower()
+        for forbidden_term in ["neo4j", "bolt://", "syntaxerror", "db-tenant-"]:
+            assert forbidden_term not in body
+
+    # -- Rate limiting (throttle) -------------------------------------------------
+
+    def test_run_custom_query_throttled_after_limit(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        mock_graph = {
+            "nodes": [{"id": "n1", "labels": ["Test"], "properties": {}}],
+            "relationships": [],
+            "total_nodes": 1,
+            "truncated": False,
+        }
+
+        url = reverse(
+            "attack-paths-scans-queries-custom",
+            kwargs={"pk": attack_paths_scan.id},
+        )
+        payload = self._custom_query_payload()
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                return_value=mock_graph,
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+            patch(
+                "api.v1.views.graph_database.clear_cache",
+            ),
+        ):
+            for i in range(11):
+                response = authenticated_client.post(
+                    url,
+                    data=payload,
+                    content_type=API_JSON_CONTENT_TYPE,
+                )
+                if i < 10:
+                    assert (
+                        response.status_code == status.HTTP_200_OK
+                    ), f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
+                else:
+                    assert (
+                        response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+                    ), f"Request {i + 1} should be throttled"
+
+    # -- Timeout simulation -------------------------------------------------------
+
+    def test_run_custom_query_returns_500_on_database_timeout(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        from rest_framework.exceptions import APIException
+
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                side_effect=APIException(
+                    "Attack Paths query execution failed due to a database error"
+                ),
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
     # -- cartography_schema action ------------------------------------------------
 
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_cartography_schema_returns_urls(
         self,
         authenticated_client,
@@ -4621,7 +5075,6 @@ class TestAttackPathsScanViewSet:
         assert "schema.md" in attributes["schema_url"]
         assert "raw.githubusercontent.com" in attributes["raw_schema_url"]
 
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_cartography_schema_returns_404_when_no_metadata(
         self,
         authenticated_client,
@@ -4656,7 +5109,6 @@ class TestAttackPathsScanViewSet:
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert "No cartography schema metadata" in str(response.json())
 
-    @pytest.mark.skip(reason="Endpoint temporarily blocked")
     def test_cartography_schema_returns_400_when_graph_not_ready(
         self,
         authenticated_client,
@@ -7463,8 +7915,12 @@ class TestUserRoleRelationshipViewSet:
         assert response.status_code == status.HTTP_204_NO_CONTENT
         relationships = UserRoleRelationship.objects.filter(user=create_test_user.id)
         assert relationships.count() == 4
-        for relationship in relationships[2:]:  # Skip admin role
-            assert relationship.role.id in [r.id for r in roles_fixture[:2]]
+        # Use set membership instead of positional slicing — QuerySet ordering is
+        # non-deterministic without an explicit order_by, which makes slice-based
+        # checks intermittently fail.
+        added_role_ids = {r.id for r in roles_fixture[:2]}
+        relationship_role_ids = {rel.role.id for rel in relationships}
+        assert added_role_ids.issubset(relationship_role_ids)
 
     def test_create_relationship_already_exists(
         self, authenticated_client, roles_fixture, create_test_user
@@ -14290,10 +14746,16 @@ class TestMuteRuleViewSet:
         assert len(data) == 2
         assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.chain")
+    @patch("api.v1.views.reaggregate_all_finding_group_summaries_task.si")
+    @patch("api.v1.views.mute_historical_findings_task.si")
+    @patch("api.v1.views.transaction.on_commit", side_effect=lambda fn: fn())
     def test_mute_rules_create_valid(
         self,
-        mock_task,
+        _mock_on_commit,
+        mock_mute_signature,
+        mock_reaggregate_signature,
+        mock_chain,
         authenticated_client,
         findings_fixture,
         create_test_user,
@@ -14331,8 +14793,14 @@ class TestMuteRuleViewSet:
         assert finding.muted_at is not None
         assert finding.muted_reason == "Security exception approved"
 
-        # Verify background task was called
-        mock_task.assert_called_once()
+        # Verify background task chain was called: mute → reaggregate all
+        mock_mute_signature.assert_called_once()
+        mock_reaggregate_signature.assert_called_once()
+        mock_chain.assert_called_once_with(
+            mock_mute_signature.return_value,
+            mock_reaggregate_signature.return_value,
+        )
+        mock_chain.return_value.apply_async.assert_called_once()
 
     @patch("tasks.tasks.mute_historical_findings_task.apply_async")
     def test_mute_rules_create_converts_finding_ids_to_uids(
@@ -14805,6 +15273,29 @@ class TestFindingGroupViewSet:
         # ec2_instance_public_ip has 1 PASS and 1 FAIL, should aggregate to FAIL
         assert data[0]["attributes"]["status"] == "FAIL"
 
+    def test_finding_groups_region_filter_reaggregates_metrics(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test finding-level filters recompute group metrics from matching findings."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "ec2_instance_public_ip",
+                "filter[region]": "us-east-1",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+
+        attrs = data[0]["attributes"]
+        assert attrs["status"] == "PASS"
+        assert attrs["pass_count"] == 1
+        assert attrs["fail_count"] == 0
+        assert attrs["resources_total"] == 1
+        assert attrs["resources_fail"] == 0
+
     def test_finding_groups_status_pass_when_no_fail(
         self, authenticated_client, finding_groups_fixture
     ):
@@ -14832,6 +15323,182 @@ class TestFindingGroupViewSet:
         assert len(data) == 1
         # rds_encryption has all muted findings
         assert data[0]["attributes"]["status"] == "MUTED"
+
+    def test_finding_groups_status_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test finding groups can be filtered by aggregated status."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[status]": "FAIL"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["status"] == "FAIL" for item in data)
+
+    def test_finding_groups_status_in_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test finding groups support status__in filter on aggregated status."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[status__in]": "FAIL,PASS"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["status"] in {"FAIL", "PASS"} for item in data)
+
+    def test_finding_groups_severity_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test finding groups can be filtered by aggregated severity."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[severity]": "critical"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["severity"] == "critical" for item in data)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_combined_region_and_status_filters(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """Test combined region + aggregated status filters."""
+        params = {"filter[region]": "us-east-1", "filter[status]": "FAIL"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_ids = {item["id"] for item in data}
+        assert check_ids == {"s3_bucket_public_access", "cloudtrail_enabled"}
+        assert all(item["attributes"]["status"] == "FAIL" for item in data)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_combined_delta_and_severity_filters(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """Test combined delta + aggregated severity filters."""
+        params = {"filter[delta]": "new", "filter[severity]": "critical"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_ids = {item["id"] for item in data}
+        assert check_ids == {"s3_bucket_public_access", "cloudtrail_enabled"}
+        assert all(item["attributes"]["severity"] == "critical" for item in data)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    @pytest.mark.parametrize(
+        "filter_key,filter_value",
+        [
+            ("status", "INVALID_STATUS"),
+            ("severity", "INVALID_SEVERITY"),
+        ],
+    )
+    def test_finding_groups_invalid_status_or_severity_returns_400(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+        filter_key,
+        filter_value,
+    ):
+        """Test invalid aggregated status/severity values are rejected."""
+        params = {f"filter[{filter_key}]": filter_value}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    @pytest.mark.parametrize(
+        "filter_key,filter_value,expected_detail",
+        [
+            ("status__in", "FAIL,INVALID_STATUS", "invalid status filter"),
+            ("severity__in", "critical,INVALID_SEVERITY", "invalid severity filter"),
+        ],
+    )
+    def test_finding_groups_invalid_in_filters_return_400(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+        filter_key,
+        filter_value,
+        expected_detail,
+    ):
+        """Test invalid values in status__in/severity__in are rejected."""
+        params = {f"filter[{filter_key}]": filter_value}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert errors[0]["code"] == "invalid"
+        assert expected_detail in errors[0]["detail"]
+
+    @pytest.mark.parametrize(
+        "filter_name,filter_value",
+        [
+            ("region", "__region_does_not_exist__"),
+            ("service", "__service_does_not_exist__"),
+            ("category", "__category_does_not_exist__"),
+            ("resource_groups", "__group_does_not_exist__"),
+            ("resource_type", "__type_does_not_exist__"),
+            ("scan", "00000000-0000-7000-8000-000000000001"),
+        ],
+    )
+    def test_finding_groups_finding_level_filters_are_applied(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        filter_name,
+        filter_value,
+    ):
+        """Test finding-level filters are applied in /finding-groups aggregation."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, f"filter[{filter_name}]": filter_value},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+
+    def test_finding_groups_delta_filter_is_applied(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test delta filter is applied in /finding-groups aggregation."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[delta]": "new"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["new_count"] > 0 for item in data)
 
     def test_finding_groups_provider_aggregation(
         self, authenticated_client, finding_groups_fixture
@@ -15127,6 +15794,66 @@ class TestFindingGroupViewSet:
         assert len(response.json()["data"]) == 1
         assert "bucket" in response.json()["data"][0]["id"].lower()
 
+    def test_finding_groups_check_title_icontains(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test searching check titles with icontains."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_title.icontains]": "public access",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "s3_bucket_public_access"
+
+    @pytest.mark.parametrize(
+        "extra_filters",
+        [
+            {},
+            {"filter[muted]": "include"},
+        ],
+        ids=["summary_path", "finding_level_path"],
+    )
+    def test_check_title_icontains_includes_all_title_variants(
+        self,
+        authenticated_client,
+        finding_groups_title_variants_fixture,
+        extra_filters,
+    ):
+        """
+        Regression: two providers report the same check_id with different
+        checktitle values (e.g. after a Prowler version upgrade).  Filtering
+        by check_title__icontains with a term that matches only ONE variant
+        must still return the finding group with counts from BOTH providers.
+
+        Parametrized to cover both aggregation paths:
+        - summary_path: default, uses _CheckTitleToCheckIdMixin on summaries
+        - finding_level_path: filter[muted]=include forces CommonFindingFilters
+        """
+        params = {
+            "filter[inserted_at]": TODAY,
+            "filter[check_title.icontains]": "Ensure repository",
+            **extra_filters,
+        }
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            params,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "github_secret_scanning_enabled"
+        attrs = data[0]["attributes"]
+        # Both providers' findings must be counted
+        assert attrs["fail_count"] == 2, (
+            "fail_count must include findings from both providers, "
+            "regardless of which title variant matches the search"
+        )
+
     def test_resources_not_found(self, authenticated_client):
         """Test 404 returned for nonexistent check_id."""
         response = authenticated_client.get(
@@ -15167,6 +15894,44 @@ class TestFindingGroupViewSet:
             assert resource.get("service"), "resource.service must not be empty"
             assert resource.get("region"), "resource.region must not be empty"
             assert resource.get("type"), "resource.type must not be empty"
+
+    def test_resources_resource_group(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test resource_group is extracted from check_metadata.resourcegroup."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        for item in data:
+            resource = item["attributes"]["resource"]
+            assert (
+                resource["resource_group"] == "storage"
+            ), "resource_group must be 'storage'"
+
+    def test_resources_name_icontains(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test resource_name__icontains filters resources by name substring."""
+        # s3_bucket_public_access has "My Instance 1" and "My Instance 2"
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[resource_name.icontains]": "Instance 1",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert "Instance 1" in data[0]["attributes"]["resource"]["name"]
 
     def test_resources_provider_info(
         self, authenticated_client, finding_groups_fixture
@@ -15425,6 +16190,258 @@ class TestFindingGroupViewSet:
         assert len(data) == 1
         assert data[0]["id"] == "cloudtrail_enabled"
 
+    def test_finding_groups_latest_status_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest supports status filter on aggregated status."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[status]": "FAIL"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["status"] == "FAIL" for item in data)
+
+    def test_finding_groups_latest_region_filter_reaggregates_metrics(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest recomputes metrics from findings matching region filter."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {
+                "filter[check_id]": "ec2_instance_public_ip",
+                "filter[region]": "us-east-1",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+
+        attrs = data[0]["attributes"]
+        assert attrs["status"] == "PASS"
+        assert attrs["pass_count"] == 1
+        assert attrs["fail_count"] == 0
+        assert attrs["resources_total"] == 1
+        assert attrs["resources_fail"] == 0
+
+    def test_finding_groups_latest_status_in_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest supports status__in filter on aggregated status."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[status__in]": "FAIL,PASS"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["status"] in {"FAIL", "PASS"} for item in data)
+
+    def test_finding_groups_latest_severity_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest supports severity filter on aggregated severity."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[severity]": "critical"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["severity"] == "critical" for item in data)
+
+    @pytest.mark.parametrize(
+        "filter_name,filter_value",
+        [
+            ("region", "__region_does_not_exist__"),
+            ("service", "__service_does_not_exist__"),
+            ("category", "__category_does_not_exist__"),
+            ("resource_groups", "__group_does_not_exist__"),
+            ("resource_type", "__type_does_not_exist__"),
+            ("scan", "00000000-0000-7000-8000-000000000001"),
+        ],
+    )
+    def test_finding_groups_latest_finding_level_filters_are_applied(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        filter_name,
+        filter_value,
+    ):
+        """Test finding-level filters are applied in /finding-groups/latest aggregation."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {f"filter[{filter_name}]": filter_value},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+
+    def test_finding_groups_check_title_filter_applies_with_delta(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test check_title filter is honored when finding-level path is used."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[delta]": "new",
+                "filter[check_title.icontains]": "__missing_check_title__",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+
+    def test_finding_groups_latest_check_title_filter_applies_with_delta(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest check_title filter is honored on finding-level path."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {
+                "filter[delta]": "new",
+                "filter[check_title.icontains]": "__missing_check_title__",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+
+    def test_finding_groups_latest_delta_filter_is_applied(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test delta filter is applied in /finding-groups/latest aggregation."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[delta]": "new"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["new_count"] > 0 for item in data)
+
+    def test_finding_groups_latest_aggregates_latest_per_provider(
+        self,
+        authenticated_client,
+        providers_fixture,
+        resources_fixture,
+    ):
+        """Test /latest keeps all findings from the latest scan per provider.
+
+        Verifies that when the latest scan produces multiple findings for the
+        same check_id (e.g. one per resource), all of them are included in the
+        aggregation — not just one.
+        """
+        provider1 = providers_fixture[0]
+        provider2 = providers_fixture[1]
+        resource1 = resources_fixture[0]
+        resource2 = resources_fixture[1]
+        resource3 = resources_fixture[2]
+        check_id = "cross_provider_latest_resources_total"
+
+        latest_scan_provider1 = Scan.objects.create(
+            tenant_id=provider1.tenant_id,
+            provider=provider1,
+            state=StateChoices.COMPLETED,
+            trigger=Scan.TriggerChoices.MANUAL,
+            completed_at=datetime.now(timezone.utc),
+        )
+
+        latest_scan_provider2 = Scan.objects.create(
+            tenant_id=provider2.tenant_id,
+            provider=provider2,
+            state=StateChoices.COMPLETED,
+            trigger=Scan.TriggerChoices.MANUAL,
+            completed_at=datetime.now(timezone.utc),
+        )
+
+        older_scan_provider1 = Scan.objects.create(
+            tenant_id=provider1.tenant_id,
+            provider=provider1,
+            state=StateChoices.COMPLETED,
+            trigger=Scan.TriggerChoices.MANUAL,
+            completed_at=datetime.now(timezone.utc) - timedelta(days=1),
+        )
+
+        # Older scan — these should be excluded from /latest
+        Finding.objects.create(
+            tenant_id=provider1.tenant_id,
+            uid="old_cross_provider_1",
+            scan=older_scan_provider1,
+            delta="new",
+            status="FAIL",
+            severity="high",
+            impact="high",
+            check_id=check_id,
+            check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
+            first_seen_at=datetime.now(timezone.utc) - timedelta(days=2),
+            muted=False,
+        )
+
+        # Latest scan provider1: TWO findings (PASS + FAIL) for the same check
+        latest_p1_pass = Finding.objects.create(
+            tenant_id=provider1.tenant_id,
+            uid="latest_cross_provider_1_pass",
+            scan=latest_scan_provider1,
+            delta="new",
+            status="PASS",
+            severity="high",
+            impact="high",
+            check_id=check_id,
+            check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
+            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            muted=False,
+        )
+        latest_p1_pass.add_resources([resource1])
+
+        latest_p1_fail = Finding.objects.create(
+            tenant_id=provider1.tenant_id,
+            uid="latest_cross_provider_1_fail",
+            scan=latest_scan_provider1,
+            delta="new",
+            status="FAIL",
+            severity="high",
+            impact="high",
+            check_id=check_id,
+            check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
+            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            muted=False,
+        )
+        latest_p1_fail.add_resources([resource2])
+
+        # Latest scan provider2: one finding
+        latest_p2 = Finding.objects.create(
+            tenant_id=provider2.tenant_id,
+            uid="latest_cross_provider_2",
+            scan=latest_scan_provider2,
+            delta="new",
+            status="FAIL",
+            severity="high",
+            impact="high",
+            check_id=check_id,
+            check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
+            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            muted=False,
+        )
+        latest_p2.add_resources([resource3])
+
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[check_id]": check_id, "filter[delta]": "new"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+        # 3 findings total: 2 from provider1 latest + 1 from provider2 latest
+        assert attrs["pass_count"] == 1
+        assert attrs["fail_count"] == 2
+        assert attrs["resources_total"] == 3
+        assert attrs["resources_fail"] == 2
+
     def test_finding_groups_latest_provider_type_filter(
         self, authenticated_client, finding_groups_fixture
     ):
@@ -15463,6 +16480,44 @@ class TestFindingGroupViewSet:
         data = response.json()["data"]
         check_ids = [item["id"] for item in data]
         assert check_ids == sorted(check_ids)
+
+    def test_finding_groups_latest_sort_by_check_title(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest supports sorting by check_title."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"sort": "check_title"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_titles = [item["attributes"]["check_title"] for item in data]
+        assert check_titles == sorted(check_titles)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    @pytest.mark.parametrize(
+        "sort_field",
+        ["first_seen_at", "-first_seen_at", "last_seen_at", "failing_since"],
+    )
+    def test_finding_groups_sort_by_time_fields(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+        sort_field,
+    ):
+        """Test sorting by aggregated time fields (first_seen_at, last_seen_at, failing_since)."""
+        params = {"sort": sort_field}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
 
     def test_finding_groups_latest_ignores_date_filters(
         self, authenticated_client, finding_groups_fixture

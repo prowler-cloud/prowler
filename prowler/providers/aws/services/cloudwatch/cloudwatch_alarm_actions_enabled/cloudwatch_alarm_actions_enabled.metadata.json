@@ -4,7 +4,7 @@
   "CheckTitle": "CloudWatch metric alarm has actions enabled",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "TTPs/Defense Evasion"
   ],
   "ServiceName": "cloudwatch",

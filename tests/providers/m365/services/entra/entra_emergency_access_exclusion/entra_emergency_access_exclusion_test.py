@@ -8,10 +8,12 @@ from prowler.providers.m365.services.entra.entra_service import (
     Conditions,
     GrantControlOperator,
     GrantControls,
+    Group,
     PersistentBrowser,
     SessionControls,
     SignInFrequency,
     SignInFrequencyInterval,
+    User,
     UsersConditions,
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
@@ -334,12 +336,23 @@ class Test_entra_emergency_access_exclusion:
                 ),
             }
 
+            entra_client.users = {
+                emergency_user_id: User(
+                    id=emergency_user_id,
+                    name="BreakGlass1",
+                    on_premises_sync_enabled=False,
+                    authentication_methods=[],
+                ),
+            }
+            entra_client.groups = []
+
             check = entra_emergency_access_exclusion()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
+            assert "BreakGlass1" in result[0].status_extended
             assert (
-                "1 user(s) excluded as emergency access across all 2 enabled Conditional Access policies"
+                "excluded from all 2 enabled Conditional Access policies"
                 in result[0].status_extended
             )
             assert result[0].resource_name == "Conditional Access Policies"
@@ -445,12 +458,23 @@ class Test_entra_emergency_access_exclusion:
                 ),
             }
 
+            entra_client.users = {}
+            entra_client.groups = [
+                Group(
+                    id=emergency_group_id,
+                    name="BreakGlassGroup",
+                    groupTypes=[],
+                    membershipRule=None,
+                ),
+            ]
+
             check = entra_emergency_access_exclusion()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
+            assert "BreakGlassGroup" in result[0].status_extended
             assert (
-                "1 group(s) excluded as emergency access across all 2 enabled Conditional Access policies"
+                "excluded from all 2 enabled Conditional Access policies"
                 in result[0].status_extended
             )
             assert result[0].resource_name == "Conditional Access Policies"
@@ -557,12 +581,31 @@ class Test_entra_emergency_access_exclusion:
                 ),
             }
 
+            entra_client.users = {
+                emergency_user_id: User(
+                    id=emergency_user_id,
+                    name="BreakGlass1",
+                    on_premises_sync_enabled=False,
+                    authentication_methods=[],
+                ),
+            }
+            entra_client.groups = [
+                Group(
+                    id=emergency_group_id,
+                    name="BreakGlassGroup",
+                    groupTypes=[],
+                    membershipRule=None,
+                ),
+            ]
+
             check = entra_emergency_access_exclusion()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
+            assert "BreakGlass1" in result[0].status_extended
+            assert "BreakGlassGroup" in result[0].status_extended
             assert (
-                "1 user(s) and 1 group(s) excluded as emergency access across all 2 enabled Conditional Access policies"
+                "excluded from all 2 enabled Conditional Access policies"
                 in result[0].status_extended
             )
             assert result[0].resource_name == "Conditional Access Policies"
@@ -668,14 +711,25 @@ class Test_entra_emergency_access_exclusion:
                 ),
             }
 
+            entra_client.users = {
+                emergency_user_id: User(
+                    id=emergency_user_id,
+                    name="BreakGlass1",
+                    on_premises_sync_enabled=False,
+                    authentication_methods=[],
+                ),
+            }
+            entra_client.groups = []
+
             check = entra_emergency_access_exclusion()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].resource_name == "Conditional Access Policies"
             assert result[0].resource_id == "conditionalAccessPolicies"
+            assert "BreakGlass1" in result[0].status_extended
             assert (
-                "1 user(s) excluded as emergency access across all 1 enabled Conditional Access policies"
+                "excluded from all 1 enabled Conditional Access policies"
                 in result[0].status_extended
             )
 
@@ -780,12 +834,23 @@ class Test_entra_emergency_access_exclusion:
                 ),
             }
 
+            entra_client.users = {
+                emergency_user_id: User(
+                    id=emergency_user_id,
+                    name="BreakGlass1",
+                    on_premises_sync_enabled=False,
+                    authentication_methods=[],
+                ),
+            }
+            entra_client.groups = []
+
             check = entra_emergency_access_exclusion()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
+            assert "BreakGlass1" in result[0].status_extended
             assert (
-                "1 user(s) excluded as emergency access across all 2 enabled Conditional Access policies"
+                "excluded from all 2 enabled Conditional Access policies"
                 in result[0].status_extended
             )
             assert result[0].resource_name == "Conditional Access Policies"

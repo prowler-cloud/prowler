@@ -61,7 +61,9 @@ class TestIacProvider:
         assert report.check_metadata.CheckID == SAMPLE_FAILED_CHECK["ID"]
         assert report.check_metadata.CheckTitle == SAMPLE_FAILED_CHECK["Title"]
         assert report.check_metadata.Severity == "low"
-        assert report.check_metadata.RelatedUrl == SAMPLE_FAILED_CHECK["PrimaryURL"]
+        assert report.check_metadata.RelatedUrl == SAMPLE_FAILED_CHECK.get(
+            "PrimaryURL", ""
+        )
 
     def test_iac_provider_process_finding_passed(self):
         """Test processing a passed finding"""
