@@ -55,11 +55,12 @@ def load_checks_to_execute(
                         check_categories[category] = []
                     check_categories[category].append(check)
 
-                # Resource Groups
+                # Resource Groups (stored lowercase for case-insensitive matching)
                 if metadata.ResourceGroup:
-                    if metadata.ResourceGroup not in check_resource_groups:
-                        check_resource_groups[metadata.ResourceGroup] = []
-                    check_resource_groups[metadata.ResourceGroup].append(check)
+                    rg_key = metadata.ResourceGroup.lower()
+                    if rg_key not in check_resource_groups:
+                        check_resource_groups[rg_key] = []
+                    check_resource_groups[rg_key].append(check)
             except Exception as error:
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -180,10 +181,13 @@ def load_checks_to_execute(
 
         # Handle if there are resource groups passed using --resource-group
         elif resource_groups:
-            # Validate that all resource groups exist
+            # Validate that all resource groups exist (case-insensitive)
             available_resource_groups = set(check_resource_groups.keys())
+            normalized_resource_groups = [rg.lower() for rg in resource_groups]
             invalid_resource_groups = [
-                rg for rg in resource_groups if rg not in available_resource_groups
+                rg
+                for rg in normalized_resource_groups
+                if rg not in available_resource_groups
             ]
             if invalid_resource_groups:
                 logger.critical(
@@ -194,7 +198,7 @@ def load_checks_to_execute(
                 )
                 sys.exit(1)
 
-            for resource_group in resource_groups:
+            for resource_group in normalized_resource_groups:
                 checks_to_execute.update(check_resource_groups[resource_group])
 
         # If there are no checks passed as argument

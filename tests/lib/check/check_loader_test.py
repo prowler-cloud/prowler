@@ -567,6 +567,24 @@ class TestCheckLoader:
             provider=self.provider,
         )
 
+    def test_load_checks_to_execute_with_resource_group_case_insensitive(self):
+        """Test that resource group matching is case-insensitive"""
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata(),
+            IAM_USER_NO_MFA_NAME: self.get_custom_check_iam_metadata(),
+        }
+        # "iam" lowercase should match metadata "IAM", "Storage" mixed case should match "storage"
+        resource_groups = {"iam", "Storage"}
+
+        assert {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME,
+            IAM_USER_NO_MFA_NAME,
+        } == load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            resource_groups=resource_groups,
+            provider=self.provider,
+        )
+
     def test_load_checks_to_execute_with_invalid_resource_group(self):
         """Test that invalid resource group names cause sys.exit(1)"""
         bulk_checks_metadata = {
