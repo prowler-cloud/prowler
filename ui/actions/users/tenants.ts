@@ -223,6 +223,11 @@ const deleteTenantSchema = z.object({
   tenantId: z.uuid(),
 });
 
+const switchThenDeleteTenantSchema = z.object({
+  tenantId: z.uuid(),
+  targetTenantId: z.uuid(),
+});
+
 export interface DeleteTenantState {
   success?: boolean;
   error?: string;
@@ -261,5 +266,109 @@ export async function deleteTenant(
     return { success: true };
   } catch (error) {
     return handleApiError(error);
+  }
+}
+
+export interface SwitchThenDeleteTenantState {
+  success?: boolean;
+  accessToken?: string;
+  refreshToken?: string;
+  error?: string;
+}
+
+export async function switchThenDeleteTenant(
+  _prevState: SwitchThenDeleteTenantState | null,
+  formData: FormData,
+): Promise<SwitchThenDeleteTenantState> {
+  const formDataObject = Object.fromEntries(formData);
+  const validatedData = switchThenDeleteTenantSchema.safeParse(formDataObject);
+
+  if (!validatedData.success) {
+    return { error: "Invalid tenant or target tenant ID" };
+  }
+
+  const { tenantId, targetTenantId } = validatedData.data;
+  const headers = await getAuthHeaders({ contentType: true });
+
+  // Step 1: Switch to the target tenant (current token is still valid)
+  const switchPayload = {
+    data: {
+      type: "tokens-switch-tenant",
+      attributes: {
+        tenant_id: targetTenantId,
+      },
+    },
+  };
+
+  let newAccessToken: string;
+  let newRefreshToken: string;
+
+  try {
+    const switchUrl = new URL(`${apiBaseUrl}/tokens/switch`);
+    const switchResponse = await fetch(switchUrl.toString(), {
+      method: "POST",
+      headers,
+      body: JSON.stringify(switchPayload),
+    });
+
+    if (!switchResponse.ok) {
+      const errorData = await switchResponse.json().catch(() => null);
+      const errorDetail =
+        errorData?.errors?.[0]?.detail ||
+        `Failed to switch tenant: ${switchResponse.statusText}`;
+      throw new Error(errorDetail);
+    }
+
+    const switchData = await switchResponse.json();
+    newAccessToken = switchData?.data?.attributes?.access;
+    newRefreshToken = switchData?.data?.attributes?.refresh;
+
+    if (!newAccessToken || !newRefreshToken) {
+      throw new Error("Missing tokens in switch tenant response");
+    }
+  } catch (error) {
+    return handleApiError(error);
+  }
+
+  // Step 2: Delete the old tenant using the NEW token
+  const deleteHeaders: Record<string, string> = {
+    Accept: "application/vnd.api+json",
+    Authorization: `Bearer ${newAccessToken}`,
+  };
+
+  try {
+    const deleteUrl = new URL(`${apiBaseUrl}/tenants/${tenantId}`);
+    const deleteResponse = await fetch(deleteUrl.toString(), {
+      method: "DELETE",
+      headers: deleteHeaders,
+    });
+
+    if (!deleteResponse.ok) {
+      const errorData = await deleteResponse.json().catch(() => null);
+      const errorDetail =
+        errorData?.errors?.[0]?.detail ||
+        `Failed to delete tenant: ${deleteResponse.statusText}`;
+      // Switch succeeded but delete failed — return tokens so client can still update session
+      return {
+        error: errorDetail,
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      };
+    }
+
+    revalidatePath("/profile");
+    return {
+      success: true,
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
+  } catch (error) {
+    // Switch succeeded but delete threw — return tokens so client can still update session
+    const errorResult = handleApiError(error);
+    return {
+      ...errorResult,
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
   }
 }

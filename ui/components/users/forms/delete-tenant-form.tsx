@@ -11,8 +11,8 @@ import {
 
 import {
   deleteTenant,
-  switchTenant,
-  SwitchTenantState,
+  switchThenDeleteTenant,
+  SwitchThenDeleteTenantState,
 } from "@/actions/users/tenants";
 import {
   Select,
@@ -23,6 +23,7 @@ import {
 } from "@/components/shadcn/select/select";
 import { useToast } from "@/components/ui";
 import { FormButtons } from "@/components/ui/form";
+import { reloadPage } from "@/lib/navigation";
 
 interface DeleteTenantFormProps {
   tenantId: string;
@@ -39,7 +40,19 @@ export const DeleteTenantForm = ({
   availableTenants,
   setIsOpen,
 }: DeleteTenantFormProps) => {
-  const [state, formAction] = useActionState(deleteTenant, null);
+  // Two hooks: one for simple delete, one for switch-then-delete.
+  // Both are always called (hook rules), but only the relevant one is used.
+  const [deleteState, deleteFormAction] = useActionState(deleteTenant, null);
+  const [switchDeleteState, switchDeleteFormAction] = useActionState(
+    switchThenDeleteTenant,
+    null,
+  );
+
+  const state: SwitchThenDeleteTenantState | null = isActiveTenant
+    ? switchDeleteState
+    : deleteState;
+  const formAction = isActiveTenant ? switchDeleteFormAction : deleteFormAction;
+
   const { update } = useSession();
   const { toast } = useToast();
   const [confirmName, setConfirmName] = useState("");
@@ -53,32 +66,19 @@ export const DeleteTenantForm = ({
   useEffect(() => {
     if (!state) return;
 
-    const handleDelete = async () => {
+    const handleResult = async () => {
       if (state.success) {
-        if (isActiveTenant && targetTenantId) {
-          // Active tenant deleted — switch to the target
-          const fd = new FormData();
-          fd.set("tenantId", targetTenantId);
-          const switchResult: SwitchTenantState = await switchTenant(null, fd);
-
-          if ("success" in switchResult) {
-            await update({
-              accessToken: switchResult.accessToken,
-              refreshToken: switchResult.refreshToken,
-            });
-            toast({
-              title: "Organization deleted",
-              description: "Switching to another organization.",
-            });
-            window.location.reload();
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Organization deleted, but switch failed",
-              description: "Please sign out and sign back in.",
-            });
-            setIsOpen(false);
-          }
+        if (state.accessToken) {
+          // Active tenant: switch + delete succeeded — update session and reload
+          await update({
+            accessToken: state.accessToken,
+            refreshToken: state.refreshToken,
+          });
+          toast({
+            title: "Organization deleted",
+            description: "Switching to another organization.",
+          });
+          reloadPage();
         } else {
           // Non-active tenant — simple delete
           toast({
@@ -88,21 +88,38 @@ export const DeleteTenantForm = ({
           setIsOpen(false);
         }
       } else if (state.error) {
-        toast({
-          variant: "destructive",
-          title: "Oops! Something went wrong",
-          description: state.error,
-        });
+        if (state.accessToken) {
+          // Partial success: switch OK but delete failed — still update session
+          await update({
+            accessToken: state.accessToken,
+            refreshToken: state.refreshToken,
+          });
+          toast({
+            variant: "destructive",
+            title: "Switch succeeded but delete failed",
+            description: state.error,
+          });
+          reloadPage();
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Oops! Something went wrong",
+            description: state.error,
+          });
+        }
       }
     };
 
-    handleDelete();
+    handleResult();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <input type="hidden" name="tenantId" value={tenantId} />
+      {isActiveTenant && targetTenantId && (
+        <input type="hidden" name="targetTenantId" value={targetTenantId} />
+      )}
 
       <div className="text-sm">
         Type <span className="font-bold">{tenantName}</span> to confirm
