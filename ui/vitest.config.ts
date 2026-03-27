@@ -38,6 +38,9 @@ export default defineConfig({
       {
         extends: true,
         define: {
+          "process.env.NEXT_PUBLIC_API_BASE_URL": JSON.stringify(
+            "https://some-api-server/api/v1",
+          ),
           "process.env": {},
           "process.version": JSON.stringify(""),
         },
