@@ -39,8 +39,8 @@ jobs:
             files.pythonhosted.org:443
             api.github.com:443
             release-assets.githubusercontent.com:443
-            amazonaws.com:443
-            googleapis.com:443
+            *.amazonaws.com:443
+            *.googleapis.com:443
             schema.ocsf.io:443
             registry-1.docker.io:443
             production.cloudflare.docker.com:443
