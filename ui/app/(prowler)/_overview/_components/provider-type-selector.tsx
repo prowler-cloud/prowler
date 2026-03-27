@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { lazy, Suspense } from "react";
+import { type ComponentType, lazy, Suspense } from "react";
 
 import {
   MultiSelect,
@@ -48,6 +48,11 @@ const IacProviderBadge = lazy(() =>
     default: m.IacProviderBadge,
   })),
 );
+const ImageProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.ImageProviderBadge,
+  })),
+);
 const OracleCloudProviderBadge = lazy(() =>
   import("@/components/icons/providers-badge").then((m) => ({
     default: m.OracleCloudProviderBadge,
@@ -63,6 +68,21 @@ const AlibabaCloudProviderBadge = lazy(() =>
     default: m.AlibabaCloudProviderBadge,
   })),
 );
+const CloudflareProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.CloudflareProviderBadge,
+  })),
+);
+const OpenStackProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.OpenStackProviderBadge,
+  })),
+);
+const GoogleWorkspaceProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.GoogleWorkspaceProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -72,7 +92,7 @@ const IconPlaceholder = ({ width, height }: IconProps) => (
 
 const PROVIDER_DATA: Record<
   ProviderType,
-  { label: string; icon: React.ComponentType<IconProps> }
+  { label: string; icon: ComponentType<IconProps> }
 > = {
   aws: {
     label: "Amazon Web Services",
@@ -98,9 +118,17 @@ const PROVIDER_DATA: Record<
     label: "GitHub",
     icon: GitHubProviderBadge,
   },
+  googleworkspace: {
+    label: "Google Workspace",
+    icon: GoogleWorkspaceProviderBadge,
+  },
   iac: {
     label: "Infrastructure as Code",
     icon: IacProviderBadge,
+  },
+  image: {
+    label: "Container Registry",
+    icon: ImageProviderBadge,
   },
   oraclecloud: {
     label: "Oracle Cloud Infrastructure",
@@ -114,24 +142,70 @@ const PROVIDER_DATA: Record<
     label: "Alibaba Cloud",
     icon: AlibabaCloudProviderBadge,
   },
+  cloudflare: {
+    label: "Cloudflare",
+    icon: CloudflareProviderBadge,
+  },
+  openstack: {
+    label: "OpenStack",
+    icon: OpenStackProviderBadge,
+  },
 };
 
-type ProviderTypeSelectorProps = {
+/** Common props shared by both batch and instant modes. */
+interface ProviderTypeSelectorBaseProps {
   providers: ProviderProps[];
-};
+}
+
+/** Batch mode: caller controls both pending state and notification callback (all-or-nothing). */
+interface ProviderTypeSelectorBatchProps extends ProviderTypeSelectorBaseProps {
+  /**
+   * Called instead of navigating immediately.
+   * Use this on pages that batch filter changes (e.g. Findings).
+   *
+   * @param filterKey - The raw filter key without "filter[]" wrapper, e.g. "provider_type__in"
+   * @param values - The selected values array
+   */
+  onBatchChange: (filterKey: string, values: string[]) => void;
+  /**
+   * Pending selected values controlled by the parent.
+   * Reflects pending state before Apply is clicked.
+   */
+  selectedValues: string[];
+}
+
+/** Instant mode: URL-driven — neither callback nor controlled value. */
+interface ProviderTypeSelectorInstantProps
+  extends ProviderTypeSelectorBaseProps {
+  onBatchChange?: never;
+  selectedValues?: never;
+}
+
+type ProviderTypeSelectorProps =
+  | ProviderTypeSelectorBatchProps
+  | ProviderTypeSelectorInstantProps;
 
 export const ProviderTypeSelector = ({
   providers,
+  onBatchChange,
+  selectedValues,
 }: ProviderTypeSelectorProps) => {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
 
   const currentProviders = searchParams.get("filter[provider_type__in]") || "";
-  const selectedTypes = currentProviders
+  const urlSelectedTypes = currentProviders
     ? currentProviders.split(",").filter(Boolean)
     : [];
 
+  // In batch mode, use the parent-controlled pending values; otherwise, use URL state.
+  const selectedTypes = onBatchChange ? selectedValues : urlSelectedTypes;
+
   const handleMultiValueChange = (values: string[]) => {
+    if (onBatchChange) {
+      onBatchChange("provider_type__in", values);
+      return;
+    }
     navigateWithParams((params) => {
       // Update provider_type__in
       if (values.length > 0) {
@@ -139,10 +213,6 @@ export const ProviderTypeSelector = ({
       } else {
         params.delete("filter[provider_type__in]");
       }
-
-      // Clear account selection when changing provider types
-      // User should manually select accounts if they want to filter by specific accounts
-      params.delete("filter[provider_id__in]");
     });
   };
 
@@ -168,14 +238,14 @@ export const ProviderTypeSelector = ({
     if (selectedTypes.length === 1) {
       const providerType = selectedTypes[0] as ProviderType;
       return (
-        <span className="flex items-center gap-2">
+        <span className="flex min-w-0 items-center gap-2">
           {renderIcon(providerType)}
-          <span>{PROVIDER_DATA[providerType].label}</span>
+          <span className="truncate">{PROVIDER_DATA[providerType].label}</span>
         </span>
       );
     }
     return (
-      <span className="truncate">
+      <span className="min-w-0 truncate">
         {selectedTypes.length} providers selected
       </span>
     );

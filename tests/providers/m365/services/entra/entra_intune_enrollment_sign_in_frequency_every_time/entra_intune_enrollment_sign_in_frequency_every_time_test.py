@@ -2,6 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.m365.services.entra.entra_service import (
+    ApplicationEnforcedRestrictions,
     ApplicationsConditions,
     ConditionalAccessPolicyState,
     Conditions,
@@ -108,6 +109,9 @@ class Test_entra_intune_enrollment_sign_in_frequency_every_time:
                             type=None,
                             interval=SignInFrequencyInterval.EVERY_TIME,
                         ),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
+                        ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED,
                 )
@@ -184,6 +188,9 @@ class Test_entra_intune_enrollment_sign_in_frequency_every_time:
                             type=None,
                             interval=SignInFrequencyInterval.EVERY_TIME,
                         ),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
+                        ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED,
                 )
@@ -257,6 +264,9 @@ class Test_entra_intune_enrollment_sign_in_frequency_every_time:
                             frequency=4,
                             type=SignInFrequencyType.HOURS,
                             interval=SignInFrequencyInterval.TIME_BASED,
+                        ),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
                         ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED,
@@ -333,6 +343,9 @@ class Test_entra_intune_enrollment_sign_in_frequency_every_time:
                             frequency=None,
                             type=None,
                             interval=SignInFrequencyInterval.EVERY_TIME,
+                        ),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
                         ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,

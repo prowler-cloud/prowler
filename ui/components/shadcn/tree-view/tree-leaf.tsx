@@ -8,7 +8,7 @@ import { TreeLeafProps } from "@/types/tree";
 
 import { TreeItemLabel } from "./tree-item-label";
 import { TreeSpinner } from "./tree-spinner";
-import { TreeStatusIcon } from "./tree-status-icon";
+import { TreeStatusIndicator } from "./tree-status-indicator";
 import { getTreeLeafPadding } from "./utils";
 
 /**
@@ -30,6 +30,15 @@ export function TreeLeaf({
   renderItem,
 }: TreeLeafProps) {
   const isSelected = selectedIds.includes(item.id);
+  const shouldReplaceCheckboxWithState =
+    showCheckboxes && (item.isLoading || Boolean(item.status));
+  const statusIcon =
+    !item.isLoading && item.status ? (
+      <TreeStatusIndicator
+        status={item.status}
+        errorMessage={item.errorMessage}
+      />
+    ) : null;
 
   const handleSelect = () => {
     if (!item.disabled) {
@@ -50,7 +59,6 @@ export function TreeLeaf({
         "flex items-center gap-2 rounded-md px-2 py-1.5",
         "hover:bg-prowler-white/5 cursor-pointer",
         "focus-visible:ring-border-input-primary-press focus-visible:ring-2 focus-visible:outline-none",
-        isSelected && "bg-prowler-white/10",
         item.disabled && "cursor-not-allowed opacity-50",
         item.className,
       )}
@@ -62,12 +70,17 @@ export function TreeLeaf({
       aria-selected={isSelected}
       aria-disabled={item.disabled}
     >
-      {item.isLoading && <TreeSpinner />}
-      {!item.isLoading && item.status && (
-        <TreeStatusIcon status={item.status} />
+      {!showCheckboxes && item.isLoading && <TreeSpinner />}
+      {!showCheckboxes && statusIcon}
+
+      {showCheckboxes && shouldReplaceCheckboxWithState && (
+        <>
+          {item.isLoading && <TreeSpinner />}
+          {statusIcon}
+        </>
       )}
 
-      {showCheckboxes && (
+      {showCheckboxes && !shouldReplaceCheckboxWithState && (
         <Checkbox
           size="sm"
           checked={isSelected}

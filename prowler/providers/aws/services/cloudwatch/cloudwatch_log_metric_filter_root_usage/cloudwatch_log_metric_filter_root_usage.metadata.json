@@ -19,7 +19,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/root-account-usage-alarm.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudWatchLogs/root-account-usage-alarm.html",
     "https://asecure.cloud/a/root_account_login/",
     "https://support.icompaas.com/support/solutions/articles/62000083624-ensure-a-log-metric-filter-and-alarm-exist-for-usage-of-root-account",
     "https://www.intelligentdiscovery.io/controls/cloudwatch/cloudwatch-alarm-root-account-usage",

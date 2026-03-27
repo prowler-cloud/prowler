@@ -3,6 +3,7 @@ import glob
 import json
 import logging
 import os
+import time
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -15,6 +16,7 @@ from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.saml.views import FinishACSView, LoginView
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
+from celery import chain
 from celery.result import AsyncResult
 from config.custom_logging import BackendLogger
 from config.env import env
@@ -24,26 +26,30 @@ from config.settings.social_login import (
 )
 from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings as django_settings
-from django.contrib.postgres.aggregates import ArrayAgg
+from django.contrib.postgres.aggregates import ArrayAgg, StringAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import (
     Case,
+    CharField,
     Count,
     DecimalField,
     ExpressionWrapper,
     F,
     IntegerField,
     Max,
+    Min,
     Prefetch,
     Q,
+    QuerySet,
     Subquery,
     Sum,
     Value,
     When,
     Window,
 )
-from django.db.models.functions import Coalesce, RowNumber
+from django.db.models.fields.json import KeyTextTransform
+from django.db.models.functions import Cast, Coalesce, RowNumber
 from django.http import HttpResponse, QueryDict
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -71,6 +77,7 @@ from rest_framework.exceptions import (
 )
 from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
+from rest_framework_json_api import filters as jsonapi_filters
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
@@ -88,6 +95,7 @@ from tasks.tasks import (
     jira_integration_task,
     mute_historical_findings_task,
     perform_scan_task,
+    reaggregate_all_finding_group_summaries_task,
     refresh_lighthouse_provider_models_task,
 )
 
@@ -99,6 +107,7 @@ from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
 )
+from api.constants import SEVERITY_ORDER
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import (
@@ -117,10 +126,15 @@ from api.filters import (
     CustomDjangoFilterBackend,
     DailySeveritySummaryFilter,
     FindingFilter,
+    FindingGroupAggregatedComputedFilter,
+    FindingGroupFilter,
+    FindingGroupSummaryFilter,
     IntegrationFilter,
     IntegrationJiraFindingsFilter,
     InvitationFilter,
     LatestFindingFilter,
+    LatestFindingGroupFilter,
+    LatestFindingGroupSummaryFilter,
     LatestResourceFilter,
     LighthouseProviderConfigFilter,
     LighthouseProviderModelsFilter,
@@ -149,6 +163,7 @@ from api.models import (
     ComplianceRequirementOverview,
     DailySeveritySummary,
     Finding,
+    FindingGroupDailySummary,
     Integration,
     Invitation,
     LighthouseConfiguration,
@@ -187,6 +202,7 @@ from api.models import (
 )
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
+from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.rls import Tenant
 from api.utils import (
     CustomOAuth2Client,
@@ -197,6 +213,8 @@ from api.utils import (
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
+    AttackPathsCartographySchemaSerializer,
+    AttackPathsCustomQueryRunRequestSerializer,
     AttackPathsQueryResultSerializer,
     AttackPathsQueryRunRequestSerializer,
     AttackPathsQuerySerializer,
@@ -210,6 +228,8 @@ from api.v1.serializers import (
     ComplianceOverviewSerializer,
     ComplianceWatchlistOverviewSerializer,
     FindingDynamicFilterSerializer,
+    FindingGroupResourceSerializer,
+    FindingGroupSerializer,
     FindingMetadataSerializer,
     FindingSerializer,
     FindingsSeverityOverTimeSerializer,
@@ -392,7 +412,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.20.0"
+        spectacular_settings.VERSION = "1.24.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1190,6 +1210,17 @@ class TenantViewSet(BaseTenantViewset):
     ordering_fields = ["name", "inserted_at", "updated_at"]
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_ACCOUNT]
+
+    def set_required_permissions(self):
+        """
+        Returns the required permissions based on the request method.
+        """
+        if self.action in ("list", "retrieve", "create"):
+            # No permissions required for listing, retrieving or creating tenants
+            self.required_permissions = []
+        else:
+            # Require MANAGE_ACCOUNT for update and delete
+            self.required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
         queryset = Tenant.objects.filter(membership__user=self.request.user)
@@ -2388,6 +2419,40 @@ class TaskViewSet(BaseRLSViewSet):
             ),
         },
     ),
+    run_custom_attack_paths_query=extend_schema(
+        tags=["Attack Paths"],
+        summary="Execute a custom openCypher query",
+        description="Execute a raw openCypher query against the Attack Paths graph. "
+        "Results are filtered to the scan's provider and truncated to a maximum node count.",
+        request=AttackPathsCustomQueryRunRequestSerializer,
+        responses={
+            200: OpenApiResponse(AttackPathsQueryResultSerializer),
+            403: OpenApiResponse(description="Read-only queries are enforced"),
+            404: OpenApiResponse(description="No results found for the given query"),
+            500: OpenApiResponse(
+                description="Query execution failed due to a database error"
+            ),
+        },
+    ),
+    cartography_schema=extend_schema(
+        tags=["Attack Paths"],
+        summary="Retrieve cartography schema metadata",
+        description="Return the cartography provider, version, and links to the schema documentation "
+        "for the cloud provider associated with this Attack Paths scan.",
+        request=None,
+        responses={
+            200: OpenApiResponse(AttackPathsCartographySchemaSerializer),
+            400: OpenApiResponse(
+                description="Attack Paths data is not yet available (graph_data_ready is false)"
+            ),
+            404: OpenApiResponse(
+                description="No cartography schema metadata found for this provider"
+            ),
+            500: OpenApiResponse(
+                description="Unable to retrieve cartography schema due to a database error"
+            ),
+        },
+    ),
 )
 class AttackPathsScanViewSet(BaseRLSViewSet):
     queryset = AttackPathsScan.objects.all()
@@ -2402,6 +2467,11 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_SCANS]
 
+    def get_throttles(self):
+        if self.action == "run_custom_attack_paths_query":
+            self.throttle_scope = "attack-paths-custom-query"
+        return super().get_throttles()
+
     def set_required_permissions(self):
         if self.request.method in SAFE_METHODS:
             self.required_permissions = []
@@ -2412,6 +2482,12 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "run_attack_paths_query":
             return AttackPathsQueryRunRequestSerializer
+
+        if self.action == "run_custom_attack_paths_query":
+            return AttackPathsCustomQueryRunRequestSerializer
+
+        if self.action == "cartography_schema":
+            return AttackPathsCartographySchemaSerializer
 
         return super().get_serializer_class()
 
@@ -2473,11 +2549,13 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         serializer = AttackPathsQuerySerializer(queries, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(parameters=[OpenApiParameter("format", exclude=True)])
     @action(
         detail=True,
         methods=["post"],
         url_path="queries/run",
         url_name="queries-run",
+        renderer_classes=[APIJSONRenderer, PlainTextRenderer],
     )
     def run_attack_paths_query(self, request, pk=None):
         attack_paths_scan = self.get_object()
@@ -2489,7 +2567,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
                 }
             )
 
-        payload = attack_paths_views_helpers.normalize_run_payload(request.data)
+        payload = attack_paths_views_helpers.normalize_query_payload(request.data)
         serializer = AttackPathsQueryRunRequestSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
 
@@ -2505,23 +2583,155 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         database_name = graph_database.get_database_name(
             attack_paths_scan.provider.tenant_id
         )
-        parameters = attack_paths_views_helpers.prepare_query_parameters(
+        provider_id = str(attack_paths_scan.provider_id)
+        parameters = attack_paths_views_helpers.prepare_parameters(
             query_definition,
             serializer.validated_data.get("parameters", {}),
             attack_paths_scan.provider.uid,
+            provider_id,
         )
 
-        graph = attack_paths_views_helpers.execute_attack_paths_query(
-            database_name, query_definition, parameters
+        start = time.monotonic()
+        graph = attack_paths_views_helpers.execute_query(
+            database_name,
+            query_definition,
+            parameters,
+            provider_id,
         )
+        query_duration = time.monotonic() - start
         graph_database.clear_cache(database_name)
+
+        result_nodes = len(graph.get("nodes", []))
+        result_relationships = len(graph.get("relationships", []))
+        logger.info(
+            "attack_paths_query_run",
+            extra={
+                "user_id": str(request.user.id),
+                "tenant_id": str(attack_paths_scan.provider.tenant_id),
+                "metadata": {
+                    "query_id": query_definition.id,
+                    "provider": query_definition.provider,
+                    "scan_id": pk,
+                    "provider_id": provider_id,
+                    "result_nodes": result_nodes,
+                    "result_relationships": result_relationships,
+                    "query_duration": round(query_duration, 3),
+                },
+            },
+        )
 
         status_code = status.HTTP_200_OK
         if not graph.get("nodes"):
             status_code = status.HTTP_404_NOT_FOUND
 
+        if isinstance(request.accepted_renderer, PlainTextRenderer):
+            text = attack_paths_views_helpers.serialize_graph_as_text(graph)
+            return Response(text, status=status_code, content_type="text/plain")
+
         response_serializer = AttackPathsQueryResultSerializer(graph)
         return Response(response_serializer.data, status=status_code)
+
+    @extend_schema(parameters=[OpenApiParameter("format", exclude=True)])
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="queries/custom",
+        url_name="queries-custom",
+        renderer_classes=[APIJSONRenderer, PlainTextRenderer],
+    )
+    def run_custom_attack_paths_query(self, request, pk=None):
+        attack_paths_scan = self.get_object()
+
+        if not attack_paths_scan.graph_data_ready:
+            raise ValidationError(
+                {
+                    "detail": "Attack Paths data is not available for querying - a scan must complete at least once before queries can be run"
+                }
+            )
+
+        payload = attack_paths_views_helpers.normalize_custom_query_payload(
+            request.data
+        )
+        serializer = AttackPathsCustomQueryRunRequestSerializer(data=payload)
+        serializer.is_valid(raise_exception=True)
+
+        database_name = graph_database.get_database_name(
+            attack_paths_scan.provider.tenant_id
+        )
+        provider_id = str(attack_paths_scan.provider_id)
+
+        start = time.monotonic()
+        graph = attack_paths_views_helpers.execute_custom_query(
+            database_name,
+            serializer.validated_data["query"],
+            provider_id,
+        )
+        query_duration = time.monotonic() - start
+        graph_database.clear_cache(database_name)
+
+        query_length = len(serializer.validated_data["query"])
+        result_nodes = len(graph.get("nodes", []))
+        result_relationships = len(graph.get("relationships", []))
+        logger.info(
+            "attack_paths_custom_query_run",
+            extra={
+                "user_id": str(request.user.id),
+                "tenant_id": str(attack_paths_scan.provider.tenant_id),
+                "metadata": {
+                    "provider": attack_paths_scan.provider.provider,
+                    "scan_id": pk,
+                    "provider_id": provider_id,
+                    "query_length": query_length,
+                    "result_nodes": result_nodes,
+                    "result_relationships": result_relationships,
+                    "query_duration": round(query_duration, 3),
+                },
+            },
+        )
+
+        status_code = status.HTTP_200_OK
+        if not graph.get("nodes"):
+            status_code = status.HTTP_404_NOT_FOUND
+
+        if isinstance(request.accepted_renderer, PlainTextRenderer):
+            text = attack_paths_views_helpers.serialize_graph_as_text(graph)
+            return Response(text, status=status_code, content_type="text/plain")
+
+        response_serializer = AttackPathsQueryResultSerializer(graph)
+        return Response(response_serializer.data, status=status_code)
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="schema",
+        url_name="schema",
+    )
+    def cartography_schema(self, request, pk=None):
+        attack_paths_scan = self.get_object()
+
+        if not attack_paths_scan.graph_data_ready:
+            raise ValidationError(
+                {
+                    "detail": "Attack Paths data is not available for querying - a scan must complete at least once before the schema can be retrieved"
+                }
+            )
+
+        database_name = graph_database.get_database_name(
+            attack_paths_scan.provider.tenant_id
+        )
+        provider_id = str(attack_paths_scan.provider_id)
+
+        schema = attack_paths_views_helpers.get_cartography_schema(
+            database_name, provider_id
+        )
+        if not schema:
+            return Response(
+                {"detail": "No cartography schema metadata found for this provider"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = AttackPathsCartographySchemaSerializer(schema)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(
@@ -6530,11 +6740,18 @@ class MuteRuleViewSet(BaseRLSViewSet):
             muted_reason=mute_rule.reason,
         )
 
-        # Launch background task for historical muting
-        with transaction.atomic():
-            mute_historical_findings_task.apply_async(
-                kwargs={"tenant_id": tenant_id, "mute_rule_id": str(mute_rule.id)}
-            )
+        # Launch background task for historical muting + reaggregation
+        transaction.on_commit(
+            lambda: chain(
+                mute_historical_findings_task.si(
+                    tenant_id=tenant_id,
+                    mute_rule_id=str(mute_rule.id),
+                ),
+                reaggregate_all_finding_group_summaries_task.si(
+                    tenant_id=tenant_id,
+                ),
+            ).apply_async()
+        )
 
         # Return the created mute rule
         serializer = self.get_serializer(mute_rule)
@@ -6542,3 +6759,801 @@ class MuteRuleViewSet(BaseRLSViewSet):
             data=serializer.data,
             status=status.HTTP_201_CREATED,
         )
+
+
+SEVERITY_ORDER_REVERSE = {v: k for k, v in SEVERITY_ORDER.items()}
+
+
+@extend_schema_view(
+    list=extend_schema(
+        summary="List finding groups",
+        description="""
+        Retrieve aggregated findings grouped by check_id.
+
+        Each group shows:
+        - Aggregated status (FAIL if any non-muted failure)
+        - Maximum severity across all findings
+        - Resource counts (failing vs total)
+        - Finding counts by status and delta
+        - Affected provider types
+
+        At least one date filter is required for performance reasons.
+        """,
+        tags=["Finding Groups"],
+    ),
+    retrieve=extend_schema(exclude=True),
+)
+class FindingGroupViewSet(BaseRLSViewSet):
+    """
+    ViewSet for Finding Groups - aggregates findings by check_id.
+
+    This endpoint provides a summary view of security checks, aggregating
+    metrics across all findings for each unique check_id. This enables
+    security analysts to see which checks are failing across their
+    infrastructure without scrolling through thousands of individual findings.
+
+    Uses a hybrid strategy: pre-aggregated daily summaries when possible,
+    and raw findings when finding-level filters require precise subset metrics.
+    """
+
+    queryset = FindingGroupDailySummary.objects.all()
+    serializer_class = FindingGroupSerializer
+    filterset_class = FindingGroupFilter
+    filter_backends = [
+        jsonapi_filters.QueryParameterValidationFilter,
+        jsonapi_filters.OrderingFilter,
+        CustomDjangoFilterBackend,
+    ]
+    http_method_names = ["get"]
+    required_permissions = []
+
+    def get_filterset_class(self):
+        """Return the filterset class used for schema generation and the list action.
+
+        Note: The resources and latest_resources actions do not use this method
+        at runtime. They manually instantiate FindingGroupFilter /
+        LatestFindingGroupFilter against a Finding queryset (see
+        _get_finding_queryset). The class returned here for those actions only
+        affects the OpenAPI schema generated by drf-spectacular.
+        """
+        if self.action == "latest":
+            return LatestFindingGroupFilter
+        if self.action == "resources":
+            return FindingGroupFilter
+        if self.action == "latest_resources":
+            return LatestFindingGroupFilter
+        return FindingGroupFilter
+
+    def get_queryset(self):
+        """Get the base FindingGroupDailySummary queryset with RLS filtering."""
+        tenant_id = self.request.tenant_id
+        role = get_role(self.request.user)
+        queryset = FindingGroupDailySummary.objects.filter(tenant_id=tenant_id)
+
+        if not role.unlimited_visibility:
+            queryset = queryset.filter(provider__in=get_providers(role))
+
+        return queryset
+
+    def _get_finding_queryset(self):
+        """Get the Finding queryset for resources drill-down (with RBAC)."""
+        role = get_role(self.request.user)
+        providers = get_providers(role)
+
+        tenant_id = self.request.tenant_id
+        queryset = Finding.all_objects.filter(tenant_id=tenant_id)
+
+        # Apply RBAC provider filtering
+        if not role.unlimited_visibility:
+            queryset = queryset.filter(scan__provider_id__in=providers)
+
+        return queryset
+
+    def _normalize_jsonapi_params(self, query_params):
+        """Convert JSON:API filter params (filter[X]) to flat params (X)."""
+        normalized = QueryDict(mutable=True)
+        for key, values in query_params.lists():
+            normalized_key = (
+                key[7:-1] if key.startswith("filter[") and key.endswith("]") else key
+            )
+            # Convert JSON:API dot notation to Django double underscore
+            normalized_key = normalized_key.replace(".", "__")
+            normalized.setlist(normalized_key, values)
+        return normalized
+
+    @extend_schema(exclude=True)
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
+
+    RESOURCE_FILTER_MAP = {
+        "resources": "id__in",
+        "resource_uid": "uid",
+        "resource_uid__in": "uid__in",
+        "resource_uid__icontains": "uid__icontains",
+        "resource_name": "name",
+        "resource_name__in": "name__in",
+        "resource_name__icontains": "name__icontains",
+        "resource_type": "type",
+        "resource_type__in": "type__in",
+        "resource_type__icontains": "type__icontains",
+    }
+
+    def _split_resource_filters(self, params: QueryDict) -> tuple[QueryDict, QueryDict]:
+        resource_keys = set(self.RESOURCE_FILTER_MAP)
+        finding_params = QueryDict(mutable=True)
+        resource_params = QueryDict(mutable=True)
+        for key, values in params.lists():
+            if key in resource_keys:
+                resource_params.setlist(key, values)
+            else:
+                finding_params.setlist(key, values)
+        return finding_params, resource_params
+
+    def _resource_ids_from_params(
+        self, params: QueryDict, tenant_id: str | None
+    ) -> QuerySet | None:
+        if not params:
+            return None
+
+        queryset = Resource.objects.all()
+        if tenant_id:
+            queryset = queryset.filter(tenant_id=tenant_id)
+
+        filter_params = QueryDict(mutable=True)
+        for key, mapped_key in self.RESOURCE_FILTER_MAP.items():
+            if key not in params:
+                continue
+            if key == "resources" or key.endswith("__in"):
+                values = params.getlist(key)
+                items: list[str] = []
+                for value in values:
+                    if value is None:
+                        continue
+                    for part in value.split(","):
+                        part = part.strip()
+                        if part:
+                            items.append(part)
+                if items:
+                    filter_params.setlist(mapped_key, [",".join(items)])
+            else:
+                value = params.get(key)
+                if value:
+                    filter_params.setlist(mapped_key, [value])
+
+        if not filter_params:
+            return None
+
+        filterset = LatestResourceFilter(filter_params, queryset=queryset)
+        if not filterset.is_valid():
+            raise ValidationError(filterset.errors)
+
+        return filterset.qs.values("id")
+
+    def _get_finding_level_filter_keys(self, latest: bool = False) -> set[str]:
+        """Derive filters that require querying raw findings."""
+        summary_filterset = (
+            LatestFindingGroupSummaryFilter if latest else FindingGroupSummaryFilter
+        )
+        finding_filterset = LatestFindingGroupFilter if latest else FindingGroupFilter
+
+        summary_supported = set(summary_filterset.base_filters.keys())
+        finding_supported = set(finding_filterset.base_filters.keys())
+        return finding_supported - summary_supported
+
+    def _requires_finding_level_aggregation(
+        self, params: QueryDict, latest: bool = False
+    ) -> bool:
+        finding_level_keys = self._get_finding_level_filter_keys(latest=latest)
+        return any(key in finding_level_keys for key in params.keys())
+
+    def _aggregate_daily_summaries(self, queryset):
+        """Re-aggregate summary rows by check_id."""
+        return queryset.values("check_id").annotate(
+            severity_order=Max("severity_order"),
+            pass_count=Sum("pass_count"),
+            fail_count=Sum("fail_count"),
+            muted_count=Sum("muted_count"),
+            new_count=Sum("new_count"),
+            changed_count=Sum("changed_count"),
+            resources_total=Sum("resources_total"),
+            resources_fail=Sum("resources_fail"),
+            impacted_providers_str=StringAgg(
+                Cast("provider__provider", CharField()),
+                delimiter=",",
+                distinct=True,
+                default="",
+            ),
+            agg_first_seen_at=Min("first_seen_at"),
+            agg_last_seen_at=Max("last_seen_at"),
+            agg_failing_since=Min("failing_since"),
+            check_title=Max("check_title"),
+            check_description=Max("check_description"),
+        )
+
+    def _aggregate_findings(self, queryset):
+        """Aggregate findings by check_id for finding-group endpoints."""
+        severity_case = Case(
+            *[
+                When(severity=severity, then=Value(order))
+                for severity, order in SEVERITY_ORDER.items()
+            ],
+            output_field=IntegerField(),
+        )
+
+        return queryset.values("check_id").annotate(
+            severity_order=Max(severity_case),
+            pass_count=Count("id", filter=Q(status="PASS", muted=False)),
+            fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
+            muted_count=Count("id", filter=Q(muted=True)),
+            new_count=Count("id", filter=Q(delta="new", muted=False)),
+            changed_count=Count("id", filter=Q(delta="changed", muted=False)),
+            resources_total=Count("resources__id", distinct=True),
+            resources_fail=Count(
+                "resources__id",
+                distinct=True,
+                filter=Q(status="FAIL", muted=False),
+            ),
+            impacted_providers_str=StringAgg(
+                Cast("scan__provider__provider", CharField()),
+                delimiter=",",
+                distinct=True,
+                default="",
+            ),
+            agg_first_seen_at=Min("first_seen_at"),
+            agg_last_seen_at=Max("inserted_at"),
+            agg_failing_since=Min(
+                "first_seen_at", filter=Q(status="FAIL", muted=False)
+            ),
+            check_title=Coalesce(
+                Max(KeyTextTransform("checktitle", "check_metadata")),
+                Max(KeyTextTransform("CheckTitle", "check_metadata")),
+                Max(KeyTextTransform("Checktitle", "check_metadata")),
+            ),
+            check_description=Coalesce(
+                Max(KeyTextTransform("description", "check_metadata")),
+                Max(KeyTextTransform("Description", "check_metadata")),
+            ),
+        )
+
+    def _split_computed_aggregate_filters(
+        self, params: QueryDict
+    ) -> tuple[QueryDict, QueryDict]:
+        """Split finding filters from computed aggregate filters."""
+        computed_keys = {
+            "status",
+            "status__in",
+            "severity",
+            "severity__in",
+            "include_muted",
+        }
+        finding_params = QueryDict(mutable=True)
+        computed_params = QueryDict(mutable=True)
+
+        for key, values in params.lists():
+            if key in computed_keys:
+                computed_params.setlist(key, values)
+            else:
+                finding_params.setlist(key, values)
+
+        return finding_params, computed_params
+
+    def _get_latest_findings_per_provider(self, filtered_queryset):
+        """Keep only findings from each provider's most recent completed scan."""
+        latest_scan_ids = (
+            Scan.objects.filter(
+                tenant_id=self.request.tenant_id,
+                state=StateChoices.COMPLETED,
+            )
+            .order_by("provider_id", "-completed_at", "-inserted_at")
+            .distinct("provider_id")
+            .values("id")
+        )
+        return filtered_queryset.filter(scan_id__in=latest_scan_ids)
+
+    def _post_process_aggregation(self, aggregated_data):
+        """
+        Post-process aggregation results to add computed fields.
+
+        - Converts severity integer back to string
+        - Computes aggregated status (FAIL > PASS > MUTED)
+        - Converts provider string to list
+        """
+        results = []
+        for row in aggregated_data:
+            # Convert severity order back to string
+            severity_order = row.get("severity_order", 1)
+            row["severity"] = SEVERITY_ORDER_REVERSE.get(
+                severity_order, "informational"
+            )
+
+            if "agg_first_seen_at" in row:
+                row["first_seen_at"] = row.pop("agg_first_seen_at")
+            if "agg_last_seen_at" in row:
+                row["last_seen_at"] = row.pop("agg_last_seen_at")
+            if "agg_failing_since" in row:
+                row["failing_since"] = row.pop("agg_failing_since")
+
+            # Compute aggregated status
+            if row.get("fail_count", 0) > 0:
+                row["status"] = "FAIL"
+            elif row.get("pass_count", 0) > 0:
+                row["status"] = "PASS"
+            else:
+                row["status"] = "MUTED"
+
+            # Convert provider string to list
+            providers_str = row.pop("impacted_providers_str", "") or ""
+            row["impacted_providers"] = [
+                p.strip() for p in providers_str.split(",") if p.strip()
+            ]
+
+            results.append(row)
+
+        return results
+
+    def _validate_sort_fields(self, sort_param):
+        """Validate and map JSON:API sort fields for aggregated finding groups."""
+        sort_field_map = {
+            "check_id": "check_id",
+            "check_title": "check_title",
+            "severity": "severity_order",
+            "fail_count": "fail_count",
+            "pass_count": "pass_count",
+            "muted_count": "muted_count",
+            "new_count": "new_count",
+            "changed_count": "changed_count",
+            "resources_total": "resources_total",
+            "resources_fail": "resources_fail",
+            "first_seen_at": "agg_first_seen_at",
+            "last_seen_at": "agg_last_seen_at",
+            "failing_since": "agg_failing_since",
+        }
+
+        ordering = []
+        for field in sort_param.split(","):
+            field = field.strip()
+            if not field:
+                continue
+            is_desc = field.startswith("-")
+            raw_field = field[1:] if is_desc else field
+            if raw_field not in sort_field_map:
+                # Validate sort fields explicitly to return JSON:API 400 instead of FieldError.
+                raise ValidationError(
+                    [
+                        {
+                            "detail": f"invalid sort parameter: {raw_field}",
+                            "status": "400",
+                            "source": {"pointer": "/data"},
+                            "code": "invalid",
+                        }
+                    ]
+                )
+            mapped_field = sort_field_map[raw_field]
+            ordering.append(f"-{mapped_field}" if is_desc else mapped_field)
+
+        return ordering
+
+    def _apply_aggregated_computed_filters(self, queryset, computed_params: QueryDict):
+        """Apply computed filters (status/severity) on aggregated finding-group rows."""
+        if not computed_params:
+            return queryset
+
+        if computed_params.get("status") or computed_params.getlist("status__in"):
+            queryset = queryset.annotate(
+                aggregated_status=Case(
+                    When(fail_count__gt=0, then=Value("FAIL")),
+                    When(pass_count__gt=0, then=Value("PASS")),
+                    default=Value("MUTED"),
+                    output_field=CharField(),
+                )
+            )
+
+        # Exclude fully-muted groups by default unless include_muted is set
+        if "include_muted" not in computed_params:
+            queryset = queryset.exclude(fail_count=0, pass_count=0, muted_count__gt=0)
+
+        filterset = FindingGroupAggregatedComputedFilter(
+            computed_params, queryset=queryset
+        )
+        if not filterset.is_valid():
+            raise ValidationError(filterset.errors)
+
+        return filterset.qs
+
+    def _build_resource_mapping_queryset(
+        self, filtered_queryset, resource_ids=None, tenant_id: str | None = None
+    ):
+        """
+        Build resource mapping queryset using a filtered findings subquery.
+
+        Starting from ResourceFindingMapping avoids scanning all mappings
+        before applying check_id/date filters on findings.
+        """
+        finding_ids = filtered_queryset.order_by().values("id")
+
+        mapping_queryset = ResourceFindingMapping.objects.filter(
+            finding_id__in=Subquery(finding_ids)
+        )
+        if tenant_id:
+            mapping_queryset = mapping_queryset.filter(tenant_id=tenant_id)
+        if resource_ids is not None:
+            if isinstance(resource_ids, QuerySet):
+                mapping_queryset = mapping_queryset.filter(
+                    resource_id__in=Subquery(resource_ids)
+                )
+            else:
+                mapping_queryset = mapping_queryset.filter(resource_id__in=resource_ids)
+
+        return mapping_queryset
+
+    def _build_resource_aggregation(
+        self, filtered_queryset, resource_ids=None, tenant_id: str | None = None
+    ):
+        """Build resource aggregation using a filtered findings subquery."""
+        mapping_queryset = self._build_resource_mapping_queryset(
+            filtered_queryset, resource_ids=resource_ids, tenant_id=tenant_id
+        )
+
+        return (
+            mapping_queryset.values("resource_id")
+            .annotate(
+                resource_uid=Max("resource__uid"),
+                resource_name=Max("resource__name"),
+                resource_service=Max("resource__service"),
+                resource_region=Max("resource__region"),
+                resource_type=Max("resource__type"),
+                provider_type=Max("resource__provider__provider"),
+                provider_uid=Max("resource__provider__uid"),
+                provider_alias=Max("resource__provider__alias"),
+                status_order=Max(
+                    Case(
+                        When(
+                            finding__status="FAIL",
+                            finding__muted=False,
+                            then=Value(3),
+                        ),
+                        When(
+                            finding__status="PASS",
+                            finding__muted=False,
+                            then=Value(2),
+                        ),
+                        default=Value(1),
+                        output_field=IntegerField(),
+                    )
+                ),
+                severity_order=Max(
+                    Case(
+                        *[
+                            When(finding__severity=severity, then=Value(order))
+                            for severity, order in SEVERITY_ORDER.items()
+                        ],
+                        output_field=IntegerField(),
+                    )
+                ),
+                first_seen_at=Min("finding__first_seen_at"),
+                last_seen_at=Max("finding__inserted_at"),
+                # Max() picks an arbitrary reason when a resource has multiple
+                # muted findings; this is acceptable because mute rules are
+                # applied per-check so all findings for the same resource
+                # share the same muted_reason in practice.
+                muted_reason=Max("finding__muted_reason"),
+            )
+            .filter(resource_id__isnull=False)
+            .order_by("resource_id")
+        )
+
+    def _post_process_resources(self, resource_data):
+        """Convert resource aggregation rows to API output."""
+        results = []
+        for row in resource_data:
+            severity_order = row.get("severity_order", 1)
+            status_order = row.get("status_order", 1)
+            if status_order == 3:
+                status = "FAIL"
+            elif status_order == 2:
+                status = "PASS"
+            else:
+                status = "MUTED"
+
+            results.append(
+                {
+                    "resource_id": row["resource_id"],
+                    "resource_uid": row["resource_uid"],
+                    "resource_name": row["resource_name"],
+                    "resource_service": row["resource_service"],
+                    "resource_region": row["resource_region"],
+                    "resource_type": row["resource_type"],
+                    "provider_type": row["provider_type"],
+                    "provider_uid": row["provider_uid"],
+                    "provider_alias": row["provider_alias"],
+                    "status": status,
+                    "severity": SEVERITY_ORDER_REVERSE.get(
+                        severity_order, "informational"
+                    ),
+                    "first_seen_at": row["first_seen_at"],
+                    "last_seen_at": row["last_seen_at"],
+                    "muted_reason": row.get("muted_reason"),
+                }
+            )
+
+        return results
+
+    def _build_aggregated_queryset(self, finding_params, latest=False):
+        """Select the summary or findings path and return an aggregated queryset."""
+        finding_filterset_class = (
+            LatestFindingGroupFilter if latest else FindingGroupFilter
+        )
+        summary_filterset_class = (
+            LatestFindingGroupSummaryFilter if latest else FindingGroupSummaryFilter
+        )
+
+        if self._requires_finding_level_aggregation(finding_params, latest=latest):
+            finding_queryset = self._get_finding_queryset()
+            filterset = finding_filterset_class(
+                finding_params, queryset=finding_queryset
+            )
+            if not filterset.is_valid():
+                raise ValidationError(filterset.errors)
+            filtered_queryset = filterset.qs
+            if latest:
+                filtered_queryset = self._get_latest_findings_per_provider(
+                    filtered_queryset
+                )
+            return self._aggregate_findings(filtered_queryset)
+
+        summary_queryset = self.get_queryset()
+        filterset = summary_filterset_class(finding_params, queryset=summary_queryset)
+        if not filterset.is_valid():
+            raise ValidationError(filterset.errors)
+        filtered_queryset = filterset.qs
+        # Only include summaries from each provider's most recent date
+        # (within the filtered range)
+        filtered_queryset = filtered_queryset.annotate(
+            _max_provider_date=Window(
+                expression=Max("inserted_at"),
+                partition_by=[F("provider_id")],
+            ),
+        ).filter(inserted_at=F("_max_provider_date"))
+        return self._aggregate_daily_summaries(filtered_queryset)
+
+    def _sorted_paginated_response(self, request, aggregated_queryset):
+        """Apply ordering, pagination, post-processing, and return the Response."""
+        sort_param = request.query_params.get("sort")
+        if sort_param:
+            ordering = self._validate_sort_fields(sort_param)
+            if ordering:
+                aggregated_queryset = aggregated_queryset.order_by(*ordering)
+        else:
+            aggregated_queryset = aggregated_queryset.order_by(
+                "-fail_count", "-severity_order", "check_id"
+            )
+
+        page = self.paginate_queryset(aggregated_queryset)
+        if page is not None:
+            processed_data = self._post_process_aggregation(page)
+            serializer = self.get_serializer(processed_data, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        processed_data = self._post_process_aggregation(aggregated_queryset)
+        serializer = self.get_serializer(processed_data, many=True)
+        return Response(serializer.data)
+
+    def list(self, request, *args, **kwargs):
+        """
+        List finding groups with aggregation and filtering.
+
+        Returns findings grouped by check_id with aggregated metrics.
+        Requires at least one date filter for performance.
+        Uses summaries when possible and raw findings for finding-level filters.
+        """
+        normalized_params = self._normalize_jsonapi_params(request.query_params)
+        finding_params, computed_params = self._split_computed_aggregate_filters(
+            normalized_params
+        )
+        aggregated_qs = self._build_aggregated_queryset(finding_params, latest=False)
+        aggregated_qs = self._apply_aggregated_computed_filters(
+            aggregated_qs, computed_params
+        )
+        return self._sorted_paginated_response(request, aggregated_qs)
+
+    @extend_schema(
+        summary="List latest finding groups",
+        description="""
+        Retrieve the latest available state for each finding group (check_id).
+
+        This endpoint returns finding groups without requiring date filters,
+        automatically using the latest available data per check_id.
+        All other filters (provider_id, provider_type, check_id) are still supported.
+        """,
+        tags=["Finding Groups"],
+    )
+    @action(detail=False, methods=["get"], url_name="latest")
+    def latest(self, request):
+        """
+        List the latest finding group state per check_id.
+
+        Returns findings grouped by check_id using latest data per
+        (check_id, provider), without requiring date filters.
+        """
+        normalized_params = self._normalize_jsonapi_params(request.query_params)
+        for key in list(normalized_params.keys()):
+            if key.startswith("inserted_at"):
+                del normalized_params[key]
+
+        finding_params, computed_params = self._split_computed_aggregate_filters(
+            normalized_params
+        )
+        aggregated_qs = self._build_aggregated_queryset(finding_params, latest=True)
+        aggregated_qs = self._apply_aggregated_computed_filters(
+            aggregated_qs, computed_params
+        )
+        return self._sorted_paginated_response(request, aggregated_qs)
+
+    @extend_schema(
+        summary="List resources for a finding group",
+        description="""
+        Retrieve resources affected by a specific check (finding group).
+
+        Returns individual resources with their current status, severity,
+        and timing information including how long they have been failing.
+        """,
+        tags=["Finding Groups"],
+        filters=True,
+    )
+    @action(detail=True, methods=["get"], url_path="resources")
+    def resources(self, request, pk=None):
+        """
+        List resources for a specific finding group (check_id).
+
+        Returns resources with their status, severity, and provider info
+        for the specified check_id. Uses Finding table for resource details.
+        """
+        check_id = pk
+        queryset = self._get_finding_queryset()
+
+        # Apply date filters from request to Finding queryset
+        normalized_params = self._normalize_jsonapi_params(request.query_params)
+        finding_params, resource_params = self._split_resource_filters(
+            normalized_params
+        )
+
+        filterset = FindingGroupFilter(finding_params, queryset=queryset)
+        if not filterset.is_valid():
+            raise ValidationError(filterset.errors)
+        filtered_queryset = filterset.qs
+
+        # Filter by check_id
+        filtered_queryset = filtered_queryset.filter(check_id=check_id)
+
+        # Check if any findings exist for this check_id
+        if not filtered_queryset.exists():
+            raise NotFound(f"Finding group '{check_id}' not found.")
+
+        resource_ids = self._resource_ids_from_params(
+            resource_params, request.tenant_id
+        )
+        mapping_queryset = self._build_resource_mapping_queryset(
+            filtered_queryset,
+            resource_ids=resource_ids,
+            tenant_id=request.tenant_id,
+        )
+        resource_id_queryset = (
+            mapping_queryset.values_list("resource_id", flat=True)
+            .distinct()
+            .order_by("resource_id")
+        )
+
+        page_ids = self.paginate_queryset(resource_id_queryset)
+        if page_ids is not None:
+            resource_data = self._build_resource_aggregation(
+                filtered_queryset,
+                resource_ids=page_ids,
+                tenant_id=request.tenant_id,
+            )
+            results = self._post_process_resources(resource_data)
+            serializer = FindingGroupResourceSerializer(results, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        resource_data = self._build_resource_aggregation(
+            filtered_queryset,
+            resource_ids=resource_ids,
+            tenant_id=request.tenant_id,
+        )
+        results = self._post_process_resources(resource_data)
+        serializer = FindingGroupResourceSerializer(results, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="List resources for a finding group from latest scans",
+        description="""
+        Retrieve resources affected by a specific check (finding group) from the
+        latest completed scan for each provider.
+
+        Returns individual resources with their current status, severity,
+        and timing information. No date filters required.
+        """,
+        tags=["Finding Groups"],
+        filters=True,
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="latest/(?P<check_id>[^/.]+)/resources",
+        url_name="latest_resources",
+    )
+    def latest_resources(self, request, check_id=None):
+        """
+        List resources for a specific finding group from the latest scan.
+
+        Similar to `resources` but automatically filters to only include
+        findings from the most recent completed scan for each provider.
+        """
+        tenant_id = request.tenant_id
+        queryset = self._get_finding_queryset()
+
+        # Get latest completed scan for each provider
+        latest_scan_ids = (
+            Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+
+        normalized_params = self._normalize_jsonapi_params(request.query_params)
+        # Remove date filters since we're using latest
+        for key in list(normalized_params.keys()):
+            if key.startswith("inserted_at"):
+                del normalized_params[key]
+
+        finding_params, resource_params = self._split_resource_filters(
+            normalized_params
+        )
+
+        filterset = LatestFindingGroupFilter(finding_params, queryset=queryset)
+        if not filterset.is_valid():
+            raise ValidationError(filterset.errors)
+        filtered_queryset = filterset.qs
+
+        # Filter to latest scans and check_id
+        filtered_queryset = filtered_queryset.filter(
+            scan_id__in=latest_scan_ids,
+            check_id=check_id,
+        )
+
+        # Check if any findings exist for this check_id
+        if not filtered_queryset.exists():
+            raise NotFound(f"Finding group '{check_id}' not found.")
+
+        resource_ids = self._resource_ids_from_params(
+            resource_params, request.tenant_id
+        )
+        mapping_queryset = self._build_resource_mapping_queryset(
+            filtered_queryset,
+            resource_ids=resource_ids,
+            tenant_id=request.tenant_id,
+        )
+        resource_id_queryset = (
+            mapping_queryset.values_list("resource_id", flat=True)
+            .distinct()
+            .order_by("resource_id")
+        )
+
+        page_ids = self.paginate_queryset(resource_id_queryset)
+        if page_ids is not None:
+            resource_data = self._build_resource_aggregation(
+                filtered_queryset,
+                resource_ids=page_ids,
+                tenant_id=request.tenant_id,
+            )
+            results = self._post_process_resources(resource_data)
+            serializer = FindingGroupResourceSerializer(results, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        resource_data = self._build_resource_aggregation(
+            filtered_queryset,
+            resource_ids=resource_ids,
+            tenant_id=request.tenant_id,
+        )
+        results = self._post_process_resources(resource_data)
+        serializer = FindingGroupResourceSerializer(results, many=True)
+        return Response(serializer.data)

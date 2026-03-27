@@ -5,7 +5,7 @@ import { TreeDataItem } from "@/types/tree";
  * Used to calculate consistent padding for nested tree items.
  */
 export const TREE_INDENT_REM = 1.25;
-export const TREE_LEAF_EXTRA_PADDING_REM = 1.5;
+export const TREE_LEAF_EXTRA_PADDING_REM = 1.75;
 
 /**
  * Calculates the left padding for a tree node based on its nesting level.

@@ -84,8 +84,8 @@ class Test_network_watcher_enabled:
                 == f"Network Watcher is not enabled for the following locations in subscription '{AZURE_SUBSCRIPTION_NAME}': location."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_NAME
-            assert result[0].resource_name == network_watcher_name
-            assert result[0].resource_id == network_watcher_id
+            assert result[0].resource_name == AZURE_SUBSCRIPTION_NAME
+            assert result[0].resource_id == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
             assert result[0].location == "global"
 
     def test_network_valid_network_watchers(self):
@@ -131,9 +131,8 @@ class Test_network_watcher_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Network Watcher is enabled for all locations in subscription '{AZURE_SUBSCRIPTION_NAME}'."
+                == f"Network Watcher {network_watcher_name} is enabled in location location in subscription '{AZURE_SUBSCRIPTION_NAME}'."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_NAME
             assert result[0].resource_name == network_watcher_name
             assert result[0].resource_id == network_watcher_id
-            assert result[0].location == "global"

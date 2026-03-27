@@ -163,3 +163,6 @@ GEMINI.md
 .codex/skills
 .github/skills
 .gemini/skills
+
+# Claude Code
+.claude/*

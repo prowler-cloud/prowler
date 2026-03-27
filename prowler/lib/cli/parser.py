@@ -27,16 +27,17 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,dashboard,iac,image} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,dashboard,iac,image} ...",
             epilog="""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes,m365,github,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack}
+  {aws,azure,gcp,kubernetes,m365,github,googleworkspace,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
     kubernetes          Kubernetes Provider
     m365                Microsoft 365 Provider
     github              GitHub Provider
+    googleworkspace     Google Workspace Provider
     cloudflare          Cloudflare Provider
     oraclecloud         Oracle Cloud Infrastructure Provider
     openstack           OpenStack Provider
@@ -214,6 +215,16 @@ Detailed documentation at https://docs.prowler.com
             action="store_true",
             default=False,
             help="Set the output timestamp format as unix timestamps instead of iso format timestamps (default mode).",
+        )
+        common_outputs_parser.add_argument(
+            "--push-to-cloud",
+            action="store_true",
+            help=(
+                "Send findings in OCSF format to Prowler Cloud. "
+                "Requires PROWLER_CLOUD_API_KEY environment variable. "
+                "For the IaC provider, --provider-uid is also required. "
+                "More details here: https://goto.prowler.com/import-findings"
+            ),
         )
 
     def __init_logging_parser__(self):

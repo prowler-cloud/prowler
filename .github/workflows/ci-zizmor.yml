@@ -1,0 +1,49 @@
+name: 'CI: Zizmor'
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - '.github/**'
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - '.github/**'
+  schedule:
+    - cron: '30 06 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  zizmor:
+    if: github.repository == 'prowler-cloud/prowler'
+    name: GitHub Actions Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@0dce2577a4760a2749d8cfb7a84b7d5585ebcb7d # v0.5.0
+        with:
+          token: ${{ github.token }}

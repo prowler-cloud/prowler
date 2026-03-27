@@ -19,7 +19,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/high_availability_origin_failover.html#concept_origin_groups.creating",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-4",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/origin-failover-enabled.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudFront/origin-failover-enabled.html"
   ],
   "Remediation": {
     "Code": {

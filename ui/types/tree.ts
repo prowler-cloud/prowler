@@ -35,6 +35,8 @@ export interface TreeDataItem {
   isLoading?: boolean;
   /** Status indicator shown after loading (success/error) */
   status?: TreeItemStatus;
+  /** Optional error detail used by status icon tooltip */
+  errorMessage?: string;
   /** Additional CSS classes for the item */
   className?: string;
 }
@@ -97,7 +99,6 @@ export interface TreeNodeProps {
   onExpandedChange: (ids: string[]) => void;
   showCheckboxes: boolean;
   renderItem?: (params: TreeRenderItemParams) => React.ReactNode;
-  expandAll: boolean;
   enableSelectChildren: boolean;
 }
 

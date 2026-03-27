@@ -1,6 +1,7 @@
 name: 'Tools: PR Merged'
 
 on:
+  # zizmor: ignore[dangerous-triggers] - intentional: needs read access to merged PR metadata, no PR code checkout
   pull_request_target:
     branches:
       - 'master'
@@ -22,11 +23,18 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Calculate short commit SHA
         id: vars
         run: |
-          SHORT_SHA="${{ github.event.pull_request.merge_commit_sha }}"
-          echo "SHORT_SHA=${SHORT_SHA::7}" >> $GITHUB_ENV
+          SHORT_SHA="${GITHUB_EVENT_PULL_REQUEST_MERGE_COMMIT_SHA}"
+          echo "short_sha=${SHORT_SHA::7}" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_EVENT_PULL_REQUEST_MERGE_COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
 
       - name: Trigger Cloud repository pull request
         uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
@@ -37,7 +45,7 @@ jobs:
           client-payload: |
             {
               "PROWLER_COMMIT_SHA": "${{ github.event.pull_request.merge_commit_sha }}",
-              "PROWLER_COMMIT_SHORT_SHA": "${{ env.SHORT_SHA }}",
+              "PROWLER_COMMIT_SHORT_SHA": "${{ steps.vars.outputs.short_sha }}",
               "PROWLER_PR_NUMBER": "${{ github.event.pull_request.number }}",
               "PROWLER_PR_TITLE": ${{ toJson(github.event.pull_request.title) }},
               "PROWLER_PR_LABELS": ${{ toJson(github.event.pull_request.labels.*.name) }},

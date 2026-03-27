@@ -17,7 +17,7 @@
   "Risk": "Without **OAC**, S3 objects can be reached outside CloudFront, bypassing edge controls and weakening **confidentiality** and **integrity**.\n- Direct access enables data exfiltration\n- Loss of WAF, rate-limiting, and detailed logging; cost abuse\n- Limited support for signed writes and **SSE-KMS**, increasing tampering risk",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/s3-origin.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudFront/s3-origin.html",
     "https://repost.aws/knowledge-center/cloudfront-access-to-amazon-s3",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-13",
     "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html"

@@ -931,6 +931,56 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_image_assessment_summary(provider: Provider) -> str:
+        """
+        get_image_assessment_summary gets the HTML assessment summary for the Image provider
+
+        Args:
+            provider (Provider): the Image provider object
+
+        Returns:
+            str: the HTML assessment summary
+        """
+        try:
+            if provider.registry:
+                target_info = f"<b>Registry URL:</b> {provider.registry}"
+            else:
+                target_info = f'<b>Images:</b> {", ".join(provider.images)}'
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Image Assessment Summary
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                {target_info}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Image Credentials
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Image authentication method:</b> {provider.auth_method}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_llm_assessment_summary(provider: Provider) -> str:
         """
         get_llm_assessment_summary gets the HTML assessment summary for the LLM provider
@@ -1223,6 +1273,55 @@ class HTML(Output):
                                 <b>Username:</b> {username}
                             </li>
                             {user_id_item}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_googleworkspace_assessment_summary(provider: Provider) -> str:
+        """
+        get_googleworkspace_assessment_summary gets the HTML assessment summary for the Google Workspace provider
+
+        Args:
+            provider (Provider): the Google Workspace provider object
+
+        Returns:
+            str: HTML assessment summary for the Google Workspace provider
+        """
+        try:
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Google Workspace Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Domain:</b> {provider.identity.domain}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Customer ID:</b> {provider.identity.customer_id}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Google Workspace Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Delegated User:</b> {provider.identity.delegated_user}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Authentication Method:</b> Service Account with Domain-Wide Delegation
+                            </li>
                         </ul>
                     </div>
                 </div>"""

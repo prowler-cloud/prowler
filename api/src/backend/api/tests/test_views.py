@@ -30,6 +30,7 @@ from django.test import RequestFactory
 from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from api.attack_paths import (
@@ -806,6 +807,63 @@ class TestTenantViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    def test_tenants_list_no_permissions(
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
+    ):
+        response = authenticated_client_no_permissions_rbac.get(reverse("tenant-list"))
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_tenants_retrieve_no_permissions(
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
+    ):
+        tenant1, *_ = tenants_fixture
+        response = authenticated_client_no_permissions_rbac.get(
+            reverse("tenant-detail", kwargs={"pk": tenant1.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_tenants_create_no_permissions(
+        self, authenticated_client_no_permissions_rbac, valid_tenant_payload
+    ):
+        response = authenticated_client_no_permissions_rbac.post(
+            reverse("tenant-list"),
+            data=valid_tenant_payload,
+            format="json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+    def test_tenants_partial_update_no_permissions(
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
+    ):
+        tenant1, *_ = tenants_fixture
+        payload = {
+            "data": {
+                "type": "tenants",
+                "id": str(tenant1.id),
+                "attributes": {"name": "Unauthorized update"},
+            },
+        }
+        response = authenticated_client_no_permissions_rbac.patch(
+            reverse("tenant-detail", kwargs={"pk": tenant1.id}),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @patch("api.v1.views.delete_tenant_task.apply_async")
+    def test_tenants_delete_no_permissions(
+        self,
+        delete_tenant_mock,
+        authenticated_client_no_permissions_rbac,
+        tenants_fixture,
+    ):
+        tenant1, *_ = tenants_fixture
+        response = authenticated_client_no_permissions_rbac.delete(
+            reverse("tenant-detail", kwargs={"pk": tenant1.id})
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        delete_tenant_mock.assert_not_called()
+
 
 @pytest.mark.django_db
 class TestMembershipViewSet:
@@ -1080,6 +1138,11 @@ class TestProviderViewSet:
                 {"provider": "aws", "uid": "111111111111", "alias": "test"},
                 {"provider": "gcp", "uid": "a12322-test54321", "alias": "test"},
                 {
+                    "provider": "gcp",
+                    "uid": "example.com:my-project-123456",
+                    "alias": "legacy-gcp",
+                },
+                {
                     "provider": "kubernetes",
                     "uid": "kubernetes-test-123456789",
                     "alias": "test",
@@ -1184,6 +1247,26 @@ class TestProviderViewSet:
                     "uid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                     "alias": "OpenStack Project",
                 },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C01234abc",
+                    "alias": "Google Workspace Customer",
+                },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C12345678",
+                    "alias": "Google Workspace All Digits",
+                },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "CABCDEF123",
+                    "alias": "Google Workspace Uppercase",
+                },
+                {
+                    "provider": "googleworkspace",
+                    "uid": "C12",
+                    "alias": "Google Workspace Minimum Length",
+                },
             ]
         ),
     )
@@ -1203,6 +1286,11 @@ class TestProviderViewSet:
             [
                 {"provider": "aws", "uid": "111111111111", "alias": "test"},
                 {"provider": "gcp", "uid": "a12322-test54321", "alias": "test"},
+                {
+                    "provider": "gcp",
+                    "uid": "example.com:my-project-123456",
+                    "alias": "legacy-gcp",
+                },
                 {
                     "provider": "kubernetes",
                     "uid": "kubernetes-test-123456789",
@@ -1331,7 +1419,11 @@ class TestProviderViewSet:
         response = authenticated_client.post(
             reverse("provider-list"), data=provider_json_payload, format="json"
         )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_409_CONFLICT
+        error = response.json()["errors"][0]
+        assert error["detail"] == "Provider already exists."
+        assert error["code"] == "conflict"
+        assert error["source"]["pointer"] == "/data/attributes/uid"
 
         mock_delete_task.reset_mock()
         mock_delete_task.return_value = task_mock
@@ -1623,6 +1715,36 @@ class TestProviderViewSet:
                     "min_length",
                     "uid",
                 ),
+                # Google Workspace UID validation - missing 'C' prefix
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "01234abc",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - contains special characters
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "C0123-abc",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
+                # Google Workspace UID validation - lowercase 'c' prefix
+                (
+                    {
+                        "provider": "googleworkspace",
+                        "uid": "c12345678",
+                        "alias": "test",
+                    },
+                    "googleworkspace-uid",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -1796,21 +1918,21 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    10,
+                    11,
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 11),
+                ("inserted_at", TODAY, 12),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    11,
+                    12,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    11,
+                    12,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2426,6 +2548,15 @@ class TestProviderSecretViewSet:
                     "clouds_yaml_cloud": "mycloud",
                 },
             ),
+            # Google Workspace with service account credentials
+            (
+                Provider.ProviderChoices.GOOGLEWORKSPACE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "credentials_content": '{"type": "service_account", "project_id": "test-project", "private_key_id": "key123", "private_key": "-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----\\n", "client_email": "test@test-project.iam.gserviceaccount.com", "client_id": "123456789"}',
+                    "delegated_user": "admin@example.com",
+                },
+            ),
         ],
     )
     def test_provider_secrets_create_valid(
@@ -3035,21 +3166,21 @@ class TestScanViewSet:
             [
                 ("provider_type", "aws", 3),
                 ("provider_type.in", "gcp,azure", 0),
-                ("provider_uid", "123456789012", 2),
+                ("provider_uid", "123456789012", 1),
                 ("provider_uid.icontains", "1", 3),
                 ("provider_uid.in", "123456789012,123456789013", 3),
-                ("provider_alias", "aws_testing_1", 2),
+                ("provider_alias", "aws_testing_1", 1),
                 ("provider_alias.icontains", "aws", 3),
                 ("provider_alias.in", "aws_testing_1,aws_testing_2", 3),
                 ("name", "Scan 1", 1),
                 ("name.icontains", "Scan", 3),
-                ("started_at", "2024-01-02", 3),
+                ("started_at", "2024-01-02", 1),
                 ("started_at.gte", "2024-01-01", 3),
                 ("started_at.lte", "2024-01-01", 0),
                 ("trigger", Scan.TriggerChoices.MANUAL, 1),
                 ("state", StateChoices.AVAILABLE, 1),
-                ("state", StateChoices.FAILED, 1),
-                ("state.in", f"{StateChoices.FAILED},{StateChoices.AVAILABLE}", 2),
+                ("state", StateChoices.FAILED, 0),
+                ("state.in", f"{StateChoices.FAILED},{StateChoices.AVAILABLE}", 1),
                 ("trigger", Scan.TriggerChoices.MANUAL, 1),
             ]
         ),
@@ -3092,20 +3223,52 @@ class TestScanViewSet:
             {"filter[provider]": scans_fixture[0].provider.id},
         )
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == 2
+        assert len(response.json()["data"]) == 1
 
     def test_scan_filter_by_provider_id_in(self, authenticated_client, scans_fixture):
         response = authenticated_client.get(
             reverse("scan-list"),
             {
-                "filter[provider.in]": [
-                    scans_fixture[0].provider.id,
-                    scans_fixture[1].provider.id,
-                ]
+                "filter[provider.in]": f"{scans_fixture[0].provider.id},{scans_fixture[1].provider.id}",
             },
         )
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == 2
+        assert len(response.json()["data"]) == 3
+
+    def test_scans_filter_state_failed(self, authenticated_client, scans_fixture):
+        """Ensure state filter matches only FAILED scans."""
+        scan1, *_ = scans_fixture
+        failed_scan = Scan.objects.create(
+            name="Scan Failed",
+            provider=scan1.provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.FAILED,
+            tenant_id=scan1.tenant_id,
+        )
+        response = authenticated_client.get(
+            reverse("scan-list"),
+            {"filter[state]": StateChoices.FAILED},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == str(failed_scan.id)
+
+    def test_scans_filter_provider_alias_exact(
+        self, authenticated_client, scans_fixture
+    ):
+        """Ensure provider_alias filter returns all scans for that provider."""
+        scan1, *_ = scans_fixture
+        response = authenticated_client.get(
+            reverse("scan-list"),
+            {"filter[provider_alias]": scan1.provider.alias},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["relationships"]["provider"]["data"]["id"] == str(
+            scan1.provider.id
+        )
 
     @pytest.mark.parametrize(
         "sort_field",
@@ -3704,6 +3867,12 @@ class TestTaskViewSet:
 
 @pytest.mark.django_db
 class TestAttackPathsScanViewSet:
+    @pytest.fixture(autouse=True)
+    def _clear_throttle_cache(self):
+        from django.core.cache import cache
+
+        cache.clear()
+
     @staticmethod
     def _run_payload(query_id="aws-rds", parameters=None):
         return {
@@ -3951,6 +4120,8 @@ class TestAttackPathsScanViewSet:
                     "properties": {},
                 }
             ],
+            "total_nodes": 1,
+            "truncated": False,
         }
 
         expected_db_name = f"db-tenant-{attack_paths_scan.provider.tenant_id}"
@@ -3964,11 +4135,11 @@ class TestAttackPathsScanViewSet:
                 return_value=expected_db_name,
             ) as mock_get_db_name,
             patch(
-                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                "api.v1.views.attack_paths_views_helpers.prepare_parameters",
                 return_value=prepared_parameters,
             ) as mock_prepare,
             patch(
-                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
+                "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value=graph_payload,
             ) as mock_execute,
             patch("api.v1.views.graph_database.clear_cache") as mock_clear_cache,
@@ -3985,21 +4156,92 @@ class TestAttackPathsScanViewSet:
         assert response.status_code == status.HTTP_200_OK
         mock_get_query.assert_called_once_with("aws-rds")
         mock_get_db_name.assert_called_once_with(attack_paths_scan.provider.tenant_id)
+        provider_id = str(attack_paths_scan.provider_id)
         mock_prepare.assert_called_once_with(
             query_definition,
             {},
             attack_paths_scan.provider.uid,
+            provider_id,
         )
         mock_execute.assert_called_once_with(
             expected_db_name,
             query_definition,
             prepared_parameters,
+            provider_id,
         )
         mock_clear_cache.assert_called_once_with(expected_db_name)
         result = response.json()["data"]
         attributes = result["attributes"]
         assert attributes["nodes"] == graph_payload["nodes"]
         assert attributes["relationships"] == graph_payload["relationships"]
+
+    def test_run_attack_paths_query_returns_text_when_accept_text_plain(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+        query_definition = AttackPathsQueryDefinition(
+            id="aws-rds",
+            name="RDS inventory",
+            short_description="List account RDS assets.",
+            description="List account RDS assets",
+            provider=provider.provider,
+            cypher="MATCH (n) RETURN n",
+            parameters=[],
+        )
+        graph_payload = {
+            "nodes": [
+                {
+                    "id": "node-1",
+                    "labels": ["AWSAccount"],
+                    "properties": {"name": "root"},
+                }
+            ],
+            "relationships": [],
+            "total_nodes": 1,
+            "truncated": False,
+        }
+
+        with (
+            patch("api.v1.views.get_query_by_id", return_value=query_definition),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+            patch(
+                "api.v1.views.attack_paths_views_helpers.prepare_parameters",
+                return_value={"provider_uid": provider.uid},
+            ),
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_query",
+                return_value=graph_payload,
+            ),
+            patch("api.v1.views.graph_database.clear_cache"),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-run",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._run_payload("aws-rds"),
+                content_type=API_JSON_CONTENT_TYPE,
+                HTTP_ACCEPT="text/plain",
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response["Content-Type"] == "text/plain"
+        body = response.content.decode()
+        assert "## Nodes (1)" in body
+        assert "## Relationships (0)" in body
+        assert "## Summary" in body
 
     def test_run_attack_paths_query_blocks_when_graph_data_not_ready(
         self,
@@ -4054,14 +4296,16 @@ class TestAttackPathsScanViewSet:
         with (
             patch("api.v1.views.get_query_by_id", return_value=query_definition),
             patch(
-                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                "api.v1.views.attack_paths_views_helpers.prepare_parameters",
                 return_value={"provider_uid": provider.uid},
             ),
             patch(
-                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
+                "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value={
                     "nodes": [{"id": "n1", "labels": ["AWSAccount"], "properties": {}}],
                     "relationships": [],
+                    "total_nodes": 1,
+                    "truncated": False,
                 },
             ),
             patch("api.v1.views.graph_database.clear_cache"),
@@ -4107,14 +4351,16 @@ class TestAttackPathsScanViewSet:
         with (
             patch("api.v1.views.get_query_by_id", return_value=query_definition),
             patch(
-                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                "api.v1.views.attack_paths_views_helpers.prepare_parameters",
                 return_value={"provider_uid": provider.uid},
             ),
             patch(
-                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
+                "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value={
                     "nodes": [{"id": "n1", "labels": ["AWSAccount"], "properties": {}}],
                     "relationships": [],
+                    "total_nodes": 1,
+                    "truncated": False,
                 },
             ),
             patch("api.v1.views.graph_database.clear_cache"),
@@ -4185,12 +4431,17 @@ class TestAttackPathsScanViewSet:
         with (
             patch("api.v1.views.get_query_by_id", return_value=query_definition),
             patch(
-                "api.v1.views.attack_paths_views_helpers.prepare_query_parameters",
+                "api.v1.views.attack_paths_views_helpers.prepare_parameters",
                 return_value={"provider_uid": provider.uid},
             ),
             patch(
-                "api.v1.views.attack_paths_views_helpers.execute_attack_paths_query",
-                return_value={"nodes": [], "relationships": []},
+                "api.v1.views.attack_paths_views_helpers.execute_query",
+                return_value={
+                    "nodes": [],
+                    "relationships": [],
+                    "total_nodes": 0,
+                    "truncated": False,
+                },
             ),
             patch("api.v1.views.graph_database.clear_cache"),
         ):
@@ -4211,6 +4462,675 @@ class TestAttackPathsScanViewSet:
             assert attributes.get("relationships") == []
         else:
             assert "errors" in payload
+
+    # -- run_custom_attack_paths_query action ------------------------------------
+
+    @staticmethod
+    def _custom_query_payload(query="MATCH (n) RETURN n"):
+        return {
+            "data": {
+                "type": "attack-paths-custom-query-run-requests",
+                "attributes": {"query": query},
+            }
+        }
+
+    def test_run_custom_query_returns_graph(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+        graph_payload = {
+            "nodes": [
+                {
+                    "id": "node-1",
+                    "labels": ["AWSAccount"],
+                    "properties": {"name": "root"},
+                }
+            ],
+            "relationships": [],
+            "total_nodes": 1,
+            "truncated": False,
+        }
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                return_value=graph_payload,
+            ) as mock_execute,
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+            patch("api.v1.views.graph_database.clear_cache"),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_execute.assert_called_once_with(
+            "db-test",
+            "MATCH (n) RETURN n",
+            str(attack_paths_scan.provider_id),
+        )
+        attributes = response.json()["data"]["attributes"]
+        assert len(attributes["nodes"]) == 1
+        assert attributes["total_nodes"] == 1
+        assert attributes["truncated"] is False
+
+    def test_run_custom_query_returns_text_when_accept_text_plain(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+        graph_payload = {
+            "nodes": [
+                {
+                    "id": "node-1",
+                    "labels": ["AWSAccount"],
+                    "properties": {"name": "root"},
+                }
+            ],
+            "relationships": [],
+            "total_nodes": 1,
+            "truncated": False,
+        }
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                return_value=graph_payload,
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+            patch("api.v1.views.graph_database.clear_cache"),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+                HTTP_ACCEPT="text/plain",
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response["Content-Type"] == "text/plain"
+        body = response.content.decode()
+        assert "## Nodes (1)" in body
+        assert "## Relationships (0)" in body
+        assert "## Summary" in body
+
+    def test_run_custom_query_returns_404_when_no_nodes(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                return_value={
+                    "nodes": [],
+                    "relationships": [],
+                    "total_nodes": 0,
+                    "truncated": False,
+                },
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+            patch("api.v1.views.graph_database.clear_cache"),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_run_custom_query_returns_400_when_graph_not_ready(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=False,
+        )
+
+        response = authenticated_client.post(
+            reverse(
+                "attack-paths-scans-queries-custom",
+                kwargs={"pk": attack_paths_scan.id},
+            ),
+            data=self._custom_query_payload(),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "not available" in response.json()["errors"][0]["detail"]
+
+    def test_run_custom_query_returns_403_for_write_query(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                side_effect=PermissionDenied(
+                    "Attack Paths query execution failed: read-only queries are enforced"
+                ),
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload("CREATE (n) RETURN n"),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    # -- SSRF blocklist (HTTP level) ----------------------------------------------
+
+    @pytest.mark.parametrize(
+        "cypher",
+        [
+            "LOAD CSV FROM 'http://169.254.169.254/' AS x RETURN x",
+            "CALL apoc.load.json('http://evil.com/') YIELD value RETURN value",
+            "CALL apoc.import.csv([{fileName: 'f'}], [], {}) YIELD node RETURN node",
+            "CALL apoc.export.csv.all('file.csv', {})",
+            "CALL apoc.cypher.run('CREATE (n)', {}) YIELD value RETURN value",
+            "CALL apoc.systemdb.graph() YIELD nodes RETURN nodes",
+        ],
+        ids=[
+            "LOAD_CSV",
+            "apoc.load",
+            "apoc.import",
+            "apoc.export",
+            "apoc.cypher.run",
+            "apoc.systemdb",
+        ],
+    )
+    def test_run_custom_query_rejects_ssrf_patterns(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+        cypher,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with patch(
+            "api.v1.views.graph_database.get_database_name",
+            return_value="db-test",
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(cypher),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "blocked" in response.json()["errors"][0]["detail"].lower()
+
+    # -- Cross-tenant isolation ---------------------------------------------------
+
+    def test_run_custom_query_returns_404_for_foreign_tenant(
+        self,
+        authenticated_client,
+        create_attack_paths_scan,
+    ):
+        from api.models import Provider, Tenant
+
+        foreign_tenant = Tenant.objects.create(name="foreign-tenant")
+        foreign_provider = Provider.objects.create(
+            tenant=foreign_tenant,
+            provider="aws",
+            uid="123456789999",
+        )
+        attack_paths_scan = create_attack_paths_scan(
+            foreign_provider,
+            graph_data_ready=True,
+        )
+
+        with patch(
+            "api.v1.views.graph_database.get_database_name",
+            return_value="db-test",
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_cartography_schema_returns_404_for_foreign_tenant(
+        self,
+        authenticated_client,
+        create_attack_paths_scan,
+    ):
+        from api.models import Provider, Tenant
+
+        foreign_tenant = Tenant.objects.create(name="foreign-tenant-schema")
+        foreign_provider = Provider.objects.create(
+            tenant=foreign_tenant,
+            provider="aws",
+            uid="123456789998",
+        )
+        attack_paths_scan = create_attack_paths_scan(
+            foreign_provider,
+            graph_data_ready=True,
+        )
+
+        response = authenticated_client.get(
+            reverse(
+                "attack-paths-scans-schema",
+                kwargs={"pk": attack_paths_scan.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    # -- Authentication / authorization -------------------------------------------
+
+    def test_run_custom_query_returns_401_unauthenticated(
+        self,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        from rest_framework.test import APIClient
+
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        unauthenticated = APIClient()
+        response = unauthenticated.post(
+            reverse(
+                "attack-paths-scans-queries-custom",
+                kwargs={"pk": attack_paths_scan.id},
+            ),
+            data=self._custom_query_payload(),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_cartography_schema_returns_401_unauthenticated(
+        self,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        from rest_framework.test import APIClient
+
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        unauthenticated = APIClient()
+        response = unauthenticated.get(
+            reverse(
+                "attack-paths-scans-schema",
+                kwargs={"pk": attack_paths_scan.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_run_custom_query_returns_403_no_manage_scans(
+        self,
+        authenticated_client_no_permissions_rbac,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        response = authenticated_client_no_permissions_rbac.post(
+            reverse(
+                "attack-paths-scans-queries-custom",
+                kwargs={"pk": attack_paths_scan.id},
+            ),
+            data=self._custom_query_payload(),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    # -- Error leakage ------------------------------------------------------------
+
+    def test_run_custom_query_does_not_leak_internals_on_error(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        from rest_framework.exceptions import APIException
+
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                side_effect=APIException(
+                    "Attack Paths query execution failed due to a database error"
+                ),
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        body = json.dumps(response.json()).lower()
+        for forbidden_term in ["neo4j", "bolt://", "syntaxerror", "db-tenant-"]:
+            assert forbidden_term not in body
+
+    # -- Rate limiting (throttle) -------------------------------------------------
+
+    def test_run_custom_query_throttled_after_limit(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        mock_graph = {
+            "nodes": [{"id": "n1", "labels": ["Test"], "properties": {}}],
+            "relationships": [],
+            "total_nodes": 1,
+            "truncated": False,
+        }
+
+        url = reverse(
+            "attack-paths-scans-queries-custom",
+            kwargs={"pk": attack_paths_scan.id},
+        )
+        payload = self._custom_query_payload()
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                return_value=mock_graph,
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+            patch(
+                "api.v1.views.graph_database.clear_cache",
+            ),
+        ):
+            for i in range(11):
+                response = authenticated_client.post(
+                    url,
+                    data=payload,
+                    content_type=API_JSON_CONTENT_TYPE,
+                )
+                if i < 10:
+                    assert (
+                        response.status_code == status.HTTP_200_OK
+                    ), f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
+                else:
+                    assert (
+                        response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+                    ), f"Request {i + 1} should be throttled"
+
+    # -- Timeout simulation -------------------------------------------------------
+
+    def test_run_custom_query_returns_500_on_database_timeout(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        from rest_framework.exceptions import APIException
+
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.execute_custom_query",
+                side_effect=APIException(
+                    "Attack Paths query execution failed due to a database error"
+                ),
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+        ):
+            response = authenticated_client.post(
+                reverse(
+                    "attack-paths-scans-queries-custom",
+                    kwargs={"pk": attack_paths_scan.id},
+                ),
+                data=self._custom_query_payload(),
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
+    # -- cartography_schema action ------------------------------------------------
+
+    def test_cartography_schema_returns_urls(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        schema_data = {
+            "id": "aws-0.129.0",
+            "provider": "aws",
+            "cartography_version": "0.129.0",
+            "schema_url": "https://github.com/cartography-cncf/cartography/blob/0.129.0/docs/root/modules/aws/schema.md",
+            "raw_schema_url": "https://raw.githubusercontent.com/cartography-cncf/cartography/refs/tags/0.129.0/docs/root/modules/aws/schema.md",
+        }
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.get_cartography_schema",
+                return_value=schema_data,
+            ) as mock_get_schema,
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+        ):
+            response = authenticated_client.get(
+                reverse(
+                    "attack-paths-scans-schema",
+                    kwargs={"pk": attack_paths_scan.id},
+                )
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_get_schema.assert_called_once_with(
+            "db-test", str(attack_paths_scan.provider_id)
+        )
+        attributes = response.json()["data"]["attributes"]
+        assert attributes["provider"] == "aws"
+        assert attributes["cartography_version"] == "0.129.0"
+        assert "schema.md" in attributes["schema_url"]
+        assert "raw.githubusercontent.com" in attributes["raw_schema_url"]
+
+    def test_cartography_schema_returns_404_when_no_metadata(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=True,
+        )
+
+        with (
+            patch(
+                "api.v1.views.attack_paths_views_helpers.get_cartography_schema",
+                return_value=None,
+            ),
+            patch(
+                "api.v1.views.graph_database.get_database_name",
+                return_value="db-test",
+            ),
+        ):
+            response = authenticated_client.get(
+                reverse(
+                    "attack-paths-scans-schema",
+                    kwargs={"pk": attack_paths_scan.id},
+                )
+            )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert "No cartography schema metadata" in str(response.json())
+
+    def test_cartography_schema_returns_400_when_graph_not_ready(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = providers_fixture[0]
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            graph_data_ready=False,
+        )
+
+        response = authenticated_client.get(
+            reverse(
+                "attack-paths-scans-schema",
+                kwargs={"pk": attack_paths_scan.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
 @pytest.mark.django_db
@@ -4352,15 +5272,10 @@ class TestResourceViewSet:
     ):
         response = authenticated_client.get(
             reverse("resource-list"),
-            {
-                "filter[scan.in]": [
-                    scans_fixture[0].id,
-                    scans_fixture[1].id,
-                ]
-            },
+            {"filter[scan.in]": f"{scans_fixture[0].id},{scans_fixture[1].id}"},
         )
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == 2
+        assert len(response.json()["data"]) == 3
 
     def test_resource_filter_by_provider_id_in(
         self, authenticated_client, resources_fixture
@@ -7000,8 +7915,12 @@ class TestUserRoleRelationshipViewSet:
         assert response.status_code == status.HTTP_204_NO_CONTENT
         relationships = UserRoleRelationship.objects.filter(user=create_test_user.id)
         assert relationships.count() == 4
-        for relationship in relationships[2:]:  # Skip admin role
-            assert relationship.role.id in [r.id for r in roles_fixture[:2]]
+        # Use set membership instead of positional slicing — QuerySet ordering is
+        # non-deterministic without an explicit order_by, which makes slice-based
+        # checks intermittently fail.
+        added_role_ids = {r.id for r in roles_fixture[:2]}
+        relationship_role_ids = {rel.role.id for rel in relationships}
+        assert added_role_ids.issubset(relationship_role_ids)
 
     def test_create_relationship_already_exists(
         self, authenticated_client, roles_fixture, create_test_user
@@ -13827,10 +14746,16 @@ class TestMuteRuleViewSet:
         assert len(data) == 2
         assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.chain")
+    @patch("api.v1.views.reaggregate_all_finding_group_summaries_task.si")
+    @patch("api.v1.views.mute_historical_findings_task.si")
+    @patch("api.v1.views.transaction.on_commit", side_effect=lambda fn: fn())
     def test_mute_rules_create_valid(
         self,
-        mock_task,
+        _mock_on_commit,
+        mock_mute_signature,
+        mock_reaggregate_signature,
+        mock_chain,
         authenticated_client,
         findings_fixture,
         create_test_user,
@@ -13868,8 +14793,14 @@ class TestMuteRuleViewSet:
         assert finding.muted_at is not None
         assert finding.muted_reason == "Security exception approved"
 
-        # Verify background task was called
-        mock_task.assert_called_once()
+        # Verify background task chain was called: mute → reaggregate all
+        mock_mute_signature.assert_called_once()
+        mock_reaggregate_signature.assert_called_once()
+        mock_chain.assert_called_once_with(
+            mock_mute_signature.return_value,
+            mock_reaggregate_signature.return_value,
+        )
+        mock_chain.return_value.apply_async.assert_called_once()
 
     @patch("tasks.tasks.mute_historical_findings_task.apply_async")
     def test_mute_rules_create_converts_finding_ids_to_uids(
@@ -14252,3 +15183,1270 @@ class TestMuteRuleViewSet:
         assert len(data) == len(mute_rules_fixture)
         for rule_data in data:
             assert rule_data["id"] != str(other_rule.id)
+
+
+@pytest.mark.django_db
+class TestFindingGroupViewSet:
+    """Tests for Finding Groups API - aggregates findings by check_id."""
+
+    def test_finding_groups_requires_date_filter(self, authenticated_client):
+        """Test that at least one date filter is required."""
+        response = authenticated_client.get(reverse("finding-group-list"))
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "required"
+
+    def test_finding_groups_empty(self, authenticated_client):
+        """Test empty list returned when no findings exist."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"), {"filter[inserted_at]": TODAY}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
+    def test_finding_groups_single_check(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that findings with same check_id are grouped correctly."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "s3_bucket_public_access",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "s3_bucket_public_access"
+        assert data[0]["attributes"]["check_id"] == "s3_bucket_public_access"
+
+    def test_finding_groups_multiple_checks(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that different check_ids produce separate finding groups."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"), {"filter[inserted_at]": TODAY}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        # Should have 5 distinct check_ids from fixture
+        assert len(data) == 5
+        check_ids = {item["id"] for item in data}
+        assert "s3_bucket_public_access" in check_ids
+        assert "ec2_instance_public_ip" in check_ids
+        assert "iam_password_policy" in check_ids
+        assert "rds_encryption" in check_ids
+        assert "cloudtrail_enabled" in check_ids
+
+    def test_finding_groups_severity_max(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that max severity is returned across all findings in group."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "s3_bucket_public_access",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        # s3_bucket_public_access has critical and high severity findings
+        # Max should be critical
+        assert data[0]["attributes"]["severity"] == "critical"
+
+    def test_finding_groups_status_fail_priority(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that FAIL status takes priority over PASS when any non-muted FAIL exists."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "ec2_instance_public_ip",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        # ec2_instance_public_ip has 1 PASS and 1 FAIL, should aggregate to FAIL
+        assert data[0]["attributes"]["status"] == "FAIL"
+
+    def test_finding_groups_region_filter_reaggregates_metrics(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test finding-level filters recompute group metrics from matching findings."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "ec2_instance_public_ip",
+                "filter[region]": "us-east-1",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+
+        attrs = data[0]["attributes"]
+        assert attrs["status"] == "PASS"
+        assert attrs["pass_count"] == 1
+        assert attrs["fail_count"] == 0
+        assert attrs["resources_total"] == 1
+        assert attrs["resources_fail"] == 0
+
+    def test_finding_groups_status_pass_when_no_fail(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that PASS status returned when no non-muted FAIL exists."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[check_id]": "iam_password_policy"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        # iam_password_policy has only PASS findings
+        assert data[0]["attributes"]["status"] == "PASS"
+
+    def test_finding_groups_status_muted_all(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that MUTED status returned when all findings are muted."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[check_id]": "rds_encryption"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        # rds_encryption has all muted findings
+        assert data[0]["attributes"]["status"] == "MUTED"
+
+    def test_finding_groups_status_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test finding groups can be filtered by aggregated status."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[status]": "FAIL"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["status"] == "FAIL" for item in data)
+
+    def test_finding_groups_status_in_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test finding groups support status__in filter on aggregated status."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[status__in]": "FAIL,PASS"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["status"] in {"FAIL", "PASS"} for item in data)
+
+    def test_finding_groups_severity_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test finding groups can be filtered by aggregated severity."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[severity]": "critical"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["severity"] == "critical" for item in data)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_combined_region_and_status_filters(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """Test combined region + aggregated status filters."""
+        params = {"filter[region]": "us-east-1", "filter[status]": "FAIL"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_ids = {item["id"] for item in data}
+        assert check_ids == {"s3_bucket_public_access", "cloudtrail_enabled"}
+        assert all(item["attributes"]["status"] == "FAIL" for item in data)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_combined_delta_and_severity_filters(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """Test combined delta + aggregated severity filters."""
+        params = {"filter[delta]": "new", "filter[severity]": "critical"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_ids = {item["id"] for item in data}
+        assert check_ids == {"s3_bucket_public_access", "cloudtrail_enabled"}
+        assert all(item["attributes"]["severity"] == "critical" for item in data)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    @pytest.mark.parametrize(
+        "filter_key,filter_value",
+        [
+            ("status", "INVALID_STATUS"),
+            ("severity", "INVALID_SEVERITY"),
+        ],
+    )
+    def test_finding_groups_invalid_status_or_severity_returns_400(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+        filter_key,
+        filter_value,
+    ):
+        """Test invalid aggregated status/severity values are rejected."""
+        params = {f"filter[{filter_key}]": filter_value}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    @pytest.mark.parametrize(
+        "filter_key,filter_value,expected_detail",
+        [
+            ("status__in", "FAIL,INVALID_STATUS", "invalid status filter"),
+            ("severity__in", "critical,INVALID_SEVERITY", "invalid severity filter"),
+        ],
+    )
+    def test_finding_groups_invalid_in_filters_return_400(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+        filter_key,
+        filter_value,
+        expected_detail,
+    ):
+        """Test invalid values in status__in/severity__in are rejected."""
+        params = {f"filter[{filter_key}]": filter_value}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert errors[0]["code"] == "invalid"
+        assert expected_detail in errors[0]["detail"]
+
+    @pytest.mark.parametrize(
+        "filter_name,filter_value",
+        [
+            ("region", "__region_does_not_exist__"),
+            ("service", "__service_does_not_exist__"),
+            ("category", "__category_does_not_exist__"),
+            ("resource_groups", "__group_does_not_exist__"),
+            ("resource_type", "__type_does_not_exist__"),
+            ("scan", "00000000-0000-7000-8000-000000000001"),
+        ],
+    )
+    def test_finding_groups_finding_level_filters_are_applied(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        filter_name,
+        filter_value,
+    ):
+        """Test finding-level filters are applied in /finding-groups aggregation."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, f"filter[{filter_name}]": filter_value},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+
+    def test_finding_groups_delta_filter_is_applied(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test delta filter is applied in /finding-groups aggregation."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[delta]": "new"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["new_count"] > 0 for item in data)
+
+    def test_finding_groups_provider_aggregation(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that impacted_providers contains distinct provider types."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"), {"filter[inserted_at]": TODAY}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        # Find the s3_bucket_public_access group
+        s3_group = next(
+            (item for item in data if item["id"] == "s3_bucket_public_access"), None
+        )
+        assert s3_group is not None
+        # Should have aws provider
+        assert "aws" in s3_group["attributes"]["impacted_providers"]
+
+    def test_finding_groups_resource_counts(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test resources_fail and resources_total counts are correct."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "s3_bucket_public_access",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+        # s3_bucket_public_access has 2 FAIL findings on 2 different resources
+        assert attrs["resources_fail"] == 2
+        assert attrs["resources_total"] == 2
+
+    def test_finding_groups_finding_counts(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test pass_count, fail_count, muted_count are correct."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "ec2_instance_public_ip",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+        # ec2_instance_public_ip has 1 PASS and 1 FAIL (non-muted)
+        assert attrs["pass_count"] == 1
+        assert attrs["fail_count"] == 1
+        assert attrs["muted_count"] == 0
+
+    def test_finding_groups_delta_counts(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test new_count and changed_count are correct."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "s3_bucket_public_access",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+        # s3_bucket_public_access has 1 new and 1 changed finding
+        assert attrs["new_count"] == 1
+        assert attrs["changed_count"] == 1
+
+    def test_finding_groups_timing(self, authenticated_client, finding_groups_fixture):
+        """Test first_seen_at, last_seen_at, and failing_since are returned."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "s3_bucket_public_access",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+        assert "first_seen_at" in attrs
+        assert "last_seen_at" in attrs
+        assert "failing_since" in attrs
+        assert attrs["first_seen_at"] is not None
+        assert attrs["last_seen_at"] is not None
+        # s3_bucket_public_access has FAIL findings, so failing_since should be set
+        assert attrs["failing_since"] is not None
+
+    # Test failing_since for checks without failures
+    def test_finding_groups_failing_since_null_when_passing(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test failing_since is null for checks that only have PASS findings."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[check_id]": "iam_password_policy"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+        # iam_password_policy has only PASS findings, so failing_since should be null
+        assert attrs["failing_since"] is None
+
+    def test_finding_groups_rls_isolation(
+        self, authenticated_client, finding_groups_fixture, tenants_fixture
+    ):
+        """Test that users only see finding groups from their tenant."""
+        # Create finding in another tenant
+        from api.models import Finding, Provider, Resource, Scan
+        from api.rls import Tenant
+
+        other_tenant = Tenant.objects.create(name="Other Tenant")
+        other_provider = Provider.objects.create(
+            tenant_id=other_tenant.id,
+            provider="aws",
+            uid="999999999999",  # Valid 12-digit AWS account ID
+            alias="Other Account",
+        )
+        other_scan = Scan.objects.create(
+            tenant_id=other_tenant.id,
+            name="Other scan",
+            provider=other_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+        )
+        other_resource = Resource.objects.create(
+            tenant_id=other_tenant.id,
+            provider=other_provider,
+            uid="other-resource-uid",
+            name="Other Resource",
+            region="us-west-2",
+            service="s3",
+            type="bucket",
+        )
+        other_finding = Finding.objects.create(
+            tenant_id=other_tenant.id,
+            uid="other_tenant_finding",
+            scan=other_scan,
+            delta=None,
+            status="FAIL",
+            severity="critical",
+            impact="critical",
+            check_id="other_tenant_check",
+            check_metadata={"CheckId": "other_tenant_check"},
+            first_seen_at="2024-01-02T00:00:00Z",
+        )
+        other_finding.add_resources([other_resource])
+
+        # Request should not include other tenant's finding groups
+        response = authenticated_client.get(
+            reverse("finding-group-list"), {"filter[inserted_at]": TODAY}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_ids = {item["id"] for item in data}
+        assert "other_tenant_check" not in check_ids
+
+    def test_finding_groups_rbac_unlimited(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that users with unlimited visibility see all finding groups."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"), {"filter[inserted_at]": TODAY}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        # Should see all 5 check_ids from the fixture
+        assert len(data) == 5
+
+    def test_finding_groups_date_filter_gte(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test filtering by start date."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at.gte]": today_after_n_days(-1)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # All fixture findings were created today
+        assert len(response.json()["data"]) == 5
+
+    def test_finding_groups_date_filter_lte(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test filtering by end date."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at.lte]": today_after_n_days(1)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 5
+
+    def test_finding_groups_date_filter_range(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test filtering by date range (max 7 days)."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                # Use 6-day range to stay within 7-day max limit
+                "filter[inserted_at.gte]": today_after_n_days(-6),
+                "filter[inserted_at.lte]": today_after_n_days(0),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 5
+
+    def test_finding_groups_date_filter_outside_backfill_range_returns_empty(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that older dates return empty results without error."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": today_after_n_days(-60)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
+    def test_finding_groups_date_filter_max_range(self, authenticated_client):
+        """Test that exceeding max date range returns 400."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at.lte]": today_after_n_days(
+                    -(settings.FINDINGS_MAX_DAYS_IN_RANGE + 1)
+                ),
+            },
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+
+    def test_finding_groups_provider_filter(
+        self, authenticated_client, finding_groups_fixture, providers_fixture
+    ):
+        """Test filtering by provider UUID."""
+        provider = providers_fixture[0]
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[provider_id]": str(provider.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # Should return finding groups associated with this provider
+        # Provider 1 has scan1 with checks: s3_bucket_public_access, ec2_instance_public_ip,
+        # iam_password_policy, rds_encryption (4 checks)
+        assert len(response.json()["data"]) == 4
+
+    def test_finding_groups_provider_type_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test filtering by provider type."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[provider_type]": "aws"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # All fixture findings are from AWS provider
+        assert len(response.json()["data"]) == 5
+
+    def test_finding_groups_check_id_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test filtering by exact check_id."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "s3_bucket_public_access",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert response.json()["data"][0]["id"] == "s3_bucket_public_access"
+
+    def test_finding_groups_check_id_icontains(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test searching check_ids with icontains."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[check_id.icontains]": "bucket"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert "bucket" in response.json()["data"][0]["id"].lower()
+
+    def test_finding_groups_check_title_icontains(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test searching check titles with icontains."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_title.icontains]": "public access",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "s3_bucket_public_access"
+
+    def test_resources_not_found(self, authenticated_client):
+        """Test 404 returned for nonexistent check_id."""
+        response = authenticated_client.get(
+            reverse("finding-group-resources", kwargs={"pk": "nonexistent_check"}),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_resources_list(self, authenticated_client, finding_groups_fixture):
+        """Test resources are returned correctly for a finding group."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        # s3_bucket_public_access has 2 findings with 2 different resources
+        assert len(data) == 2
+
+    def test_resources_fields(self, authenticated_client, finding_groups_fixture):
+        """Test resource fields (uid, name, service, region, type) have valid values."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        for item in data:
+            resource = item["attributes"]["resource"]
+            # All fields must be present and non-empty
+            assert resource.get("uid"), "resource.uid must not be empty"
+            assert resource.get("name"), "resource.name must not be empty"
+            assert resource.get("service"), "resource.service must not be empty"
+            assert resource.get("region"), "resource.region must not be empty"
+            assert resource.get("type"), "resource.type must not be empty"
+
+    def test_resources_provider_info(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test provider info (type, uid, alias) has valid values."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        for item in data:
+            provider = item["attributes"]["provider"]
+            assert provider.get("type") == "aws", "provider.type must be 'aws'"
+            assert provider.get("uid"), "provider.uid must not be empty"
+            assert provider.get("alias"), "provider.alias must not be empty"
+
+    def test_resources_status_severity(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test status and severity from latest finding have valid values."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        for item in data:
+            attrs = item["attributes"]
+            # s3_bucket_public_access has FAIL findings
+            assert attrs["status"] == "FAIL", "status must be 'FAIL'"
+            # severity must be one of the valid values
+            assert attrs["severity"] in [
+                "critical",
+                "high",
+                "medium",
+                "low",
+                "informational",
+            ]
+
+    def test_resources_timing(self, authenticated_client, finding_groups_fixture):
+        """Test first_seen_at and last_seen_at are not null."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        for item in data:
+            attrs = item["attributes"]
+            assert attrs["first_seen_at"] is not None, "first_seen_at must not be null"
+            assert attrs["last_seen_at"] is not None, "last_seen_at must not be null"
+
+    def test_resources_filters_applied(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that date filters work on resources endpoint."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {
+                "filter[inserted_at.gte]": today_after_n_days(-6),
+                "filter[inserted_at.lte]": today_after_n_days(0),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # Should still return the 2 resources within the date range
+        assert len(response.json()["data"]) == 2
+
+    # Test provider_id filter actually filters data
+    def test_finding_groups_provider_id_filter_actually_filters(
+        self, authenticated_client, finding_groups_fixture, providers_fixture
+    ):
+        """
+        Test that provider_id filter returns ONLY data from that provider.
+
+        This is a critical test - it verifies the filter doesn't just return 200 OK,
+        but actually restricts the data to the specified provider.
+        """
+        provider1 = providers_fixture[0]  # Has scan1 with 4 checks
+        provider2 = providers_fixture[1]  # Has scan2 with 1 check (cloudtrail_enabled)
+
+        # Get ALL finding groups (without provider filter)
+        response_all = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response_all.status_code == status.HTTP_200_OK
+        all_check_ids = {item["id"] for item in response_all.json()["data"]}
+        assert len(all_check_ids) == 5, "Should have 5 total check_ids"
+
+        # Get finding groups for provider1 only
+        response_p1 = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[provider_id]": str(provider1.id)},
+        )
+        assert response_p1.status_code == status.HTTP_200_OK
+        p1_check_ids = {item["id"] for item in response_p1.json()["data"]}
+        # Provider1 has scan1 with 4 checks
+        assert (
+            len(p1_check_ids) == 4
+        ), f"Provider1 should have 4 checks, got {len(p1_check_ids)}"
+        assert (
+            "cloudtrail_enabled" not in p1_check_ids
+        ), "cloudtrail_enabled should NOT be in provider1"
+
+        # Get finding groups for provider2 only
+        response_p2 = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[provider_id]": str(provider2.id)},
+        )
+        assert response_p2.status_code == status.HTTP_200_OK
+        p2_check_ids = {item["id"] for item in response_p2.json()["data"]}
+        # Provider2 has scan2 with 1 check
+        assert (
+            len(p2_check_ids) == 1
+        ), f"Provider2 should have 1 check, got {len(p2_check_ids)}"
+        assert (
+            "cloudtrail_enabled" in p2_check_ids
+        ), "cloudtrail_enabled should be in provider2"
+
+    # Test provider_type filter actually filters data
+    def test_finding_groups_provider_type_filter_actually_filters(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """
+        Test that provider_type filter returns ONLY data from that provider type.
+        """
+        # All fixtures use AWS providers, so filtering by AWS should return all 5
+        response_aws = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[provider_type]": "aws"},
+        )
+        assert response_aws.status_code == status.HTTP_200_OK
+        assert len(response_aws.json()["data"]) == 5
+
+        # Filtering by GCP should return 0 (no GCP findings in fixture)
+        response_gcp = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[provider_type]": "gcp"},
+        )
+        assert response_gcp.status_code == status.HTTP_200_OK
+        assert (
+            len(response_gcp.json()["data"]) == 0
+        ), "GCP filter should return 0 results"
+
+    def test_finding_groups_pagination(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test pagination metadata and links."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "page[size]": 2},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # Should have pagination metadata
+        assert "meta" in response.json()
+        meta = response.json()["meta"]
+        assert "pagination" in meta
+        assert "count" in meta["pagination"]
+
+    def test_resources_pagination(self, authenticated_client, finding_groups_fixture):
+        """Test pagination on resources endpoint."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY, "page[size]": 1},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert "meta" in response.json()
+
+    def test_finding_groups_ordering_default(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test default ordering (-fail_count, -severity, check_id)."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"), {"filter[inserted_at]": TODAY}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        # First results should have highest fail_count or critical severity
+        # s3_bucket_public_access has 2 fails with critical severity
+        assert data[0]["id"] in ["s3_bucket_public_access", "cloudtrail_enabled"]
+
+    def test_finding_groups_ordering_custom(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test custom sort parameter."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "sort": "check_id"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        # Results should be in alphabetical order by check_id
+        check_ids = [item["id"] for item in data]
+        assert check_ids == sorted(check_ids)
+
+    def test_finding_groups_latest_no_date_filter_required(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that /latest endpoint works without date filters."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        # Should return all 5 checks from the fixture
+        assert len(data) == 5
+
+    def test_finding_groups_latest_empty(self, authenticated_client):
+        """Test /latest returns empty list when no summaries exist."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+
+    def test_finding_groups_latest_provider_id_filter(
+        self, authenticated_client, finding_groups_fixture, providers_fixture
+    ):
+        """Test /latest with provider_id filter returns only that provider's data."""
+        provider1 = providers_fixture[0]  # Has 4 checks
+        provider2 = providers_fixture[1]  # Has 1 check
+
+        # Filter by provider1
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[provider_id]": str(provider1.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 4
+        check_ids = {item["id"] for item in data}
+        assert "cloudtrail_enabled" not in check_ids
+
+        # Filter by provider2
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[provider_id]": str(provider2.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "cloudtrail_enabled"
+
+    def test_finding_groups_latest_status_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest supports status filter on aggregated status."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[status]": "FAIL"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["status"] == "FAIL" for item in data)
+
+    def test_finding_groups_latest_region_filter_reaggregates_metrics(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest recomputes metrics from findings matching region filter."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {
+                "filter[check_id]": "ec2_instance_public_ip",
+                "filter[region]": "us-east-1",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+
+        attrs = data[0]["attributes"]
+        assert attrs["status"] == "PASS"
+        assert attrs["pass_count"] == 1
+        assert attrs["fail_count"] == 0
+        assert attrs["resources_total"] == 1
+        assert attrs["resources_fail"] == 0
+
+    def test_finding_groups_latest_status_in_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest supports status__in filter on aggregated status."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[status__in]": "FAIL,PASS"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["status"] in {"FAIL", "PASS"} for item in data)
+
+    def test_finding_groups_latest_severity_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest supports severity filter on aggregated severity."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[severity]": "critical"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["severity"] == "critical" for item in data)
+
+    @pytest.mark.parametrize(
+        "filter_name,filter_value",
+        [
+            ("region", "__region_does_not_exist__"),
+            ("service", "__service_does_not_exist__"),
+            ("category", "__category_does_not_exist__"),
+            ("resource_groups", "__group_does_not_exist__"),
+            ("resource_type", "__type_does_not_exist__"),
+            ("scan", "00000000-0000-7000-8000-000000000001"),
+        ],
+    )
+    def test_finding_groups_latest_finding_level_filters_are_applied(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        filter_name,
+        filter_value,
+    ):
+        """Test finding-level filters are applied in /finding-groups/latest aggregation."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {f"filter[{filter_name}]": filter_value},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+
+    def test_finding_groups_check_title_filter_applies_with_delta(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test check_title filter is honored when finding-level path is used."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[delta]": "new",
+                "filter[check_title.icontains]": "__missing_check_title__",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+
+    def test_finding_groups_latest_check_title_filter_applies_with_delta(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest check_title filter is honored on finding-level path."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {
+                "filter[delta]": "new",
+                "filter[check_title.icontains]": "__missing_check_title__",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+
+    def test_finding_groups_latest_delta_filter_is_applied(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test delta filter is applied in /finding-groups/latest aggregation."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[delta]": "new"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+        assert all(item["attributes"]["new_count"] > 0 for item in data)
+
+    def test_finding_groups_latest_aggregates_latest_per_provider(
+        self,
+        authenticated_client,
+        providers_fixture,
+        resources_fixture,
+    ):
+        """Test /latest keeps all findings from the latest scan per provider.
+
+        Verifies that when the latest scan produces multiple findings for the
+        same check_id (e.g. one per resource), all of them are included in the
+        aggregation — not just one.
+        """
+        provider1 = providers_fixture[0]
+        provider2 = providers_fixture[1]
+        resource1 = resources_fixture[0]
+        resource2 = resources_fixture[1]
+        resource3 = resources_fixture[2]
+        check_id = "cross_provider_latest_resources_total"
+
+        latest_scan_provider1 = Scan.objects.create(
+            tenant_id=provider1.tenant_id,
+            provider=provider1,
+            state=StateChoices.COMPLETED,
+            trigger=Scan.TriggerChoices.MANUAL,
+            completed_at=datetime.now(timezone.utc),
+        )
+
+        latest_scan_provider2 = Scan.objects.create(
+            tenant_id=provider2.tenant_id,
+            provider=provider2,
+            state=StateChoices.COMPLETED,
+            trigger=Scan.TriggerChoices.MANUAL,
+            completed_at=datetime.now(timezone.utc),
+        )
+
+        older_scan_provider1 = Scan.objects.create(
+            tenant_id=provider1.tenant_id,
+            provider=provider1,
+            state=StateChoices.COMPLETED,
+            trigger=Scan.TriggerChoices.MANUAL,
+            completed_at=datetime.now(timezone.utc) - timedelta(days=1),
+        )
+
+        # Older scan — these should be excluded from /latest
+        Finding.objects.create(
+            tenant_id=provider1.tenant_id,
+            uid="old_cross_provider_1",
+            scan=older_scan_provider1,
+            delta="new",
+            status="FAIL",
+            severity="high",
+            impact="high",
+            check_id=check_id,
+            check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
+            first_seen_at=datetime.now(timezone.utc) - timedelta(days=2),
+            muted=False,
+        )
+
+        # Latest scan provider1: TWO findings (PASS + FAIL) for the same check
+        latest_p1_pass = Finding.objects.create(
+            tenant_id=provider1.tenant_id,
+            uid="latest_cross_provider_1_pass",
+            scan=latest_scan_provider1,
+            delta="new",
+            status="PASS",
+            severity="high",
+            impact="high",
+            check_id=check_id,
+            check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
+            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            muted=False,
+        )
+        latest_p1_pass.add_resources([resource1])
+
+        latest_p1_fail = Finding.objects.create(
+            tenant_id=provider1.tenant_id,
+            uid="latest_cross_provider_1_fail",
+            scan=latest_scan_provider1,
+            delta="new",
+            status="FAIL",
+            severity="high",
+            impact="high",
+            check_id=check_id,
+            check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
+            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            muted=False,
+        )
+        latest_p1_fail.add_resources([resource2])
+
+        # Latest scan provider2: one finding
+        latest_p2 = Finding.objects.create(
+            tenant_id=provider2.tenant_id,
+            uid="latest_cross_provider_2",
+            scan=latest_scan_provider2,
+            delta="new",
+            status="FAIL",
+            severity="high",
+            impact="high",
+            check_id=check_id,
+            check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
+            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            muted=False,
+        )
+        latest_p2.add_resources([resource3])
+
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[check_id]": check_id, "filter[delta]": "new"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+        # 3 findings total: 2 from provider1 latest + 1 from provider2 latest
+        assert attrs["pass_count"] == 1
+        assert attrs["fail_count"] == 2
+        assert attrs["resources_total"] == 3
+        assert attrs["resources_fail"] == 2
+
+    def test_finding_groups_latest_provider_type_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest with provider_type filter."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[provider_type]": "aws"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        # All providers in fixture are AWS
+        assert len(data) == 5
+
+    def test_finding_groups_latest_check_id_filter(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest with check_id filter."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[check_id]": "s3_bucket_public_access"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "s3_bucket_public_access"
+
+    def test_finding_groups_latest_custom_sort(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest with custom sort parameter."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"sort": "check_id"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_ids = [item["id"] for item in data]
+        assert check_ids == sorted(check_ids)
+
+    def test_finding_groups_latest_sort_by_check_title(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test /latest supports sorting by check_title."""
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"sort": "check_title"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_titles = [item["attributes"]["check_title"] for item in data]
+        assert check_titles == sorted(check_titles)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    @pytest.mark.parametrize(
+        "sort_field",
+        ["first_seen_at", "-first_seen_at", "last_seen_at", "failing_since"],
+    )
+    def test_finding_groups_sort_by_time_fields(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+        sort_field,
+    ):
+        """Test sorting by aggregated time fields (first_seen_at, last_seen_at, failing_since)."""
+        params = {"sort": sort_field}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+    def test_finding_groups_latest_ignores_date_filters(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that /latest ignores any date filters passed in params."""
+        # Even with an old date filter, /latest should return current data
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[inserted_at]": "2020-01-01"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        # Should still return data, not filtered by the old date
+        assert len(data) == 5

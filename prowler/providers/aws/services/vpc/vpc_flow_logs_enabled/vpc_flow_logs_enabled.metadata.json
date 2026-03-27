@@ -21,7 +21,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/flow-logs.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/VPC/vpc-flow-logs-enabled.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/VPC/vpc-flow-logs-enabled.html"
   ],
   "Remediation": {
     "Code": {

@@ -26,16 +26,26 @@ runs:
       if: github.event_name == 'pull_request' && github.base_ref == 'master' && github.repository == 'prowler-cloud/prowler'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
+      env:
+        HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
       run: |
         BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
-        echo "Using branch: $BRANCH_NAME"
-        sed -i "s|\(git+https://github.com/prowler-cloud/prowler[^@]*\)@master|\1@$BRANCH_NAME|g" pyproject.toml
+        UPSTREAM="prowler-cloud/prowler"
+        if [ "$HEAD_REPO" != "$UPSTREAM" ]; then
+          echo "Fork PR detected (${HEAD_REPO}), rewriting VCS URL to fork"
+          sed -i "s|git+https://github.com/prowler-cloud/prowler\([^@]*\)@master|git+https://github.com/${HEAD_REPO}\1@$BRANCH_NAME|g" pyproject.toml
+        else
+          echo "Same-repo PR, using branch: $BRANCH_NAME"
+          sed -i "s|\(git+https://github.com/prowler-cloud/prowler[^@]*\)@master|\1@$BRANCH_NAME|g" pyproject.toml
+        fi
 
     - name: Install poetry
       shell: bash
       run: |
         python -m pip install --upgrade pip
-        pipx install poetry==${{ inputs.poetry-version }}
+        pipx install poetry==${INPUTS_POETRY_VERSION}
+      env:
+        INPUTS_POETRY_VERSION: ${{ inputs.poetry-version }}
 
     - name: Update poetry.lock with latest Prowler commit
       if: github.repository_owner == 'prowler-cloud' && github.repository != 'prowler-cloud/prowler'

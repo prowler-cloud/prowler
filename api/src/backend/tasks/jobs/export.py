@@ -137,6 +137,7 @@ COMPLIANCE_CLASS_MAP = {
         # IaC provider doesn't have specific compliance frameworks yet
         # Trivy handles its own compliance checks
     ],
+    "image": [],
     "oraclecloud": [
         (lambda name: name.startswith("cis_"), OracleCloudCIS),
         (lambda name: name.startswith("csa_"), OracleCloudCSA),

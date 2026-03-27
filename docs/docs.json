@@ -99,6 +99,7 @@
               },
               "user-guide/tutorials/prowler-app-rbac",
               "user-guide/tutorials/prowler-app-api-keys",
+              "user-guide/tutorials/prowler-app-import-findings",
               {
                 "group": "Mutelist",
                 "expanded": true,
@@ -117,12 +118,20 @@
                 ]
               },
               {
+                "group": "AWS Organizations",
+                "expanded": true,
+                "pages": [
+                  "user-guide/tutorials/prowler-cloud-aws-organizations"
+                ]
+              },
+              {
                 "group": "Lighthouse AI",
                 "pages": [
                   "user-guide/tutorials/prowler-app-lighthouse",
                   "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
                 ]
               },
+              "user-guide/tutorials/prowler-app-attack-paths",
               "user-guide/tutorials/prowler-cloud-public-ips",
               {
                 "group": "Tutorials",
@@ -228,6 +237,13 @@
                 ]
               },
               {
+                "group": "Google Workspace",
+                "pages": [
+                  "user-guide/providers/googleworkspace/getting-started-googleworkspace",
+                  "user-guide/providers/googleworkspace/authentication"
+                ]
+              },
+              {
                 "group": "GitHub",
                 "pages": [
                   "user-guide/providers/github/getting-started-github",
@@ -287,6 +303,13 @@
             "group": "Compliance",
             "pages": [
               "user-guide/compliance/tutorials/threatscore"
+            ]
+          },
+          {
+            "group": "Cookbooks",
+            "pages": [
+              "user-guide/cookbooks/kubernetes-in-cluster",
+              "user-guide/cookbooks/cicd-pipeline"
             ]
           }
         ]

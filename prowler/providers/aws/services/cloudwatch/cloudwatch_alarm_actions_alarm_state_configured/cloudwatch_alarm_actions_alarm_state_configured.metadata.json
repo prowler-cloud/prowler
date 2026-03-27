@@ -20,7 +20,7 @@
     "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-15",
     "https://support.icompaas.com/support/solutions/articles/62000233431-ensure-cloudwatch-alarms-have-specified-actions-configured-for-the-alarm-state",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatch/cloudwatch-alarm-action.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudWatch/cloudwatch-alarm-action.html",
     "https://awscli.amazonaws.com/v2/documentation/api/2.0.34/reference/cloudwatch/put-metric-alarm.html"
   ],
   "Remediation": {

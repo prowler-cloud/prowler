@@ -1,0 +1,59 @@
+name: 'Helm: Chart Release'
+# DISCLAIMER: This workflow is not maintained by the Prowler team. Refer to contrib/k8s/helm/prowler-app for the source code.
+
+on:
+  release:
+    types:
+      - 'published'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CHART_PATH: contrib/k8s/helm/prowler-app
+
+jobs:
+  release-helm-chart:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Helm
+        uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4.3.0
+
+      - name: Set appVersion from release tag
+        run: |
+          RELEASE_TAG="${GITHUB_EVENT_RELEASE_TAG_NAME}"
+          echo "Setting appVersion to ${RELEASE_TAG}"
+          sed -i "s/^appVersion:.*/appVersion: \"${RELEASE_TAG}\"/" ${{ env.CHART_PATH }}/Chart.yaml
+        env:
+          GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${GITHUB_ACTOR} --password-stdin
+
+      - name: Update chart dependencies
+        run: helm dependency update ${{ env.CHART_PATH }}
+
+      - name: Package Helm chart
+        run: helm package ${{ env.CHART_PATH }} --destination .helm-packages
+
+      - name: Push chart to GHCR
+        run: |
+          PACKAGE=$(ls .helm-packages/*.tgz)
+          helm push "$PACKAGE" oci://ghcr.io/${{ github.repository_owner }}/charts

@@ -19,7 +19,7 @@
     "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-13",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/how-to-set-lifecycle-configuration-intro.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/lifecycle-configuration.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/S3/lifecycle-configuration.html"
   ],
   "Remediation": {
     "Code": {

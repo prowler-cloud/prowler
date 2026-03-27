@@ -16,7 +16,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://aws.amazon.com/architecture/well-architected/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WellArchitected/findings.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/WellArchitected/findings.html"
   ],
   "Remediation": {
     "Code": {

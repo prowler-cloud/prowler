@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",
-  "ResourceType": "OpenStackInstance",
+  "ResourceType": "OS::Nova::Server",
   "ResourceGroup": "compute",
   "Description": "**OpenStack compute instances** (VMs) are evaluated to verify that **config drive** is enabled. Config drive provides metadata and user data via a virtual CD-ROM device instead of the metadata service (169.254.169.254). This improves security by eliminating network-based metadata access, which can be vulnerable to SSRF attacks and metadata service exploitation.",
   "Risk": "Instances without config drive rely on the metadata service (169.254.169.254), vulnerable to SSRF attacks that extract credentials and SSH keys. Metadata service is vulnerable to spoofing in compromised networks and can become unavailable. Config drive eliminates this attack surface by providing metadata via virtual CD-ROM, removing dependency on network-accessible metadata.",

@@ -109,14 +109,16 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 | GCP | 100 | 13 | 15 | 11 | Official | UI, API, CLI |
 | Kubernetes | 83 | 7 | 7 | 9 | Official | UI, API, CLI |
 | GitHub | 21 | 2 | 1 | 2 | Official | UI, API, CLI |
-| M365 | 75 | 7 | 4 | 4 | Official | UI, API, CLI |
-| OCI | 51 | 13 | 3 | 12 | Official | UI, API, CLI |
+| M365 | 89 | 9 | 4 | 5 | Official | UI, API, CLI |
+| OCI | 48 | 13 | 3 | 10 | Official | UI, API, CLI |
 | Alibaba Cloud | 61 | 9 | 3 | 9 | Official | UI, API, CLI |
-| Cloudflare | 29 | 2 | 0 | 5 | Official | CLI, API |
+| Cloudflare | 29 | 2 | 0 | 5 | Official | UI, API, CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
-| MongoDB Atlas | 10 | 3 | 0 | 3 | Official | UI, API, CLI |
+| MongoDB Atlas | 10 | 3 | 0 | 8 | Official | UI, API, CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
-| OpenStack | 1 | 1 | 0 | 2 | Official | CLI |
+| Image | N/A | N/A | N/A | N/A | Official | CLI, API |
+| Google Workspace | 1 | 1 | 0 | 1 | Official | CLI |
+| OpenStack | 27 | 4 | 0 | 8 | Official | UI, API, CLI |
 | NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
 
 > [!Note]
@@ -148,21 +150,17 @@ Prowler App offers flexible installation methods tailored to various environment
 **Commands**
 
 ``` console
-curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/docker-compose.yml
-curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/.env
+VERSION=$(curl -s https://api.github.com/repos/prowler-cloud/prowler/releases/latest | jq -r .tag_name)
+curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/docker-compose.yml"
+# Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
+curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/.env"
 docker compose up -d
 ```
 
-> Containers are built for `linux/amd64`.
+> [!WARNING]
+> 🔒 For a secure setup, the API auto-generates a unique key pair, `DJANGO_TOKEN_SIGNING_KEY` and `DJANGO_TOKEN_VERIFYING_KEY`, and stores it in `~/.config/prowler-api` (non-container) or the bound Docker volume in `_data/api` (container). Never commit or reuse static/default keys. To rotate keys, delete the stored key files and restart the API.
 
-### Configuring Your Workstation for Prowler App
-
-If your workstation's architecture is incompatible, you can resolve this by:
-
-- **Setting the environment variable**: `DOCKER_DEFAULT_PLATFORM=linux/amd64`
-- **Using the following flag in your Docker command**: `--platform linux/amd64`
-
-> Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
+Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
 
 ### Common Issues with Docker Pull Installation
 

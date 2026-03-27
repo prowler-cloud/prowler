@@ -22,11 +22,17 @@ jobs:
       issues: write
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Create backport label for minor releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
         run: |
-          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          RELEASE_TAG="${GITHUB_EVENT_RELEASE_TAG_NAME}"
 
           if [ -z "$RELEASE_TAG" ]; then
             echo "Error: No release tag provided"

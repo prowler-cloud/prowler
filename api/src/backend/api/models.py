@@ -1,7 +1,6 @@
 import json
 import logging
 import re
-import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
@@ -9,15 +8,20 @@ from allauth.socialaccount.models import SocialApp
 from config.custom_logging import BackendLogger
 from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
 from cryptography.fernet import Fernet, InvalidToken
+import defusedxml
+from defusedxml import ElementTree as ET
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex, OpClass
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Q
+from django.db.models.functions import Upper
+from django.utils import timezone as django_timezone
 from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
@@ -289,6 +293,8 @@ class Provider(RowLevelSecurityProtectedModel):
         ALIBABACLOUD = "alibabacloud", _("Alibaba Cloud")
         CLOUDFLARE = "cloudflare", _("Cloudflare")
         OPENSTACK = "openstack", _("OpenStack")
+        IMAGE = "image", _("Image")
+        GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -327,11 +333,23 @@ class Provider(RowLevelSecurityProtectedModel):
 
     @staticmethod
     def validate_gcp_uid(value):
-        if not re.match(r"^[a-z][a-z0-9-]{5,29}$", value):
+        # Standard format: 6-30 chars, starts with letter, lowercase + digits + hyphens
+        # Legacy App Engine format: domain.com:project-id
+        if not re.match(r"^([a-z][a-z0-9.-]*:)?[a-z][a-z0-9-]{5,29}$", value):
             raise ModelValidationError(
-                detail="GCP provider ID must be 6 to 30 characters, start with a letter, and contain only lowercase "
-                "letters, numbers, and hyphens.",
+                detail="GCP provider ID must be a valid project ID: 6 to 30 characters, start with a letter, "
+                "and contain only lowercase letters, numbers, and hyphens. "
+                "Legacy App Engine project IDs with a domain prefix (e.g., example.com:my-project) are also accepted.",
                 code="gcp-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_googleworkspace_uid(value):
+        if not re.match(r"^C[0-9a-zA-Z]+$", value):
+            raise ModelValidationError(
+                detail="Google Workspace Customer ID must start with 'C' followed by one or more alphanumeric characters (e.g., C01234abc, C12345678).",
+                code="googleworkspace-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -417,6 +435,15 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="OpenStack provider ID must be a valid project ID (UUID or project name).",
                 code="openstack-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_image_uid(value):
+        if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9._/:@-]{2,249}$", value):
+            raise ModelValidationError(
+                detail="Image provider ID must be a valid container image reference.",
+                code="image-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -852,6 +879,16 @@ class Resource(RowLevelSecurityProtectedModel):
                 fields=["tenant_id", "service", "region", "type"],
                 name="resource_tenant_metadata_idx",
             ),
+            # icontains compiles to UPPER(field) LIKE, so index the same expression
+            GinIndex(
+                OpClass(Upper("uid"), name="gin_trgm_ops"),
+                name="res_uid_trgm_idx",
+            ),
+            GinIndex(
+                OpClass(Upper("name"), name="gin_trgm_ops"),
+                name="res_name_trgm_idx",
+            ),
+            GinIndex(fields=["text_search"], name="gin_resources_search_idx"),
             models.Index(fields=["tenant_id", "id"], name="resources_tenant_id_idx"),
             models.Index(
                 fields=["tenant_id", "provider_id"],
@@ -1048,6 +1085,10 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "uid", "-inserted_at"],
                 name="find_tenant_uid_inserted_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "check_id", "inserted_at"],
+                name="find_tenant_check_ins_idx",
             ),
             models.Index(
                 fields=["tenant_id", "scan_id", "check_id"],
@@ -1666,6 +1707,98 @@ class DailySeveritySummary(RowLevelSecurityProtectedModel):
         ]
 
 
+class FindingGroupDailySummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated daily finding counts per check_id per provider.
+    Used by finding-groups endpoint for efficient queries over date ranges.
+
+    Instead of aggregating millions of findings on-the-fly, we pre-compute
+    daily summaries and re-aggregate them when querying date ranges.
+    This reduces query complexity from O(findings) to O(days × checks × providers).
+    """
+
+    objects = ActiveProviderManager()
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(default=django_timezone.now, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    check_id = models.CharField(max_length=255, db_index=True)
+
+    # Provider FK for filtering by specific provider
+    provider = models.ForeignKey(
+        "Provider",
+        on_delete=models.CASCADE,
+        related_name="finding_group_summaries",
+    )
+
+    # Check metadata (denormalized for performance)
+    check_title = models.CharField(max_length=500, blank=True, null=True)
+    check_description = models.TextField(blank=True, null=True)
+
+    # Severity stored as integer for MAX aggregation (5=critical, 4=high, etc.)
+    severity_order = models.SmallIntegerField(default=1)
+
+    # Finding counts
+    pass_count = models.IntegerField(default=0)
+    fail_count = models.IntegerField(default=0)
+    muted_count = models.IntegerField(default=0)
+
+    # Delta counts
+    new_count = models.IntegerField(default=0)
+    changed_count = models.IntegerField(default=0)
+
+    # Resource counts
+    resources_fail = models.IntegerField(default=0)
+    resources_total = models.IntegerField(default=0)
+
+    # Timing
+    first_seen_at = models.DateTimeField(null=True, blank=True)
+    last_seen_at = models.DateTimeField(null=True, blank=True)
+    failing_since = models.DateTimeField(null=True, blank=True)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "finding_group_daily_summaries"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "provider", "check_id", "inserted_at"),
+                name="unique_finding_group_daily_summary",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "inserted_at"],
+                name="fgds_tenant_inserted_at_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "check_id", "inserted_at"],
+                name="fgds_tenant_chk_ins_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "provider", "inserted_at"],
+                name="fgds_tenant_prov_ins_idx",
+            ),
+            # Trigram indexes for case-insensitive search
+            GinIndex(
+                OpClass(Upper("check_id"), name="gin_trgm_ops"),
+                name="fgds_check_id_trgm_idx",
+            ),
+            GinIndex(
+                OpClass(Upper("check_title"), name="gin_trgm_ops"),
+                name="fgds_check_title_trgm_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "finding-group-daily-summaries"
+
+
 class Integration(RowLevelSecurityProtectedModel):
     class IntegrationChoices(models.TextChoices):
         AMAZON_S3 = "amazon_s3", _("Amazon S3")
@@ -1935,6 +2068,8 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             root = ET.fromstring(self.metadata_xml)
         except ET.ParseError as e:
             raise ValidationError({"metadata_xml": f"Invalid XML: {e}"})
+        except defusedxml.DefusedXmlException as e:
+            raise ValidationError({"metadata_xml": f"Unsafe XML content rejected: {e}"})
 
         # Entity ID
         entity_id = root.attrib.get("entityID")

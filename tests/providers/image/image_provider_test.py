@@ -1,3 +1,4 @@
+import os
 import tempfile
 from unittest import mock
 from unittest.mock import MagicMock, patch
@@ -14,11 +15,13 @@ from prowler.providers.image.exceptions.exceptions import (
     ImageListFileNotFoundError,
     ImageListFileReadError,
     ImageNoImagesProvidedError,
+    ImageRegistryAuthError,
     ImageScanError,
     ImageTrivyBinaryNotFoundError,
 )
 from prowler.providers.image.image_provider import ImageProvider
 from tests.providers.image.image_fixtures import (
+    SAMPLE_IMAGE_SHA,
     SAMPLE_MISCONFIGURATION_FINDING,
     SAMPLE_SECRET_FINDING,
     SAMPLE_UNKNOWN_SEVERITY_FINDING,
@@ -26,6 +29,8 @@ from tests.providers.image.image_fixtures import (
     get_empty_trivy_output,
     get_invalid_trivy_output,
     get_multi_type_trivy_output,
+    get_no_metadata_trivy_output,
+    get_repo_digest_only_trivy_output,
     get_sample_trivy_json_output,
 )
 
@@ -48,7 +53,7 @@ class TestImageProvider:
         assert provider._type == "image"
         assert provider.type == "image"
         assert provider.images == ["alpine:3.18"]
-        assert provider.scanners == ["vuln", "secret"]
+        assert provider.scanners == ["vuln", "secret", "misconfig"]
         assert provider.image_config_scanners == []
         assert provider.trivy_severity == []
         assert provider.ignore_unfixed is False
@@ -119,22 +124,27 @@ class TestImageProvider:
         provider = _make_provider()
         report = provider._process_finding(
             SAMPLE_VULNERABILITY_FINDING,
+            "alpine:3.18",
             "alpine:3.18 (alpine 3.18.0)",
-            "alpine",
+            image_sha="c1aabb73d233",
         )
 
         assert isinstance(report, CheckReportImage)
         assert report.status == "FAIL"
         assert report.check_metadata.CheckID == "CVE-2024-1234"
         assert report.check_metadata.Severity == "high"
-        assert report.check_metadata.ServiceName == "alpine"
+        assert report.check_metadata.ServiceName == "container-image"
         assert report.check_metadata.ResourceType == "container-image"
         assert report.check_metadata.ResourceGroup == "container"
         assert report.package_name == "openssl"
         assert report.installed_version == "1.1.1k-r0"
         assert report.fixed_version == "1.1.1l-r0"
-        assert report.resource_name == "alpine:3.18 (alpine 3.18.0)"
+        assert report.resource_name == "alpine:3.18"
+        assert report.image_sha == "c1aabb73d233"
+        assert report.resource_details == "alpine:3.18 (alpine 3.18.0)"
         assert report.region == "container"
+        assert report.check_metadata.Categories == ["vulnerabilities"]
+        assert report.check_metadata.RelatedUrl == ""
 
     def test_process_finding_secret(self):
         """Test processing a secret finding (identified by RuleID)."""
@@ -142,14 +152,15 @@ class TestImageProvider:
         report = provider._process_finding(
             SAMPLE_SECRET_FINDING,
             "myimage:latest",
-            "secret",
+            "myimage:latest (debian 12)",
         )
 
         assert isinstance(report, CheckReportImage)
         assert report.status == "FAIL"
         assert report.check_metadata.CheckID == "aws-access-key-id"
         assert report.check_metadata.Severity == "critical"
-        assert report.check_metadata.ServiceName == "secret"
+        assert report.check_metadata.ServiceName == "container-image"
+        assert report.check_metadata.Categories == ["secrets"]
 
     def test_process_finding_misconfiguration(self):
         """Test processing a misconfiguration finding (identified by ID)."""
@@ -157,13 +168,14 @@ class TestImageProvider:
         report = provider._process_finding(
             SAMPLE_MISCONFIGURATION_FINDING,
             "myimage:latest",
-            "misconfiguration",
+            "myimage:latest (debian 12)",
         )
 
         assert isinstance(report, CheckReportImage)
         assert report.check_metadata.CheckID == "DS001"
         assert report.check_metadata.Severity == "medium"
-        assert report.check_metadata.ServiceName == "misconfiguration"
+        assert report.check_metadata.ServiceName == "container-image"
+        assert report.check_metadata.Categories == []
 
     def test_process_finding_unknown_severity(self):
         """Test that UNKNOWN severity is mapped to informational."""
@@ -171,7 +183,7 @@ class TestImageProvider:
         report = provider._process_finding(
             SAMPLE_UNKNOWN_SEVERITY_FINDING,
             "myimage:latest",
-            "alpine",
+            "myimage:latest (alpine 3.18.0)",
         )
 
         assert report.check_metadata.Severity == "informational"
@@ -190,6 +202,9 @@ class TestImageProvider:
 
         assert len(reports) == 1
         assert reports[0].check_metadata.CheckID == "CVE-2024-1234"
+        assert reports[0].image_sha == SAMPLE_IMAGE_SHA
+        assert reports[0].resource_name == "alpine:3.18"
+        assert reports[0].check_metadata.ServiceName == "container-image"
 
     @patch("subprocess.run")
     def test_run_scan_empty_output(self, mock_subprocess):
@@ -274,20 +289,23 @@ class TestImageProvider:
             )
             assert "alpine:3.18" in output
 
-    @patch("subprocess.run")
-    def test_test_connection_success(self, mock_subprocess):
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_success(self, mock_factory):
         """Test successful connection returns is_connected=True."""
-        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
+        mock_adapter = MagicMock()
+        mock_adapter.list_tags.return_value = ["3.18", "latest"]
+        mock_factory.return_value = mock_adapter
 
         result = ImageProvider.test_connection(image="alpine:3.18")
 
         assert result.is_connected is True
+        mock_adapter.list_tags.assert_called_once_with("library/alpine")
 
-    @patch("subprocess.run")
-    def test_test_connection_auth_failure(self, mock_subprocess):
-        """Test 401 error returns auth failure."""
-        mock_subprocess.return_value = MagicMock(
-            returncode=1, stderr="401 unauthorized"
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_auth_failure(self, mock_factory):
+        """Test registry auth error returns auth failure."""
+        mock_factory.return_value = MagicMock(
+            list_tags=MagicMock(side_effect=ImageRegistryAuthError(file=__file__))
         )
 
         result = ImageProvider.test_connection(image="private/image:latest")
@@ -295,15 +313,35 @@ class TestImageProvider:
         assert result.is_connected is False
         assert "Authentication failed" in result.error
 
-    @patch("subprocess.run")
-    def test_test_connection_not_found(self, mock_subprocess):
-        """Test 404 error returns not found."""
-        mock_subprocess.return_value = MagicMock(returncode=1, stderr="404 not found")
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_not_found(self, mock_factory):
+        """Test tag not found returns not found error."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_tags.return_value = ["v1", "v2"]
+        mock_factory.return_value = mock_adapter
 
         result = ImageProvider.test_connection(image="nonexistent/image:latest")
 
         assert result.is_connected is False
         assert "not found" in result.error
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_registry_url(self, mock_factory):
+        """Test registry URL (namespace) uses list_repositories."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_repositories.return_value = ["andoniaf/myapp"]
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(image="docker.io/andoniaf")
+
+        assert result.is_connected is True
+        mock_factory.assert_called_once_with(
+            registry_url="docker.io/andoniaf",
+            username=None,
+            password=None,
+            token=None,
+        )
+        mock_adapter.list_repositories.assert_called_once()
 
     def test_build_status_extended(self):
         """Test status message content for different finding types."""
@@ -390,6 +428,51 @@ class TestImageProvider:
                 pass
 
     @patch("subprocess.run")
+    def test_sha_extraction_from_image_id(self, mock_subprocess):
+        """Test that image_sha is extracted from Trivy Metadata.ImageID."""
+        provider = _make_provider()
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
+        )
+
+        reports = []
+        for batch in provider._scan_single_image("alpine:3.18"):
+            reports.extend(batch)
+
+        assert len(reports) == 1
+        assert reports[0].image_sha == SAMPLE_IMAGE_SHA
+
+    @patch("subprocess.run")
+    def test_sha_extraction_fallback_to_repo_digests(self, mock_subprocess):
+        """Test that image_sha falls back to RepoDigests when ImageID is absent."""
+        provider = _make_provider()
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_repo_digest_only_trivy_output(), stderr=""
+        )
+
+        reports = []
+        for batch in provider._scan_single_image("alpine:3.18"):
+            reports.extend(batch)
+
+        assert len(reports) == 1
+        assert reports[0].image_sha == "e5f6g7h8i9j0"
+
+    @patch("subprocess.run")
+    def test_sha_extraction_no_metadata(self, mock_subprocess):
+        """Test that image_sha is empty when no Metadata is present."""
+        provider = _make_provider()
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_no_metadata_trivy_output(), stderr=""
+        )
+
+        reports = []
+        for batch in provider._scan_single_image("alpine:3.18"):
+            reports.extend(batch)
+
+        assert len(reports) == 1
+        assert reports[0].image_sha == ""
+
+    @patch("subprocess.run")
     def test_run_scan_propagates_scan_error(self, mock_subprocess):
         """Test that run_scan() re-raises ImageScanError instead of swallowing it."""
         provider = _make_provider()
@@ -402,6 +485,374 @@ class TestImageProvider:
         with pytest.raises(ImageScanError):
             for _ in provider.run_scan():
                 pass
+
+
+class TestImageProviderRegistryAuth:
+    def test_no_auth_by_default(self):
+        """Test that no auth is set when no credentials are provided."""
+        provider = _make_provider()
+
+        assert provider.registry_username is None
+        assert provider.registry_password is None
+        assert provider.registry_token is None
+        assert provider.auth_method == "No auth"
+
+    def test_basic_auth_with_explicit_params(self):
+        """Test basic auth via explicit constructor params."""
+        provider = _make_provider(
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+
+        assert provider.registry_username == "myuser"
+        assert provider.registry_password == "mypass"
+        assert provider.auth_method == "Docker login"
+
+    def test_token_auth_with_explicit_param(self):
+        """Test token auth via explicit constructor param."""
+        provider = _make_provider(registry_token="my-token-123")
+
+        assert provider.registry_token == "my-token-123"
+        assert provider.auth_method == "Registry token"
+
+    def test_basic_auth_takes_precedence_over_token(self):
+        """Test that username/password takes precedence over token."""
+        provider = _make_provider(
+            registry_username="myuser",
+            registry_password="mypass",
+            registry_token="my-token",
+        )
+
+        assert provider.auth_method == "Docker login"
+
+    @patch.dict(
+        os.environ, {"REGISTRY_USERNAME": "envuser", "REGISTRY_PASSWORD": "envpass"}
+    )
+    def test_basic_auth_from_env_vars(self):
+        """Test that env vars are used as fallback for basic auth."""
+        provider = _make_provider()
+
+        assert provider.registry_username == "envuser"
+        assert provider.registry_password == "envpass"
+        assert provider.auth_method == "Docker login"
+
+    @patch.dict(os.environ, {"REGISTRY_TOKEN": "env-token"})
+    def test_token_auth_from_env_var(self):
+        """Test that env var is used as fallback for token auth."""
+        provider = _make_provider()
+
+        assert provider.registry_token == "env-token"
+        assert provider.auth_method == "Registry token"
+
+    @patch.dict(
+        os.environ, {"REGISTRY_USERNAME": "envuser", "REGISTRY_PASSWORD": "envpass"}
+    )
+    def test_explicit_params_override_env_vars(self):
+        """Test that explicit params take precedence over env vars."""
+        provider = _make_provider(
+            registry_username="explicit",
+            registry_password="explicit-pass",
+        )
+
+        assert provider.registry_username == "explicit"
+        assert provider.registry_password == "explicit-pass"
+
+    def test_build_trivy_env_no_auth(self):
+        """Test that _build_trivy_env returns base env when no auth."""
+        provider = _make_provider()
+        env = provider._build_trivy_env()
+
+        assert "TRIVY_USERNAME" not in env
+        assert "TRIVY_PASSWORD" not in env
+        assert "TRIVY_REGISTRY_TOKEN" not in env
+
+    def test_build_trivy_env_basic_auth_sets_env_vars(self):
+        """Test that _build_trivy_env injects TRIVY_USERNAME/PASSWORD for native Trivy auth."""
+        provider = _make_provider(
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+        env = provider._build_trivy_env()
+
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
+
+    def test_build_trivy_env_token_auth(self):
+        """Test that _build_trivy_env injects registry token."""
+        provider = _make_provider(registry_token="my-token")
+        env = provider._build_trivy_env()
+
+        assert env["TRIVY_REGISTRY_TOKEN"] == "my-token"
+
+    @patch("subprocess.run")
+    def test_execute_trivy_sets_trivy_env_with_basic_auth(self, mock_subprocess):
+        """Test that _execute_trivy sets TRIVY_USERNAME/PASSWORD for native Trivy auth."""
+        provider = _make_provider(
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
+        )
+
+        provider._execute_trivy(["trivy", "image", "alpine:3.18"], "alpine:3.18")
+
+        call_kwargs = mock_subprocess.call_args
+        env = call_kwargs.kwargs.get("env") or call_kwargs[1].get("env")
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_with_basic_auth(self, mock_factory):
+        """Test test_connection passes credentials to the registry adapter."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_tags.return_value = ["v1"]
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(
+            image="private.registry.io/myapp:v1",
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+
+        assert result.is_connected is True
+        mock_factory.assert_called_once_with(
+            registry_url="private.registry.io",
+            username="myuser",
+            password="mypass",
+            token=None,
+        )
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_with_token(self, mock_factory):
+        """Test test_connection passes token to the registry adapter."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_tags.return_value = ["v1"]
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(
+            image="private.registry.io/myapp:v1",
+            registry_token="my-token",
+        )
+
+        assert result.is_connected is True
+        mock_factory.assert_called_once_with(
+            registry_url="private.registry.io",
+            username=None,
+            password=None,
+            token="my-token",
+        )
+
+    def test_print_credentials_shows_auth_method(self):
+        """Test that print_credentials outputs the auth method."""
+        provider = _make_provider(
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+        with mock.patch("builtins.print") as mock_print:
+            provider.print_credentials()
+            output = " ".join(
+                str(call.args[0]) for call in mock_print.call_args_list if call.args
+            )
+            assert "Docker login" in output
+
+
+class TestExtractRegistry:
+    def test_docker_hub_simple(self):
+        assert ImageProvider._extract_registry("alpine:3.18") is None
+
+    def test_docker_hub_with_namespace(self):
+        assert ImageProvider._extract_registry("andoniaf/test-private:tag") is None
+
+    def test_ghcr(self):
+        assert ImageProvider._extract_registry("ghcr.io/user/image:tag") == "ghcr.io"
+
+    def test_ecr(self):
+        assert (
+            ImageProvider._extract_registry(
+                "123456789012.dkr.ecr.us-east-1.amazonaws.com/repo:tag"
+            )
+            == "123456789012.dkr.ecr.us-east-1.amazonaws.com"
+        )
+
+    def test_localhost_with_port(self):
+        assert (
+            ImageProvider._extract_registry("localhost:5000/myimage:latest")
+            == "localhost:5000"
+        )
+
+    def test_custom_registry_with_port(self):
+        assert (
+            ImageProvider._extract_registry("myregistry.io:5000/image:tag")
+            == "myregistry.io:5000"
+        )
+
+    def test_digest_reference(self):
+        assert (
+            ImageProvider._extract_registry("ghcr.io/user/image@sha256:abc123")
+            == "ghcr.io"
+        )
+
+    def test_bare_image_name(self):
+        assert ImageProvider._extract_registry("nginx") is None
+
+
+class TestIsRegistryUrl:
+    def test_bare_ecr_hostname(self):
+        assert ImageProvider._is_registry_url(
+            "714274078102.dkr.ecr.eu-west-1.amazonaws.com"
+        )
+
+    def test_bare_hostname_with_port(self):
+        assert ImageProvider._is_registry_url("myregistry.com:5000")
+
+    def test_bare_ghcr(self):
+        assert ImageProvider._is_registry_url("ghcr.io")
+
+    def test_registry_with_namespace_only(self):
+        """Registry URL with a single path segment (no tag) is a registry URL."""
+        assert ImageProvider._is_registry_url("ghcr.io/myorg")
+
+    def test_image_reference_not_registry(self):
+        """Full image reference with repo and tag is not a registry URL."""
+        assert not ImageProvider._is_registry_url("ghcr.io/myorg/repo:tag")
+
+    def test_simple_image_name(self):
+        assert not ImageProvider._is_registry_url("alpine:3.18")
+
+    def test_bare_image_no_tag(self):
+        assert not ImageProvider._is_registry_url("nginx")
+
+    def test_dockerhub_namespace(self):
+        assert not ImageProvider._is_registry_url("library/alpine")
+
+
+class TestTestRegistryConnection:
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_registry_connection_success(self, mock_factory):
+        """Test that a bare hostname triggers registry catalog test."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_repositories.return_value = ["repo1"]
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(
+            image="714274078102.dkr.ecr.eu-west-1.amazonaws.com",
+            registry_username="user",
+            registry_password="pass",
+        )
+
+        assert result.is_connected is True
+        mock_factory.assert_called_once_with(
+            registry_url="714274078102.dkr.ecr.eu-west-1.amazonaws.com",
+            username="user",
+            password="pass",
+            token=None,
+        )
+        mock_adapter.list_repositories.assert_called_once()
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_registry_connection_auth_failure(self, mock_factory):
+        """Test that 401 from registry adapter returns auth failure."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_repositories.side_effect = Exception("401 unauthorized")
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(
+            image="714274078102.dkr.ecr.eu-west-1.amazonaws.com",
+        )
+
+        assert result.is_connected is False
+        assert "Authentication failed" in result.error
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_registry_connection_generic_error(self, mock_factory):
+        """Test that a generic error from registry adapter returns error message."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_repositories.side_effect = Exception("connection refused")
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(
+            image="myregistry.example.com",
+        )
+
+        assert result.is_connected is False
+        assert "Failed to connect to registry" in result.error
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_image_reference_uses_registry_adapter(self, mock_factory):
+        """Test that a full image reference uses registry adapter to verify tag."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_tags.return_value = ["3.18", "latest"]
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(image="alpine:3.18")
+
+        assert result.is_connected is True
+        mock_adapter.list_tags.assert_called_once()
+
+
+class TestTrivyAuthIntegration:
+    @patch("subprocess.run")
+    def test_run_scan_passes_trivy_env_with_credentials(self, mock_subprocess):
+        """Test that run_scan() passes TRIVY_USERNAME/PASSWORD via env when credentials are set."""
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
+        )
+        provider = _make_provider(
+            images=["ghcr.io/user/image:tag"],
+            registry_username="myuser",
+            registry_password="mypass",
+        )
+
+        list(provider.run_scan())
+
+        call_kwargs = mock_subprocess.call_args
+        env = call_kwargs.kwargs.get("env") or call_kwargs[1].get("env")
+        assert env["TRIVY_USERNAME"] == "myuser"
+        assert env["TRIVY_PASSWORD"] == "mypass"
+
+    def test_registry_url_ghcr(self):
+        assert ImageProvider._is_registry_url("ghcr.io/org") is True
+
+    def test_image_ref_with_tag(self):
+        assert ImageProvider._is_registry_url("ghcr.io/user/image:tag") is False
+
+    def test_image_ref_with_repo(self):
+        assert ImageProvider._is_registry_url("ghcr.io/user/image") is False
+
+    def test_dockerhub_short_image(self):
+        assert ImageProvider._is_registry_url("alpine:3.18") is False
+
+    def test_dockerhub_with_namespace(self):
+        assert ImageProvider._is_registry_url("andoniaf/test:tag") is False
+
+    def test_bare_image_name(self):
+        assert ImageProvider._is_registry_url("nginx") is False
+
+    def test_localhost_namespace(self):
+        assert ImageProvider._is_registry_url("localhost:5000/myns") is True
+
+    def test_localhost_image_with_tag(self):
+        assert ImageProvider._is_registry_url("localhost:5000/myns/image:v1") is False
+
+
+class TestCleanup:
+    def test_cleanup_idempotent(self):
+        """Test cleanup is safe to call multiple times."""
+        provider = _make_provider()
+
+        provider.cleanup()
+        provider.cleanup()
+
+    def test_cleanup_removes_trivy_cache_dir(self):
+        """Test that cleanup removes the temporary Trivy cache directory."""
+        provider = _make_provider()
+        cache_dir = provider._trivy_cache_dir
+        assert os.path.isdir(cache_dir)
+
+        provider.cleanup()
+
+        assert not os.path.isdir(cache_dir)
 
 
 class TestImageProviderInputValidation:
@@ -472,6 +923,22 @@ class TestImageProviderInputValidation:
         """Test that an invalid image config scanner raises ImageInvalidConfigScannerError."""
         with pytest.raises(ImageInvalidConfigScannerError):
             _make_provider(image_config_scanners=["misconfig", "vuln"])
+
+    @patch("subprocess.run")
+    def test_trivy_command_includes_cache_dir(self, mock_subprocess):
+        """Test that Trivy command includes --cache-dir for cache isolation."""
+        provider = _make_provider()
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_empty_trivy_output(), stderr=""
+        )
+
+        for _ in provider._scan_single_image("alpine:3.18"):
+            pass
+
+        call_args = mock_subprocess.call_args[0][0]
+        assert "--cache-dir" in call_args
+        idx = call_args.index("--cache-dir")
+        assert call_args[idx + 1] == provider._trivy_cache_dir
 
     @patch("subprocess.run")
     def test_trivy_command_includes_image_config_scanners(self, mock_subprocess):
@@ -593,3 +1060,67 @@ class TestImageProviderNameValidation:
 
         with pytest.raises(ImageListFileReadError):
             _make_provider(images=None, image_list_file=file_path)
+
+
+class TestScanPerImage:
+    @patch("subprocess.run")
+    def test_yields_per_image(self, mock_subprocess):
+        """Test that scan_per_image yields (name, findings) per image."""
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
+        )
+        provider = _make_provider(images=["alpine:3.18", "nginx:latest"])
+
+        results = list(provider.scan_per_image())
+
+        assert len(results) == 2
+        for name, findings in results:
+            assert isinstance(name, str)
+            assert isinstance(findings, list)
+            assert all(isinstance(f, CheckReportImage) for f in findings)
+
+    @patch("subprocess.run")
+    def test_reraises_scan_error(self, mock_subprocess):
+        """Test that ImageScanError propagates from scan_per_image."""
+        mock_subprocess.return_value = MagicMock(
+            returncode=1, stdout="", stderr="scan failed"
+        )
+        provider = _make_provider(images=["alpine:3.18"])
+
+        with pytest.raises(ImageScanError):
+            list(provider.scan_per_image())
+
+    @patch("subprocess.run")
+    def test_skips_generic_error(self, mock_subprocess):
+        """Test that a generic RuntimeError in _scan_single_image yields empty findings and continues."""
+
+        def side_effect(cmd, **kwargs):
+            if "bad:image" in cmd:
+                raise RuntimeError("unexpected error")
+            return MagicMock(
+                returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
+            )
+
+        mock_subprocess.side_effect = side_effect
+        provider = _make_provider(images=["bad:image", "alpine:3.18"])
+
+        results = list(provider.scan_per_image())
+
+        assert len(results) == 2
+        assert results[0][0] == "bad:image"
+        assert results[0][1] == []
+        assert results[1][0] == "alpine:3.18"
+        assert len(results[1][1]) > 0
+
+    @patch("subprocess.run")
+    def test_calls_cleanup(self, mock_subprocess):
+        """Test that cleanup is called even after scan_per_image completes."""
+        mock_subprocess.return_value = MagicMock(
+            returncode=0, stdout=get_sample_trivy_json_output(), stderr=""
+        )
+        provider = _make_provider(images=["alpine:3.18"])
+
+        with mock.patch.object(provider, "cleanup") as mock_cleanup:
+            list(provider.scan_per_image())
+
+        mock_cleanup.assert_called_once()

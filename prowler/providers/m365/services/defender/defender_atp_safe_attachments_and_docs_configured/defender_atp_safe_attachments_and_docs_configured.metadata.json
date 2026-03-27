@@ -7,9 +7,9 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Defender ATP Policy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "**Safe Attachments** for SharePoint, OneDrive, and Microsoft Teams protects organizations from inadvertently sharing malicious files. When enabled, files identified as malicious are blocked and cannot be opened, copied, moved, or shared until further actions are taken by the organization's security team.",
+  "Description": "**Microsoft Defender for Office 365 Safe Attachments** for SharePoint, OneDrive, and Microsoft Teams protects organizations from inadvertently sharing malicious files. When enabled, files identified as malicious are blocked and cannot be opened, copied, moved, or shared until further actions are taken by the organization's security team.",
   "Risk": "Without **Safe Attachments** enabled, users may download, sync, or access **malicious files** from SharePoint, OneDrive, or Teams, potentially leading to **malware infections** across the organization. If **Safe Documents** is disabled or users can bypass **Protected View**, malicious content in Office documents may execute and **compromise endpoints**.",
   "RelatedUrl": "",
   "AdditionalURLs": [

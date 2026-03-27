@@ -19,6 +19,8 @@ jobs:
   # First, analyze which tests need to run
   impact-analysis:
     if: github.repository == 'prowler-cloud/prowler'
+    permissions:
+      contents: read
     uses: ./.github/workflows/test-impact-analysis.yml
 
   # Run E2E tests based on impact analysis
@@ -72,24 +74,35 @@ jobs:
       # Pass E2E paths from impact analysis
       E2E_TEST_PATHS: ${{ needs.impact-analysis.outputs.ui-e2e }}
       RUN_ALL_TESTS: ${{ needs.impact-analysis.outputs.run-all }}
+    permissions:
+      contents: read
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Show test scope
         run: |
           echo "## E2E Test Scope" >> $GITHUB_STEP_SUMMARY
-          if [[ "${{ env.RUN_ALL_TESTS }}" == "true" ]]; then
+          if [[ "${RUN_ALL_TESTS}" == "true" ]]; then
             echo "Running **ALL** E2E tests (critical path changed)" >> $GITHUB_STEP_SUMMARY
           else
-            echo "Running tests matching: \`${{ env.E2E_TEST_PATHS }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "Running tests matching: \`${E2E_TEST_PATHS}\`" >> $GITHUB_STEP_SUMMARY
           fi
           echo ""
-          echo "Affected modules: \`${{ needs.impact-analysis.outputs.modules }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> $GITHUB_STEP_SUMMARY
+        env:
+          NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES: ${{ needs.impact-analysis.outputs.modules }}
 
       - name: Create k8s Kind Cluster
-        uses: helm/kind-action@v1
+        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1
         with:
           cluster_name: kind
 
@@ -145,12 +158,12 @@ jobs:
           '
 
       - name: Setup Node.js
-        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: '24.13.0'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
         with:
           version: 10
           run_install: false
@@ -159,7 +172,7 @@ jobs:
         run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Setup pnpm and Next.js cache
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: |
             ${{ env.STORE_PATH }}
@@ -179,7 +192,7 @@ jobs:
         run: pnpm run build
 
       - name: Cache Playwright browsers
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -195,23 +208,52 @@ jobs:
       - name: Run E2E tests
         working-directory: ./ui
         run: |
-          if [[ "${{ env.RUN_ALL_TESTS }}" == "true" ]]; then
+          if [[ "${RUN_ALL_TESTS}" == "true" ]]; then
             echo "Running ALL E2E tests..."
             pnpm run test:e2e
           else
-            echo "Running targeted E2E tests: ${{ env.E2E_TEST_PATHS }}"
+            echo "Running targeted E2E tests: ${E2E_TEST_PATHS}"
             # Convert glob patterns to playwright test paths
             # e.g., "ui/tests/providers/**" -> "tests/providers"
-            TEST_PATHS="${{ env.E2E_TEST_PATHS }}"
+            TEST_PATHS="${E2E_TEST_PATHS}"
             # Remove ui/ prefix and convert ** to empty (playwright handles recursion)
             TEST_PATHS=$(echo "$TEST_PATHS" | sed 's|ui/||g' | sed 's|\*\*||g' | tr ' ' '\n' | sort -u)
             # Drop auth setup helpers (not runnable test suites)
             TEST_PATHS=$(echo "$TEST_PATHS" | grep -v '^tests/setups/')
+            # Safety net: if bare "tests/" appears (from broad patterns like ui/tests/**),
+            # expand to specific subdirs to avoid Playwright discovering setup files
+            if echo "$TEST_PATHS" | grep -qx 'tests/'; then
+              echo "Expanding bare 'tests/' to specific subdirs (excluding setups)..."
+              SPECIFIC_DIRS=""
+              for dir in tests/*/; do
+                [[ "$dir" == "tests/setups/" ]] && continue
+                SPECIFIC_DIRS="${SPECIFIC_DIRS}${dir}"$'\n'
+              done
+              # Replace "tests/" with specific dirs, keep other paths
+              TEST_PATHS=$(echo "$TEST_PATHS" | grep -vx 'tests/')
+              TEST_PATHS="${TEST_PATHS}"$'\n'"${SPECIFIC_DIRS}"
+              TEST_PATHS=$(echo "$TEST_PATHS" | grep -v '^$' | sort -u)
+            fi
             if [[ -z "$TEST_PATHS" ]]; then
               echo "No runnable E2E test paths after filtering setups"
               exit 0
             fi
-            TEST_PATHS=$(echo "$TEST_PATHS" | tr '\n' ' ')
+            # Filter out directories that don't contain any test files
+            VALID_PATHS=""
+            while IFS= read -r p; do
+              [[ -z "$p" ]] && continue
+              if find "$p" -name '*.spec.ts' -o -name '*.test.ts' 2>/dev/null | head -1 | grep -q .; then
+                VALID_PATHS="${VALID_PATHS}${p}"$'\n'
+              else
+                echo "Skipping empty test directory: $p"
+              fi
+            done <<< "$TEST_PATHS"
+            VALID_PATHS=$(echo "$VALID_PATHS" | grep -v '^$' || true)
+            if [[ -z "$VALID_PATHS" ]]; then
+              echo "No test files found in any resolved paths — skipping E2E"
+              exit 0
+            fi
+            TEST_PATHS=$(echo "$VALID_PATHS" | tr '\n' ' ')
             echo "Resolved test paths: $TEST_PATHS"
             pnpm exec playwright test $TEST_PATHS
           fi
@@ -237,13 +279,22 @@ jobs:
       needs.impact-analysis.outputs.has-ui-e2e != 'true' &&
       needs.impact-analysis.outputs.run-all != 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: No E2E tests needed
         run: |
           echo "## E2E Tests Skipped" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "No UI E2E tests needed for this change." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Affected modules: \`${{ needs.impact-analysis.outputs.modules }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "To run all tests, modify a file in a critical path (e.g., \`ui/lib/**\`)." >> $GITHUB_STEP_SUMMARY
+        env:
+          NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES: ${{ needs.impact-analysis.outputs.modules }}

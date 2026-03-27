@@ -30,12 +30,20 @@ jobs:
           - '3.12'
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # zizmor: ignore[artipacked]
+          persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
 
       - name: Check for SDK changes
         id: check-changes
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
         with:
           files: ./**
           files_ignore: |
@@ -64,7 +72,7 @@ jobs:
 
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
@@ -77,7 +85,7 @@ jobs:
       - name: Check if AWS files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-aws
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
         with:
           files: |
             ./prowler/**/aws/**
@@ -119,7 +127,7 @@ jobs:
               "wafv2": ["cognito", "elbv2"],
           }
 
-          changed_raw = """${{ steps.changed-aws.outputs.all_changed_files }}"""
+          changed_raw = os.environ.get("STEPS_CHANGED_AWS_OUTPUTS_ALL_CHANGED_FILES", "")
           # all_changed_files is space-separated, not newline-separated
           # Strip leading "./" if present for consistent path handling
           changed_files = [Path(f.lstrip("./")) for f in changed_raw.split() if f]
@@ -174,20 +182,25 @@ jobs:
           else:
               print("AWS service test paths: none detected")
           PY
+        env:
+          STEPS_CHANGED_AWS_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-aws.outputs.all_changed_files }}
 
       - name: Run AWS tests
         if: steps.changed-aws.outputs.any_changed == 'true'
         run: |
-          echo "AWS run_all=${{ steps.aws-services.outputs.run_all }}"
-          echo "AWS service_paths='${{ steps.aws-services.outputs.service_paths }}'"
+          echo "AWS run_all=${STEPS_AWS_SERVICES_OUTPUTS_RUN_ALL}"
+          echo "AWS service_paths='${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}'"
 
-          if [ "${{ steps.aws-services.outputs.run_all }}" = "true" ]; then
+          if [ "${STEPS_AWS_SERVICES_OUTPUTS_RUN_ALL}" = "true" ]; then
             poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
-          elif [ -z "${{ steps.aws-services.outputs.service_paths }}" ]; then
+          elif [ -z "${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}" ]; then
             echo "No AWS service paths detected; skipping AWS tests."
           else
-            poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml ${{ steps.aws-services.outputs.service_paths }}
+            poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml ${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}
           fi
+        env:
+          STEPS_AWS_SERVICES_OUTPUTS_RUN_ALL: ${{ steps.aws-services.outputs.run_all }}
+          STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS: ${{ steps.aws-services.outputs.service_paths }}
 
       - name: Upload AWS coverage to Codecov
         if: steps.changed-aws.outputs.any_changed == 'true'
@@ -202,7 +215,7 @@ jobs:
       - name: Check if Azure files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-azure
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
         with:
           files: |
             ./prowler/**/azure/**
@@ -226,7 +239,7 @@ jobs:
       - name: Check if GCP files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-gcp
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
         with:
           files: |
             ./prowler/**/gcp/**
@@ -250,7 +263,7 @@ jobs:
       - name: Check if Kubernetes files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-kubernetes
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
         with:
           files: |
             ./prowler/**/kubernetes/**
@@ -274,7 +287,7 @@ jobs:
       - name: Check if GitHub files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-github
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
         with:
           files: |
             ./prowler/**/github/**
@@ -298,7 +311,7 @@ jobs:
       - name: Check if NHN files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-nhn
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
         with:
           files: |
             ./prowler/**/nhn/**
@@ -322,7 +335,7 @@ jobs:
       - name: Check if M365 files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-m365
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
         with:
           files: |
             ./prowler/**/m365/**
@@ -346,7 +359,7 @@ jobs:
       - name: Check if IaC files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-iac
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
         with:
           files: |
             ./prowler/**/iac/**
@@ -370,7 +383,7 @@ jobs:
       - name: Check if MongoDB Atlas files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-mongodbatlas
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
         with:
           files: |
             ./prowler/**/mongodbatlas/**
@@ -394,7 +407,7 @@ jobs:
       - name: Check if OCI files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-oraclecloud
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
         with:
           files: |
             ./prowler/**/oraclecloud/**
@@ -418,7 +431,7 @@ jobs:
       - name: Check if OpenStack files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-openstack
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
         with:
           files: |
             ./prowler/**/openstack/**
@@ -438,11 +451,35 @@ jobs:
           flags: prowler-py${{ matrix.python-version }}-openstack
           files: ./openstack_coverage.xml
 
+      # Google Workspace Provider
+      - name: Check if Google Workspace files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-googleworkspace
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
+        with:
+          files: |
+            ./prowler/**/googleworkspace/**
+            ./tests/**/googleworkspace/**
+            ./poetry.lock
+
+      - name: Run Google Workspace tests
+        if: steps.changed-googleworkspace.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/googleworkspace --cov-report=xml:googleworkspace_coverage.xml tests/providers/googleworkspace
+
+      - name: Upload Google Workspace coverage to Codecov
+        if: steps.changed-googleworkspace.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-googleworkspace
+          files: ./googleworkspace_coverage.xml
+
       # Lib
       - name: Check if Lib files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-lib
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
         with:
           files: |
             ./prowler/lib/**
@@ -466,7 +503,7 @@ jobs:
       - name: Check if Config files changed
         if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-config
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
         with:
           files: |
             ./prowler/config/**

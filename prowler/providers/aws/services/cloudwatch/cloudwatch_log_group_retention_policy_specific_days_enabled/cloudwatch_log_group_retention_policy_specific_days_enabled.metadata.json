@@ -19,7 +19,7 @@
   "Risk": "Short log retention erodes audit evidence. Adversaries can wait out the window, creating gaps in detection, forensics, and compliance reporting. This degrades the **availability** of historical logs and the **integrity** of incident timelines.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/cloudwatch-logs-retention-period.html",
+    "https://trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudWatchLogs/cloudwatch-logs-retention-period.html",
     "https://boto3.amazonaws.com/v1/documentation/api/1.26.93/reference/services/logs/client/put_retention_policy.html",
     "https://medium.com/pareture/aws-cloudwatch-log-group-retention-periods-bb8a2fb9c358",
     "https://www.blinkops.com/blog/cloudwatch-retention",

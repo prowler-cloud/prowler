@@ -13,6 +13,8 @@ keywords:
   - gcp
   - kubernetes
 maintainers:
+  - name: Dani
+    email: andre.gomes@promptlyhealth.com
   - name: Mihai
     email: mihai.legat@gmail.com
 dependencies:

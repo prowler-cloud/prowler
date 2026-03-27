@@ -17,7 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticbeanstalk-controls.html#elasticbeanstalk-2",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ElasticBeanstalk/managed-platform-updates.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/ElasticBeanstalk/managed-platform-updates.html",
     "https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environment-platform-update-managed.html"
   ],
   "Remediation": {
