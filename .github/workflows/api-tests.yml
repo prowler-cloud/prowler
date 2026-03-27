@@ -22,6 +22,9 @@ env:
   POSTGRES_USER: prowler_user
   POSTGRES_PASSWORD: prowler
   POSTGRES_DB: postgres-db
+  VALKEY_SCHEME: redis
+  VALKEY_USERNAME: ""
+  VALKEY_PASSWORD: ""
   VALKEY_HOST: localhost
   VALKEY_PORT: 6379
   VALKEY_DB: 0
