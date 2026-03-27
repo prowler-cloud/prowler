@@ -1,4 +1,5 @@
-import { describe, vi } from "vitest";
+import { http, HttpResponse } from "msw";
+import { beforeEach, describe, vi } from "vitest";
 import { render } from "vitest-browser-react";
 
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
@@ -14,6 +15,10 @@ vi.mock("next-auth/react", () => ({
 
 vi.mock("@/auth.config", () => ({
   auth: vi.fn(),
+}));
+
+vi.mock("@/lib/navigation", () => ({
+  reloadPage: vi.fn(),
 }));
 
 vi.mock("@/components/ui", () => ({
@@ -52,6 +57,11 @@ function makeTenant(id: string, name: string) {
     relationships: { memberships: { meta: { count: 1 }, data: [] } },
   };
 }
+
+// ── UUID constants for submission tests (z.uuid() validation) ──
+
+const UUID_T1 = "00000000-0000-4000-a000-000000000001";
+const UUID_T2 = "00000000-0000-4000-a000-000000000002";
 
 // ── Fixtures ──
 
@@ -101,6 +111,19 @@ const FIVE_ORGS = {
   },
 };
 
+// ── UUID Fixtures (for form submission tests) ──
+
+const TWO_ORGS_UUID = {
+  memberships: [
+    makeMembership({ id: "m1", role: "owner", tenantId: UUID_T1 }),
+    makeMembership({ id: "m2", role: "member", tenantId: UUID_T2 }),
+  ],
+  tenantsMap: {
+    [UUID_T1]: makeTenant(UUID_T1, "Alpha Org"),
+    [UUID_T2]: makeTenant(UUID_T2, "Beta Org"),
+  },
+};
+
 // ── Helper ──
 
 function renderCard(props: {
@@ -121,582 +144,852 @@ function renderCard(props: {
   );
 }
 
-describe("Permission + Org Config Combinations", () => {
-  test("owner + active + single org: Edit + Active, no Switch/Delete", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...SINGLE_ORG, isOwner: true, sessionTenantId: "t1" });
+// ── Tests ──
 
-    await expect.element(h.editButton()).toBeVisible();
-    await expect.element(h.activeBadge()).toBeVisible();
-    await expect.element(h.switchButtons().first()).not.toBeInTheDocument();
-    await expect.element(h.deleteButton()).not.toBeInTheDocument();
+describe("MembershipsCard", () => {
+  beforeEach(() => {
+    vi.stubGlobal("location.reload", vi.fn());
   });
+  // ────────────────────────────────────────────
+  // Card Structure & Rendering
+  // ────────────────────────────────────────────
 
-  test("owner + active + multiple orgs: Edit + Delete + Active, no Switch", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
-
-    // Active org has Edit + Delete + Active badge
-    await expect.element(h.editButtons().first()).toBeVisible();
-    await expect.element(h.deleteButtons().first()).toBeVisible();
-    await expect.element(h.activeBadge()).toBeVisible();
-    // Non-active org has Switch
-    await expect.element(h.switchButtons().first()).toBeVisible();
-    await expect.element(h.switchButtons().nth(1)).not.toBeInTheDocument();
-  });
-
-  test("owner + non-active single org: Edit + Switch, no Delete", async () => {
-    const h = new ProfileOrganizationsHarness();
-    // sessionTenantId doesn't match the only org → it's non-active
-    renderCard({ ...SINGLE_ORG, isOwner: true, sessionTenantId: "other" });
-
-    await expect.element(h.editButton()).toBeVisible();
-    await expect.element(h.switchButtons().first()).toBeVisible();
-    await expect.element(h.deleteButton()).not.toBeInTheDocument();
-    await expect.element(h.activeBadge()).not.toBeInTheDocument();
-  });
-
-  test("non-owner + active + single org: Active badge only", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...SINGLE_ORG, isOwner: false, sessionTenantId: "t1" });
-
-    await expect.element(h.activeBadge()).toBeVisible();
-    await expect.element(h.editButton()).not.toBeInTheDocument();
-    await expect.element(h.deleteButton()).not.toBeInTheDocument();
-    await expect.element(h.switchButtons().first()).not.toBeInTheDocument();
-  });
-
-  test("non-owner + non-active + multiple orgs: Switch only, no Edit/Delete", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...TWO_ORGS, isOwner: false, sessionTenantId: "t1" });
-
-    // Active org: just Active badge
-    await expect.element(h.activeBadge()).toBeVisible();
-    // Non-active org: just Switch
-    await expect.element(h.switchButtons().first()).toBeVisible();
-    await expect.element(h.editButton()).not.toBeInTheDocument();
-    await expect.element(h.deleteButton()).not.toBeInTheDocument();
-  });
-});
-
-describe("Multi-Org Configurations", () => {
-  test("2 orgs, first active: 1 Active badge, 1 Switch button", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...TWO_ORGS, isOwner: false, sessionTenantId: "t1" });
-
-    await expect.element(h.activeBadge()).toBeVisible();
-    await expect.element(h.switchButtons().first()).toBeVisible();
-    await expect.element(h.activeBadges().nth(1)).not.toBeInTheDocument();
-    await expect.element(h.switchButtons().nth(1)).not.toBeInTheDocument();
-  });
-
-  test("2 orgs, second active: Active on second, Switch on first", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...TWO_ORGS, isOwner: false, sessionTenantId: "t2" });
-
-    await expect.element(h.activeBadge()).toBeVisible();
-    await expect.element(h.switchButtons().first()).toBeVisible();
-    await expect.element(h.orgName("Alpha Org")).toBeVisible();
-    await expect.element(h.orgName("Beta Org")).toBeVisible();
-  });
-
-  test("3 orgs, middle one active: 1 Active badge, 2 Switch buttons", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: false, sessionTenantId: "t2" });
-
-    await expect.element(h.activeBadge()).toBeVisible();
-    await expect.element(h.activeBadges().nth(1)).not.toBeInTheDocument();
-    await expect.element(h.switchButtons().first()).toBeVisible();
-    await expect.element(h.switchButtons().nth(1)).toBeVisible();
-    await expect.element(h.switchButtons().nth(2)).not.toBeInTheDocument();
-  });
-
-  test("3 orgs, last one active: Active on third, Switch on first two", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: false, sessionTenantId: "t3" });
-
-    await expect.element(h.activeBadge()).toBeVisible();
-    await expect.element(h.switchButtons().first()).toBeVisible();
-    await expect.element(h.switchButtons().nth(1)).toBeVisible();
-    await expect.element(h.switchButtons().nth(2)).not.toBeInTheDocument();
-  });
-
-  test("owner with 3 orgs: Edit on all 3, Delete on all 3", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: true, sessionTenantId: "t1" });
-
-    await expect.element(h.editButtons().nth(0)).toBeVisible();
-    await expect.element(h.editButtons().nth(1)).toBeVisible();
-    await expect.element(h.editButtons().nth(2)).toBeVisible();
-    await expect.element(h.deleteButtons().nth(0)).toBeVisible();
-    await expect.element(h.deleteButtons().nth(1)).toBeVisible();
-    await expect.element(h.deleteButtons().nth(2)).toBeVisible();
-  });
-
-  test("non-owner with 3 orgs: no Edit or Delete on any", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: false, sessionTenantId: "t1" });
-
-    await expect.element(h.editButton()).not.toBeInTheDocument();
-    await expect.element(h.deleteButton()).not.toBeInTheDocument();
-  });
-
-  test("Create button visible regardless of hasManageAccount", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({
-      ...SINGLE_ORG,
-      isOwner: false,
-      hasManageAccount: false,
-      sessionTenantId: "t1",
+  describe("Card Structure & Rendering", () => {
+    test("should show Organizations heading", async () => {
+      const h = new ProfileOrganizationsHarness();
+      renderCard({ ...SINGLE_ORG, isOwner: false, sessionTenantId: "t1" });
+      await expect.element(h.cardTitle()).toBeVisible();
     });
 
-    await expect.element(h.createButton()).toBeVisible();
-  });
-});
-
-describe("Switch flow scenarios", () => {
-  test("shows Active badge on current org and Switch button on other orgs", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
-
-    await expect.element(h.activeBadge()).toBeVisible();
-    await expect.element(h.switchButtons().first()).toBeVisible();
-    await expect.element(h.orgName("Alpha Org")).toBeVisible();
-    await expect.element(h.orgName("Beta Org")).toBeVisible();
-  });
-
-  test("opens confirmation dialog when clicking Switch", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
-
-    await h.clickSwitchOnFirstAvailable();
-
-    await expect.element(h.alertDialog()).toBeVisible();
-    await expect.element(h.confirmationTitle()).toBeVisible();
-    await expect.element(h.confirmButton()).toBeVisible();
-    await expect.element(h.cancelButton()).toBeVisible();
-  });
-
-  test("closes dialog without switching when clicking Cancel", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
-
-    await h.clickSwitchOnFirstAvailable();
-    await expect.element(h.alertDialog()).toBeVisible();
-
-    await h.cancelSwitch();
-
-    await expect.element(h.alertDialog()).not.toBeInTheDocument();
-    await expect.element(h.switchButtons().first()).toBeVisible();
-  });
-
-  test("with 3 orgs, can open switch for each non-active org", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: true, sessionTenantId: "t1" });
-
-    await h.clickSwitchAt(0);
-    await expect.element(h.alertDialog()).toBeVisible();
-    await h.cancelSwitch();
-    await expect.element(h.alertDialog()).not.toBeInTheDocument();
-
-    await h.clickSwitchAt(1);
-    await expect.element(h.alertDialog()).toBeVisible();
-  });
-
-  test("switching targets correct org: dialog carries the right tenantId", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: true, sessionTenantId: "t1" });
-
-    // Click switch on Beta (first Switch button)
-    await h.clickSwitchAt(0);
-    const input = h.hiddenTenantInput() as HTMLInputElement | null;
-    expect(input?.value).toBe("t2");
-    await h.cancelSwitch();
-
-    // Click switch on Gamma (second Switch button)
-    await h.clickSwitchAt(1);
-    const input2 = h.hiddenTenantInput() as HTMLInputElement | null;
-    expect(input2?.value).toBe("t3");
-  });
-
-  test("switch button count matches non-active orgs", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: false, sessionTenantId: "t2" });
-
-    // Beta active → Alpha and Gamma have Switch (2 buttons)
-    await expect.element(h.switchButtons().first()).toBeVisible();
-    await expect.element(h.switchButtons().nth(1)).toBeVisible();
-    await expect.element(h.switchButtons().nth(2)).not.toBeInTheDocument();
-  });
-});
-
-describe("Delete Non-Active Tenant Validation", () => {
-  function renderForDeleteNonActive(tenantName = "Alpha Org") {
-    const memberships = [
-      makeMembership({ id: "m1", role: "owner", tenantId: "t1" }),
-      makeMembership({ id: "m2", role: "member", tenantId: "t2" }),
-    ];
-    const tenantsMap = {
-      t1: makeTenant("t1", tenantName),
-      t2: makeTenant("t2", "Beta Org"),
-    };
-    // t2 is active → t1 is non-active, owner can delete it
-    return renderCard({
-      memberships,
-      tenantsMap,
-      isOwner: true,
-      sessionTenantId: "t2",
-    });
-  }
-
-  test("Delete button disabled initially", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderForDeleteNonActive();
-    await h.openDeleteModalAt(0);
-
-    await expect.element(h.submitButton(/delete/i)).toBeDisabled();
-  });
-
-  test("Delete button disabled with partial name", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderForDeleteNonActive();
-    await h.openDeleteModalAt(0);
-
-    await h.fillDeleteConfirmation("Alpha Org", "Alpha");
-    await expect.element(h.submitButton(/delete/i)).toBeDisabled();
-  });
-
-  test("Delete button disabled with case mismatch", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderForDeleteNonActive();
-    await h.openDeleteModalAt(0);
-
-    await h.fillDeleteConfirmation("Alpha Org", "alpha org");
-    await expect.element(h.submitButton(/delete/i)).toBeDisabled();
-  });
-
-  test("Delete button enables on exact match", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderForDeleteNonActive();
-    await h.openDeleteModalAt(0);
-
-    await h.fillDeleteConfirmation("Alpha Org", "Alpha Org");
-    await expect.element(h.submitButton(/delete/i)).toBeEnabled();
-  });
-
-  test("Delete button re-disables when text is cleared", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderForDeleteNonActive();
-    await h.openDeleteModalAt(0);
-
-    await h.fillDeleteConfirmation("Alpha Org", "Alpha Org");
-    await expect.element(h.submitButton(/delete/i)).toBeEnabled();
-
-    await h.fillDeleteConfirmation("Alpha Org", "");
-    await expect.element(h.submitButton(/delete/i)).toBeDisabled();
-  });
-
-  test("Delete button re-disables when matched text is modified", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderForDeleteNonActive();
-    await h.openDeleteModalAt(0);
-
-    await h.fillDeleteConfirmation("Alpha Org", "Alpha Org");
-    await expect.element(h.submitButton(/delete/i)).toBeEnabled();
-
-    await h.fillDeleteConfirmation("Alpha Org", "Alpha Orgx");
-    await expect.element(h.submitButton(/delete/i)).toBeDisabled();
-  });
-
-  test("No target tenant select shown for non-active org", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderForDeleteNonActive();
-    await h.openDeleteModalAt(0);
-
-    await expect.element(h.switchToAfterDeletionText()).not.toBeInTheDocument();
-    await expect.element(h.targetTenantSelect()).not.toBeInTheDocument();
-  });
-
-  test("Special characters in org name require exact match", async () => {
-    const h = new ProfileOrganizationsHarness();
-    const specialName = "O'Reilly & Co.";
-    renderForDeleteNonActive(specialName);
-    await h.openDeleteModalAt(0);
-
-    await h.fillDeleteConfirmation(specialName, "OReilly Co");
-    await expect.element(h.submitButton(/delete/i)).toBeDisabled();
-
-    await h.fillDeleteConfirmation(specialName, specialName);
-    await expect.element(h.submitButton(/delete/i)).toBeEnabled();
-  });
-});
-
-describe("Delete Active Tenant — Target Selection", () => {
-  test("shows target tenant select when deleting active org", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
-    // t1 is active (index 0) → delete opens with target select
-    await h.openDeleteModalAt(0);
-
-    await expect.element(h.switchToAfterDeletionText()).toBeVisible();
-    await expect.element(h.targetTenantSelect()).toBeVisible();
-  });
-
-  test("Delete disabled even with correct name if no target selected", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
-    await h.openDeleteModalAt(0);
-
-    await h.fillDeleteConfirmation("Alpha Org", "Alpha Org");
-    await expect.element(h.submitButton(/delete/i)).toBeDisabled();
-  });
-
-  test("Delete enables when name matches AND target selected", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
-    await h.openDeleteModalAt(0);
-
-    await h.fillDeleteConfirmation("Alpha Org", "Alpha Org");
-    await h.targetTenantSelect().click();
-    await h.orgName("Beta Org").last().click();
-
-    await expect.element(h.submitButton(/delete/i)).toBeEnabled();
-  });
-
-  test("Target select lists only other orgs (not self)", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: true, sessionTenantId: "t1" });
-
-    await h.openDeleteModalAt(0);
-    await h.targetTenantSelect().click();
-
-    await expect.element(h.orgName("Beta Org").last()).toBeVisible();
-    await expect.element(h.orgName("Gamma Org").last()).toBeVisible();
-  });
-
-  test("With 3 orgs, deleting active shows 2 target options", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: true, sessionTenantId: "t1" });
-
-    await h.openDeleteModalAt(0);
-    await h.targetTenantSelect().click();
-
-    await expect.element(h.orgName("Beta Org").last()).toBeVisible();
-    await expect.element(h.orgName("Gamma Org").last()).toBeVisible();
-  });
-
-  test("Target select shows org names not IDs", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
-    await h.openDeleteModalAt(0);
-    await h.targetTenantSelect().click();
-
-    await expect.element(h.orgName("Beta Org").last()).toBeVisible();
-    await expect.element(h.orgName("t2")).not.toBeInTheDocument();
-  });
-});
-
-describe("Edit Flow Scenarios", () => {
-  test("owner clicks Edit: modal shows that org's current name", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...SINGLE_ORG, isOwner: true, sessionTenantId: "t1" });
-    await h.openEditModal();
-
-    await expect.element(h.dialog()).toBeVisible();
-    await expect.element(h.currentNameDisplay("Alpha Org")).toBeVisible();
-    await expect.element(h.editNameInput()).toBeVisible();
-  });
-
-  test("with 3 orgs, Edit on each opens with correct org name", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: true, sessionTenantId: "t1" });
-
-    await h.openEditModalAt(0);
-    await expect.element(h.currentNameDisplay("Alpha Org")).toBeVisible();
-    await h.cancel();
-
-    await h.openEditModalAt(1);
-    await expect.element(h.currentNameDisplay("Beta Org")).toBeVisible();
-    await h.cancel();
-
-    await h.openEditModalAt(2);
-    await expect.element(h.currentNameDisplay("Gamma Org")).toBeVisible();
-  });
-
-  test("non-owner sees no Edit button", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: false, sessionTenantId: "t1" });
-
-    await expect.element(h.editButton()).not.toBeInTheDocument();
-  });
-});
-
-describe("Card Structure & Empty States", () => {
-  test("empty memberships: shows message and Create button", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({
-      memberships: [],
-      tenantsMap: {},
-      isOwner: false,
-      sessionTenantId: "t1",
+    test("should show 'No memberships found' message when empty", async () => {
+      const h = new ProfileOrganizationsHarness();
+      renderCard({
+        memberships: [],
+        tenantsMap: {},
+        isOwner: false,
+        sessionTenantId: "t1",
+      });
+      await expect.element(h.noMembershipsMessage()).toBeVisible();
     });
 
-    await expect.element(h.noMembershipsMessage()).toBeVisible();
-    await expect.element(h.createButton()).toBeVisible();
-  });
-
-  test("1 org renders 1 row", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...SINGLE_ORG, isOwner: false, sessionTenantId: "t1" });
-    await expect.element(h.orgName("Alpha Org")).toBeVisible();
-  });
-
-  test("3 orgs render 3 rows", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: false, sessionTenantId: "t1" });
-    await expect.element(h.orgName("Alpha Org")).toBeVisible();
-    await expect.element(h.orgName("Beta Org")).toBeVisible();
-    await expect.element(h.orgName("Gamma Org")).toBeVisible();
-  });
-
-  test("card shows Organizations heading", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...SINGLE_ORG, isOwner: false, sessionTenantId: "t1" });
-    await expect.element(h.cardTitle()).toBeVisible();
-  });
-
-  test("tenant missing from tenantsMap renders without crash", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({
-      memberships: [
-        makeMembership({ id: "m1", role: "owner", tenantId: "t1" }),
-      ],
-      tenantsMap: {},
-      isOwner: false,
-      sessionTenantId: "t1",
-    });
-    await expect.element(h.cardTitle()).toBeVisible();
-  });
-});
-
-describe("Edge Cases & Data Integrity", () => {
-  test("long organization name renders and works in delete confirmation", async () => {
-    const h = new ProfileOrganizationsHarness();
-    const longName = "A".repeat(120);
-    const memberships = [
-      makeMembership({ id: "m1", role: "owner", tenantId: "t1" }),
-      makeMembership({ id: "m2", role: "member", tenantId: "t2" }),
-    ];
-    const tenantsMap = {
-      t1: makeTenant("t1", longName),
-      t2: makeTenant("t2", "Beta Org"),
-    };
-    renderCard({
-      memberships,
-      tenantsMap,
-      isOwner: true,
-      sessionTenantId: "t2",
+    test("should render 1 row for 1 org", async () => {
+      const h = new ProfileOrganizationsHarness();
+      renderCard({ ...SINGLE_ORG, isOwner: false, sessionTenantId: "t1" });
+      await expect.element(h.orgName("Alpha Org")).toBeVisible();
     });
 
-    await expect.element(h.orgName(longName)).toBeVisible();
-    await h.openDeleteModalAt(0);
-    await h.fillDeleteConfirmation(longName, longName);
-    await expect.element(h.submitButton(/delete/i)).toBeEnabled();
-  });
-
-  test("special characters in org name render correctly", async () => {
-    const h = new ProfileOrganizationsHarness();
-    const specialName = '<Test> & "Quotes"';
-    renderCard({
-      memberships: [
-        makeMembership({ id: "m1", role: "owner", tenantId: "t1" }),
-      ],
-      tenantsMap: { t1: makeTenant("t1", specialName) },
-      isOwner: false,
-      sessionTenantId: "other",
+    test("should render 3 rows for 3 orgs", async () => {
+      const h = new ProfileOrganizationsHarness();
+      renderCard({ ...THREE_ORGS, isOwner: false, sessionTenantId: "t1" });
+      await expect.element(h.orgName("Alpha Org")).toBeVisible();
+      await expect.element(h.orgName("Beta Org")).toBeVisible();
+      await expect.element(h.orgName("Gamma Org")).toBeVisible();
     });
-    await expect.element(h.orgName(specialName)).toBeVisible();
+
+    test("should render without crash when tenant is missing from map", async () => {
+      const h = new ProfileOrganizationsHarness();
+      renderCard({
+        memberships: [
+          makeMembership({ id: "m1", role: "owner", tenantId: "t1" }),
+        ],
+        tenantsMap: {},
+        isOwner: false,
+        sessionTenantId: "t1",
+      });
+      await expect.element(h.cardTitle()).toBeVisible();
+    });
+
+    test("should render special characters in org name correctly", async () => {
+      const h = new ProfileOrganizationsHarness();
+      const specialName = '<Test> & "Quotes"';
+      renderCard({
+        memberships: [
+          makeMembership({ id: "m1", role: "owner", tenantId: "t1" }),
+        ],
+        tenantsMap: { t1: makeTenant("t1", specialName) },
+        isOwner: false,
+        sessionTenantId: "other",
+      });
+      await expect.element(h.orgName(specialName)).toBeVisible();
+    });
+
+    test("should show Active badge on current org", async () => {
+      const h = new ProfileOrganizationsHarness();
+      renderCard({ ...SINGLE_ORG, isOwner: false, sessionTenantId: "t1" });
+      await expect.element(h.activeBadge()).toBeVisible();
+    });
   });
 
-  test("availableTenants for delete filters out self correctly", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: true, sessionTenantId: "t2" });
+  // ────────────────────────────────────────────
+  // Create Organization
+  // ────────────────────────────────────────────
 
-    // Open delete on Beta (active, index 1)
-    await h.openDeleteModalAt(1);
-    await h.targetTenantSelect().click();
+  describe("Create Organization", () => {
+    test("should show Create button regardless of hasManageAccount", async () => {
+      const h = new ProfileOrganizationsHarness();
+      renderCard({
+        ...SINGLE_ORG,
+        isOwner: false,
+        hasManageAccount: false,
+        sessionTenantId: "t1",
+      });
+      await expect.element(h.createButton()).toBeVisible();
+    });
 
-    await expect.element(h.orgName("Alpha Org").last()).toBeVisible();
-    await expect.element(h.orgName("Gamma Org").last()).toBeVisible();
+    test("should show Create button when no memberships exist", async () => {
+      const h = new ProfileOrganizationsHarness();
+      renderCard({
+        memberships: [],
+        tenantsMap: {},
+        isOwner: false,
+        sessionTenantId: "t1",
+      });
+      await expect.element(h.createButton()).toBeVisible();
+    });
   });
 
-  test("5 orgs: all non-active show Switch, all show Edit+Delete as owner", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...FIVE_ORGS, isOwner: true, sessionTenantId: "t1" });
+  // ────────────────────────────────────────────
+  // Switch Organization
+  // ────────────────────────────────────────────
 
-    // 4 Switch buttons (all except active t1)
-    await expect.element(h.switchButtons().nth(0)).toBeVisible();
-    await expect.element(h.switchButtons().nth(1)).toBeVisible();
-    await expect.element(h.switchButtons().nth(2)).toBeVisible();
-    await expect.element(h.switchButtons().nth(3)).toBeVisible();
-    await expect.element(h.switchButtons().nth(4)).not.toBeInTheDocument();
+  describe("Switch Organization", () => {
+    describe("Button visibility", () => {
+      test("should not show Switch when only one org and it is active", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...SINGLE_ORG, isOwner: true, sessionTenantId: "t1" });
+        await expect.element(h.switchButtons().first()).not.toBeInTheDocument();
+      });
 
-    // 5 Edit and Delete buttons
-    await expect.element(h.editButtons().nth(4)).toBeVisible();
-    await expect.element(h.deleteButtons().nth(4)).toBeVisible();
+      test("should show Switch on non-active org when owner", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...SINGLE_ORG, isOwner: true, sessionTenantId: "other" });
+        await expect.element(h.switchButtons().first()).toBeVisible();
+      });
 
-    // 1 Active badge
-    await expect.element(h.activeBadge()).toBeVisible();
-    await expect.element(h.activeBadges().nth(1)).not.toBeInTheDocument();
+      test("should show Switch only on non-active orgs in multi-org", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
+        await expect.element(h.switchButtons().first()).toBeVisible();
+        await expect.element(h.switchButtons().nth(1)).not.toBeInTheDocument();
+      });
+
+      test("should not show Switch for non-owner on single active org", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...SINGLE_ORG, isOwner: false, sessionTenantId: "t1" });
+        await expect.element(h.switchButtons().first()).not.toBeInTheDocument();
+      });
+
+      test("should show Switch on non-active orgs for non-owner", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...TWO_ORGS, isOwner: false, sessionTenantId: "t1" });
+        await expect.element(h.switchButtons().first()).toBeVisible();
+      });
+    });
+
+    describe("Multi-org count", () => {
+      test("should show 1 Switch button when 2 orgs and first is active", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...TWO_ORGS, isOwner: false, sessionTenantId: "t1" });
+        await expect.element(h.activeBadge()).toBeVisible();
+        await expect.element(h.switchButtons().first()).toBeVisible();
+        await expect.element(h.activeBadges().nth(1)).not.toBeInTheDocument();
+        await expect.element(h.switchButtons().nth(1)).not.toBeInTheDocument();
+      });
+
+      test("should show Switch on first org when second is active", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...TWO_ORGS, isOwner: false, sessionTenantId: "t2" });
+        await expect.element(h.activeBadge()).toBeVisible();
+        await expect.element(h.switchButtons().first()).toBeVisible();
+        await expect.element(h.orgName("Alpha Org")).toBeVisible();
+        await expect.element(h.orgName("Beta Org")).toBeVisible();
+      });
+
+      test("should show 2 Switch buttons when middle org is active", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: false,
+          sessionTenantId: "t2",
+        });
+        await expect.element(h.activeBadge()).toBeVisible();
+        await expect.element(h.activeBadges().nth(1)).not.toBeInTheDocument();
+        await expect.element(h.switchButtons().first()).toBeVisible();
+        await expect.element(h.switchButtons().nth(1)).toBeVisible();
+        await expect.element(h.switchButtons().nth(2)).not.toBeInTheDocument();
+      });
+
+      test("should show Switch on first two when last org is active", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: false,
+          sessionTenantId: "t3",
+        });
+        await expect.element(h.activeBadge()).toBeVisible();
+        await expect.element(h.switchButtons().first()).toBeVisible();
+        await expect.element(h.switchButtons().nth(1)).toBeVisible();
+        await expect.element(h.switchButtons().nth(2)).not.toBeInTheDocument();
+      });
+
+      test("should match Switch button count to non-active orgs", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: false,
+          sessionTenantId: "t2",
+        });
+        // Beta active → Alpha and Gamma have Switch (2 buttons)
+        await expect.element(h.switchButtons().first()).toBeVisible();
+        await expect.element(h.switchButtons().nth(1)).toBeVisible();
+        await expect.element(h.switchButtons().nth(2)).not.toBeInTheDocument();
+      });
+
+      test("should show 4 Switch buttons with 5 orgs and first active", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...FIVE_ORGS, isOwner: true, sessionTenantId: "t1" });
+        await expect.element(h.switchButtons().nth(0)).toBeVisible();
+        await expect.element(h.switchButtons().nth(1)).toBeVisible();
+        await expect.element(h.switchButtons().nth(2)).toBeVisible();
+        await expect.element(h.switchButtons().nth(3)).toBeVisible();
+        await expect.element(h.switchButtons().nth(4)).not.toBeInTheDocument();
+        await expect.element(h.activeBadge()).toBeVisible();
+        await expect.element(h.activeBadges().nth(1)).not.toBeInTheDocument();
+      });
+    });
+
+    describe("Confirmation dialog", () => {
+      test("should open confirmation dialog when clicking Switch", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
+
+        await h.clickSwitchOnFirstAvailable();
+
+        await expect.element(h.alertDialog()).toBeVisible();
+        await expect.element(h.confirmationTitle()).toBeVisible();
+        await expect.element(h.confirmButton()).toBeVisible();
+        await expect.element(h.cancelButton()).toBeVisible();
+      });
+
+      test("should close dialog without switching when clicking Cancel", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
+
+        await h.clickSwitchOnFirstAvailable();
+        await expect.element(h.alertDialog()).toBeVisible();
+
+        await h.cancelSwitch();
+
+        await expect.element(h.alertDialog()).not.toBeInTheDocument();
+        await expect.element(h.switchButtons().first()).toBeVisible();
+      });
+
+      test("should allow opening dialog for each non-active org", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: true,
+          sessionTenantId: "t1",
+        });
+
+        await h.clickSwitchAt(0);
+        await expect.element(h.alertDialog()).toBeVisible();
+        await h.cancelSwitch();
+        await expect.element(h.alertDialog()).not.toBeInTheDocument();
+
+        await h.clickSwitchAt(1);
+        await expect.element(h.alertDialog()).toBeVisible();
+      });
+
+      test("should carry the correct tenantId in dialog", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: true,
+          sessionTenantId: "t1",
+        });
+
+        // Click switch on Beta (first Switch button)
+        await h.clickSwitchAt(0);
+        const input = h.hiddenTenantInput() as HTMLInputElement | null;
+        expect(input?.value).toBe("t2");
+        await h.cancelSwitch();
+
+        // Click switch on Gamma (second Switch button)
+        await h.clickSwitchAt(1);
+        const input2 = h.hiddenTenantInput() as HTMLInputElement | null;
+        expect(input2?.value).toBe("t3");
+      });
+    });
+
+    describe("Modal isolation", () => {
+      test("should target correct org when switching between org A and B", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: false,
+          sessionTenantId: "t1",
+        });
+
+        await h.openSwitchModalAt(0);
+        await expect.element(h.alertDialog()).toBeVisible();
+        await h.cancelSwitch();
+
+        await h.openSwitchModalAt(1);
+        await expect.element(h.alertDialog()).toBeVisible();
+      });
+    });
   });
-});
 
-describe("Cross-Org Modal Isolation", () => {
-  test("delete on org A then org B: confirmation shows B's name", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: true, sessionTenantId: "t3" });
+  // ────────────────────────────────────────────
+  // Edit Organization
+  // ────────────────────────────────────────────
 
-    await h.openDeleteModalAt(0);
-    await expect.element(h.deleteConfirmInput("Alpha Org")).toBeVisible();
-    await h.cancel();
+  describe("Edit Organization", () => {
+    describe("Button visibility", () => {
+      test("should show Edit button when user is owner", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...SINGLE_ORG, isOwner: true, sessionTenantId: "t1" });
+        await expect.element(h.editButton()).toBeVisible();
+      });
 
-    await h.openDeleteModalAt(1);
-    await expect.element(h.deleteConfirmInput("Beta Org")).toBeVisible();
+      test("should show Edit on all orgs for owner with 3 orgs", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: true,
+          sessionTenantId: "t1",
+        });
+        await expect.element(h.editButtons().nth(0)).toBeVisible();
+        await expect.element(h.editButtons().nth(1)).toBeVisible();
+        await expect.element(h.editButtons().nth(2)).toBeVisible();
+      });
+
+      test("should hide Edit button when user is not owner", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: false,
+          sessionTenantId: "t1",
+        });
+        await expect.element(h.editButton()).not.toBeInTheDocument();
+      });
+    });
+
+    describe("Modal content", () => {
+      test("should display current org name in modal", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...SINGLE_ORG, isOwner: true, sessionTenantId: "t1" });
+        await h.openEditModal();
+
+        await expect.element(h.dialog()).toBeVisible();
+        await expect.element(h.currentNameDisplay("Alpha Org")).toBeVisible();
+        await expect.element(h.editNameInput()).toBeVisible();
+      });
+
+      test("should show correct name when editing each org", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: true,
+          sessionTenantId: "t1",
+        });
+
+        await h.openEditModalAt(0);
+        await expect.element(h.currentNameDisplay("Alpha Org")).toBeVisible();
+        await h.cancel();
+
+        await h.openEditModalAt(1);
+        await expect.element(h.currentNameDisplay("Beta Org")).toBeVisible();
+        await h.cancel();
+
+        await h.openEditModalAt(2);
+        await expect.element(h.currentNameDisplay("Gamma Org")).toBeVisible();
+      });
+    });
+
+    describe("Modal isolation", () => {
+      test("should show org B name after editing org A then B", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: true,
+          sessionTenantId: "t1",
+        });
+
+        await h.openEditModalAt(0);
+        await expect.element(h.currentNameDisplay("Alpha Org")).toBeVisible();
+        await h.cancel();
+
+        await h.openEditModalAt(1);
+        await expect.element(h.currentNameDisplay("Beta Org")).toBeVisible();
+      });
+    });
   });
 
-  test("edit on org A then org B: shows B's current name", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: true, sessionTenantId: "t1" });
+  // ────────────────────────────────────────────
+  // Delete Organization
+  // ────────────────────────────────────────────
 
-    await h.openEditModalAt(0);
-    await expect.element(h.currentNameDisplay("Alpha Org")).toBeVisible();
-    await h.cancel();
+  describe("Delete Organization", () => {
+    describe("Button visibility", () => {
+      test("should not show Delete when only one org exists", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...SINGLE_ORG, isOwner: true, sessionTenantId: "t1" });
+        await expect.element(h.deleteButton()).not.toBeInTheDocument();
+      });
 
-    await h.openEditModalAt(1);
-    await expect.element(h.currentNameDisplay("Beta Org")).toBeVisible();
-  });
+      test("should show Delete when multiple orgs exist and user is owner", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
+        await expect.element(h.deleteButtons().first()).toBeVisible();
+      });
 
-  test("switch on org A then org B: dialog targets correct org", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...THREE_ORGS, isOwner: false, sessionTenantId: "t1" });
+      test("should show Delete on all orgs for owner with 3 orgs", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: true,
+          sessionTenantId: "t1",
+        });
+        await expect.element(h.deleteButtons().nth(0)).toBeVisible();
+        await expect.element(h.deleteButtons().nth(1)).toBeVisible();
+        await expect.element(h.deleteButtons().nth(2)).toBeVisible();
+      });
 
-    await h.openSwitchModalAt(0);
-    await expect.element(h.alertDialog()).toBeVisible();
-    await h.cancelSwitch();
+      test("should hide Delete on all orgs for non-owner", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: false,
+          sessionTenantId: "t1",
+        });
+        await expect.element(h.deleteButton()).not.toBeInTheDocument();
+      });
+    });
 
-    await h.openSwitchModalAt(1);
-    await expect.element(h.alertDialog()).toBeVisible();
-  });
+    describe("Non-active tenant validation", () => {
+      function renderForDeleteNonActive(tenantName = "Alpha Org") {
+        const memberships = [
+          makeMembership({ id: "m1", role: "owner", tenantId: "t1" }),
+          makeMembership({ id: "m2", role: "member", tenantId: "t2" }),
+        ];
+        const tenantsMap = {
+          t1: makeTenant("t1", tenantName),
+          t2: makeTenant("t2", "Beta Org"),
+        };
+        // t2 is active → t1 is non-active, owner can delete it
+        return renderCard({
+          memberships,
+          tenantsMap,
+          isOwner: true,
+          sessionTenantId: "t2",
+        });
+      }
 
-  test("delete fill partial name, cancel, reopen: input is empty", async () => {
-    const h = new ProfileOrganizationsHarness();
-    renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t2" });
+      test("should disable Delete button initially", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderForDeleteNonActive();
+        await h.openDeleteModalAt(0);
 
-    await h.openDeleteModalAt(0);
-    await h.fillDeleteConfirmation("Alpha Org", "Alpha");
-    await h.cancel();
+        await expect.element(h.submitButton(/delete/i)).toBeDisabled();
+      });
 
-    await h.openDeleteModalAt(0);
-    await expect.element(h.submitButton(/delete/i)).toBeDisabled();
+      test("should disable Delete with partial name match", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderForDeleteNonActive();
+        await h.openDeleteModalAt(0);
+
+        await h.fillDeleteConfirmation("Alpha Org", "Alpha");
+        await expect.element(h.submitButton(/delete/i)).toBeDisabled();
+      });
+
+      test("should disable Delete with case mismatch", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderForDeleteNonActive();
+        await h.openDeleteModalAt(0);
+
+        await h.fillDeleteConfirmation("Alpha Org", "alpha org");
+        await expect.element(h.submitButton(/delete/i)).toBeDisabled();
+      });
+
+      test("should enable Delete on exact name match", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderForDeleteNonActive();
+        await h.openDeleteModalAt(0);
+
+        await h.fillDeleteConfirmation("Alpha Org", "Alpha Org");
+        await expect.element(h.submitButton(/delete/i)).toBeEnabled();
+      });
+
+      test("should re-disable Delete when text is cleared", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderForDeleteNonActive();
+        await h.openDeleteModalAt(0);
+
+        await h.fillDeleteConfirmation("Alpha Org", "Alpha Org");
+        await expect.element(h.submitButton(/delete/i)).toBeEnabled();
+
+        await h.fillDeleteConfirmation("Alpha Org", "");
+        await expect.element(h.submitButton(/delete/i)).toBeDisabled();
+      });
+
+      test("should re-disable Delete when matched text is modified", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderForDeleteNonActive();
+        await h.openDeleteModalAt(0);
+
+        await h.fillDeleteConfirmation("Alpha Org", "Alpha Org");
+        await expect.element(h.submitButton(/delete/i)).toBeEnabled();
+
+        await h.fillDeleteConfirmation("Alpha Org", "Alpha Orgx");
+        await expect.element(h.submitButton(/delete/i)).toBeDisabled();
+      });
+
+      test("should not show target tenant select for non-active org", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderForDeleteNonActive();
+        await h.openDeleteModalAt(0);
+
+        await expect
+          .element(h.switchToAfterDeletionText())
+          .not.toBeInTheDocument();
+        await expect.element(h.targetTenantSelect()).not.toBeInTheDocument();
+      });
+
+      test("should require exact match for special characters in name", async () => {
+        const h = new ProfileOrganizationsHarness();
+        const specialName = "O'Reilly & Co.";
+        renderForDeleteNonActive(specialName);
+        await h.openDeleteModalAt(0);
+
+        await h.fillDeleteConfirmation(specialName, "OReilly Co");
+        await expect.element(h.submitButton(/delete/i)).toBeDisabled();
+
+        await h.fillDeleteConfirmation(specialName, specialName);
+        await expect.element(h.submitButton(/delete/i)).toBeEnabled();
+      });
+    });
+
+    describe("Active tenant — target selection", () => {
+      test("should show target tenant select when deleting active org", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
+        // t1 is active (index 0) → delete opens with target select
+        await h.openDeleteModalAt(0);
+
+        await expect.element(h.switchToAfterDeletionText()).toBeVisible();
+        await expect.element(h.targetTenantSelect()).toBeVisible();
+      });
+
+      test("should disable Delete even with correct name if no target selected", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
+        await h.openDeleteModalAt(0);
+
+        await h.fillDeleteConfirmation("Alpha Org", "Alpha Org");
+        await expect.element(h.submitButton(/delete/i)).toBeDisabled();
+      });
+
+      test("should enable Delete when name matches and target is selected", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
+        await h.openDeleteModalAt(0);
+
+        await h.fillDeleteConfirmation("Alpha Org", "Alpha Org");
+        await h.targetTenantSelect().click();
+        await h.orgName("Beta Org").last().click();
+
+        await expect.element(h.submitButton(/delete/i)).toBeEnabled();
+      });
+
+      test("should list only other orgs in target select, not self", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: true,
+          sessionTenantId: "t1",
+        });
+
+        await h.openDeleteModalAt(0);
+        await h.targetTenantSelect().click();
+
+        await expect.element(h.orgName("Beta Org").last()).toBeVisible();
+        await expect.element(h.orgName("Gamma Org").last()).toBeVisible();
+      });
+
+      test("should show 2 target options when deleting active in 3 orgs", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: true,
+          sessionTenantId: "t1",
+        });
+
+        await h.openDeleteModalAt(0);
+        await h.targetTenantSelect().click();
+
+        await expect.element(h.orgName("Beta Org").last()).toBeVisible();
+        await expect.element(h.orgName("Gamma Org").last()).toBeVisible();
+      });
+
+      test("should show org names in target select, not IDs", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t1" });
+        await h.openDeleteModalAt(0);
+        await h.targetTenantSelect().click();
+
+        await expect.element(h.orgName("Beta Org").last()).toBeVisible();
+        await expect.element(h.orgName("t2")).not.toBeInTheDocument();
+      });
+    });
+
+    describe("Edge cases", () => {
+      test("should handle long org name in delete confirmation", async () => {
+        const h = new ProfileOrganizationsHarness();
+        const longName = "A".repeat(120);
+        const memberships = [
+          makeMembership({ id: "m1", role: "owner", tenantId: "t1" }),
+          makeMembership({ id: "m2", role: "member", tenantId: "t2" }),
+        ];
+        const tenantsMap = {
+          t1: makeTenant("t1", longName),
+          t2: makeTenant("t2", "Beta Org"),
+        };
+        renderCard({
+          memberships,
+          tenantsMap,
+          isOwner: true,
+          sessionTenantId: "t2",
+        });
+
+        await expect.element(h.orgName(longName)).toBeVisible();
+        await h.openDeleteModalAt(0);
+        await h.fillDeleteConfirmation(longName, longName);
+        await expect.element(h.submitButton(/delete/i)).toBeEnabled();
+      });
+
+      test("should filter out self from available tenants correctly", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: true,
+          sessionTenantId: "t2",
+        });
+
+        // Open delete on Beta (active, index 1)
+        await h.openDeleteModalAt(1);
+        await h.targetTenantSelect().click();
+
+        await expect.element(h.orgName("Alpha Org").last()).toBeVisible();
+        await expect.element(h.orgName("Gamma Org").last()).toBeVisible();
+      });
+
+      test("should show Delete on all 5 orgs for owner", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...FIVE_ORGS, isOwner: true, sessionTenantId: "t1" });
+        await expect.element(h.deleteButtons().nth(4)).toBeVisible();
+      });
+    });
+
+    describe("Modal isolation", () => {
+      test("should show org B name after opening delete on A then B", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...THREE_ORGS,
+          isOwner: true,
+          sessionTenantId: "t3",
+        });
+
+        await h.openDeleteModalAt(0);
+        await expect.element(h.deleteConfirmInput("Alpha Org")).toBeVisible();
+        await h.cancel();
+
+        await h.openDeleteModalAt(1);
+        await expect.element(h.deleteConfirmInput("Beta Org")).toBeVisible();
+      });
+
+      test("should reset input when reopening delete after cancel", async () => {
+        const h = new ProfileOrganizationsHarness();
+        renderCard({ ...TWO_ORGS, isOwner: true, sessionTenantId: "t2" });
+
+        await h.openDeleteModalAt(0);
+        await h.fillDeleteConfirmation("Alpha Org", "Alpha");
+        await h.cancel();
+
+        await h.openDeleteModalAt(0);
+        await expect.element(h.submitButton(/delete/i)).toBeDisabled();
+      });
+    });
+
+    describe("Form submission", () => {
+      test("should switch then delete when deleting the active tenant", async ({
+        worker,
+      }) => {
+        const switchCalled: string[] = [];
+        const deleteCalled: string[] = [];
+        const API_BASE =
+          process.env.NEXT_PUBLIC_API_BASE_URL ??
+          "https://api.test.prowler.com/api/v1";
+
+        worker.use(
+          http.post(`${API_BASE}/tokens/switch`, async ({ request }) => {
+            const body = (await request.json()) as any;
+            switchCalled.push(body?.data?.attributes?.tenant_id ?? "unknown");
+            return HttpResponse.json({
+              data: {
+                attributes: {
+                  access: "new-access-token",
+                  refresh: "new-refresh-token",
+                },
+              },
+            });
+          }),
+          http.delete(`${API_BASE}/tenants/:tenantId`, ({ params }) => {
+            deleteCalled.push(params.tenantId as string);
+            return new HttpResponse(null, { status: 204 });
+          }),
+        );
+
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...TWO_ORGS_UUID,
+          isOwner: true,
+          sessionTenantId: UUID_T1,
+        });
+
+        await h.openDeleteModalAt(0);
+        await h.fillDeleteConfirmation("Alpha Org", "Alpha Org");
+        await h.selectTargetTenant("Beta Org");
+        await expect.element(h.submitButton(/delete/i)).toBeEnabled();
+
+        await h.submitDelete();
+
+        // Wait for the async server action to complete
+        await expect.poll(() => switchCalled.length).toBe(1);
+        await expect.poll(() => deleteCalled.length).toBe(1);
+
+        // Switch was called with the target tenant
+        expect(switchCalled[0]).toBe(UUID_T2);
+        // Delete was called with the tenant being deleted
+        expect(deleteCalled[0]).toBe(UUID_T1);
+      });
+
+      test("should close modal after deleting a non-active tenant", async ({
+        worker,
+      }) => {
+        const deleteCalled: string[] = [];
+        const API_BASE =
+          process.env.NEXT_PUBLIC_API_BASE_URL ??
+          "https://api.test.prowler.com/api/v1";
+
+        worker.use(
+          http.delete(`${API_BASE}/tenants/:tenantId`, ({ params }) => {
+            deleteCalled.push(params.tenantId as string);
+            return new HttpResponse(null, { status: 204 });
+          }),
+        );
+
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...TWO_ORGS_UUID,
+          isOwner: true,
+          sessionTenantId: UUID_T2,
+        });
+
+        // t1 is non-active → simple delete, no switch needed
+        await h.openDeleteModalAt(0);
+        await h.fillDeleteConfirmation("Alpha Org", "Alpha Org");
+        await expect.element(h.submitButton(/delete/i)).toBeEnabled();
+
+        await h.submitDelete();
+
+        await expect.poll(() => deleteCalled.length).toBe(1);
+        expect(deleteCalled[0]).toBe(UUID_T1);
+
+        // Modal should close after successful deletion
+        await expect.element(h.alertDialog()).not.toBeInTheDocument();
+      });
+
+      test("should show error when switch fails during active tenant deletion", async ({
+        worker,
+      }) => {
+        const API_BASE =
+          process.env.NEXT_PUBLIC_API_BASE_URL ??
+          "https://api.test.prowler.com/api/v1";
+
+        worker.use(
+          http.post(`${API_BASE}/tokens/switch`, () => {
+            return HttpResponse.json(
+              { errors: [{ detail: "Unauthorized" }] },
+              { status: 401 },
+            );
+          }),
+        );
+
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...TWO_ORGS_UUID,
+          isOwner: true,
+          sessionTenantId: UUID_T1,
+        });
+
+        await h.openDeleteModalAt(0);
+        await h.fillDeleteConfirmation("Alpha Org", "Alpha Org");
+        await h.selectTargetTenant("Beta Org");
+
+        await h.submitDelete();
+
+        // The submit button should re-enable after the error
+        await expect.element(h.submitButton(/delete/i)).toBeEnabled();
+      });
+
+      test("should still switch when delete fails after successful switch", async ({
+        worker,
+      }) => {
+        const switchCalled: string[] = [];
+        const API_BASE =
+          process.env.NEXT_PUBLIC_API_BASE_URL ??
+          "https://api.test.prowler.com/api/v1";
+
+        worker.use(
+          http.post(`${API_BASE}/tokens/switch`, async ({ request }) => {
+            const body = (await request.json()) as any;
+            switchCalled.push(body?.data?.attributes?.tenant_id ?? "unknown");
+            return HttpResponse.json({
+              data: {
+                attributes: {
+                  access: "new-access-token",
+                  refresh: "new-refresh-token",
+                },
+              },
+            });
+          }),
+          http.delete(`${API_BASE}/tenants/:tenantId`, () => {
+            return HttpResponse.json(
+              { errors: [{ detail: "Internal server error" }] },
+              { status: 500 },
+            );
+          }),
+        );
+
+        const h = new ProfileOrganizationsHarness();
+        renderCard({
+          ...TWO_ORGS_UUID,
+          isOwner: true,
+          sessionTenantId: UUID_T1,
+        });
+
+        await h.openDeleteModalAt(0);
+        await h.fillDeleteConfirmation("Alpha Org", "Alpha Org");
+        await h.selectTargetTenant("Beta Org");
+
+        await h.submitDelete();
+
+        // Switch should have been called even though delete will fail
+        await expect.poll(() => switchCalled.length).toBe(1);
+        expect(switchCalled[0]).toBe(UUID_T2);
+      });
+    });
   });
 });

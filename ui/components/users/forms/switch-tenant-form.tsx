@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { Dispatch, SetStateAction, useActionState, useEffect } from "react";
 
 import { switchTenant } from "@/actions/users/tenants";
+import { reloadPage } from "@/lib/navigation";
 import { useToast } from "@/components/ui";
 import { FormButtons } from "@/components/ui/form";
 
@@ -30,7 +31,7 @@ export const SwitchTenantForm = ({
           title: "Organization switched",
           description: "The page will reload to apply the change.",
         });
-        window.location.reload();
+        reloadPage();
       } else {
         toast({
           variant: "destructive",

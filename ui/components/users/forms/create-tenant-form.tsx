@@ -8,6 +8,7 @@ import {
   switchTenant,
   SwitchTenantState,
 } from "@/actions/users/tenants";
+import { reloadPage } from "@/lib/navigation";
 import { useToast } from "@/components/ui";
 import { CustomServerInput } from "@/components/ui/custom";
 import { FormButtons } from "@/components/ui/form";
@@ -39,7 +40,7 @@ export const CreateTenantForm = ({
             title: "Organization created",
             description: "Switching to the new organization.",
           });
-          window.location.reload();
+          reloadPage();
         } else {
           // Create succeeded but switch failed — org exists, user can switch manually
           toast({

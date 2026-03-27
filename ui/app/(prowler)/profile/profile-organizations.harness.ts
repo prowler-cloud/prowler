@@ -149,4 +149,13 @@ export class ProfileOrganizationsHarness {
   async cancel() {
     await this.cancelButton().click();
   }
+
+  async submitDelete() {
+    await this.submitButton(/delete/i).click();
+  }
+
+  async selectTargetTenant(name: string) {
+    await this.targetTenantSelect().click();
+    await this.orgName(name).last().click();
+  }
 }

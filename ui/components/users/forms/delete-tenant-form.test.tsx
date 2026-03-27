@@ -16,6 +16,7 @@ vi.mock("@/auth.config", () => ({
 vi.mock("@/actions/users/tenants", () => ({
   deleteTenant: vi.fn(),
   switchTenant: vi.fn(),
+  switchThenDeleteTenant: vi.fn(),
 }));
 
 const mockToast = vi.fn();
