@@ -136,22 +136,23 @@ class BaseTenantViewset(BaseViewSet):
             self.db_alias = MainRouter.default_db
 
     def _create_admin_role(self, tenant_id):
-        admin_role = Role.objects.using(MainRouter.admin_db).create(
-            name="admin",
-            tenant_id=tenant_id,
-            manage_users=True,
-            manage_account=True,
-            manage_billing=True,
-            manage_providers=True,
-            manage_integrations=True,
-            manage_scans=True,
-            unlimited_visibility=True,
-        )
-        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-            user=self.request.user,
-            role=admin_role,
-            tenant_id=tenant_id,
-        )
+        with transaction.atomic(using=MainRouter.admin_db):
+            admin_role = Role.objects.using(MainRouter.admin_db).create(
+                name="admin",
+                tenant_id=tenant_id,
+                manage_users=True,
+                manage_account=True,
+                manage_billing=True,
+                manage_providers=True,
+                manage_integrations=True,
+                manage_scans=True,
+                unlimited_visibility=True,
+            )
+            UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                user=self.request.user,
+                role=admin_role,
+                tenant_id=tenant_id,
+            )
 
     def _handle_creation_error(self, error, tenant):
         if tenant.data.get("id"):
