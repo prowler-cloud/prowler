@@ -16,6 +16,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   check-changelog:
     if: contains(github.event.pull_request.labels.*.name, 'no-changelog') == false

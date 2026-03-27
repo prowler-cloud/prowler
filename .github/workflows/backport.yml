@@ -17,6 +17,9 @@ env:
   BACKPORT_LABEL_PREFIX: backport-to-
   BACKPORT_LABEL_IGNORE: was-backported
 
+permissions:
+  contents: read
+
 jobs:
   backport:
     if: github.event.pull_request.merged == true && !(contains(github.event.pull_request.labels.*.name, 'backport')) && !(contains(github.event.pull_request.labels.*.name, 'was-backported'))
