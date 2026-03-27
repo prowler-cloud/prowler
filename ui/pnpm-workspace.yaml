@@ -7,6 +7,11 @@ packages: []
 # Prevents installing compromised packages during the detection window.
 minimumReleaseAge: 1440
 
+# Bypasses the minimum release age for specific packages.
+# Use ONLY for emergency patches (e.g., critical CVE fixes) that cannot wait 24h.
+# This should be ephemeral — remove the entry once the package meets the age threshold.
+# minimumReleaseAgeExclude:
+
 # --- Level 2: Explicit Build Script Allow-list ---
 # Only these packages may run install/postinstall lifecycle scripts.
 # Any unlisted package with lifecycle scripts will have them silently skipped.
