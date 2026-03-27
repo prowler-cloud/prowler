@@ -16,7 +16,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
-CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_conditional_access_policy_device_registration_mfa.entra_conditional_access_policy_device_registration_mfa"
+CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_conditional_access_policy_device_registration_mfa_required.entra_conditional_access_policy_device_registration_mfa_required"
 
 
 def build_policy(
@@ -69,7 +69,7 @@ def build_policy(
     )
 
 
-class Test_entra_conditional_access_policy_device_registration_mfa:
+class Test_entra_conditional_access_policy_device_registration_mfa_required:
     def test_no_conditional_access_policies(self):
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
@@ -82,13 +82,15 @@ class Test_entra_conditional_access_policy_device_registration_mfa:
             ),
             mock.patch(f"{CHECK_MODULE_PATH}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_registration_mfa.entra_conditional_access_policy_device_registration_mfa import (
-                entra_conditional_access_policy_device_registration_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_registration_mfa_required.entra_conditional_access_policy_device_registration_mfa_required import (
+                entra_conditional_access_policy_device_registration_mfa_required,
             )
 
             entra_client.conditional_access_policies = {}
 
-            result = entra_conditional_access_policy_device_registration_mfa().execute()
+            result = (
+                entra_conditional_access_policy_device_registration_mfa_required().execute()
+            )
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -109,8 +111,8 @@ class Test_entra_conditional_access_policy_device_registration_mfa:
             ),
             mock.patch(f"{CHECK_MODULE_PATH}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_registration_mfa.entra_conditional_access_policy_device_registration_mfa import (
-                entra_conditional_access_policy_device_registration_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_registration_mfa_required.entra_conditional_access_policy_device_registration_mfa_required import (
+                entra_conditional_access_policy_device_registration_mfa_required,
             )
 
             policy = build_policy(
@@ -121,7 +123,9 @@ class Test_entra_conditional_access_policy_device_registration_mfa:
             )
             entra_client.conditional_access_policies = {policy.id: policy}
 
-            result = entra_conditional_access_policy_device_registration_mfa().execute()
+            result = (
+                entra_conditional_access_policy_device_registration_mfa_required().execute()
+            )
 
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -143,8 +147,8 @@ class Test_entra_conditional_access_policy_device_registration_mfa:
             ),
             mock.patch(f"{CHECK_MODULE_PATH}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_registration_mfa.entra_conditional_access_policy_device_registration_mfa import (
-                entra_conditional_access_policy_device_registration_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_registration_mfa_required.entra_conditional_access_policy_device_registration_mfa_required import (
+                entra_conditional_access_policy_device_registration_mfa_required,
             )
 
             policy = build_policy(
@@ -155,7 +159,9 @@ class Test_entra_conditional_access_policy_device_registration_mfa:
             )
             entra_client.conditional_access_policies = {policy.id: policy}
 
-            result = entra_conditional_access_policy_device_registration_mfa().execute()
+            result = (
+                entra_conditional_access_policy_device_registration_mfa_required().execute()
+            )
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -176,8 +182,8 @@ class Test_entra_conditional_access_policy_device_registration_mfa:
             ),
             mock.patch(f"{CHECK_MODULE_PATH}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_registration_mfa.entra_conditional_access_policy_device_registration_mfa import (
-                entra_conditional_access_policy_device_registration_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_registration_mfa_required.entra_conditional_access_policy_device_registration_mfa_required import (
+                entra_conditional_access_policy_device_registration_mfa_required,
             )
 
             policy = build_policy(
@@ -189,7 +195,9 @@ class Test_entra_conditional_access_policy_device_registration_mfa:
             )
             entra_client.conditional_access_policies = {policy.id: policy}
 
-            result = entra_conditional_access_policy_device_registration_mfa().execute()
+            result = (
+                entra_conditional_access_policy_device_registration_mfa_required().execute()
+            )
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -210,8 +218,8 @@ class Test_entra_conditional_access_policy_device_registration_mfa:
             ),
             mock.patch(f"{CHECK_MODULE_PATH}.entra_client", new=entra_client),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_registration_mfa.entra_conditional_access_policy_device_registration_mfa import (
-                entra_conditional_access_policy_device_registration_mfa,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_registration_mfa_required.entra_conditional_access_policy_device_registration_mfa_required import (
+                entra_conditional_access_policy_device_registration_mfa_required,
             )
 
             policy = build_policy(
@@ -221,7 +229,9 @@ class Test_entra_conditional_access_policy_device_registration_mfa:
             )
             entra_client.conditional_access_policies = {policy.id: policy}
 
-            result = entra_conditional_access_policy_device_registration_mfa().execute()
+            result = (
+                entra_conditional_access_policy_device_registration_mfa_required().execute()
+            )
 
             assert len(result) == 1
             assert result[0].status == "FAIL"

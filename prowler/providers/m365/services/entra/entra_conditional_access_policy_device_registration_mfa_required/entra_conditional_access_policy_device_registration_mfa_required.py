@@ -7,7 +7,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 
 
-class entra_conditional_access_policy_device_registration_mfa(Check):
+class entra_conditional_access_policy_device_registration_mfa_required(Check):
     """Ensure MFA is required for device registration."""
 
     def execute(self) -> list[CheckReportM365]:

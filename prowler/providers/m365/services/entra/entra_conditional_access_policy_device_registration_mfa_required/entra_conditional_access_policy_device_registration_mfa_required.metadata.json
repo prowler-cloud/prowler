@@ -1,6 +1,6 @@
 {
   "Provider": "m365",
-  "CheckID": "entra_conditional_access_policy_device_registration_mfa",
+  "CheckID": "entra_conditional_access_policy_device_registration_mfa_required",
   "CheckTitle": "Conditional Access policies enforce MFA for device registration",
   "CheckType": [],
   "ServiceName": "entra",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Enforce **MFA** through **Conditional Access** for **device registration** so users must verify identity before registering or joining devices to the directory.",
-      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_device_registration_mfa"
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_device_registration_mfa_required"
     }
   },
   "Categories": [

@@ -34,7 +34,7 @@
   ],
   "DependsOn": [],
   "RelatedTo": [
-    "entra_conditional_access_policy_device_registration_mfa",
+    "entra_conditional_access_policy_device_registration_mfa_required",
     "entra_intune_enrollment_sign_in_frequency_every_time"
   ],
   "Notes": "Requires Entra ID P1 or later license."
