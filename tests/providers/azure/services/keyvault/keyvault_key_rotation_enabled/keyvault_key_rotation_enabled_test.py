@@ -128,12 +128,12 @@ class Test_keyvault_key_rotation_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has the key {key_name} without rotation policy set."
+                == f"Key {key_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have a rotation policy set."
             )
-            assert result[0].resource_name == keyvault_name
+            assert result[0].resource_name == key_name
             assert result[0].resource_id == "id"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].location == "westeurope"
+            assert result[0].location == "location"
 
     def test_key_with_rotation_policy(self):
         keyvault_client = mock.MagicMock
@@ -198,12 +198,12 @@ class Test_keyvault_key_rotation_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has the key {key_name} with rotation policy set."
+                == f"Key {key_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has a rotation policy set."
             )
-            assert result[0].resource_name == keyvault_name
+            assert result[0].resource_name == key_name
             assert result[0].resource_id == "id"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].location == "westeurope"
+            assert result[0].location == "location"
 
     def test_multiple_keys_mixed_rotation_policies(self):
         keyvault_client = mock.MagicMock
@@ -372,5 +372,5 @@ class Test_keyvault_key_rotation_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has the key {key_name} with rotation policy set."
+                == f"Key {key_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has a rotation policy set."
             )

@@ -128,12 +128,12 @@ class Test_keyvault_non_rbac_secret_expiration_set:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has the secret {secret_name} without expiration date set."
+                == f"Secret {secret_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have an expiration date set."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == keyvault_name
-            assert result[0].resource_id == keyvault_id
-            assert result[0].location == "westeurope"
+            assert result[0].resource_name == secret_name
+            assert result[0].resource_id == "id"
+            assert result[0].location == "location"
 
     def test_key_vaults_invalid_multiple_secrets(self):
         keyvault_client = mock.MagicMock
@@ -254,9 +254,9 @@ class Test_keyvault_non_rbac_secret_expiration_set:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has the secret {secret_name} with expiration date set."
+                == f"Secret {secret_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has an expiration date set."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == keyvault_name
-            assert result[0].resource_id == keyvault_id
-            assert result[0].location == "westeurope"
+            assert result[0].resource_name == secret_name
+            assert result[0].resource_id == "id"
+            assert result[0].location == "location"

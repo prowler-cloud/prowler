@@ -19,9 +19,9 @@ class keyvault_key_rotation_enabled(Check):
                         )
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has the key {key.name} with rotation policy set."
+                        report.status_extended = f"Key {key.name} in Key Vault {keyvault.name} from subscription {subscription} has a rotation policy set."
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has the key {key.name} without rotation policy set."
+                        report.status_extended = f"Key {key.name} in Key Vault {keyvault.name} from subscription {subscription} does not have a rotation policy set."
                     findings.append(report)
         return findings

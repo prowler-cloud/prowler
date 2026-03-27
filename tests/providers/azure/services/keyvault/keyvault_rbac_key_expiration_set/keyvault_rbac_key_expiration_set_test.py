@@ -127,12 +127,12 @@ class Test_keyvault_rbac_key_expiration_set:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has the key {key_name} without expiration date set."
+                == f"Key {key_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have an expiration date set."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == keyvault_name
-            assert result[0].resource_id == keyvault_id
-            assert result[0].location == "westeurope"
+            assert result[0].resource_name == key_name
+            assert result[0].resource_id == "id"
+            assert result[0].location == "location"
 
     def test_key_vaults_valid_keys(self):
         keyvault_client = mock.MagicMock
@@ -188,12 +188,12 @@ class Test_keyvault_rbac_key_expiration_set:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has the key {key_name} with expiration date set."
+                == f"Key {key_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has an expiration date set."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == keyvault_name
-            assert result[0].resource_id == keyvault_id
-            assert result[0].location == "westeurope"
+            assert result[0].resource_name == key_name
+            assert result[0].resource_id == "id"
+            assert result[0].location == "location"
 
     def test_multiple_keys_mixed_expiration(self):
         keyvault_client = mock.MagicMock
