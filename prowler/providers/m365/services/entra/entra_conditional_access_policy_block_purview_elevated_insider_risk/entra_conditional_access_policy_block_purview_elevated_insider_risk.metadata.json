@@ -1,7 +1,7 @@
 {
   "Provider": "m365",
-  "CheckID": "entra_conditional_access_policy_block_elevated_insider_risk",
-  "CheckTitle": "Conditional Access Policy blocks access for users with elevated insider risk",
+  "CheckID": "entra_conditional_access_policy_block_purview_elevated_insider_risk",
+  "CheckTitle": "Conditional Access Policy blocks access for users with elevated Microsoft Purview insider risk",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Configure **Adaptive Protection** in Microsoft Purview to classify insider risk tiers, then create a Conditional Access policy that **blocks access** to all cloud apps for users with **elevated** risk. Only exclude dedicated break-glass accounts.",
-      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_block_elevated_insider_risk"
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_block_purview_elevated_insider_risk"
     }
   },
   "Categories": [
