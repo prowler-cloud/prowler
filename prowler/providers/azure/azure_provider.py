@@ -16,6 +16,7 @@ from azure.identity import (
     DefaultAzureCredential,
     InteractiveBrowserCredential,
 )
+from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
 from msgraph import GraphServiceClient
@@ -103,7 +104,7 @@ class AzureProvider(Provider):
     _region_config: AzureRegionConfig
     _locations: dict
     _mutelist: AzureMutelist
-    _resource_groups: list
+    _resource_groups: dict
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
@@ -116,7 +117,7 @@ class AzureProvider(Provider):
         tenant_id: str = None,
         region: str = "AzureCloud",
         subscription_ids: list = [],
-        resource_groups: list = [],
+        resource_groups: dict = {},
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
@@ -276,7 +277,7 @@ class AzureProvider(Provider):
         # TODO: should we keep this here or within the identity?
         self._locations = self.get_locations()
 
-        self._resource_groups = resource_groups
+        self._resource_groups = self.validate_resource_groups(resource_groups)
 
         # Audit Config
         if config_content:
@@ -463,7 +464,7 @@ class AzureProvider(Provider):
             f"Azure Tenant Domain: {Fore.YELLOW}{self._identity.tenant_domain}{Style.RESET_ALL} Azure Tenant ID: {Fore.YELLOW}{self._identity.tenant_ids[0]}{Style.RESET_ALL}",
             f"Azure Region: {Fore.YELLOW}{self.region_config.name}{Style.RESET_ALL}",
             f"Azure Subscriptions: {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}",
-            f"Azure Resource Groups: {Fore.YELLOW}{self._resource_groups if self._resource_groups else 'ALL'}{Style.RESET_ALL}",
+            f"Azure Resource Groups: {Fore.YELLOW}{sorted({rg for rgs in self._resource_groups.values() for rg in rgs}) if self._resource_groups else 'ALL'}{Style.RESET_ALL}",
             f"Azure Identity Type: {Fore.YELLOW}{self._identity.identity_type}{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}{self._identity.identity_id}{Style.RESET_ALL}",
         ]
         report_title = (
@@ -1086,6 +1087,24 @@ class AzureProvider(Provider):
             }
 
         return set(chain.from_iterable(locations.values()))
+
+    def validate_resource_groups(self, resource_groups: list) -> dict:
+        if not resource_groups:
+            return {}
+
+        rg_map = {sub: [] for sub in self._identity.subscriptions}
+        credentials = self.session
+
+        for display_name, subscription_id in self._identity.subscriptions.items():
+            rg_client = ResourceManagementClient(credentials, subscription_id)
+
+            existing_rgs = {rg.name for rg in rg_client.resource_groups.list()}
+
+            for rg in resource_groups:
+                if rg in existing_rgs:
+                    rg_map[display_name].append(rg)
+
+        return rg_map
 
     @staticmethod
     def validate_static_credentials(

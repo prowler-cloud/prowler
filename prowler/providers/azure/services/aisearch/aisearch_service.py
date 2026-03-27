@@ -18,14 +18,25 @@ class AISearch(AzureService):
             try:
                 aisearch_services.update({subscription: {}})
                 aisearch_services_list = []
-
-                if self.resource_groups:
-                    for rg in self.resource_groups:
-                        aisearch_services_list += list(
-                            client.services.list_by_resource_group(
-                                resource_group_name=rg
-                            )
+                if self.resource_groups is not None:
+                    rgs = self.resource_groups.get(subscription, [])
+                    if not rgs:
+                        logger.warning(
+                            f"No valid resource groups for subscription {subscription}"
                         )
+                    else:
+                        for rg in rgs:
+                            try:
+                                aisearch_services_list += list(
+                                    client.services.list_by_resource_group(
+                                        resource_group_name=rg
+                                    )
+                                )
+                            except Exception as error:
+                                logger.warning(
+                                    f"Subscription name: {subscription} -- Resource Group: {rg} -- "
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
                 else:
                     aisearch_services_list = client.services.list_by_subscription()
                 for aisearch_service in aisearch_services_list:
