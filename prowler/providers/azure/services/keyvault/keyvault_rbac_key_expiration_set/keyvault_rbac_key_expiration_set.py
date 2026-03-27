@@ -10,9 +10,7 @@ class keyvault_rbac_key_expiration_set(Check):
                 if keyvault.properties.enable_rbac_authorization:
                     for key in keyvault.keys or []:
                         report = Check_Report_Azure(
-                        report = Check_Report_Azure(
                             metadata=self.metadata(), resource=key
-                        )
                         )
                         report.subscription = subscription
                         if not key.attributes.expires and key.enabled:
