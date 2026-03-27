@@ -8,6 +8,11 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - `VALKEY_SCHEME`, `VALKEY_USERNAME`, and `VALKEY_PASSWORD` environment variables to configure Celery broker TLS/auth connection details for Valkey/ElastiCache [(#10420)](https://github.com/prowler-cloud/prowler/pull/10420)
 
+### 🔄 Changed
+
+- Attack Paths: Periodic cleanup of stale scans with dead-worker detection via Celery inspect, marking orphaned `EXECUTING` scans as `FAILED` and recovering `graph_data_ready` [(#10387)](https://github.com/prowler-cloud/prowler/pull/10387)
+- Attack Paths: Replace `_provider_id` property with `_Provider_{uuid}` label for provider isolation, add regex-based label injection for custom queries [(#10402)](https://github.com/prowler-cloud/prowler/pull/10402)
+
 ### 🐞 Fixed
 
 - Finding groups list/latest now apply computed status/severity filters and finding-level prefilters (delta, region, service, category, resource group, scan, resource type), plus `check_title` support for sort/filter consistency [(#10428)](https://github.com/prowler-cloud/prowler/pull/10428)
@@ -29,10 +34,6 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🚀 Added
 
 - Finding groups support `check_title` substring filtering [(#10377)](https://github.com/prowler-cloud/prowler/pull/10377)
-
-### 🔄 Changed
-
-- Attack Paths: Periodic cleanup of stale scans with dead-worker detection via Celery inspect, marking orphaned `EXECUTING` scans as `FAILED` and recovering `graph_data_ready` [(#10387)](https://github.com/prowler-cloud/prowler/pull/10387)
 
 ### 🐞 Fixed
 
