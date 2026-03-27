@@ -121,7 +121,7 @@ const SSRDataUser = async ({
             tenantsMap={tenantsMap}
             isOwner={isOwner && hasManageAccount}
             hasManageAccount={hasManageAccount}
-            sessionTenantId={session?.tenantId || ""}
+            sessionTenantId={session?.tenantId}
           />
           {hasManageAccount && <ApiKeysCard searchParams={searchParams} />}
         </div>

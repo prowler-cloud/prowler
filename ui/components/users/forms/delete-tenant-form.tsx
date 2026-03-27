@@ -3,17 +3,14 @@
 import { useSession } from "next-auth/react";
 import {
   Dispatch,
+  FormEvent,
   SetStateAction,
   useActionState,
   useEffect,
   useState,
 } from "react";
 
-import {
-  deleteTenant,
-  switchThenDeleteTenant,
-  SwitchThenDeleteTenantState,
-} from "@/actions/users/tenants";
+import { deleteTenant, switchThenDeleteTenant } from "@/actions/users/tenants";
 import {
   Select,
   SelectContent,
@@ -40,23 +37,13 @@ export const DeleteTenantForm = ({
   availableTenants,
   setIsOpen,
 }: DeleteTenantFormProps) => {
-  // Two hooks: one for simple delete, one for switch-then-delete.
-  // Both are always called (hook rules), but only the relevant one is used.
   const [deleteState, deleteFormAction] = useActionState(deleteTenant, null);
-  const [switchDeleteState, switchDeleteFormAction] = useActionState(
-    switchThenDeleteTenant,
-    null,
-  );
-
-  const state: SwitchThenDeleteTenantState | null = isActiveTenant
-    ? switchDeleteState
-    : deleteState;
-  const formAction = isActiveTenant ? switchDeleteFormAction : deleteFormAction;
 
   const { update } = useSession();
   const { toast } = useToast();
   const [confirmName, setConfirmName] = useState("");
   const [targetTenantId, setTargetTenantId] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const nameMatches = confirmName === tenantName;
   const canSubmit = isActiveTenant
@@ -64,58 +51,74 @@ export const DeleteTenantForm = ({
     : nameMatches;
 
   useEffect(() => {
-    if (!state) return;
+    if (!deleteState) return;
 
-    const handleResult = async () => {
-      if (state.success) {
-        if (state.accessToken) {
-          // Active tenant: switch + delete succeeded — update session and reload
-          await update({
-            accessToken: state.accessToken,
-            refreshToken: state.refreshToken,
-          });
-          toast({
-            title: "Organization deleted",
-            description: "Switching to another organization.",
-          });
-          reloadPage();
-        } else {
-          // Non-active tenant — simple delete
-          toast({
-            title: "Organization deleted",
-            description: "The organization has been permanently deleted.",
-          });
-          setIsOpen(false);
-        }
-      } else if (state.error) {
-        if (state.accessToken) {
-          // Partial success: switch OK but delete failed — still update session
-          await update({
-            accessToken: state.accessToken,
-            refreshToken: state.refreshToken,
-          });
-          toast({
-            variant: "destructive",
-            title: "Switch succeeded but delete failed",
-            description: state.error,
-          });
-          reloadPage();
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Oops! Something went wrong",
-            description: state.error,
-          });
-        }
-      }
-    };
-
-    handleResult();
+    if (deleteState.success) {
+      toast({
+        title: "Organization deleted",
+        description: "The organization has been permanently deleted.",
+      });
+      setIsOpen(false);
+    } else if (deleteState.error) {
+      toast({
+        variant: "destructive",
+        title: "Oops! Something went wrong",
+        description: deleteState.error,
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state]);
+  }, [deleteState]);
+
+  // Handle active-tenant delete: call server action directly to avoid
+  // React's RSC reconciliation unmounting this component before we can
+  // update the session with the new tokens.
+  const handleActiveTenantDelete = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const formData = new FormData(e.currentTarget);
+    const result = await switchThenDeleteTenant(null, formData);
+
+    if (result.success && result.accessToken) {
+      await update({
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      });
+      toast({
+        title: "Organization deleted",
+        description: "Switching to another organization.",
+      });
+      reloadPage();
+    } else if (result.error) {
+      if (result.accessToken) {
+        // Partial success: switch OK but delete failed — still update session
+        await update({
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+        });
+        toast({
+          variant: "destructive",
+          title: "Switch succeeded but delete failed",
+          description: result.error,
+        });
+        reloadPage();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Oops! Something went wrong",
+          description: result.error,
+        });
+        setIsSubmitting(false);
+      }
+    }
+  };
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form
+      action={isActiveTenant ? undefined : deleteFormAction}
+      onSubmit={isActiveTenant ? handleActiveTenantDelete : undefined}
+      className="flex flex-col gap-4"
+    >
       <input type="hidden" name="tenantId" value={tenantId} />
       {isActiveTenant && targetTenantId && (
         <input type="hidden" name="targetTenantId" value={targetTenantId} />
@@ -158,10 +161,10 @@ export const DeleteTenantForm = ({
 
       <FormButtons
         setIsOpen={setIsOpen}
-        submitText="Delete"
+        submitText={isSubmitting ? "Deleting" : "Delete"}
         loadingText="Deleting"
         submitColor="danger"
-        isDisabled={!canSubmit}
+        isDisabled={!canSubmit || isSubmitting}
         rightIcon={null}
       />
     </form>
