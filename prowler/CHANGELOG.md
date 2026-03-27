@@ -22,6 +22,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `return` statements in `finally` blocks replaced across IAM, Organizations, GCP provider, and custom checks metadata to stop silently swallowing exceptions [(#10102)](https://github.com/prowler-cloud/prowler/pull/10102)
 
+### 🔐 Security
+
+- Pin direct SDK dependencies to exact versions and rely on `poetry.lock` artifact hashes for reproducible installs
+
 ---
 
 ## [5.22.1] (Prowler UNRELEASED)
