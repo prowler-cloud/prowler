@@ -241,7 +241,7 @@ pnpm start
 
 ## Prowler CLI
 ### Pip package
-Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/). Consequently, it can be installed using pip with Python >3.9.1, <3.13:
+Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/). Consequently, it can be installed using pip with Python >=3.10, <3.13:
 
 ```console
 pip install prowler
@@ -273,7 +273,7 @@ The container images are available here:
 
 ### From GitHub
 
-Python >3.9.1, <3.13 is required with pip and Poetry:
+Python >=3.10, <3.13 is required with pip and Poetry:
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
