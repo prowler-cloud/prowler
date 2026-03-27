@@ -22,7 +22,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - `MANAGE_ACCOUNT` permission no longer required for listing and creating tenants [(#10468)](https://github.com/prowler-cloud/prowler/pull/10468)
 - Finding groups muted filter, counters, metadata extraction and mute reaggregation [(#10477)](https://github.com/prowler-cloud/prowler/pull/10477)
 - Finding groups `check_title__icontains` resolution, `name__icontains` resource filter and `resource_group` field in `/resources` response [(#10486)](https://github.com/prowler-cloud/prowler/pull/10486)
-- Membership `post_delete` signal using raw FK ids to avoid `DoesNotExist` during cascade deletions [(#10496)](https://github.com/prowler-cloud/prowler/pull/10496)
+- Membership `post_delete` signal using raw FK ids to avoid `DoesNotExist` during cascade deletions [(#10497)](https://github.com/prowler-cloud/prowler/pull/10497)
 
 ### 🔐 Security
 
