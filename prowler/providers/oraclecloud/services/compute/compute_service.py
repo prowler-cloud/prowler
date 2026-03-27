@@ -33,12 +33,9 @@ class Compute(OCIService):
         Returns:
             Compute client instance
         """
-        client_region = self.regional_clients.get(region)
-        if not client_region:
-            return self._create_oci_client(
-                oci.core.ComputeClient, config_overrides={"region": region}
-            )
-        return client_region.client
+        return self._create_oci_client(
+            oci.core.ComputeClient, config_overrides={"region": region}
+        )
 
     def __list_instances__(self, regional_client):
         """
