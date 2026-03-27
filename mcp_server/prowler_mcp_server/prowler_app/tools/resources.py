@@ -8,6 +8,7 @@ from typing import Any
 
 from prowler_mcp_server.prowler_app.models.resources import (
     DetailedResource,
+    ResourceEventsResponse,
     ResourcesListResponse,
     ResourcesMetadataResponse,
 )
@@ -342,3 +343,62 @@ class ResourcesTools(BaseTool):
 
         report = "\n".join(report_lines)
         return {"report": report}
+
+    async def get_resource_events(
+        self,
+        resource_id: str = Field(
+            description="Prowler's internal UUID (v4) for the resource. Use `prowler_app_list_resources` to find the right ID, or get it from a finding's resource relationship via `prowler_app_get_finding_details`."
+        ),
+        lookback_days: int = Field(
+            default=90,
+            ge=1,
+            le=90,
+            description="How many days back to search for events. Range: 1-90. Default: 90.",
+        ),
+        page_size: int = Field(
+            default=50,
+            ge=1,
+            le=50,
+            description="Number of events to return. Range: 1-50. Default: 50.",
+        ),
+        include_read_events: bool = Field(
+            default=False,
+            description="Include read-only API calls (e.g., Describe*, Get*, List*). Default: false (write/modify events only).",
+        ),
+    ) -> dict[str, Any]:
+        """Get the timeline of cloud API actions performed on a specific resource.
+
+        IMPORTANT: Currently only available for AWS resources. Uses CloudTrail to retrieve
+        the modification history of a resource, showing who did what and when.
+
+        Each event includes:
+        - What happened: event_name (e.g., PutBucketPolicy), event_source (e.g., s3.amazonaws.com)
+        - Who did it: actor, actor_type, actor_uid
+        - From where: source_ip_address, user_agent
+        - What changed: request_data, response_data (full API payloads)
+        - Errors: error_code, error_message (if the action failed)
+
+        Use cases:
+        - Investigating security incidents (who modified this resource?)
+        - Change tracking and audit trails
+        - Understanding resource configuration drift
+        - Identifying unauthorized or unexpected modifications
+
+        Workflows:
+        1. Resource browsing: prowler_app_list_resources → find resource → this tool for event history
+        2. Incident investigation: prowler_app_get_finding_details → get resource ID from finding → this tool to identify who caused the issue, what they changed, and when
+        """
+        params = {
+            "lookback_days": lookback_days,
+            "page[size]": page_size,
+            "include_read_events": include_read_events,
+        }
+
+        clean_params = self.api_client.build_filter_params(params)
+
+        api_response = await self.api_client.get(
+            f"/resources/{resource_id}/events", params=clean_params
+        )
+        events_response = ResourceEventsResponse.from_api_response(api_response)
+
+        return events_response.model_dump()
