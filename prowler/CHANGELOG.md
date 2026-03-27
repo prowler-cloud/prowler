@@ -17,6 +17,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Minimum Python version from 3.9 to 3.10 and updated classifiers to reflect supported versions (3.10, 3.11, 3.12) [(#10464)](https://github.com/prowler-cloud/prowler/pull/10464)
 
+### 🐞 Fixed
+
+- `return` statements in `finally` blocks replaced across IAM, Organizations, GCP provider, and custom checks metadata to stop silently swallowing exceptions [(#10102)](https://github.com/prowler-cloud/prowler/pull/10102)
+
 ---
 
 ## [5.22.1] (Prowler UNRELEASED)
