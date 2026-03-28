@@ -12,6 +12,8 @@ from prowler.providers.github.exceptions.exceptions import (
     GithubInvalidCredentialsError,
     GithubInvalidProviderIdError,
     GithubInvalidTokenError,
+    GithubRepoListFileNotFoundError,
+    GithubRepoListFileReadError,
     GithubSetUpIdentityError,
     GithubSetUpSessionError,
 )
@@ -708,3 +710,83 @@ class Test_GithubProvider_Scoping:
 
             assert provider_none.repositories == []
             assert provider_none.organizations == []
+
+
+class TestGitHubProviderLoadReposFromFile:
+    """Tests for GithubProvider._load_repos_from_file"""
+
+    def _make_provider(self):
+        """Create a GithubProvider instance with mocked session/identity."""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token=PAT_TOKEN, id="", key=""),
+            ),
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_identity",
+                return_value=GithubIdentityInfo(
+                    account_id=ACCOUNT_ID,
+                    account_name=ACCOUNT_NAME,
+                    account_url=ACCOUNT_URL,
+                ),
+            ),
+        ):
+            provider = GithubProvider(
+                personal_access_token=PAT_TOKEN,
+            )
+        return provider
+
+    def test_load_repos_from_file_happy_path(self, tmp_path):
+        provider = self._make_provider()
+        repo_file = tmp_path / "repos.txt"
+        repo_file.write_text("owner/repo-a\nowner/repo-b\nowner/repo-c\n")
+
+        provider._load_repos_from_file(str(repo_file))
+
+        assert "owner/repo-a" in provider.repositories
+        assert "owner/repo-b" in provider.repositories
+        assert "owner/repo-c" in provider.repositories
+
+    def test_load_repos_from_file_comments_and_blanks(self, tmp_path):
+        provider = self._make_provider()
+        repo_file = tmp_path / "repos.txt"
+        repo_file.write_text(
+            "# This is a comment\n"
+            "\n"
+            "owner/repo-a\n"
+            "  # Another comment\n"
+            "  \n"
+            "owner/repo-b\n"
+        )
+
+        provider._load_repos_from_file(str(repo_file))
+
+        assert provider.repositories == ["owner/repo-a", "owner/repo-b"]
+
+    def test_load_repos_from_file_not_found(self):
+        provider = self._make_provider()
+
+        with pytest.raises(GithubRepoListFileNotFoundError):
+            provider._load_repos_from_file("/nonexistent/path/repos.txt")
+
+    def test_load_repos_from_file_exceeds_max_lines(self, tmp_path):
+        provider = self._make_provider()
+        repo_file = tmp_path / "repos.txt"
+        # Write MAX_REPO_LIST_LINES + 1 lines to trigger the guard
+        lines = [
+            f"owner/repo-{i}" for i in range(provider.MAX_REPO_LIST_LINES + 1)
+        ]
+        repo_file.write_text("\n".join(lines) + "\n")
+
+        with pytest.raises(GithubRepoListFileReadError):
+            provider._load_repos_from_file(str(repo_file))
+
+    def test_load_repos_from_file_skips_long_names(self, tmp_path):
+        provider = self._make_provider()
+        repo_file = tmp_path / "repos.txt"
+        long_name = "a" * (provider.MAX_REPO_NAME_LENGTH + 1)
+        repo_file.write_text(f"owner/valid-repo\n{long_name}\nowner/also-valid\n")
+
+        provider._load_repos_from_file(str(repo_file))
+
+        assert provider.repositories == ["owner/valid-repo", "owner/also-valid"]
