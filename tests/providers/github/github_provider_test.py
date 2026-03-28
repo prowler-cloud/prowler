@@ -773,9 +773,7 @@ class TestGitHubProviderLoadReposFromFile:
         provider = self._make_provider()
         repo_file = tmp_path / "repos.txt"
         # Write MAX_REPO_LIST_LINES + 1 lines to trigger the guard
-        lines = [
-            f"owner/repo-{i}" for i in range(provider.MAX_REPO_LIST_LINES + 1)
-        ]
+        lines = [f"owner/repo-{i}" for i in range(provider.MAX_REPO_LIST_LINES + 1)]
         repo_file.write_text("\n".join(lines) + "\n")
 
         with pytest.raises(GithubRepoListFileReadError):

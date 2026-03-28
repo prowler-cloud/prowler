@@ -23,6 +23,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `Vercel` provider support with 30 checks [(#10189)](https://github.com/prowler-cloud/prowler/pull/10189)
 - `stepfunctions_statemachine_no_secrets_in_definition` check for hardcoded secrets in AWS Step Functions state machine definitions [(#10570)](https://github.com/prowler-cloud/prowler/pull/10570)
 - CCC improvements with the latest checks and new mappings [(#10625)](https://github.com/prowler-cloud/prowler/pull/10625)
+- `--repo-list-file` CLI flag for GitHub provider to load repositories from a file [(#10501)](https://github.com/prowler-cloud/prowler/pull/10501)
 
 ### 🔄 Changed
 

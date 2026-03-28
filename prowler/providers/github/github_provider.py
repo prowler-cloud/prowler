@@ -287,7 +287,9 @@ class GithubProvider(Provider):
                         )
                         continue
                     self._repositories.append(line)
-            logger.info(f"Loaded {len(self._repositories)} repositories from {file_path}")
+            logger.info(
+                f"Loaded {len(self._repositories)} repositories from {file_path}"
+            )
         except OSError:
             raise GithubRepoListFileNotFoundError(
                 file=file_path,
