@@ -166,3 +166,6 @@ GEMINI.md
 
 # Claude Code
 .claude/*
+
+.env
+docker-compose.yml
