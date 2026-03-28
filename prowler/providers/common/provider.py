@@ -250,20 +250,6 @@ class Provider(ABC):
                     if getattr(arguments, "repositories", None):
                         repos.extend(arguments.repositories)
 
-                    # Load repositories from file if provided
-                    repo_list_file = getattr(arguments, "repo_list_file", None)
-                    if repo_list_file:
-                        try:
-                            with open(repo_list_file, "r") as f:
-                                for line in f:
-                                    line = line.strip()
-                                    if line and not line.startswith("#"):
-                                        repos.append(line)
-                        except FileNotFoundError:
-                            raise SystemExit(
-                                f"Error: repo list file not found: {repo_list_file}"
-                            )
-
                     orgs = list(dict.fromkeys(orgs))
                     repos = list(dict.fromkeys(repos))
 
@@ -275,6 +261,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
                         repositories=repos,
+                        repo_list_file=getattr(arguments, "repo_list_file", None),
                         organizations=orgs,
                     )
                 elif "googleworkspace" in provider_class_name.lower():
