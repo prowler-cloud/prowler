@@ -51,6 +51,12 @@ def init_parser(self):
         metavar="REPOSITORY",
     )
     github_scoping_subparser.add_argument(
+        "--repo-list-file",
+        dest="repo_list_file",
+        default=None,
+        help="Path to a file containing a list of repositories to scan (one per line in 'owner/repo-name' format). Lines starting with # are treated as comments.",
+    )
+    github_scoping_subparser.add_argument(
         "--organization",
         "--organizations",
         nargs="*",
