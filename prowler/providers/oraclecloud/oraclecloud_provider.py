@@ -495,11 +495,30 @@ class OraclecloudProvider(Provider):
         logger.info(f"OCI User ID: {user_id}")
         logger.info(f"OCI Region: {region}")
 
+        home_region = region
+        try:
+            region_subscriptions = identity_client.list_region_subscriptions(
+                tenancy_id
+            ).data
+            home_region = next(
+                (
+                    region_subscription.region_name
+                    for region_subscription in region_subscriptions
+                    if getattr(region_subscription, "is_home_region", False)
+                ),
+                region,
+            )
+        except Exception as error:
+            logger.warning(f"Could not determine tenancy home region: {error}")
+
+        logger.info(f"OCI Home Region: {home_region}")
+
         return OCIIdentityInfo(
             tenancy_id=tenancy_id,
             tenancy_name=tenancy_name,
             user_id=user_id,
             region=region,
+            home_region=home_region,
             profile=session.profile,
             audited_regions=set([region]) if region else set(),
             audited_compartments=compartment_ids if compartment_ids else [],

@@ -19,9 +19,7 @@ class Audit(OCIService):
     def __get_configuration__(self):
         """Get Audit configuration."""
         try:
-            # Audit Configuration API is a tenancy-level resource that must
-            # be queried from the home region to avoid 404 errors.
-            home_region = self.provider.identity.region
+            home_region = self.provider.identity.home_region
             audit_client = self._create_oci_client(
                 oci.audit.AuditClient,
                 config_overrides={"region": home_region},
