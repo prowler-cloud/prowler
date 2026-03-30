@@ -111,8 +111,9 @@ def disable_logging():
     logging.disable(logging.CRITICAL)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def create_test_user(django_db_setup, django_db_blocker):
+@pytest.fixture(scope="session")
+def _session_test_user(django_db_setup, django_db_blocker):
+    """Create the test user once per session. Internal; use create_test_user instead."""
     with django_db_blocker.unblock():
         user = User.objects.create_user(
             name="testing",
@@ -120,6 +121,21 @@ def create_test_user(django_db_setup, django_db_blocker):
             password=TEST_PASSWORD,
         )
     return user
+
+
+@pytest.fixture(autouse=True)
+def create_test_user(_session_test_user, django_db_blocker):
+    """Re-create the session-scoped test user when a TransactionTestCase
+    has truncated the users table."""
+    with django_db_blocker.unblock():
+        if not User.objects.filter(pk=_session_test_user.pk).exists():
+            User.objects.create_user(
+                id=_session_test_user.pk,
+                name="testing",
+                email=TEST_USER,
+                password=TEST_PASSWORD,
+            )
+    return _session_test_user
 
 
 @pytest.fixture(scope="function")
