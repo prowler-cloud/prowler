@@ -204,7 +204,19 @@ export function FindingsGroupTable({
         }
         controlledSearch={expandedCheckId ? resourceSearchInput : undefined}
         onSearchChange={expandedCheckId ? setResourceSearchInput : undefined}
-        onSearchCommit={expandedCheckId ? setResourceSearch : undefined}
+        onSearchCommit={
+          expandedCheckId
+            ? (value: string) => {
+                setResourceSearch(value);
+                // Trigger re-fetch with updated filters imperatively.
+                // The hook uses refs (no auto-refetch on prop change), so
+                // we call refresh() after the state update is committed.
+                // queueMicrotask ensures the new resourceSearch is in the
+                // filters object before refresh reads filtersRef.current.
+                queueMicrotask(() => inlineRef.current?.refresh());
+              }
+            : undefined
+        }
         searchBadge={
           expandedGroup
             ? { label: expandedGroup.checkTitle, onDismiss: handleCollapse }
