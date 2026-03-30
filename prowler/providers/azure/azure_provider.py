@@ -345,7 +345,7 @@ class AzureProvider(Provider):
         return self._mutelist
 
     @property
-    def resource_groups(self) -> list:
+    def resource_groups(self) -> dict:
         """Returns the list of resource groups to be scanned."""
         return self._resource_groups
 
