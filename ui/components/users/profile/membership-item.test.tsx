@@ -38,7 +38,7 @@ describe("MembershipItem", () => {
         membership={baseMembership}
         tenantName="Test Org"
         tenantId="tenant-1"
-        isOwner={false}
+        isOrgOwner={false}
         sessionTenantId="different-tenant"
         availableTenants={[]}
         membershipCount={1}
@@ -55,7 +55,7 @@ describe("MembershipItem", () => {
         membership={baseMembership}
         tenantName="Test Org"
         tenantId="tenant-1"
-        isOwner={false}
+        isOrgOwner={false}
         sessionTenantId="tenant-1"
         availableTenants={[]}
         membershipCount={1}
@@ -74,7 +74,7 @@ describe("MembershipItem", () => {
         membership={baseMembership}
         tenantName="Test Org"
         tenantId="tenant-1"
-        isOwner={true}
+        isOrgOwner={true}
         sessionTenantId="tenant-1"
         availableTenants={[]}
         membershipCount={1}
@@ -90,7 +90,7 @@ describe("MembershipItem", () => {
         membership={baseMembership}
         tenantName="Test Org"
         tenantId="tenant-1"
-        isOwner={false}
+        isOrgOwner={false}
         sessionTenantId="tenant-1"
         availableTenants={[]}
         membershipCount={1}
@@ -108,7 +108,7 @@ describe("MembershipItem", () => {
         membership={baseMembership}
         tenantName="Test Org"
         tenantId="tenant-1"
-        isOwner={false}
+        isOrgOwner={false}
         sessionTenantId="tenant-1"
         availableTenants={[]}
         membershipCount={1}
@@ -118,13 +118,13 @@ describe("MembershipItem", () => {
     expect(screen.getByText("owner")).toBeInTheDocument();
   });
 
-  it("shows Delete button when isOwner and membershipCount > 1", () => {
+  it("shows Delete button when isOrgOwner and membershipCount > 1", () => {
     render(
       <MembershipItem
         membership={baseMembership}
         tenantName="Test Org"
         tenantId="tenant-1"
-        isOwner={true}
+        isOrgOwner={true}
         sessionTenantId="tenant-1"
         availableTenants={[{ id: "tenant-2", name: "Other Org" }]}
         membershipCount={2}
@@ -139,7 +139,7 @@ describe("MembershipItem", () => {
         membership={baseMembership}
         tenantName="Test Org"
         tenantId="tenant-1"
-        isOwner={true}
+        isOrgOwner={true}
         sessionTenantId="tenant-1"
         availableTenants={[]}
         membershipCount={1}
@@ -150,13 +150,13 @@ describe("MembershipItem", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("hides Delete button when not isOwner", () => {
+  it("hides Delete button when not isOrgOwner", () => {
     render(
       <MembershipItem
         membership={baseMembership}
         tenantName="Test Org"
         tenantId="tenant-1"
-        isOwner={false}
+        isOrgOwner={false}
         sessionTenantId="tenant-1"
         availableTenants={[{ id: "tenant-2", name: "Other Org" }]}
         membershipCount={2}

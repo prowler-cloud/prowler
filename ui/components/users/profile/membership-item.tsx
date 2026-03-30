@@ -15,7 +15,7 @@ export const MembershipItem = ({
   membership,
   tenantName,
   tenantId,
-  isOwner,
+  isOrgOwner,
   sessionTenantId,
   availableTenants,
   membershipCount,
@@ -23,7 +23,7 @@ export const MembershipItem = ({
   membership: MembershipDetailData;
   tenantName: string;
   tenantId: string;
-  isOwner: boolean;
+  isOrgOwner: boolean;
   sessionTenantId: string | undefined;
   availableTenants: Array<{ id: string; name: string }>;
   membershipCount: number;
@@ -33,7 +33,7 @@ export const MembershipItem = ({
   const [isDeletingOpen, setIsDeletingOpen] = useState(false);
 
   const isActiveTenant = tenantId === sessionTenantId;
-  const canDelete = isOwner && membershipCount > 1;
+  const canDelete = isOrgOwner && membershipCount > 1;
 
   return (
     <>
@@ -86,7 +86,7 @@ export const MembershipItem = ({
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            {isOwner && (
+            {isOrgOwner && (
               <Button
                 type="button"
                 variant="ghost"

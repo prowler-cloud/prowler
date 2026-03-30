@@ -97,12 +97,6 @@ const SSRDataUser = async ({
       userRoleIds.includes(role.id),
   );
 
-  const isOwner = membershipsIncluded.some(
-    (m) =>
-      m.attributes.role === "owner" &&
-      m.relationships?.user?.data?.id === userData.id,
-  );
-
   const samlConfig = hasManageIntegrations ? await getSamlConfig() : undefined;
 
   return (
@@ -119,7 +113,6 @@ const SSRDataUser = async ({
           <MembershipsCard
             memberships={membershipsIncluded}
             tenantsMap={tenantsMap}
-            isOwner={isOwner && hasManageAccount}
             hasManageAccount={hasManageAccount}
             sessionTenantId={session?.tenantId}
           />

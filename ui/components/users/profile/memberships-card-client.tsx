@@ -19,7 +19,6 @@ import { MembershipItem } from "./membership-item";
 interface MembershipsCardClientProps {
   memberships: MembershipDetailData[];
   tenantsMap: Record<string, TenantDetailData>;
-  isOwner: boolean;
   hasManageAccount: boolean;
   sessionTenantId: string | undefined;
 }
@@ -27,7 +26,7 @@ interface MembershipsCardClientProps {
 export const MembershipsCardClient = ({
   memberships,
   tenantsMap,
-  isOwner,
+  hasManageAccount,
   sessionTenantId,
 }: MembershipsCardClientProps) => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -78,7 +77,9 @@ export const MembershipsCardClient = ({
                     membership={membership}
                     tenantId={tenantId}
                     tenantName={tenantsMap[tenantId]?.attributes.name}
-                    isOwner={isOwner}
+                    isOrgOwner={
+                      hasManageAccount && membership.attributes.role === "owner"
+                    }
                     sessionTenantId={sessionTenantId}
                     availableTenants={availableTenants.filter(
                       (t) => t.id !== tenantId,
