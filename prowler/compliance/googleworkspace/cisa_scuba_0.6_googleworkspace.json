@@ -2,7 +2,7 @@
   "Framework": "CISA-SCuBA",
   "Name": "CISA Secure Cloud Business Applications (SCuBA) Google Workspace Baselines",
   "Version": "0.6",
-  "Provider": "googleworkspace",
+  "Provider": "GoogleWorkspace",
   "Description": "The CISA Secure Cloud Business Applications (SCuBA) project provides security configuration baselines for Google Workspace. These baselines define minimum security requirements using RFC 2119 requirement levels (SHALL/SHOULD/SHALL NOT) and include mappings to NIST SP 800-53 Rev 5 and MITRE ATT&CK.",
   "Requirements": [
     {
