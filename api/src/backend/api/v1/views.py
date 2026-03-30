@@ -1234,28 +1234,44 @@ class TenantViewSet(BaseTenantViewset):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        tenant = serializer.save()
-        Membership.objects.create(
+        tenant = Tenant.objects.using(MainRouter.admin_db).create(
+            **serializer.validated_data
+        )
+        Membership.objects.using(MainRouter.admin_db).create(
             user=self.request.user, tenant=tenant, role=Membership.RoleChoices.OWNER
         )
+        serializer.instance = tenant
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
-        # This will perform validation and raise a 404 if the tenant does not exist
-        tenant_id = kwargs.get("pk")
-        get_object_or_404(Tenant, id=tenant_id)
+        tenant = self.get_object()
+        tenant_id = str(tenant.id)
+
+        # Only owners can delete a tenant
+        membership = Membership.objects.filter(user=request.user, tenant=tenant).first()
+        if not membership or membership.role != Membership.RoleChoices.OWNER:
+            raise PermissionDenied("Only owners can delete a tenant.")
 
         with transaction.atomic():
-            # Delete memberships
+            # Collect user IDs from this tenant's memberships before deleting them
+            tenant_user_ids = set(
+                Membership.objects.using(MainRouter.admin_db)
+                .filter(tenant_id=tenant_id)
+                .values_list("user_id", flat=True)
+            )
+
+            # Delete memberships for this tenant
             Membership.objects.using(MainRouter.admin_db).filter(
                 tenant_id=tenant_id
             ).delete()
 
-            # Delete users without memberships
-            User.objects.using(MainRouter.admin_db).filter(
-                membership__isnull=True
-            ).delete()
-        # Delete tenant in batches
+            # Delete only users that were exclusively in this tenant
+            if tenant_user_ids:
+                User.objects.using(MainRouter.admin_db).filter(
+                    id__in=tenant_user_ids, membership__isnull=True
+                ).delete()
+
+        # Delete tenant data in background
         delete_tenant_task.apply_async(kwargs={"tenant_id": tenant_id})
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -1320,8 +1336,12 @@ class TenantMembersViewSet(BaseTenantViewset):
     http_method_names = ["get", "delete"]
     serializer_class = MembershipSerializer
     queryset = Membership.objects.none()
-    # RBAC required permissions
-    required_permissions = [Permissions.MANAGE_ACCOUNT]
+    # Authorization is handled by get_requesting_membership (owner/member checks),
+    # not by RBAC, since the target tenant differs from the JWT tenant.
+    required_permissions = []
+
+    def set_required_permissions(self):
+        self.required_permissions = []
 
     def get_queryset(self):
         tenant = self.get_tenant()
@@ -1334,8 +1354,10 @@ class TenantMembersViewSet(BaseTenantViewset):
 
     def get_tenant(self):
         tenant_id = self.kwargs.get("tenant_pk")
-        tenant = get_object_or_404(Tenant, id=tenant_id)
-        return tenant
+        return get_object_or_404(
+            Tenant.objects.filter(membership__user=self.request.user),
+            id=tenant_id,
+        )
 
     def get_requesting_membership(self, tenant):
         try:

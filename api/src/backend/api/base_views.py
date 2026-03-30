@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from rest_framework import permissions
 from rest_framework.exceptions import NotAuthenticated
@@ -13,7 +12,7 @@ from api.authentication import CombinedJWTOrAPIKeyAuthentication
 from api.db_router import MainRouter, reset_read_db_alias, set_read_db_alias
 from api.db_utils import POSTGRES_USER_VAR, rls_transaction
 from api.filters import CustomDjangoFilterBackend
-from api.models import Role, Tenant, UserRoleRelationship
+from api.models import Role, UserRoleRelationship
 from api.rbac.permissions import HasPermissions
 
 
@@ -114,54 +113,40 @@ class BaseTenantViewset(BaseViewSet):
             if request is not None:
                 request.db_alias = self.db_alias
 
-            with transaction.atomic(using=self.db_alias):
+            with (
+                transaction.atomic(using=self.db_alias),
+                transaction.atomic(using=MainRouter.admin_db),
+            ):
                 tenant = super().dispatch(request, *args, **kwargs)
-
-            try:
-                # If the request is a POST and succeeded, create the admin role
                 if (
                     request.method == "POST"
                     and isinstance(tenant, Response)
                     and tenant.status_code == 201
                 ):
                     self._create_admin_role(tenant.data["id"])
-            except Exception as e:
-                self._handle_creation_error(e, tenant)
-                raise
-
-            return tenant
+                return tenant
         finally:
             if alias_token is not None:
                 reset_read_db_alias(alias_token)
             self.db_alias = MainRouter.default_db
 
     def _create_admin_role(self, tenant_id):
-        with transaction.atomic(using=MainRouter.admin_db):
-            admin_role = Role.objects.using(MainRouter.admin_db).create(
-                name="admin",
-                tenant_id=tenant_id,
-                manage_users=True,
-                manage_account=True,
-                manage_billing=True,
-                manage_providers=True,
-                manage_integrations=True,
-                manage_scans=True,
-                unlimited_visibility=True,
-            )
-            UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-                user=self.request.user,
-                role=admin_role,
-                tenant_id=tenant_id,
-            )
-
-    def _handle_creation_error(self, error, tenant):
-        if tenant.data.get("id"):
-            try:
-                Tenant.objects.using(MainRouter.admin_db).filter(
-                    id=tenant.data["id"]
-                ).delete()
-            except ObjectDoesNotExist:
-                pass  # Tenant might not exist, handle gracefully
+        admin_role = Role.objects.using(MainRouter.admin_db).create(
+            name="admin",
+            tenant_id=tenant_id,
+            manage_users=True,
+            manage_account=True,
+            manage_billing=True,
+            manage_providers=True,
+            manage_integrations=True,
+            manage_scans=True,
+            unlimited_visibility=True,
+        )
+        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+            user=self.request.user,
+            role=admin_role,
+            tenant_id=tenant_id,
+        )
 
     def initial(self, request, *args, **kwargs):
         if request.auth is None:
