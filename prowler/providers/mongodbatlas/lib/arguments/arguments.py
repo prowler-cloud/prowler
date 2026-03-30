@@ -1,3 +1,6 @@
+SENSITIVE_ARGUMENTS = frozenset({"--atlas-private-key", "--atlas-public-key"})
+
+
 def init_parser(self):
     """Initialize the MongoDB Atlas Provider CLI parser"""
     mongodbatlas_parser = self.subparsers.add_parser(

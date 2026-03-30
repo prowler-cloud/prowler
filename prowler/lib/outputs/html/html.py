@@ -9,6 +9,7 @@ from prowler.config.config import (
     square_logo_img,
     timestamp,
 )
+from prowler.lib.cli.redact import redact_argv
 from prowler.lib.logger import logger
 from prowler.lib.outputs.output import Finding, Output
 from prowler.lib.outputs.utils import parse_html_string, unroll_dict
@@ -196,7 +197,7 @@ class HTML(Output):
                 </div>
                 </li>
                 <li class="list-group-item">
-                <b>Parameters used:</b> {" ".join(sys.argv[1:]) if from_cli else ""}
+                <b>Parameters used:</b> {redact_argv(sys.argv[1:]) if from_cli else ""}
                 </li>
                 <li class="list-group-item">
                 <b>Date:</b> {timestamp.isoformat()}

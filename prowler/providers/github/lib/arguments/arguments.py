@@ -1,3 +1,8 @@
+SENSITIVE_ARGUMENTS = frozenset(
+    {"--personal-access-token", "--oauth-app-token", "--github-app-key"}
+)
+
+
 def init_parser(self):
     """Init the Github Provider CLI parser"""
     github_parser = self.subparsers.add_parser(
