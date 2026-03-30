@@ -269,28 +269,30 @@ class GithubProvider(Provider):
     def _load_repos_from_file(self, file_path: str) -> None:
         """Load repository names from a file (one per line)."""
         try:
-            line_count = 0
+            repo_count = 0
+            before = len(self._repositories)
             with open(file_path, "r") as f:
                 for line in f:
-                    line_count += 1
-                    if line_count > self.MAX_REPO_LIST_LINES:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    repo_count += 1
+                    if repo_count > self.MAX_REPO_LIST_LINES:
                         raise GithubRepoListFileReadError(
                             file=file_path,
                             message=f"Repo list file exceeds maximum of {self.MAX_REPO_LIST_LINES} lines.",
                         )
-                    line = line.strip()
-                    if not line or line.startswith("#"):
-                        continue
                     if len(line) > self.MAX_REPO_NAME_LENGTH:
                         logger.warning(
-                            f"Skipping repo name exceeding {self.MAX_REPO_NAME_LENGTH} chars at line {line_count} in {file_path}"
+                            f"Skipping repo name exceeding {self.MAX_REPO_NAME_LENGTH} chars at line {repo_count} in {file_path}"
                         )
                         continue
                     self._repositories.append(line)
+            self._repositories = list(dict.fromkeys(self._repositories))
             logger.info(
-                f"Loaded {len(self._repositories)} repositories from {file_path}"
+                f"Loaded {len(self._repositories) - before} repositories from {file_path}"
             )
-        except OSError:
+        except FileNotFoundError:
             raise GithubRepoListFileNotFoundError(
                 file=file_path,
                 message=f"Repo list file not found: {file_path}",
