@@ -16113,6 +16113,89 @@ class TestFindingGroupViewSet:
         assert data[0]["attributes"]["status"] == "PASS"
         assert data[1]["attributes"]["status"] == "FAIL"
 
+    def test_resources_nonexistent_check_missing_date_returns_400(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Nonexistent check_id with missing required date filter returns 400, not 404."""
+        response = authenticated_client.get(
+            reverse("finding-group-resources", kwargs={"pk": "totally_fake_check"}),
+        )
+        # FindingGroupFilter requires inserted_at — validation fires before existence check
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_resources_nonexistent_check_invalid_sort_returns_400(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Nonexistent check_id with invalid sort returns 400, not 404."""
+        response = authenticated_client.get(
+            reverse("finding-group-resources", kwargs={"pk": "totally_fake_check"}),
+            {"filter[inserted_at]": TODAY, "sort": "invalid_field"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_resources_empty_sort_falls_back_to_default_order(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Degenerate sort values should behave like no sort, not raise 500."""
+        all_ids = set()
+        for page_num in (1, 2):
+            response = authenticated_client.get(
+                reverse(
+                    "finding-group-resources",
+                    kwargs={"pk": "s3_bucket_public_access"},
+                ),
+                {
+                    "filter[inserted_at]": TODAY,
+                    "sort": ",",
+                    "page[size]": 1,
+                    "page[number]": page_num,
+                },
+            )
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()["data"]
+            assert len(data) == 1
+            all_ids.add(data[0]["id"])
+        assert len(all_ids) == 2
+
+    def test_resources_sort_pagination_stability(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Sort with small page size returns all resources without duplicates or gaps."""
+        # s3_bucket_public_access has 2 resources, both FAIL — they tie on status
+        all_ids = set()
+        for page_num in (1, 2):
+            response = authenticated_client.get(
+                reverse(
+                    "finding-group-resources",
+                    kwargs={"pk": "s3_bucket_public_access"},
+                ),
+                {
+                    "filter[inserted_at]": TODAY,
+                    "sort": "status",
+                    "page[size]": 1,
+                    "page[number]": page_num,
+                },
+            )
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()["data"]
+            assert len(data) == 1
+            all_ids.add(data[0]["id"])
+        # Both pages should return different resources (no duplicates)
+        assert len(all_ids) == 2
+
+    def test_latest_resources_nonexistent_check_invalid_sort_returns_400(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Nonexistent check_id with invalid sort on latest returns 400, not 404."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-latest_resources",
+                kwargs={"check_id": "totally_fake_check"},
+            ),
+            {"sort": "invalid_field"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
     # Test provider_id filter actually filters data
     def test_finding_groups_provider_id_filter_actually_filters(
         self, authenticated_client, finding_groups_fixture, providers_fixture
