@@ -7407,41 +7407,28 @@ class FindingGroupViewSet(BaseRLSViewSet):
         self,
         request,
         aggregated_queryset,
-        sort_field_map=None,
-        default_ordering=("-fail_count", "-severity_order", "check_id"),
-        post_processor=None,
-        serializer_class=None,
     ):
         """Apply ordering, pagination, post-processing, and return the Response."""
-        if sort_field_map is None:
-            sort_field_map = self._FINDING_GROUP_SORT_MAP
-        if post_processor is None:
-            post_processor = self._post_process_aggregation
-
         sort_param = request.query_params.get("sort")
         if sort_param:
-            ordering = self._validate_sort_fields(sort_param, sort_field_map)
+            ordering = self._validate_sort_fields(
+                sort_param, self._FINDING_GROUP_SORT_MAP
+            )
             if ordering:
                 aggregated_queryset = aggregated_queryset.order_by(*ordering)
         else:
-            aggregated_queryset = aggregated_queryset.order_by(*default_ordering)
+            aggregated_queryset = aggregated_queryset.order_by(
+                "-fail_count", "-severity_order", "check_id"
+            )
 
         page = self.paginate_queryset(aggregated_queryset)
         if page is not None:
-            processed_data = post_processor(page)
-            serializer = (
-                serializer_class(processed_data, many=True)
-                if serializer_class
-                else self.get_serializer(processed_data, many=True)
-            )
+            processed_data = self._post_process_aggregation(page)
+            serializer = self.get_serializer(processed_data, many=True)
             return self.get_paginated_response(serializer.data)
 
-        processed_data = post_processor(aggregated_queryset)
-        serializer = (
-            serializer_class(processed_data, many=True)
-            if serializer_class
-            else self.get_serializer(processed_data, many=True)
-        )
+        processed_data = self._post_process_aggregation(aggregated_queryset)
+        serializer = self.get_serializer(processed_data, many=True)
         return Response(serializer.data)
 
     def _validate_resource_sort(self, request):
