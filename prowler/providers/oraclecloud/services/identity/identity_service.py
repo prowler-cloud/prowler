@@ -35,7 +35,7 @@ class Identity(OCIService):
         self.__threading_call__(self.__list_dynamic_groups__)
         self.__threading_call__(self.__list_domains__)
         self.__threading_call__(self.__list_domain_password_policies__)
-        self.__get_password_policy__()
+        self.__threading_call__(self.__get_password_policy__)
         self.__threading_call__(self.__search_root_compartment_resources__)
         self.__threading_call__(self.__search_active_non_root_compartments__)
 
@@ -49,10 +49,9 @@ class Identity(OCIService):
         Returns:
             Identity client instance
         """
-        client_region = self.regional_clients.get(region)
-        if client_region:
-            return self._create_oci_client(oci.identity.IdentityClient)
-        return None
+        return self._create_oci_client(
+            oci.identity.IdentityClient, config_overrides={"region": region}
+        )
 
     def __list_users__(self, regional_client):
         """
@@ -66,7 +65,7 @@ class Identity(OCIService):
             if regional_client.region not in self.provider.identity.region:
                 return
 
-            identity_client = self._create_oci_client(oci.identity.IdentityClient)
+            identity_client = self.__get_client__(regional_client.region)
 
             logger.info("Identity - Listing Users...")
 
@@ -316,7 +315,7 @@ class Identity(OCIService):
             if regional_client.region not in self.provider.identity.region:
                 return
 
-            identity_client = self._create_oci_client(oci.identity.IdentityClient)
+            identity_client = self.__get_client__(regional_client.region)
 
             logger.info("Identity - Listing Groups...")
 
@@ -359,7 +358,7 @@ class Identity(OCIService):
             if regional_client.region not in self.provider.identity.region:
                 return
 
-            identity_client = self._create_oci_client(oci.identity.IdentityClient)
+            identity_client = self.__get_client__(regional_client.region)
 
             logger.info("Identity - Listing Policies...")
 
@@ -404,7 +403,7 @@ class Identity(OCIService):
             if regional_client.region not in self.provider.identity.region:
                 return
 
-            identity_client = self._create_oci_client(oci.identity.IdentityClient)
+            identity_client = self.__get_client__(regional_client.region)
 
             logger.info("Identity - Listing Dynamic Groups...")
 
@@ -452,7 +451,7 @@ class Identity(OCIService):
             if regional_client.region not in self.provider.identity.region:
                 return
 
-            identity_client = self._create_oci_client(oci.identity.IdentityClient)
+            identity_client = self.__get_client__(regional_client.region)
 
             logger.info("Identity - Listing Identity Domains...")
 
@@ -549,10 +548,10 @@ class Identity(OCIService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_password_policy__(self):
+    def __get_password_policy__(self, regional_client):
         """Get the password policy for the tenancy."""
         try:
-            identity_client = self._create_oci_client(oci.identity.IdentityClient)
+            identity_client = self.__get_client__(regional_client.region)
 
             logger.info("Identity - Getting Password Policy...")
 
@@ -584,7 +583,8 @@ class Identity(OCIService):
 
             # Create search client using the helper method for proper authentication
             search_client = self._create_oci_client(
-                oci.resource_search.ResourceSearchClient
+                oci.resource_search.ResourceSearchClient,
+                config_overrides={"region": regional_client.region},
             )
 
             # Query to search for resources in root compartment
@@ -631,7 +631,8 @@ class Identity(OCIService):
 
             # Create search client using the helper method for proper authentication
             search_client = self._create_oci_client(
-                oci.resource_search.ResourceSearchClient
+                oci.resource_search.ResourceSearchClient,
+                config_overrides={"region": regional_client.region},
             )
 
             # Query to search for active compartments in the tenancy (excluding root)
