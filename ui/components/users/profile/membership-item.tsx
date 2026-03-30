@@ -3,13 +3,12 @@
 import { useState } from "react";
 
 import { Badge, Button, Card } from "@/components/shadcn";
-import { AlertModal } from "@/components/shadcn/alert-modal/alert-modal";
 import { Modal } from "@/components/shadcn/modal";
 import { DateWithTime, InfoField } from "@/components/ui/entities";
 import { EditTenantForm } from "@/components/users/forms";
 import { DeleteTenantForm } from "@/components/users/forms/delete-tenant-form";
 import { SwitchTenantForm } from "@/components/users/forms/switch-tenant-form";
-import { MembershipDetailData } from "@/types/users";
+import { MembershipDetailData, TenantOption } from "@/types/users";
 
 export const MembershipItem = ({
   membership,
@@ -25,7 +24,7 @@ export const MembershipItem = ({
   tenantId: string;
   isOrgOwner: boolean;
   sessionTenantId: string | undefined;
-  availableTenants: Array<{ id: string; name: string }>;
+  availableTenants: TenantOption[];
   membershipCount: number;
 }) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -44,15 +43,15 @@ export const MembershipItem = ({
           setIsOpen={setIsEditOpen}
         />
       </Modal>
-      <AlertModal
+      <Modal
         open={isSwitchingOpen}
         onOpenChange={setIsSwitchingOpen}
         title="Confirm organization switch"
         description="The session will be updated and the page will reload to apply the change."
       >
         <SwitchTenantForm tenantId={tenantId} setIsOpen={setIsSwitchingOpen} />
-      </AlertModal>
-      <AlertModal
+      </Modal>
+      <Modal
         open={isDeletingOpen}
         onOpenChange={setIsDeletingOpen}
         title="Delete organization"
@@ -65,7 +64,7 @@ export const MembershipItem = ({
           availableTenants={availableTenants}
           setIsOpen={setIsDeletingOpen}
         />
-      </AlertModal>
+      </Modal>
       <Card variant="inner" className="p-2">
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <Badge variant="secondary">{membership.attributes.role}</Badge>
