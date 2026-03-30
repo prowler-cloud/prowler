@@ -1,6 +1,6 @@
 import { Check, Flag } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { Badge } from "@/components/shadcn";
 
 export const TriageStatusValues = {
   IN_PROGRESS: "in_progress",
@@ -24,12 +24,7 @@ const TriageBadge = ({ status, count }: TriageBadgeProps) => {
   const isInProgress = status === TriageStatusValues.IN_PROGRESS;
 
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-sm",
-        "border-border-tag-primary bg-bg-tag-primary text-text-neutral-primary",
-      )}
-    >
+    <Badge variant="tag" className="rounded text-sm">
       {isInProgress ? (
         <Flag className="size-3 fill-sky-400 text-sky-400" />
       ) : (
@@ -39,7 +34,7 @@ const TriageBadge = ({ status, count }: TriageBadgeProps) => {
       <span className="font-normal">
         {isInProgress ? "In-progress" : "Resolved"}
       </span>
-    </span>
+    </Badge>
   );
 };
 
@@ -58,16 +53,11 @@ export const ImpactedResourcesCell = ({
 }: ImpactedResourcesCellProps) => {
   return (
     <div className="flex items-center gap-6">
-      <span
-        className={cn(
-          "inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-sm",
-          "border-border-tag-primary bg-bg-tag-primary text-text-neutral-primary",
-        )}
-      >
+      <Badge variant="tag" className="rounded text-sm">
         <span className="font-bold">{impacted}</span>
         <span className="font-normal">of</span>
         <span className="font-bold">{total}</span>
-      </span>
+      </Badge>
 
       {inProgress > 0 && (
         <TriageBadge

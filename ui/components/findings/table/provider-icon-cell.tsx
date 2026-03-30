@@ -14,6 +14,7 @@ import {
   OpenStackProviderBadge,
   OracleCloudProviderBadge,
 } from "@/components/icons/providers-badge";
+import { cn } from "@/lib/utils";
 import { ProviderType } from "@/types";
 
 export const PROVIDER_ICONS = {
@@ -36,24 +37,31 @@ export const PROVIDER_ICONS = {
 interface ProviderIconCellProps {
   provider: ProviderType;
   size?: number;
+  className?: string;
 }
 
 export const ProviderIconCell = ({
   provider,
   size = 26,
+  className = "size-8 rounded-md bg-white",
 }: ProviderIconCellProps) => {
   const IconComponent = PROVIDER_ICONS[provider];
 
   if (!IconComponent) {
     return (
-      <div className="flex size-8 items-center justify-center rounded-md bg-white">
+      <div className={cn("flex items-center justify-center", className)}>
         <span className="text-text-neutral-secondary text-xs">?</span>
       </div>
     );
   }
 
   return (
-    <div className="flex size-8 items-center justify-center overflow-hidden rounded-md bg-white">
+    <div
+      className={cn(
+        "flex items-center justify-center overflow-hidden",
+        className,
+      )}
+    >
       <IconComponent width={size} height={size} />
     </div>
   );
