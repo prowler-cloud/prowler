@@ -20,7 +20,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CIS Google Workspace Foundations Benchmark v1.3.0 compliance [(#10462)](https://github.com/prowler-cloud/prowler/pull/10462)
 - `entra_conditional_access_policy_device_registration_mfa_required` check and `entra_intune_enrollment_sign_in_frequency_every_time` enhancement for M365 provider [(#10222)](https://github.com/prowler-cloud/prowler/pull/10222)
 - `entra_conditional_access_policy_block_elevated_insider_risk` check for M365 provider [(#10234)](https://github.com/prowler-cloud/prowler/pull/10234)
-- Oracle cloud patch for multi region support for identity client configuration in blockstorage and filestorage [(#10519)](https://github.com/prowler-cloud/prowler/pull/10520)
+- Oracle cloud patch for multi region support for identity client configuration in blockstorage, identity, and filestorage [(#10519)](https://github.com/prowler-cloud/prowler/pull/10520)
 
 ### 🔄 Changed
 
