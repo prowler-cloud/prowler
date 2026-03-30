@@ -94,10 +94,13 @@ class TestGetSensitiveArguments:
         result = get_sensitive_arguments()
         assert "--shodan" in result
         assert "--personal-access-token" in result
+        assert "--oauth-app-token" in result
+        assert "--github-app-key" in result
+        assert "--github-app-key-path" in result
         assert "--atlas-private-key" in result
+        assert "--atlas-public-key" in result
         assert "--nhn-password" in result
         assert "--os-password" in result
-        assert "--github-app-key-path" in result
 
     def test_does_not_include_non_sensitive_flags(self):
         """Verify non-sensitive flags are not in the set."""

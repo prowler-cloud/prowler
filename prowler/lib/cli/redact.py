@@ -28,7 +28,6 @@ def get_sensitive_arguments() -> frozenset:
             sensitive.update(getattr(module, "SENSITIVE_ARGUMENTS", frozenset()))
         except Exception as error:
             logger.debug(f"Could not load SENSITIVE_ARGUMENTS from {provider}: {error}")
-            continue
 
     return frozenset(sensitive)
 
