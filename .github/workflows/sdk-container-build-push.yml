@@ -42,6 +42,7 @@ env:
   # Container registries
   PROWLERCLOUD_DOCKERHUB_REPOSITORY: prowlercloud
   PROWLERCLOUD_DOCKERHUB_IMAGE: prowler
+  TONIBLYX_DOCKERHUB_REPOSITORY: toniblyx
 
   # AWS configuration (for ECR)
   AWS_REGION: us-east-1
@@ -290,6 +291,39 @@ jobs:
           NEEDS_SETUP_OUTPUTS_PROWLER_VERSION: ${{ needs.setup.outputs.prowler_version }}
           NEEDS_SETUP_OUTPUTS_STABLE_TAG: ${{ needs.setup.outputs.stable_tag }}
           NEEDS_SETUP_OUTPUTS_LATEST_TAG: ${{ needs.setup.outputs.latest_tag }}
+
+      # Push to toniblyx/prowler only for current version (latest/stable/release tags)
+      - name: Login to DockerHub (toniblyx)
+        if: needs.setup.outputs.latest_tag == 'latest'
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          username: ${{ secrets.TONIBLYX_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.TONIBLYX_DOCKERHUB_PASSWORD }}
+
+      - name: Push manifests to toniblyx for push event
+        if: needs.setup.outputs.latest_tag == 'latest' && github.event_name == 'push'
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.TONIBLYX_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:latest \
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:latest
+
+      - name: Push manifests to toniblyx for release event
+        if: needs.setup.outputs.latest_tag == 'latest' && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.TONIBLYX_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_PROWLER_VERSION} \
+            -t ${{ env.TONIBLYX_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:stable \
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:stable
+        env:
+          NEEDS_SETUP_OUTPUTS_PROWLER_VERSION: ${{ needs.setup.outputs.prowler_version }}
+
+      # Re-login as prowlercloud for cleanup of intermediate tags
+      - name: Login to DockerHub (prowlercloud)
+        if: always()
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Install regctl
         if: always()
