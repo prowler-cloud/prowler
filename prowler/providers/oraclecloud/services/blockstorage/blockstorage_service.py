@@ -35,10 +35,9 @@ class BlockStorage(OCIService):
         Returns:
             Block Storage client instance
         """
-        client_region = self.regional_clients.get(region)
-        if client_region:
-            return self._create_oci_client(oci.core.BlockstorageClient)
-        return None
+        return self._create_oci_client(
+            oci.core.BlockstorageClient, config_overrides={"region": region}
+        )
 
     def __list_volumes__(self, regional_client):
         """

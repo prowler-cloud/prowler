@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { AlertTriangle, Eye, MoreVertical } from "lucide-react";
+import { AlertTriangle, Eye } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -87,18 +87,7 @@ const ResourceRowActions = ({ row }: { row: { original: ResourceProps } }) => {
   return (
     <>
       <div className="flex items-center justify-end">
-        <ActionDropdown
-          trigger={
-            <button
-              type="button"
-              aria-label="Resource actions"
-              className="hover:bg-bg-neutral-tertiary rounded-md p-1 transition-colors"
-            >
-              <MoreVertical className="text-text-neutral-secondary size-5" />
-            </button>
-          }
-          ariaLabel="Resource actions"
-        >
+        <ActionDropdown ariaLabel="Resource actions">
           <ActionDropdownItem
             icon={<Eye className="size-5" />}
             label="View Details"

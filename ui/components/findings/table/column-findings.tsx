@@ -1,3 +1,5 @@
+// TODO: Legacy columns — used by overview dashboard (column-new-findings-to-date.tsx).
+// Migrate that consumer to grouped view columns, then delete this file.
 "use client";
 
 import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
