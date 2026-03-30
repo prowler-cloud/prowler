@@ -31,22 +31,34 @@ export const NotificationIndicator = ({
 }: NotificationIndicatorProps) => {
   // Muted takes precedence over delta
   if (isMuted) {
-    const ruleName = mutedReason || "Unknown rule";
-
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="ml-1 flex cursor-pointer items-center justify-center">
+          <div
+            className="flex w-2 shrink-0 cursor-pointer items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
             <MutedIcon className="text-bg-data-muted size-2" />
           </div>
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent onClick={(e) => e.stopPropagation()}>
           <Link
             href="/mutelist"
+            onClick={(e) => e.stopPropagation()}
             className="text-button-tertiary hover:text-button-tertiary-hover flex items-center gap-1 text-xs underline-offset-4"
           >
-            <span className="text-text-neutral-primary">Mute rule:</span>
-            <span className="max-w-[150px] truncate">{ruleName}</span>
+            {/* TODO: always show rule name once the API returns muted_reason in finding-group-resources */}
+            {mutedReason ? (
+              <>
+                <span className="text-text-neutral-primary">Mute rule:</span>
+                <span className="max-w-[150px] truncate">{mutedReason}</span>
+              </>
+            ) : (
+              <>
+                <span className="text-text-neutral-primary">Mute rule:</span>
+                <span>view rules</span>
+              </>
+            )}
           </Link>
         </TooltipContent>
       </Tooltip>
@@ -59,13 +71,18 @@ export const NotificationIndicator = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <div
-            className={cn(
-              "ml-1 size-1.5 cursor-pointer rounded-full",
-              delta === DeltaValues.NEW
-                ? "bg-system-severity-high"
-                : "bg-system-severity-low",
-            )}
-          />
+            onClick={(e) => e.stopPropagation()}
+            className="flex w-2 shrink-0 cursor-pointer items-center justify-center"
+          >
+            <div
+              className={cn(
+                "size-1.5 rounded-full",
+                delta === DeltaValues.NEW
+                  ? "bg-system-severity-high"
+                  : "bg-system-severity-low",
+              )}
+            />
+          </div>
         </TooltipTrigger>
         <TooltipContent>
           <div className="flex items-center gap-1 text-xs">
@@ -96,5 +113,5 @@ export const NotificationIndicator = ({
   }
 
   // No indicator - return minimal width placeholder
-  return <div className="w-2" />;
+  return <div className="w-2 shrink-0" />;
 };

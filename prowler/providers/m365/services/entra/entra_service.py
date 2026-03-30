@@ -289,12 +289,20 @@ class Entra(M365Service):
                                 [],
                             )
                         ],
-                        insider_risk_levels=self._parse_insider_risk_levels(
-                            getattr(
-                                policy.conditions,
-                                "insider_risk_levels",
-                                None,
+                        # The MS Graph SDK deserializes insiderRiskLevels
+                        # as a list via get_collection_of_enum_values, so
+                        # we take the first element when present.
+                        insider_risk_levels=(
+                            InsiderRiskLevel(raw_insider_risk[0].value)
+                            if (
+                                raw_insider_risk := getattr(
+                                    policy.conditions,
+                                    "insider_risk_levels",
+                                    None,
+                                )
                             )
+                            and raw_insider_risk
+                            else None
                         ),
                         platform_conditions=PlatformConditions(
                             include_platforms=[
@@ -1001,7 +1009,7 @@ class ClientAppType(Enum):
 class InsiderRiskLevel(Enum):
     """Insider risk levels for Conditional Access policies.
 
-    Reference: https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccessconditionset
+    Reference: https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccessconditionset#conditionalaccessinsiderrisklevels-values
     """
 
     MINOR = "minor"
@@ -1035,7 +1043,7 @@ class Conditions(BaseModel):
     client_app_types: Optional[List[ClientAppType]]
     user_risk_levels: List[RiskLevel] = []
     sign_in_risk_levels: List[RiskLevel] = []
-    insider_risk_levels: Optional[List[InsiderRiskLevel]] = None
+    insider_risk_levels: Optional[InsiderRiskLevel] = None
     platform_conditions: Optional[PlatformConditions] = None
     authentication_flows: Optional[AuthenticationFlows] = None
 
