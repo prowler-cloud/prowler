@@ -4,6 +4,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.23.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- Findings grouped view with drill-down table showing resources per check, resource detail drawer, infinite scroll pagination, and bulk mute support [(#10425)](https://github.com/prowler-cloud/prowler/pull/10425)
+
 ### 🔄 Changed
 
 - Attack Paths custom openCypher queries now use a code editor with syntax highlighting and line numbers [(#10445)](https://github.com/prowler-cloud/prowler/pull/10445)
@@ -24,6 +28,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Findings filters now use a batch-apply pattern with an Apply Filters button, filter summary strip, and independent filter options instead of triggering API calls on every selection [(#10388)](https://github.com/prowler-cloud/prowler/pull/10388)
+
+---
+
+## [1.21.0] (Prowler v5.21.0)
+
+### 🚀 Added
+
+- Attack Paths custom openCypher queries with Cartography schema guidance and clearer execution errors [(#10397)](https://github.com/prowler-cloud/prowler/pull/10397)
 
 ---
 

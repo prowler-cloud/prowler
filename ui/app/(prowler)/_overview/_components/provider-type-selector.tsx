@@ -222,7 +222,11 @@ export const ProviderTypeSelector = ({
         // .filter((p) => p.attributes.connection?.connected)
         .map((p) => p.attributes.provider),
     ),
-  ).filter((type): type is ProviderType => type in PROVIDER_DATA);
+  )
+    .filter((type): type is ProviderType => type in PROVIDER_DATA)
+    .sort((a, b) =>
+      PROVIDER_DATA[a].label.localeCompare(PROVIDER_DATA[b].label),
+    );
 
   const renderIcon = (providerType: ProviderType) => {
     const IconComponent = PROVIDER_DATA[providerType].icon;
