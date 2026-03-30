@@ -206,6 +206,41 @@ class Test_entra_conditional_access_policy_device_registration_mfa_required:
                 == "No Conditional Access Policy requires MFA for device registration."
             )
 
+    def test_disabled_policy_is_skipped(self):
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(f"{CHECK_MODULE_PATH}.entra_client", new=entra_client),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_device_registration_mfa_required.entra_conditional_access_policy_device_registration_mfa_required import (
+                entra_conditional_access_policy_device_registration_mfa_required,
+            )
+
+            policy = build_policy(
+                display_name="Disabled device registration MFA",
+                state=ConditionalAccessPolicyState.DISABLED,
+                included_user_actions=[UserAction.REGISTER_DEVICE],
+                built_in_controls=[ConditionalAccessGrantControl.MFA],
+            )
+            entra_client.conditional_access_policies = {policy.id: policy}
+
+            result = (
+                entra_conditional_access_policy_device_registration_mfa_required().execute()
+            )
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "No Conditional Access Policy requires MFA for device registration."
+            )
+
     def test_policy_without_mfa_grant_control_fails(self):
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
