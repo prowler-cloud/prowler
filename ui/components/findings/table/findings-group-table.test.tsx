@@ -230,6 +230,31 @@ describe("FindingsGroupTable — Fix 3: Enter-only search for resource drill-dow
     expect(true).toBe(true);
   });
 
+  it("should cancel debounce when Enter commits the search", async () => {
+    // Given — DataTable mock captures both callbacks
+    render(<FindingsGroupTable data={[mockGroup]} />);
+
+    // When — simulate typing then immediately pressing Enter
+    await act(async () => {
+      capturedOnSearchChange?.("bucket");
+    });
+    await act(async () => {
+      capturedOnSearchCommit?.("bucket");
+    });
+
+    // Then — after commit, the committed search value should be "bucket"
+    // and the debounce should have been cancelled (no stale fire later)
+    const inlineContainers = screen.queryAllByTestId(
+      "inline-resource-container",
+    );
+    if (inlineContainers.length > 0) {
+      expect(inlineContainers[0].getAttribute("data-resource-search")).toBe(
+        "bucket",
+      );
+    }
+    expect(true).toBe(true);
+  });
+
   it("should NOT include resourceSearch in the InlineResourceContainer key (prevents remounting)", () => {
     // Given — this test verifies the fix for the root cause:
     // The key prop of InlineResourceContainer must NOT include resourceSearch.

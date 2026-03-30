@@ -105,7 +105,12 @@ export const DataTableSearch = ({
         clearTimeout(debounceTimeoutRef.current);
       }
 
-      setIsLoading(true);
+      // When onSearchCommit is provided, the actual search only fires on
+      // Enter. Don't show the loading spinner on every keystroke — it
+      // misleads the user into thinking a search is happening.
+      if (!onSearchCommit) {
+        setIsLoading(true);
+      }
       debounceTimeoutRef.current = setTimeout(() => {
         onSearchChange(newValue);
         setIsLoading(false);
@@ -262,7 +267,17 @@ export const DataTableSearch = ({
             onChange={(e) => handleChange(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && onSearchCommit) {
+                // Cancel any pending debounce — the user explicitly committed
+                if (debounceTimeoutRef.current) {
+                  clearTimeout(debounceTimeoutRef.current);
+                  debounceTimeoutRef.current = null;
+                }
+                // Sync display state to the committed callback
+                if (onSearchChange) {
+                  onSearchChange(value);
+                }
                 onSearchCommit(value);
+                setIsLoading(false);
               }
             }}
             onFocus={handleFocus}
