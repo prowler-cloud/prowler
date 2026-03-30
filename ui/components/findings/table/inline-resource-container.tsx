@@ -46,11 +46,11 @@ interface InlineResourceContainerProps {
 }
 
 // NOTE: We intentionally do NOT auto-select child resources when a parent group
-// is selected. Selecting a group already covers all its resources server-side
-// (resolveFindingIdsByCheckIds resolves the full set by checkId). Auto-selecting
-// children would require syncing state with infinite scroll (resources load 10 at
-// a time), causing cascading setState during render and confusing partial selections.
-// Resource-level checkboxes are for selecting a specific subset independently.
+// is selected. Group-level mute resolution now fetches the group's visible
+// resources separately. Auto-selecting children would still require syncing state
+// with infinite scroll (resources load 10 at a time), causing cascading setState
+// during render and confusing partial selections. Resource-level checkboxes are
+// for selecting a specific subset independently.
 
 /** Max skeleton rows that fit in the 440px scroll container */
 const MAX_SKELETON_ROWS = 7;
@@ -219,6 +219,8 @@ export function InlineResourceContainer({
     return resolveFindingIds({
       checkId: group.checkId,
       resourceUids,
+      filters,
+      hasDateOrScanFilter: hasDateOrScan,
     });
   };
 

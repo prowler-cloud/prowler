@@ -119,6 +119,8 @@ export function FindingsGroupDrillDown({
     return resolveFindingIds({
       checkId: group.checkId,
       resourceUids,
+      filters,
+      hasDateOrScanFilter: hasDateOrScan,
     });
   };
 

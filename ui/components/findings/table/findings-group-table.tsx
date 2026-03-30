@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 
 import {
   resolveFindingIds,
-  resolveFindingIdsByCheckIds,
+  resolveFindingIdsByVisibleGroupResources,
 } from "@/actions/findings/findings-by-resource";
 import { DataTable } from "@/components/ui/table";
 import { hasDateOrScanFilter } from "@/lib";
@@ -68,9 +68,9 @@ export function FindingsGroupTable({
     }
   });
 
-  // Get selected check IDs (not UUIDs) — resolveFindingIdsByCheckIds expects check_id values.
-  // When the expanded group has individual resource selections, exclude it from
-  // group-level mute targets — the resource-level FloatingMuteButton handles those.
+  // Get selected group check IDs. When the expanded group has individual resource
+  // selections, exclude it from group-level mute targets — the resource-level
+  // FloatingMuteButton handles those.
   const selectedCheckIds = Object.keys(rowSelection)
     .filter((key) => rowSelection[key])
     .map((idx) => safeData[parseInt(idx)]?.checkId)
@@ -102,13 +102,27 @@ export function FindingsGroupTable({
     return selectedCheckIds.includes(id);
   };
 
-  /** Shared resolver for row action dropdowns (via context). */
+  const resolveGroupMuteIds = async (checkIds: string[]) => {
+    const results = await Promise.all(
+      checkIds.map((checkId) =>
+        resolveFindingIdsByVisibleGroupResources({
+          checkId,
+          filters,
+          hasDateOrScanFilter: hasDateOrScan,
+          resourceSearch:
+            checkId === expandedCheckId && resourceSearch
+              ? resourceSearch
+              : undefined,
+        }),
+      ),
+    );
+
+    return Array.from(new Set(results.flat()));
+  };
+
+  /** Shared resolver for group row action dropdowns (via context). */
   const resolveMuteIds = async (checkIds: string[]) =>
-    resolveFindingIdsByCheckIds({
-      checkIds,
-      filters,
-      hasDateOrScanFilter: hasDateOrScan,
-    });
+    resolveGroupMuteIds(checkIds);
 
   const handleMuteComplete = () => {
     clearSelection();
@@ -204,16 +218,14 @@ export function FindingsGroupTable({
           onBeforeOpen={async () => {
             const [groupIds, resourceIds] = await Promise.all([
               selectedCheckIds.length > 0
-                ? resolveFindingIdsByCheckIds({
-                    checkIds: selectedCheckIds,
-                    filters,
-                    hasDateOrScanFilter: hasDateOrScan,
-                  })
+                ? resolveGroupMuteIds(selectedCheckIds)
                 : Promise.resolve([]),
               hasResourceSelection && expandedCheckId
                 ? resolveFindingIds({
                     checkId: expandedCheckId,
                     resourceUids: resourceSelection,
+                    filters,
+                    hasDateOrScanFilter: hasDateOrScan,
                   })
                 : Promise.resolve([]),
             ]);
