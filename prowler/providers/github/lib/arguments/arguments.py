@@ -1,5 +1,10 @@
 SENSITIVE_ARGUMENTS = frozenset(
-    {"--personal-access-token", "--oauth-app-token", "--github-app-key"}
+    {
+        "--personal-access-token",
+        "--oauth-app-token",
+        "--github-app-key",
+        "--github-app-key-path",
+    }
 )
 
 

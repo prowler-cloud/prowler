@@ -1,3 +1,4 @@
+from functools import lru_cache
 from importlib import import_module
 
 from prowler.lib.logger import logger
@@ -6,6 +7,7 @@ from prowler.providers.common.provider import Provider, providers_path
 REDACTED_VALUE = "REDACTED"
 
 
+@lru_cache(maxsize=None)
 def get_sensitive_arguments() -> frozenset:
     """Collect SENSITIVE_ARGUMENTS from all provider argument modules and the common parser."""
     sensitive: set[str] = set()
@@ -24,8 +26,8 @@ def get_sensitive_arguments() -> frozenset:
                 f"{providers_path}.{provider}.lib.arguments.arguments"
             )
             sensitive.update(getattr(module, "SENSITIVE_ARGUMENTS", frozenset()))
-        except Exception:
-            # Provider may not have an arguments module
+        except Exception as error:
+            logger.debug(f"Could not load SENSITIVE_ARGUMENTS from {provider}: {error}")
             continue
 
     return frozenset(sensitive)

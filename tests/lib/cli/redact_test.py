@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from prowler.lib.cli.redact import REDACTED_VALUE, redact_argv
+from prowler.lib.cli.redact import REDACTED_VALUE, get_sensitive_arguments, redact_argv
 
 
 @pytest.fixture
@@ -85,3 +85,24 @@ class TestRedactArgv:
     def test_non_sensitive_flag_with_equals(self, mock_sensitive_args):
         argv = ["aws", "--region=us-east-1"]
         assert redact_argv(argv) == "aws --region=us-east-1"
+
+
+class TestGetSensitiveArguments:
+    def test_discovers_known_sensitive_arguments(self):
+        """Integration test: verify the discovery mechanism finds flags from provider modules."""
+        get_sensitive_arguments.cache_clear()
+        result = get_sensitive_arguments()
+        assert "--shodan" in result
+        assert "--personal-access-token" in result
+        assert "--atlas-private-key" in result
+        assert "--nhn-password" in result
+        assert "--os-password" in result
+        assert "--github-app-key-path" in result
+
+    def test_does_not_include_non_sensitive_flags(self):
+        """Verify non-sensitive flags are not in the set."""
+        get_sensitive_arguments.cache_clear()
+        result = get_sensitive_arguments()
+        assert "--region" not in result
+        assert "--profile" not in result
+        assert "--output-formats" not in result
