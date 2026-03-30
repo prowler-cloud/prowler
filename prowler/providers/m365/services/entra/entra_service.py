@@ -301,6 +301,7 @@ class Entra(M365Service):
                                     None,
                                 )
                             )
+                            and raw_insider_risk
                             else None
                         ),
                         platform_conditions=PlatformConditions(
