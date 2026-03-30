@@ -3,7 +3,7 @@ from api.attack_paths.queries.types import (
     AttackPathsQueryDefinition,
     AttackPathsQueryParameterDefinition,
 )
-from tasks.jobs.attack_paths.config import PROVIDER_ID_PROPERTY, PROWLER_FINDING_LABEL
+from tasks.jobs.attack_paths.config import PROWLER_FINDING_LABEL
 
 
 # Custom Attack Path Queries
@@ -16,8 +16,6 @@ AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS = AttackPathsQueryDefinition(
     description="Detect EC2 instances with SSH exposed to the internet that can assume higher-privileged roles to read tagged sensitive S3 buckets despite bucket-level public access blocks.",
     provider="aws",
     cypher=f"""
-        OPTIONAL MATCH (internet:Internet {{{PROVIDER_ID_PROPERTY}: $provider_id}})
-
         MATCH path_s3 = (aws:AWSAccount {{id: $provider_uid}})--(s3:S3Bucket)--(t:AWSTag)
         WHERE toLower(t.key) = toLower($tag_key) AND toLower(t.value) = toLower($tag_value)
 
@@ -31,7 +29,7 @@ AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS = AttackPathsQueryDefinition(
 
         MATCH path_assume_role = (ec2)-[p:STS_ASSUMEROLE_ALLOW*1..9]-(r:AWSRole)
 
-        OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(ec2)
+        OPTIONAL MATCH (internet:Internet)-[can_access:CAN_ACCESS]->(ec2)
 
         WITH collect(path_s3) + collect(path_ec2) + collect(path_role) + collect(path_assume_role) AS paths,
             head(collect(internet)) AS internet, collect(can_access) AS can_access
@@ -40,7 +38,7 @@ AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS = AttackPathsQueryDefinition(
 
         WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
     """,
@@ -79,7 +77,7 @@ AWS_RDS_INSTANCES = AttackPathsQueryDefinition(
 
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -102,7 +100,7 @@ AWS_RDS_UNENCRYPTED_STORAGE = AttackPathsQueryDefinition(
 
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -125,7 +123,7 @@ AWS_S3_ANONYMOUS_ACCESS_BUCKETS = AttackPathsQueryDefinition(
 
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -149,7 +147,7 @@ AWS_IAM_STATEMENTS_ALLOW_ALL_ACTIONS = AttackPathsQueryDefinition(
 
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -173,7 +171,7 @@ AWS_IAM_STATEMENTS_ALLOW_DELETE_POLICY = AttackPathsQueryDefinition(
 
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -197,7 +195,7 @@ AWS_IAM_STATEMENTS_ALLOW_CREATE_ACTIONS = AttackPathsQueryDefinition(
 
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -215,12 +213,10 @@ AWS_EC2_INSTANCES_INTERNET_EXPOSED = AttackPathsQueryDefinition(
     description="Find EC2 instances flagged as exposed to the internet within the selected account.",
     provider="aws",
     cypher=f"""
-        OPTIONAL MATCH (internet:Internet {{{PROVIDER_ID_PROPERTY}: $provider_id}})
-
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(ec2:EC2Instance)
         WHERE ec2.exposed_internet = true
 
-        OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(ec2)
+        OPTIONAL MATCH (internet:Internet)-[can_access:CAN_ACCESS]->(ec2)
 
         WITH collect(path) AS paths, head(collect(internet)) AS internet, collect(can_access) AS can_access
         UNWIND paths AS p
@@ -228,7 +224,7 @@ AWS_EC2_INSTANCES_INTERNET_EXPOSED = AttackPathsQueryDefinition(
 
         WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
     """,
@@ -242,13 +238,11 @@ AWS_SECURITY_GROUPS_OPEN_INTERNET_FACING = AttackPathsQueryDefinition(
     description="Find internet-facing resources associated with security groups that allow inbound access from '0.0.0.0/0'.",
     provider="aws",
     cypher=f"""
-        OPTIONAL MATCH (internet:Internet {{{PROVIDER_ID_PROPERTY}: $provider_id}})
-
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(ec2:EC2Instance)--(sg:EC2SecurityGroup)--(ipi:IpPermissionInbound)--(ir:IpRange)
         WHERE ec2.exposed_internet = true
             AND ir.range = "0.0.0.0/0"
 
-        OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(ec2)
+        OPTIONAL MATCH (internet:Internet)-[can_access:CAN_ACCESS]->(ec2)
 
         WITH collect(path) AS paths, head(collect(internet)) AS internet, collect(can_access) AS can_access
         UNWIND paths AS p
@@ -256,7 +250,7 @@ AWS_SECURITY_GROUPS_OPEN_INTERNET_FACING = AttackPathsQueryDefinition(
 
         WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
     """,
@@ -270,12 +264,10 @@ AWS_CLASSIC_ELB_INTERNET_EXPOSED = AttackPathsQueryDefinition(
     description="Find Classic Load Balancers exposed to the internet along with their listeners.",
     provider="aws",
     cypher=f"""
-        OPTIONAL MATCH (internet:Internet {{{PROVIDER_ID_PROPERTY}: $provider_id}})
-
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(elb:LoadBalancer)--(listener:ELBListener)
         WHERE elb.exposed_internet = true
 
-        OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(elb)
+        OPTIONAL MATCH (internet:Internet)-[can_access:CAN_ACCESS]->(elb)
 
         WITH collect(path) AS paths, head(collect(internet)) AS internet, collect(can_access) AS can_access
         UNWIND paths AS p
@@ -283,7 +275,7 @@ AWS_CLASSIC_ELB_INTERNET_EXPOSED = AttackPathsQueryDefinition(
 
         WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
     """,
@@ -297,12 +289,10 @@ AWS_ELBV2_INTERNET_EXPOSED = AttackPathsQueryDefinition(
     description="Find ELBv2 load balancers exposed to the internet along with their listeners.",
     provider="aws",
     cypher=f"""
-        OPTIONAL MATCH (internet:Internet {{{PROVIDER_ID_PROPERTY}: $provider_id}})
-
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(elbv2:LoadBalancerV2)--(listener:ELBV2Listener)
         WHERE elbv2.exposed_internet = true
 
-        OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(elbv2)
+        OPTIONAL MATCH (internet:Internet)-[can_access:CAN_ACCESS]->(elbv2)
 
         WITH collect(path) AS paths, head(collect(internet)) AS internet, collect(can_access) AS can_access
         UNWIND paths AS p
@@ -310,7 +300,7 @@ AWS_ELBV2_INTERNET_EXPOSED = AttackPathsQueryDefinition(
 
         WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
     """,
@@ -324,15 +314,13 @@ AWS_PUBLIC_IP_RESOURCE_LOOKUP = AttackPathsQueryDefinition(
     description="Given a public IP address, find the related AWS resource and its adjacent node within the selected account.",
     provider="aws",
     cypher=f"""
-        OPTIONAL MATCH (internet:Internet {{{PROVIDER_ID_PROPERTY}: $provider_id}})
-
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})-[r]-(x)-[q]-(y)
         WHERE (x:EC2PrivateIp AND x.public_ip = $ip)
            OR (x:EC2Instance AND x.publicipaddress = $ip)
            OR (x:NetworkInterface AND x.public_ip = $ip)
            OR (x:ElasticIPAddress AND x.public_ip = $ip)
 
-        OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(x)
+        OPTIONAL MATCH (internet:Internet)-[can_access:CAN_ACCESS]->(x)
 
         WITH collect(path) AS paths, head(collect(internet)) AS internet, collect(can_access) AS can_access
         UNWIND paths AS p
@@ -340,7 +328,7 @@ AWS_PUBLIC_IP_RESOURCE_LOOKUP = AttackPathsQueryDefinition(
 
         WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
     """,
@@ -403,7 +391,7 @@ AWS_APPRUNNER_PRIVESC_PASSROLE_CREATE_SERVICE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -441,7 +429,7 @@ AWS_APPRUNNER_PRIVESC_UPDATE_SERVICE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -511,7 +499,7 @@ AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -558,7 +546,7 @@ AWS_BEDROCK_PRIVESC_INVOKE_CODE_INTERPRETER = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -610,7 +598,7 @@ AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACK = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -648,7 +636,7 @@ AWS_CLOUDFORMATION_PRIVESC_UPDATE_STACK = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -709,7 +697,7 @@ AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACKSET = AttackPathsQueryDefinition
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -761,7 +749,7 @@ AWS_CLOUDFORMATION_PRIVESC_PASSROLE_UPDATE_STACKSET = AttackPathsQueryDefinition
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -808,7 +796,7 @@ AWS_CLOUDFORMATION_PRIVESC_CHANGESET = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -869,7 +857,7 @@ AWS_CODEBUILD_PRIVESC_PASSROLE_CREATE_PROJECT = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -907,7 +895,7 @@ AWS_CODEBUILD_PRIVESC_START_BUILD = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -945,7 +933,7 @@ AWS_CODEBUILD_PRIVESC_START_BUILD_BATCH = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1006,7 +994,7 @@ AWS_CODEBUILD_PRIVESC_PASSROLE_CREATE_PROJECT_BATCH = AttackPathsQueryDefinition
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1077,7 +1065,7 @@ AWS_DATAPIPELINE_PRIVESC_PASSROLE_CREATE_PIPELINE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1129,7 +1117,7 @@ AWS_EC2_PRIVESC_PASSROLE_IAM = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1185,7 +1173,7 @@ AWS_EC2_PRIVESC_MODIFY_INSTANCE_ATTRIBUTE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1237,7 +1225,7 @@ AWS_EC2_PRIVESC_PASSROLE_SPOT_INSTANCES = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1284,7 +1272,7 @@ AWS_EC2_PRIVESC_LAUNCH_TEMPLATE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1322,7 +1310,7 @@ AWS_EC2INSTANCECONNECT_PRIVESC_SEND_SSH_PUBLIC_KEY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1392,7 +1380,7 @@ AWS_ECS_PRIVESC_PASSROLE_CREATE_SERVICE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1462,7 +1450,7 @@ AWS_ECS_PRIVESC_PASSROLE_RUN_TASK = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1523,7 +1511,7 @@ AWS_ECS_PRIVESC_PASSROLE_CREATE_SERVICE_EXISTING_CLUSTER = AttackPathsQueryDefin
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1584,7 +1572,7 @@ AWS_ECS_PRIVESC_PASSROLE_RUN_TASK_EXISTING_CLUSTER = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1645,7 +1633,7 @@ AWS_ECS_PRIVESC_PASSROLE_START_TASK_EXISTING_CLUSTER = AttackPathsQueryDefinitio
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1692,7 +1680,7 @@ AWS_ECS_PRIVESC_EXECUTE_COMMAND = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1744,7 +1732,7 @@ AWS_GLUE_PRIVESC_PASSROLE_DEV_ENDPOINT = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1782,7 +1770,7 @@ AWS_GLUE_PRIVESC_UPDATE_DEV_ENDPOINT = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1843,7 +1831,7 @@ AWS_GLUE_PRIVESC_PASSROLE_CREATE_JOB = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1904,7 +1892,7 @@ AWS_GLUE_PRIVESC_PASSROLE_CREATE_JOB_TRIGGER = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1965,7 +1953,7 @@ AWS_GLUE_PRIVESC_PASSROLE_UPDATE_JOB = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2026,7 +2014,7 @@ AWS_GLUE_PRIVESC_PASSROLE_UPDATE_JOB_TRIGGER = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2069,7 +2057,7 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2112,7 +2100,7 @@ AWS_IAM_PRIVESC_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2169,7 +2157,7 @@ AWS_IAM_PRIVESC_DELETE_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2212,7 +2200,7 @@ AWS_IAM_PRIVESC_CREATE_LOGIN_PROFILE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2252,7 +2240,7 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2295,7 +2283,7 @@ AWS_IAM_PRIVESC_UPDATE_LOGIN_PROFILE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2335,7 +2323,7 @@ AWS_IAM_PRIVESC_PUT_USER_POLICY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2375,7 +2363,7 @@ AWS_IAM_PRIVESC_ATTACH_USER_POLICY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2415,7 +2403,7 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2458,7 +2446,7 @@ AWS_IAM_PRIVESC_ATTACH_GROUP_POLICY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2501,7 +2489,7 @@ AWS_IAM_PRIVESC_PUT_GROUP_POLICY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2544,7 +2532,7 @@ AWS_IAM_PRIVESC_UPDATE_ASSUME_ROLE_POLICY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2587,7 +2575,7 @@ AWS_IAM_PRIVESC_ADD_USER_TO_GROUP = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2630,7 +2618,7 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_ASSUME_ROLE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2687,7 +2675,7 @@ AWS_IAM_PRIVESC_ATTACH_USER_POLICY_CREATE_ACCESS_KEY = AttackPathsQueryDefinitio
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2731,7 +2719,7 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION_ASSUME_ROLE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2774,7 +2762,7 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY_ASSUME_ROLE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2831,7 +2819,7 @@ AWS_IAM_PRIVESC_PUT_USER_POLICY_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2888,7 +2876,7 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_UPDATE_ASSUME_ROLE = AttackPathsQueryDefiniti
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2946,7 +2934,7 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION_UPDATE_ASSUME_ROLE = AttackPathsQueryDefin
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3003,7 +2991,7 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY_UPDATE_ASSUME_ROLE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3064,7 +3052,7 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3125,7 +3113,7 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION_EVENT_SOURCE = AttackPathsQueryDefin
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3168,7 +3156,7 @@ AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3225,7 +3213,7 @@ AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE_INVOKE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3282,7 +3270,7 @@ AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE_ADD_PERMISSION = AttackPathsQueryDefinit
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3343,7 +3331,7 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION_ADD_PERMISSION = AttackPathsQueryDef
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3395,7 +3383,7 @@ AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_NOTEBOOK = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3447,7 +3435,7 @@ AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_TRAINING_JOB = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3499,7 +3487,7 @@ AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_PROCESSING_JOB = AttackPathsQueryDefinitio
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3542,7 +3530,7 @@ AWS_SAGEMAKER_PRIVESC_PRESIGNED_NOTEBOOK_URL = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3612,7 +3600,7 @@ AWS_SAGEMAKER_PRIVESC_LIFECYCLE_CONFIG_NOTEBOOK = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3650,7 +3638,7 @@ AWS_SSM_PRIVESC_START_SESSION = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3688,7 +3676,7 @@ AWS_SSM_PRIVESC_SEND_COMMAND = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3731,7 +3719,7 @@ AWS_STS_PRIVESC_ASSUME_ROLE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
+        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,

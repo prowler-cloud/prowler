@@ -25,13 +25,11 @@ export interface UseFilterBatchReturn {
   /** Discard all pending changes, reset pending to the current URL state */
   discardAll: () => void;
   /**
-   * Clear all pending filters to an empty state (no filters selected).
-   * Unlike `discardAll`, this does NOT reset to the URL state — it sets
-   * pending to `{}` (truly empty). The user must click Apply to push
-   * the empty state to the URL.
-   * Includes provider/account keys and all batch-managed filter keys.
+   * Clear all batch-managed filters and immediately navigate (router.push)
+   * with defaultParams applied. Resets pending state to empty and pushes
+   * the resulting URL in one step.
    */
-  clearAll: () => void;
+  clearAndApply: () => void;
   /** Remove a single filter key from pending state */
   removePending: (key: string) => void;
   /** Whether pending state differs from the current URL */
@@ -164,20 +162,19 @@ export const useFilterBatch = (
     });
   };
 
-  const applyAll = () => {
-    // Start from the current URL params to preserve non-batch params.
-    // Only filter[search] is excluded from batch management and preserved from the URL as-is.
+  /** Private helper — builds URLSearchParams from a pending state and pushes. */
+  const buildAndPush = (nextPending: PendingFilters) => {
     const params = new URLSearchParams(searchParams.toString());
 
-    // Remove all existing batch-managed filter params
+    // Remove all batch-managed filter params
     Array.from(params.keys()).forEach((key) => {
       if (key.startsWith("filter[") && !EXCLUDED_FROM_BATCH.includes(key)) {
         params.delete(key);
       }
     });
 
-    // Write the pending state
-    Object.entries(pendingFilters).forEach(([key, values]) => {
+    // Re-apply the given pending filters
+    Object.entries(nextPending).forEach(([key, values]) => {
       const nonEmpty = values.filter(Boolean);
       if (nonEmpty.length > 0) {
         params.set(key, nonEmpty.join(","));
@@ -203,6 +200,10 @@ export const useFilterBatch = (
     router.push(targetUrl, { scroll: false });
   };
 
+  const applyAll = () => {
+    buildAndPush(pendingFilters);
+  };
+
   const discardAll = () => {
     const applied = deriveAppliedFromUrl(
       new URLSearchParams(searchParams.toString()),
@@ -211,23 +212,14 @@ export const useFilterBatch = (
   };
 
   /**
-   * Clears ALL pending batch filters to an empty state (no filters selected).
+   * Clears ALL batch-managed filters and immediately navigates (router.push).
    *
-   * Unlike `discardAll`, this resets pending to `{}` — not to the current URL
-   * state. This covers both:
-   * - Keys that are already in `pendingFilters` (pending-only or URL-loaded)
-   * - Keys that are in the applied (URL) state but were removed from pending
-   *   via `removePending` (edge case: diverged state)
-   *
-   * The user must click Apply to push the empty state to the URL.
-   * `applyAll()` removes all batch-managed URL params first, so even keys
-   * absent from `pendingFilters` will be removed from the URL on apply.
+   * Builds the target URL directly from an empty pending state and pushes it
+   * in one step. defaultParams (e.g. filter[muted]=false) are applied as usual.
    */
-  const clearAll = () => {
-    // Return a truly empty object — no filters pending at all.
-    // `getFilterValue` normalises missing keys to [] so selectors will show
-    // their "all selected" / placeholder state immediately.
+  const clearAndApply = () => {
     setPendingFilters({});
+    buildAndPush({});
   };
 
   const getFilterValue = (key: string): string[] => {
@@ -248,7 +240,7 @@ export const useFilterBatch = (
     setPending,
     applyAll,
     discardAll,
-    clearAll,
+    clearAndApply,
     removePending,
     hasChanges,
     changeCount,

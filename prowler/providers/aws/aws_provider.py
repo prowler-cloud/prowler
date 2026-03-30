@@ -942,20 +942,23 @@ class AwsProvider(Provider):
             )
             raise error
 
-    def get_default_region(self, service: str) -> str:
-        """get_default_region returns the default region based on the profile and audited service regions
+    def get_default_region(self, service: str, global_service: bool = False) -> str:
+        """get_default_region returns the default region based on the profile and audited service regions.
+
+        For global services (CloudFront, Route53, Shield, FMS) the partition's
+        global region is always returned, ignoring profile and audited regions.
 
         Args:
             - service: The AWS service name
+            - global_service: If True, return the partition's global region directly
 
         Returns:
             - str: The default region for the given service
-
-        Example:
-            service = "ec2"
-            default_region = get_default_region(service)
         """
         try:
+            if global_service:
+                return self.get_global_region()
+
             service_regions = AwsProvider.get_available_aws_service_regions(
                 service, self._identity.partition, self._identity.audited_regions
             )
