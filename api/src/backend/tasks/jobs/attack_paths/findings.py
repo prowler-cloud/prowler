@@ -22,7 +22,6 @@ from tasks.jobs.attack_paths.config import (
     get_provider_resource_label,
     get_root_node_label,
 )
-from tasks.jobs.attack_paths.indexes import IndexType, create_indexes
 from tasks.jobs.attack_paths.queries import (
     ADD_RESOURCE_LABEL_TEMPLATE,
     CLEANUP_FINDINGS_TEMPLATE,
@@ -82,11 +81,6 @@ def _to_neo4j_dict(record: dict[str, Any], resource_uid: str) -> dict[str, Any]:
 
 # Public API
 # ----------
-
-
-def create_findings_indexes(neo4j_session: neo4j.Session) -> None:
-    """Create indexes for Prowler findings and resource lookups."""
-    create_indexes(neo4j_session, IndexType.FINDINGS)
 
 
 def analysis(
@@ -196,7 +190,6 @@ def cleanup_findings(
 ) -> None:
     """Remove stale findings (classic Cartography behaviour)."""
     parameters = {
-        "provider_uid": str(prowler_api_provider.uid),
         "last_updated": config.update_tag,
         "batch_size": BATCH_SIZE,
     }

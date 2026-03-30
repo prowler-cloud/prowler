@@ -59,10 +59,14 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Harden the runner (Audit all outbound calls)
+      - name: Harden Runner
         uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            pypi.org:443
+            files.pythonhosted.org:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -165,10 +169,26 @@ jobs:
       packages: write
 
     steps:
-      - name: Harden the runner (Audit all outbound calls)
+      - name: Harden Runner
         uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.ecr-public.us-east-1.amazonaws.com:443
+            public.ecr.aws:443
+            registry-1.docker.io:443
+            production.cloudflare.docker.com:443
+            auth.docker.io:443
+            debian.map.fastlydns.net:80
+            github.com:443
+            release-assets.githubusercontent.com:443
+            pypi.org:443
+            files.pythonhosted.org:443
+            www.powershellgallery.com:443
+            aka.ms:443
+            cdn.powershellgallery.com:443
+            _http._tcp.deb.debian.org:443
+            powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -216,10 +236,19 @@ jobs:
       contents: read
 
     steps:
-      - name: Harden the runner (Audit all outbound calls)
+      - name: Harden Runner
         uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            registry-1.docker.io:443
+            auth.docker.io:443
+            public.ecr.aws:443
+            production.cloudflare.docker.com:443
+            github.com:443
+            release-assets.githubusercontent.com:443
+            api.ecr-public.us-east-1.amazonaws.com:443
+
 
       - name: Login to DockerHub
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
