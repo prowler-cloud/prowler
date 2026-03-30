@@ -16087,6 +16087,191 @@ class TestFindingGroupViewSet:
         # Should still return the 2 resources within the date range
         assert len(response.json()["data"]) == 2
 
+    def test_resources_status_filter_returns_empty_not_404(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that filtering by status on a valid check returns empty list, not 404."""
+        # s3_bucket_public_access has only FAIL findings, filtering by PASS should return []
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY, "filter[status]": "PASS"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+
+    def test_resources_nonexistent_check_still_404(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that a truly nonexistent check_id still returns 404."""
+        response = authenticated_client.get(
+            reverse("finding-group-resources", kwargs={"pk": "totally_fake_check"}),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_resources_sort_by_status_ascending(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test sort=status returns PASS before FAIL."""
+        # ec2_instance_public_ip has 1 PASS (resource1) and 1 FAIL (resource2)
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources",
+                kwargs={"pk": "ec2_instance_public_ip"},
+            ),
+            {"filter[inserted_at]": TODAY, "sort": "status"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        assert data[0]["attributes"]["status"] == "PASS"
+        assert data[1]["attributes"]["status"] == "FAIL"
+
+    def test_resources_sort_by_status_descending(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test sort=-status returns FAIL before PASS."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources",
+                kwargs={"pk": "ec2_instance_public_ip"},
+            ),
+            {"filter[inserted_at]": TODAY, "sort": "-status"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        assert data[0]["attributes"]["status"] == "FAIL"
+        assert data[1]["attributes"]["status"] == "PASS"
+
+    def test_resources_sort_invalid_field_returns_400(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that an invalid sort field returns 400."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY, "sort": "invalid_field"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_latest_resources_status_filter_returns_empty_not_404(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test latest resources with status filter on valid check returns empty, not 404."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-latest_resources",
+                kwargs={"check_id": "s3_bucket_public_access"},
+            ),
+            {"filter[status]": "PASS"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+
+    def test_latest_resources_sort_by_status(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test latest resources sort=status returns PASS before FAIL."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-latest_resources",
+                kwargs={"check_id": "ec2_instance_public_ip"},
+            ),
+            {"sort": "status"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        assert data[0]["attributes"]["status"] == "PASS"
+        assert data[1]["attributes"]["status"] == "FAIL"
+
+    def test_resources_nonexistent_check_missing_date_returns_400(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Nonexistent check_id with missing required date filter returns 400, not 404."""
+        response = authenticated_client.get(
+            reverse("finding-group-resources", kwargs={"pk": "totally_fake_check"}),
+        )
+        # FindingGroupFilter requires inserted_at — validation fires before existence check
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_resources_nonexistent_check_invalid_sort_returns_400(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Nonexistent check_id with invalid sort returns 400, not 404."""
+        response = authenticated_client.get(
+            reverse("finding-group-resources", kwargs={"pk": "totally_fake_check"}),
+            {"filter[inserted_at]": TODAY, "sort": "invalid_field"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_resources_empty_sort_falls_back_to_default_order(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Degenerate sort values should behave like no sort, not raise 500."""
+        all_ids = set()
+        for page_num in (1, 2):
+            response = authenticated_client.get(
+                reverse(
+                    "finding-group-resources",
+                    kwargs={"pk": "s3_bucket_public_access"},
+                ),
+                {
+                    "filter[inserted_at]": TODAY,
+                    "sort": ",",
+                    "page[size]": 1,
+                    "page[number]": page_num,
+                },
+            )
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()["data"]
+            assert len(data) == 1
+            all_ids.add(data[0]["id"])
+        assert len(all_ids) == 2
+
+    def test_resources_sort_pagination_stability(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Sort with small page size returns all resources without duplicates or gaps."""
+        # s3_bucket_public_access has 2 resources, both FAIL — they tie on status
+        all_ids = set()
+        for page_num in (1, 2):
+            response = authenticated_client.get(
+                reverse(
+                    "finding-group-resources",
+                    kwargs={"pk": "s3_bucket_public_access"},
+                ),
+                {
+                    "filter[inserted_at]": TODAY,
+                    "sort": "status",
+                    "page[size]": 1,
+                    "page[number]": page_num,
+                },
+            )
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()["data"]
+            assert len(data) == 1
+            all_ids.add(data[0]["id"])
+        # Both pages should return different resources (no duplicates)
+        assert len(all_ids) == 2
+
+    def test_latest_resources_nonexistent_check_invalid_sort_returns_400(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Nonexistent check_id with invalid sort on latest returns 400, not 404."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-latest_resources",
+                kwargs={"check_id": "totally_fake_check"},
+            ),
+            {"sort": "invalid_field"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
     # Test provider_id filter actually filters data
     def test_finding_groups_provider_id_filter_actually_filters(
         self, authenticated_client, finding_groups_fixture, providers_fixture

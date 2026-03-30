@@ -10,6 +10,11 @@ All notable changes to the **Prowler API** are documented in this file.
 - Filter RBAC role lookup by `tenant_id` to prevent cross-tenant privilege leak [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
 - `VALKEY_SCHEME`, `VALKEY_USERNAME`, and `VALKEY_PASSWORD` environment variables to configure Celery broker TLS/auth connection details for Valkey/ElastiCache [(#10420)](https://github.com/prowler-cloud/prowler/pull/10420)
 
+### 🔄 Changed
+
+- Attack Paths: Periodic cleanup of stale scans with dead-worker detection via Celery inspect, marking orphaned `EXECUTING` scans as `FAILED` and recovering `graph_data_ready` [(#10387)](https://github.com/prowler-cloud/prowler/pull/10387)
+- Attack Paths: Replace `_provider_id` property with `_Provider_{uuid}` label for provider isolation, add regex-based label injection for custom queries [(#10402)](https://github.com/prowler-cloud/prowler/pull/10402)
+
 ### 🐞 Fixed
 
 - Finding groups list/latest now apply computed status/severity filters and finding-level prefilters (delta, region, service, category, resource group, scan, resource type), plus `check_title` support for sort/filter consistency [(#10428)](https://github.com/prowler-cloud/prowler/pull/10428)
@@ -19,6 +24,8 @@ All notable changes to the **Prowler API** are documented in this file.
 - `MANAGE_ACCOUNT` permission no longer required for listing and creating tenants [(#10468)](https://github.com/prowler-cloud/prowler/pull/10468)
 - Finding groups muted filter, counters, metadata extraction and mute reaggregation [(#10477)](https://github.com/prowler-cloud/prowler/pull/10477)
 - Finding groups `check_title__icontains` resolution, `name__icontains` resource filter and `resource_group` field in `/resources` response [(#10486)](https://github.com/prowler-cloud/prowler/pull/10486)
+- Membership `post_delete` signal using raw FK ids to avoid `DoesNotExist` during cascade deletions [(#10497)](https://github.com/prowler-cloud/prowler/pull/10497)
+- Finding group resources endpoints returning false 404 when filters match no results, and `sort` parameter being ignored [(#10510)](https://github.com/prowler-cloud/prowler/pull/10510)
 
 ### 🔐 Security
 

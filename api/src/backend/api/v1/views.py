@@ -7130,23 +7130,40 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         return results
 
-    def _validate_sort_fields(self, sort_param):
-        """Validate and map JSON:API sort fields for aggregated finding groups."""
-        sort_field_map = {
-            "check_id": "check_id",
-            "check_title": "check_title",
-            "severity": "severity_order",
-            "fail_count": "fail_count",
-            "pass_count": "pass_count",
-            "muted_count": "muted_count",
-            "new_count": "new_count",
-            "changed_count": "changed_count",
-            "resources_total": "resources_total",
-            "resources_fail": "resources_fail",
-            "first_seen_at": "agg_first_seen_at",
-            "last_seen_at": "agg_last_seen_at",
-            "failing_since": "agg_failing_since",
-        }
+    _FINDING_GROUP_SORT_MAP = {
+        "check_id": "check_id",
+        "check_title": "check_title",
+        "severity": "severity_order",
+        "fail_count": "fail_count",
+        "pass_count": "pass_count",
+        "muted_count": "muted_count",
+        "new_count": "new_count",
+        "changed_count": "changed_count",
+        "resources_total": "resources_total",
+        "resources_fail": "resources_fail",
+        "first_seen_at": "agg_first_seen_at",
+        "last_seen_at": "agg_last_seen_at",
+        "failing_since": "agg_failing_since",
+    }
+
+    _RESOURCE_SORT_MAP = {
+        "status": "status_order",
+        "severity": "severity_order",
+        "first_seen_at": "first_seen_at",
+        "last_seen_at": "last_seen_at",
+        "resource.uid": "resource_uid",
+        "resource.name": "resource_name",
+        "resource.region": "resource_region",
+        "resource.service": "resource_service",
+        "resource.type": "resource_type",
+        "provider.uid": "provider_uid",
+        "provider.alias": "provider_alias",
+    }
+
+    def _validate_sort_fields(self, sort_param, sort_field_map=None):
+        """Validate and map JSON:API sort fields using the given field map."""
+        if sort_field_map is None:
+            sort_field_map = self._FINDING_GROUP_SORT_MAP
 
         ordering = []
         for field in sort_param.split(","):
@@ -7156,7 +7173,6 @@ class FindingGroupViewSet(BaseRLSViewSet):
             is_desc = field.startswith("-")
             raw_field = field[1:] if is_desc else field
             if raw_field not in sort_field_map:
-                # Validate sort fields explicitly to return JSON:API 400 instead of FieldError.
                 raise ValidationError(
                     [
                         {
@@ -7280,7 +7296,58 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 ),
             )
             .filter(resource_id__isnull=False)
-            .order_by("resource_id")
+        )
+
+    # Annotations needed for each sort field (lightweight versions for ordering)
+    _RESOURCE_SORT_ANNOTATIONS = {
+        "status_order": lambda: Max(
+            Case(
+                When(finding__status="FAIL", finding__muted=False, then=Value(3)),
+                When(finding__status="PASS", finding__muted=False, then=Value(2)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+        ),
+        "severity_order": lambda: Max(
+            Case(
+                *[
+                    When(finding__severity=severity, then=Value(order))
+                    for severity, order in SEVERITY_ORDER.items()
+                ],
+                output_field=IntegerField(),
+            )
+        ),
+        "first_seen_at": lambda: Min("finding__first_seen_at"),
+        "last_seen_at": lambda: Max("finding__inserted_at"),
+        "resource_uid": lambda: Max("resource__uid"),
+        "resource_name": lambda: Max("resource__name"),
+        "resource_region": lambda: Max("resource__region"),
+        "resource_service": lambda: Max("resource__service"),
+        "resource_type": lambda: Max("resource__type"),
+        "provider_uid": lambda: Max("resource__provider__uid"),
+        "provider_alias": lambda: Max("resource__provider__alias"),
+    }
+
+    def _build_resource_ordering_queryset(
+        self, filtered_queryset, resource_ids, tenant_id, ordering
+    ):
+        """Build a lightweight aggregation with only the columns needed for sorting."""
+        mapping_qs = self._build_resource_mapping_queryset(
+            filtered_queryset, resource_ids=resource_ids, tenant_id=tenant_id
+        )
+
+        # Collect only the annotations required by the requested ordering
+        annotations = {}
+        for field in ordering:
+            col = field.lstrip("-")
+            if col != "resource_id" and col in self._RESOURCE_SORT_ANNOTATIONS:
+                annotations[col] = self._RESOURCE_SORT_ANNOTATIONS[col]()
+
+        return (
+            mapping_qs.values("resource_id")
+            .annotate(**annotations)
+            .filter(resource_id__isnull=False)
+            .order_by(*ordering)
         )
 
     def _post_process_resources(self, resource_data):
@@ -7363,11 +7430,17 @@ class FindingGroupViewSet(BaseRLSViewSet):
         )
         return self._aggregate_daily_summaries(clean_queryset)
 
-    def _sorted_paginated_response(self, request, aggregated_queryset):
+    def _sorted_paginated_response(
+        self,
+        request,
+        aggregated_queryset,
+    ):
         """Apply ordering, pagination, post-processing, and return the Response."""
         sort_param = request.query_params.get("sort")
         if sort_param:
-            ordering = self._validate_sort_fields(sort_param)
+            ordering = self._validate_sort_fields(
+                sort_param, self._FINDING_GROUP_SORT_MAP
+            )
             if ordering:
                 aggregated_queryset = aggregated_queryset.order_by(*ordering)
         else:
@@ -7383,6 +7456,88 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         processed_data = self._post_process_aggregation(aggregated_queryset)
         serializer = self.get_serializer(processed_data, many=True)
+        return Response(serializer.data)
+
+    def _validate_resource_sort(self, request):
+        """Validate the sort parameter for resource endpoints (raises 400 if invalid)."""
+        sort_param = request.query_params.get("sort")
+        if sort_param:
+            self._validate_sort_fields(sort_param, self._RESOURCE_SORT_MAP)
+
+    def _paginated_resource_response(
+        self, request, filtered_queryset, resource_ids, tenant_id
+    ):
+        """Paginate and return resources.
+
+        Without sort: paginate lightweight resource IDs first, aggregate only the page.
+        With sort: build a lightweight ordering subquery (resource_id + sort keys),
+        paginate that, then aggregate full details only for the page.
+        """
+        sort_param = request.query_params.get("sort")
+
+        if sort_param:
+            ordering = self._validate_sort_fields(sort_param, self._RESOURCE_SORT_MAP)
+            if ordering:
+                if "resource_id" not in {field.lstrip("-") for field in ordering}:
+                    ordering.append("resource_id")
+
+                # Phase 1: lightweight aggregation with only sort keys, paginate
+                ordering_qs = self._build_resource_ordering_queryset(
+                    filtered_queryset,
+                    resource_ids=resource_ids,
+                    tenant_id=tenant_id,
+                    ordering=ordering,
+                )
+                page = self.paginate_queryset(ordering_qs)
+                if page is not None:
+                    page_ids = [row["resource_id"] for row in page]
+                    resource_data = self._build_resource_aggregation(
+                        filtered_queryset, resource_ids=page_ids, tenant_id=tenant_id
+                    )
+                    # Re-sort to match the page ordering
+                    id_order = {rid: idx for idx, rid in enumerate(page_ids)}
+                    results = self._post_process_resources(resource_data)
+                    results.sort(key=lambda r: id_order.get(r["resource_id"], 0))
+                    serializer = FindingGroupResourceSerializer(results, many=True)
+                    return self.get_paginated_response(serializer.data)
+
+                page_ids = [row["resource_id"] for row in ordering_qs]
+                resource_data = self._build_resource_aggregation(
+                    filtered_queryset, resource_ids=page_ids, tenant_id=tenant_id
+                )
+                id_order = {rid: idx for idx, rid in enumerate(page_ids)}
+                results = self._post_process_resources(resource_data)
+                results.sort(key=lambda r: id_order.get(r["resource_id"], 0))
+                serializer = FindingGroupResourceSerializer(results, many=True)
+                return Response(serializer.data)
+
+        # No sort (or only empty sort fragments): paginate lightweight resource IDs
+        # first, aggregate only the page.
+        mapping_qs = self._build_resource_mapping_queryset(
+            filtered_queryset, resource_ids=resource_ids, tenant_id=tenant_id
+        )
+        resource_id_qs = (
+            mapping_qs.values_list("resource_id", flat=True)
+            .distinct()
+            .order_by("resource_id")
+        )
+
+        page_ids = self.paginate_queryset(resource_id_qs)
+        if page_ids is not None:
+            resource_data = self._build_resource_aggregation(
+                filtered_queryset, resource_ids=page_ids, tenant_id=tenant_id
+            )
+            id_order = {rid: idx for idx, rid in enumerate(page_ids)}
+            results = self._post_process_resources(resource_data)
+            results.sort(key=lambda r: id_order.get(r["resource_id"], 0))
+            serializer = FindingGroupResourceSerializer(results, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        resource_data = self._build_resource_aggregation(
+            filtered_queryset, resource_ids=resource_ids, tenant_id=tenant_id
+        ).order_by("resource_id")
+        results = self._post_process_resources(resource_data)
+        serializer = FindingGroupResourceSerializer(results, many=True)
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
@@ -7458,57 +7613,33 @@ class FindingGroupViewSet(BaseRLSViewSet):
         check_id = pk
         queryset = self._get_finding_queryset()
 
-        # Apply date filters from request to Finding queryset
+        # 1. Normalize and split params
         normalized_params = self._normalize_jsonapi_params(request.query_params)
         finding_params, resource_params = self._split_resource_filters(
             normalized_params
         )
 
+        # 2. Validate all inputs before any DB existence check
         filterset = FindingGroupFilter(finding_params, queryset=queryset)
         if not filterset.is_valid():
             raise ValidationError(filterset.errors)
+        # Access .qs to trigger filter_queryset validation (e.g. required date filters)
         filtered_queryset = filterset.qs
-
-        # Filter by check_id
-        filtered_queryset = filtered_queryset.filter(check_id=check_id)
-
-        # Check if any findings exist for this check_id
-        if not filtered_queryset.exists():
-            raise NotFound(f"Finding group '{check_id}' not found.")
-
         resource_ids = self._resource_ids_from_params(
             resource_params, request.tenant_id
         )
-        mapping_queryset = self._build_resource_mapping_queryset(
-            filtered_queryset,
-            resource_ids=resource_ids,
-            tenant_id=request.tenant_id,
-        )
-        resource_id_queryset = (
-            mapping_queryset.values_list("resource_id", flat=True)
-            .distinct()
-            .order_by("resource_id")
-        )
+        self._validate_resource_sort(request)
 
-        page_ids = self.paginate_queryset(resource_id_queryset)
-        if page_ids is not None:
-            resource_data = self._build_resource_aggregation(
-                filtered_queryset,
-                resource_ids=page_ids,
-                tenant_id=request.tenant_id,
-            )
-            results = self._post_process_resources(resource_data)
-            serializer = FindingGroupResourceSerializer(results, many=True)
-            return self.get_paginated_response(serializer.data)
+        # 3. Check if the finding group exists (scoped to tenant/RBAC, ignoring user filters)
+        if not queryset.filter(check_id=check_id).exists():
+            raise NotFound(f"Finding group '{check_id}' not found.")
 
-        resource_data = self._build_resource_aggregation(
-            filtered_queryset,
-            resource_ids=resource_ids,
-            tenant_id=request.tenant_id,
+        # 4. Narrow to check_id
+        filtered_queryset = filtered_queryset.filter(check_id=check_id)
+
+        return self._paginated_resource_response(
+            request, filtered_queryset, resource_ids, request.tenant_id
         )
-        results = self._post_process_resources(resource_data)
-        serializer = FindingGroupResourceSerializer(results, many=True)
-        return Response(serializer.data)
 
     @extend_schema(
         summary="List resources for a finding group from latest scans",
@@ -7552,55 +7683,31 @@ class FindingGroupViewSet(BaseRLSViewSet):
             if key.startswith("inserted_at"):
                 del normalized_params[key]
 
+        # 1. Normalize and split params
         finding_params, resource_params = self._split_resource_filters(
             normalized_params
         )
 
+        # 2. Validate all inputs before any DB existence check
         filterset = LatestFindingGroupFilter(finding_params, queryset=queryset)
         if not filterset.is_valid():
             raise ValidationError(filterset.errors)
         filtered_queryset = filterset.qs
+        resource_ids = self._resource_ids_from_params(
+            resource_params, request.tenant_id
+        )
+        self._validate_resource_sort(request)
 
-        # Filter to latest scans and check_id
+        # 3. Check if the finding group exists (scoped to tenant/RBAC + latest scans)
+        if not queryset.filter(scan_id__in=latest_scan_ids, check_id=check_id).exists():
+            raise NotFound(f"Finding group '{check_id}' not found.")
+
+        # 4. Narrow to latest scans + check_id
         filtered_queryset = filtered_queryset.filter(
             scan_id__in=latest_scan_ids,
             check_id=check_id,
         )
 
-        # Check if any findings exist for this check_id
-        if not filtered_queryset.exists():
-            raise NotFound(f"Finding group '{check_id}' not found.")
-
-        resource_ids = self._resource_ids_from_params(
-            resource_params, request.tenant_id
+        return self._paginated_resource_response(
+            request, filtered_queryset, resource_ids, request.tenant_id
         )
-        mapping_queryset = self._build_resource_mapping_queryset(
-            filtered_queryset,
-            resource_ids=resource_ids,
-            tenant_id=request.tenant_id,
-        )
-        resource_id_queryset = (
-            mapping_queryset.values_list("resource_id", flat=True)
-            .distinct()
-            .order_by("resource_id")
-        )
-
-        page_ids = self.paginate_queryset(resource_id_queryset)
-        if page_ids is not None:
-            resource_data = self._build_resource_aggregation(
-                filtered_queryset,
-                resource_ids=page_ids,
-                tenant_id=request.tenant_id,
-            )
-            results = self._post_process_resources(resource_data)
-            serializer = FindingGroupResourceSerializer(results, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        resource_data = self._build_resource_aggregation(
-            filtered_queryset,
-            resource_ids=resource_ids,
-            tenant_id=request.tenant_id,
-        )
-        results = self._post_process_resources(resource_data)
-        serializer = FindingGroupResourceSerializer(results, many=True)
-        return Response(serializer.data)
