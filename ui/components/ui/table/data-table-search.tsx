@@ -27,6 +27,13 @@ interface DataTableSearchProps {
    */
   controlledValue?: string;
   onSearchChange?: (value: string) => void;
+  /**
+   * Called when the user commits a search (pressing Enter).
+   * When provided, the search is only "committed" on Enter, while
+   * onSearchChange still fires on every keystroke for responsive display.
+   * Use this to avoid remounting child components on every keystroke.
+   */
+  onSearchCommit?: (value: string) => void;
   placeholder?: string;
   /** Badge shown inside the search input (e.g., active drill-down group title) */
   badge?: { label: string; onDismiss: () => void };
@@ -36,6 +43,7 @@ export const DataTableSearch = ({
   paramPrefix = "",
   controlledValue,
   onSearchChange,
+  onSearchCommit,
   placeholder = "Search...",
   badge,
 }: DataTableSearchProps) => {
@@ -252,6 +260,11 @@ export const DataTableSearch = ({
             placeholder={placeholder}
             value={value}
             onChange={(e) => handleChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && onSearchCommit) {
+                onSearchCommit(value);
+              }
+            }}
             onFocus={handleFocus}
             onBlur={handleBlur}
             className="h-9 min-w-0 flex-1 border-0 bg-transparent pr-9 shadow-none hover:bg-transparent focus:border-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"

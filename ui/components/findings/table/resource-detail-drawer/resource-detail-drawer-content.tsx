@@ -382,16 +382,16 @@ export function ResourceDetailDrawerContent({
             {(checkMeta.risk || checkMeta.description || f?.statusExtended) && (
               <Card variant="inner">
                 {checkMeta.risk && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
+                  <div className="border-border-error-primary bg-bg-fail-secondary flex flex-col gap-1 rounded-md border p-3">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
                       Risk:
                     </span>
                     <MarkdownContainer>{checkMeta.risk}</MarkdownContainer>
                   </div>
                 )}
                 {checkMeta.description && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
+                  <div className="border-default-200 flex flex-col gap-1 border-b pb-4">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
                       Description:
                     </span>
                     <MarkdownContainer>
@@ -401,7 +401,7 @@ export function ResourceDetailDrawerContent({
                 )}
                 {f?.statusExtended && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
                       Status Extended:
                     </span>
                     <p className="text-text-neutral-primary text-sm">
@@ -459,7 +459,7 @@ export function ResourceDetailDrawerContent({
                 {checkMeta.remediation.code.terraform && (
                   <div className="flex flex-col gap-1">
                     <span className="text-text-neutral-secondary text-xs">
-                      Terraform Command:
+                      Terraform:
                     </span>
                     <CodeSnippet
                       value={`$ ${checkMeta.remediation.code.terraform}`}
@@ -473,7 +473,7 @@ export function ResourceDetailDrawerContent({
                 {checkMeta.remediation.code.nativeiac && (
                   <div className="flex flex-col gap-1">
                     <span className="text-text-neutral-secondary text-xs">
-                      CloudFormation Command:
+                      CloudFormation:
                     </span>
                     <CodeSnippet
                       value={`$ ${checkMeta.remediation.code.nativeiac}`}
@@ -690,7 +690,7 @@ export function ResourceDetailDrawerContent({
         }}
       >
         <CircleArrowRight className="size-5" />
-        View This Finding With Lighthouse AI
+        Analyze This Finding With Lighthouse AI
       </a>
     </div>
   );

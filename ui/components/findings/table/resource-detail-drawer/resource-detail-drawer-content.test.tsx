@@ -265,6 +265,195 @@ const mockFinding: ResourceDrawerFinding = {
 };
 
 // ---------------------------------------------------------------------------
+// Fix 1: Lighthouse AI button text change
+// ---------------------------------------------------------------------------
+
+describe("ResourceDetailDrawerContent — Fix 1: Lighthouse AI button text", () => {
+  it("should say 'Analyze this finding with Lighthouse AI' instead of 'View This Finding'", () => {
+    // Given
+    const { container } = render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When — look for the lighthouse link
+    const allText = container.textContent ?? "";
+
+    // Then — correct text must be present, old text must be absent
+    expect(allText.toLowerCase()).toContain("analyze this finding");
+    expect(allText.toLowerCase()).not.toContain("view this finding");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fix 2: Remediation heading labels — remove "Command" suffix
+// ---------------------------------------------------------------------------
+
+describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", () => {
+  const checkMetaWithCommands: CheckMeta = {
+    ...mockCheckMeta,
+    remediation: {
+      recommendation: { text: "Fix it", url: "https://example.com" },
+      code: {
+        cli: "aws s3 ...",
+        terraform: "resource aws_s3_bucket {}",
+        nativeiac: "AWSTemplateFormatVersion: ...",
+        other: "",
+      },
+    },
+  };
+
+  it("should render 'Terraform' heading without 'Command' suffix", () => {
+    // Given
+    const { container } = render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={checkMetaWithCommands}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    const allText = container.textContent ?? "";
+
+    // Then — "Terraform" present, "Terraform Command" absent
+    expect(allText).toContain("Terraform");
+    expect(allText).not.toContain("Terraform Command");
+  });
+
+  it("should render 'CloudFormation' heading without 'Command' suffix", () => {
+    // Given
+    const { container } = render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={checkMetaWithCommands}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    const allText = container.textContent ?? "";
+
+    // Then — "CloudFormation" present, "CloudFormation Command" absent
+    expect(allText).toContain("CloudFormation");
+    expect(allText).not.toContain("CloudFormation Command");
+  });
+
+  it("should still render 'CLI Command' label for CLI section", () => {
+    // Given
+    const { container } = render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={checkMetaWithCommands}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    const allText = container.textContent ?? "";
+
+    // Then — CLI Command label must remain
+    expect(allText).toContain("CLI Command");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fix 5 & 6: Risk section has danger styling, sections have separators and bigger headings
+// ---------------------------------------------------------------------------
+
+describe("ResourceDetailDrawerContent — Fix 5 & 6: Risk section styling", () => {
+  it("should wrap the Risk section in a danger-styled container", () => {
+    // Given
+    const { container } = render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When — find the element containing the "Risk:" label
+    const allElements = Array.from(container.querySelectorAll("[class]"));
+    const riskWrapper = allElements.find(
+      (el) =>
+        el.textContent?.includes("Risk:") &&
+        (el.className.includes("border-border-error-primary") ||
+          el.className.includes("border-danger") ||
+          el.className.includes("bg-bg-fail-secondary")),
+    );
+
+    // Then — Risk section must have an error/danger-related class
+    expect(riskWrapper).toBeDefined();
+  });
+
+  it("should use larger heading size for section labels (text-sm → text-base or larger)", () => {
+    // Given
+    const { container } = render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When — look for section heading span with "Risk:"
+    const headingSpans = Array.from(container.querySelectorAll("span")).filter(
+      (el) => el.textContent?.trim() === "Risk:",
+    );
+
+    // Then — heading must not be tiny text-xs; should be text-sm or larger with font-semibold/font-medium
+    expect(headingSpans.length).toBeGreaterThan(0);
+    const riskHeading = headingSpans[0];
+    expect(riskHeading.className).not.toContain("text-xs");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Fix 4: Dark mode — no hardcoded color classes
 // ---------------------------------------------------------------------------
 
