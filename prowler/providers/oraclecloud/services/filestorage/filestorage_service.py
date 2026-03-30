@@ -39,7 +39,7 @@ class Filestorage(OCIService):
                 try:
                     # Get availability domains for this compartment
                     identity_client = self._create_oci_client(
-                        oci.identity.IdentityClient
+                        oci.identity.IdentityClient, config_overrides={"region":regional_client.region}
                     )
                     availability_domains = identity_client.list_availability_domains(
                         compartment_id=compartment.id
