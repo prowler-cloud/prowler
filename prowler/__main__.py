@@ -27,6 +27,7 @@ from prowler.lib.check.check import (
     list_categories,
     list_checks_json,
     list_fixers,
+    list_resource_groups,
     list_services,
     load_custom_checks_metadata,
     parse_checks_from_file,
@@ -36,6 +37,7 @@ from prowler.lib.check.check import (
     print_compliance_frameworks,
     print_compliance_requirements,
     print_fixers,
+    print_resource_groups,
     print_services,
     remove_custom_checks_module,
     run_fixer,
@@ -162,6 +164,7 @@ def prowler():
     excluded_services = args.excluded_service
     services = args.service
     categories = args.category
+    resource_groups = args.resource_group
     checks_file = args.checks_file
     checks_folder = args.checks_folder
     severities = args.severity
@@ -171,6 +174,7 @@ def prowler():
         not checks
         and not services
         and not categories
+        and not resource_groups
         and not excluded_checks
         and not excluded_services
         and not severities
@@ -216,6 +220,10 @@ def prowler():
         print_categories(list_categories(bulk_checks_metadata))
         sys.exit()
 
+    if args.list_resource_groups:
+        print_resource_groups(list_resource_groups(bulk_checks_metadata))
+        sys.exit()
+
     bulk_compliance_frameworks = {}
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
@@ -257,6 +265,7 @@ def prowler():
         severities=severities,
         compliance_frameworks=compliance_framework,
         categories=categories,
+        resource_groups=resource_groups,
         provider=provider,
     )
 

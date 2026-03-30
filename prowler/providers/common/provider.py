@@ -321,7 +321,7 @@ class Provider(ABC):
                     provider_class(
                         oci_config_file=arguments.oci_config_file,
                         profile=arguments.profile,
-                        region=arguments.region,
+                        region=set(arguments.region) if arguments.region else None,
                         compartment_ids=arguments.compartment_id,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
