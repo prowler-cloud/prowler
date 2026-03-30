@@ -23,6 +23,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Finding groups muted filter, counters, metadata extraction and mute reaggregation [(#10477)](https://github.com/prowler-cloud/prowler/pull/10477)
 - Finding groups `check_title__icontains` resolution, `name__icontains` resource filter and `resource_group` field in `/resources` response [(#10486)](https://github.com/prowler-cloud/prowler/pull/10486)
 - Membership `post_delete` signal using raw FK ids to avoid `DoesNotExist` during cascade deletions [(#10497)](https://github.com/prowler-cloud/prowler/pull/10497)
+- Finding group resources endpoints returning false 404 when filters match no results, and `sort` parameter being ignored [(#10510)](https://github.com/prowler-cloud/prowler/pull/10510)
 
 ### 🔐 Security
 
