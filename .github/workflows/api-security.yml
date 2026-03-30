@@ -77,10 +77,9 @@ jobs:
 
       - name: Safety
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run safety check --ignore 79023,79027,86217,SFTY-20260218-01424
+        run: poetry run safety check --ignore 79023,79027,86217
         # TODO: 79023 & 79027 knack ReDoS until `azure-cli-core` (via `cartography`) allows `knack` >=0.13.0
         # TODO: 86217 because `alibabacloud-tea-openapi == 0.4.3` don't let us upgrade `cryptography >= 46.0.0`
-        # TODO: SFTY-20260218-01424 nltk 3.9.2 CVE-2025-14009 — nltk is a transitive dependency of `safety` itself, pinned to <=3.9.2; we have no control over upgrading it until safety releases a fix
 
       - name: Vulture
         if: steps.check-changes.outputs.any_changed == 'true'
