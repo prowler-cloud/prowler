@@ -81,6 +81,11 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
         label: "Repository URL",
         placeholder: "e.g. https://github.com/user/repo",
       };
+    case "image":
+      return {
+        label: "Registry URL",
+        placeholder: "e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com",
+      };
     case "oraclecloud":
       return {
         label: "Tenancy OCID",
@@ -105,6 +110,11 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
       return {
         label: "Project ID",
         placeholder: "e.g. a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      };
+    case "googleworkspace":
+      return {
+        label: "Customer ID",
+        placeholder: "e.g. C01234abc",
       };
     default:
       return {

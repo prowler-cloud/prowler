@@ -7,9 +7,12 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 
 import {
+  buildAttackPathQueries,
+  executeCustomQuery,
   executeQuery,
   getAttackPathScans,
   getAvailableQueries,
+  getCartographySchema,
 } from "@/actions/attack-paths";
 import { adaptQueryResultToGraphData } from "@/actions/attack-paths/query-result.adapter";
 import { AutoRefresh } from "@/components/scans";
@@ -35,6 +38,7 @@ import type {
   AttackPathScan,
   GraphNode,
 } from "@/types/attack-paths";
+import { ATTACK_PATH_QUERY_IDS } from "@/types/attack-paths";
 
 import {
   AttackPathGraph,
@@ -43,6 +47,8 @@ import {
   GraphLegend,
   GraphLoading,
   NodeDetailContent,
+  QueryDescription,
+  QueryExecutionError,
   QueryParametersForm,
   QuerySelector,
   ScanListTable,
@@ -138,11 +144,21 @@ export default function AttackPathsPage() {
 
       setQueriesLoading(true);
       try {
-        const queriesData = await getAvailableQueries(scanId);
-        if (queriesData?.data) {
-          setQueries(queriesData.data);
+        const [queriesData, schemaData] = await Promise.all([
+          getAvailableQueries(scanId),
+          getCartographySchema(scanId),
+        ]);
+
+        const availableQueries = buildAttackPathQueries(
+          queriesData?.data ?? [],
+          schemaData?.data.attributes,
+        );
+
+        if (availableQueries.length > 0) {
+          setQueries(availableQueries);
           setQueriesError(null);
         } else {
+          setQueries([]);
           setQueriesError("Failed to load available queries");
           toast({
             title: "Error",
@@ -199,15 +215,12 @@ export default function AttackPathsPage() {
     graphState.setError(null);
 
     try {
-      const parameters = queryBuilder.getQueryParameters() as Record<
-        string,
-        string | number | boolean
-      >;
-      const result = await executeQuery(
-        scanId,
-        queryBuilder.selectedQuery,
-        parameters,
-      );
+      const parameters = queryBuilder.getQueryParameters();
+      const isCustomQuery =
+        queryBuilder.selectedQuery === ATTACK_PATH_QUERY_IDS.CUSTOM;
+      const result = isCustomQuery
+        ? await executeCustomQuery(scanId, String(parameters?.query ?? ""))
+        : await executeQuery(scanId, queryBuilder.selectedQuery, parameters);
 
       if (result && "error" in result) {
         const apiError = result as AttackPathQueryError;
@@ -371,9 +384,10 @@ export default function AttackPathsPage() {
               {queriesLoading ? (
                 <p className="text-sm">Loading queries...</p>
               ) : queriesError ? (
-                <p className="text-text-danger dark:text-text-danger text-sm">
-                  {queriesError}
-                </p>
+                <QueryExecutionError
+                  title="Failed to load queries"
+                  error={queriesError}
+                />
               ) : (
                 <>
                   <FormProvider {...queryBuilder.form}>
@@ -384,40 +398,9 @@ export default function AttackPathsPage() {
                     />
 
                     {queryBuilder.selectedQueryData && (
-                      <div className="bg-bg-neutral-tertiary text-text-neutral-secondary dark:text-text-neutral-secondary rounded-md px-3 py-2 text-sm">
-                        <div className="flex items-start gap-2">
-                          <Info
-                            className="mt-0.5 size-4 shrink-0"
-                            style={{ color: "var(--bg-data-info)" }}
-                          />
-                          <p className="whitespace-pre-line">
-                            {
-                              queryBuilder.selectedQueryData.attributes
-                                .description
-                            }
-                          </p>
-                        </div>
-                        {queryBuilder.selectedQueryData.attributes
-                          .attribution && (
-                          <p className="mt-2 text-xs">
-                            Source:{" "}
-                            <a
-                              href={
-                                queryBuilder.selectedQueryData.attributes
-                                  .attribution.link
-                              }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="underline"
-                            >
-                              {
-                                queryBuilder.selectedQueryData.attributes
-                                  .attribution.text
-                              }
-                            </a>
-                          </p>
-                        )}
-                      </div>
+                      <QueryDescription
+                        query={queryBuilder.selectedQueryData}
+                      />
                     )}
 
                     {queryBuilder.selectedQuery && (
@@ -430,15 +413,16 @@ export default function AttackPathsPage() {
                   <div className="flex justify-end gap-3">
                     <ExecuteButton
                       isLoading={graphState.loading}
-                      isDisabled={!queryBuilder.selectedQuery}
+                      isDisabled={
+                        !queryBuilder.selectedQuery ||
+                        queryBuilder.isExecutionBlocked
+                      }
                       onExecute={handleExecuteQuery}
                     />
                   </div>
 
                   {graphState.error && (
-                    <div className="bg-bg-danger-secondary text-text-danger dark:bg-bg-danger-secondary dark:text-text-danger rounded p-3 text-sm">
-                      {graphState.error}
-                    </div>
+                    <QueryExecutionError error={graphState.error} />
                   )}
                 </>
               )}

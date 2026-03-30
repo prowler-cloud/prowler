@@ -1,13 +1,16 @@
 from dataclasses import dataclass
 from typing import Callable
+from uuid import UUID
 
 from config.env import env
-
 from tasks.jobs.attack_paths import aws
 
-
-# Batch size for Neo4j operations
+# Batch size for Neo4j write operations (resource labeling, cleanup)
 BATCH_SIZE = env.int("ATTACK_PATHS_BATCH_SIZE", 1000)
+# Batch size for Postgres findings fetch (keyset pagination page size)
+FINDINGS_BATCH_SIZE = env.int("ATTACK_PATHS_FINDINGS_BATCH_SIZE", 500)
+# Batch size for temp-to-tenant graph sync (nodes and relationships per cursor page)
+SYNC_BATCH_SIZE = env.int("ATTACK_PATHS_SYNC_BATCH_SIZE", 250)
 
 # Neo4j internal labels (Prowler-specific, not provider-specific)
 # - `Internet`: Singleton node representing external internet access for exposed-resource queries
@@ -16,6 +19,12 @@ BATCH_SIZE = env.int("ATTACK_PATHS_BATCH_SIZE", 1000)
 INTERNET_NODE_LABEL = "Internet"
 PROWLER_FINDING_LABEL = "ProwlerFinding"
 PROVIDER_RESOURCE_LABEL = "_ProviderResource"
+
+# Dynamic isolation labels that contain entity UUIDs and are added to every synced node during sync
+# Format: _Tenant_{uuid_no_hyphens}, _Provider_{uuid_no_hyphens}
+TENANT_LABEL_PREFIX = "_Tenant_"
+PROVIDER_LABEL_PREFIX = "_Provider_"
+DYNAMIC_ISOLATION_PREFIXES = [TENANT_LABEL_PREFIX, PROVIDER_LABEL_PREFIX]
 
 
 @dataclass(frozen=True)
@@ -54,11 +63,9 @@ INTERNAL_LABELS: list[str] = [
 ]
 
 # Provider isolation properties
-PROVIDER_ID_PROPERTY = "_provider_id"
 PROVIDER_ELEMENT_ID_PROPERTY = "_provider_element_id"
 
 PROVIDER_ISOLATION_PROPERTIES: list[str] = [
-    PROVIDER_ID_PROPERTY,
     PROVIDER_ELEMENT_ID_PROPERTY,
 ]
 
@@ -107,3 +114,27 @@ def get_provider_resource_label(provider_type: str) -> str:
     """Get the resource label for a provider type (e.g., `_AWSResource`)."""
     config = PROVIDER_CONFIGS.get(provider_type)
     return config.resource_label if config else "_UnknownProviderResource"
+
+
+# Dynamic Isolation Label Helpers
+# --------------------------------
+
+
+def _normalize_uuid(value: str | UUID) -> str:
+    """Strip hyphens from a UUID string for use in Neo4j labels."""
+    return str(value).replace("-", "")
+
+
+def get_tenant_label(tenant_id: str | UUID) -> str:
+    """Get the Neo4j label for a tenant (e.g., `_Tenant_019c41ee7df37deca684d839f95619f8`)."""
+    return f"{TENANT_LABEL_PREFIX}{_normalize_uuid(tenant_id)}"
+
+
+def get_provider_label(provider_id: str | UUID) -> str:
+    """Get the Neo4j label for a provider (e.g., `_Provider_019c41ee7df37deca684d839f95619f8`)."""
+    return f"{PROVIDER_LABEL_PREFIX}{_normalize_uuid(provider_id)}"
+
+
+def is_dynamic_isolation_label(label: str) -> bool:
+    """Check if a label is a dynamic tenant/provider isolation label."""
+    return any(label.startswith(prefix) for prefix in DYNAMIC_ISOLATION_PREFIXES)

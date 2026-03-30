@@ -20,6 +20,7 @@ def load_checks_to_execute(
     severities: list = None,
     compliance_frameworks: list = None,
     categories: set = None,
+    resource_groups: set = None,
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and the input arguments given"""
     try:
@@ -31,6 +32,7 @@ def load_checks_to_execute(
         checks_to_execute = set()
         check_aliases = {}
         check_categories = {}
+        check_resource_groups = {}
         check_severities = {severity.value: [] for severity in Severity}
 
         if not bulk_checks_metadata:
@@ -53,6 +55,13 @@ def load_checks_to_execute(
                     if category not in check_categories:
                         check_categories[category] = []
                     check_categories[category].append(check)
+
+                # Resource Groups (stored lowercase for case-insensitive matching)
+                if metadata.ResourceGroup:
+                    rg_key = metadata.ResourceGroup.lower()
+                    if rg_key not in check_resource_groups:
+                        check_resource_groups[rg_key] = []
+                    check_resource_groups[rg_key].append(check)
             except Exception as error:
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -170,6 +179,28 @@ def load_checks_to_execute(
 
             for category in categories:
                 checks_to_execute.update(check_categories[category])
+
+        # Handle if there are resource groups passed using --resource-group
+        elif resource_groups:
+            # Validate that all resource groups exist (case-insensitive)
+            available_resource_groups = set(check_resource_groups.keys())
+            normalized_resource_groups = [rg.lower() for rg in resource_groups]
+            invalid_resource_groups = [
+                rg
+                for rg in normalized_resource_groups
+                if rg not in available_resource_groups
+            ]
+            if invalid_resource_groups:
+                logger.critical(
+                    f"Invalid resource group(s) specified: {', '.join(invalid_resource_groups)}"
+                )
+                logger.critical(
+                    f"Please provide valid resource group names. Use 'prowler {provider} --list-resource-groups' to see available resource groups."
+                )
+                sys.exit(1)
+
+            for resource_group in normalized_resource_groups:
+                checks_to_execute.update(check_resource_groups[resource_group])
 
         # If there are no checks passed as argument
         else:

@@ -245,7 +245,7 @@ class CheckMetadata(BaseModel):
     Compliance: Optional[list[Any]] = Field(default_factory=list)
 
     @validator("Categories", each_item=True, pre=True, always=True)
-    def valid_category(value):
+    def valid_category(cls, value, values):
         if not isinstance(value, str):
             raise ValueError("Categories must be a list of strings")
         value_lower = value.lower()
@@ -253,7 +253,10 @@ class CheckMetadata(BaseModel):
             raise ValueError(
                 f"Invalid category: {value}. Categories can only contain lowercase letters, numbers and hyphen '-'"
             )
-        if value_lower not in VALID_CATEGORIES:
+        if (
+            value_lower not in VALID_CATEGORIES
+            and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS
+        ):
             raise ValueError(
                 f"Invalid category: '{value_lower}'. Must be one of: {', '.join(sorted(VALID_CATEGORIES))}."
             )
@@ -306,30 +309,32 @@ class CheckMetadata(BaseModel):
         return check_id
 
     @validator("CheckTitle", pre=True, always=True)
-    def validate_check_title(cls, check_title):
-        if len(check_title) > 150:
-            raise ValueError(
-                f"CheckTitle must not exceed 150 characters, got {len(check_title)} characters"
-            )
-        if check_title.startswith("Ensure"):
-            raise ValueError(
-                "CheckTitle must not start with 'Ensure'. Use a descriptive title that focuses on the security state."
-            )
+    def validate_check_title(cls, check_title, values):
+        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+            if len(check_title) > 150:
+                raise ValueError(
+                    f"CheckTitle must not exceed 150 characters, got {len(check_title)} characters"
+                )
+            if check_title.startswith("Ensure"):
+                raise ValueError(
+                    "CheckTitle must not start with 'Ensure'. Use a descriptive title that focuses on the security state."
+                )
         return check_title
 
     @validator("RelatedUrl", pre=True, always=True)
-    def validate_related_url(cls, related_url):
-        if related_url:
+    def validate_related_url(cls, related_url, values):
+        if related_url and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
             raise ValueError("RelatedUrl must be empty. This field is deprecated.")
         return related_url
 
     @validator("Remediation")
-    def validate_recommendation_url(remediation):
-        url = remediation.Recommendation.Url
-        if url and not url.startswith("https://hub.prowler.com/"):
-            raise ValueError(
-                f"Remediation Recommendation URL must point to Prowler Hub (https://hub.prowler.com/...), got '{url}'."
-            )
+    def validate_recommendation_url(cls, remediation, values):
+        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+            url = remediation.Recommendation.Url
+            if url and not url.startswith("https://hub.prowler.com/"):
+                raise ValueError(
+                    f"Remediation Recommendation URL must point to Prowler Hub (https://hub.prowler.com/...), got '{url}'."
+                )
         return remediation
 
     @validator("CheckType", pre=True, always=True)
@@ -362,19 +367,21 @@ class CheckMetadata(BaseModel):
         return check_type
 
     @validator("Description", pre=True, always=True)
-    def validate_description(cls, description):
-        if len(description) > 400:
-            raise ValueError(
-                f"Description must not exceed 400 characters, got {len(description)} characters"
-            )
+    def validate_description(cls, description, values):
+        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+            if len(description) > 400:
+                raise ValueError(
+                    f"Description must not exceed 400 characters, got {len(description)} characters"
+                )
         return description
 
     @validator("Risk", pre=True, always=True)
-    def validate_risk(cls, risk):
-        if len(risk) > 400:
-            raise ValueError(
-                f"Risk must not exceed 400 characters, got {len(risk)} characters"
-            )
+    def validate_risk(cls, risk, values):
+        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+            if len(risk) > 400:
+                raise ValueError(
+                    f"Risk must not exceed 400 characters, got {len(risk)} characters"
+                )
         return risk
 
     @validator("ResourceGroup", pre=True, always=True)

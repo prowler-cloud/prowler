@@ -238,6 +238,21 @@ class Provider(ABC):
                         fixer_config=fixer_config,
                     )
                 elif "github" in provider_class_name.lower():
+                    orgs = []
+                    repos = []
+
+                    if getattr(arguments, "organization", None):
+                        orgs.extend(arguments.organization)
+                    if getattr(arguments, "organizations", None):
+                        orgs.extend(arguments.organizations)
+                    if getattr(arguments, "repository", None):
+                        repos.extend(arguments.repository)
+                    if getattr(arguments, "repositories", None):
+                        repos.extend(arguments.repositories)
+
+                    orgs = list(dict.fromkeys(orgs))
+                    repos = list(dict.fromkeys(repos))
+
                     provider_class(
                         personal_access_token=arguments.personal_access_token,
                         oauth_app_token=arguments.oauth_app_token,
@@ -245,14 +260,12 @@ class Provider(ABC):
                         github_app_id=arguments.github_app_id,
                         mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
-                        repositories=arguments.repository,
-                        organizations=arguments.organization,
+                        repositories=repos,
+                        organizations=orgs,
                         github_actions_enabled=not getattr(
                             arguments, "no_github_actions", False
                         ),
-                        exclude_workflows=getattr(
-                            arguments, "exclude_workflows", []
-                        ),
+                        exclude_workflows=getattr(arguments, "exclude_workflows", []),
                     )
                 elif "googleworkspace" in provider_class_name.lower():
                     provider_class(
@@ -298,6 +311,12 @@ class Provider(ABC):
                         timeout=arguments.timeout,
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
+                        registry=arguments.registry,
+                        image_filter=arguments.image_filter,
+                        tag_filter=arguments.tag_filter,
+                        max_images=arguments.max_images,
+                        registry_insecure=arguments.registry_insecure,
+                        registry_list_images=arguments.registry_list_images,
                     )
                 elif "mongodbatlas" in provider_class_name.lower():
                     provider_class(
@@ -312,7 +331,7 @@ class Provider(ABC):
                     provider_class(
                         oci_config_file=arguments.oci_config_file,
                         profile=arguments.profile,
-                        region=arguments.region,
+                        region=set(arguments.region) if arguments.region else None,
                         compartment_ids=arguments.compartment_id,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,

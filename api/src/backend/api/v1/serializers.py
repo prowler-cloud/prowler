@@ -4180,6 +4180,7 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
     severity = serializers.CharField()
     first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     last_seen_at = serializers.DateTimeField(required=False, allow_null=True)
+    muted_reason = serializers.CharField(required=False, allow_null=True)
 
     class JSONAPIMeta:
         resource_name = "finding-group-resources"
@@ -4193,6 +4194,7 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
                 "service": {"type": "string"},
                 "region": {"type": "string"},
                 "type": {"type": "string"},
+                "resource_group": {"type": "string"},
             },
         }
     )
@@ -4204,6 +4206,7 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
             "service": obj.get("resource_service", ""),
             "region": obj.get("resource_region", ""),
             "type": obj.get("resource_type", ""),
+            "resource_group": obj.get("resource_group", ""),
         }
 
     @extend_schema_field(

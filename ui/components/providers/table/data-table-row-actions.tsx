@@ -6,13 +6,11 @@ import { useState } from "react";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { updateProvider } from "@/actions/providers";
-import { VerticalDotsIcon } from "@/components/icons";
 import { ProviderWizardModal } from "@/components/providers/wizard";
 import {
   ORG_WIZARD_INTENT,
   OrgWizardInitialData,
 } from "@/components/providers/wizard/types";
-import { Button } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownDangerZone,
@@ -150,13 +148,7 @@ function OrgGroupDropdownActions({
       </Modal>
 
       <div className="relative flex items-center justify-end gap-2">
-        <ActionDropdown
-          trigger={
-            <Button variant="ghost" size="icon-sm" className="rounded-full">
-              <VerticalDotsIcon className="text-text-neutral-secondary" />
-            </Button>
-          }
-        >
+        <ActionDropdown>
           {isOrgKind && (
             <>
               <ActionDropdownItem
@@ -304,13 +296,7 @@ export function DataTableRowActions({
 
     return (
       <div className="relative flex items-center justify-end gap-2">
-        <ActionDropdown
-          trigger={
-            <Button variant="ghost" size="icon-sm" className="rounded-full">
-              <VerticalDotsIcon className="text-text-neutral-secondary" />
-            </Button>
-          }
-        >
+        <ActionDropdown>
           <ActionDropdownItem
             icon={<Rocket />}
             label={loading ? "Testing..." : `Test Connection${bulkCount}`}
@@ -399,13 +385,7 @@ export function DataTableRowActions({
       />
 
       <div className="relative flex items-center justify-end gap-2">
-        <ActionDropdown
-          trigger={
-            <Button variant="ghost" size="icon-sm" className="rounded-full">
-              <VerticalDotsIcon className="text-text-neutral-secondary" />
-            </Button>
-          }
-        >
+        <ActionDropdown>
           <ActionDropdownItem
             icon={<Pencil />}
             label="Edit Provider Alias"
