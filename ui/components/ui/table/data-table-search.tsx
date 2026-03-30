@@ -55,7 +55,6 @@ export const DataTableSearch = ({
   // In controlled mode, track display value separately for immediate feedback
   const [displayValue, setDisplayValue] = useState(controlledValue ?? "");
   const [isLoading, setIsLoading] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const id = useId();
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -79,9 +78,6 @@ export const DataTableSearch = ({
   // Determine param names based on prefix
   const searchParam = paramPrefix ? `${paramPrefix}Search` : "filter[search]";
   const pageParam = paramPrefix ? `${paramPrefix}Page` : "page";
-
-  // Keep expanded if there's a value or input is focused or badge is present
-  const shouldStayExpanded = value.length > 0 || isFocused || hasBadge;
 
   // Sync with URL on mount (only for uncontrolled mode)
   useEffect(() => {
@@ -132,67 +128,22 @@ export const DataTableSearch = ({
     };
   }, []);
 
-  const handleMouseEnter = () => {
-    setIsExpanded(true);
-  };
-
-  const handleMouseLeave = () => {
-    if (!shouldStayExpanded) {
-      setIsExpanded(false);
-    }
-  };
-
   const handleFocus = () => {
     setIsFocused(true);
-    setIsExpanded(true);
   };
 
   const handleBlur = () => {
     setIsFocused(false);
-    if (!value && !hasBadge) {
-      setIsExpanded(false);
-    }
   };
-
-  const handleIconClick = () => {
-    setIsExpanded(true);
-    // Focus input after expansion animation starts
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 50);
-  };
-
-  const effectiveExpanded = isExpanded || hasBadge;
 
   return (
     <div
       className={cn(
-        "relative flex items-center transition-all duration-300 ease-in-out",
-        effectiveExpanded ? (hasBadge ? "w-[28rem]" : "w-64") : "w-10",
+        "relative flex items-center",
+        hasBadge ? "w-[28rem]" : "w-64",
       )}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
-      {/* Collapsed state - just icon button */}
-      <button
-        type="button"
-        onClick={handleIconClick}
-        className={cn(
-          "border-border-neutral-tertiary bg-bg-neutral-tertiary absolute left-0 flex size-10 items-center justify-center rounded-md border transition-opacity duration-200",
-          effectiveExpanded ? "pointer-events-none opacity-0" : "opacity-100",
-        )}
-        aria-label="Open search"
-      >
-        <SearchIcon className="text-text-neutral-tertiary size-4" />
-      </button>
-
-      {/* Expanded state - full input with optional badge */}
-      <div
-        className={cn(
-          "relative w-full transition-opacity duration-200",
-          effectiveExpanded ? "opacity-100" : "pointer-events-none opacity-0",
-        )}
-      >
+      <div className="relative w-full">
         <div
           className={cn(
             "border-border-neutral-tertiary bg-bg-neutral-tertiary hover:bg-bg-neutral-secondary flex items-center gap-1.5 rounded-md border transition-colors",
