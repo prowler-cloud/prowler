@@ -118,39 +118,9 @@ export const DataTableSearch = ({
       return;
     }
 
+    // Uncontrolled mode: only update the display value on keystroke.
+    // The actual URL update happens on Enter (see onKeyDown handler).
     setInternalValue(newValue);
-
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-
-    // If using prefix, handle URL updates directly instead of useUrlFilters
-    if (paramPrefix) {
-      setIsLoading(true);
-      debounceTimeoutRef.current = setTimeout(() => {
-        const params = new URLSearchParams(searchParams.toString());
-        if (newValue) {
-          params.set(searchParam, newValue);
-        } else {
-          params.delete(searchParam);
-        }
-        params.set(pageParam, "1"); // Reset to first page
-        router.push(`${pathname}?${params.toString()}`, { scroll: false });
-        setIsLoading(false);
-      }, SEARCH_DEBOUNCE_MS);
-    } else {
-      // Original behavior for non-prefixed search
-      if (newValue) {
-        setIsLoading(true);
-        debounceTimeoutRef.current = setTimeout(() => {
-          updateFilter("search", newValue);
-          setIsLoading(false);
-        }, SEARCH_DEBOUNCE_MS);
-      } else {
-        setIsLoading(false);
-        updateFilter("search", null);
-      }
-    }
   };
 
   // Cleanup timeout on unmount
@@ -266,17 +236,41 @@ export const DataTableSearch = ({
             value={value}
             onChange={(e) => handleChange(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && onSearchCommit) {
-                // Cancel any pending debounce — the user explicitly committed
-                if (debounceTimeoutRef.current) {
-                  clearTimeout(debounceTimeoutRef.current);
-                  debounceTimeoutRef.current = null;
-                }
-                // Sync display state to the committed callback
+              if (e.key !== "Enter") return;
+
+              // Cancel any pending debounce
+              if (debounceTimeoutRef.current) {
+                clearTimeout(debounceTimeoutRef.current);
+                debounceTimeoutRef.current = null;
+              }
+
+              // Controlled mode with explicit commit callback
+              if (onSearchCommit) {
                 if (onSearchChange) {
                   onSearchChange(value);
                 }
                 onSearchCommit(value);
+                setIsLoading(false);
+                return;
+              }
+
+              // Uncontrolled mode: commit search to URL on Enter
+              if (!isControlled) {
+                setIsLoading(true);
+                if (paramPrefix) {
+                  const params = new URLSearchParams(searchParams.toString());
+                  if (value) {
+                    params.set(searchParam, value);
+                  } else {
+                    params.delete(searchParam);
+                  }
+                  params.set(pageParam, "1");
+                  router.push(`${pathname}?${params.toString()}`, {
+                    scroll: false,
+                  });
+                } else {
+                  updateFilter("search", value || null);
+                }
                 setIsLoading(false);
               }
             }}
