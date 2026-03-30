@@ -63,10 +63,6 @@ export class ProfileOrganizationsHarness {
     return page.getByRole("dialog");
   }
 
-  alertDialog() {
-    return page.getByRole("alertdialog");
-  }
-
   confirmationTitle() {
     return page.getByText("Confirm organization switch");
   }
@@ -81,7 +77,7 @@ export class ProfileOrganizationsHarness {
 
   hiddenTenantInput() {
     return page
-      .getByRole("alertdialog")
+      .getByRole("dialog")
       .element()
       .querySelector('input[name="tenantId"]');
   }

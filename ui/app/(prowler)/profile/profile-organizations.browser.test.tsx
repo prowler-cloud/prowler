@@ -3,6 +3,8 @@ import { beforeEach, describe, vi } from "vitest";
 import { render } from "vitest-browser-react";
 
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
+import { reloadPage } from "@/lib/navigation";
+import { API_BASE } from "@/testing/msw/handlers";
 import { expect, test } from "@/testing/test-extend";
 
 import { ProfileOrganizationsHarness } from "./profile-organizations.harness";
@@ -392,7 +394,7 @@ describe("MembershipsCard", () => {
 
         await h.clickSwitchOnFirstAvailable();
 
-        await expect.element(h.alertDialog()).toBeVisible();
+        await expect.element(h.dialog()).toBeVisible();
         await expect.element(h.confirmationTitle()).toBeVisible();
         await expect.element(h.confirmButton()).toBeVisible();
         await expect.element(h.cancelButton()).toBeVisible();
@@ -403,11 +405,11 @@ describe("MembershipsCard", () => {
         renderCard({ ...TWO_ORGS, sessionTenantId: "t1" });
 
         await h.clickSwitchOnFirstAvailable();
-        await expect.element(h.alertDialog()).toBeVisible();
+        await expect.element(h.dialog()).toBeVisible();
 
         await h.cancelSwitch();
 
-        await expect.element(h.alertDialog()).not.toBeInTheDocument();
+        await expect.element(h.dialog()).not.toBeInTheDocument();
         await expect.element(h.switchButtons().first()).toBeVisible();
       });
 
@@ -419,12 +421,12 @@ describe("MembershipsCard", () => {
         });
 
         await h.clickSwitchAt(0);
-        await expect.element(h.alertDialog()).toBeVisible();
+        await expect.element(h.dialog()).toBeVisible();
         await h.cancelSwitch();
-        await expect.element(h.alertDialog()).not.toBeInTheDocument();
+        await expect.element(h.dialog()).not.toBeInTheDocument();
 
         await h.clickSwitchAt(1);
-        await expect.element(h.alertDialog()).toBeVisible();
+        await expect.element(h.dialog()).toBeVisible();
       });
 
       test("should carry the correct tenantId in dialog", async () => {
@@ -457,11 +459,11 @@ describe("MembershipsCard", () => {
         });
 
         await h.openSwitchModalAt(0);
-        await expect.element(h.alertDialog()).toBeVisible();
+        await expect.element(h.dialog()).toBeVisible();
         await h.cancelSwitch();
 
         await h.openSwitchModalAt(1);
-        await expect.element(h.alertDialog()).toBeVisible();
+        await expect.element(h.dialog()).toBeVisible();
       });
     });
   });
@@ -868,13 +870,12 @@ describe("MembershipsCard", () => {
       }) => {
         const switchCalled: string[] = [];
         const deleteCalled: string[] = [];
-        const API_BASE =
-          process.env.NEXT_PUBLIC_API_BASE_URL ??
-          "https://api.test.prowler.com/api/v1";
 
         worker.use(
           http.post(`${API_BASE}/tokens/switch`, async ({ request }) => {
-            const body = (await request.json()) as any;
+            const body = (await request.json()) as {
+              data?: { attributes?: { tenant_id?: string } };
+            };
             switchCalled.push(body?.data?.attributes?.tenant_id ?? "unknown");
             return HttpResponse.json({
               data: {
@@ -912,15 +913,16 @@ describe("MembershipsCard", () => {
         expect(switchCalled[0]).toBe(UUID_T2);
         // Delete was called with the tenant being deleted
         expect(deleteCalled[0]).toBe(UUID_T1);
+        // Page should reload after successful switch+delete
+        await expect
+          .poll(() => vi.mocked(reloadPage).mock.calls.length)
+          .toBeGreaterThanOrEqual(1);
       });
 
       test("should close modal after deleting a non-active tenant", async ({
         worker,
       }) => {
         const deleteCalled: string[] = [];
-        const API_BASE =
-          process.env.NEXT_PUBLIC_API_BASE_URL ??
-          "https://api.test.prowler.com/api/v1";
 
         worker.use(
           http.delete(`${API_BASE}/tenants/:tenantId`, ({ params }) => {
@@ -946,16 +948,12 @@ describe("MembershipsCard", () => {
         expect(deleteCalled[0]).toBe(UUID_T1);
 
         // Modal should close after successful deletion
-        await expect.element(h.alertDialog()).not.toBeInTheDocument();
+        await expect.element(h.dialog()).not.toBeInTheDocument();
       });
 
       test("should show error when switch fails during active tenant deletion", async ({
         worker,
       }) => {
-        const API_BASE =
-          process.env.NEXT_PUBLIC_API_BASE_URL ??
-          "https://api.test.prowler.com/api/v1";
-
         worker.use(
           http.post(`${API_BASE}/tokens/switch`, () => {
             return HttpResponse.json(
@@ -979,19 +977,20 @@ describe("MembershipsCard", () => {
 
         // The submit button should re-enable after the error
         await expect.element(h.submitButton(/delete/i)).toBeEnabled();
+        // Page should NOT reload on failure
+        expect(vi.mocked(reloadPage)).not.toHaveBeenCalled();
       });
 
       test("should still switch when delete fails after successful switch", async ({
         worker,
       }) => {
         const switchCalled: string[] = [];
-        const API_BASE =
-          process.env.NEXT_PUBLIC_API_BASE_URL ??
-          "https://api.test.prowler.com/api/v1";
 
         worker.use(
           http.post(`${API_BASE}/tokens/switch`, async ({ request }) => {
-            const body = (await request.json()) as any;
+            const body = (await request.json()) as {
+              data?: { attributes?: { tenant_id?: string } };
+            };
             switchCalled.push(body?.data?.attributes?.tenant_id ?? "unknown");
             return HttpResponse.json({
               data: {
@@ -1025,6 +1024,10 @@ describe("MembershipsCard", () => {
         // Switch should have been called even though delete will fail
         await expect.poll(() => switchCalled.length).toBe(1);
         expect(switchCalled[0]).toBe(UUID_T2);
+        // Page should still reload because switch succeeded (session was updated)
+        await expect
+          .poll(() => vi.mocked(reloadPage).mock.calls.length)
+          .toBeGreaterThanOrEqual(1);
       });
     });
   });
