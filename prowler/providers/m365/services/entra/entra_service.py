@@ -547,31 +547,6 @@ class Entra(M365Service):
         return AuthenticationFlows(transfer_methods=transfer_methods)
 
     @staticmethod
-    def _parse_insider_risk_levels(raw_value):
-        """Parse insider risk levels from a Graph API flag enum value.
-
-        The insiderRiskLevels field in the Graph API is a flag enum
-        (conditionalAccessInsiderRiskLevels). The msgraph SDK may
-        represent it as an IntFlag, string enum, or raw string
-        depending on the version. This method normalizes it into a
-        list of InsiderRiskLevel enum values.
-
-        Args:
-            raw_value: The raw insider risk levels value from the SDK.
-
-        Returns:
-            A list of InsiderRiskLevel enum values present in the raw value.
-        """
-        if raw_value is None:
-            return None
-        raw_str = str(raw_value).lower()
-        return [
-            InsiderRiskLevel(level)
-            for level in ["minor", "moderate", "elevated"]
-            if level in raw_str
-        ]
-
-    @staticmethod
     def _parse_app_management_restrictions(restrictions):
         """Parse credential restrictions from the Graph API response into AppManagementRestrictions."""
         if not restrictions:

@@ -42,6 +42,9 @@ class entra_conditional_access_policy_block_elevated_insider_risk(Check):
             if not policy.conditions.application_conditions:
                 continue
 
+            if "All" not in policy.conditions.user_conditions.included_users:
+                continue
+
             if (
                 "All"
                 not in policy.conditions.application_conditions.included_applications
@@ -68,7 +71,7 @@ class entra_conditional_access_policy_block_elevated_insider_risk(Check):
                     report.status_extended = f"Conditional Access Policy {policy.display_name} is configured to block all cloud apps and Microsoft Purview Adaptive Protection is not providing insider risk signals."
                 continue
 
-            if InsiderRiskLevel.ELEVATED not in policy.conditions.insider_risk_levels:
+            if policy.conditions.insider_risk_levels != InsiderRiskLevel.ELEVATED:
                 continue
 
             report = CheckReportM365(
