@@ -62,7 +62,7 @@ class OraclecloudProvider(Provider):
     _identity: OCIIdentityInfo
     _session: OCISession
     _audit_config: dict
-    _regions: list = []
+    _regions: set = set()
     _compartments: list = []
     _mutelist: OCIMutelist
     audit_metadata: Audit_Metadata
@@ -71,7 +71,7 @@ class OraclecloudProvider(Provider):
         self,
         oci_config_file: str = None,
         profile: str = None,
-        region: str = None,
+        region: set = set(),
         compartment_ids: list = None,
         config_path: str = None,
         config_content: dict = None,
@@ -92,7 +92,7 @@ class OraclecloudProvider(Provider):
         Args:
             - oci_config_file: The path to the OCI config file.
             - profile: The name of the OCI CLI profile to use.
-            - region: The OCI region to audit.
+            - region: The OCI region(s) to audit.
             - compartment_ids: A list of compartment OCIDs to audit.
             - config_path: The path to the Prowler configuration file.
             - config_content: The content of the configuration file.
@@ -127,6 +127,11 @@ class OraclecloudProvider(Provider):
 
         logger.info("Initializing OCI provider ...")
 
+        # Check if the configuration is scanning a single region
+        single_region = None
+        if region:
+            single_region = list(region)[0] if len(region) == 1 else None
+
         # Setup OCI Session
         logger.info("Setting up OCI session ...")
         self._session = self.setup_session(
@@ -138,7 +143,7 @@ class OraclecloudProvider(Provider):
             key_file=key_file,
             key_content=key_content,
             tenancy=tenancy,
-            region=region,
+            region=single_region,
             pass_phrase=pass_phrase,
         )
 
@@ -148,7 +153,7 @@ class OraclecloudProvider(Provider):
         logger.info("Validating OCI credentials ...")
         self._identity = self.set_identity(
             session=self._session,
-            region=region,
+            region=single_region,
             compartment_ids=compartment_ids,
         )
         logger.info("OCI credentials validated")
@@ -531,47 +536,42 @@ class OraclecloudProvider(Provider):
 
         return True
 
-    def get_regions_to_audit(self, region: str = None) -> list:
+    def get_regions_to_audit(self, region_set: set = None) -> list:
         """
         get_regions_to_audit returns the list of regions to audit.
 
         Args:
-            - region: The OCI region to audit.
+            - region: The OCI region(s) to audit.
 
         Returns:
             - list: The list of OCIRegion objects to audit.
         """
         regions = []
 
-        if region:
-            # Audit specific region
-            if region in OCI_REGIONS:
-                regions.append(
-                    OCIRegion(
-                        key=region,
-                        name=OCI_REGIONS[region],
-                        is_home_region=True,
-                    )
+        # Audit all subscribed regions
+        try:
+            # Create identity client with proper authentication handling
+            if self._session.signer:
+                identity_client = oci.identity.IdentityClient(
+                    config=self._session.config, signer=self._session.signer
                 )
             else:
-                logger.warning(f"Invalid region: {region}. Using default region.")
-        else:
-            # Audit all subscribed regions
-            try:
-                # Create identity client with proper authentication handling
-                if self._session.signer:
-                    identity_client = oci.identity.IdentityClient(
-                        config=self._session.config, signer=self._session.signer
-                    )
-                else:
-                    identity_client = oci.identity.IdentityClient(
-                        config=self._session.config
-                    )
-                region_subscriptions = identity_client.list_region_subscriptions(
-                    self._identity.tenancy_id
-                ).data
+                identity_client = oci.identity.IdentityClient(
+                    config=self._session.config
+                )
+            region_subscriptions = identity_client.list_region_subscriptions(
+                self._identity.tenancy_id
+            ).data
 
-                for region_sub in region_subscriptions:
+            # Check if auditing specific region or all
+            regions_check = (
+                region_set
+                if region_set
+                else [sub.region_name for sub in region_subscriptions]
+            )
+
+            for region_sub in region_subscriptions:
+                if region_sub.region_name in regions_check:
                     regions.append(
                         OCIRegion(
                             key=region_sub.region_name,
@@ -581,22 +581,20 @@ class OraclecloudProvider(Provider):
                             is_home_region=region_sub.is_home_region,
                         )
                     )
-
-                logger.info(f"Found {len(regions)} subscribed regions")
-
-            except Exception as error:
-                logger.warning(
-                    f"Could not retrieve region subscriptions: {error}. Using configured region."
+            logger.info(f"Found {len(regions)} subscribed regions")
+        except Exception as error:
+            logger.warning(
+                f"Could not retrieve region subscriptions: {error}. Using configured region."
+            )
+            # Fallback to configured region
+            config_region = self._session.config.get("region", "us-ashburn-1")
+            regions.append(
+                OCIRegion(
+                    key=config_region,
+                    name=OCI_REGIONS.get(config_region, config_region),
+                    is_home_region=True,
                 )
-                # Fallback to configured region
-                config_region = self._session.config.get("region", "us-ashburn-1")
-                regions.append(
-                    OCIRegion(
-                        key=config_region,
-                        name=OCI_REGIONS.get(config_region, config_region),
-                        is_home_region=True,
-                    )
-                )
+            )
 
         return regions
 
