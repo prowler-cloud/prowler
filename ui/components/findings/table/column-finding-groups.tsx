@@ -152,12 +152,13 @@ export function getColumnFindingGroups({
 
         return (
           <div>
-            <p
-              className="text-text-neutral-primary hover:text-button-tertiary cursor-pointer text-left text-sm break-words whitespace-normal hover:underline"
+            <button
+              type="button"
+              className="text-text-neutral-primary hover:text-button-tertiary w-full cursor-pointer border-none bg-transparent p-0 text-left text-sm break-words whitespace-normal hover:underline"
               onClick={() => onDrillDown(group.checkId, group)}
             >
               {group.checkTitle}
-            </p>
+            </button>
           </div>
         );
       },
