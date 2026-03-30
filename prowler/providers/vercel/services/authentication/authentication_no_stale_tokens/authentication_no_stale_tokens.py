@@ -6,29 +6,32 @@ from prowler.providers.vercel.services.authentication.authentication_client impo
     authentication_client,
 )
 
-STALE_THRESHOLD_DAYS = 90
-
 
 class authentication_no_stale_tokens(Check):
     """Check if API tokens have been used recently.
 
     This class verifies whether each Vercel API token has been active within
-    the last 90 days. Stale tokens that remain unused pose a security risk
-    as they may have been forgotten or belong to former team members.
+    the configured threshold (default: 90 days). Stale tokens that remain
+    unused pose a security risk as they may have been forgotten or belong
+    to former team members.
     """
 
     def execute(self) -> List[CheckReportVercel]:
         """Execute the Vercel Stale Token check.
 
         Iterates over all tokens and checks if each token has been active
-        within the last 90 days.
+        within the configured threshold. The threshold is configurable via
+        ``stale_token_threshold_days`` in audit_config (default: 90 days).
 
         Returns:
             List[CheckReportVercel]: A list of reports for each token.
         """
         findings = []
         now = datetime.now(timezone.utc)
-        stale_cutoff = now - timedelta(days=STALE_THRESHOLD_DAYS)
+        stale_threshold_days = authentication_client.audit_config.get(
+            "stale_token_threshold_days", 90
+        )
+        stale_cutoff = now - timedelta(days=stale_threshold_days)
 
         for token in authentication_client.tokens.values():
             report = CheckReportVercel(
@@ -51,14 +54,14 @@ class authentication_no_stale_tokens(Check):
                     f"Token '{token.name}' ({token.id}) has not been used for "
                     f"{days_inactive} days (last active: "
                     f"{token.active_at.strftime('%Y-%m-%d %H:%M UTC')}). "
-                    f"Threshold is {STALE_THRESHOLD_DAYS} days."
+                    f"Threshold is {stale_threshold_days} days."
                 )
             else:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Token '{token.name}' ({token.id}) was last active on "
                     f"{token.active_at.strftime('%Y-%m-%d %H:%M UTC')} "
-                    f"(within the last {STALE_THRESHOLD_DAYS} days)."
+                    f"(within the last {stale_threshold_days} days)."
                 )
 
             findings.append(report)

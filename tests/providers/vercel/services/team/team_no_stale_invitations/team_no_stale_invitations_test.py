@@ -16,6 +16,7 @@ from tests.providers.vercel.vercel_fixtures import (
 class Test_team_no_stale_invitations:
     def test_no_teams(self):
         team_client = mock.MagicMock
+        team_client.audit_config = {"stale_invitation_threshold_days": 30}
         team_client.teams = {}
 
         with (
@@ -38,6 +39,7 @@ class Test_team_no_stale_invitations:
 
     def test_no_stale_invitations(self):
         team_client = mock.MagicMock
+        team_client.audit_config = {"stale_invitation_threshold_days": 30}
         team_client.teams = {
             TEAM_ID: VercelTeam(
                 id=TEAM_ID,
@@ -83,6 +85,7 @@ class Test_team_no_stale_invitations:
 
     def test_stale_invitation(self):
         team_client = mock.MagicMock
+        team_client.audit_config = {"stale_invitation_threshold_days": 30}
         team_client.teams = {
             TEAM_ID: VercelTeam(
                 id=TEAM_ID,
