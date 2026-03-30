@@ -90,7 +90,9 @@ export const getFindingGroupResources = async ({
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  const url = new URL(`${apiBaseUrl}/finding-groups/${checkId}/resources`);
+  const url = new URL(
+    `${apiBaseUrl}/finding-groups/${encodeURIComponent(checkId)}/resources`,
+  );
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
@@ -123,7 +125,7 @@ export const getLatestFindingGroupResources = async ({
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(
-    `${apiBaseUrl}/finding-groups/latest/${checkId}/resources`,
+    `${apiBaseUrl}/finding-groups/latest/${encodeURIComponent(checkId)}/resources`,
   );
 
   if (page) url.searchParams.append("page[number]", page.toString());

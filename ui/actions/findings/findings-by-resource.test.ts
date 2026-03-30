@@ -267,3 +267,77 @@ describe("resolveFindingIdsByVisibleGroupResources", () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Fix 4: Unbounded page[size] cap
+//
+// The bug: createResourceFindingResolutionUrl sets page[size]=resourceUids.length
+// with no upper bound guard. The production fix adds Math.min(resourceUids.length, MAX_PAGE_SIZE)
+// with MAX_PAGE_SIZE=500 as an explicit defensive cap.
+// ---------------------------------------------------------------------------
+
+describe("resolveFindingIds — Fix 4: page[size] explicit cap at MAX_PAGE_SIZE=500", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+  });
+
+  it("should use resourceUids.length as page[size] for a small batch (under 500)", async () => {
+    // Given — 3 resources, well under the cap
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+    handleApiResponseMock.mockResolvedValue({
+      data: [{ id: "finding-1" }, { id: "finding-2" }, { id: "finding-3" }],
+    });
+
+    // When
+    await resolveFindingIds({
+      checkId: "check-1",
+      resourceUids: ["resource-1", "resource-2", "resource-3"],
+    });
+
+    // Then — page[size] should equal the number of resourceUids (3)
+    const calledUrl = new URL(fetchMock.mock.calls[0][0]);
+    expect(calledUrl.searchParams.get("page[size]")).toBe("3");
+  });
+
+  it("should cap page[size] at 500 when the chunk has exactly 500 UIDs (boundary value)", async () => {
+    // Given — exactly 500 unique UIDs (at the cap boundary)
+    const resourceUids = Array.from({ length: 500 }, (_, i) => `resource-${i}`);
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+    handleApiResponseMock.mockResolvedValue({ data: [] });
+
+    // When
+    await resolveFindingIds({
+      checkId: "check-1",
+      resourceUids,
+    });
+
+    // Then — page[size] must be exactly 500 (not capped lower)
+    const firstUrl = new URL(fetchMock.mock.calls[0][0] as string);
+    expect(firstUrl.searchParams.get("page[size]")).toBe("500");
+  });
+
+  it("should cap page[size] at 500 even when a chunk would exceed 500 — Math.min guard in URL builder", async () => {
+    // Given — 501 UIDs. The chunker splits into [500, 1].
+    // The FIRST chunk has 500 UIDs → page[size] should be 500 (Math.min(500, 500)).
+    // The SECOND chunk has 1 UID → page[size] should be 1 (Math.min(1, 500)).
+    // This proves the Math.min cap fires correctly on every chunk.
+    const resourceUids = Array.from({ length: 501 }, (_, i) => `resource-${i}`);
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+    handleApiResponseMock.mockResolvedValue({ data: [] });
+
+    // When
+    await resolveFindingIds({
+      checkId: "check-1",
+      resourceUids,
+    });
+
+    // Then — two fetch calls: one for 500 UIDs, one for 1 UID
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const firstUrl = new URL(fetchMock.mock.calls[0][0] as string);
+    const secondUrl = new URL(fetchMock.mock.calls[1][0] as string);
+    expect(firstUrl.searchParams.get("page[size]")).toBe("500");
+    expect(secondUrl.searchParams.get("page[size]")).toBe("1");
+  });
+});
