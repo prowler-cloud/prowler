@@ -29,6 +29,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `return` statements in `finally` blocks replaced across IAM, Organizations, GCP provider, and custom checks metadata to stop silently swallowing exceptions [(#10102)](https://github.com/prowler-cloud/prowler/pull/10102)
 
+### 🔐 Security
+
+- Sensitive CLI flag values (tokens, keys, passwords) in HTML output "Parameters used" field now redacted to prevent credential leaks [(#10518)](https://github.com/prowler-cloud/prowler/pull/10518)
+
 ---
 
 ## [5.22.1] (Prowler UNRELEASED)
