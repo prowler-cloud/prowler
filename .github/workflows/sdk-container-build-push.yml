@@ -64,9 +64,10 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
+            dc.services.visualstudio.com:443
+            files.pythonhosted.org:443
             github.com:443
             pypi.org:443
-            files.pythonhosted.org:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -174,21 +175,21 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
-            api.ecr-public.us-east-1.amazonaws.com:443
-            public.ecr.aws:443
-            registry-1.docker.io:443
-            production.cloudflare.docker.com:443
-            auth.docker.io:443
-            debian.map.fastlydns.net:80
-            github.com:443
-            release-assets.githubusercontent.com:443
-            pypi.org:443
-            files.pythonhosted.org:443
-            www.powershellgallery.com:443
-            aka.ms:443
-            cdn.powershellgallery.com:443
             _http._tcp.deb.debian.org:443
+            aka.ms:443
+            api.ecr-public.us-east-1.amazonaws.com:443
+            auth.docker.io:443
+            cdn.powershellgallery.com:443
+            debian.map.fastlydns.net:80
+            files.pythonhosted.org:443
+            github.com:443
             powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net:443
+            production.cloudflare.docker.com:443
+            public.ecr.aws:443
+            pypi.org:443
+            registry-1.docker.io:443
+            release-assets.githubusercontent.com:443
+            www.powershellgallery.com:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -241,13 +242,13 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
-            registry-1.docker.io:443
-            auth.docker.io:443
-            public.ecr.aws:443
-            production.cloudflare.docker.com:443
-            github.com:443
-            release-assets.githubusercontent.com:443
             api.ecr-public.us-east-1.amazonaws.com:443
+            auth.docker.io:443
+            github.com:443
+            production.cloudflare.docker.com:443
+            public.ecr.aws:443
+            registry-1.docker.io:443
+            release-assets.githubusercontent.com:443
 
 
       - name: Login to DockerHub

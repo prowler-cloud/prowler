@@ -33,6 +33,8 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            f27ab01db9584e008c443b7137d16425.apm.europe-west2.gcp.elastic-cloud.com:443
+            github.com:443
 
       - name: Check labels
         id: label_check
