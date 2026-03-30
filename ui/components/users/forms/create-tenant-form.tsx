@@ -24,12 +24,16 @@ export const CreateTenantForm = ({
   useEffect(() => {
     if (!state) return;
 
+    let cancelled = false;
+
     const handleCreate = async () => {
-      if (state.success && state.tenantId) {
+      if ("success" in state) {
         // Two-step: create succeeded, now switch to the new tenant
         const fd = new FormData();
         fd.set("tenantId", state.tenantId);
         const switchResult: SwitchTenantState = await switchTenant(null, fd);
+
+        if (cancelled) return;
 
         if ("success" in switchResult) {
           await update({
@@ -52,7 +56,7 @@ export const CreateTenantForm = ({
           });
           setIsOpen(false);
         }
-      } else if (state.error) {
+      } else {
         toast({
           variant: "destructive",
           title: "Oops! Something went wrong",
@@ -62,6 +66,10 @@ export const CreateTenantForm = ({
     };
 
     handleCreate();
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
@@ -74,8 +82,8 @@ export const CreateTenantForm = ({
         labelPlacement="outside"
         variant="bordered"
         isRequired={true}
-        isInvalid={!!(state && state.error)}
-        errorMessage={state?.error}
+        isInvalid={!!(state && "error" in state)}
+        errorMessage={state && "error" in state ? state.error : undefined}
       />
 
       <FormButtons

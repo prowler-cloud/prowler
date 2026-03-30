@@ -38,7 +38,15 @@ const editTenantFormSchema = z
     path: ["name"],
   });
 
-export async function updateTenantName(_prevState: any, formData: FormData) {
+export type UpdateTenantNameState =
+  | { errors: { name?: string } }
+  | { success: string }
+  | { error: string };
+
+export async function updateTenantName(
+  _prevState: UpdateTenantNameState | null,
+  formData: FormData,
+): Promise<UpdateTenantNameState> {
   const headers = await getAuthHeaders({ contentType: true });
   const formDataObject = Object.fromEntries(formData);
   const validatedData = editTenantFormSchema.safeParse(formDataObject);
@@ -161,11 +169,16 @@ const createTenantSchema = z.object({
     .max(100, { message: "Name must be 100 characters or less" }),
 });
 
-export interface CreateTenantState {
-  success?: boolean;
-  tenantId?: string;
-  error?: string;
+interface CreateTenantSuccess {
+  success: true;
+  tenantId: string;
 }
+
+interface CreateTenantError {
+  error: string;
+}
+
+export type CreateTenantState = CreateTenantSuccess | CreateTenantError;
 
 export async function createTenant(
   _prevState: CreateTenantState | null,
@@ -228,10 +241,15 @@ const switchThenDeleteTenantSchema = z.object({
   targetTenantId: z.uuid(),
 });
 
-export interface DeleteTenantState {
-  success?: boolean;
-  error?: string;
+interface DeleteTenantSuccess {
+  success: true;
 }
+
+interface DeleteTenantError {
+  error: string;
+}
+
+export type DeleteTenantState = DeleteTenantSuccess | DeleteTenantError;
 
 export async function deleteTenant(
   _prevState: DeleteTenantState | null,
@@ -269,12 +287,21 @@ export async function deleteTenant(
   }
 }
 
-export interface SwitchThenDeleteTenantState {
-  success?: boolean;
+interface SwitchThenDeleteSuccess {
+  success: true;
+  accessToken: string;
+  refreshToken: string;
+}
+
+interface SwitchThenDeleteError {
+  error: string;
   accessToken?: string;
   refreshToken?: string;
-  error?: string;
 }
+
+export type SwitchThenDeleteTenantState =
+  | SwitchThenDeleteSuccess
+  | SwitchThenDeleteError;
 
 export async function switchThenDeleteTenant(
   _prevState: SwitchThenDeleteTenantState | null,

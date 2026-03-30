@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import { deleteTenant, switchThenDeleteTenant } from "@/actions/users/tenants";
+import { Input } from "@/components/shadcn/input/input";
 import {
   Select,
   SelectContent,
@@ -21,12 +22,13 @@ import {
 import { useToast } from "@/components/ui";
 import { FormButtons } from "@/components/ui/form";
 import { reloadPage } from "@/lib/navigation";
+import { TenantOption } from "@/types/users";
 
 interface DeleteTenantFormProps {
   tenantId: string;
   tenantName: string;
   isActiveTenant: boolean;
-  availableTenants: Array<{ id: string; name: string }>;
+  availableTenants: TenantOption[];
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }
 
@@ -53,13 +55,13 @@ export const DeleteTenantForm = ({
   useEffect(() => {
     if (!deleteState) return;
 
-    if (deleteState.success) {
+    if ("success" in deleteState) {
       toast({
         title: "Organization deleted",
         description: "The organization has been permanently deleted.",
       });
       setIsOpen(false);
-    } else if (deleteState.error) {
+    } else {
       toast({
         variant: "destructive",
         title: "Oops! Something went wrong",
@@ -79,7 +81,7 @@ export const DeleteTenantForm = ({
     const formData = new FormData(e.currentTarget);
     const result = await switchThenDeleteTenant(null, formData);
 
-    if (result.success && result.accessToken) {
+    if ("success" in result) {
       await update({
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
@@ -89,27 +91,25 @@ export const DeleteTenantForm = ({
         description: "Switching to another organization.",
       });
       reloadPage();
-    } else if (result.error) {
-      if (result.accessToken) {
-        // Partial success: switch OK but delete failed — still update session
-        await update({
-          accessToken: result.accessToken,
-          refreshToken: result.refreshToken,
-        });
-        toast({
-          variant: "destructive",
-          title: "Switch succeeded but delete failed",
-          description: result.error,
-        });
-        reloadPage();
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Oops! Something went wrong",
-          description: result.error,
-        });
-        setIsSubmitting(false);
-      }
+    } else if (result.accessToken) {
+      // Partial success: switch OK but delete failed — still update session
+      await update({
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      });
+      toast({
+        variant: "destructive",
+        title: "Switch succeeded but delete failed",
+        description: result.error,
+      });
+      reloadPage();
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Oops! Something went wrong",
+        description: result.error,
+      });
+      setIsSubmitting(false);
     }
   };
 
@@ -129,12 +129,11 @@ export const DeleteTenantForm = ({
         deletion:
       </div>
 
-      <input
-        type="text"
+      <Input
         value={confirmName}
         onChange={(e) => setConfirmName(e.target.value)}
         placeholder={tenantName}
-        className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+        aria-label={`Type ${tenantName} to confirm deletion`}
         autoComplete="off"
       />
 

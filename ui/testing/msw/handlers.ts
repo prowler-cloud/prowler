@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 
-const API_BASE =
+export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://some-api-server/api/v1";
 /**
  * Default MSW handlers for the prowler backend API.
@@ -22,7 +22,9 @@ export const handlers = [
 
   // Create tenant
   http.post(`${API_BASE}/tenants`, async ({ request }) => {
-    const body = (await request.json()) as any;
+    const body = (await request.json()) as {
+      data?: { attributes?: { name?: string } };
+    };
     return HttpResponse.json({
       data: {
         id: "new-tenant-id",
