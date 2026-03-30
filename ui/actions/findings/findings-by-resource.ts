@@ -189,8 +189,9 @@ async function fetchFindingGroupResourceUidsPage({
 
   return {
     resourceUids: data
-      .map((item: { attributes?: { resource?: { uid?: string } } }) =>
-        item.attributes?.resource?.uid,
+      .map(
+        (item: { attributes?: { resource?: { uid?: string } } }) =>
+          item.attributes?.resource?.uid,
       )
       .filter((uid: string | undefined): uid is string => Boolean(uid)),
     totalPages: response?.meta?.pagination?.pages ?? 1,
