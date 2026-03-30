@@ -119,7 +119,6 @@ export const FindingsFilters = ({
     applyAll,
     discardAll,
     clearAndApply,
-    clearKeys,
     hasChanges,
     changeCount,
     getFilterValue,
@@ -197,20 +196,6 @@ export const FindingsFilters = ({
     const currentValues = pendingFilters[filterKey] ?? [];
     const nextValues = currentValues.filter((v) => v !== value);
     setPending(filterKey, nextValues);
-  };
-
-  // Handler for clearing all chips: clears only the filter keys visible as chips,
-  // without touching provider/account selectors.
-  const PROVIDER_KEYS = new Set([
-    "filter[provider_type__in]",
-    "filter[provider_id__in]",
-  ]);
-
-  const handleClearAllChips = () => {
-    const chipKeys = Array.from(new Set(filterChips.map((c) => c.key))).filter(
-      (k) => !PROVIDER_KEYS.has(k),
-    );
-    clearKeys(chipKeys);
   };
 
   // Derive pending muted state for the checkbox.
@@ -291,11 +276,7 @@ export const FindingsFilters = ({
       </div>
 
       {/* Summary strip: shown below filter bar when there are pending changes */}
-      <FilterSummaryStrip
-        chips={filterChips}
-        onRemove={handleChipRemove}
-        onClearAll={handleClearAllChips}
-      />
+      <FilterSummaryStrip chips={filterChips} onRemove={handleChipRemove} />
 
       {/* Expandable filters section */}
       {hasCustomFilters && (

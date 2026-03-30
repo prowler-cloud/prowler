@@ -61,10 +61,12 @@ function TestCustomQueryForm() {
           name: "query",
           label: "openCypher",
           data_type: "string",
-          input_type: "textarea",
+          input_type: "code-editor",
           placeholder: "MATCH (n) RETURN n LIMIT 25",
           description: "",
           required: true,
+          editor_language: "openCypher",
+          requirement_badge: "Read-only*",
         },
       ],
     },
@@ -133,7 +135,7 @@ describe("QueryParametersForm", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("renders a textarea when the parameter input type is textarea", () => {
+  it("renders a code editor when the parameter input type is code-editor", () => {
     // Given
     render(<TestCustomQueryForm />);
 
@@ -142,25 +144,18 @@ describe("QueryParametersForm", () => {
     const codeEditor = screen.getByTestId("query-code-editor");
 
     // Then
-    expect(input.tagName).toBe("TEXTAREA");
-    expect(input).toHaveAttribute("data-slot", "textarea");
-    expect(input).toHaveAttribute("placeholder", "MATCH (n) RETURN n LIMIT 25");
-    expect(input).toHaveAttribute("spellcheck", "false");
-    expect(input).toHaveAttribute("autocomplete", "off");
-    expect(input).toHaveAttribute("autocorrect", "off");
-    expect(input).toHaveAttribute("autocapitalize", "none");
-    expect(input).toHaveClass(
-      "minimal-scrollbar",
-      "min-h-[320px]",
-      "font-mono",
-      "leading-6",
-    );
+    expect(input.tagName).toBe("DIV");
+    expect(input).toHaveAttribute("contenteditable", "true");
+    expect(codeEditor).toHaveAttribute("data-language", "openCypher");
     expect(codeEditor).toHaveClass(
       "rounded-xl",
       "border",
       "bg-bg-neutral-primary",
     );
-    expect(screen.getByText("Read-only")).toBeInTheDocument();
+    expect(screen.getByText("Read-only*")).toBeInTheDocument();
+    expect(screen.getByText("openCypher")).toBeInTheDocument();
+    expect(screen.queryByText("openCypher*")).not.toBeInTheDocument();
+    expect(screen.queryByText("Read-only")).not.toBeInTheDocument();
   });
 
   it("uses the design-system error token for field validation messages", async () => {
