@@ -58,7 +58,7 @@ def get_role(user: User, tenant_id: str) -> Role:
     Raises:
         PermissionDenied: If the user has no role in the given tenant.
     """
-    role = user.roles.filter(tenant_id=tenant_id).first()
+    role = user.roles.using(MainRouter.admin_db).filter(tenant_id=tenant_id).first()
     if role is None:
         raise PermissionDenied("User has no role in this tenant.")
     return role
