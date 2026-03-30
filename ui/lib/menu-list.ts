@@ -183,10 +183,10 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
       menus: [
         {
           href: "https://hub.prowler.com/",
-          label: "Prowler Hub",
+          label: "OpsVision Hub",
           icon: ProwlerShort,
           target: "_blank",
-          tooltip: "Looking for all available checks? learn more.",
+          tooltip: "Looking for all available checks? Learn more.",
         },
       ],
     },

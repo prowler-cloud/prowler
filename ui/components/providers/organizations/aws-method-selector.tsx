@@ -53,7 +53,7 @@ function CtaBadge() {
     >
       <div className="flex items-center gap-1.5">
         <span className="text-primary-foreground text-sm leading-6 font-bold">
-          Available in Prowler Cloud
+          Available in OpsVision Cloud
         </span>
       </div>
     </a>

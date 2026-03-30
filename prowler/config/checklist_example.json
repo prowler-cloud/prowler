@@ -1,7 +1,0 @@
-{
-  "aws": [
-    "glue_development_endpoints_cloudwatch_logs_encryption_enabled",
-    "emr_cluster_account_public_block_enabled",
-    "ec2_instance_public_ip"
-  ]
-}

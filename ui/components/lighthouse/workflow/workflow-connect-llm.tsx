@@ -20,7 +20,7 @@ const steps = [
   {
     title: "Select Default Model",
     description:
-      "Choose the default model to use for AI-powered features in Prowler.",
+      "Choose the default model to use for AI-powered features in OpsVision.",
     href: "/lighthouse/config/select-model",
   },
 ];

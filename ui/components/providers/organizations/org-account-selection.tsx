@@ -77,7 +77,7 @@ export function OrgAccountSelection({
           <p className="text-muted-foreground text-sm">
             {isTestingView
               ? "Testing account connections..."
-              : "Confirm all accounts under this Organization you want to add to Prowler."}{" "}
+              : "Confirm all accounts under this Organization you want to add to OpsVision."}{" "}
             {!isTestingView &&
               `${selectedCount} of ${totalAccounts} accounts selected.`}
           </p>

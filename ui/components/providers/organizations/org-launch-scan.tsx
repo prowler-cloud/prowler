@@ -136,7 +136,7 @@ export function OrgLaunchScan({
           </div>
 
           <p className="text-text-neutral-secondary text-sm">
-            Your accounts are connected to Prowler and ready to Scan!
+            Your accounts are connected to OpsVision and ready to Scan!
           </p>
 
           {createdProviderIds.length === 0 && (
@@ -148,7 +148,7 @@ export function OrgLaunchScan({
 
           <div className="flex flex-col gap-4">
             <p className="text-text-neutral-secondary text-sm">
-              Select a Prowler scan schedule for these accounts.
+              Select a OpsVision scan schedule for these accounts.
             </p>
             <Select
               value={scheduleOption}

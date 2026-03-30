@@ -21,7 +21,7 @@ export const AuthLayout = ({ title, children }: AuthLayoutProps) => {
           }}
         ></div>
 
-        {/* Prowler Logo */}
+        {/* OpsVision Logo */}
         <div className="relative z-10 mb-8 flex w-full max-w-[300px]">
           <ProwlerExtended width={300} className="h-auto w-full" />
         </div>

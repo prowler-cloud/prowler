@@ -39,8 +39,8 @@ export const MenuItem = ({
   const isActive =
     active !== undefined ? active : pathname.startsWith(hrefPathname);
 
-  // Show tooltip always for Prowler Hub, or when sidebar is collapsed
-  const showTooltip = label === "Prowler Hub" ? !!tooltip : !isOpen;
+  // Show tooltip always for OpsVision Hub, or when sidebar is collapsed
+  const showTooltip = label === "OpsVision Hub" ? !!tooltip : !isOpen;
 
   return (
     <Tooltip delayDuration={100}>

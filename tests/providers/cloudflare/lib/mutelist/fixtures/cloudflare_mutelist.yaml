@@ -1,9 +1,0 @@
-Mutelist:
-  Accounts:
-    "test-account-id":
-      Checks:
-        "zone_dnssec_enabled":
-          Regions:
-            - "*"
-          Resources:
-            - "test-zone-id"

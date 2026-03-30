@@ -21,13 +21,13 @@ interface StepConfig {
 const STEPS: StepConfig[] = [
   {
     label: "Link a Cloud Provider",
-    description: "Enter the provider details you would like to add in Prowler.",
+    description: "Enter the provider details you would like to add in OpsVision.",
     icon: FolderGit2,
   },
   {
     label: "Authenticate Credentials",
     description:
-      "Authorize a secure connection between Prowler and your provider.",
+      "Authorize a secure connection between OpsVision and your provider.",
     icon: KeyRound,
   },
   {
