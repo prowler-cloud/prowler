@@ -1,0 +1,97 @@
+applications:
+  - name: prowler-api-web
+    path: api
+    buildpacks:
+      - python_buildpack
+    memory: 1024M
+    disk_quota: 4G
+    instances: 1
+    command: ./bin/cloudgov-web.sh
+    routes:
+      - route: ((api_route))
+    services:
+      - prowler-api-db
+      - prowler-api-redis
+    env:
+      DISABLE_COLLECTSTATIC: 1
+      DJANGO_SETTINGS_MODULE: config.django.production
+      DJANGO_BIND_ADDRESS: 0.0.0.0
+      DJANGO_LOGGING_FORMATTER: human_readable
+      DJANGO_LOGGING_LEVEL: INFO
+      CLOUDGOV_UAA_ENABLED: true
+      UAA_CLIENT_ID: ((uaa_client_id))
+      UAA_CLIENT_SECRET: ((uaa_client_secret))
+      UAA_AUTH_URL: https://login.fr.cloud.gov/oauth/authorize
+      UAA_TOKEN_URL: https://uaa.fr.cloud.gov/oauth/token
+      UAA_APPROVED_DOMAINS: ((uaa_approved_domains))
+      UAA_LOGIN_REDIRECT_URL: ((uaa_login_redirect_url))
+      SECRET_KEY: ((django_secret_key))
+      DJANGO_SECRETS_ENCRYPTION_KEY: ((django_secrets_encryption_key))
+      DJANGO_TOKEN_SIGNING_KEY: ((django_token_signing_key))
+      DJANGO_TOKEN_VERIFYING_KEY: ((django_token_verifying_key))
+      SENTRY_ENVIRONMENT: cloudgov
+      SENTRY_RELEASE: cloudgov
+
+  - name: prowler-api-worker
+    path: api
+    buildpacks:
+      - python_buildpack
+    memory: 1024M
+    disk_quota: 4G
+    instances: 1
+    no-route: true
+    health-check-type: process
+    command: ./bin/cloudgov-worker.sh
+    services:
+      - prowler-api-db
+      - prowler-api-redis
+    env:
+      DISABLE_COLLECTSTATIC: 1
+      DJANGO_SETTINGS_MODULE: config.django.production
+      DJANGO_LOGGING_FORMATTER: human_readable
+      DJANGO_LOGGING_LEVEL: INFO
+      CLOUDGOV_UAA_ENABLED: true
+      UAA_CLIENT_ID: ((uaa_client_id))
+      UAA_CLIENT_SECRET: ((uaa_client_secret))
+      UAA_AUTH_URL: https://login.fr.cloud.gov/oauth/authorize
+      UAA_TOKEN_URL: https://uaa.fr.cloud.gov/oauth/token
+      UAA_APPROVED_DOMAINS: ((uaa_approved_domains))
+      UAA_LOGIN_REDIRECT_URL: ((uaa_login_redirect_url))
+      SECRET_KEY: ((django_secret_key))
+      DJANGO_SECRETS_ENCRYPTION_KEY: ((django_secrets_encryption_key))
+      DJANGO_TOKEN_SIGNING_KEY: ((django_token_signing_key))
+      DJANGO_TOKEN_VERIFYING_KEY: ((django_token_verifying_key))
+      SENTRY_ENVIRONMENT: cloudgov
+      SENTRY_RELEASE: cloudgov
+
+  - name: prowler-api-beat
+    path: api
+    buildpacks:
+      - python_buildpack
+    memory: 256M
+    disk_quota: 2G
+    instances: 1
+    no-route: true
+    health-check-type: process
+    command: ./bin/cloudgov-beat.sh
+    services:
+      - prowler-api-db
+      - prowler-api-redis
+    env:
+      DISABLE_COLLECTSTATIC: 1
+      DJANGO_SETTINGS_MODULE: config.django.production
+      DJANGO_LOGGING_FORMATTER: human_readable
+      DJANGO_LOGGING_LEVEL: INFO
+      CLOUDGOV_UAA_ENABLED: true
+      UAA_CLIENT_ID: ((uaa_client_id))
+      UAA_CLIENT_SECRET: ((uaa_client_secret))
+      UAA_AUTH_URL: https://login.fr.cloud.gov/oauth/authorize
+      UAA_TOKEN_URL: https://uaa.fr.cloud.gov/oauth/token
+      UAA_APPROVED_DOMAINS: ((uaa_approved_domains))
+      UAA_LOGIN_REDIRECT_URL: ((uaa_login_redirect_url))
+      SECRET_KEY: ((django_secret_key))
+      DJANGO_SECRETS_ENCRYPTION_KEY: ((django_secrets_encryption_key))
+      DJANGO_TOKEN_SIGNING_KEY: ((django_token_signing_key))
+      DJANGO_TOKEN_VERIFYING_KEY: ((django_token_verifying_key))
+      SENTRY_ENVIRONMENT: cloudgov
+      SENTRY_RELEASE: cloudgov

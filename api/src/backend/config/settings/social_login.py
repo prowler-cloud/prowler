@@ -9,6 +9,29 @@ GITHUB_OAUTH_CLIENT_ID = env("SOCIAL_GITHUB_OAUTH_CLIENT_ID", default="")
 GITHUB_OAUTH_CLIENT_SECRET = env("SOCIAL_GITHUB_OAUTH_CLIENT_SECRET", default="")
 GITHUB_OAUTH_CALLBACK_URL = env("SOCIAL_GITHUB_OAUTH_CALLBACK_URL", default="")
 
+CLOUDGOV_UAA_ENABLED = env.bool("CLOUDGOV_UAA_ENABLED", default=False)
+CLOUDGOV_UAA_INSTALLED_APPS = ["uaa_client"] if CLOUDGOV_UAA_ENABLED else []
+CLOUDGOV_UAA_MIDDLEWARE = (
+    ["uaa_client.middleware.UaaRefreshMiddleware"] if CLOUDGOV_UAA_ENABLED else []
+)
+
+if CLOUDGOV_UAA_ENABLED:
+    UAA_CLIENT_ID = env("UAA_CLIENT_ID")
+    UAA_CLIENT_SECRET = env("UAA_CLIENT_SECRET")
+    UAA_AUTH_URL = env(
+        "UAA_AUTH_URL", default="https://login.fr.cloud.gov/oauth/authorize"
+    )
+    UAA_TOKEN_URL = env(
+        "UAA_TOKEN_URL", default="https://uaa.fr.cloud.gov/oauth/token"
+    )
+    UAA_APPROVED_DOMAINS = env.list("UAA_APPROVED_DOMAINS", default=[])
+    AUTHENTICATION_BACKENDS = [
+        "api.cloudgov.authentication.ProwlerUaaBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    ]
+    LOGIN_URL = "uaa_client:login"
+    LOGIN_REDIRECT_URL = env("UAA_LOGIN_REDIRECT_URL", default="/")
+
 # Allauth settings
 ACCOUNT_LOGIN_METHODS = {"email"}  # Use Email / Password authentication
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]

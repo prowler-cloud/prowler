@@ -139,6 +139,7 @@ ai-config.json
 ui/.env*
 api/.env*
 mcp_server/.env*
+cloudgov-vars.yml
 
 # Coverage
 .coverage*
