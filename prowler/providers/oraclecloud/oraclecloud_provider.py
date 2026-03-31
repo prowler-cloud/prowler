@@ -127,6 +127,9 @@ class OraclecloudProvider(Provider):
 
         logger.info("Initializing OCI provider ...")
 
+        # Set initial region if specified
+        single_region = list(region)[0] if len(region) >= 1 else None
+
         # Setup OCI Session
         logger.info("Setting up OCI session ...")
         self._session = self.setup_session(
@@ -138,7 +141,7 @@ class OraclecloudProvider(Provider):
             key_file=key_file,
             key_content=key_content,
             tenancy=tenancy,
-            region=region,
+            region=single_region,
             pass_phrase=pass_phrase,
         )
 
@@ -148,7 +151,7 @@ class OraclecloudProvider(Provider):
         logger.info("Validating OCI credentials ...")
         self._identity = self.set_identity(
             session=self._session,
-            region=region,
+            region=single_region,
             compartment_ids=compartment_ids,
         )
         logger.info("OCI credentials validated")
@@ -408,7 +411,7 @@ class OraclecloudProvider(Provider):
     @staticmethod
     def set_identity(
         session: OCISession,
-        region: set = set(),
+        region: str = None,
         compartment_ids: list = None,
     ) -> OCIIdentityInfo:
         """
@@ -446,14 +449,13 @@ class OraclecloudProvider(Provider):
 
         # Get region from config or use provided region
         if not region:
-            region = set([session.config.get("region", "us-ashburn-1")])
+            region = session.config.get("region", "us-ashburn-1")
 
         # Validate region
-        invalid_regions = [r not in OCI_REGIONS for r in region]
-        if any(invalid_regions):
+        if region not in OCI_REGIONS:
             raise OCIInvalidRegionError(
                 file=pathlib.Path(__file__).name,
-                message=f"Invalid regions: {invalid_regions}",
+                message=f"Invalid region: {region}",
             )
 
         # Validate credentials by calling OCI Identity service
@@ -500,9 +502,9 @@ class OraclecloudProvider(Provider):
             tenancy_id=tenancy_id,
             tenancy_name=tenancy_name,
             user_id=user_id,
-            region=list(region)[0],
+            region=region,
             profile=session.profile,
-            audited_regions= region if region else set(),
+            audited_regions=set([region]) if region else set(),
             audited_compartments=compartment_ids if compartment_ids else [],
         )
 
@@ -577,9 +579,6 @@ class OraclecloudProvider(Provider):
                             is_home_region=region_sub.is_home_region,
                         )
                     )
-                    if region_sub.is_home_region:
-                        self._identity.region.add(region_sub.region_name)
-
             logger.info(f"Found {len(regions)} subscribed regions")
         except Exception as error:
             logger.warning(

@@ -61,7 +61,6 @@ class Identity(OCIService):
             regional_client: Regional OCI client
         """
         try:
-            # Identity is a global service, use home region
             if regional_client.region not in [region.key for region in self.provider.regions]:
                 return
 
