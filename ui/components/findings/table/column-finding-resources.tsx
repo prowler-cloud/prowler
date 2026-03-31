@@ -201,16 +201,7 @@ export function getColumnFindingResources({
         const rawStatus = row.original.status;
         const status =
           rawStatus === "MUTED" ? "FAIL" : (rawStatus as FindingStatus);
-        return (
-          <div className="flex flex-col gap-0.5">
-            <StatusFindingBadge status={status} />
-            {row.original.isMuted && (
-              <span className="text-text-neutral-tertiary text-xs font-medium">
-                Muted
-              </span>
-            )}
-          </div>
-        );
+        return <StatusFindingBadge status={status} />;
       },
       enableSorting: false,
     },

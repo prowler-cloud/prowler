@@ -208,34 +208,7 @@ function renderStatusCell(resource: FindingResourceRow) {
 // Fix 4: Muted resource rows must show a visible "Muted" indicator
 // ---------------------------------------------------------------------------
 
-describe("column-finding-resources — Fix 4: Muted indicator in resource rows", () => {
-  it("should show a 'Muted' text indicator when isMuted is true", () => {
-    // Given
-    const mutedResource = makeResource({
-      isMuted: true,
-      status: "MUTED",
-      mutedReason: "Test mute rule",
-    });
-
-    // When
-    renderStatusCell(mutedResource);
-
-    // Then — a visible "Muted" label should appear
-    expect(screen.getByText(/muted/i)).toBeInTheDocument();
-  });
-
-  it("should NOT show a 'Muted' indicator when isMuted is false", () => {
-    // Given
-    const activeResource = makeResource({ isMuted: false, status: "FAIL" });
-
-    // When
-    renderStatusCell(activeResource);
-
-    // Then — no "Muted" text should appear in the status cell
-    const mutedText = screen.queryByText(/^muted$/i);
-    expect(mutedText).toBeNull();
-  });
-
+describe("column-finding-resources — status cell rendering", () => {
   it("should show 'FAIL' status badge for non-muted resources", () => {
     // Given
     const activeResource = makeResource({ isMuted: false, status: "FAIL" });
@@ -248,15 +221,15 @@ describe("column-finding-resources — Fix 4: Muted indicator in resource rows",
     expect(screen.getByTestId("status-badge")).toHaveTextContent("FAIL");
   });
 
-  it("should show FAIL status badge alongside Muted indicator for muted resources", () => {
-    // Given — muted resources still show FAIL status (MUTED → FAIL conversion)
+  it("should convert MUTED status to FAIL for display", () => {
+    // Given — muted resources show FAIL badge (MUTED → FAIL conversion)
     const mutedResource = makeResource({ isMuted: true, status: "MUTED" });
 
     // When
     renderStatusCell(mutedResource);
 
-    // Then — both FAIL badge and Muted indicator should appear
+    // Then
     expect(screen.getByTestId("status-badge")).toBeInTheDocument();
-    expect(screen.getByText(/muted/i)).toBeInTheDocument();
+    expect(screen.getByTestId("status-badge")).toHaveTextContent("FAIL");
   });
 });
