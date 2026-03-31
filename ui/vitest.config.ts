@@ -11,6 +11,22 @@ const aliases = {
   "@stripe/stripe-js": path.resolve(__dirname, "./__mocks__/stripe-js.ts"),
 };
 
+// Aliases for the browser project — next-auth is server-only and must be
+// stubbed when Vite resolves imports inside Chromium.
+// ORDER MATTERS: Vite's alias plugin does prefix matching and picks the first
+// hit, so sub-paths (next-auth/react, next-auth/jwt, …) must appear before
+// the bare "next-auth" entry, otherwise "next-auth" would catch them all.
+const browserAliases = {
+  ...aliases,
+  "next-auth/providers/credentials": path.resolve(
+    __dirname,
+    "./__mocks__/next-auth-providers-credentials.ts",
+  ),
+  "next-auth/react": path.resolve(__dirname, "./__mocks__/next-auth-react.ts"),
+  "next-auth/jwt": path.resolve(__dirname, "./__mocks__/next-auth-jwt.ts"),
+  "next-auth": path.resolve(__dirname, "./__mocks__/next-auth.ts"),
+};
+
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -37,6 +53,9 @@ export default defineConfig({
       },
       {
         extends: true,
+        resolve: {
+          alias: browserAliases,
+        },
         define: {
           "process.env.NEXT_PUBLIC_API_BASE_URL": JSON.stringify(
             "https://some-api-server/api/v1",
