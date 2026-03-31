@@ -34,12 +34,13 @@ export const NotificationIndicator = ({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div
-            className="flex w-2 shrink-0 cursor-pointer items-center justify-center"
+          <button
+            type="button"
+            className="flex w-4 shrink-0 cursor-pointer items-center justify-center bg-transparent p-0"
             onClick={(e) => e.stopPropagation()}
           >
             <MutedIcon className="text-bg-data-muted size-2" />
-          </div>
+          </button>
         </TooltipTrigger>
         <TooltipContent
           onClick={(e) => e.stopPropagation()}
