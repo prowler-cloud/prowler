@@ -34,7 +34,7 @@ class githubactions_workflow_security_scan(Check):
                         "CheckType": [],
                         "ServiceName": "githubactions",
                         "SubServiceName": "",
-                        "ResourceIdTemplate": "github:user-id:repository/repository-name",
+                        "ResourceIdTemplate": "",
                         "Severity": f.severity,
                         "ResourceType": "GitHubActionsWorkflow",
                         "ResourceGroup": "devops",
@@ -50,7 +50,7 @@ class githubactions_workflow_security_scan(Check):
                             },
                             "Recommendation": {
                                 "Text": f"Review the zizmor documentation for {f.ident}",
-                                "Url": f"https://hub.prowler.com/checks/{f.finding_id}",
+                                "Url": f"https://hub.prowler.com/check/{f.finding_id}",
                             },
                         },
                         "Categories": ["software-supply-chain"],

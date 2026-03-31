@@ -5,7 +5,7 @@
   "CheckType": [],
   "ServiceName": "githubactions",
   "SubServiceName": "",
-  "ResourceIdTemplate": "github:user-id:repository/repository-name",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "GitHubActionsWorkflow",
   "ResourceGroup": "devops",

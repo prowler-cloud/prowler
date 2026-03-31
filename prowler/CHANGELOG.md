@@ -19,7 +19,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CISA SCuBA Google Workspace Baselines compliance [(#10466)](https://github.com/prowler-cloud/prowler/pull/10466)
 - CIS Google Workspace Foundations Benchmark v1.3.0 compliance [(#10462)](https://github.com/prowler-cloud/prowler/pull/10462)
 - `entra_conditional_access_policy_device_registration_mfa_required` check and `entra_intune_enrollment_sign_in_frequency_every_time` enhancement for M365 provider [(#10222)](https://github.com/prowler-cloud/prowler/pull/10222)
-- GitHub Actions service for scanning workflow security issues using zizmor [(#9182)](https://github.com/prowler-cloud/prowler/pull/9182)
+- GitHub Actions service for scanning workflow security issues using zizmor
 
 ### 🔄 Changed
 
