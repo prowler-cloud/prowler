@@ -113,18 +113,15 @@ class BaseTenantViewset(BaseViewSet):
             if request is not None:
                 request.db_alias = self.db_alias
 
-            with (
-                transaction.atomic(using=self.db_alias),
-                transaction.atomic(using=MainRouter.admin_db),
-            ):
-                tenant = super().dispatch(request, *args, **kwargs)
-                if (
-                    request.method == "POST"
-                    and isinstance(tenant, Response)
-                    and tenant.status_code == 201
-                ):
-                    self._create_admin_role(tenant.data["id"])
-                return tenant
+            if request.method == "POST":
+                with transaction.atomic(using=MainRouter.admin_db):
+                    tenant = super().dispatch(request, *args, **kwargs)
+                    if isinstance(tenant, Response) and tenant.status_code == 201:
+                        self._create_admin_role(tenant.data["id"])
+                    return tenant
+            else:
+                with transaction.atomic(using=self.db_alias):
+                    return super().dispatch(request, *args, **kwargs)
         finally:
             if alias_token is not None:
                 reset_read_db_alias(alias_token)
