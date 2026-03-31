@@ -581,6 +581,9 @@ class OraclecloudProvider(Provider):
                             is_home_region=region_sub.is_home_region,
                         )
                     )
+                    if region_sub.is_home_region:
+                        self._identity.region.add(region_sub.region_name)
+
             logger.info(f"Found {len(regions)} subscribed regions")
         except Exception as error:
             logger.warning(
