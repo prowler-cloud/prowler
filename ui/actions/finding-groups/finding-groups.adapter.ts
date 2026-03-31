@@ -1,11 +1,11 @@
-import {
+import type {
   FindingGroupRow,
   FindingResourceRow,
-  FINDINGS_ROW_TYPE,
   FindingStatus,
   ProviderType,
   Severity,
 } from "@/types";
+import { FINDINGS_ROW_TYPE } from "@/types";
 
 /**
  * API response shape for a finding group (JSON:API).
@@ -43,13 +43,19 @@ interface FindingGroupApiItem {
  * Transforms the API response for finding groups into FindingGroupRow[].
  */
 export function adaptFindingGroupsResponse(
-  apiResponse: any,
+  apiResponse: unknown,
 ): FindingGroupRow[] {
-  if (!apiResponse?.data || !Array.isArray(apiResponse.data)) {
+  if (
+    !apiResponse ||
+    typeof apiResponse !== "object" ||
+    !("data" in apiResponse) ||
+    !Array.isArray((apiResponse as { data: unknown }).data)
+  ) {
     return [];
   }
 
-  return apiResponse.data.map((item: FindingGroupApiItem) => ({
+  const data = (apiResponse as { data: FindingGroupApiItem[] }).data;
+  return data.map((item) => ({
     id: item.id,
     rowType: FINDINGS_ROW_TYPE.GROUP,
     checkId: item.attributes.check_id,
@@ -109,14 +115,20 @@ interface FindingGroupResourceApiItem {
  * into FindingResourceRow[].
  */
 export function adaptFindingGroupResourcesResponse(
-  apiResponse: any,
+  apiResponse: unknown,
   checkId: string,
 ): FindingResourceRow[] {
-  if (!apiResponse?.data || !Array.isArray(apiResponse.data)) {
+  if (
+    !apiResponse ||
+    typeof apiResponse !== "object" ||
+    !("data" in apiResponse) ||
+    !Array.isArray((apiResponse as { data: unknown }).data)
+  ) {
     return [];
   }
 
-  return apiResponse.data.map((item: FindingGroupResourceApiItem) => ({
+  const data = (apiResponse as { data: FindingGroupResourceApiItem[] }).data;
+  return data.map((item) => ({
     id: item.id,
     rowType: FINDINGS_ROW_TYPE.RESOURCE,
     findingId: item.id,

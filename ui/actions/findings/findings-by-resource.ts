@@ -127,6 +127,10 @@ function createResourceFindingResolutionUrl({
 
   appendSanitizedProviderTypeFilters(url, filters);
 
+  // Hardcoded FAIL filter AFTER appendSanitizedProviderTypeFilters — .set()
+  // guarantees this wins even if the caller passes filter[status] in filters.
+  url.searchParams.set("filter[status]", "FAIL");
+
   return url;
 }
 

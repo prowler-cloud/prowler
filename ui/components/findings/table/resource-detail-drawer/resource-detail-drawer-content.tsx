@@ -65,6 +65,11 @@ import { getRegionFlag } from "@/lib/region-flags";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
+
+/** Strip markdown code fences (```lang ... ```) so CodeSnippet shows clean code. */
+function stripCodeFences(code: string): string {
+  return code.replace(/^```\w*\n?/, "").replace(/\n?```\s*$/, "").trim();
+}
 import { NotificationIndicator } from "../notification-indicator";
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
@@ -200,7 +205,7 @@ export function ResourceDetailDrawerContent({
                 return icon ? (
                   <Tooltip key={framework}>
                     <TooltipTrigger asChild>
-                      <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
+                      <div className="border-default-200 bg-background flex size-7 shrink-0 items-center justify-center rounded-md border p-0.5">
                         <Image
                           src={icon}
                           alt={framework}
@@ -215,7 +220,7 @@ export function ResourceDetailDrawerContent({
                 ) : (
                   <Tooltip key={framework}>
                     <TooltipTrigger asChild>
-                      <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
+                      <span className="text-text-neutral-secondary border-default-200 bg-background inline-flex h-7 shrink-0 items-center rounded-md border px-1.5 text-xs">
                         {framework}
                       </span>
                     </TooltipTrigger>
@@ -382,16 +387,16 @@ export function ResourceDetailDrawerContent({
             {(checkMeta.risk || checkMeta.description || f?.statusExtended) && (
               <Card variant="inner">
                 {checkMeta.risk && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
+                  <div className="border-border-error-primary bg-bg-fail-secondary flex flex-col gap-1 rounded-md border p-3">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
                       Risk:
                     </span>
                     <MarkdownContainer>{checkMeta.risk}</MarkdownContainer>
                   </div>
                 )}
                 {checkMeta.description && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
+                  <div className="border-default-200 flex flex-col gap-1 border-b pb-4">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
                       Description:
                     </span>
                     <MarkdownContainer>
@@ -401,7 +406,7 @@ export function ResourceDetailDrawerContent({
                 )}
                 {f?.statusExtended && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
                       Status Extended:
                     </span>
                     <p className="text-text-neutral-primary text-sm">
@@ -448,7 +453,7 @@ export function ResourceDetailDrawerContent({
                       CLI Command:
                     </span>
                     <CodeSnippet
-                      value={`$ ${checkMeta.remediation.code.cli}`}
+                      value={`$ ${stripCodeFences(checkMeta.remediation.code.cli)}`}
                       multiline
                       transparent
                       className="max-w-full text-sm"
@@ -459,10 +464,10 @@ export function ResourceDetailDrawerContent({
                 {checkMeta.remediation.code.terraform && (
                   <div className="flex flex-col gap-1">
                     <span className="text-text-neutral-secondary text-xs">
-                      Terraform Command:
+                      Terraform:
                     </span>
                     <CodeSnippet
-                      value={`$ ${checkMeta.remediation.code.terraform}`}
+                      value={stripCodeFences(checkMeta.remediation.code.terraform)}
                       multiline
                       transparent
                       className="max-w-full text-sm"
@@ -473,10 +478,10 @@ export function ResourceDetailDrawerContent({
                 {checkMeta.remediation.code.nativeiac && (
                   <div className="flex flex-col gap-1">
                     <span className="text-text-neutral-secondary text-xs">
-                      CloudFormation Command:
+                      CloudFormation:
                     </span>
                     <CodeSnippet
-                      value={`$ ${checkMeta.remediation.code.nativeiac}`}
+                      value={stripCodeFences(checkMeta.remediation.code.nativeiac)}
                       multiline
                       transparent
                       className="max-w-full text-sm"
@@ -526,9 +531,17 @@ export function ResourceDetailDrawerContent({
                   <span className="text-text-neutral-secondary text-xs">
                     Categories:
                   </span>
-                  <p className="text-text-neutral-primary text-sm">
-                    {checkMeta.categories.join(", ")}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {checkMeta.categories.map((category) => (
+                      <Badge
+                        key={category}
+                        variant="outline"
+                        className="text-xs capitalize"
+                      >
+                        {category}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               </Card>
             )}
@@ -684,13 +697,13 @@ export function ResourceDetailDrawerContent({
       {/* Lighthouse AI button */}
       <a
         href={`/lighthouse?${new URLSearchParams({ prompt: `Analyze this security finding and provide remediation guidance:\n\n- **Finding**: ${checkMeta.checkTitle}\n- **Check ID**: ${checkMeta.checkId}\n- **Severity**: ${f?.severity ?? "unknown"}\n- **Status**: ${f?.status ?? "unknown"}${f?.statusExtended ? `\n- **Detail**: ${f.statusExtended}` : ""}${checkMeta.risk ? `\n- **Risk**: ${checkMeta.risk}` : ""}` }).toString()}`}
-        className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-950 transition-opacity hover:opacity-90"
+        className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 transition-opacity hover:opacity-90"
         style={{
           background: "var(--gradient-lighthouse)",
         }}
       >
         <CircleArrowRight className="size-5" />
-        View This Finding With Lighthouse AI
+        Analyze This Finding With Lighthouse AI
       </a>
     </div>
   );

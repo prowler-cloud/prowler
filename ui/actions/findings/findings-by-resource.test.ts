@@ -269,6 +269,85 @@ describe("resolveFindingIdsByVisibleGroupResources", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Blocker 3: Muting a group mutes ALL historical findings, not just FAIL ones
+//
+// The fix: resolveFindingIds must include filter[status]=FAIL so only active
+// (failing) findings are resolved for mute, not historical/passing ones.
+// ---------------------------------------------------------------------------
+
+describe("resolveFindingIds — Blocker 3: only resolve FAIL findings for mute", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+  });
+
+  it("should include filter[status]=FAIL in the findings resolution URL for mute", async () => {
+    // Given
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+    handleApiResponseMock.mockResolvedValue({
+      data: [{ id: "finding-1" }, { id: "finding-2" }],
+    });
+
+    // When
+    await resolveFindingIds({
+      checkId: "check-1",
+      resourceUids: ["resource-1", "resource-2"],
+    });
+
+    // Then — the URL must filter to only FAIL status findings
+    const calledUrl = new URL(fetchMock.mock.calls[0][0]);
+    expect(calledUrl.searchParams.get("filter[status]")).toBe("FAIL");
+  });
+
+  it("should include filter[status]=FAIL even when date or scan filters are active", async () => {
+    // Given
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+    handleApiResponseMock.mockResolvedValue({
+      data: [{ id: "finding-1" }],
+    });
+
+    // When
+    await resolveFindingIds({
+      checkId: "check-1",
+      resourceUids: ["resource-1"],
+      hasDateOrScanFilter: true,
+      filters: {
+        "filter[inserted_at__gte]": "2026-01-01",
+      },
+    });
+
+    // Then
+    const calledUrl = new URL(fetchMock.mock.calls[0][0]);
+    expect(calledUrl.pathname).toBe("/api/v1/findings");
+    expect(calledUrl.searchParams.get("filter[status]")).toBe("FAIL");
+  });
+
+  it("should override caller filter[status] with FAIL — no duplicate params", async () => {
+    // Given — caller passes filter[status]=PASS via filters dict
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+    handleApiResponseMock.mockResolvedValue({
+      data: [{ id: "finding-1" }],
+    });
+
+    // When
+    await resolveFindingIds({
+      checkId: "check-1",
+      resourceUids: ["resource-1"],
+      filters: {
+        "filter[status]": "PASS",
+      },
+    });
+
+    // Then — hardcoded FAIL must win, exactly 1 value
+    const calledUrl = new URL(fetchMock.mock.calls[0][0] as string);
+    const statusValues = calledUrl.searchParams.getAll("filter[status]");
+    expect(statusValues).toHaveLength(1);
+    expect(statusValues[0]).toBe("FAIL");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Fix 4: Unbounded page[size] cap
 //
 // The bug: createResourceFindingResolutionUrl sets page[size]=resourceUids.length
