@@ -1,4 +1,4 @@
-SENSITIVE_ARGUMENTS = frozenset({"--atlas-private-key", "--atlas-public-key"})
+SENSITIVE_ARGUMENTS = frozenset({"--atlas-private-key"})
 
 
 def init_parser(self):

@@ -95,10 +95,7 @@ class TestGetSensitiveArguments:
         assert "--shodan" in result
         assert "--personal-access-token" in result
         assert "--oauth-app-token" in result
-        assert "--github-app-key" in result
-        assert "--github-app-key-path" in result
         assert "--atlas-private-key" in result
-        assert "--atlas-public-key" in result
         assert "--nhn-password" in result
         assert "--os-password" in result
 

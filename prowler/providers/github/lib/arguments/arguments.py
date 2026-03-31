@@ -1,11 +1,4 @@
-SENSITIVE_ARGUMENTS = frozenset(
-    {
-        "--personal-access-token",
-        "--oauth-app-token",
-        "--github-app-key",
-        "--github-app-key-path",
-    }
-)
+SENSITIVE_ARGUMENTS = frozenset({"--personal-access-token", "--oauth-app-token"})
 
 
 def init_parser(self):
