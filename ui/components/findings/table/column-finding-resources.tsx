@@ -101,11 +101,6 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
       >
         <ActionDropdown ariaLabel="Resource actions">
           <ActionDropdownItem
-            icon={<JiraIcon size={20} />}
-            label="Send to Jira"
-            onSelect={() => setIsJiraModalOpen(true)}
-          />
-          <ActionDropdownItem
             icon={
               resource.isMuted ? (
                 <VolumeOff className="size-5" />
@@ -118,6 +113,11 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
             label={isResolving ? "Resolving..." : getMuteLabel()}
             disabled={resource.isMuted || isResolving}
             onSelect={handleMuteClick}
+          />
+          <ActionDropdownItem
+            icon={<JiraIcon size={20} />}
+            label="Send to Jira"
+            onSelect={() => setIsJiraModalOpen(true)}
           />
         </ActionDropdown>
       </div>
