@@ -200,7 +200,7 @@ export function ResourceDetailDrawerContent({
                 return icon ? (
                   <Tooltip key={framework}>
                     <TooltipTrigger asChild>
-                      <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
+                      <div className="border-default-200 bg-background flex size-7 shrink-0 items-center justify-center rounded-md border p-0.5">
                         <Image
                           src={icon}
                           alt={framework}
@@ -215,7 +215,7 @@ export function ResourceDetailDrawerContent({
                 ) : (
                   <Tooltip key={framework}>
                     <TooltipTrigger asChild>
-                      <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
+                      <span className="text-text-neutral-secondary border-default-200 bg-background inline-flex h-7 shrink-0 items-center rounded-md border px-1.5 text-xs">
                         {framework}
                       </span>
                     </TooltipTrigger>
@@ -684,7 +684,7 @@ export function ResourceDetailDrawerContent({
       {/* Lighthouse AI button */}
       <a
         href={`/lighthouse?${new URLSearchParams({ prompt: `Analyze this security finding and provide remediation guidance:\n\n- **Finding**: ${checkMeta.checkTitle}\n- **Check ID**: ${checkMeta.checkId}\n- **Severity**: ${f?.severity ?? "unknown"}\n- **Status**: ${f?.status ?? "unknown"}${f?.statusExtended ? `\n- **Detail**: ${f.statusExtended}` : ""}${checkMeta.risk ? `\n- **Risk**: ${checkMeta.risk}` : ""}` }).toString()}`}
-        className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-950 transition-opacity hover:opacity-90"
+        className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 transition-opacity hover:opacity-90"
         style={{
           background: "var(--gradient-lighthouse)",
         }}

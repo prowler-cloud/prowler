@@ -35,11 +35,19 @@ export function FloatingMuteButton({
   const handleClick = async () => {
     if (onBeforeOpen) {
       setIsResolving(true);
-      const ids = await onBeforeOpen();
-      setResolvedIds(ids);
-      setIsResolving(false);
-      if (ids.length > 0) {
-        setIsModalOpen(true);
+      try {
+        const ids = await onBeforeOpen();
+        setResolvedIds(ids);
+        if (ids.length > 0) {
+          setIsModalOpen(true);
+        }
+      } catch (error) {
+        console.error(
+          "FloatingMuteButton: failed to resolve finding IDs",
+          error,
+        );
+      } finally {
+        setIsResolving(false);
       }
     } else {
       setIsModalOpen(true);
