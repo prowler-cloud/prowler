@@ -62,7 +62,7 @@ class Identity(OCIService):
         """
         try:
             # Identity is a global service, use home region
-            if regional_client.region not in self.provider.identity.region:
+            if regional_client.region not in [region.key for region in self.provider.regions]:
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -312,7 +312,8 @@ class Identity(OCIService):
     def __list_groups__(self, regional_client):
         """List all IAM groups."""
         try:
-            if regional_client.region not in self.provider.identity.region:
+            if regional_client.region not in [region.key for region in self.provider.regions]:
+                logger.info([region.key for region in self.provider.regions])
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -355,7 +356,7 @@ class Identity(OCIService):
     def __list_policies__(self, regional_client):
         """List all IAM policies."""
         try:
-            if regional_client.region not in self.provider.identity.region:
+            if regional_client.region not in [region.key for region in self.provider.regions]:
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -400,7 +401,7 @@ class Identity(OCIService):
         """List all dynamic groups in the tenancy."""
         try:
             # Dynamic groups are only in the home region
-            if regional_client.region not in self.provider.identity.region:
+            if regional_client.region not in [region.key for region in self.provider.regions]:
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -448,7 +449,7 @@ class Identity(OCIService):
         """List all identity domains."""
         try:
             # Domains are only in the home region
-            if regional_client.region not in self.provider.identity.region:
+            if regional_client.region not in [region.key for region in self.provider.regions]:
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -494,7 +495,7 @@ class Identity(OCIService):
         """List password policies for all identity domains."""
         try:
             # Password policies are only in the home region
-            if regional_client.region not in self.provider.identity.region:
+            if regional_client.region not in [region.key for region in self.provider.regions]:
                 return
 
             logger.info("Identity - Listing Domain Password Policies...")
@@ -551,7 +552,7 @@ class Identity(OCIService):
     def __get_password_policy__(self, regional_client):
         """Get the password policy for the tenancy."""
         try:
-            if regional_client.region not in self.provider.identity.region:
+            if regional_client.region not in [region.key for region in self.provider.regions]:
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -579,7 +580,7 @@ class Identity(OCIService):
         """Search for resources in the root compartment using OCI Resource Search."""
         try:
             # Search is a global service, use home region
-            if regional_client.region not in self.provider.identity.region:
+            if regional_client.region not in [region.key for region in self.provider.regions]:
                 return
 
             logger.info("Identity - Searching for resources in root compartment...")
@@ -627,7 +628,7 @@ class Identity(OCIService):
         """Search for active non-root compartments using OCI Resource Search."""
         try:
             # Search is a global service, use home region
-            if regional_client.region not in self.provider.identity.region:
+            if regional_client.region not in [region.key for region in self.provider.regions]:
                 return
 
             logger.info("Identity - Searching for active non-root compartments...")
