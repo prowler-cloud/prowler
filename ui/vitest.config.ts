@@ -11,21 +11,6 @@ const aliases = {
   "@stripe/stripe-js": path.resolve(__dirname, "./__mocks__/stripe-js.ts"),
 };
 
-// Aliases for the browser project — next-auth is server-only and must be
-// stubbed when Vite resolves imports inside Chromium.
-// ORDER MATTERS: Vite's alias plugin does prefix matching and picks the first
-// hit, so sub-paths (next-auth/react, next-auth/jwt, …) must appear before
-// the bare "next-auth" entry, otherwise "next-auth" would catch them all.
-const browserAliases = {
-  ...aliases,
-  "next-auth/providers/credentials": path.resolve(
-    __dirname,
-    "./__mocks__/next-auth-providers-credentials.ts",
-  ),
-  "next-auth/react": path.resolve(__dirname, "./__mocks__/next-auth-react.ts"),
-  "next-auth/jwt": path.resolve(__dirname, "./__mocks__/next-auth-jwt.ts"),
-  "next-auth": path.resolve(__dirname, "./__mocks__/next-auth.ts"),
-};
 
 export default defineConfig({
   plugins: [react()],
@@ -53,9 +38,6 @@ export default defineConfig({
       },
       {
         extends: true,
-        resolve: {
-          alias: browserAliases,
-        },
         define: {
           "process.env.NEXT_PUBLIC_API_BASE_URL": JSON.stringify(
             "https://some-api-server/api/v1",
@@ -93,7 +75,61 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ["vitest-browser-react", "next-auth/react", "@sentry/nextjs"],
+    // Pre-bundle all deps the browser project needs so Vite doesn't discover
+    // them mid-test and trigger a reload that breaks dynamic imports.
+    include: [
+      "vitest-browser-react",
+      "next-auth/react",
+      "@sentry/nextjs",
+      "class-variance-authority",
+      "lucide-react",
+      "vaul",
+      "clsx",
+      "tailwind-merge",
+      "zod",
+      "react-hook-form",
+      "@hookform/resolvers/zod",
+      "date-fns",
+      "cmdk",
+      "jwt-decode",
+      "next-auth",
+      "next-auth/providers/credentials",
+      "next/link",
+      "next/navigation",
+      "next-themes",
+      "zustand",
+      "zustand/middleware",
+      "js-yaml",
+      "@iconify/react",
+      "@radix-ui/react-alert-dialog",
+      "@radix-ui/react-avatar",
+      "@radix-ui/react-checkbox",
+      "@radix-ui/react-collapsible",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-icons",
+      "@radix-ui/react-label",
+      "@radix-ui/react-popover",
+      "@radix-ui/react-scroll-area",
+      "@radix-ui/react-select",
+      "@radix-ui/react-separator",
+      "@radix-ui/react-slot",
+      "@radix-ui/react-tabs",
+      "@radix-ui/react-toast",
+      "@radix-ui/react-tooltip",
+      "@heroui/accordion",
+      "@heroui/breadcrumbs",
+      "@heroui/card",
+      "@heroui/divider",
+      "@heroui/input",
+      "@heroui/radio",
+      "@heroui/switch",
+      "@heroui/theme",
+      "@heroui/tooltip",
+      "@react-aria/ssr",
+      "@react-aria/visually-hidden",
+      "@extractus/feed-extractor",
+    ],
   },
   resolve: {
     alias: aliases,
