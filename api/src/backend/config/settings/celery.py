@@ -1,5 +1,6 @@
 from urllib.parse import quote
 
+from config.cloudfoundry import parse_environment_json, get_redis_settings_from_vcap_services
 from config.env import env
 
 _VALID_SCHEMES = {"redis", "rediss"}
@@ -32,12 +33,28 @@ def _build_celery_broker_url(
     return f"{scheme}://{auth}{host}:{port}/{db}"
 
 
-VALKEY_SCHEME = env("VALKEY_SCHEME", default="redis")
-VALKEY_USERNAME = env("VALKEY_USERNAME", default="")
-VALKEY_PASSWORD = env("VALKEY_PASSWORD", default="")
-VALKEY_HOST = env("VALKEY_HOST", default="valkey")
-VALKEY_PORT = env("VALKEY_PORT", default="6379")
-VALKEY_DB = env("VALKEY_DB", default="0")
+cloudfoundry_redis_settings = get_redis_settings_from_vcap_services(
+    parse_environment_json(env.str("VCAP_SERVICES", default=""))
+)
+
+VALKEY_SCHEME = (cloudfoundry_redis_settings or {}).get(
+    "scheme", env("VALKEY_SCHEME", default="redis")
+)
+VALKEY_USERNAME = (cloudfoundry_redis_settings or {}).get(
+    "username", env("VALKEY_USERNAME", default="")
+)
+VALKEY_PASSWORD = (cloudfoundry_redis_settings or {}).get(
+    "password", env("VALKEY_PASSWORD", default="")
+)
+VALKEY_HOST = (cloudfoundry_redis_settings or {}).get(
+    "host", env("VALKEY_HOST", default="valkey")
+)
+VALKEY_PORT = (cloudfoundry_redis_settings or {}).get(
+    "port", env("VALKEY_PORT", default="6379")
+)
+VALKEY_DB = (cloudfoundry_redis_settings or {}).get(
+    "db", env("VALKEY_DB", default="0")
+)
 
 CELERY_BROKER_URL = _build_celery_broker_url(
     VALKEY_SCHEME,

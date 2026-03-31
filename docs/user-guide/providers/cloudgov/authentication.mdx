@@ -1,0 +1,90 @@
+# Configure Cloud.gov Authentication
+
+Prowler API now supports Cloud.gov authentication through `cg-django-uaa`, the Django integration maintained for Cloud.gov UAA.
+
+## Authentication Model
+
+The Cloud.gov authentication flow is configured with the following behavior:
+
+* `uaa_client` is enabled only when `CLOUDGOV_UAA_ENABLED=true`
+* Django routes `/auth/login` and `/auth/callback` are exposed through `uaa_client.urls`
+* `uaa_client.middleware.UaaRefreshMiddleware` refreshes short-lived Cloud.gov access tokens for authenticated browser sessions
+* A custom backend, `api.cloudgov.authentication.ProwlerUaaBackend`, subclasses `uaa_client.authentication.UaaBackend`
+
+## Why a Custom UAA Backend Is Required
+
+The default `django-uaa` backend assumes a standard Django user model and only auto-creates users when the email domain is approved. Prowler requires additional bootstrap actions when a new user is created:
+
+* Create the initial tenant
+* Create an owner membership
+* Create the tenant-scoped `admin` role
+* Link the new user to that role
+
+To keep that behavior consistent with existing social login providers, the repository now uses a shared helper:
+
+* `api.account_bootstrap.provision_default_tenant_access`
+
+That helper is used by both:
+
+* `ProwlerSocialAccountAdapter` for social logins
+* `ProwlerUaaBackend` for Cloud.gov UAA logins
+
+## Required Environment Variables
+
+Set these variables for Cloud.gov authentication:
+
+```env
+CLOUDGOV_UAA_ENABLED=True
+UAA_CLIENT_ID=<cloud.gov service key client_id>
+UAA_CLIENT_SECRET=<cloud.gov service key client_secret>
+UAA_AUTH_URL=https://login.fr.cloud.gov/oauth/authorize
+UAA_TOKEN_URL=https://uaa.fr.cloud.gov/oauth/token
+UAA_APPROVED_DOMAINS=gsa.gov
+UAA_LOGIN_REDIRECT_URL=/
+```
+
+`UAA_APPROVED_DOMAINS` controls which email domains may be auto-created on first login. If this value is empty, users must already exist in the database before authenticating.
+
+## Required Redirect URIs
+
+`django-uaa` builds the callback URL from the Django route named `uaa_client:callback`, which resolves to:
+
+```text
+/auth/callback
+```
+
+Register at least these redirect URIs in the Cloud.gov identity-provider service key:
+
+* `https://<api-route>/auth/callback`
+* `https://<api-route>/`
+
+For the route used in the sample manifest, those values are:
+
+* `https://prowler-api-gsa-10x-prototyping.app.cloud.gov/auth/callback`
+* `https://prowler-api-gsa-10x-prototyping.app.cloud.gov/`
+
+## Login Flow
+
+The browser-based authentication flow is:
+
+1. Visit `/auth/login`
+2. Redirect to Cloud.gov UAA
+3. Return to `/auth/callback`
+4. Exchange the authorization code for a token
+5. Resolve or create the Django user
+6. Create the default tenant and admin relationship on first login
+
+If something fails in the callback flow, Django renders `uaa_client/login_error.html`, which has been added to the API templates directory.
+
+## Route and Settings Integration
+
+The Cloud.gov implementation also adds deployment-aware behavior:
+
+* `VCAP_APPLICATION` extends `ALLOWED_HOSTS`
+* `VCAP_APPLICATION` extends `CORS_ALLOWED_ORIGINS`
+* `VCAP_SERVICES` supplies PostgreSQL and Redis connection settings
+* PostgreSQL service bindings force `sslmode=require`
+
+## Operational Recommendation
+
+For production environments, keep `UAA_APPROVED_DOMAINS` restricted to the smallest practical set of domains. If broader access control or tenant routing is needed, extend `ProwlerUaaBackend` instead of broadening the approved-domain list indiscriminately.

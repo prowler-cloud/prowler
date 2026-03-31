@@ -42,7 +42,8 @@ dependencies = [
   "gevent (==25.9.1)",
   "werkzeug (==3.1.7)",
   "sqlparse (==0.5.5)",
-  "fonttools (==4.62.1)"
+  "fonttools (==4.62.1)",
+  "cg-django-uaa (>=2.1.9,<3.0.0)"
 ]
 description = "Prowler's API (Django/DRF)"
 license = "Apache-2.0"
