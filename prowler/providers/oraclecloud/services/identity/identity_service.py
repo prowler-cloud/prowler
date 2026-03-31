@@ -405,7 +405,6 @@ class Identity(OCIService):
     def __list_dynamic_groups__(self, regional_client):
         """List all dynamic groups in the tenancy."""
         try:
-            # Dynamic groups are only in the home region
             if regional_client.region not in [
                 region.key for region in self.provider.regions
             ]:
@@ -455,7 +454,6 @@ class Identity(OCIService):
     def __list_domains__(self, regional_client):
         """List all identity domains."""
         try:
-            # Domains are only in the home region
             if regional_client.region not in [
                 region.key for region in self.provider.regions
             ]:
@@ -503,7 +501,6 @@ class Identity(OCIService):
     def __list_domain_password_policies__(self, regional_client):
         """List password policies for all identity domains."""
         try:
-            # Password policies are only in the home region
             if regional_client.region not in [
                 region.key for region in self.provider.regions
             ]:
@@ -592,7 +589,6 @@ class Identity(OCIService):
     def __search_root_compartment_resources__(self, regional_client):
         """Search for resources in the root compartment using OCI Resource Search."""
         try:
-            # Search is a global service, use home region
             if regional_client.region not in [
                 region.key for region in self.provider.regions
             ]:
@@ -642,7 +638,6 @@ class Identity(OCIService):
     def __search_active_non_root_compartments__(self, regional_client):
         """Search for active non-root compartments using OCI Resource Search."""
         try:
-            # Search is a global service, use home region
             if regional_client.region not in [
                 region.key for region in self.provider.regions
             ]:
