@@ -684,7 +684,7 @@ export function ResourceDetailDrawerContent({
       {/* Lighthouse AI button */}
       <a
         href={`/lighthouse?${new URLSearchParams({ prompt: `Analyze this security finding and provide remediation guidance:\n\n- **Finding**: ${checkMeta.checkTitle}\n- **Check ID**: ${checkMeta.checkId}\n- **Severity**: ${f?.severity ?? "unknown"}\n- **Status**: ${f?.status ?? "unknown"}${f?.statusExtended ? `\n- **Detail**: ${f.statusExtended}` : ""}${checkMeta.risk ? `\n- **Risk**: ${checkMeta.risk}` : ""}` }).toString()}`}
-        className="text-foreground flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold transition-opacity hover:opacity-90"
+        className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 transition-opacity hover:opacity-90"
         style={{
           background: "var(--gradient-lighthouse)",
         }}
