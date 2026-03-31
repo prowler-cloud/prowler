@@ -551,6 +551,9 @@ class Identity(OCIService):
     def __get_password_policy__(self, regional_client):
         """Get the password policy for the tenancy."""
         try:
+            if regional_client.region not in self.provider.identity.region:
+                return
+
             identity_client = self.__get_client__(regional_client.region)
 
             logger.info("Identity - Getting Password Policy...")
