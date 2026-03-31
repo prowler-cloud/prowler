@@ -80,13 +80,7 @@ vi.mock("@/components/shadcn", () => {
 });
 
 vi.mock("@/components/shadcn/card/card", () => ({
-  Card: ({
-    children,
-    variant,
-  }: {
-    children: ReactNode;
-    variant?: string;
-  }) => (
+  Card: ({ children, variant }: { children: ReactNode; variant?: string }) => (
     <div data-slot="card" data-variant={variant}>
       {children}
     </div>

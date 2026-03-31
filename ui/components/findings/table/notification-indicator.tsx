@@ -34,32 +34,23 @@ export const NotificationIndicator = ({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div
-            className="flex w-2 shrink-0 cursor-pointer items-center justify-center"
+          <Link
+            href="/mutelist"
+            className="flex w-2 shrink-0 items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
             <MutedIcon className="text-bg-data-muted size-2" />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent onClick={(e) => e.stopPropagation()}>
-          <Link
-            href="/mutelist"
-            onClick={(e) => e.stopPropagation()}
-            className="text-button-tertiary hover:text-button-tertiary-hover flex items-center gap-1 text-xs underline-offset-4"
-          >
-            {/* TODO: always show rule name once the API returns muted_reason in finding-group-resources */}
-            {mutedReason ? (
-              <>
-                <span className="text-text-neutral-primary">Mute rule:</span>
-                <span className="max-w-[150px] truncate">{mutedReason}</span>
-              </>
-            ) : (
-              <>
-                <span className="text-text-neutral-primary">Mute rule:</span>
-                <span>view rules</span>
-              </>
-            )}
           </Link>
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-text-neutral-primary">Mute rule:</span>
+            {mutedReason ? (
+              <span className="max-w-[150px] truncate">{mutedReason}</span>
+            ) : (
+              <span>view rules</span>
+            )}
+          </div>
         </TooltipContent>
       </Tooltip>
     );
