@@ -5,7 +5,7 @@ import api.db_utils
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0085_finding_group_daily_summary_trgm_indexes"),
+        ("api", "0086_attack_paths_cleanup_periodic_task"),
     ]
 
     operations = [
