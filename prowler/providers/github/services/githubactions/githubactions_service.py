@@ -175,9 +175,7 @@ class GithubActions(GithubService):
                     if isinstance(local, dict) and "given_path" in local:
                         return local["given_path"]
 
-            logger.warning(
-                f"Could not extract workflow file from location: {location}"
-            )
+            logger.warning(f"Could not extract workflow file from location: {location}")
             return None
         except Exception as error:
             logger.error(
@@ -221,6 +219,8 @@ class GithubActions(GithubService):
             )
             workflow_url = f"https://github.com/{repo.full_name}/blob/{default_branch}/{workflow_file}"
 
+            ident = finding.get("ident", "unknown")
+
             return GithubActionsWorkflowFinding(
                 repo_id=repo.id,
                 repo_name=repo.name,
@@ -229,7 +229,8 @@ class GithubActions(GithubService):
                 workflow_file=workflow_file,
                 workflow_url=workflow_url,
                 line_range=line_range,
-                finding_id=f"githubactions_{finding.get('ident', 'unknown').replace('-', '_')}",
+                finding_id=f"githubactions_{ident.replace('-', '_')}",
+                ident=ident,
                 description=finding.get(
                     "desc", "Security issue detected in GitHub Actions workflow"
                 ),
@@ -257,6 +258,7 @@ class GithubActionsWorkflowFinding(BaseModel):
     workflow_url: str
     line_range: str
     finding_id: str
+    ident: str
     description: str
     severity: str
     confidence: str

@@ -54,6 +54,7 @@ def _make_finding(
         workflow_url=f"https://github.com/{repo_owner}/{repo_name}/blob/main/{workflow_file}",
         line_range="line 10",
         finding_id="githubactions_template_injection",
+        ident="template-injection",
         description="Template Injection Vulnerability",
         severity="high",
         confidence="High",
@@ -124,6 +125,10 @@ class Test_githubactions_workflow_security_scan:
             assert result[0].status == "PASS"
             assert result[0].resource_name == "repo1"
             assert (
+                result[0].check_metadata.CheckID
+                == "githubactions_workflow_security_scan"
+            )
+            assert (
                 "no GitHub Actions workflow security issues"
                 in result[0].status_extended
             )
@@ -167,6 +172,13 @@ class Test_githubactions_workflow_security_scan:
             assert (
                 "https://github.com/account-name/repo1/blob/main/.github/workflows/ci.yml"
                 in result[0].status_extended
+            )
+            assert (
+                result[0].check_metadata.CheckID == "githubactions_template_injection"
+            )
+            assert (
+                result[0].check_metadata.CheckTitle
+                == "GitHub Actions workflow template-injection detected by zizmor"
             )
             assert result[0].check_metadata.Severity == "high"
             assert result[0].check_metadata.Risk == "Template Injection Vulnerability"
@@ -220,6 +232,7 @@ class Test_githubactions_workflow_security_scan:
             workflow_url="https://github.com/account-name/repo1/blob/main/.github/workflows/ci.yml",
             line_range="line 10",
             finding_id="githubactions_template_injection",
+            ident="template-injection",
             description="Template Injection",
             severity="high",
             confidence="High",
@@ -235,6 +248,7 @@ class Test_githubactions_workflow_security_scan:
             workflow_url="https://github.com/account-name/repo1/blob/main/.github/workflows/deploy.yml",
             line_range="line 5",
             finding_id="githubactions_excessive_permissions",
+            ident="excessive-permissions",
             description="Excessive Permissions",
             severity="medium",
             confidence="Medium",
@@ -277,6 +291,7 @@ class Test_githubactions_workflow_security_scan:
                 r for r in result if r.resource_name == ".github/workflows/deploy.yml"
             )
 
+            assert r1.check_metadata.CheckID == "githubactions_template_injection"
             assert r1.check_metadata.Severity == "high"
             assert r1.check_metadata.Risk == "Template Injection"
             assert (
@@ -284,6 +299,7 @@ class Test_githubactions_workflow_security_scan:
                 in r1.check_metadata.AdditionalURLs
             )
 
+            assert r2.check_metadata.CheckID == "githubactions_excessive_permissions"
             assert r2.check_metadata.Severity == "medium"
             assert r2.check_metadata.Risk == "Excessive Permissions"
             assert (

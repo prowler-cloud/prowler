@@ -1,6 +1,7 @@
+import json
 from typing import List
 
-from prowler.lib.check.models import Check, CheckReportGithub, Severity
+from prowler.lib.check.models import Check, CheckReportGithub
 from prowler.providers.github.services.githubactions.githubactions_client import (
     githubactions_client,
 )
@@ -26,8 +27,40 @@ class githubactions_workflow_security_scan(Check):
                 findings.append(report)
             else:
                 for f in repo_findings:
+                    metadata_dict = {
+                        "Provider": "github",
+                        "CheckID": f.finding_id,
+                        "CheckTitle": f"GitHub Actions workflow {f.ident} detected by zizmor",
+                        "CheckType": [],
+                        "ServiceName": "githubactions",
+                        "SubServiceName": "",
+                        "ResourceIdTemplate": "github:user-id:repository/repository-name",
+                        "Severity": f.severity,
+                        "ResourceType": "GitHubActionsWorkflow",
+                        "ResourceGroup": "devops",
+                        "Description": f.description[:400],
+                        "Risk": f.description[:400],
+                        "RelatedUrl": "",
+                        "Remediation": {
+                            "Code": {
+                                "CLI": "",
+                                "NativeIaC": "",
+                                "Other": "",
+                                "Terraform": "",
+                            },
+                            "Recommendation": {
+                                "Text": f"Review the zizmor documentation for {f.ident}",
+                                "Url": f"https://hub.prowler.com/checks/{f.finding_id}",
+                            },
+                        },
+                        "Categories": ["software-supply-chain"],
+                        "DependsOn": [],
+                        "RelatedTo": [],
+                        "Notes": "",
+                        "AdditionalURLs": [f.url] if f.url else [],
+                    }
                     report = CheckReportGithub(
-                        metadata=self.metadata(),
+                        metadata=json.dumps(metadata_dict),
                         resource=repo,
                         resource_name=f.workflow_file,
                         resource_id=str(f.repo_id),
@@ -41,10 +74,6 @@ class githubactions_workflow_security_scan(Check):
                         f"Details: {f.annotation}. "
                         f"URL: {f.workflow_url}"
                     )
-                    report.check_metadata.Severity = Severity(f.severity)
-                    report.check_metadata.Risk = f.description
-                    if f.url not in report.check_metadata.AdditionalURLs:
-                        report.check_metadata.AdditionalURLs.append(f.url)
                     findings.append(report)
 
         return findings

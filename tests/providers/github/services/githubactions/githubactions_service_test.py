@@ -91,10 +91,13 @@ class TestGithubActionsService:
         repo.full_name = "owner/test-repo"
         repo.owner = "owner"
 
-        result = GithubActions._parse_finding(finding, ".github/workflows/test.yml", location, repo)
+        result = GithubActions._parse_finding(
+            finding, ".github/workflows/test.yml", location, repo
+        )
 
         assert isinstance(result, GithubActionsWorkflowFinding)
         assert result.finding_id == "githubactions_template_injection"
+        assert result.ident == "template-injection"
         assert result.severity == "high"
         assert result.line_range == "line 10"
         assert result.workflow_file == ".github/workflows/test.yml"

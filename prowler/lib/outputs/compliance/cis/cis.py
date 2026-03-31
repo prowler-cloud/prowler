@@ -24,6 +24,8 @@ def get_cis_table(
     fail_count = []
     muted_count = []
     for index, finding in enumerate(findings):
+        if finding.check_metadata.CheckID not in bulk_checks_metadata:
+            continue
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
         for compliance in check_compliances:

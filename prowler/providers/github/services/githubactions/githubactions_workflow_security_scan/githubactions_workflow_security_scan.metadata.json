@@ -2,7 +2,7 @@
   "Provider": "github",
   "CheckID": "githubactions_workflow_security_scan",
   "CheckTitle": "Check GitHub Actions workflows for security issues using zizmor",
-  "CheckType": ["Security"],
+  "CheckType": [],
   "ServiceName": "githubactions",
   "SubServiceName": "",
   "ResourceIdTemplate": "github:user-id:repository/repository-name",
@@ -24,9 +24,13 @@
       "Url": "https://hub.prowler.com/check/githubactions_workflow_security_scan"
     }
   },
-  "Categories": ["security"],
+  "Categories": [
+    "software-supply-chain"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This check requires zizmor to be installed. If zizmor is not available, the check will be skipped gracefully.",
-  "AdditionalURLs": ["https://docs.zizmor.sh/"]
+  "AdditionalURLs": [
+    "https://docs.zizmor.sh/"
+  ]
 }
