@@ -111,6 +111,11 @@ export function useInfiniteResources({
       const totalPages = response?.meta?.pagination?.pages ?? 1;
       const hasMore = page < totalPages;
 
+      // Commit the page number only after a successful (non-aborted) fetch.
+      // This prevents a premature pageRef increment from loadNextPage being
+      // permanently committed if a concurrent abort fires before fetchPage
+      // starts executing.
+      pageRef.current = page;
       hasMoreRef.current = hasMore;
 
       if (append) {
@@ -160,9 +165,11 @@ export function useInfiniteResources({
     )
       return;
 
-    const nextPage = pageRef.current + 1;
-    pageRef.current = nextPage;
-    fetchPage(nextPage, true, currentCheckIdRef.current, signal);
+    // Pass the next page number as an argument without pre-committing
+    // pageRef.current. The fetchPage function commits pageRef.current = page
+    // only after a successful (non-aborted) response, eliminating the race
+    // where a concurrent abort would leave pageRef permanently incremented.
+    fetchPage(pageRef.current + 1, true, currentCheckIdRef.current, signal);
   }
 
   // IntersectionObserver callback
@@ -195,7 +202,6 @@ export function useInfiniteResources({
     const controller = new AbortController();
     controllerRef.current = controller;
 
-    pageRef.current = 1;
     hasMoreRef.current = true;
     isLoadingRef.current = false;
 
