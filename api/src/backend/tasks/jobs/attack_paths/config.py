@@ -63,11 +63,9 @@ INTERNAL_LABELS: list[str] = [
 ]
 
 # Provider isolation properties
-PROVIDER_ID_PROPERTY = "_provider_id"
 PROVIDER_ELEMENT_ID_PROPERTY = "_provider_element_id"
 
 PROVIDER_ISOLATION_PROPERTIES: list[str] = [
-    PROVIDER_ID_PROPERTY,
     PROVIDER_ELEMENT_ID_PROPERTY,
 ]
 

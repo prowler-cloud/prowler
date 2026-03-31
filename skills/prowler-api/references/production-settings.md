@@ -164,8 +164,13 @@ POSTGRES_DB=...
 POSTGRES_USER=...
 POSTGRES_PASSWORD=...
 
-# Redis (for Celery)
-REDIS_URL=redis://host:6379/0
+# Valkey/Redis (for Celery)
+VALKEY_SCHEME=rediss
+VALKEY_USERNAME=default
+VALKEY_PASSWORD=<strong-password>
+VALKEY_HOST=host
+VALKEY_PORT=6379
+VALKEY_DB=0
 
 # Optional
 SENTRY_DSN=https://...@sentry.io/...
