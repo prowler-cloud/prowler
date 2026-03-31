@@ -265,6 +265,7 @@
         }
       ],
       "Checks": [
+        "bedrock_marketplace_subscription_access_least_privilege",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges"

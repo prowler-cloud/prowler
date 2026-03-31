@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_marketplace_subscription_access_least_privilege",
+  "CheckTitle": "IAM policy restricts aws-marketplace:Subscribe to specific resources for Bedrock model subscriptions",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
+  "Description": "IAM policies are evaluated for overly broad `aws-marketplace:Subscribe` permissions on all resources (`*`). This action controls the ability to subscribe to AWS Marketplace products, including **Amazon Bedrock foundation models**, and should be scoped to specific resources to enforce least privilege.",
+  "Risk": "Granting `aws-marketplace:Subscribe` on all resources allows any principal with the policy to subscribe to **any** Marketplace product, including expensive Bedrock models. This could lead to:\n- **Uncontrolled costs** from unauthorized model subscriptions\n- **Shadow AI usage** outside governance controls\n- **Compliance violations** from unapproved model deployments",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/service-authorization/latest/reference/list_awsmarketplace.html",
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/security-iam.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```yaml\nResources:\n  example_resource:\n    Type: AWS::IAM::Policy\n    Properties:\n      PolicyName: scoped-marketplace-subscribe\n      PolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Action:\n              - aws-marketplace:Subscribe  # CRITICAL: scope to specific product ARNs\n            Resource:\n              - arn:aws:aws-marketplace::123456789012:product/example-product-id\n```",
+      "Other": "1. Open the AWS Console and go to **IAM > Policies**\n2. Locate the policy that grants `aws-marketplace:Subscribe` on `Resource: *`\n3. Click **Edit** and modify the policy statement\n4. Replace `Resource: \"*\"` with specific AWS Marketplace product ARNs that are approved for use\n5. Review and save the updated policy",
+      "Terraform": "```hcl\nresource \"aws_iam_policy\" \"example_resource\" {\n  name = \"scoped-marketplace-subscribe\"\n\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [{\n      Effect   = \"Allow\"\n      Action   = [\"aws-marketplace:Subscribe\"]\n      # CRITICAL: scope to specific product ARNs instead of \"*\"\n      Resource = [\"arn:aws:aws-marketplace::123456789012:product/example-product-id\"]\n    }]\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply the **principle of least privilege** to `aws-marketplace:Subscribe` permissions. Scope the `Resource` element to specific, approved AWS Marketplace product ARNs rather than using a wildcard (`*`). This prevents unauthorized subscriptions to costly Bedrock models and other Marketplace products.",
+      "Url": "https://hub.prowler.com/check/bedrock_marketplace_subscription_access_least_privilege"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "bedrock_api_key_no_administrative_privileges"
+  ],
+  "Notes": "This check only evaluates custom IAM policies. AWS managed policies are maintained by AWS and cannot be modified by users. The check flags policies where aws-marketplace:Subscribe is allowed on Resource:* without restriction."
+}

@@ -183,6 +183,7 @@
         }
       ],
       "Checks": [
+        "bedrock_marketplace_subscription_access_least_privilege",
         "elbv2_ssl_listeners",
         "iam_no_custom_policy_permissive_role_assumption",
         "iam_aws_attached_policy_no_administrative_privileges",

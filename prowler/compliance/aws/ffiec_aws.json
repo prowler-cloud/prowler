@@ -418,6 +418,7 @@
         }
       ],
       "Checks": [
+        "bedrock_marketplace_subscription_access_least_privilege",
         "ec2_instance_profile_attached",
         "iam_policy_attached_only_to_group_or_roles",
         "iam_aws_attached_policy_no_administrative_privileges",

@@ -1168,6 +1168,7 @@
         }
       ],
       "Checks": [
+        "bedrock_marketplace_subscription_access_least_privilege",
         "ec2_ebs_public_snapshot",
         "ec2_instance_public_ip",
         "ec2_instance_imdsv2_enabled",
