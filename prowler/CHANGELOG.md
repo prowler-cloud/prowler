@@ -17,6 +17,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CISA SCuBA Google Workspace Baselines compliance [(#10466)](https://github.com/prowler-cloud/prowler/pull/10466)
 - CIS Google Workspace Foundations Benchmark v1.3.0 compliance [(#10462)](https://github.com/prowler-cloud/prowler/pull/10462)
 - `entra_conditional_access_policy_device_registration_mfa_required` check and `entra_intune_enrollment_sign_in_frequency_every_time` enhancement for M365 provider [(#10222)](https://github.com/prowler-cloud/prowler/pull/10222)
+- `entra_conditional_access_policy_block_elevated_insider_risk` check for M365 provider [(#10234)](https://github.com/prowler-cloud/prowler/pull/10234)
 - `Vercel` provider support with 30 checks [(#10189)](https://github.com/prowler-cloud/prowler/pull/10189)
 
 ### 🔄 Changed
@@ -27,6 +28,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - `return` statements in `finally` blocks replaced across IAM, Organizations, GCP provider, and custom checks metadata to stop silently swallowing exceptions [(#10102)](https://github.com/prowler-cloud/prowler/pull/10102)
+
+### 🔐 Security
+
+- Sensitive CLI flag values (tokens, keys, passwords) in HTML output "Parameters used" field now redacted to prevent credential leaks [(#10518)](https://github.com/prowler-cloud/prowler/pull/10518)
 
 ---
 
@@ -41,6 +46,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Oracle Cloud patch for filestorage, blockstorage, kms, and compute services in OCI to allow for region scanning outside home [(#10455)](https://github.com/prowler-cloud/prowler/pull/10472)
 - Oracle cloud provider now supports multi-region filtering [(#10435)](https://github.com/prowler-cloud/prowler/pull/10473)
 - `prowler image --registry` failing with `ImageNoImagesProvidedError` due to registry arguments not being forwarded to `ImageProvider` in `init_global_provider` [(#10457)](https://github.com/prowler-cloud/prowler/issues/10457)
+- Oracle Cloud multi-region support for identity client configuration in blockstorage, identity, and filestorage services [(#10519)](https://github.com/prowler-cloud/prowler/pull/10520)
 
 ---
 
