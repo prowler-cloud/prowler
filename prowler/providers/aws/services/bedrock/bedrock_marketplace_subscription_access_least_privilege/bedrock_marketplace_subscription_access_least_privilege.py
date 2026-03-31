@@ -55,7 +55,7 @@ def _policy_allows_marketplace_subscribe_on_all_resources(
 
         if effect == "Allow" and "*" in resources:
             is_allowed = True
-        elif effect == "Deny":
+        elif effect == "Deny" and "*" in resources:
             is_denied = True
 
     return is_allowed and not is_denied
@@ -83,9 +83,7 @@ class bedrock_marketplace_subscription_access_least_privilege(Check):
         findings = []
         for policy in iam_client.policies.values():
             if policy.type == "Custom":
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource=policy
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=policy)
                 report.region = iam_client.region
                 report.status = "PASS"
                 report.status_extended = f"IAM policy {policy.name} does not allow aws-marketplace:Subscribe on all resources."

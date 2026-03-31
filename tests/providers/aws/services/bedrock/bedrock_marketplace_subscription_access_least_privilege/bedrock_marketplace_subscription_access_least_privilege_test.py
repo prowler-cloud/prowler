@@ -481,6 +481,54 @@ class Test_bedrock_marketplace_subscription_access_least_privilege:
                 assert result[0].region == "us-east-1"
 
     @mock_aws
+    def test_policy_deny_specific_resource_does_not_override_allow_all(self):
+        """FAIL: Deny on a specific resource does not negate Allow on Resource:*."""
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam_client = client("iam")
+        policy_name = "deny_specific_resource"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "aws-marketplace:Subscribe",
+                    "Resource": "*",
+                },
+                {
+                    "Effect": "Deny",
+                    "Action": "aws-marketplace:Subscribe",
+                    "Resource": "arn:aws:aws-marketplace::123456789012:product/blocked-product",
+                },
+            ],
+        }
+        arn = iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+        )["Policy"]["Arn"]
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                f"{CHECK_MODULE_PATH}.iam_client",
+                new=IAM(aws_provider),
+            ):
+                from prowler.providers.aws.services.bedrock.bedrock_marketplace_subscription_access_least_privilege.bedrock_marketplace_subscription_access_least_privilege import (
+                    bedrock_marketplace_subscription_access_least_privilege,
+                )
+
+                check = bedrock_marketplace_subscription_access_least_privilege()
+                result = check.execute()
+                assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == f"IAM policy {policy_name} allows aws-marketplace:Subscribe on all resources."
+                )
+                assert result[0].resource_id == policy_name
+                assert result[0].resource_arn == arn
+                assert result[0].region == "us-east-1"
+
+    @mock_aws
     def test_policy_resource_list_without_wildcard(self):
         """PASS: Policy allows aws-marketplace:Subscribe on specific resources only (list without *)."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
