@@ -14,8 +14,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip` check for AWS provider using `ipaddress.is_global` for accurate public IP detection [(#10335)](https://github.com/prowler-cloud/prowler/pull/10335)
 - `entra_conditional_access_policy_block_o365_elevated_insider_risk` check for M365 provider [(#10232)](https://github.com/prowler-cloud/prowler/pull/10232)
 - `--resource-group` and `--list-resource-groups` CLI flags to filter checks by resource group across all providers [(#10479)](https://github.com/prowler-cloud/prowler/pull/10479)
+- `apikeys_api_restricted_with_gemini_api` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
+- `gemini_api_disabled` check for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
+- CISA SCuBA Google Workspace Baselines compliance [(#10466)](https://github.com/prowler-cloud/prowler/pull/10466)
 - CIS Google Workspace Foundations Benchmark v1.3.0 compliance [(#10462)](https://github.com/prowler-cloud/prowler/pull/10462)
 - `entra_conditional_access_policy_device_registration_mfa_required` check and `entra_intune_enrollment_sign_in_frequency_every_time` enhancement for M365 provider [(#10222)](https://github.com/prowler-cloud/prowler/pull/10222)
+- `entra_conditional_access_policy_block_elevated_insider_risk` check for M365 provider [(#10234)](https://github.com/prowler-cloud/prowler/pull/10234)
 
 ### 🔄 Changed
 
@@ -38,6 +42,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Oracle Cloud `kms_key_rotation_enabled` now checks current key version age to avoid false positives on vaults without auto-rotation support [(#10450)](https://github.com/prowler-cloud/prowler/pull/10450)
 - Oracle Cloud patch for filestorage, blockstorage, kms, and compute services in OCI to allow for region scanning outside home [(#10455)](https://github.com/prowler-cloud/prowler/pull/10472)
 - Oracle cloud provider now supports multi-region filtering [(#10435)](https://github.com/prowler-cloud/prowler/pull/10473)
+- `prowler image --registry` failing with `ImageNoImagesProvidedError` due to registry arguments not being forwarded to `ImageProvider` in `init_global_provider` [(#10457)](https://github.com/prowler-cloud/prowler/issues/10457)
+- Oracle Cloud multi-region support for identity client configuration in blockstorage, identity, and filestorage services [(#10519)](https://github.com/prowler-cloud/prowler/pull/10520)
 
 ---
 
