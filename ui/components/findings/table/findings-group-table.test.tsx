@@ -5,7 +5,7 @@
  *        resourceSearch must NOT be part of InlineResourceContainer's key.
  */
 
-import { act, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

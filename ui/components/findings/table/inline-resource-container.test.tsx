@@ -12,28 +12,11 @@ import type {
   ReactNode,
   TdHTMLAttributes,
 } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
-
-// Hoist createPortal spy so it is available when the vi.mock factory runs.
-// vi.hoisted() runs before all imports, making the spy available in the factory.
-const { createPortalSpy } = vi.hoisted(() => ({
-  createPortalSpy: vi.fn(),
-}));
-
-vi.mock("react-dom", async (importOriginal) => {
-  const original = await importOriginal<typeof import("react-dom")>();
-  // Delegate to the real createPortal so other tests keep working,
-  // but allow spy assertions on call count and timing.
-  createPortalSpy.mockImplementation(original.createPortal);
-  return {
-    ...original,
-    createPortal: createPortalSpy,
-  };
-});
 
 // Mock next/navigation before component import
 vi.mock("next/navigation", () => ({
@@ -182,19 +165,12 @@ const mockGroup: FindingGroupRow = {
 };
 
 // ---------------------------------------------------------------------------
-// Fix 2: SSR crash — portal only mounted after client-side mount
+// Fix 2: Drawer renders without manual createPortal (shadcn Drawer has its own portal)
 // ---------------------------------------------------------------------------
 
-describe("InlineResourceContainer — Fix 2: SSR portal guard", () => {
-  beforeEach(() => {
-    createPortalSpy.mockClear();
-  });
-
-  it("should render without crash when document.body exists (JSDOM)", async () => {
-    // Given — JSDOM has document.body; this verifies the happy path
+describe("InlineResourceContainer — Drawer rendering", () => {
+  it("should render without crash", async () => {
     let renderError: Error | null = null;
-
-    // When
     try {
       await act(async () => {
         render(
@@ -213,13 +189,10 @@ describe("InlineResourceContainer — Fix 2: SSR portal guard", () => {
     } catch (e) {
       renderError = e as Error;
     }
-
-    // Then — component must not throw
     expect(renderError).toBeNull();
   });
 
-  it("should render the portal content (ResourceDetailDrawer) after mount", async () => {
-    // Given
+  it("should render the ResourceDetailDrawer", async () => {
     await act(async () => {
       render(
         <table>
@@ -234,49 +207,7 @@ describe("InlineResourceContainer — Fix 2: SSR portal guard", () => {
         </table>,
       );
     });
-
-    // Then — drawer appears in the document via portal after mount
     expect(screen.getByTestId("resource-detail-drawer")).toBeInTheDocument();
-  });
-
-  it("should NOT call createPortal synchronously on initial render — only after useEffect fires (isMounted guard)", () => {
-    // Given — createPortalSpy is reset by beforeEach, so call count starts at 0.
-    // Before the fix: createPortal runs on the initial synchronous render → crash in SSR.
-    // After the fix: createPortal is guarded by isMounted (set via useEffect).
-    // useEffect fires AFTER commit, so createPortal must NOT be called
-    // during the synchronous render phase.
-
-    // When — render inside synchronous act() and capture spy count INSIDE the callback.
-    // In React 19, act() DOES flush effects — but the callback runs BEFORE effects drain.
-    // So: the callback body executes first (synchronous render only), THEN act() flushes
-    // pending effects after the callback returns.
-    // Capturing spy state inside the callback captures the pre-effect state.
-    let portalCallsAfterSyncRender = 0;
-    act(() => {
-      render(
-        <table>
-          <tbody>
-            <InlineResourceContainer
-              group={mockGroup}
-              resourceSearch=""
-              columnCount={10}
-              onResourceSelectionChange={vi.fn()}
-            />
-          </tbody>
-        </table>,
-      );
-      // Capture call count here — inside the callback = after synchronous render,
-      // but BEFORE act() drains pending effects (effects flush after this returns).
-      portalCallsAfterSyncRender = createPortalSpy.mock.calls.length;
-    });
-    // After the callback returns, act() flushes pending effects (isMounted = true → re-render)
-
-    // Then — createPortal must NOT have been called during the synchronous render phase
-    // (isMounted starts as false, createPortal is inside {isMounted && createPortal(...)})
-    expect(portalCallsAfterSyncRender).toBe(0);
-
-    // After act() completes, effects have flushed → isMounted = true → re-render → createPortal called
-    expect(createPortalSpy).toHaveBeenCalled();
   });
 });
 

@@ -10,8 +10,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronsDown } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useImperativeHandle, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useImperativeHandle, useRef, useState } from "react";
 
 import { resolveFindingIds } from "@/actions/findings/findings-by-resource";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
@@ -133,12 +132,6 @@ export function InlineResourceContainer({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [resources, setResources] = useState<FindingResourceRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   // Scroll hint: shows "scroll for more" when content overflows
   const {
     containerRef: scrollHintContainerRef,
@@ -395,26 +388,22 @@ export function InlineResourceContainer({
         </td>
       </tr>
 
-      {isMounted &&
-        createPortal(
-          <ResourceDetailDrawer
-            open={drawer.isOpen}
-            onOpenChange={(open) => {
-              if (!open) drawer.closeDrawer();
-            }}
-            isLoading={drawer.isLoading}
-            isNavigating={drawer.isNavigating}
-            checkMeta={drawer.checkMeta}
-            currentIndex={drawer.currentIndex}
-            totalResources={drawer.totalResources}
-            currentFinding={drawer.currentFinding}
-            otherFindings={drawer.otherFindings}
-            onNavigatePrev={drawer.navigatePrev}
-            onNavigateNext={drawer.navigateNext}
-            onMuteComplete={handleDrawerMuteComplete}
-          />,
-          document.body,
-        )}
+      <ResourceDetailDrawer
+        open={drawer.isOpen}
+        onOpenChange={(open) => {
+          if (!open) drawer.closeDrawer();
+        }}
+        isLoading={drawer.isLoading}
+        isNavigating={drawer.isNavigating}
+        checkMeta={drawer.checkMeta}
+        currentIndex={drawer.currentIndex}
+        totalResources={drawer.totalResources}
+        currentFinding={drawer.currentFinding}
+        otherFindings={drawer.otherFindings}
+        onNavigatePrev={drawer.navigatePrev}
+        onNavigateNext={drawer.navigateNext}
+        onMuteComplete={handleDrawerMuteComplete}
+      />
     </FindingsSelectionContext.Provider>
   );
 }
