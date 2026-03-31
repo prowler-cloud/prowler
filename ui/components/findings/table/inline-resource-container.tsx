@@ -321,7 +321,18 @@ export function InlineResourceContainer({
                             key={row.id}
                             data-state={row.getIsSelected() && "selected"}
                             className="cursor-pointer"
-                            onClick={() => drawer.openDrawer(row.index)}
+                            onClick={(e) => {
+                              // Don't open drawer if clicking interactive elements
+                              // (links, buttons, checkboxes, dropdown items)
+                              const target = e.target as HTMLElement;
+                              if (
+                                target.closest(
+                                  "a, button, input, [role=menuitem]",
+                                )
+                              )
+                                return;
+                              drawer.openDrawer(row.index);
+                            }}
                           >
                             {row.getVisibleCells().map((cell) => (
                               <TableCell key={cell.id}>

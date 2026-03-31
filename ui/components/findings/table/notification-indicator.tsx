@@ -34,23 +34,34 @@ export const NotificationIndicator = ({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <Link
-            href="/mutelist"
-            className="flex w-2 shrink-0 items-center justify-center"
+          <div
+            className="flex w-2 shrink-0 cursor-pointer items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
             <MutedIcon className="text-bg-data-muted size-2" />
-          </Link>
-        </TooltipTrigger>
-        <TooltipContent>
-          <div className="flex items-center gap-1 text-xs">
-            <span className="text-text-neutral-primary">Mute rule:</span>
-            {mutedReason ? (
-              <span className="max-w-[150px] truncate">{mutedReason}</span>
-            ) : (
-              <span>view rules</span>
-            )}
           </div>
+        </TooltipTrigger>
+        <TooltipContent
+          onClick={(e) => e.stopPropagation()}
+          onPointerDownCapture={(e) => e.stopPropagation()}
+        >
+          <Link
+            href="/mutelist"
+            onClick={(e) => e.stopPropagation()}
+            className="text-button-tertiary hover:text-button-tertiary-hover flex items-center gap-1 text-xs underline-offset-4"
+          >
+            {mutedReason ? (
+              <>
+                <span className="text-text-neutral-primary">Mute rule:</span>
+                <span className="max-w-[150px] truncate">{mutedReason}</span>
+              </>
+            ) : (
+              <>
+                <span className="text-text-neutral-primary">Mute rule:</span>
+                <span>view rules</span>
+              </>
+            )}
+          </Link>
         </TooltipContent>
       </Tooltip>
     );
