@@ -19,6 +19,8 @@ from prowler.providers.common.arguments import (
     validate_provider_arguments,
 )
 
+SENSITIVE_ARGUMENTS = frozenset({"--shodan"})
+
 
 class ProwlerArgumentParser:
     # Set the default parser
