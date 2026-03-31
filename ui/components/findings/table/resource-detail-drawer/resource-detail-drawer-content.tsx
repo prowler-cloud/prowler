@@ -390,12 +390,12 @@ export function ResourceDetailDrawerContent({
             {(checkMeta.risk || checkMeta.description || f?.statusExtended) && (
               <Card variant="inner">
                 {checkMeta.risk && (
-                  <div className="border-border-error-primary bg-bg-fail-secondary flex flex-col gap-1 rounded-md border p-3">
+                  <Card variant="danger">
                     <span className="text-text-neutral-secondary text-sm font-semibold">
                       Risk:
                     </span>
                     <MarkdownContainer>{checkMeta.risk}</MarkdownContainer>
-                  </div>
+                  </Card>
                 )}
                 {checkMeta.description && (
                   <div className="border-default-200 flex flex-col gap-1 border-b pb-4">

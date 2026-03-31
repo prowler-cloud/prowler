@@ -80,7 +80,17 @@ vi.mock("@/components/shadcn", () => {
 });
 
 vi.mock("@/components/shadcn/card/card", () => ({
-  Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Card: ({
+    children,
+    variant,
+  }: {
+    children: ReactNode;
+    variant?: string;
+  }) => (
+    <div data-slot="card" data-variant={variant}>
+      {children}
+    </div>
+  ),
 }));
 
 vi.mock("@/components/shadcn/dropdown", () => ({
@@ -393,7 +403,7 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
 // ---------------------------------------------------------------------------
 
 describe("ResourceDetailDrawerContent — Fix 5 & 6: Risk section styling", () => {
-  it("should wrap the Risk section in a danger-styled container", () => {
+  it("should wrap the Risk section in a Card component (data-slot='card')", () => {
     // Given
     const { container } = render(
       <ResourceDetailDrawerContent
@@ -410,18 +420,16 @@ describe("ResourceDetailDrawerContent — Fix 5 & 6: Risk section styling", () =
       />,
     );
 
-    // When — find the element containing the "Risk:" label
-    const allElements = Array.from(container.querySelectorAll("[class]"));
-    const riskWrapper = allElements.find(
-      (el) =>
-        el.textContent?.includes("Risk:") &&
-        (el.className.includes("border-border-error-primary") ||
-          el.className.includes("border-danger") ||
-          el.className.includes("bg-bg-fail-secondary")),
+    // When — find a Card with variant="danger" that contains the Risk label
+    const dangerCards = Array.from(
+      container.querySelectorAll('[data-variant="danger"]'),
+    );
+    const riskCard = dangerCards.find((el) =>
+      el.textContent?.includes("Risk:"),
     );
 
-    // Then — Risk section must have an error/danger-related class
-    expect(riskWrapper).toBeDefined();
+    // Then — Risk section must be wrapped in a Card variant="danger"
+    expect(riskCard).toBeDefined();
   });
 
   it("should use larger heading size for section labels (text-sm → text-base or larger)", () => {
