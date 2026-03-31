@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -14,6 +15,9 @@ class Domain(VercelService):
         self.domains: dict[str, VercelDomain] = {}
         self._list_domains()
         self.__threading_call__(self._fetch_dns_records, list(self.domains.values()))
+        self.__threading_call__(
+            self._fetch_ssl_certificate, list(self.domains.values())
+        )
 
     def _list_domains(self):
         """List all domains."""
@@ -28,13 +32,6 @@ class Domain(VercelService):
                     continue
                 seen_names.add(domain_name)
 
-                ssl_cert = None
-                cert_data = domain.get("certs", [])
-                if cert_data:
-                    ssl_cert = (
-                        cert_data[0] if isinstance(cert_data, list) else cert_data
-                    )
-
                 self.domains[domain_name] = VercelDomain(
                     name=domain_name,
                     id=domain.get("id", domain_name),
@@ -45,7 +42,6 @@ class Domain(VercelService):
                         if "configured" in domain
                         else domain.get("verified", False)
                     ),
-                    ssl_certificate=ssl_cert,
                     redirect=domain.get("redirect"),
                     team_id=self.provider.session.team_id,
                 )
@@ -73,6 +69,45 @@ class Domain(VercelService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _fetch_ssl_certificate(self, domain: "VercelDomain"):
+        """Fetch SSL certificate for a domain via the certs endpoint."""
+        try:
+            data = self._get(f"/v8/certs/{domain.name}")
+            if data:
+                expires_at_ms = data.get("expiresAt")
+                created_at_ms = data.get("createdAt")
+                domain.ssl_certificate = VercelSSLCertificate(
+                    id=data.get("id", ""),
+                    created_at=(
+                        datetime.fromtimestamp(created_at_ms / 1000, tz=timezone.utc)
+                        if created_at_ms
+                        else None
+                    ),
+                    expires_at=(
+                        datetime.fromtimestamp(expires_at_ms / 1000, tz=timezone.utc)
+                        if expires_at_ms
+                        else None
+                    ),
+                    auto_renew=data.get("autoRenew", False),
+                    cns=data.get("cns", []),
+                )
+                logger.debug(f"Domain - Fetched SSL certificate for {domain.name}")
+        except Exception as error:
+            logger.error(
+                f"Domain - Error fetching SSL certificate for {domain.name}: "
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+class VercelSSLCertificate(BaseModel):
+    """Vercel SSL certificate representation."""
+
+    id: str = ""
+    created_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+    auto_renew: bool = False
+    cns: list[str] = Field(default_factory=list)
+
 
 class VercelDomain(BaseModel):
     """Vercel domain representation."""
@@ -82,7 +117,7 @@ class VercelDomain(BaseModel):
     apex_name: Optional[str] = None
     verified: bool = False
     configured: bool = False
-    ssl_certificate: Optional[dict] = None
+    ssl_certificate: Optional[VercelSSLCertificate] = None
     redirect: Optional[str] = None
     dns_records: list[dict] = Field(default_factory=list)
     team_id: Optional[str] = None

@@ -32,7 +32,9 @@ class team_no_stale_invitations(Check):
             )
 
             now = datetime.now(timezone.utc)
-            stale_threshold_days = 30
+            stale_threshold_days = team_client.audit_config.get(
+                "stale_invitation_threshold_days", 30
+            )
             stale_invitations = []
 
             for member in team.members:

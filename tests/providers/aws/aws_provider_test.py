@@ -944,6 +944,68 @@ aws:
         assert aws_provider.get_default_region("ec2") == AWS_REGION_EU_WEST_1
 
     @mock_aws
+    def test_get_default_region_global_service_ignores_profile_region(self):
+        region = [AWS_REGION_EU_WEST_1]
+        aws_provider = AwsProvider(
+            regions=region,
+        )
+        aws_provider._identity.profile_region = AWS_REGION_EU_WEST_1
+
+        assert (
+            aws_provider.get_default_region("cloudfront", global_service=True)
+            == AWS_REGION_US_EAST_1
+        )
+
+    @mock_aws
+    def test_get_default_region_global_service_ignores_audited_regions(self):
+        region = [AWS_REGION_EU_WEST_1]
+        aws_provider = AwsProvider(
+            regions=region,
+        )
+        aws_provider._identity.profile_region = None
+
+        assert (
+            aws_provider.get_default_region("route53", global_service=True)
+            == AWS_REGION_US_EAST_1
+        )
+
+    @mock_aws
+    def test_get_default_region_global_service_china_partition(self):
+        aws_provider = AwsProvider()
+        aws_provider._identity.partition = AWS_CHINA_PARTITION
+        aws_provider._identity.profile_region = AWS_REGION_CN_NORTHWEST_1
+
+        assert (
+            aws_provider.get_default_region("cloudfront", global_service=True)
+            == AWS_REGION_CN_NORTH_1
+        )
+
+    @mock_aws
+    def test_get_default_region_global_service_gov_cloud_partition(self):
+        aws_provider = AwsProvider()
+        aws_provider._identity.partition = AWS_GOV_CLOUD_PARTITION
+        aws_provider._identity.profile_region = "us-gov-west-1"
+
+        assert (
+            aws_provider.get_default_region("shield", global_service=True)
+            == AWS_REGION_GOV_CLOUD_US_EAST_1
+        )
+
+    @mock_aws
+    def test_get_default_region_non_global_service_unaffected(self):
+        """Ensure global_service=False (default) still follows profile region logic."""
+        region = [AWS_REGION_EU_WEST_1]
+        aws_provider = AwsProvider(
+            regions=region,
+        )
+        aws_provider._identity.profile_region = AWS_REGION_EU_WEST_1
+
+        assert (
+            aws_provider.get_default_region("ec2", global_service=False)
+            == AWS_REGION_EU_WEST_1
+        )
+
+    @mock_aws
     def test_aws_gov_get_global_region(self):
         aws_provider = AwsProvider()
         aws_provider._identity.partition = AWS_GOV_CLOUD_PARTITION

@@ -10,6 +10,7 @@ from tests.providers.vercel.vercel_fixtures import set_mocked_vercel_provider
 class Test_authentication_no_stale_tokens:
     def test_no_tokens(self):
         authentication_client = mock.MagicMock
+        authentication_client.audit_config = {"stale_token_threshold_days": 90}
         authentication_client.tokens = {}
 
         with (
@@ -35,6 +36,7 @@ class Test_authentication_no_stale_tokens:
         token_name = "Recent Token"
         active_at = datetime.now(timezone.utc) - timedelta(days=10)
         authentication_client = mock.MagicMock
+        authentication_client.audit_config = {"stale_token_threshold_days": 90}
         authentication_client.tokens = {
             token_id: VercelAuthToken(
                 id=token_id,
@@ -75,6 +77,7 @@ class Test_authentication_no_stale_tokens:
         active_at = datetime.now(timezone.utc) - timedelta(days=120)
         days_inactive = (datetime.now(timezone.utc) - active_at).days
         authentication_client = mock.MagicMock
+        authentication_client.audit_config = {"stale_token_threshold_days": 90}
         authentication_client.tokens = {
             token_id: VercelAuthToken(
                 id=token_id,
@@ -113,6 +116,7 @@ class Test_authentication_no_stale_tokens:
         token_id = "tok_3"
         token_name = "Never Used Token"
         authentication_client = mock.MagicMock
+        authentication_client.audit_config = {"stale_token_threshold_days": 90}
         authentication_client.tokens = {
             token_id: VercelAuthToken(
                 id=token_id,

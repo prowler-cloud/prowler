@@ -152,22 +152,60 @@ const PROVIDER_DATA: Record<
   },
 };
 
-type ProviderTypeSelectorProps = {
+/** Common props shared by both batch and instant modes. */
+interface ProviderTypeSelectorBaseProps {
   providers: ProviderProps[];
-};
+}
+
+/** Batch mode: caller controls both pending state and notification callback (all-or-nothing). */
+interface ProviderTypeSelectorBatchProps extends ProviderTypeSelectorBaseProps {
+  /**
+   * Called instead of navigating immediately.
+   * Use this on pages that batch filter changes (e.g. Findings).
+   *
+   * @param filterKey - The raw filter key without "filter[]" wrapper, e.g. "provider_type__in"
+   * @param values - The selected values array
+   */
+  onBatchChange: (filterKey: string, values: string[]) => void;
+  /**
+   * Pending selected values controlled by the parent.
+   * Reflects pending state before Apply is clicked.
+   */
+  selectedValues: string[];
+}
+
+/** Instant mode: URL-driven — neither callback nor controlled value. */
+interface ProviderTypeSelectorInstantProps
+  extends ProviderTypeSelectorBaseProps {
+  onBatchChange?: never;
+  selectedValues?: never;
+}
+
+type ProviderTypeSelectorProps =
+  | ProviderTypeSelectorBatchProps
+  | ProviderTypeSelectorInstantProps;
 
 export const ProviderTypeSelector = ({
   providers,
+  onBatchChange,
+  selectedValues,
 }: ProviderTypeSelectorProps) => {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
 
   const currentProviders = searchParams.get("filter[provider_type__in]") || "";
-  const selectedTypes = currentProviders
+  const urlSelectedTypes = currentProviders
     ? currentProviders.split(",").filter(Boolean)
     : [];
 
+  // In batch mode, use the parent-controlled pending values; otherwise, use URL state.
+  const selectedTypes = onBatchChange ? selectedValues : urlSelectedTypes;
+
   const handleMultiValueChange = (values: string[]) => {
+    if (onBatchChange) {
+      onBatchChange("provider_type__in", values);
+      return;
+    }
     navigateWithParams((params) => {
       // Update provider_type__in
       if (values.length > 0) {
@@ -175,10 +213,6 @@ export const ProviderTypeSelector = ({
       } else {
         params.delete("filter[provider_type__in]");
       }
-
-      // Clear account selection when changing provider types
-      // User should manually select accounts if they want to filter by specific accounts
-      params.delete("filter[provider_id__in]");
     });
   };
 
@@ -188,7 +222,11 @@ export const ProviderTypeSelector = ({
         // .filter((p) => p.attributes.connection?.connected)
         .map((p) => p.attributes.provider),
     ),
-  ).filter((type): type is ProviderType => type in PROVIDER_DATA);
+  )
+    .filter((type): type is ProviderType => type in PROVIDER_DATA)
+    .sort((a, b) =>
+      PROVIDER_DATA[a].label.localeCompare(PROVIDER_DATA[b].label),
+    );
 
   const renderIcon = (providerType: ProviderType) => {
     const IconComponent = PROVIDER_DATA[providerType].icon;
