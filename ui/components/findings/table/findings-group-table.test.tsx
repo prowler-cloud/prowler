@@ -7,7 +7,7 @@
 
 import { act, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Hoist mocks
@@ -75,7 +75,6 @@ vi.mock("@/lib", () => ({
 
 let capturedOnSearchChange: ((value: string) => void) | undefined;
 let capturedOnSearchCommit: ((value: string) => void) | undefined;
-let _capturedControlledSearch: string | undefined;
 
 vi.mock("@/components/ui/table", () => ({
   DataTable: ({
@@ -103,7 +102,6 @@ vi.mock("@/components/ui/table", () => ({
   }) => {
     capturedOnSearchChange = onSearchChange;
     capturedOnSearchCommit = onSearchCommit;
-    _capturedControlledSearch = controlledSearch;
 
     return (
       <div data-testid="data-table">
@@ -152,85 +150,36 @@ const mockGroup: FindingGroupRow = {
 // Fix 3: Search fires only on Enter (onSearchCommit), not on every keystroke
 // ---------------------------------------------------------------------------
 
-describe("FindingsGroupTable — Fix 3: Enter-only search for resource drill-down", () => {
-  it("should render successfully with drill-down data", () => {
-    // Given
-    render(<FindingsGroupTable data={[mockGroup]} />);
-
-    // Then
-    expect(screen.getByTestId("data-table")).toBeInTheDocument();
-  });
-
-  it("should pass onSearchCommit callback to DataTable (fires only on Enter)", () => {
-    // Given — this tests the contract: FindingsGroupTable MUST pass onSearchCommit
-    // to DataTable so the search only fires on Enter (not on every keystroke).
-    render(<FindingsGroupTable data={[mockGroup]} />);
-
-    // When — initially no drill-down group is active
-    // In this state, onSearchCommit should be undefined (no active drill-down)
-    // This verifies the prop exists as part of the DataTable interface.
-    // The actual value depends on whether a group is expanded.
-    expect(screen.getByTestId("data-table")).toBeInTheDocument();
-  });
-
-  it("should keep InlineResourceContainer's resourceSearch empty after typing (before commit)", async () => {
-    // Given — simulate an expanded drill-down by rendering with renderAfterRow
+describe("FindingsGroupTable — Enter-only search for resource drill-down", () => {
+  beforeEach(() => {
+    capturedOnSearchChange = undefined;
+    capturedOnSearchCommit = undefined;
     inlineRenders.length = 0;
-    render(<FindingsGroupTable data={[mockGroup]} />);
-
-    // Note: The DataTable mock calls renderAfterRow for the first row.
-    // But renderAfterRow only returns InlineResourceContainer if the row's
-    // checkId matches the expandedCheckId. In the initial state, expandedCheckId
-    // is null, so no inline container is shown.
-    //
-    // The key behavioral assertion: if we simulate onSearchChange being called
-    // (which happens on every keystroke), the InlineResourceContainer should
-    // NOT receive the updated resourceSearch until onSearchCommit is called.
-
-    // When — simulate typing (calls onSearchChange but NOT onSearchCommit)
-    await act(async () => {
-      capturedOnSearchChange?.("my-bucket-search");
-    });
-
-    // Then — InlineResourceContainer (if rendered) should still have empty search
-    // because only onSearchCommit triggers the actual resourceSearch state update
-    const inlineContainers = screen.queryAllByTestId(
-      "inline-resource-container",
-    );
-    for (const container of inlineContainers) {
-      expect(container.getAttribute("data-resource-search")).toBe("");
-    }
   });
 
-  it("should pass onSearchCommit to DataTable so search only fires on Enter", () => {
-    // Given
+  it("should render successfully with drill-down data", () => {
+    render(<FindingsGroupTable data={[mockGroup]} />);
+    expect(screen.getByTestId("data-table")).toBeInTheDocument();
+  });
+
+  it("should not pass onSearchCommit when no group is expanded", () => {
+    // Given — no drill-down active
     render(<FindingsGroupTable data={[mockGroup]} />);
 
-    // Then — onSearchCommit callback must be captured by the DataTable mock.
-    // When no group is expanded, onSearchCommit should be undefined.
-    // When a group is expanded, onSearchCommit should be a function.
-    // In this initial state (no drill-down), we verify the callback exists
-    // as part of the DataTable interface contract.
+    // Then — onSearchCommit must be undefined (no active drill-down)
     expect(capturedOnSearchCommit).toBeUndefined();
+    // onSearchChange must also be undefined
+    expect(capturedOnSearchChange).toBeUndefined();
   });
 
-  it("should separate display state (onSearchChange) from committed state (onSearchCommit)", async () => {
-    // Given
+  it("should not render InlineResourceContainer when no group is expanded", () => {
+    // Given — no drill-down active
     render(<FindingsGroupTable data={[mockGroup]} />);
 
-    // When — simulate typing (onSearchChange updates display only)
-    await act(async () => {
-      capturedOnSearchChange?.("my-bucket-search");
-    });
-
-    // Then — the committed search (resourceSearch) should still be empty
-    // because only onSearchCommit triggers the key-based remount.
-    // InlineResourceContainer (if rendered) should have empty search.
+    // Then — no inline containers rendered
     const inlineContainers = screen.queryAllByTestId(
       "inline-resource-container",
     );
-    for (const container of inlineContainers) {
-      expect(container.getAttribute("data-resource-search")).toBe("");
-    }
+    expect(inlineContainers).toHaveLength(0);
   });
 });
