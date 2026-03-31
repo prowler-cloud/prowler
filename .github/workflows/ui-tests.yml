@@ -40,6 +40,8 @@ jobs:
             fonts.gstatic.com:443
             api.github.com:443
             release-assets.githubusercontent.com:443
+            cdn.playwright.dev:443
+            playwright.download.prss.microsoft.com:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -122,6 +124,10 @@ jobs:
       - name: Install dependencies
         if: steps.check-changes.outputs.any_changed == 'true'
         run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Install Playwright browsers
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Run healthcheck
         if: steps.check-changes.outputs.any_changed == 'true'
