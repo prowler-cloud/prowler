@@ -1,0 +1,3 @@
+web: ./bin/cloudgov-web.sh
+worker: ./bin/cloudgov-worker.sh
+beat: ./bin/cloudgov-beat.sh
