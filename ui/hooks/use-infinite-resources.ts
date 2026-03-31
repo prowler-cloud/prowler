@@ -202,6 +202,7 @@ export function useInfiniteResources({
     const controller = new AbortController();
     controllerRef.current = controller;
 
+    pageRef.current = 1;
     hasMoreRef.current = true;
     isLoadingRef.current = false;
 
