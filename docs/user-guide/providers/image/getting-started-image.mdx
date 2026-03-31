@@ -25,7 +25,7 @@ Prowler App does not support scanner selection. The vulnerability, secret, and m
 ### Step 1: Access Prowler Cloud/App
 
 1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app)
-2. Go to "Configuration" > "Cloud Providers"
+2. Navigate to "Configuration" > "Cloud Providers"
 
     ![Cloud Providers Page](/images/prowler-app/cloud-providers-page.png)
 
@@ -43,7 +43,7 @@ Prowler App does not support scanner selection. The vulnerability, secret, and m
 
 ### Step 2: Enter Authentication and Scan Filters
 
-6. To authenticate to private registries, optionally provide the [authentication](/user-guide/providers/image/authentication) details. To control which images are scanned, configure the following scan filters:
+6. Optionally provide [authentication](/user-guide/providers/image/authentication) credentials for private registries, then configure the following scan filters to control which images are scanned:
 
     * **Image filter:** A regex pattern to filter repositories by name (e.g., `^prod/.*`)
     * **Tag filter:** A regex pattern to filter tags within repositories (e.g., `^(latest|v\d+\.\d+\.\d+)$`)
@@ -154,7 +154,7 @@ Valid examples:
 
 #### Specify Scanners
 
-To select which scanners Trivy runs, use the `--scanners` option. By default, Prowler enables `vuln` and `secret` scanners:
+To select which scanners Trivy runs, use the `--scanners` option:
 
 ```bash
 # Vulnerability scanning only
@@ -314,7 +314,7 @@ To scan images from private registries, the Image provider supports three authen
 
 #### 1. Basic Authentication (Environment Variables)
 
-To authenticate with a username and password, set the `REGISTRY_USERNAME` and `REGISTRY_PASSWORD` environment variables. Prowler automatically runs `docker login`, pulls the image, and performs a `docker logout` after the scan completes:
+To authenticate with a username and password, set the `REGISTRY_USERNAME` and `REGISTRY_PASSWORD` environment variables. Prowler passes these credentials to Trivy, which handles authentication with the registry transparently:
 
 ```bash
 export REGISTRY_USERNAME="myuser"
@@ -323,7 +323,7 @@ export REGISTRY_PASSWORD="mypassword"
 prowler image -I myregistry.io/myapp:v1.0
 ```
 
-Both variables must be set for this method to activate. Prowler handles the full lifecycle — login, pull, scan, and cleanup — without any manual Docker commands.
+Both variables must be set for this method to activate.
 
 #### 2. Token-Based Authentication
 
@@ -348,7 +348,7 @@ prowler image -I myregistry.io/myapp:v1.0
 ```
 
 <Note>
-When basic authentication is active (method 1), Prowler automatically logs out from all authenticated registries after the scan completes. Manual `docker login` sessions (method 3) are not affected by this cleanup.
+Credentials provided via environment variables are only passed to the Trivy subprocess and are not persisted beyond the scan.
 </Note>
 
 ### Troubleshooting Common Scan Errors
