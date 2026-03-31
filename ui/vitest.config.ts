@@ -11,7 +11,6 @@ const aliases = {
   "@stripe/stripe-js": path.resolve(__dirname, "./__mocks__/stripe-js.ts"),
 };
 
-
 export default defineConfig({
   plugins: [react()],
   test: {
