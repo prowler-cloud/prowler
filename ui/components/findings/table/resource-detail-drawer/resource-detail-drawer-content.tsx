@@ -65,6 +65,11 @@ import { getRegionFlag } from "@/lib/region-flags";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
+
+/** Strip markdown code fences (```lang ... ```) so CodeSnippet shows clean code. */
+function stripCodeFences(code: string): string {
+  return code.replace(/^```\w*\n?/, "").replace(/\n?```\s*$/, "").trim();
+}
 import { NotificationIndicator } from "../notification-indicator";
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
@@ -448,7 +453,7 @@ export function ResourceDetailDrawerContent({
                       CLI Command:
                     </span>
                     <CodeSnippet
-                      value={`$ ${checkMeta.remediation.code.cli}`}
+                      value={`$ ${stripCodeFences(checkMeta.remediation.code.cli)}`}
                       multiline
                       transparent
                       className="max-w-full text-sm"
@@ -462,7 +467,7 @@ export function ResourceDetailDrawerContent({
                       Terraform:
                     </span>
                     <CodeSnippet
-                      value={`$ ${checkMeta.remediation.code.terraform}`}
+                      value={stripCodeFences(checkMeta.remediation.code.terraform)}
                       multiline
                       transparent
                       className="max-w-full text-sm"
@@ -476,7 +481,7 @@ export function ResourceDetailDrawerContent({
                       CloudFormation:
                     </span>
                     <CodeSnippet
-                      value={`$ ${checkMeta.remediation.code.nativeiac}`}
+                      value={stripCodeFences(checkMeta.remediation.code.nativeiac)}
                       multiline
                       transparent
                       className="max-w-full text-sm"
