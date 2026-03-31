@@ -1333,6 +1333,71 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_vercel_assessment_summary(provider: Provider) -> str:
+        """
+        get_vercel_assessment_summary gets the HTML assessment summary for the Vercel provider
+
+        Args:
+            provider (Provider): the Vercel provider object
+
+        Returns:
+            str: HTML assessment summary for the Vercel provider
+        """
+        try:
+            assessment_items = ""
+
+            team = getattr(provider.identity, "team", None)
+            if team:
+                assessment_items += f"""
+                            <li class="list-group-item">
+                                <b>Team:</b> {team.name} ({team.id})
+                            </li>"""
+
+            credentials_items = """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Token
+                            </li>"""
+
+            email = getattr(provider.identity, "email", None)
+            if email:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Email:</b> {email}
+                            </li>"""
+
+            username = getattr(provider.identity, "username", None)
+            if username:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Username:</b> {username}
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Vercel Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Vercel Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_assessment_summary(provider: Provider) -> str:
         """
         get_assessment_summary gets the HTML assessment summary for the provider

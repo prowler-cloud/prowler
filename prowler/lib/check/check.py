@@ -713,6 +713,11 @@ def execute(
                 is_finding_muted_args["project_id"] = (
                     global_provider.identity.project_id
                 )
+            elif global_provider.type == "vercel":
+                team = getattr(global_provider.identity, "team", None)
+                is_finding_muted_args["team_id"] = (
+                    team.id if team else global_provider.identity.user_id
+                )
             for finding in check_findings:
                 if global_provider.type == "cloudflare":
                     is_finding_muted_args["account_id"] = finding.account_id
