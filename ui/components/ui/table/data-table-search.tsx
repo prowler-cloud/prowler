@@ -111,38 +111,9 @@ export const DataTableSearch = ({
       return;
     }
 
-    // Uncontrolled mode: update display + debounce URL update
+    // Uncontrolled mode: only update display value on keystroke.
+    // The actual URL update happens on Enter (see onKeyDown handler).
     setInternalValue(newValue);
-
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-
-    if (paramPrefix) {
-      setIsLoading(true);
-      debounceTimeoutRef.current = setTimeout(() => {
-        const params = new URLSearchParams(searchParams.toString());
-        if (newValue) {
-          params.set(searchParam, newValue);
-        } else {
-          params.delete(searchParam);
-        }
-        params.set(pageParam, "1");
-        router.push(`${pathname}?${params.toString()}`, { scroll: false });
-        setIsLoading(false);
-      }, SEARCH_DEBOUNCE_MS);
-    } else {
-      if (newValue) {
-        setIsLoading(true);
-        debounceTimeoutRef.current = setTimeout(() => {
-          updateFilter("search", newValue);
-          setIsLoading(false);
-        }, SEARCH_DEBOUNCE_MS);
-      } else {
-        setIsLoading(false);
-        updateFilter("search", null);
-      }
-    }
   };
 
   // Cleanup timeout on unmount
