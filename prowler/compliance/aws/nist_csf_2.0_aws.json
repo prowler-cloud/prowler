@@ -774,7 +774,8 @@
         }
       ],
       "Checks": [
-        "bedrock_marketplace_subscription_access_least_privilege",
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
         "iam_administrator_access_with_mfa",
         "iam_group_administrator_access_policy",
         "iam_user_administrator_access_policy",

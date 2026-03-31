@@ -14,7 +14,7 @@ def _policy_allows_marketplace_subscribe_on_all_resources(
     Inspects each statement in the policy document for Allow statements that
     grant the ``aws-marketplace:Subscribe`` action (or a wildcard pattern that
     matches it) on all resources (``*``).  Explicit Deny statements for the
-    same action take precedence and negate the finding.
+    same action on all resources take precedence and negate the finding.
 
     Args:
         policy_document: The IAM policy document to analyse.
@@ -61,32 +61,15 @@ def _policy_allows_marketplace_subscribe_on_all_resources(
     return is_allowed and not is_denied
 
 
-class bedrock_marketplace_subscription_access_least_privilege(Check):
-    """Ensure IAM policies restrict aws-marketplace:Subscribe to specific resources.
-
-    This check evaluates custom IAM policies for overly broad
-    ``aws-marketplace:Subscribe`` permissions granted on all resources (``*``).
-    Unrestricted subscribe access allows principals to subscribe to any AWS
-    Marketplace product, including Amazon Bedrock foundation models, without
-    governance controls.
-
-    - PASS: The policy does not allow aws-marketplace:Subscribe on all resources.
-    - FAIL: The policy allows aws-marketplace:Subscribe on all resources.
-    """
-
+class iam_policy_no_wildcard_marketplace_subscribe(Check):
     def execute(self) -> list[Check_Report_AWS]:
-        """Execute the check logic.
-
-        Returns:
-            A list of reports containing the result of the check.
-        """
         findings = []
         for policy in iam_client.policies.values():
             if policy.type == "Custom":
                 report = Check_Report_AWS(metadata=self.metadata(), resource=policy)
                 report.region = iam_client.region
                 report.status = "PASS"
-                report.status_extended = f"IAM policy {policy.name} does not allow aws-marketplace:Subscribe on all resources."
+                report.status_extended = f"Custom Policy {policy.name} does not allow 'aws-marketplace:Subscribe' on all resources."
 
                 if (
                     policy.document
@@ -95,7 +78,7 @@ class bedrock_marketplace_subscription_access_least_privilege(Check):
                     )
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"IAM policy {policy.name} allows aws-marketplace:Subscribe on all resources."
+                    report.status_extended = f"Custom Policy {policy.name} allows 'aws-marketplace:Subscribe' on all resources."
 
                 findings.append(report)
         return findings

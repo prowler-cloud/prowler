@@ -344,7 +344,8 @@
         }
       ],
       "Checks": [
-        "bedrock_marketplace_subscription_access_least_privilege",
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
         "ec2_instance_profile_attached",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",

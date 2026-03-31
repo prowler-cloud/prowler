@@ -6,7 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- `bedrock_marketplace_subscription_access_least_privilege` check for aws provider [(#10525)](https://github.com/prowler-cloud/prowler/pull/10525)
+- `iam_policy_no_wildcard_marketplace_subscribe` and `iam_inline_policy_no_wildcard_marketplace_subscribe` checks for AWS provider [(#10525)](https://github.com/prowler-cloud/prowler/pull/10525)
 - `apikeys_api_restricted_with_gemini_api` and `gemini_api_disabled` checks for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
 - `cloudfront_distributions_logging_enabled` detects Standard Logging v2 via CloudWatch Log Delivery [(#10090)](https://github.com/prowler-cloud/prowler/pull/10090)
 - `glue_etl_jobs_no_secrets_in_arguments` check for plaintext secrets in AWS Glue ETL job arguments [(#10368)](https://github.com/prowler-cloud/prowler/pull/10368)

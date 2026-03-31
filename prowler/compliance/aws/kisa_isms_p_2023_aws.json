@@ -1389,7 +1389,8 @@
       "Checks": [
         "accessanalyzer_enabled",
         "accessanalyzer_enabled_without_findings",
-        "bedrock_marketplace_subscription_access_least_privilege",
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
         "iam_administrator_access_with_mfa",
         "iam_avoid_root_usage",
         "iam_aws_attached_policy_no_administrative_privileges",
