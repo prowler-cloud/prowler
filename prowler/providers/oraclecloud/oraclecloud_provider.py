@@ -127,11 +127,6 @@ class OraclecloudProvider(Provider):
 
         logger.info("Initializing OCI provider ...")
 
-        # Check if the configuration is scanning a single region
-        single_region = None
-        if region:
-            single_region = list(region)[0] if len(region) == 1 else None
-
         # Setup OCI Session
         logger.info("Setting up OCI session ...")
         self._session = self.setup_session(
@@ -143,7 +138,7 @@ class OraclecloudProvider(Provider):
             key_file=key_file,
             key_content=key_content,
             tenancy=tenancy,
-            region=single_region,
+            region=region,
             pass_phrase=pass_phrase,
         )
 
@@ -153,7 +148,7 @@ class OraclecloudProvider(Provider):
         logger.info("Validating OCI credentials ...")
         self._identity = self.set_identity(
             session=self._session,
-            region=single_region,
+            region=region,
             compartment_ids=compartment_ids,
         )
         logger.info("OCI credentials validated")
@@ -413,7 +408,7 @@ class OraclecloudProvider(Provider):
     @staticmethod
     def set_identity(
         session: OCISession,
-        region: str = None,
+        region: set = set(),
         compartment_ids: list = None,
     ) -> OCIIdentityInfo:
         """
@@ -451,13 +446,14 @@ class OraclecloudProvider(Provider):
 
         # Get region from config or use provided region
         if not region:
-            region = session.config.get("region", "us-ashburn-1")
+            region = set([session.config.get("region", "us-ashburn-1")])
 
         # Validate region
-        if region not in OCI_REGIONS:
+        invalid_regions = [r not in OCI_REGIONS for r in region]
+        if any(invalid_regions):
             raise OCIInvalidRegionError(
                 file=pathlib.Path(__file__).name,
-                message=f"Invalid region: {region}",
+                message=f"Invalid regions: {invalid_regions}",
             )
 
         # Validate credentials by calling OCI Identity service
@@ -504,9 +500,9 @@ class OraclecloudProvider(Provider):
             tenancy_id=tenancy_id,
             tenancy_name=tenancy_name,
             user_id=user_id,
-            region=region,
+            region=list(region)[0],
             profile=session.profile,
-            audited_regions=set([region]) if region else set(),
+            audited_regions= region if region else set(),
             audited_compartments=compartment_ids if compartment_ids else [],
         )
 
