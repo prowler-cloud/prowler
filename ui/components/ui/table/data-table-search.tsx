@@ -84,29 +84,26 @@ export const DataTableSearch = ({
     if (isControlled) return;
     const searchFromUrl = searchParams.get(searchParam) || "";
     setInternalValue(searchFromUrl);
-    // If there's a search value, start expanded
-    if (searchFromUrl) {
-      setIsExpanded(true);
-    }
   }, [searchParams, searchParam, isControlled]);
 
   // Handle input change with debounce
   const handleChange = (newValue: string) => {
-    // For controlled mode, update display immediately, debounce the callback
     if (isControlled) {
-      // Update display value immediately for responsive typing
       setDisplayValue(newValue);
 
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
 
-      // When onSearchCommit is provided, the actual search only fires on
-      // Enter. Don't show the loading spinner on every keystroke — it
-      // misleads the user into thinking a search is happening.
-      if (!onSearchCommit) {
-        setIsLoading(true);
+      if (onSearchCommit) {
+        // Enter-to-commit mode: sync parent immediately (no debounce, no loading).
+        // The actual search commit happens on Enter via onSearchCommit.
+        onSearchChange(newValue);
+        return;
       }
+
+      // Standard controlled mode: debounce the callback
+      setIsLoading(true);
       debounceTimeoutRef.current = setTimeout(() => {
         onSearchChange(newValue);
         setIsLoading(false);
@@ -114,9 +111,38 @@ export const DataTableSearch = ({
       return;
     }
 
-    // Uncontrolled mode: only update the display value on keystroke.
-    // The actual URL update happens on Enter (see onKeyDown handler).
+    // Uncontrolled mode: update display + debounce URL update
     setInternalValue(newValue);
+
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    if (paramPrefix) {
+      setIsLoading(true);
+      debounceTimeoutRef.current = setTimeout(() => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (newValue) {
+          params.set(searchParam, newValue);
+        } else {
+          params.delete(searchParam);
+        }
+        params.set(pageParam, "1");
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        setIsLoading(false);
+      }, SEARCH_DEBOUNCE_MS);
+    } else {
+      if (newValue) {
+        setIsLoading(true);
+        debounceTimeoutRef.current = setTimeout(() => {
+          updateFilter("search", newValue);
+          setIsLoading(false);
+        }, SEARCH_DEBOUNCE_MS);
+      } else {
+        setIsLoading(false);
+        updateFilter("search", null);
+      }
+    }
   };
 
   // Cleanup timeout on unmount
@@ -189,25 +215,21 @@ export const DataTableSearch = ({
             onKeyDown={(e) => {
               if (e.key !== "Enter") return;
 
-              // Cancel any pending debounce
+              // Cancel any pending debounce — Enter commits immediately
               if (debounceTimeoutRef.current) {
                 clearTimeout(debounceTimeoutRef.current);
                 debounceTimeoutRef.current = null;
               }
+              setIsLoading(false);
 
               // Controlled mode with explicit commit callback
-              if (onSearchCommit) {
-                if (onSearchChange) {
-                  onSearchChange(value);
-                }
+              if (isControlled && onSearchCommit) {
                 onSearchCommit(value);
-                setIsLoading(false);
                 return;
               }
 
-              // Uncontrolled mode: commit search to URL on Enter
+              // Uncontrolled mode: immediate URL update (shortcut for debounce)
               if (!isControlled) {
-                setIsLoading(true);
                 if (paramPrefix) {
                   const params = new URLSearchParams(searchParams.toString());
                   if (value) {
@@ -222,7 +244,6 @@ export const DataTableSearch = ({
                 } else {
                   updateFilter("search", value || null);
                 }
-                setIsLoading(false);
               }
             }}
             onFocus={handleFocus}
