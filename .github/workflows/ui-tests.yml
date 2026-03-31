@@ -127,7 +127,7 @@ jobs:
 
       - name: Install Playwright browsers
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install chromium
 
       - name: Run healthcheck
         if: steps.check-changes.outputs.any_changed == 'true'
