@@ -531,9 +531,17 @@ export function ResourceDetailDrawerContent({
                   <span className="text-text-neutral-secondary text-xs">
                     Categories:
                   </span>
-                  <p className="text-text-neutral-primary text-sm">
-                    {checkMeta.categories.join(", ")}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {checkMeta.categories.map((category) => (
+                      <Badge
+                        key={category}
+                        variant="outline"
+                        className="text-xs capitalize"
+                      >
+                        {category}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               </Card>
             )}
