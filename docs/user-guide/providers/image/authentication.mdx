@@ -1,0 +1,50 @@
+---
+title: "Image Authentication in Prowler"
+---
+
+Prowler's Image provider enables container image security scanning using [Trivy](https://trivy.dev/). No authentication is required for public images. For private registries, credentials can be provided using one of the following methods:
+
+* [**Basic Authentication (Environment Variables)**](https://docs.docker.com/reference/cli/docker/login/): `REGISTRY_USERNAME` and `REGISTRY_PASSWORD`
+* [**Token-Based Authentication**](https://distribution.github.io/distribution/spec/auth/token/): `REGISTRY_TOKEN`
+* [**Manual Docker Login**](https://docs.docker.com/reference/cli/docker/login/): Existing credentials in Docker's credential store
+
+Prowler uses the first available method in this priority order.
+
+### Basic Authentication (Environment Variables)
+
+To authenticate with a username and password, set the `REGISTRY_USERNAME` and `REGISTRY_PASSWORD` environment variables. Prowler automatically runs `docker login`, pulls the image, and performs a `docker logout` after the scan completes:
+
+```bash
+export REGISTRY_USERNAME="myuser"
+export REGISTRY_PASSWORD="mypassword"
+
+prowler image -I myregistry.io/myapp:v1.0
+```
+
+Both variables must be set for this method to activate. Prowler handles the full lifecycle — login, pull, scan, and cleanup — without any manual Docker commands.
+
+### Token-Based Authentication
+
+To authenticate using a registry token (such as a bearer or OAuth2 token), set the `REGISTRY_TOKEN` environment variable. Prowler passes the token directly to Trivy:
+
+```bash
+export REGISTRY_TOKEN="my-registry-token"
+
+prowler image -I myregistry.io/myapp:v1.0
+```
+
+This method is useful for registries that support token-based access without requiring a username and password.
+
+### Manual Docker Login (Fallback)
+
+If no environment variables are set, Prowler relies on existing credentials in Docker's credential store (`~/.docker/config.json`). To configure credentials manually before scanning:
+
+```bash
+docker login myregistry.io
+
+prowler image -I myregistry.io/myapp:v1.0
+```
+
+<Note>
+This method is available in Prowler CLI only. In Prowler App, use basic authentication or token-based authentication instead.
+</Note>
