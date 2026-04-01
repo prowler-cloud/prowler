@@ -1,7 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
-from prowler.providers.aws.services.iam.iam_policy_no_wildcard_marketplace_subscribe.iam_policy_no_wildcard_marketplace_subscribe import (
-    _policy_allows_marketplace_subscribe_on_all_resources,
+from prowler.providers.aws.services.iam.lib.policy import (
+    policy_allows_marketplace_subscribe_on_all_resources,
 )
 
 
@@ -22,7 +22,7 @@ class iam_inline_policy_no_wildcard_marketplace_subscribe(Check):
 
                 if (
                     policy.document
-                    and _policy_allows_marketplace_subscribe_on_all_resources(
+                    and policy_allows_marketplace_subscribe_on_all_resources(
                         policy.document
                     )
                 ):

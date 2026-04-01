@@ -6,7 +6,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- `iam_policy_no_wildcard_marketplace_subscribe` and `iam_inline_policy_no_wildcard_marketplace_subscribe` checks for AWS provider [(#10525)](https://github.com/prowler-cloud/prowler/pull/10525)
 - `apikeys_api_restricted_with_gemini_api` and `gemini_api_disabled` checks for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
 - `cloudfront_distributions_logging_enabled` detects Standard Logging v2 via CloudWatch Log Delivery [(#10090)](https://github.com/prowler-cloud/prowler/pull/10090)
 - `glue_etl_jobs_no_secrets_in_arguments` check for plaintext secrets in AWS Glue ETL job arguments [(#10368)](https://github.com/prowler-cloud/prowler/pull/10368)
@@ -21,6 +20,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CIS Google Workspace Foundations Benchmark v1.3.0 compliance [(#10462)](https://github.com/prowler-cloud/prowler/pull/10462)
 - `entra_conditional_access_policy_device_registration_mfa_required` check and `entra_intune_enrollment_sign_in_frequency_every_time` enhancement for M365 provider [(#10222)](https://github.com/prowler-cloud/prowler/pull/10222)
 - `entra_conditional_access_policy_block_elevated_insider_risk` check for M365 provider [(#10234)](https://github.com/prowler-cloud/prowler/pull/10234)
+- `iam_policy_no_wildcard_marketplace_subscribe` and `iam_inline_policy_no_wildcard_marketplace_subscribe` checks for AWS provider [(#10525)](https://github.com/prowler-cloud/prowler/pull/10525)
 
 ### 🔄 Changed
 
