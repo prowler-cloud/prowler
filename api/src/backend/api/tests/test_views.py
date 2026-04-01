@@ -3283,6 +3283,29 @@ class TestScanViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 3
 
+    def test_scan_filter_by_id_exact(self, authenticated_client, scans_fixture):
+        scan1, *_ = scans_fixture
+        response = authenticated_client.get(
+            reverse("scan-list"),
+            {"filter[id]": str(scan1.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == str(scan1.id)
+
+    def test_scan_filter_by_id_in(self, authenticated_client, scans_fixture):
+        scan1, scan2, *_ = scans_fixture
+        response = authenticated_client.get(
+            reverse("scan-list"),
+            {"filter[id.in]": f"{scan1.id},{scan2.id}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        returned_ids = {item["id"] for item in data}
+        assert returned_ids == {str(scan1.id), str(scan2.id)}
+
     def test_scans_filter_state_failed(self, authenticated_client, scans_fixture):
         """Ensure state filter matches only FAILED scans."""
         scan1, *_ = scans_fixture

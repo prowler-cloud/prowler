@@ -11,7 +11,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronsDown } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useImperativeHandle, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 
 import { resolveFindingIds } from "@/actions/findings/findings-by-resource";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
@@ -133,7 +132,6 @@ export function InlineResourceContainer({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [resources, setResources] = useState<FindingResourceRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
   // Scroll hint: shows "scroll for more" when content overflows
   const {
     containerRef: scrollHintContainerRef,
@@ -308,7 +306,7 @@ export function InlineResourceContainer({
                   className="max-h-[440px] overflow-y-auto pl-6"
                 >
                   {/* Resource rows or skeleton placeholder */}
-                  <table className="mt-[-10] w-full border-separate border-spacing-y-4">
+                  <table className="-mt-2.5 w-full border-separate border-spacing-y-4">
                     <tbody>
                       {isLoading && rows.length === 0 ? (
                         Array.from({
@@ -323,7 +321,18 @@ export function InlineResourceContainer({
                             key={row.id}
                             data-state={row.getIsSelected() && "selected"}
                             className="cursor-pointer"
-                            onClick={() => drawer.openDrawer(row.index)}
+                            onClick={(e) => {
+                              // Don't open drawer if clicking interactive elements
+                              // (links, buttons, checkboxes, dropdown items)
+                              const target = e.target as HTMLElement;
+                              if (
+                                target.closest(
+                                  "a, button, input, [role=menuitem]",
+                                )
+                              )
+                                return;
+                              drawer.openDrawer(row.index);
+                            }}
                           >
                             {row.getVisibleCells().map((cell) => (
                               <TableCell key={cell.id}>
@@ -390,25 +399,22 @@ export function InlineResourceContainer({
         </td>
       </tr>
 
-      {createPortal(
-        <ResourceDetailDrawer
-          open={drawer.isOpen}
-          onOpenChange={(open) => {
-            if (!open) drawer.closeDrawer();
-          }}
-          isLoading={drawer.isLoading}
-          isNavigating={drawer.isNavigating}
-          checkMeta={drawer.checkMeta}
-          currentIndex={drawer.currentIndex}
-          totalResources={drawer.totalResources}
-          currentFinding={drawer.currentFinding}
-          otherFindings={drawer.otherFindings}
-          onNavigatePrev={drawer.navigatePrev}
-          onNavigateNext={drawer.navigateNext}
-          onMuteComplete={handleDrawerMuteComplete}
-        />,
-        document.body,
-      )}
+      <ResourceDetailDrawer
+        open={drawer.isOpen}
+        onOpenChange={(open) => {
+          if (!open) drawer.closeDrawer();
+        }}
+        isLoading={drawer.isLoading}
+        isNavigating={drawer.isNavigating}
+        checkMeta={drawer.checkMeta}
+        currentIndex={drawer.currentIndex}
+        totalResources={drawer.totalResources}
+        currentFinding={drawer.currentFinding}
+        otherFindings={drawer.otherFindings}
+        onNavigatePrev={drawer.navigatePrev}
+        onNavigateNext={drawer.navigateNext}
+        onMuteComplete={handleDrawerMuteComplete}
+      />
     </FindingsSelectionContext.Provider>
   );
 }

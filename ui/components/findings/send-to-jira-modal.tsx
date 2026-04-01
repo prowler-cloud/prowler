@@ -14,6 +14,7 @@ import {
 } from "@/actions/integrations/jira-dispatch";
 import { Modal } from "@/components/shadcn/modal";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
+import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { useToast } from "@/components/ui";
 import { CustomBanner } from "@/components/ui/custom/custom-banner";
 import { Form, FormField, FormMessage } from "@/components/ui/form";
@@ -261,8 +262,16 @@ export const SendToJiraModal = ({
           onSubmit={form.handleSubmit(handleSubmit)}
           className="flex flex-col gap-4"
         >
+          {/* Loading skeleton for project selector */}
+          {isFetchingIntegrations && (
+            <div className="flex flex-col gap-1.5">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-12 w-full rounded-md" />
+            </div>
+          )}
+
           {/* Integration Selection */}
-          {integrations.length > 1 && (
+          {!isFetchingIntegrations && integrations.length > 1 && (
             <FormField
               control={form.control}
               name="integration"
@@ -302,41 +311,43 @@ export const SendToJiraModal = ({
           )}
 
           {/* Project Selection */}
-          {selectedIntegration && projectEntries.length > 0 && (
-            <FormField
-              control={form.control}
-              name="project"
-              render={({ field }) => (
-                <div className="flex flex-col gap-1.5">
-                  <label
-                    htmlFor="jira-project-select"
-                    className="text-text-neutral-secondary text-xs font-light tracking-tight"
-                  >
-                    Project
-                  </label>
-                  <EnhancedMultiSelect
-                    id="jira-project-select"
-                    options={projectOptions}
-                    onValueChange={(values) => {
-                      const selectedValue = values.at(-1) ?? "";
-                      field.onChange(selectedValue);
-                      // Reset issue type when project changes
-                      form.setValue("issueType", "");
-                    }}
-                    defaultValue={field.value ? [field.value] : []}
-                    placeholder="Select a Jira project"
-                    searchable={true}
-                    emptyIndicator="No projects found."
-                    hideSelectAll={true}
-                    maxCount={1}
-                    closeOnSelect={true}
-                    resetOnDefaultValueChange={true}
-                  />
-                  <FormMessage className="text-text-error text-xs" />
-                </div>
-              )}
-            />
-          )}
+          {!isFetchingIntegrations &&
+            selectedIntegration &&
+            projectEntries.length > 0 && (
+              <FormField
+                control={form.control}
+                name="project"
+                render={({ field }) => (
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor="jira-project-select"
+                      className="text-text-neutral-secondary text-xs font-light tracking-tight"
+                    >
+                      Project
+                    </label>
+                    <EnhancedMultiSelect
+                      id="jira-project-select"
+                      options={projectOptions}
+                      onValueChange={(values) => {
+                        const selectedValue = values.at(-1) ?? "";
+                        field.onChange(selectedValue);
+                        // Reset issue type when project changes
+                        form.setValue("issueType", "");
+                      }}
+                      defaultValue={field.value ? [field.value] : []}
+                      placeholder="Select a Jira project"
+                      searchable={true}
+                      emptyIndicator="No projects found."
+                      hideSelectAll={true}
+                      maxCount={1}
+                      closeOnSelect={true}
+                      resetOnDefaultValueChange={true}
+                    />
+                    <FormMessage className="text-text-error text-xs" />
+                  </div>
+                )}
+              />
+            )}
 
           {/* Issue Type Selection */}
           {selectedProject && (
