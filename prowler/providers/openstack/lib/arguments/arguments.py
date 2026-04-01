@@ -1,5 +1,7 @@
 from argparse import Namespace
 
+SENSITIVE_ARGUMENTS = frozenset({"--os-password"})
+
 
 def init_parser(self):
     """Initialize the OpenStack provider CLI parser."""

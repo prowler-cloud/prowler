@@ -296,6 +296,13 @@
                   "user-guide/providers/openstack/getting-started-openstack",
                   "user-guide/providers/openstack/authentication"
                 ]
+              },
+              {
+                "group": "Vercel",
+                "pages": [
+                  "user-guide/providers/vercel/getting-started-vercel",
+                  "user-guide/providers/vercel/authentication"
+                ]
               }
             ]
           },

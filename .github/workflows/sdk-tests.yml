@@ -499,6 +499,30 @@ jobs:
           flags: prowler-py${{ matrix.python-version }}-googleworkspace
           files: ./googleworkspace_coverage.xml
 
+      # Vercel Provider
+      - name: Check if Vercel files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-vercel
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
+        with:
+          files: |
+            ./prowler/**/vercel/**
+            ./tests/**/vercel/**
+            ./poetry.lock
+
+      - name: Run Vercel tests
+        if: steps.changed-vercel.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/vercel --cov-report=xml:vercel_coverage.xml tests/providers/vercel
+
+      - name: Upload Vercel coverage to Codecov
+        if: steps.changed-vercel.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-vercel
+          files: ./vercel_coverage.xml
+
       # Lib
       - name: Check if Lib files changed
         if: steps.check-changes.outputs.any_changed == 'true'

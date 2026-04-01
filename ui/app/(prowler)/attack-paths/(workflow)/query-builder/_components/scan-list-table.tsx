@@ -42,11 +42,7 @@ const isSelectDisabled = (
   scan: AttackPathScan,
   selectedScanId: string | null,
 ) => {
-  return (
-    !scan.attributes.graph_data_ready ||
-    scan.attributes.state === SCAN_STATES.FAILED ||
-    selectedScanId === scan.id
-  );
+  return !scan.attributes.graph_data_ready || selectedScanId === scan.id;
 };
 
 const getSelectButtonLabel = (
