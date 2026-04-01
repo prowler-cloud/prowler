@@ -434,8 +434,12 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
             raise_on_exception=False,
         )
         project_keys = jira_connection.projects if jira_connection.is_connected else {}
+        issue_types = (
+            jira_connection.issue_types if jira_connection.is_connected else {}
+        )
         with rls_transaction(str(integration.tenant_id)):
             integration.configuration["projects"] = project_keys
+            integration.configuration["issue_types"] = issue_types
             integration.save()
         return jira_connection
     elif integration.integration_type == Integration.IntegrationChoices.SLACK:
