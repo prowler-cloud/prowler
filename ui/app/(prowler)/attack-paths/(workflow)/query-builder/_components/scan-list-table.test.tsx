@@ -162,4 +162,45 @@ describe("ScanListTable", () => {
       "/attack-paths?scanPage=1&scanPageSize=5&scanId=scan-1",
     );
   });
+
+  it("enables the select button for a failed scan when graph data is ready", async () => {
+    const user = userEvent.setup();
+    const failedScan: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "failed",
+        graph_data_ready: true,
+      },
+    };
+
+    render(<ScanListTable scans={[failedScan]} />);
+
+    const button = screen.getByRole("button", { name: "Select scan" });
+    expect(button).toBeEnabled();
+    expect(button).toHaveTextContent("Select");
+
+    await user.click(button);
+
+    expect(pushMock).toHaveBeenCalledWith(
+      "/attack-paths?scanPage=1&scanPageSize=5&scanId=scan-1",
+    );
+  });
+
+  it("disables the select button for a failed scan when graph data is not ready", () => {
+    const failedScan: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "failed",
+        graph_data_ready: false,
+      },
+    };
+
+    render(<ScanListTable scans={[failedScan]} />);
+
+    const button = screen.getByRole("button", { name: "Select scan" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent("Failed");
+  });
 });
