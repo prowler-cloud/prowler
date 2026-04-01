@@ -9,6 +9,37 @@ import type {
   JiraDispatchResponse,
 } from "@/types/integrations";
 
+export const getJiraIssueTypes = async (
+  integrationId: string,
+  projectKey: string,
+): Promise<
+  { success: true; issueTypes: string[] } | { success: false; error: string }
+> => {
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(
+    `${apiBaseUrl}/integrations/${integrationId}/jira/issue_types`,
+  );
+  url.searchParams.append("project_key", projectKey);
+
+  try {
+    const response = await fetch(url.toString(), { method: "GET", headers });
+
+    if (response.ok) {
+      const data: { issue_types: string[] } = await response.json();
+      return { success: true, issueTypes: data.issue_types ?? [] };
+    }
+
+    const errorData: unknown = await response.json().catch(() => ({}));
+    const errorMessage =
+      (errorData as { errors?: { detail?: string }[] }).errors?.[0]?.detail ||
+      `Unable to fetch issue types: ${response.statusText}`;
+    return { success: false, error: errorMessage };
+  } catch (error) {
+    const errorResult = handleApiError(error);
+    return { success: false, error: errorResult.error || "An error occurred" };
+  }
+};
+
 export const getJiraIntegrations = async (): Promise<
   | { success: true; data: IntegrationProps[] }
   | { success: false; error: string }
@@ -47,7 +78,7 @@ export const sendFindingToJira = async (
   integrationId: string,
   findingId: string,
   projectKey: string,
-  _issueType: string,
+  issueType: string,
 ): Promise<
   | { success: true; taskId: string; message: string }
   | { success: false; error: string }
@@ -65,8 +96,7 @@ export const sendFindingToJira = async (
       type: "integrations-jira-dispatches",
       attributes: {
         project_key: projectKey,
-        // Temporarily hardcode to "Task" regardless of the provided value
-        issue_type: "Task",
+        issue_type: issueType,
       },
     },
   };

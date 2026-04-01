@@ -782,11 +782,15 @@ class TestProwlerIntegrationConnectionTest:
         }
         integration.configuration = {}
 
-        # Mock successful JIRA connection with projects
+        # Mock successful JIRA connection with projects and issue types
         mock_connection = MagicMock()
         mock_connection.is_connected = True
         mock_connection.error = None
         mock_connection.projects = {"PROJ1": "Project 1", "PROJ2": "Project 2"}
+        mock_connection.issue_types = {
+            "PROJ1": ["Task", "Bug"],
+            "PROJ2": ["Task", "Story"],
+        }
         mock_jira_class.test_connection.return_value = mock_connection
 
         # Mock rls_transaction context manager
@@ -815,6 +819,12 @@ class TestProwlerIntegrationConnectionTest:
             "PROJ2": "Project 2",
         }
 
+        # Verify issue types were saved to integration configuration
+        assert integration.configuration["issue_types"] == {
+            "PROJ1": ["Task", "Bug"],
+            "PROJ2": ["Task", "Story"],
+        }
+
         # Verify integration.save() was called
         integration.save.assert_called_once()
 
@@ -838,6 +848,7 @@ class TestProwlerIntegrationConnectionTest:
         mock_connection.is_connected = False
         mock_connection.error = Exception("Authentication failed: Invalid credentials")
         mock_connection.projects = {}  # Empty projects when connection fails
+        mock_connection.issue_types = {}  # Empty issue types when connection fails
         mock_jira_class.test_connection.return_value = mock_connection
 
         # Mock rls_transaction context manager
@@ -863,6 +874,9 @@ class TestProwlerIntegrationConnectionTest:
         # Verify empty projects dict was saved to integration configuration
         assert integration.configuration["projects"] == {}
 
+        # Verify empty issue types dict was saved to integration configuration
+        assert integration.configuration["issue_types"] == {}
+
         # Verify integration.save() was called even on connection failure
         integration.save.assert_called_once()
 
@@ -881,17 +895,21 @@ class TestProwlerIntegrationConnectionTest:
             "domain": "example.atlassian.net",
         }
         integration.configuration = {
-            "issue_types": ["Task"],  # Existing configuration
+            "issue_types": {"OLD_PROJ": ["Task"]},  # Existing configuration
             "projects": {"OLD_PROJ": "Old Project"},  # Will be overwritten
         }
 
-        # Mock successful JIRA connection with new projects
+        # Mock successful JIRA connection with new projects and issue types
         mock_connection = MagicMock()
         mock_connection.is_connected = True
         mock_connection.error = None
         mock_connection.projects = {
             "NEW_PROJ1": "New Project 1",
             "NEW_PROJ2": "New Project 2",
+        }
+        mock_connection.issue_types = {
+            "NEW_PROJ1": ["Task", "Bug"],
+            "NEW_PROJ2": ["Story"],
         }
         mock_jira_class.test_connection.return_value = mock_connection
 
@@ -910,8 +928,11 @@ class TestProwlerIntegrationConnectionTest:
             "NEW_PROJ2": "New Project 2",
         }
 
-        # Verify other configuration fields were preserved
-        assert integration.configuration["issue_types"] == ["Task"]
+        # Verify issue types were also updated
+        assert integration.configuration["issue_types"] == {
+            "NEW_PROJ1": ["Task", "Bug"],
+            "NEW_PROJ2": ["Story"],
+        }
 
         # Verify integration.save() was called
         integration.save.assert_called_once()

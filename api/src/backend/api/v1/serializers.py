@@ -2713,11 +2713,11 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 )
             config_serializer = JiraConfigSerializer
             # Create non-editable configuration for JIRA integration
-            default_jira_issue_types = ["Task"]
+            # issue_types will be populated per project when connection is tested
             configuration.update(
                 {
                     "projects": {},
-                    "issue_types": default_jira_issue_types,
+                    "issue_types": {},
                     "domain": credentials.get("domain"),
                 }
             )
@@ -2938,7 +2938,7 @@ class IntegrationJiraDispatchSerializer(BaseSerializerV1):
     """
 
     project_key = serializers.CharField(required=True)
-    issue_type = serializers.ChoiceField(required=True, choices=["Task"])
+    issue_type = serializers.CharField(required=True)
 
     class JSONAPIMeta:
         resource_name = "integrations-jira-dispatches"
@@ -2964,6 +2964,23 @@ class IntegrationJiraDispatchSerializer(BaseSerializerV1):
                 {
                     "project_key": "The given project key is not available for this JIRA integration. Refresh the "
                     "connection if this is an error."
+                }
+            )
+
+        issue_type = attrs.get("issue_type")
+        available_issue_types = integration_instance.configuration.get(
+            "issue_types", {}
+        )
+        # Handle old format where issue_types was a flat list (e.g., ["Task"])
+        if not isinstance(available_issue_types, dict):
+            available_issue_types = {}
+        project_issue_types = available_issue_types.get(project_key, [])
+        if project_issue_types and issue_type not in project_issue_types:
+            raise ValidationError(
+                {
+                    "issue_type": f"The issue type '{issue_type}' is not available for project '{project_key}'. "
+                    f"Available types: {', '.join(project_issue_types)}. "
+                    "Refresh the connection if this is an error."
                 }
             )
 
