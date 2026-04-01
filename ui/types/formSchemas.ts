@@ -386,6 +386,7 @@ export const addCredentialsFormSchema = (
                                         [ProviderCredentialFields.VERCEL_API_TOKEN]:
                                           z
                                             .string()
+                                            .trim()
                                             .min(1, "API Token is required"),
                                       }
                                     : {}),
