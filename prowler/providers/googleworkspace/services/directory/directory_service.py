@@ -39,6 +39,7 @@ class Directory(GoogleWorkspaceService):
                             id=user_data.get("id"),
                             email=user_data.get("primaryEmail"),
                             is_admin=user_data.get("isAdmin", False),
+                            is_delegated_admin=user_data.get("isDelegatedAdmin", False),
                         )
                         users[user.id] = user
                         logger.debug(
@@ -68,3 +69,4 @@ class User(BaseModel):
     id: str
     email: str
     is_admin: bool = False
+    is_delegated_admin: bool = False
