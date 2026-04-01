@@ -6214,10 +6214,16 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
 
         with rls_transaction(str(integration.tenant_id), using="default"):
             integration.configuration["issue_types"] = issue_types_config
-            integration.save()
+            integration.save(using="default")
 
         return Response(
-            data={"issue_types": fetched_issue_types},
+            data={
+                "type": "jira-issue-types",
+                "attributes": {
+                    "project_key": project_key,
+                    "issue_types": fetched_issue_types,
+                },
+            },
             status=status.HTTP_200_OK,
         )
 

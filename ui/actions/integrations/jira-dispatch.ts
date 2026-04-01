@@ -25,8 +25,13 @@ export const getJiraIssueTypes = async (
     const response = await fetch(url.toString(), { method: "GET", headers });
 
     if (response.ok) {
-      const data: { issue_types: string[] } = await response.json();
-      return { success: true, issueTypes: data.issue_types ?? [] };
+      const data: {
+        data: { type: string; attributes: { issue_types: string[] } };
+      } = await response.json();
+      return {
+        success: true,
+        issueTypes: data.data?.attributes?.issue_types ?? [],
+      };
     }
 
     const errorData: unknown = await response.json().catch(() => ({}));
