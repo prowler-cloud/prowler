@@ -758,8 +758,6 @@ CLI flags that accept secrets (tokens, passwords, API keys) require special hand
 2. **Add a `SENSITIVE_ARGUMENTS` frozenset** at the top of the `arguments.py` file listing every flag that accepts secret values:
 
     ```python
-    from prowler.lib.cli.sensitive import SENSITIVE_ARGUMENTS as COMMON_SENSITIVE_ARGUMENTS
-
     SENSITIVE_ARGUMENTS = frozenset({"--your-provider-password", "--your-provider-token"})
     ```
 

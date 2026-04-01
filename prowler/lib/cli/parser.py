@@ -12,7 +12,6 @@ from prowler.config.config import (
     default_output_directory,
 )
 from prowler.lib.check.models import Severity
-from prowler.lib.cli.redact import warn_sensitive_argument_values
 from prowler.lib.outputs.common import Status
 from prowler.providers.common.arguments import (
     init_providers_parser,
@@ -125,9 +124,9 @@ Detailed documentation at https://docs.prowler.com
             elif sys.argv[1] == "oci":
                 sys.argv[1] = "oraclecloud"
 
-        # Warn about sensitive flags passed with explicit values
-        # Snapshot argv before parse_args() which may exit on errors
-        warn_sensitive_argument_values(list(sys.argv[1:]))
+        # Snapshot argv before parse_args() for the sensitive-flag warning
+        # that runs later, after logging is configured in __main__.
+        self.raw_argv = list(sys.argv[1:])
 
         # Parse arguments
         args = self.parser.parse_args()

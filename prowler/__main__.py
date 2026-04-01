@@ -203,6 +203,12 @@ def prowler():
     # Set Logger configuration
     set_logging_config(args.log_level, args.log_file, args.only_logs)
 
+    # Warn about sensitive flags passed with explicit values.
+    # Runs after set_logging_config so the logger has handlers attached.
+    from prowler.lib.cli.redact import warn_sensitive_argument_values
+
+    warn_sensitive_argument_values(parser.raw_argv)
+
     if args.list_services:
         print_services(list_services(provider))
         sys.exit()

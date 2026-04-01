@@ -68,7 +68,7 @@ def redact_argv(argv: list[str]) -> str:
 
 
 def warn_sensitive_argument_values(argv: list[str]) -> None:
-    """Print a warning for each sensitive CLI flag that was passed with an explicit value.
+    """Log a warning for each sensitive CLI flag that was passed with an explicit value.
 
     Scans the raw argv list (not parsed args) to detect when users pass
     secret values directly on the command line instead of using environment
