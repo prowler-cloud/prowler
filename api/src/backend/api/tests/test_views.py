@@ -1715,6 +1715,46 @@ class TestProviderViewSet:
                     "min_length",
                     "uid",
                 ),
+                # Vercel UID validation - missing team_ prefix
+                (
+                    {
+                        "provider": "vercel",
+                        "uid": "abcdef1234567890abcdef12",
+                        "alias": "test",
+                    },
+                    "vercel-uid",
+                    "uid",
+                ),
+                # Vercel UID validation - too short after prefix
+                (
+                    {
+                        "provider": "vercel",
+                        "uid": "team_abc123",
+                        "alias": "test",
+                    },
+                    "vercel-uid",
+                    "uid",
+                ),
+                # Vercel UID validation - contains special characters
+                (
+                    {
+                        "provider": "vercel",
+                        "uid": "team_abcdef-1234567890ab",
+                        "alias": "test",
+                    },
+                    "vercel-uid",
+                    "uid",
+                ),
+                # Vercel UID validation - too long (33 chars after prefix)
+                (
+                    {
+                        "provider": "vercel",
+                        "uid": "team_abcdefghijklmnopqrstuvwxyz1234567",
+                        "alias": "test",
+                    },
+                    "vercel-uid",
+                    "uid",
+                ),
                 # Google Workspace UID validation - missing 'C' prefix
                 (
                     {
@@ -1918,21 +1958,21 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    11,
+                    12,
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 12),
+                ("inserted_at", TODAY, 13),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    12,
+                    13,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    12,
+                    13,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2555,6 +2595,14 @@ class TestProviderSecretViewSet:
                 {
                     "credentials_content": '{"type": "service_account", "project_id": "test-project", "private_key_id": "key123", "private_key": "-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----\\n", "client_email": "test@test-project.iam.gserviceaccount.com", "client_id": "123456789"}',
                     "delegated_user": "admin@example.com",
+                },
+            ),
+            # Vercel with API Token
+            (
+                Provider.ProviderChoices.VERCEL.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "api_token": "fake-vercel-api-token-for-testing",
                 },
             ),
         ],
