@@ -165,8 +165,5 @@ GEMINI.md
 .github/skills
 .gemini/skills
 
-# Vitest browser mode screenshots (local debug only)
-**/__screenshots__/
-
 # Claude Code
 .claude/*
