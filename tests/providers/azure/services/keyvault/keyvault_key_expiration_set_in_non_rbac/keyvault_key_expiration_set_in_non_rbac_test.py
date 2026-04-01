@@ -127,17 +127,18 @@ class Test_keyvault_key_expiration_set_in_non_rbac:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has the key {key_name} without expiration date set."
+                == f"Key {key_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have an expiration date set."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == keyvault_name
-            assert result[0].resource_id == keyvault_id
+            assert result[0].resource_name == key_name
+            assert result[0].resource_id == "id"
             assert result[0].location == "westeurope"
 
     def test_key_vaults_valid_keys(self):
         keyvault_client = mock.MagicMock
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
+        key_name = "Key Name"
 
         with (
             mock.patch(
@@ -159,7 +160,7 @@ class Test_keyvault_key_expiration_set_in_non_rbac:
 
             key = Key(
                 id="id",
-                name="name",
+                name=key_name,
                 enabled=True,
                 location="westeurope",
                 attributes=KeyAttributes(expires=49394, enabled=True),
@@ -187,9 +188,126 @@ class Test_keyvault_key_expiration_set_in_non_rbac:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has all the keys with expiration date set."
+                == f"Key {key_name} in Key Vault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has an expiration date set."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == keyvault_name
-            assert result[0].resource_id == keyvault_id
+            assert result[0].resource_name == key_name
+            assert result[0].resource_id == "id"
             assert result[0].location == "westeurope"
+
+    def test_disabled_key_skipped(self):
+        keyvault_client = mock.MagicMock
+        keyvault_name = "Keyvault Name"
+        keyvault_id = str(uuid4())
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_in_non_rbac.keyvault_key_expiration_set_in_non_rbac.keyvault_client",
+                new=keyvault_client,
+            ),
+        ):
+            from prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_in_non_rbac.keyvault_key_expiration_set_in_non_rbac import (
+                keyvault_key_expiration_set_in_non_rbac,
+            )
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                Key,
+                KeyVaultInfo,
+            )
+
+            key = Key(
+                id="id",
+                name="disabled_key",
+                enabled=False,
+                location="westeurope",
+                attributes=KeyAttributes(expires=None, enabled=False),
+            )
+            keyvault_client.key_vaults = {
+                AZURE_SUBSCRIPTION_ID: [
+                    KeyVaultInfo(
+                        id=keyvault_id,
+                        name=keyvault_name,
+                        location="westeurope",
+                        resource_group="resource_group",
+                        properties=VaultProperties(
+                            tenant_id="tenantid",
+                            sku="sku",
+                            enable_rbac_authorization=False,
+                        ),
+                        keys=[key],
+                        secrets=[],
+                    )
+                ]
+            }
+            check = keyvault_key_expiration_set_in_non_rbac()
+            result = check.execute()
+            assert len(result) == 0
+
+    def test_multiple_keys_mixed_expiration(self):
+        keyvault_client = mock.MagicMock
+        keyvault_name = "Keyvault Name"
+        keyvault_id = str(uuid4())
+        key_with_expiry = "key_with_expiry"
+        key_without_expiry = "key_without_expiry"
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_in_non_rbac.keyvault_key_expiration_set_in_non_rbac.keyvault_client",
+                new=keyvault_client,
+            ),
+        ):
+            from prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_in_non_rbac.keyvault_key_expiration_set_in_non_rbac import (
+                keyvault_key_expiration_set_in_non_rbac,
+            )
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                Key,
+                KeyVaultInfo,
+            )
+
+            keyvault_client.key_vaults = {
+                AZURE_SUBSCRIPTION_ID: [
+                    KeyVaultInfo(
+                        id=keyvault_id,
+                        name=keyvault_name,
+                        location="westeurope",
+                        resource_group="resource_group",
+                        properties=VaultProperties(
+                            tenant_id="tenantid",
+                            sku="sku",
+                            enable_rbac_authorization=False,
+                        ),
+                        keys=[
+                            Key(
+                                id="id1",
+                                name=key_without_expiry,
+                                enabled=True,
+                                location="westeurope",
+                                attributes=KeyAttributes(expires=None, enabled=True),
+                            ),
+                            Key(
+                                id="id2",
+                                name=key_with_expiry,
+                                enabled=True,
+                                location="westeurope",
+                                attributes=KeyAttributes(expires=49394, enabled=True),
+                            ),
+                        ],
+                        secrets=[],
+                    )
+                ]
+            }
+            check = keyvault_key_expiration_set_in_non_rbac()
+            result = check.execute()
+            assert len(result) == 2
+            assert result[0] is not result[1]
+            assert result[0].status == "FAIL"
+            assert key_without_expiry in result[0].status_extended
+            assert result[1].status == "PASS"
+            assert key_with_expiry in result[1].status_extended
