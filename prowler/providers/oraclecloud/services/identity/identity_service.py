@@ -374,14 +374,6 @@ class Identity(OCIService):
                     ).data
 
                     for policy in policies:
-                        try:
-                            logger.info(policy)
-                            policy_domain_region = identity_client.get_domain(policy.domain_ocid()).home_region
-                            logger.info(policy_domain_region)
-                            if regional_client.region != policy_domain_region and policy_domain_region:
-                                continue
-                        except Exception as error:
-                            logger.error(f"Policy error: {error}")
                         if policy.lifecycle_state != "DELETED":
                             self.policies.append(
                                 Policy(
