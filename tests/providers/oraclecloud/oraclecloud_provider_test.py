@@ -131,6 +131,36 @@ class TestSetIdentityAuthenticationErrors:
             assert identity.user_id == "ocid1.user.oc1..aaaaaaaexample"
             assert identity.region == "us-ashburn-1"
 
+    def test_successful_authentication_persists_home_region_separately(
+        self, mock_session
+    ):
+        """Test the tenancy home region is stored separately from the session region."""
+        mock_session.config["region"] = "eu-frankfurt-1"
+
+        with patch("oci.identity.IdentityClient") as mock_identity_client:
+            mock_tenancy = MagicMock()
+            mock_tenancy.name = "test-tenancy"
+
+            home_region_subscription = MagicMock()
+            home_region_subscription.region_name = "us-ashburn-1"
+            home_region_subscription.is_home_region = True
+
+            secondary_region_subscription = MagicMock()
+            secondary_region_subscription.region_name = "eu-frankfurt-1"
+            secondary_region_subscription.is_home_region = False
+
+            mock_client_instance = MagicMock()
+            mock_client_instance.get_tenancy.return_value = MagicMock(data=mock_tenancy)
+            mock_client_instance.list_region_subscriptions.return_value = MagicMock(
+                data=[secondary_region_subscription, home_region_subscription]
+            )
+            mock_identity_client.return_value = mock_client_instance
+
+            identity = OraclecloudProvider.set_identity(mock_session)
+
+            assert identity.region == "eu-frankfurt-1"
+            assert identity.home_region == "us-ashburn-1"
+
     @staticmethod
     def _create_service_error(status, message):
         """Helper to create an OCI ServiceError."""

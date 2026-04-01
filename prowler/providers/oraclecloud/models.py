@@ -27,6 +27,7 @@ class OCIIdentityInfo:
     tenancy_name: str
     user_id: str
     region: str
+    home_region: str
     profile: Optional[str]
     audited_regions: set
     audited_compartments: list
