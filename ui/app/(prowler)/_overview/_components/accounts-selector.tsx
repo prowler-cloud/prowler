@@ -18,6 +18,7 @@ import {
   MongoDBAtlasProviderBadge,
   OpenStackProviderBadge,
   OracleCloudProviderBadge,
+  VercelProviderBadge,
 } from "@/components/icons/providers-badge";
 import {
   MultiSelect,
@@ -48,6 +49,7 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   alibabacloud: <AlibabaCloudProviderBadge width={18} height={18} />,
   cloudflare: <CloudflareProviderBadge width={18} height={18} />,
   openstack: <OpenStackProviderBadge width={18} height={18} />,
+  vercel: <VercelProviderBadge width={18} height={18} />,
 };
 
 /** Common props shared by both batch and instant modes. */

@@ -381,6 +381,11 @@ export type GoogleWorkspaceCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type VercelCredentials = {
+  [ProviderCredentialFields.VERCEL_API_TOKEN]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AWSCredentialsRole
@@ -397,7 +402,8 @@ export type CredentialsFormSchema =
   | AlibabaCloudCredentialsRole
   | CloudflareCredentials
   | OpenStackCredentials
-  | GoogleWorkspaceCredentials;
+  | GoogleWorkspaceCredentials
+  | VercelCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;

@@ -83,6 +83,11 @@ const GoogleWorkspaceProviderBadge = lazy(() =>
     default: m.GoogleWorkspaceProviderBadge,
   })),
 );
+const VercelProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.VercelProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -149,6 +154,10 @@ const PROVIDER_DATA: Record<
   openstack: {
     label: "OpenStack",
     icon: OpenStackProviderBadge,
+  },
+  vercel: {
+    label: "Vercel",
+    icon: VercelProviderBadge,
   },
 };
 

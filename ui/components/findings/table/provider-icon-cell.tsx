@@ -13,6 +13,7 @@ import {
   MongoDBAtlasProviderBadge,
   OpenStackProviderBadge,
   OracleCloudProviderBadge,
+  VercelProviderBadge,
 } from "@/components/icons/providers-badge";
 import { cn } from "@/lib/utils";
 import { ProviderType } from "@/types";
@@ -32,6 +33,7 @@ export const PROVIDER_ICONS = {
   alibabacloud: AlibabaCloudProviderBadge,
   cloudflare: CloudflareProviderBadge,
   openstack: OpenStackProviderBadge,
+  vercel: VercelProviderBadge,
 } as const;
 
 interface ProviderIconCellProps {

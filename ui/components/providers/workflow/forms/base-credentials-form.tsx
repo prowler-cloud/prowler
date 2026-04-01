@@ -32,6 +32,7 @@ import {
   OCICredentials,
   OpenStackCredentials,
   ProviderType,
+  VercelCredentials,
 } from "@/types";
 
 import { ProviderTitleDocs } from "../provider-title-docs";
@@ -60,6 +61,7 @@ import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-for
 import { MongoDBAtlasCredentialsForm } from "./via-credentials/mongodbatlas-credentials-form";
 import { OpenStackCredentialsForm } from "./via-credentials/openstack-credentials-form";
 import { OracleCloudCredentialsForm } from "./via-credentials/oraclecloud-credentials-form";
+import { VercelCredentialsForm } from "./via-credentials/vercel-credentials-form";
 
 type BaseCredentialsFormProps = {
   providerType: ProviderType;
@@ -270,6 +272,11 @@ export const BaseCredentialsForm = ({
             control={
               form.control as unknown as Control<GoogleWorkspaceCredentials>
             }
+          />
+        )}
+        {providerType === "vercel" && (
+          <VercelCredentialsForm
+            control={form.control as unknown as Control<VercelCredentials>}
           />
         )}
 

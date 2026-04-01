@@ -92,6 +92,11 @@ export const getProviderHelpText = (provider: string) => {
         text: "Need help connecting your Google Workspace account?",
         link: "https://goto.prowler.com/provider-googleworkspace",
       };
+    case "vercel":
+      return {
+        text: "Need help connecting your Vercel team?",
+        link: "https://goto.prowler.com/provider-vercel",
+      };
     default:
       return {
         text: "How to setup a provider?",
