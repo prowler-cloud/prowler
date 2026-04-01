@@ -27,8 +27,6 @@ class MockIntersectionObserver {
   }
 }
 
-vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
-
 /** Simulate the sentinel becoming visible in the scroll container. */
 function triggerIntersection() {
   latestObserverCallback?.([
@@ -98,6 +96,7 @@ async function flushAsync() {
 
 describe("useInfiniteResources", () => {
   beforeEach(() => {
+    vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
     for (const mockFn of Object.values(findingGroupActionsMock)) {
       mockFn.mockReset();
     }
