@@ -1,3 +1,4 @@
+import logging
 from unittest.mock import patch
 
 import pytest
@@ -93,56 +94,59 @@ class TestRedactArgv:
 
 
 class TestWarnSensitiveArgumentValues:
-    def test_no_warning_without_sensitive_flags(self, capsys, mock_sensitive_args):
-        warn_sensitive_argument_values(["aws", "--region", "eu-west-1"])
-        assert capsys.readouterr().out == ""
+    def test_no_warning_without_sensitive_flags(self, caplog, mock_sensitive_args):
+        with caplog.at_level(logging.WARNING):
+            warn_sensitive_argument_values(["aws", "--region", "eu-west-1"])
+        assert caplog.text == ""
 
-    def test_no_warning_flag_without_value(self, capsys, mock_sensitive_args):
-        warn_sensitive_argument_values(["github", "--personal-access-token"])
-        assert capsys.readouterr().out == ""
+    def test_no_warning_flag_without_value(self, caplog, mock_sensitive_args):
+        with caplog.at_level(logging.WARNING):
+            warn_sensitive_argument_values(["github", "--personal-access-token"])
+        assert caplog.text == ""
 
     def test_no_warning_flag_followed_by_another_flag(
-        self, capsys, mock_sensitive_args
+        self, caplog, mock_sensitive_args
     ):
-        warn_sensitive_argument_values(
-            ["github", "--personal-access-token", "--region", "eu-west-1"]
-        )
-        assert capsys.readouterr().out == ""
+        with caplog.at_level(logging.WARNING):
+            warn_sensitive_argument_values(
+                ["github", "--personal-access-token", "--region", "eu-west-1"]
+            )
+        assert caplog.text == ""
 
-    def test_warning_flag_with_value(self, capsys, mock_sensitive_args):
-        warn_sensitive_argument_values(
-            ["github", "--personal-access-token", "ghp_secret"]
-        )
-        output = capsys.readouterr().out
-        assert "--personal-access-token" in output
-        assert "not recommended" in output
+    def test_warning_flag_with_value(self, caplog, mock_sensitive_args):
+        with caplog.at_level(logging.WARNING):
+            warn_sensitive_argument_values(
+                ["github", "--personal-access-token", "ghp_secret"]
+            )
+        assert "--personal-access-token" in caplog.text
+        assert "not recommended" in caplog.text
 
-    def test_warning_flag_with_equals_syntax(self, capsys, mock_sensitive_args):
-        warn_sensitive_argument_values(["aws", "--shodan=key123"])
-        output = capsys.readouterr().out
-        assert "--shodan" in output
-        assert "not recommended" in output
+    def test_warning_flag_with_equals_syntax(self, caplog, mock_sensitive_args):
+        with caplog.at_level(logging.WARNING):
+            warn_sensitive_argument_values(["aws", "--shodan=key123"])
+        assert "--shodan" in caplog.text
+        assert "not recommended" in caplog.text
 
-    def test_warning_multiple_flags(self, capsys, mock_sensitive_args):
-        warn_sensitive_argument_values(
-            [
-                "github",
-                "--personal-access-token",
-                "ghp_secret",
-                "--shodan",
-                "key",
-            ]
-        )
-        output = capsys.readouterr().out
-        assert "--personal-access-token" in output
-        assert "--shodan" in output
+    def test_warning_multiple_flags(self, caplog, mock_sensitive_args):
+        with caplog.at_level(logging.WARNING):
+            warn_sensitive_argument_values(
+                [
+                    "github",
+                    "--personal-access-token",
+                    "ghp_secret",
+                    "--shodan",
+                    "key",
+                ]
+            )
+        assert "--personal-access-token" in caplog.text
+        assert "--shodan" in caplog.text
 
-    def test_no_color_output(self, capsys, mock_sensitive_args):
-        warn_sensitive_argument_values(["--no-color", "aws", "--shodan", "key123"])
-        output = capsys.readouterr().out
-        assert "WARNING:" in output
+    def test_no_color_output(self, caplog, mock_sensitive_args):
+        with caplog.at_level(logging.WARNING):
+            warn_sensitive_argument_values(["--no-color", "aws", "--shodan", "key123"])
+        assert "not recommended" in caplog.text
         # Should not contain ANSI escape codes
-        assert "\033[" not in output
+        assert "\033[" not in caplog.text
 
 
 class TestGetSensitiveArguments:

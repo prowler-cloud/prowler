@@ -99,15 +99,15 @@ def warn_sensitive_argument_values(argv: list[str]) -> None:
 
     for flag in flags_with_values:
         if use_color:
-            print(
-                f"\n{Fore.YELLOW}{Style.BRIGHT}WARNING:{Style.RESET_ALL}{Fore.YELLOW} "
-                f"Passing a value directly to {flag} is not recommended.\n"
-                f"         Use the corresponding environment variable instead to avoid "
+            logger.warning(
+                f"{Fore.YELLOW}{Style.BRIGHT}WARNING:{Style.RESET_ALL}{Fore.YELLOW} "
+                f"Passing a value directly to {flag} is not recommended. "
+                f"Use the corresponding environment variable instead to avoid "
                 f"exposing secrets in process listings and shell history.{Style.RESET_ALL}"
             )
         else:
-            print(
-                f"\nWARNING: Passing a value directly to {flag} is not recommended.\n"
-                f"         Use the corresponding environment variable instead to avoid "
+            logger.warning(
+                f"Passing a value directly to {flag} is not recommended. "
+                f"Use the corresponding environment variable instead to avoid "
                 f"exposing secrets in process listings and shell history."
             )
