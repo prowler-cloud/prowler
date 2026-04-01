@@ -1,5 +1,6 @@
 import os
 import tempfile
+from argparse import Namespace
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
@@ -19,6 +20,7 @@ from prowler.providers.image.exceptions.exceptions import (
     ImageScanError,
     ImageTrivyBinaryNotFoundError,
 )
+from prowler.providers.common.provider import Provider
 from prowler.providers.image.image_provider import ImageProvider
 from tests.providers.image.image_fixtures import (
     SAMPLE_IMAGE_SHA,
@@ -1124,3 +1126,62 @@ class TestScanPerImage:
             list(provider.scan_per_image())
 
         mock_cleanup.assert_called_once()
+
+
+class TestInitGlobalProviderRegistryEnumeration:
+    """Regression test: `prowler image --registry` must discover images.
+
+    PR #9985 added registry scan support. PR #10128 accidentally removed
+    the registry kwargs from the init_global_provider call, so the CLI
+    parsed --registry but never forwarded it to ImageProvider. The result
+    was that registry enumeration silently never ran and the provider
+    raised ImageNoImagesProvidedError.
+    """
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    @patch("prowler.providers.common.provider.load_and_validate_config_file")
+    def test_cli_registry_flag_discovers_images(
+        self, mock_load_config, mock_adapter_factory
+    ):
+        """Verify that `prowler image --registry myregistry.io --image-filter myorg/`
+        actually discovers and populates images from the registry."""
+        mock_load_config.return_value = {}
+
+        adapter = MagicMock()
+        adapter.list_repositories.return_value = ["myorg/app", "myorg/api", "other/lib"]
+        adapter.list_tags.side_effect = [["v1.0", "latest"], ["v2.0"], ["v1.0"]]
+        mock_adapter_factory.return_value = adapter
+
+        arguments = Namespace(
+            provider="image",
+            config_file=None,
+            fixer_config=None,
+            images=None,
+            image_list_file=None,
+            scanners=["vuln"],
+            image_config_scanners=None,
+            trivy_severity=None,
+            ignore_unfixed=False,
+            timeout="5m",
+            registry="myregistry.io",
+            image_filter="^myorg/",
+            tag_filter=None,
+            max_images=0,
+            registry_insecure=False,
+            registry_list_images=False,
+        )
+
+        # Reset the global singleton so init_global_provider doesn't
+        # short-circuit via the isinstance check. The patch restores the
+        # original value automatically on exit.
+        with mock.patch.object(Provider, "_global", None):
+            Provider.init_global_provider(arguments)
+
+            provider = Provider._global
+            # Registry enumeration should have discovered images matching the filter
+            assert "myregistry.io/myorg/app:v1.0" in provider.images
+            assert "myregistry.io/myorg/app:latest" in provider.images
+            assert "myregistry.io/myorg/api:v2.0" in provider.images
+            # The "other/lib" repo should be filtered out by --image-filter
+            assert not any("other/lib" in img for img in provider.images)
+            assert len(provider.images) == 3

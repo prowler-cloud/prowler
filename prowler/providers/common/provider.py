@@ -307,6 +307,12 @@ class Provider(ABC):
                         timeout=arguments.timeout,
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
+                        registry=arguments.registry,
+                        image_filter=arguments.image_filter,
+                        tag_filter=arguments.tag_filter,
+                        max_images=arguments.max_images,
+                        registry_insecure=arguments.registry_insecure,
+                        registry_list_images=arguments.registry_list_images,
                     )
                 elif "mongodbatlas" in provider_class_name.lower():
                     provider_class(
@@ -361,6 +367,13 @@ class Provider(ABC):
                         oidc_role_arn=arguments.oidc_role_arn,
                         credentials_uri=arguments.credentials_uri,
                         regions=arguments.regions,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "vercel" in provider_class_name.lower():
+                    provider_class(
+                        projects=getattr(arguments, "project", None),
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

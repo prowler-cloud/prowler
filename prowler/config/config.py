@@ -65,6 +65,7 @@ class Provider(str, Enum):
     ALIBABACLOUD = "alibabacloud"
     OPENSTACK = "openstack"
     IMAGE = "image"
+    VERCEL = "vercel"
 
 
 # Providers that delegate scanning to an external tool (e.g. Trivy, promptfoo)
