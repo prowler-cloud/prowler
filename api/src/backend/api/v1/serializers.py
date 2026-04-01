@@ -2932,6 +2932,18 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
         return representation
 
 
+class IntegrationJiraIssueTypesSerializer(BaseSerializerV1):
+    """
+    Serializer for Jira issue types response.
+    """
+
+    project_key = serializers.CharField(read_only=True)
+    issue_types = serializers.ListField(child=serializers.CharField(), read_only=True)
+
+    class JSONAPIMeta:
+        resource_name = "jira-issue-types"
+
+
 class IntegrationJiraDispatchSerializer(BaseSerializerV1):
     """
     Serializer for dispatching findings to JIRA integration.

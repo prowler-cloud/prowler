@@ -236,6 +236,7 @@ from api.v1.serializers import (
     FindingsSeverityOverTimeSerializer,
     IntegrationCreateSerializer,
     IntegrationJiraDispatchSerializer,
+    IntegrationJiraIssueTypesSerializer,
     IntegrationSerializer,
     IntegrationUpdateSerializer,
     InvitationAcceptSerializer,
@@ -6147,6 +6148,11 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
     def list(self, request, *args, **kwargs):
         raise MethodNotAllowed(method="GET")
 
+    def get_serializer_class(self):
+        if self.action == "issue_types":
+            return IntegrationJiraIssueTypesSerializer
+        return super().get_serializer_class()
+
     def get_filter_backends(self):
         if self.action == "issue_types":
             return []
@@ -6199,7 +6205,11 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
         try:
             jira = initialize_prowler_integration(integration)
             fetched_issue_types = jira.get_available_issue_types(project_key)
-        except Exception:
+        except Exception as e:
+            logger.error(
+                f"Failed to fetch issue types from Jira for integration {integration_pk}, "
+                f"project {project_key}: {e}"
+            )
             raise ValidationError(
                 {
                     "issue_types": "Failed to fetch issue types from Jira. Please check the integration connection."
@@ -6216,16 +6226,10 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
             integration.configuration["issue_types"] = issue_types_config
             integration.save(using="default")
 
-        return Response(
-            data={
-                "type": "jira-issue-types",
-                "attributes": {
-                    "project_key": project_key,
-                    "issue_types": fetched_issue_types,
-                },
-            },
-            status=status.HTTP_200_OK,
+        serializer = IntegrationJiraIssueTypesSerializer(
+            {"project_key": project_key, "issue_types": fetched_issue_types}
         )
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"], url_name="dispatches")
     def dispatches(self, request, integration_pk=None):
