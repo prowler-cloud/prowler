@@ -2597,6 +2597,14 @@ class TestProviderSecretViewSet:
                     "delegated_user": "admin@example.com",
                 },
             ),
+            # Vercel with API Token
+            (
+                Provider.ProviderChoices.VERCEL.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "api_token": "fake-vercel-api-token-for-testing",
+                },
+            ),
         ],
     )
     def test_provider_secrets_create_valid(
