@@ -56,8 +56,8 @@ def init_parser(self):
     # Resource Groups
     azure_rg_subparser = azure_parser.add_argument_group("Resource Groups")
     azure_rg_subparser.add_argument(
-        "--resource-group",
-        "--resource-groups",
+        "--azure-resource-group",
+        "--azure-resource-groups",
         nargs="+",
         default=[],
         dest="resource_groups",

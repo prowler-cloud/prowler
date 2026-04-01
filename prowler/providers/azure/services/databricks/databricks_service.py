@@ -38,8 +38,31 @@ class Databricks(AzureService):
         for subscription, client in self.clients.items():
             try:
                 workspaces[subscription] = {}
+                workspaces_list = []
 
-                for workspace in client.workspaces.list_by_subscription():
+                if self.resource_groups:
+                    rgs = self.resource_groups.get(subscription, [])
+                    if not rgs:
+                        logger.warning(
+                            f"No valid resource groups for subscription {subscription}"
+                        )
+                    else:
+                        for rg in rgs:
+                            try:
+                                workspaces_list += list(
+                                    client.workspaces.list_by_resource_group(
+                                        resource_group_name=rg
+                                    )
+                                )
+                            except Exception as error:
+                                logger.warning(
+                                    f"Subscription: {subscription} -- Resource Group: {rg} -- "
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                else:
+                    workspaces_list = client.workspaces.list_by_subscription()
+
+                for workspace in workspaces_list:
                     workspace_parameters = getattr(workspace, "parameters", None)
                     workspace_managed_disk_encryption = getattr(
                         getattr(

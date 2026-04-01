@@ -71,8 +71,30 @@ class Monitor(AzureService):
         for subscription, client in self.clients.items():
             try:
                 alert_rules.update({subscription: []})
-                rules = client.activity_log_alerts.list_by_subscription_id()
-                for rule in rules:
+                rules_list = []
+                if self.resource_groups:
+                    rgs = self.resource_groups.get(subscription, [])
+                    if not rgs:
+                        logger.warning(
+                            f"No valid resource groups for subscription {subscription}"
+                        )
+                    else:
+                        for rg in rgs:
+                            try:
+                                rules_list += list(
+                                    client.activity_log_alerts.list_by_resource_group(
+                                        resource_group_name=rg
+                                    )
+                                )
+                            except Exception as error:
+                                logger.warning(
+                                    f"Subscription name: {subscription} -- Resource Group: {rg} -- "
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                else:
+                    rules_list = client.activity_log_alerts.list_by_subscription_id()
+
+                for rule in rules_list:
                     alert_rules[subscription].append(
                         AlertRule(
                             id=rule.id,

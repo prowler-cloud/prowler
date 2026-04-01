@@ -63,8 +63,6 @@ class Test_AISearch_Service:
             "aisearch_service_id-1"
         ].public_network_access
 
-
-class Test_AISearch_Service_ResourceGroups:
     def test_get_aisearch_services_no_resource_groups(self):
         mock_service = MagicMock()
         mock_service.id = AISEARCH_SERVICE_ID

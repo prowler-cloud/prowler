@@ -16,9 +16,9 @@ class AISearch(AzureService):
         aisearch_services = {}
         for subscription, client in self.clients.items():
             try:
-                aisearch_services.update({subscription: {}})
                 aisearch_services_list = []
-                if self.resource_groups is not None:
+                aisearch_services.update({subscription: {}})
+                if self.resource_groups:
                     rgs = self.resource_groups.get(subscription, [])
                     if not rgs:
                         logger.warning(

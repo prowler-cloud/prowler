@@ -19,9 +19,9 @@ class AKS(AzureService):
 
         for subscription_name, client in self.clients.items():
             try:
-                clusters.update({subscription_name: {}})
                 clusters_list = []
-                if self.resource_groups is not None:
+                clusters.update({subscription_name: {}})
+                if self.resource_groups:
                     rgs = self.resource_groups.get(subscription_name, [])
 
                     if not rgs:
