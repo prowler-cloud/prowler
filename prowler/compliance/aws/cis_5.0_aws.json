@@ -229,6 +229,7 @@
       "Id": "1.11",
       "Description": "Ensure credentials unused for 45 days or more are disabled",
       "Checks": [
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ],

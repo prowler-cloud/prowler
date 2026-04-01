@@ -174,6 +174,7 @@
         }
       ],
       "Checks": [
+        "bedrock_access_not_stale",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
@@ -286,6 +287,7 @@
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
+        "bedrock_access_not_stale",
         "iam_no_root_access_key",
         "iam_rotate_access_key_90_days",
         "iam_user_accesskey_unused",
@@ -344,6 +346,7 @@
         "iam_password_policy_number",
         "iam_password_policy_symbol",
         "iam_password_policy_uppercase",
+        "bedrock_access_not_stale",
         "iam_password_policy_reuse_24",
         "iam_rotate_access_key_90_days",
         "iam_user_accesskey_unused",

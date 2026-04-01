@@ -18,6 +18,7 @@
         }
       ],
       "Checks": [
+        "bedrock_access_not_stale",
         "iam_policy_attached_only_to_group_or_roles",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
