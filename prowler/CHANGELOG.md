@@ -24,6 +24,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Added `internet-exposed` category to 13 AWS checks (CloudFront, CodeArtifact, EC2, EFS, RDS, SageMaker, Shield, VPC) [(#10502)](https://github.com/prowler-cloud/prowler/pull/10502)
 - Minimum Python version from 3.9 to 3.10 and updated classifiers to reflect supported versions (3.10, 3.11, 3.12) [(#10464)](https://github.com/prowler-cloud/prowler/pull/10464)
+- Sensitive CLI flags now warn when values are passed directly, recommending environment variables instead
 
 ### 🐞 Fixed
 

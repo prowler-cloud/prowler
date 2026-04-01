@@ -1,6 +1,9 @@
 from functools import lru_cache
 from importlib import import_module
 
+from colorama import Fore, Style
+
+from prowler.lib.cli.sensitive import SENSITIVE_ARGUMENTS as COMMON_SENSITIVE_ARGUMENTS
 from prowler.lib.logger import logger
 from prowler.providers.common.provider import Provider, providers_path
 
@@ -13,11 +16,7 @@ def get_sensitive_arguments() -> frozenset:
     sensitive: set[str] = set()
 
     # Common parser sensitive arguments (e.g., --shodan)
-    try:
-        parser_module = import_module("prowler.lib.cli.parser")
-        sensitive.update(getattr(parser_module, "SENSITIVE_ARGUMENTS", frozenset()))
-    except Exception as error:
-        logger.debug(f"Could not load SENSITIVE_ARGUMENTS from parser: {error}")
+    sensitive.update(COMMON_SENSITIVE_ARGUMENTS)
 
     # Provider-specific sensitive arguments
     for provider in Provider.get_available_providers():
@@ -66,3 +65,49 @@ def redact_argv(argv: list[str]) -> str:
         result.append(arg)
 
     return " ".join(result)
+
+
+def warn_sensitive_argument_values(argv: list[str]) -> None:
+    """Print a warning for each sensitive CLI flag that was passed with an explicit value.
+
+    Scans the raw argv list (not parsed args) to detect when users pass
+    secret values directly on the command line instead of using environment
+    variables. Handles both ``--flag value`` and ``--flag=value`` syntax.
+
+    Args:
+        argv: The argument list to check (typically ``sys.argv[1:]``).
+    """
+    sensitive = get_sensitive_arguments()
+    if not sensitive:
+        return
+
+    use_color = "--no-color" not in argv
+    flags_with_values: list[str] = []
+
+    for i, arg in enumerate(argv):
+        # --flag=value syntax
+        if "=" in arg:
+            flag = arg.split("=", 1)[0]
+            if flag in sensitive:
+                flags_with_values.append(flag)
+            continue
+
+        # --flag value syntax
+        if arg in sensitive:
+            if i + 1 < len(argv) and not argv[i + 1].startswith("-"):
+                flags_with_values.append(arg)
+
+    for flag in flags_with_values:
+        if use_color:
+            print(
+                f"\n{Fore.YELLOW}{Style.BRIGHT}WARNING:{Style.RESET_ALL}{Fore.YELLOW} "
+                f"Passing a value directly to {flag} is not recommended.\n"
+                f"         Use the corresponding environment variable instead to avoid "
+                f"exposing secrets in process listings and shell history.{Style.RESET_ALL}"
+            )
+        else:
+            print(
+                f"\nWARNING: Passing a value directly to {flag} is not recommended.\n"
+                f"         Use the corresponding environment variable instead to avoid "
+                f"exposing secrets in process listings and shell history."
+            )
