@@ -555,7 +555,9 @@ class Identity(OCIService):
         try:
             # Only use one region for global password policies
             if regional_client.region is not self.provider.regions[0].key:
-                logger.info(f"Skipping {regional_client.region} as its not {self.provider.regions[0]}")
+                logger.info(
+                    f"Skipping {regional_client.region} as its not {self.provider.regions[0]}"
+                )
                 return
 
             identity_client = self.__get_client__(regional_client.region)
