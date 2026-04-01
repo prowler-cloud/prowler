@@ -63,7 +63,6 @@ class Identity(OCIService):
         try:
             # Only use one region for global users
             if regional_client.region is not self.provider.regions[0].key:
-                logger.info(f"Skipping {regional_client.region} as its not {self.provider.regions[0]}")
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -313,9 +312,8 @@ class Identity(OCIService):
     def __list_groups__(self, regional_client):
         """List all IAM groups."""
         try:
-            # Only use one region for global policies
+            # Only use one region for global groups
             if regional_client.region is not self.provider.regions[0].key:
-                logger.info(f"Skipping {regional_client.region} as its not {self.provider.regions[0]}")
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -360,7 +358,6 @@ class Identity(OCIService):
         try:
             # Only use one region for global policies
             if regional_client.region is not self.provider.regions[0].key:
-                logger.info(f"Skipping {regional_client.region} as its not {self.provider.regions[0]}")
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -404,11 +401,10 @@ class Identity(OCIService):
     def __list_dynamic_groups__(self, regional_client):
         """List all dynamic groups in the tenancy."""
         try:
-            # Only use one region for global policies
+            # Only use one region for global dynamic groups
             if regional_client.region is not self.provider.regions[0].key:
-                logger.info(f"Skipping {regional_client.region} as its not {self.provider.regions[0]}")
                 return
-            
+
             identity_client = self.__get_client__(regional_client.region)
 
             logger.info("Identity - Listing Dynamic Groups...")
@@ -418,7 +414,6 @@ class Identity(OCIService):
                     identity_client.list_dynamic_groups,
                     compartment_id=self.audited_tenancy,
                 ).data
-
 
                 for dynamic_group in dynamic_groups:
                     if dynamic_group.lifecycle_state != "DELETED":
@@ -558,7 +553,7 @@ class Identity(OCIService):
     def __get_password_policy__(self, regional_client):
         """Get the password policy for the tenancy."""
         try:
-            # Only use one region for global policies
+            # Only use one region for global password policies
             if regional_client.region is not self.provider.regions[0].key:
                 logger.info(f"Skipping {regional_client.region} as its not {self.provider.regions[0]}")
                 return
