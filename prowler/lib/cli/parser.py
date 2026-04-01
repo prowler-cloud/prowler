@@ -12,14 +12,13 @@ from prowler.config.config import (
     default_output_directory,
 )
 from prowler.lib.check.models import Severity
+from prowler.lib.cli.redact import warn_sensitive_argument_values
 from prowler.lib.outputs.common import Status
 from prowler.providers.common.arguments import (
     init_providers_parser,
     validate_asff_usage,
     validate_provider_arguments,
 )
-
-SENSITIVE_ARGUMENTS = frozenset({"--shodan"})
 
 
 class ProwlerArgumentParser:
@@ -125,6 +124,10 @@ Detailed documentation at https://docs.prowler.com
             # Oracle Cloud Infrastructure
             elif sys.argv[1] == "oci":
                 sys.argv[1] = "oraclecloud"
+
+        # Warn about sensitive flags passed with explicit values
+        # Snapshot argv before parse_args() which may exit on errors
+        warn_sensitive_argument_values(list(sys.argv[1:]))
 
         # Parse arguments
         args = self.parser.parse_args()
@@ -434,7 +437,7 @@ Detailed documentation at https://docs.prowler.com
             nargs="?",
             default=None,
             metavar="SHODAN_API_KEY",
-            help="Check if any public IPs in your Cloud environments are exposed in Shodan.",
+            help="Check if any public IPs in your Cloud environments are exposed in Shodan. We recommend to use the SHODAN_API_KEY environment variable to provide the API key.",
         )
         third_party_subparser.add_argument(
             "--slack",
