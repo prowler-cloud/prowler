@@ -1749,7 +1749,7 @@ class TestProviderViewSet:
                 (
                     {
                         "provider": "vercel",
-                        "uid": "team_abcdefghijklmnopqrstuvwxyz12345",
+                        "uid": "team_abcdefghijklmnopqrstuvwxyz1234567",
                         "alias": "test",
                     },
                     "vercel-uid",
@@ -1958,21 +1958,21 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    11,
+                    12,
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 12),
+                ("inserted_at", TODAY, 13),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    12,
+                    13,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    12,
+                    13,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
