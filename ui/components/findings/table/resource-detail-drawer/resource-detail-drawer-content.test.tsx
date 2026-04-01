@@ -1,15 +1,28 @@
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Hoist mocks for components that pull in next-auth transitively
 // ---------------------------------------------------------------------------
 
+const {
+  mockGetComplianceIcon,
+  mockGetCompliancesOverview,
+  mockRouterPush,
+  mockSearchParamsState,
+} = vi.hoisted(() => ({
+  mockGetComplianceIcon: vi.fn((_: string) => null as string | null),
+  mockGetCompliancesOverview: vi.fn(),
+  mockRouterPush: vi.fn(),
+  mockSearchParamsState: { value: "" },
+}));
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn() }),
+  useRouter: () => ({ push: mockRouterPush, refresh: vi.fn() }),
   usePathname: () => "/findings",
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(mockSearchParamsState.value),
   redirect: vi.fn(),
 }));
 
@@ -38,6 +51,9 @@ vi.mock("@/components/shadcn", () => {
     }) => <span className={className}>{children}</span>,
     Button: ({
       children,
+      variant: _variant,
+      size: _size,
+      asChild: _asChild,
       ...props
     }: ButtonHTMLAttributes<HTMLButtonElement> & {
       variant?: string;
@@ -120,8 +136,12 @@ vi.mock("@/components/findings/markdown-container", () => ({
   MarkdownContainer: ({ children }: { children: ReactNode }) => children,
 }));
 
+vi.mock("@/actions/compliances", () => ({
+  getCompliancesOverview: mockGetCompliancesOverview,
+}));
+
 vi.mock("@/components/icons", () => ({
-  getComplianceIcon: vi.fn(() => null),
+  getComplianceIcon: mockGetComplianceIcon,
 }));
 
 vi.mock("@/components/icons/services/IconServices", () => ({
@@ -214,6 +234,14 @@ import type { ResourceDrawerFinding } from "@/actions/findings";
 
 import { ResourceDetailDrawerContent } from "./resource-detail-drawer-content";
 import type { CheckMeta } from "./use-resource-detail-drawer";
+
+afterEach(() => {
+  vi.clearAllMocks();
+  mockSearchParamsState.value = "";
+  mockGetComplianceIcon.mockImplementation(
+    (_: string) => null as string | null,
+  );
+});
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -456,41 +484,17 @@ describe("ResourceDetailDrawerContent — Fix 5 & 6: Risk section styling", () =
 });
 
 // ---------------------------------------------------------------------------
-// Fix 4: Dark mode — no hardcoded color classes
+// Fix 4: Compliance icon styling should match master
 // ---------------------------------------------------------------------------
 
-describe("ResourceDetailDrawerContent — dark mode token classes", () => {
-  it("should NOT use hardcoded bg-white class anywhere in the component", () => {
+describe("ResourceDetailDrawerContent — compliance icon styling", () => {
+  it("should render framework icons inside the same white chip used in master", () => {
     // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
+    mockGetComplianceIcon.mockImplementation((framework: string) =>
+      framework === "CIS-1.4" ? "/cis.svg" : null,
     );
 
-    // When — collect class strings from HTML elements only (skip SVG)
-    const allElements = container.querySelectorAll("[class]");
-    const classStrings = Array.from(allElements)
-      .map((el) => (typeof el.className === "string" ? el.className : ""))
-      .filter(Boolean);
-    const hasBgWhite = classStrings.some((c) => c.includes("bg-white"));
-
-    // Then — no hardcoded bg-white
-    expect(hasBgWhite).toBe(false);
-  });
-
-  it("should NOT use hardcoded border-gray-300 class anywhere in the component", () => {
-    // Given
-    const { container } = render(
+    render(
       <ResourceDetailDrawerContent
         isLoading={false}
         isNavigating={false}
@@ -506,21 +510,19 @@ describe("ResourceDetailDrawerContent — dark mode token classes", () => {
     );
 
     // When
-    const allElements = container.querySelectorAll("[class]");
-    const classStrings = Array.from(allElements)
-      .map((el) => (typeof el.className === "string" ? el.className : ""))
-      .filter(Boolean);
-    const hasBorderGray = classStrings.some((c) =>
-      c.includes("border-gray-300"),
-    );
+    const icon = screen.getByRole("img", { name: "CIS-1.4" });
+    const chip = icon.closest("div");
 
     // Then
-    expect(hasBorderGray).toBe(false);
+    expect(chip).toHaveClass("bg-white");
+    expect(chip).toHaveClass("border-gray-300");
   });
 
-  it("should NOT use hardcoded text-slate-950 class anywhere", () => {
+  it("should render framework fallback pills with the same master styling", () => {
     // Given
-    const { container } = render(
+    mockGetComplianceIcon.mockReturnValue(null);
+
+    render(
       <ResourceDetailDrawerContent
         isLoading={false}
         isNavigating={false}
@@ -536,13 +538,132 @@ describe("ResourceDetailDrawerContent — dark mode token classes", () => {
     );
 
     // When
-    const allElements = container.querySelectorAll("[class]");
-    const classStrings = Array.from(allElements)
-      .map((el) => (typeof el.className === "string" ? el.className : ""))
-      .filter(Boolean);
-    const hasTextSlate = classStrings.some((c) => c.includes("text-slate-950"));
+    const chip = screen.getByText("PCI-DSS");
 
     // Then
-    expect(hasTextSlate).toBe(false);
+    expect(chip).toHaveClass("bg-white");
+    expect(chip).toHaveClass("border-gray-300");
+  });
+});
+
+describe("ResourceDetailDrawerContent — compliance navigation", () => {
+  it("should resolve the clicked framework against the selected scan and navigate to compliance detail", async () => {
+    // Given
+    const user = userEvent.setup();
+    mockSearchParamsState.value =
+      "filter[scan__in]=scan-selected&filter[region__in]=eu-west-1";
+    mockGetCompliancesOverview.mockResolvedValue({
+      data: [
+        {
+          id: "compliance-1",
+          type: "compliance-overviews",
+          attributes: {
+            framework: "PCI-DSS",
+            version: "4.0",
+            requirements_passed: 10,
+            requirements_failed: 2,
+            requirements_manual: 0,
+            total_requirements: 12,
+          },
+        },
+      ],
+    });
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open PCI-DSS compliance details",
+      }),
+    );
+
+    // Then
+    expect(mockGetCompliancesOverview).toHaveBeenCalledWith({
+      scanId: "scan-selected",
+    });
+    expect(mockRouterPush).toHaveBeenCalledWith(
+      "/compliance/PCI-DSS?complianceId=compliance-1&version=4.0&scanId=scan-selected&filter%5Bregion__in%5D=eu-west-1",
+    );
+  });
+
+  it("should use the current finding scan when no scan filter is active", async () => {
+    // Given
+    const user = userEvent.setup();
+    mockGetCompliancesOverview.mockResolvedValue({
+      data: [
+        {
+          id: "compliance-2",
+          type: "compliance-overviews",
+          attributes: {
+            framework: "PCI-DSS",
+            version: "4.0",
+            requirements_passed: 10,
+            requirements_failed: 2,
+            requirements_manual: 0,
+            total_requirements: 12,
+          },
+        },
+      ],
+    });
+    const findingWithScan = {
+      ...mockFinding,
+      scan: {
+        id: "scan-from-finding",
+        name: "Nightly scan",
+        trigger: "manual",
+        state: "completed",
+        uniqueResourceCount: 25,
+        progress: 100,
+        duration: 300,
+        startedAt: "2026-03-30T10:00:00Z",
+        completedAt: "2026-03-30T10:05:00Z",
+        insertedAt: "2026-03-30T09:59:00Z",
+        scheduledAt: null,
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={findingWithScan}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open PCI-DSS compliance details",
+      }),
+    );
+
+    // Then
+    expect(mockGetCompliancesOverview).toHaveBeenCalledWith({
+      scanId: "scan-from-finding",
+    });
+    expect(mockRouterPush).toHaveBeenCalledWith(
+      "/compliance/PCI-DSS?complianceId=compliance-2&version=4.0&scanId=scan-from-finding&scanData=%7B%22id%22%3A%22scan-from-finding%22%2C%22providerInfo%22%3A%7B%22provider%22%3A%22aws%22%2C%22alias%22%3A%22prod%22%2C%22uid%22%3A%22123456789%22%7D%2C%22attributes%22%3A%7B%22name%22%3A%22Nightly+scan%22%2C%22completed_at%22%3A%222026-03-30T10%3A05%3A00Z%22%7D%7D",
+    );
   });
 });
