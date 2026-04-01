@@ -208,8 +208,7 @@ export const SendToJiraModal = ({
               variant: "destructive",
               title: "Failed to load issue types",
               description:
-                result.error ||
-                "Unable to fetch issue types for this project",
+                result.error || "Unable to fetch issue types for this project",
             });
           }
         } finally {
@@ -341,43 +340,43 @@ export const SendToJiraModal = ({
 
           {/* Issue Type Selection */}
           {selectedProject && (
-              <FormField
-                control={form.control}
-                name="issueType"
-                render={({ field }) => (
-                  <div className="flex flex-col gap-1.5">
-                    <label
-                      htmlFor="jira-issue-type-select"
-                      className="text-text-neutral-secondary text-xs font-light tracking-tight"
-                    >
-                      Issue Type
-                    </label>
-                    <EnhancedMultiSelect
-                      id="jira-issue-type-select"
-                      options={issueTypeOptions}
-                      onValueChange={(values) => {
-                        const selectedValue = values.at(-1) ?? "";
-                        field.onChange(selectedValue);
-                      }}
-                      defaultValue={field.value ? [field.value] : []}
-                      placeholder={
-                        isFetchingIssueTypes
-                          ? "Loading issue types..."
-                          : "Select an issue type"
-                      }
-                      searchable={true}
-                      emptyIndicator="No issue types found."
-                      disabled={isFetchingIssueTypes}
-                      hideSelectAll={true}
-                      maxCount={1}
-                      closeOnSelect={true}
-                      resetOnDefaultValueChange={true}
-                    />
-                    <FormMessage className="text-text-error text-xs" />
-                  </div>
-                )}
-              />
-            )}
+            <FormField
+              control={form.control}
+              name="issueType"
+              render={({ field }) => (
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    htmlFor="jira-issue-type-select"
+                    className="text-text-neutral-secondary text-xs font-light tracking-tight"
+                  >
+                    Issue Type
+                  </label>
+                  <EnhancedMultiSelect
+                    id="jira-issue-type-select"
+                    options={issueTypeOptions}
+                    onValueChange={(values) => {
+                      const selectedValue = values.at(-1) ?? "";
+                      field.onChange(selectedValue);
+                    }}
+                    defaultValue={field.value ? [field.value] : []}
+                    placeholder={
+                      isFetchingIssueTypes
+                        ? "Loading issue types..."
+                        : "Select an issue type"
+                    }
+                    searchable={true}
+                    emptyIndicator="No issue types found."
+                    disabled={isFetchingIssueTypes}
+                    hideSelectAll={true}
+                    maxCount={1}
+                    closeOnSelect={true}
+                    resetOnDefaultValueChange={true}
+                  />
+                  <FormMessage className="text-text-error text-xs" />
+                </div>
+              )}
+            />
+          )}
 
           {/* No integrations or none connected message */}
           {!isFetchingIntegrations &&
