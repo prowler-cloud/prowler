@@ -823,7 +823,7 @@ export function ResourceDetailDrawerContent({
                   </p>
                   <Button variant="link" size="link-sm" asChild>
                     <Link
-                      href={`/scans?id=${f.scan.id}`}
+                      href={`/scans?filter[id__in]=${f.scan.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
