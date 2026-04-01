@@ -13,6 +13,9 @@ env:
   BACKPORT_LABEL_PREFIX: backport-to-
   BACKPORT_LABEL_COLOR: B60205
 
+permissions:
+  contents: read
+
 jobs:
   create-label:
     runs-on: ubuntu-latest

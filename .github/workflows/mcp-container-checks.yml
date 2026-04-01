@@ -18,6 +18,9 @@ env:
   MCP_WORKING_DIR: ./mcp_server
   IMAGE_NAME: prowler-mcp
 
+permissions:
+  contents: read
+
 jobs:
   mcp-dockerfile-lint:
     if: github.repository == 'prowler-cloud/prowler'

@@ -17,6 +17,9 @@ concurrency:
 env:
   IMAGE_NAME: prowler
 
+permissions:
+  contents: read
+
 jobs:
   sdk-dockerfile-lint:
     if: github.repository == 'prowler-cloud/prowler'

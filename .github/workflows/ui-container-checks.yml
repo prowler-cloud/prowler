@@ -18,6 +18,9 @@ env:
   UI_WORKING_DIR: ./ui
   IMAGE_NAME: prowler-ui
 
+permissions:
+  contents: read
+
 jobs:
   ui-dockerfile-lint:
     if: github.repository == 'prowler-cloud/prowler'
