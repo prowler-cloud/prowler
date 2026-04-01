@@ -61,7 +61,7 @@ def revoke_membership_api_keys(sender, instance, **kwargs):  # noqa: F841
     in that tenant should be revoked to prevent further access.
     """
     TenantAPIKey.objects.filter(
-        entity=instance.user, tenant_id=instance.tenant.id
+        entity_id=instance.user_id, tenant_id=instance.tenant_id
     ).update(revoked=True)
 
 

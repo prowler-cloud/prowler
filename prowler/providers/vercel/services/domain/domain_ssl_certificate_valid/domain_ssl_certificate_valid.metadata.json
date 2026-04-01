@@ -1,7 +1,7 @@
 {
   "Provider": "vercel",
   "CheckID": "domain_ssl_certificate_valid",
-  "CheckTitle": "Vercel domains have an SSL certificate provisioned",
+  "CheckTitle": "Vercel domains have a valid, non-expired SSL certificate",
   "CheckType": [],
   "ServiceName": "domain",
   "SubServiceName": "",
@@ -9,7 +9,7 @@
   "Severity": "critical",
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "**Vercel domains** are assessed for **SSL certificate provisioning** to verify a valid certificate is in place. Vercel automatically provisions and renews SSL certificates for properly configured domains. A missing SSL certificate indicates a configuration issue that leaves traffic unencrypted.",
+  "Description": "**Vercel domains** are assessed for **SSL certificate validity** including provisioning, expiration, and upcoming expiry. Vercel automatically provisions and renews SSL certificates for properly configured domains. A missing, expired, or soon-to-expire certificate indicates a configuration issue that may leave traffic unencrypted.",
   "Risk": "Without an **SSL certificate**, traffic between users and the domain is transmitted in **plain text**. This exposes sensitive data such as authentication tokens, form submissions, and personal information to interception via **man-in-the-middle attacks**. Search engines also penalize non-HTTPS sites, reducing visibility.",
   "RelatedUrl": "",
   "AdditionalURLs": [

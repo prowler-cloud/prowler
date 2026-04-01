@@ -23,8 +23,10 @@ class project_password_protection_enabled(Check):
         for project in project_client.projects.values():
             report = CheckReportVercel(metadata=self.metadata(), resource=project)
 
-            if project.password_protection and isinstance(
-                project.password_protection, dict
+            if (
+                project.password_protection
+                and isinstance(project.password_protection, dict)
+                and project.password_protection.get("deploymentType")
             ):
                 report.status = "PASS"
                 report.status_extended = (

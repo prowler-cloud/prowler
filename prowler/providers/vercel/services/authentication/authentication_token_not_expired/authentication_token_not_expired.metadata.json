@@ -9,8 +9,8 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "**Vercel API tokens** are assessed for **expiration status** to identify tokens that have exceeded their validity period. Expired tokens indicate poor token lifecycle management and may suggest that integrations or automation relying on these tokens are failing silently. Tokens without an expiration date are considered valid.",
-  "Risk": "Expired tokens indicate that **token lifecycle management** is not being followed. While expired tokens cannot be used for authentication, their presence suggests that token rotation practices are not in place. Integrations or **CI/CD pipelines** relying on expired tokens will fail, potentially causing service disruptions.",
+  "Description": "**Vercel API tokens** are assessed for **expiration status** to identify expired tokens or those about to expire within a configurable threshold (default: 7 days). Tokens about to expire are flagged proactively so they can be rotated before causing disruptions. Tokens without an expiration date are considered valid.",
+  "Risk": "Expired tokens indicate poor **token lifecycle management**. Tokens about to expire risk **imminent service disruption** if not rotated in time. Integrations or **CI/CD pipelines** relying on expired or soon-to-expire tokens will fail silently.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://vercel.com/docs/rest-api#authentication"
@@ -34,5 +34,5 @@
   "RelatedTo": [
     "authentication_no_stale_tokens"
   ],
-  "Notes": "Tokens without an expiration date (expires_at is None) are treated as valid since they have no defined expiry."
+  "Notes": "Tokens without an expiration date (expires_at is None) are treated as valid since they have no defined expiry. The days_to_expire_threshold is configurable via audit_config (default: 7 days). Tokens expiring within the threshold are reported with medium severity; already expired tokens are reported with high severity."
 }

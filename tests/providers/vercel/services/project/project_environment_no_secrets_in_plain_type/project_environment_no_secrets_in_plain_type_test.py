@@ -15,6 +15,7 @@ from tests.providers.vercel.vercel_fixtures import (
 class Test_project_environment_no_secrets_in_plain_type:
     def test_no_projects(self):
         project_client = mock.MagicMock
+        project_client.audit_config = {}
         project_client.projects = {}
 
         with (
@@ -37,6 +38,7 @@ class Test_project_environment_no_secrets_in_plain_type:
 
     def test_no_secret_keys_plain(self):
         project_client = mock.MagicMock
+        project_client.audit_config = {}
         project_client.projects = {
             PROJECT_ID: VercelProject(
                 id=PROJECT_ID,
@@ -81,6 +83,7 @@ class Test_project_environment_no_secrets_in_plain_type:
 
     def test_secret_key_plain(self):
         project_client = mock.MagicMock
+        project_client.audit_config = {}
         project_client.projects = {
             PROJECT_ID: VercelProject(
                 id=PROJECT_ID,
@@ -125,6 +128,7 @@ class Test_project_environment_no_secrets_in_plain_type:
 
     def test_non_secret_key_plain(self):
         project_client = mock.MagicMock
+        project_client.audit_config = {}
         project_client.projects = {
             PROJECT_ID: VercelProject(
                 id=PROJECT_ID,

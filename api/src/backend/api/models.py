@@ -1,14 +1,15 @@
 import json
 import logging
 import re
-import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
+import defusedxml
 from allauth.socialaccount.models import SocialApp
 from config.custom_logging import BackendLogger
 from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
 from cryptography.fernet import Fernet, InvalidToken
+from defusedxml import ElementTree as ET
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
@@ -295,6 +296,7 @@ class Provider(RowLevelSecurityProtectedModel):
         VERCEL = "vercel", _("Vercel")
         IMAGE = "image", _("Image")
         GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
+        VERCEL = "vercel", _("Vercel")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -2077,6 +2079,8 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             root = ET.fromstring(self.metadata_xml)
         except ET.ParseError as e:
             raise ValidationError({"metadata_xml": f"Invalid XML: {e}"})
+        except defusedxml.DefusedXmlException as e:
+            raise ValidationError({"metadata_xml": f"Unsafe XML content rejected: {e}"})
 
         # Entity ID
         entity_id = root.attrib.get("entityID")

@@ -1,14 +1,7 @@
 "use client";
 
 import { Input, Textarea } from "@heroui/input";
-import {
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { Dispatch, SetStateAction, useState, useTransition } from "react";
 
 import { createMuteRule } from "@/actions/mute-rules";
 import { MuteRuleActionState } from "@/actions/mute-rules/types";
@@ -21,6 +14,7 @@ interface MuteFindingsModalProps {
   onOpenChange: Dispatch<SetStateAction<boolean>>;
   findingIds: string[];
   onComplete?: () => void;
+  isBulkOperation?: boolean;
 }
 
 export function MuteFindingsModal({
@@ -28,34 +22,11 @@ export function MuteFindingsModal({
   onOpenChange,
   findingIds,
   onComplete,
+  isBulkOperation = false,
 }: MuteFindingsModalProps) {
   const { toast } = useToast();
   const [state, setState] = useState<MuteRuleActionState | null>(null);
   const [isPending, startTransition] = useTransition();
-
-  // Use refs to avoid stale closures in useEffect
-  const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
-
-  const onOpenChangeRef = useRef(onOpenChange);
-  onOpenChangeRef.current = onOpenChange;
-
-  useEffect(() => {
-    if (state?.success) {
-      toast({
-        title: "Success",
-        description: state.success,
-      });
-      onCompleteRef.current?.();
-      onOpenChangeRef.current(false);
-    } else if (state?.errors?.general) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: state.errors.general,
-      });
-    }
-  }, [state, toast]);
 
   const handleCancel = () => {
     onOpenChange(false);
@@ -77,6 +48,24 @@ export function MuteFindingsModal({
           startTransition(() => {
             void (async () => {
               const result = await createMuteRule(null, formData);
+              if (!result) return;
+
+              if (result.success) {
+                toast({
+                  title: "Success",
+                  description: isBulkOperation
+                    ? "Mute rule created. It may take a few minutes for all findings to update."
+                    : result.success,
+                });
+                onComplete?.();
+                onOpenChange(false);
+              } else if (result.errors?.general) {
+                toast({
+                  variant: "destructive",
+                  title: "Error",
+                  description: result.errors.general,
+                });
+              }
               setState(result);
             })();
           });

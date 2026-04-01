@@ -34,5 +34,5 @@
   "RelatedTo": [
     "authentication_token_not_expired"
   ],
-  "Notes": "The stale threshold is set to 90 days. Tokens with no recorded activity (active_at is None) are considered stale."
+  "Notes": "The stale threshold is configurable via ``stale_token_threshold_days`` in audit_config (default: 90 days). Tokens with no recorded activity (active_at is None) are considered stale."
 }
