@@ -182,6 +182,8 @@ export const SendToJiraModal = ({
 
   // Fetch issue types from API when project is selected but no types are available
   useEffect(() => {
+    let ignore = false;
+
     if (
       selectedIntegration &&
       selectedProject &&
@@ -195,26 +197,38 @@ export const SendToJiraModal = ({
             selectedIntegration,
             selectedProject,
           );
+          if (ignore) return;
           if (result.success) {
             setFetchedIssueTypes((prev) => ({
               ...prev,
               [selectedProject]: result.issueTypes,
             }));
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Failed to load issue types",
+              description:
+                result.error ||
+                "Unable to fetch issue types for this project",
+            });
           }
-        } catch {
-          // Silently fail — user will see empty dropdown
         } finally {
-          setIsFetchingIssueTypes(false);
+          if (!ignore) setIsFetchingIssueTypes(false);
         }
       };
 
       fetchIssueTypes();
     }
+
+    return () => {
+      ignore = true;
+    };
   }, [
     selectedIntegration,
     selectedProject,
     issueTypesFromConfig.length,
     fetchedIssueTypes,
+    toast,
   ]);
 
   const issueTypeOptions = issueTypesForProject.map((type) => ({
@@ -326,8 +340,7 @@ export const SendToJiraModal = ({
           )}
 
           {/* Issue Type Selection */}
-          {selectedProject &&
-            (issueTypeOptions.length > 0 || isFetchingIssueTypes) && (
+          {selectedProject && (
               <FormField
                 control={form.control}
                 name="issueType"
@@ -386,6 +399,7 @@ export const SendToJiraModal = ({
                 !form.formState.isValid ||
                 form.formState.isSubmitting ||
                 isFetchingIntegrations ||
+                isFetchingIssueTypes ||
                 integrations.length === 0 ||
                 !hasConnectedIntegration
               }
