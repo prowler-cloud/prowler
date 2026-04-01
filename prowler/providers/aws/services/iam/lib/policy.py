@@ -984,6 +984,65 @@ def is_codebuild_using_allowed_github_org(
         return False, None
 
 
+def policy_allows_marketplace_subscribe_on_all_resources(
+    policy_document: dict,
+) -> bool:
+    """Check if a policy document allows aws-marketplace:Subscribe on Resource:*.
+
+    Inspects each statement in the policy document for Allow statements that
+    grant the ``aws-marketplace:Subscribe`` action (or a wildcard pattern that
+    matches it) on all resources (``*``).  Explicit Deny statements for the
+    same action on all resources take precedence and negate the finding.
+
+    Args:
+        policy_document: The IAM policy document to analyse.
+
+    Returns:
+        True if the policy effectively allows aws-marketplace:Subscribe on
+        all resources, False otherwise.
+    """
+    from fnmatch import fnmatch
+
+    target_action = "aws-marketplace:subscribe"
+
+    if not policy_document or "Statement" not in policy_document:
+        return False
+
+    statements = policy_document.get("Statement", [])
+    if not isinstance(statements, list):
+        statements = [statements]
+
+    is_allowed = False
+    is_denied = False
+
+    for statement in statements:
+        effect = statement.get("Effect", "")
+        if not isinstance(effect, str):
+            continue
+
+        resources = statement.get("Resource", [])
+        if isinstance(resources, str):
+            resources = [resources]
+
+        actions = statement.get("Action", [])
+        if isinstance(actions, str):
+            actions = [actions]
+
+        action_matches = any(
+            fnmatch(target_action, action.lower()) for action in actions
+        )
+
+        if not action_matches:
+            continue
+
+        if effect == "Allow" and "*" in resources:
+            is_allowed = True
+        elif effect == "Deny" and "*" in resources:
+            is_denied = True
+
+    return is_allowed and not is_denied
+
+
 def has_codebuild_trusted_principal(trust_policy: dict) -> bool:
     """
     Returns True if the trust policy allows codebuild.amazonaws.com as a trusted principal, otherwise False.
