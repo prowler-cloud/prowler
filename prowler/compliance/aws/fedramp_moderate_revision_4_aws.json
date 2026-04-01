@@ -30,6 +30,7 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "securityhub_enabled"
@@ -105,6 +106,7 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
@@ -159,6 +161,7 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
@@ -177,6 +180,7 @@
       ],
       "Checks": [
         "iam_password_policy_minimum_length_14",
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
@@ -202,6 +206,7 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "awslambda_function_not_publicly_accessible",
@@ -265,6 +270,7 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
@@ -308,6 +314,7 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "awslambda_function_not_publicly_accessible",

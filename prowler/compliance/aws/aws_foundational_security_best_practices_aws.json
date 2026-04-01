@@ -2542,6 +2542,7 @@
       "Name": "Unused IAM user credentials should be removed",
       "Description": "This control checks whether your IAM users have passwords or active access keys that have not been used for 90 days.",
       "Checks": [
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ],
@@ -2630,6 +2631,7 @@
       "Name": "IAM user credentials unused for 45 days should be removed",
       "Description": "This control checks whether your IAM users have passwords or active access keys that have not been used for 45 days or more. To do so, it checks whether the maxCredentialUsageAge parameter of the AWS Config rule is equal to 45 or more.",
       "Checks": [
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ],
@@ -2648,6 +2650,7 @@
       "Name": "Expired SSL/TLS certificates managed in IAM should be removed",
       "Description": "This controls checks whether an active SSL/TLS server certificate that is managed in IAM has expired. The control fails if the expired SSL/TLS server certificate isn't removed.",
       "Checks": [
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ],

@@ -169,6 +169,7 @@
         "iam_customer_unattached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_expired_server_certificates_stored",
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "iam_no_root_access_key",
@@ -752,6 +753,7 @@
         "iam_policy_allows_privilege_escalation",
         "iam_policy_no_full_access_to_cloudtrail",
         "iam_policy_no_full_access_to_kms",
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "iam_no_root_access_key",
@@ -800,6 +802,7 @@
       "Checks": [
         "guardduty_is_enabled",
         "config_recorder_all_regions_enabled",
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "iam_password_policy_expires_passwords_within_90_days_or_less",

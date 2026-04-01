@@ -92,6 +92,8 @@ class IAM(AWSService):
         self._get_access_keys_metadata()
         self.last_accessed_services = {}
         self._get_last_accessed_services()
+        self.role_last_accessed_services = {}
+        self._get_role_last_accessed_services()
         self.user_temporary_credentials_usage = {}
         self._get_user_temporary_credentials_usage()
         self.organization_features = []
@@ -880,6 +882,47 @@ class IAM(AWSService):
                         )
                     self.last_accessed_services[(user.name, user.arn)] = response.get(
                         "ServicesLastAccessed", {}
+                    )
+
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
+                        logger.warning(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                except Exception as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_role_last_accessed_services(self):
+        """Retrieve service last accessed details for all IAM roles."""
+        logger.info("IAM - Getting Role Last Accessed Services ...")
+        try:
+            if self.roles is None:
+                return
+            for role in self.roles:
+                try:
+                    details = self.client.generate_service_last_accessed_details(
+                        Arn=role.arn
+                    )
+                    response = self.client.get_service_last_accessed_details(
+                        JobId=details["JobId"]
+                    )
+                    while response["JobStatus"] == "IN_PROGRESS":
+                        response = self.client.get_service_last_accessed_details(
+                            JobId=details["JobId"]
+                        )
+                    self.role_last_accessed_services[(role.name, role.arn)] = (
+                        response.get("ServicesLastAccessed", {})
                     )
 
                 except ClientError as error:

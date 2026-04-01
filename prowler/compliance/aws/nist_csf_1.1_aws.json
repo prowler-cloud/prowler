@@ -575,6 +575,7 @@
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
         "iam_rotate_access_key_90_days",
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -632,6 +633,7 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
+        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
