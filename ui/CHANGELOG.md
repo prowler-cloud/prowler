@@ -18,6 +18,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Deleting the active organization now switches to the target org before deleting, preventing JWT rejection from the backend [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
 - Clear Filters now resets all filters including muted findings and auto-applies, Clear all in pills only removes pill-visible sub-filters, and the discard icon is now an Undo text button [(#10446)](https://github.com/prowler-cloud/prowler/pull/10446)
+- Send to Jira modal now dynamically fetches and displays available issue types per project instead of hardcoding `"Task"`, fixing failures on non-English Jira instances [(#10534)](https://github.com/prowler-cloud/prowler/pull/10534)
 
 ---
 

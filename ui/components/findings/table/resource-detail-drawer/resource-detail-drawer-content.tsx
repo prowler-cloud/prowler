@@ -12,8 +12,10 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+import { getCompliancesOverview } from "@/actions/compliances";
 import type { ResourceDrawerFinding } from "@/actions/findings";
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
@@ -62,12 +64,118 @@ import {
 import { getFailingForLabel } from "@/lib/date-utils";
 import { formatDuration } from "@/lib/date-utils";
 import { getRegionFlag } from "@/lib/region-flags";
+import type { ComplianceOverviewData } from "@/types/compliance";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
 import { NotificationIndicator } from "../notification-indicator";
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
+
+/** Strip markdown code fences (```lang ... ```) so CodeSnippet shows clean code. */
+function stripCodeFences(code: string): string {
+  return code
+    .replace(/^```\w*\n?/, "")
+    .replace(/\n?```\s*$/, "")
+    .trim();
+}
+
+function normalizeComplianceFrameworkName(framework: string): string {
+  return framework
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-");
+}
+
+function parseSelectedScanIds(scanFilterValue: string | null): string[] {
+  if (!scanFilterValue) {
+    return [];
+  }
+
+  return scanFilterValue
+    .split(",")
+    .map((scanId) => scanId.trim())
+    .filter(Boolean);
+}
+
+function resolveComplianceMatch(
+  compliances: ComplianceOverviewData[] | undefined,
+  framework: string,
+): {
+  complianceId: string;
+  framework: string;
+  version: string;
+} | null {
+  if (!compliances?.length) {
+    return null;
+  }
+
+  const normalizedFramework = normalizeComplianceFrameworkName(framework);
+  const match = compliances.find(
+    (compliance) =>
+      normalizeComplianceFrameworkName(compliance.attributes.framework) ===
+      normalizedFramework,
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    complianceId: match.id,
+    framework: match.attributes.framework,
+    version: match.attributes.version,
+  };
+}
+
+function buildComplianceDetailHref({
+  complianceId,
+  framework,
+  version,
+  scanId,
+  regionFilter,
+  currentFinding,
+  includeScanData,
+}: {
+  complianceId: string;
+  framework: string;
+  version: string;
+  scanId: string;
+  regionFilter: string | null;
+  currentFinding: ResourceDrawerFinding | null;
+  includeScanData: boolean;
+}): string {
+  const params = new URLSearchParams();
+  params.set("complianceId", complianceId);
+  if (version) {
+    params.set("version", version);
+  }
+  params.set("scanId", scanId);
+
+  if (regionFilter) {
+    params.set("filter[region__in]", regionFilter);
+  }
+
+  if (includeScanData && currentFinding?.scan?.completedAt) {
+    params.set(
+      "scanData",
+      JSON.stringify({
+        id: currentFinding.scan.id,
+        providerInfo: {
+          provider: currentFinding.providerType,
+          alias: currentFinding.providerAlias,
+          uid: currentFinding.providerUid,
+        },
+        attributes: {
+          name: currentFinding.scan.name,
+          completed_at: currentFinding.scan.completedAt,
+        },
+      }),
+    );
+  }
+
+  return `/compliance/${encodeURIComponent(framework)}?${params.toString()}`;
+}
 
 interface ResourceDetailDrawerContentProps {
   isLoading: boolean;
@@ -94,8 +202,13 @@ export function ResourceDetailDrawerContent({
   onNavigateNext,
   onMuteComplete,
 }: ResourceDetailDrawerContentProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
+  const [resolvingFramework, setResolvingFramework] = useState<string | null>(
+    null,
+  );
 
   // Initial load — no check metadata yet
   if (!checkMeta && isLoading) {
@@ -140,6 +253,54 @@ export function ResourceDetailDrawerContent({
   const f = currentFinding;
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < totalResources - 1;
+  const selectedScanIds = parseSelectedScanIds(
+    searchParams.get("filter[scan__in]"),
+  );
+  const complianceScanId =
+    selectedScanIds.length === 1
+      ? selectedScanIds[0]
+      : selectedScanIds.length === 0
+        ? (f?.scan?.id ?? null)
+        : null;
+  const regionFilter = searchParams.get("filter[region__in]");
+
+  const handleOpenCompliance = async (framework: string) => {
+    if (!complianceScanId || resolvingFramework) {
+      return;
+    }
+
+    setResolvingFramework(framework);
+
+    try {
+      const compliancesOverview = await getCompliancesOverview({
+        scanId: complianceScanId,
+      });
+      const complianceMatch = resolveComplianceMatch(
+        compliancesOverview?.data,
+        framework,
+      );
+
+      if (!complianceMatch) {
+        return;
+      }
+
+      router.push(
+        buildComplianceDetailHref({
+          complianceId: complianceMatch.complianceId,
+          framework: complianceMatch.framework,
+          version: complianceMatch.version,
+          scanId: complianceScanId,
+          regionFilter,
+          currentFinding: f,
+          includeScanData: f?.scan?.id === complianceScanId,
+        }),
+      );
+    } catch (error) {
+      console.error("Error resolving compliance detail:", error);
+    } finally {
+      setResolvingFramework(null);
+    }
+  };
 
   return (
     <div className="flex h-full min-w-0 flex-col gap-4 overflow-hidden">
@@ -197,27 +358,66 @@ export function ResourceDetailDrawerContent({
             <div className="flex flex-wrap items-center gap-2">
               {checkMeta.complianceFrameworks.map((framework) => {
                 const icon = getComplianceIcon(framework);
+                const isNavigable = Boolean(complianceScanId);
+                const isResolving = resolvingFramework === framework;
+
                 return icon ? (
                   <Tooltip key={framework}>
                     <TooltipTrigger asChild>
-                      <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
-                        <Image
-                          src={icon}
-                          alt={framework}
-                          width={20}
-                          height={20}
-                          className="size-5 object-contain"
-                        />
-                      </div>
+                      {isNavigable ? (
+                        <button
+                          type="button"
+                          aria-label={`Open ${framework} compliance details`}
+                          onClick={() => void handleOpenCompliance(framework)}
+                          disabled={Boolean(resolvingFramework)}
+                          className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5 transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
+                        >
+                          <Image
+                            src={icon}
+                            alt={framework}
+                            width={20}
+                            height={20}
+                            className="size-5 object-contain"
+                          />
+                          {isResolving && (
+                            <span className="sr-only">Opening compliance</span>
+                          )}
+                        </button>
+                      ) : (
+                        <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
+                          <Image
+                            src={icon}
+                            alt={framework}
+                            width={20}
+                            height={20}
+                            className="size-5 object-contain"
+                          />
+                        </div>
+                      )}
                     </TooltipTrigger>
                     <TooltipContent>{framework}</TooltipContent>
                   </Tooltip>
                 ) : (
                   <Tooltip key={framework}>
                     <TooltipTrigger asChild>
-                      <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
-                        {framework}
-                      </span>
+                      {isNavigable ? (
+                        <button
+                          type="button"
+                          aria-label={`Open ${framework} compliance details`}
+                          onClick={() => void handleOpenCompliance(framework)}
+                          disabled={Boolean(resolvingFramework)}
+                          className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
+                        >
+                          {framework}
+                          {isResolving && (
+                            <span className="sr-only">Opening compliance</span>
+                          )}
+                        </button>
+                      ) : (
+                        <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
+                          {framework}
+                        </span>
+                      )}
                     </TooltipTrigger>
                     <TooltipContent>{framework}</TooltipContent>
                   </Tooltip>
@@ -382,16 +582,16 @@ export function ResourceDetailDrawerContent({
             {(checkMeta.risk || checkMeta.description || f?.statusExtended) && (
               <Card variant="inner">
                 {checkMeta.risk && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
+                  <Card variant="danger">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
                       Risk:
                     </span>
                     <MarkdownContainer>{checkMeta.risk}</MarkdownContainer>
-                  </div>
+                  </Card>
                 )}
                 {checkMeta.description && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
+                  <div className="border-default-200 flex flex-col gap-1 border-b pb-4">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
                       Description:
                     </span>
                     <MarkdownContainer>
@@ -401,7 +601,7 @@ export function ResourceDetailDrawerContent({
                 )}
                 {f?.statusExtended && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
                       Status Extended:
                     </span>
                     <p className="text-text-neutral-primary text-sm">
@@ -448,7 +648,7 @@ export function ResourceDetailDrawerContent({
                       CLI Command:
                     </span>
                     <CodeSnippet
-                      value={`$ ${checkMeta.remediation.code.cli}`}
+                      value={`$ ${stripCodeFences(checkMeta.remediation.code.cli)}`}
                       multiline
                       transparent
                       className="max-w-full text-sm"
@@ -459,10 +659,12 @@ export function ResourceDetailDrawerContent({
                 {checkMeta.remediation.code.terraform && (
                   <div className="flex flex-col gap-1">
                     <span className="text-text-neutral-secondary text-xs">
-                      Terraform Command:
+                      Terraform:
                     </span>
                     <CodeSnippet
-                      value={`$ ${checkMeta.remediation.code.terraform}`}
+                      value={stripCodeFences(
+                        checkMeta.remediation.code.terraform,
+                      )}
                       multiline
                       transparent
                       className="max-w-full text-sm"
@@ -473,10 +675,12 @@ export function ResourceDetailDrawerContent({
                 {checkMeta.remediation.code.nativeiac && (
                   <div className="flex flex-col gap-1">
                     <span className="text-text-neutral-secondary text-xs">
-                      CloudFormation Command:
+                      CloudFormation:
                     </span>
                     <CodeSnippet
-                      value={`$ ${checkMeta.remediation.code.nativeiac}`}
+                      value={stripCodeFences(
+                        checkMeta.remediation.code.nativeiac,
+                      )}
                       multiline
                       transparent
                       className="max-w-full text-sm"
@@ -526,9 +730,17 @@ export function ResourceDetailDrawerContent({
                   <span className="text-text-neutral-secondary text-xs">
                     Categories:
                   </span>
-                  <p className="text-text-neutral-primary text-sm">
-                    {checkMeta.categories.join(", ")}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {checkMeta.categories.map((category) => (
+                      <Badge
+                        key={category}
+                        variant="outline"
+                        className="text-xs capitalize"
+                      >
+                        {category}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               </Card>
             )}
@@ -611,7 +823,7 @@ export function ResourceDetailDrawerContent({
                   </p>
                   <Button variant="link" size="link-sm" asChild>
                     <Link
-                      href={`/scans?id=${f.scan.id}`}
+                      href={`/scans?filter[id__in]=${f.scan.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -684,13 +896,13 @@ export function ResourceDetailDrawerContent({
       {/* Lighthouse AI button */}
       <a
         href={`/lighthouse?${new URLSearchParams({ prompt: `Analyze this security finding and provide remediation guidance:\n\n- **Finding**: ${checkMeta.checkTitle}\n- **Check ID**: ${checkMeta.checkId}\n- **Severity**: ${f?.severity ?? "unknown"}\n- **Status**: ${f?.status ?? "unknown"}${f?.statusExtended ? `\n- **Detail**: ${f.statusExtended}` : ""}${checkMeta.risk ? `\n- **Risk**: ${checkMeta.risk}` : ""}` }).toString()}`}
-        className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-950 transition-opacity hover:opacity-90"
+        className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 transition-opacity hover:opacity-90"
         style={{
           background: "var(--gradient-lighthouse)",
         }}
       >
         <CircleArrowRight className="size-5" />
-        View This Finding With Lighthouse AI
+        Analyze This Finding With Lighthouse AI
       </a>
     </div>
   );

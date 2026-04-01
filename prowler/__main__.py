@@ -145,6 +145,7 @@ from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
 from prowler.providers.openstack.models import OpenStackOutputOptions
 from prowler.providers.oraclecloud.models import OCIOutputOptions
+from prowler.providers.vercel.models import VercelOutputOptions
 
 
 def prowler():
@@ -396,6 +397,10 @@ def prowler():
         )
     elif provider == "openstack":
         output_options = OpenStackOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "vercel":
+        output_options = VercelOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
 

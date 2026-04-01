@@ -19,6 +19,8 @@ const cardVariants = cva("flex flex-col gap-6 rounded-xl border", {
       base: "border-border-neutral-secondary bg-bg-neutral-secondary px-[18px] pt-3 pb-4",
       inner:
         "rounded-[12px] backdrop-blur-[46px] border-border-neutral-tertiary bg-bg-neutral-tertiary",
+      danger:
+        "gap-1 rounded-[12px] border-border-error-primary bg-bg-fail-secondary",
     },
     padding: {
       default: "",
@@ -33,6 +35,11 @@ const cardVariants = cva("flex flex-col gap-6 rounded-xl border", {
       variant: "inner",
       padding: "default",
       className: "px-4 py-3", // md padding by default for inner
+    },
+    {
+      variant: "danger",
+      padding: "default",
+      className: "px-4 py-3", // md padding by default for danger
     },
   ],
   defaultVariants: {

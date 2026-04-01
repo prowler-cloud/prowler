@@ -44,9 +44,11 @@ class JiraConnection(Connection):
     Represents a Jira connection object.
     Attributes:
         projects (dict): Dictionary of projects in Jira.
+        issue_types (dict): Dictionary of issue types per project key.
     """
 
     projects: dict = None
+    issue_types: dict = None
 
 
 class MarkdownToADFConverter:
@@ -781,7 +783,20 @@ class Jira:
             )
             projects = jira.get_projects()
 
-            return JiraConnection(is_connected=True, projects=projects)
+            issue_types = {}
+            for project_key in projects:
+                try:
+                    issue_types[project_key] = jira.get_available_issue_types(
+                        project_key
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to get issue types for project {project_key}: {e}"
+                    )
+
+            return JiraConnection(
+                is_connected=True, projects=projects, issue_types=issue_types
+            )
         except JiraNoProjectsError as no_projects_error:
             logger.error(
                 f"{no_projects_error.__class__.__name__}[{no_projects_error.__traceback__.tb_lineno}]: {no_projects_error}"

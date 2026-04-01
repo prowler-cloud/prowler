@@ -27,6 +27,13 @@ interface DataTableSearchProps {
    */
   controlledValue?: string;
   onSearchChange?: (value: string) => void;
+  /**
+   * Called when the user commits a search (pressing Enter).
+   * When provided, the search is only "committed" on Enter, while
+   * onSearchChange still fires on every keystroke for responsive display.
+   * Use this to avoid remounting child components on every keystroke.
+   */
+  onSearchCommit?: (value: string) => void;
   placeholder?: string;
   /** Badge shown inside the search input (e.g., active drill-down group title) */
   badge?: { label: string; onDismiss: () => void };
@@ -36,6 +43,7 @@ export const DataTableSearch = ({
   paramPrefix = "",
   controlledValue,
   onSearchChange,
+  onSearchCommit,
   placeholder = "Search...",
   badge,
 }: DataTableSearchProps) => {
@@ -47,7 +55,6 @@ export const DataTableSearch = ({
   // In controlled mode, track display value separately for immediate feedback
   const [displayValue, setDisplayValue] = useState(controlledValue ?? "");
   const [isLoading, setIsLoading] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const id = useId();
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -72,31 +79,30 @@ export const DataTableSearch = ({
   const searchParam = paramPrefix ? `${paramPrefix}Search` : "filter[search]";
   const pageParam = paramPrefix ? `${paramPrefix}Page` : "page";
 
-  // Keep expanded if there's a value or input is focused or badge is present
-  const shouldStayExpanded = value.length > 0 || isFocused || hasBadge;
-
   // Sync with URL on mount (only for uncontrolled mode)
   useEffect(() => {
     if (isControlled) return;
     const searchFromUrl = searchParams.get(searchParam) || "";
     setInternalValue(searchFromUrl);
-    // If there's a search value, start expanded
-    if (searchFromUrl) {
-      setIsExpanded(true);
-    }
   }, [searchParams, searchParam, isControlled]);
 
   // Handle input change with debounce
   const handleChange = (newValue: string) => {
-    // For controlled mode, update display immediately, debounce the callback
     if (isControlled) {
-      // Update display value immediately for responsive typing
       setDisplayValue(newValue);
 
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
 
+      if (onSearchCommit) {
+        // Enter-to-commit mode: sync parent immediately (no debounce, no loading).
+        // The actual search commit happens on Enter via onSearchCommit.
+        onSearchChange(newValue);
+        return;
+      }
+
+      // Standard controlled mode: debounce the callback
       setIsLoading(true);
       debounceTimeoutRef.current = setTimeout(() => {
         onSearchChange(newValue);
@@ -105,39 +111,9 @@ export const DataTableSearch = ({
       return;
     }
 
+    // Uncontrolled mode: only update display value on keystroke.
+    // The actual URL update happens on Enter (see onKeyDown handler).
     setInternalValue(newValue);
-
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-
-    // If using prefix, handle URL updates directly instead of useUrlFilters
-    if (paramPrefix) {
-      setIsLoading(true);
-      debounceTimeoutRef.current = setTimeout(() => {
-        const params = new URLSearchParams(searchParams.toString());
-        if (newValue) {
-          params.set(searchParam, newValue);
-        } else {
-          params.delete(searchParam);
-        }
-        params.set(pageParam, "1"); // Reset to first page
-        router.push(`${pathname}?${params.toString()}`, { scroll: false });
-        setIsLoading(false);
-      }, SEARCH_DEBOUNCE_MS);
-    } else {
-      // Original behavior for non-prefixed search
-      if (newValue) {
-        setIsLoading(true);
-        debounceTimeoutRef.current = setTimeout(() => {
-          updateFilter("search", newValue);
-          setIsLoading(false);
-        }, SEARCH_DEBOUNCE_MS);
-      } else {
-        setIsLoading(false);
-        updateFilter("search", null);
-      }
-    }
   };
 
   // Cleanup timeout on unmount
@@ -149,67 +125,22 @@ export const DataTableSearch = ({
     };
   }, []);
 
-  const handleMouseEnter = () => {
-    setIsExpanded(true);
-  };
-
-  const handleMouseLeave = () => {
-    if (!shouldStayExpanded) {
-      setIsExpanded(false);
-    }
-  };
-
   const handleFocus = () => {
     setIsFocused(true);
-    setIsExpanded(true);
   };
 
   const handleBlur = () => {
     setIsFocused(false);
-    if (!value && !hasBadge) {
-      setIsExpanded(false);
-    }
   };
-
-  const handleIconClick = () => {
-    setIsExpanded(true);
-    // Focus input after expansion animation starts
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 50);
-  };
-
-  const effectiveExpanded = isExpanded || hasBadge;
 
   return (
     <div
       className={cn(
-        "relative flex items-center transition-all duration-300 ease-in-out",
-        effectiveExpanded ? (hasBadge ? "w-[28rem]" : "w-64") : "w-10",
+        "relative flex items-center",
+        hasBadge ? "w-[28rem]" : "w-64",
       )}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
-      {/* Collapsed state - just icon button */}
-      <button
-        type="button"
-        onClick={handleIconClick}
-        className={cn(
-          "border-border-neutral-tertiary bg-bg-neutral-tertiary absolute left-0 flex size-10 items-center justify-center rounded-md border transition-opacity duration-200",
-          effectiveExpanded ? "pointer-events-none opacity-0" : "opacity-100",
-        )}
-        aria-label="Open search"
-      >
-        <SearchIcon className="text-text-neutral-tertiary size-4" />
-      </button>
-
-      {/* Expanded state - full input with optional badge */}
-      <div
-        className={cn(
-          "relative w-full transition-opacity duration-200",
-          effectiveExpanded ? "opacity-100" : "pointer-events-none opacity-0",
-        )}
-      >
+      <div className="relative w-full">
         <div
           className={cn(
             "border-border-neutral-tertiary bg-bg-neutral-tertiary hover:bg-bg-neutral-secondary flex items-center gap-1.5 rounded-md border transition-colors",
@@ -252,6 +183,40 @@ export const DataTableSearch = ({
             placeholder={placeholder}
             value={value}
             onChange={(e) => handleChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+
+              // Cancel any pending debounce — Enter commits immediately
+              if (debounceTimeoutRef.current) {
+                clearTimeout(debounceTimeoutRef.current);
+                debounceTimeoutRef.current = null;
+              }
+              setIsLoading(false);
+
+              // Controlled mode with explicit commit callback
+              if (isControlled && onSearchCommit) {
+                onSearchCommit(value);
+                return;
+              }
+
+              // Uncontrolled mode: immediate URL update (shortcut for debounce)
+              if (!isControlled) {
+                if (paramPrefix) {
+                  const params = new URLSearchParams(searchParams.toString());
+                  if (value) {
+                    params.set(searchParam, value);
+                  } else {
+                    params.delete(searchParam);
+                  }
+                  params.set(pageParam, "1");
+                  router.push(`${pathname}?${params.toString()}`, {
+                    scroll: false,
+                  });
+                } else {
+                  updateFilter("search", value || null);
+                }
+              }
+            }}
             onFocus={handleFocus}
             onBlur={handleBlur}
             className="h-9 min-w-0 flex-1 border-0 bg-transparent pr-9 shadow-none hover:bg-transparent focus:border-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
