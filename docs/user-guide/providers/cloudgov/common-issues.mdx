@@ -105,16 +105,6 @@ Cloud.gov injects `VCAP_SERVICES`, and in this deployment the runtime environmen
 
 Even so, keeping a startup-script fallback that derives `DATABASE_URL` from `VCAP_SERVICES` is useful because it makes the scripts resilient to environment differences between tasks, shells, and future platform behavior.
 
-## Use the Default Django Database Alias
-
-This deployment initially attempted to run migrations against a non-default alias. Cloud.gov runtime behavior was simpler and more reliable when migrations used the default alias:
-
-```console
-python manage.py migrate
-```
-
-Avoid hard-coding a Cloud.gov-specific `--database admin` migration path unless the deployment explicitly requires it.
-
 ## `django_celery_beat` Can Drift from Migration History
 
 This deployment hit a state where `python manage.py showmigrations django_celery_beat` reported all migrations as applied, but the scheduler tables were still missing in PostgreSQL.
@@ -126,6 +116,8 @@ django.db.utils.ProgrammingError: relation "django_celery_beat_crontabschedule" 
 ```
 
 In this codebase, Django and Celery framework tables are routed through the `admin` database alias. That means migration debugging must validate both migration history and physical table existence on the routed database, not just the default alias.
+
+On Cloud.gov, running `python manage.py migrate` against the default alias can record migration history without creating the routed framework tables. When framework tables such as `django_content_type`, `django_site`, or `django_celery_beat_*` are missing, run repair tasks against `--database admin`.
 
 Useful checks:
 
@@ -140,6 +132,22 @@ cf run-task prowler-api-web -k 4G -m 1G \
 ```
 
 If those two results disagree, treat it as a schema-repair problem rather than a Celery configuration problem.
+
+If multiple framework apps are marked as migrated but their tables are missing, a targeted `django_celery_beat` repair is not enough. Rebuild the routed schema on `admin` first, then restart beat.
+
+This recovery path restored the deployment:
+
+```console
+cf run-task prowler-api-web -k 4G -m 1G \
+  --command "sh -lc 'cd src/backend && python -c \"import os; os.environ.setdefault(\"DJANGO_SETTINGS_MODULE\", \"config.django.production\"); import django; django.setup(); from django.core.management import call_command; from django.db.models.signals import post_migrate; receivers = post_migrate.receivers; post_migrate.receivers = []; [call_command(\"migrate\", app, \"zero\", database=\"admin\", fake=True, interactive=False, verbosity=1) for app in [\"django_celery_results\", \"sessions\", \"sites\"]]; call_command(\"migrate\", database=\"admin\", interactive=False, verbosity=1); post_migrate.receivers = receivers\"'"
+```
+
+After the bootstrap task succeeds, verify that key tables exist before restarting beat:
+
+```console
+cf run-task prowler-api-web -k 4G -m 1G \
+  --command "sh -lc 'cd src/backend && python -c \"import json, os, psycopg2; conn = psycopg2.connect(os.environ[\"DATABASE_URL\"]); cur = conn.cursor(); cur.execute(\"select schemaname, tablename from pg_tables where schemaname = $$public$$ and tablename in (%s,%s,%s,%s,%s,%s) order by tablename\", [\"django_celery_beat_crontabschedule\", \"django_celery_beat_periodictask\", \"django_celery_results_taskresult\", \"django_content_type\", \"django_site\", \"scans\"]); print(cur.fetchall())\"'"
+```
 
 ## Neo4j Is Not a Managed Cloud.gov Service
 

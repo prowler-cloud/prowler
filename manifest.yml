@@ -114,3 +114,24 @@ applications:
       NEO4J_PASSWORD: ''
       SENTRY_ENVIRONMENT: cloudgov
       SENTRY_RELEASE: cloudgov
+  - name: prowler-ui
+    path: ui
+    buildpacks:
+      - nodejs_buildpack
+    memory: 512M
+    disk_quota: 4G
+    instances: 1
+    command: node .next/standalone/server.js
+    routes:
+      - route: ((ui_route))
+    env:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      BP_NODE_PACKAGE_MANAGER: pnpm
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_API_BASE_URL: https://((api_route))/api/v1
+      NEXT_PUBLIC_API_DOCS_URL: https://((api_route))/api/v1/docs
+      API_BASE_URL: https://((api_route))/api/v1
+      AUTH_URL: https://((ui_route))
+      AUTH_SECRET: ((ui_auth_secret))
