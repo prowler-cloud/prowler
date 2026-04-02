@@ -24,7 +24,7 @@ class identity_storage_service_level_admins_scoped(Check):
             item for sublist in storage_policies.values() for item in sublist
         ]
 
-        # Check for policies that violate least privilege by granting manage all-resources
+        # Check for policies that violate least privilege by granting manage delete service-level storage privileges
         for policy in identity_client.policies:
             # Skip non-active policies
             if policy.lifecycle_state != "ACTIVE":
@@ -44,7 +44,7 @@ class identity_storage_service_level_admins_scoped(Check):
                 if not statement_upper.startswith("ALLOW GROUP"):
                     continue
 
-                # Check for "allow group ... to manage file service resources without restriction" (not specific to service/compartment)
+                # Check for "allow group ... to manage *file-service* resources" without restriction (not restricted to certain buckets or non delete)
                 if any(
                     f"MANAGE {global_storage_policy}" in statement_upper
                     for global_storage_policy in storage_policies
