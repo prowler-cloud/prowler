@@ -221,7 +221,6 @@ class TestSARIF:
         assert "id" in rule
         assert "shortDescription" in rule
         assert "fullDescription" in rule
-        assert "helpUri" in rule
         assert "help" in rule
         assert "defaultConfiguration" in rule
         assert "properties" in rule

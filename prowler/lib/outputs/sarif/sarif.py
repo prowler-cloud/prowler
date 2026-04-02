@@ -41,15 +41,17 @@ class SARIF(Output):
             severity = finding.metadata.Severity.lower()
 
             if check_id not in rules:
-                rules[check_id] = {
+                rule = {
                     "id": check_id,
                     "name": check_id,
                     "shortDescription": {"text": finding.metadata.CheckTitle},
-                    "fullDescription": {"text": finding.metadata.Description},
-                    "helpUri": finding.metadata.RelatedUrl or "",
+                    "fullDescription": {
+                        "text": finding.metadata.Description or check_id
+                    },
                     "help": {
                         "text": finding.metadata.Remediation.Recommendation.Text
-                        or finding.metadata.Description,
+                        or finding.metadata.Description
+                        or check_id,
                     },
                     "defaultConfiguration": {
                         "level": SEVERITY_TO_SARIF_LEVEL.get(severity, "note"),
@@ -65,13 +67,18 @@ class SARIF(Output):
                         ),
                     },
                 }
+                if finding.metadata.RelatedUrl:
+                    rule["helpUri"] = finding.metadata.RelatedUrl
+                rules[check_id] = rule
 
             rule_index = list(rules.keys()).index(check_id)
             result = {
                 "ruleId": check_id,
                 "ruleIndex": rule_index,
                 "level": SEVERITY_TO_SARIF_LEVEL.get(severity, "note"),
-                "message": {"text": finding.status_extended},
+                "message": {
+                    "text": finding.status_extended or finding.metadata.CheckTitle
+                },
             }
 
             location = self._build_location(finding)
