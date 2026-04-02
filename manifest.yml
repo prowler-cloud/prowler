@@ -15,9 +15,12 @@ applications:
     env:
       DISABLE_COLLECTSTATIC: 1
       DJANGO_SETTINGS_MODULE: config.django.production
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,((api_route))
+      DJANGO_CORS_ALLOWED_ORIGINS: http://localhost,http://127.0.0.1,https://((api_route))
       DJANGO_BIND_ADDRESS: 0.0.0.0
       DJANGO_LOGGING_FORMATTER: human_readable
       DJANGO_LOGGING_LEVEL: INFO
+      RUN_DB_MIGRATIONS: 0
       CLOUDGOV_UAA_ENABLED: true
       UAA_CLIENT_ID: ((uaa_client_id))
       UAA_CLIENT_SECRET: ((uaa_client_secret))
@@ -29,6 +32,10 @@ applications:
       DJANGO_SECRETS_ENCRYPTION_KEY: ((django_secrets_encryption_key))
       DJANGO_TOKEN_SIGNING_KEY: ((django_token_signing_key))
       DJANGO_TOKEN_VERIFYING_KEY: ((django_token_verifying_key))
+      NEO4J_HOST: ''
+      NEO4J_PORT: ''
+      NEO4J_USER: ''
+      NEO4J_PASSWORD: ''
       SENTRY_ENVIRONMENT: cloudgov
       SENTRY_RELEASE: cloudgov
 
@@ -48,6 +55,8 @@ applications:
     env:
       DISABLE_COLLECTSTATIC: 1
       DJANGO_SETTINGS_MODULE: config.django.production
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,((api_route))
+      DJANGO_CORS_ALLOWED_ORIGINS: http://localhost,http://127.0.0.1,https://((api_route))
       DJANGO_LOGGING_FORMATTER: human_readable
       DJANGO_LOGGING_LEVEL: INFO
       CLOUDGOV_UAA_ENABLED: true
@@ -61,6 +70,10 @@ applications:
       DJANGO_SECRETS_ENCRYPTION_KEY: ((django_secrets_encryption_key))
       DJANGO_TOKEN_SIGNING_KEY: ((django_token_signing_key))
       DJANGO_TOKEN_VERIFYING_KEY: ((django_token_verifying_key))
+      NEO4J_HOST: ''
+      NEO4J_PORT: ''
+      NEO4J_USER: ''
+      NEO4J_PASSWORD: ''
       SENTRY_ENVIRONMENT: cloudgov
       SENTRY_RELEASE: cloudgov
 
@@ -68,8 +81,8 @@ applications:
     path: api
     buildpacks:
       - python_buildpack
-    memory: 256M
-    disk_quota: 2G
+    memory: 512M
+    disk_quota: 4G
     instances: 1
     no-route: true
     health-check-type: process
@@ -80,6 +93,8 @@ applications:
     env:
       DISABLE_COLLECTSTATIC: 1
       DJANGO_SETTINGS_MODULE: config.django.production
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,((api_route))
+      DJANGO_CORS_ALLOWED_ORIGINS: http://localhost,http://127.0.0.1,https://((api_route))
       DJANGO_LOGGING_FORMATTER: human_readable
       DJANGO_LOGGING_LEVEL: INFO
       CLOUDGOV_UAA_ENABLED: true
@@ -93,5 +108,9 @@ applications:
       DJANGO_SECRETS_ENCRYPTION_KEY: ((django_secrets_encryption_key))
       DJANGO_TOKEN_SIGNING_KEY: ((django_token_signing_key))
       DJANGO_TOKEN_VERIFYING_KEY: ((django_token_verifying_key))
+      NEO4J_HOST: ''
+      NEO4J_PORT: ''
+      NEO4J_USER: ''
+      NEO4J_PASSWORD: ''
       SENTRY_ENVIRONMENT: cloudgov
       SENTRY_RELEASE: cloudgov

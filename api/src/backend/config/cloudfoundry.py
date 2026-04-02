@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Any
 from urllib.parse import urlparse
 
@@ -179,3 +180,16 @@ def get_cors_origins_from_vcap_application(
             merged_origins.append(origin)
 
     return merged_origins
+
+
+def get_neo4j_settings_from_environment(
+    environment: dict[str, str] | None = None,
+) -> dict[str, str]:
+    environment = environment or os.environ
+
+    return {
+        "HOST": environment.get("NEO4J_HOST", ""),
+        "PORT": environment.get("NEO4J_PORT", ""),
+        "USER": environment.get("NEO4J_USER", ""),
+        "PASSWORD": environment.get("NEO4J_PASSWORD", ""),
+    }

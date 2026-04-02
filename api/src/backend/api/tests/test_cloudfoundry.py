@@ -3,6 +3,7 @@ from config.cloudfoundry import (
     get_allowed_hosts_from_vcap_application,
     get_cors_origins_from_vcap_application,
     get_database_settings_from_vcap_services,
+    get_neo4j_settings_from_environment,
     get_redis_settings_from_vcap_services,
 )
 
@@ -46,6 +47,43 @@ class TestCloudFoundrySettings:
         assert databases["default"]["ENGINE"] == "psqlextra.backend"
         assert databases["default"]["HOST"] == "db.example.com"
         assert databases["admin"]["USER"] == "db-user"
+
+    def test_get_database_settings_from_database_url_without_vcap_services(self):
+        settings_by_alias = get_database_settings_from_vcap_services(
+            {},
+            "postgres://db-user:db-pass@db.example.com:5432/prowler",
+        )
+
+        assert settings_by_alias is not None
+        assert settings_by_alias["prowler_user"]["NAME"] == "prowler"
+        assert settings_by_alias["admin"]["HOST"] == "db.example.com"
+
+    def test_get_neo4j_settings_from_environment_defaults_to_empty_strings(self):
+        neo4j_settings = get_neo4j_settings_from_environment({})
+
+        assert neo4j_settings == {
+            "HOST": "",
+            "PORT": "",
+            "USER": "",
+            "PASSWORD": "",
+        }
+
+    def test_get_neo4j_settings_from_environment_uses_values_when_present(self):
+        neo4j_settings = get_neo4j_settings_from_environment(
+            {
+                "NEO4J_HOST": "neo4j.example.com",
+                "NEO4J_PORT": "7687",
+                "NEO4J_USER": "neo4j",
+                "NEO4J_PASSWORD": "secret",
+            }
+        )
+
+        assert neo4j_settings == {
+            "HOST": "neo4j.example.com",
+            "PORT": "7687",
+            "USER": "neo4j",
+            "PASSWORD": "secret",
+        }
 
     def test_get_redis_settings_from_vcap_services_uses_bound_uri(self):
         redis_settings = get_redis_settings_from_vcap_services(

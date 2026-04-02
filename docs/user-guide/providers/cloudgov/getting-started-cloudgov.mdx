@@ -2,6 +2,12 @@
 
 This guide prepares Prowler API for deployment on Cloud.gov as a Cloud Foundry application using the Python buildpack, Amazon RDS for PostgreSQL, Amazon ElastiCache for Redis, and Cloud.gov UAA for authentication.
 
+Use this page together with:
+
+* [Required Deployment Files](./required-files.mdx)
+* [Common Issues](./common-issues.mdx)
+* [Authentication](./authentication.mdx)
+
 ## Scope
 
 This deployment path covers:
@@ -98,25 +104,24 @@ cf service-key prowler-api-uaa prowler-api-login
 
 Copy `client_id` and `client_secret` into the Cloud Foundry vars file described below.
 
-## Files Added for Cloud.gov Deployment
+## Create the Deployment Files Locally
 
-The repository now includes the following Cloud.gov deployment artifacts:
+For an upstream contribution, keep the repository free of Cloud.gov-only deployment artifacts and recreate them locally when needed.
 
-* `manifest.yml` at the repository root for `cf push`
-* `cloudgov-vars.example.yml` with the required secrets and route variables
-* `api/runtime.txt` to pin the Python runtime for the buildpack
-* `api/requirements.txt` for buildpack dependency installation
-* `api/bin/cloudgov-web.sh` for the web process
-* `api/bin/cloudgov-worker.sh` for the worker process
-* `api/bin/cloudgov-beat.sh` for the beat process
+Create the required files from the inline templates in [Required Deployment Files](./required-files.mdx):
+
+* `manifest.yml`
+* `cloudgov-vars.yml`
+* `api/Procfile`
+* `api/runtime.txt`
+* `api/requirements.txt`
+* `api/bin/cloudgov-web.sh`
+* `api/bin/cloudgov-worker.sh`
+* `api/bin/cloudgov-beat.sh`
 
 ## Prepare the Variables File
 
-Create a deployment-specific vars file from the example:
-
-```console
-cp cloudgov-vars.example.yml cloudgov-vars.yml
-```
+Create `cloudgov-vars.yml` locally from the template in [Required Deployment Files](./required-files.mdx). Do not commit this file.
 
 Set the following values in `cloudgov-vars.yml`:
 
@@ -139,6 +144,12 @@ Once the services are ready, deploy all three processes with:
 cf push --vars-file cloudgov-vars.yml
 ```
 
+For iterative debugging, deploy only the web process first:
+
+```console
+cf push prowler-api-web --vars-file cloudgov-vars.yml
+```
+
 The manifest creates:
 
 * `prowler-api-web`
@@ -147,9 +158,15 @@ The manifest creates:
 
 The web process:
 
-* runs the social-account migration repair command
-* applies Django migrations against the `admin` database alias
+* skips automatic migrations during normal startup
 * starts Gunicorn
+
+Run migrations as a one-off task instead of on every web restart:
+
+```console
+cf run-task prowler-api-web -k 4G -m 1G \
+	--command "sh -lc 'cd src/backend && RUN_DB_MIGRATIONS=1 python manage.py migrate'"
+```
 
 The worker and beat processes use the same codebase and service bindings without a public route.
 
@@ -179,6 +196,9 @@ Keep the following platform details in mind:
 * The Redis broker binding is consumed from `VCAP_SERVICES`, including `rediss://` URIs when TLS is enabled
 * `VCAP_APPLICATION` is now used to extend Django allowed hosts and CORS origins automatically for Cloud Foundry routes
 * If Attack Paths is required, Neo4j must be supplied separately because Cloud.gov does not provide a managed Neo4j broker
+* If Neo4j is not used, leave the Neo4j environment variables empty in the manifest
+
+For quota, staging, runtime, and startup issues discovered during this deployment, refer to [Common Issues](./common-issues.mdx).
 
 ## Next Steps
 
