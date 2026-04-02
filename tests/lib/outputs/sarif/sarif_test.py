@@ -40,7 +40,6 @@ class TestSARIF:
         assert result["ruleIndex"] == 0
         assert result["level"] == "error"
         assert result["message"]["text"] == "S3 bucket is not encrypted"
-        assert result["partialFingerprints"]["primaryLocationLineHash"] is not None
 
     def test_transform_pass_finding_excluded(self):
         finding = generate_finding_output(status="PASS", severity="high")
@@ -234,7 +233,6 @@ class TestSARIF:
         assert "ruleIndex" in result
         assert "level" in result
         assert "message" in result
-        assert "partialFingerprints" in result
         assert "locations" in result
 
         loc = result["locations"][0]["physicalLocation"]

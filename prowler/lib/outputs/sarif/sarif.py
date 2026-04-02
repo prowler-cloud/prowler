@@ -72,9 +72,6 @@ class SARIF(Output):
                 "ruleIndex": rule_index,
                 "level": SEVERITY_TO_SARIF_LEVEL.get(severity, "note"),
                 "message": {"text": finding.status_extended},
-                "partialFingerprints": {
-                    "primaryLocationLineHash": finding.uid,
-                },
             }
 
             location = self._build_location(finding)
