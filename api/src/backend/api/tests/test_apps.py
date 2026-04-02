@@ -182,10 +182,26 @@ def _make_app():
     return ApiConfig("api", api)
 
 
+def _set_neo4j_settings(monkeypatch, **overrides):
+    databases = {alias: config.copy() for alias, config in settings.DATABASES.items()}
+    databases["neo4j"] = {
+        **databases.get("neo4j", {}),
+        **overrides,
+    }
+    monkeypatch.setattr(settings, "DATABASES", databases, raising=False)
+
+
 def test_ready_initializes_driver_for_api_process(monkeypatch):
     config = _make_app()
     _set_argv(monkeypatch, ["gunicorn"])
     _set_testing(monkeypatch, False)
+    _set_neo4j_settings(
+        monkeypatch,
+        HOST="neo4j.example.com",
+        PORT="7687",
+        USER="neo4j",
+        PASSWORD="secret",
+    )
 
     with (
         patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None),
@@ -228,6 +244,49 @@ def test_ready_skips_driver_when_testing(monkeypatch):
     config = _make_app()
     _set_argv(monkeypatch, ["gunicorn"])
     _set_testing(monkeypatch, True)
+
+    with (
+        patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None),
+        patch("api.attack_paths.database.init_driver") as init_driver,
+    ):
+        config.ready()
+
+    init_driver.assert_not_called()
+
+
+def test_ready_skips_driver_when_neo4j_is_not_configured(monkeypatch):
+    config = _make_app()
+    _set_argv(monkeypatch, ["gunicorn"])
+    _set_testing(monkeypatch, False)
+    _set_neo4j_settings(
+        monkeypatch,
+        HOST="",
+        PORT="",
+        USER="",
+        PASSWORD="",
+    )
+
+    with (
+        patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None),
+        patch("api.attack_paths.database.init_driver") as init_driver,
+    ):
+        config.ready()
+
+    init_driver.assert_not_called()
+
+
+def test_ready_skips_driver_when_neo4j_is_disabled(monkeypatch):
+    config = _make_app()
+    _set_argv(monkeypatch, ["gunicorn"])
+    _set_testing(monkeypatch, False)
+    monkeypatch.setenv("DISABLE_NEO4J_INIT", "true")
+    _set_neo4j_settings(
+        monkeypatch,
+        HOST="neo4j.example.com",
+        PORT="7687",
+        USER="neo4j",
+        PASSWORD="secret",
+    )
 
     with (
         patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None),

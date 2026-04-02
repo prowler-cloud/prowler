@@ -272,6 +272,15 @@
                 ]
               },
               {
+                "group": "Cloud.gov",
+                "pages": [
+                  "user-guide/providers/cloudgov/getting-started-cloudgov",
+                  "user-guide/providers/cloudgov/authentication",
+                  "user-guide/providers/cloudgov/required-files",
+                  "user-guide/providers/cloudgov/common-issues"
+                ]
+              },
+              {
                 "group": "Image",
                 "pages": [
                   "user-guide/providers/image/getting-started-image"

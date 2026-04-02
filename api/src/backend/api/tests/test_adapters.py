@@ -130,3 +130,34 @@ class TestProvisionDefaultTenantAccess:
                 MainRouter.admin_db
             ).get(user=user, tenant_id=tenant.id)
             assert relationship.role_id == role.id
+
+    def test_creates_member_membership_and_read_role(self):
+        user = User.objects.db_manager(MainRouter.admin_db).create_user(
+            name="reader",
+            email="reader@example.com",
+        )
+
+        tenant = provision_default_tenant_access(user, role_name="read")
+
+        membership = Membership.objects.using(MainRouter.admin_db).get(
+            user=user, tenant=tenant
+        )
+
+        assert membership.role == Membership.RoleChoices.MEMBER
+
+        with rls_transaction(str(tenant.id), using=MainRouter.admin_db):
+            role = Role.objects.using(MainRouter.admin_db).get(
+                tenant_id=tenant.id, name="read"
+            )
+            assert role.manage_users is False
+            assert role.manage_account is False
+            assert role.manage_billing is False
+            assert role.manage_providers is False
+            assert role.manage_integrations is False
+            assert role.manage_scans is False
+            assert role.unlimited_visibility is True
+
+            relationship = UserRoleRelationship.objects.using(
+                MainRouter.admin_db
+            ).get(user=user, tenant_id=tenant.id)
+            assert relationship.role_id == role.id

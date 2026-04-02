@@ -28,6 +28,7 @@ neo4j==6.1.0
 openai==1.109.1
 prowler @ git+https://github.com/prowler-cloud/prowler.git@master
 psycopg2-binary==2.9.9
+redis==7.1.0
 reportlab==4.4.10
 sentry-sdk[django]==2.56.0
 sqlparse==0.5.5

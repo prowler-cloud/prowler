@@ -1,16 +1,27 @@
 from config.cloudfoundry import (
     build_django_databases_from_vcap_services,
+    get_allowed_hosts_from_vcap_application,
+    get_cors_origins_from_vcap_application,
     get_database_settings_from_vcap_services,
+    get_neo4j_settings_from_environment,
     parse_environment_json,
 )
 from config.django.base import *  # noqa
 from config.env import env
 
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
-CORS_ALLOWED_ORIGINS = env.list(
-    "DJANGO_CORS_ALLOWED_ORIGINS",
-    default=["http://localhost", "http://127.0.0.1"],
+VCAP_APPLICATION = parse_environment_json(env.str("VCAP_APPLICATION", default=""))
+
+ALLOWED_HOSTS = get_allowed_hosts_from_vcap_application(
+    env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.1"]),
+    VCAP_APPLICATION,
+)
+CORS_ALLOWED_ORIGINS = get_cors_origins_from_vcap_application(
+    env.list(
+        "DJANGO_CORS_ALLOWED_ORIGINS",
+        default=["http://localhost", "http://127.0.0.1"],
+    ),
+    VCAP_APPLICATION,
 )
 
 # Database
@@ -20,6 +31,7 @@ default_db_user = env("POSTGRES_USER", default="")
 default_db_password = env("POSTGRES_PASSWORD", default="")
 default_db_host = env("POSTGRES_HOST", default="")
 default_db_port = env("POSTGRES_PORT", default="")
+neo4j_settings = get_neo4j_settings_from_environment()
 
 DATABASES = {
     "prowler_user": {
@@ -55,10 +67,10 @@ DATABASES = {
         "PORT": env("POSTGRES_REPLICA_PORT", default=default_db_port),
     },
     "neo4j": {
-        "HOST": env.str("NEO4J_HOST"),
-        "PORT": env.str("NEO4J_PORT"),
-        "USER": env.str("NEO4J_USER"),
-        "PASSWORD": env.str("NEO4J_PASSWORD"),
+        "HOST": neo4j_settings["HOST"],
+        "PORT": neo4j_settings["PORT"],
+        "USER": neo4j_settings["USER"],
+        "PASSWORD": neo4j_settings["PASSWORD"],
     },
 }
 
