@@ -24,6 +24,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Added `internet-exposed` category to 13 AWS checks (CloudFront, CodeArtifact, EC2, EFS, RDS, SageMaker, Shield, VPC) [(#10502)](https://github.com/prowler-cloud/prowler/pull/10502)
 - Minimum Python version from 3.9 to 3.10 and updated classifiers to reflect supported versions (3.10, 3.11, 3.12) [(#10464)](https://github.com/prowler-cloud/prowler/pull/10464)
+- Added `tenancy_id` argument to oci mutelist is_finding_muted to enable mutelist support. Updated `oraclecloud_mutelist_example.yaml` to reflect schema [(#10565)](https://github.com/prowler-cloud/prowler/pull/10566)
 
 ### 🐞 Fixed
 

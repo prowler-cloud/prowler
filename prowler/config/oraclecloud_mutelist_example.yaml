@@ -1,12 +1,12 @@
-### Tenancy, Check and/or Region can be * to apply for all the cases.
-### Tenancy == OCI Tenancy OCID and Region == OCI Region
+### Account, Check and/or Region can be * to apply for all the cases.
+### Account == OCI Tenancy OCID and Region == OCI Region
 ### Resources and tags are lists that can have either Regex or Keywords.
 ### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
 ### Use an alternation Regex to match one of multiple tags with "ORed" logic.
 ### For each check you can except Tenancies, Regions, Resources and/or Tags.
 ###########################  MUTELIST EXAMPLE  ###########################
 Mutelist:
-  Tenancies:
+  Accounts:
     "ocid1.tenancy.oc1..aaaaaaaexample":
       Checks:
         "iam_user_mfa_enabled":
