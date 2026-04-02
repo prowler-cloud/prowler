@@ -50,17 +50,24 @@ Enter the following values obtained from the SAML SSO integration setup in Prowl
 
 | Google Workspace Field | Prowler Value |
 |------------------------|---------------|
-| **ACS URL** | The Assertion Consumer Service (ACS) URL shown in Prowler App |
+| **ACS URL** | The Assertion Consumer Service (ACS) URL shown in Prowler App. Self-hosted deployments will have a different base URL. |
 | **Entity ID** | The Audience URI (Entity ID) shown in Prowler App |
 | **Name ID format** | `EMAIL` |
 | **Name ID** | `Basic Information > Primary email` |
 
 Additionally:
 
-- Check "Signed response".
+- Enable "Sign SAML response AND assertion" (both must be enabled).
 - Click "Continue".
 
 ### Step 4: Configure Attribute Mapping
+
+<Warning>
+**Dynamic Updates**
+
+Prowler App updates user attributes each time a user logs in. Any changes made in the IdP will be reflected on the next login.
+
+</Warning>
 
 To correctly provision users, configure the IdP to send the following attributes in the SAML assertion by clicking "Add mapping" for each entry:
 
@@ -114,8 +121,7 @@ Navigate to the profile settings page:
 ### Step 2: Enable SAML SSO
 
 1. Find the "SAML SSO Integration" card.
-2. Click "Enable".
-3. Prowler App displays the **ACS URL** and **Audience URI (Entity ID)** — these are the values used in Part A, Step 3.
+2. Click "Enable". This reveals the **ACS URL** and **Audience URI (Entity ID)** that Google Admin Console needs for Part A, Step 3. Copy these values before proceeding.
 
 ### Step 3: Upload Metadata and Configure Email Domain
 
@@ -140,7 +146,7 @@ The "SAML Integration" card should now display an **"Active"** status, indicatin
 
 ### IdP-Initiated SSO (from Google)
 
-1. Open the Google Workspace app launcher (the grid icon in the top-right corner of any Google page).
+1. Open the Google Workspace app launcher at [apps.google.com](https://apps.google.com) or click the grid icon in the top-right corner of any Google page.
 2. Click the "Prowler Cloud" app tile.
 3. The browser redirects directly to Prowler App, authenticated.
 
@@ -161,7 +167,7 @@ curl -X DELETE 'https://api.prowler.com/api/v1/saml-config' \
   -H 'Accept: application/vnd.api+json'
 ```
 
-After removal, affected users must reset their password to regain access. For more details, refer to the [SAML API Reference](/user-guide/tutorials/prowler-app-sso#saml-api-reference).
+After removal, affected users must reset their password to regain access. For more details, refer to the [SAML API Reference](/user-guide/tutorials/prowler-app-sso#saml-api-reference). For additional support, contact [Prowler Support](https://docs.prowler.com/user-guide/contact-support).
 
 </Warning>
 
