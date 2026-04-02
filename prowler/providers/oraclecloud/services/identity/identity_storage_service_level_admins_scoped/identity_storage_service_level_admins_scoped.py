@@ -3,6 +3,7 @@ from prowler.providers.oraclecloud.services.identity.identity_client import (
     identity_client,
 )
 
+
 class identity_storage_service_level_admins_scoped(Check):
     """Ensure storage service-level admins cannot delete resources they manage (CIS 1.15)"""
 
@@ -68,7 +69,7 @@ class identity_storage_service_level_admins_scoped(Check):
                         has_violation = True
                         offending_statement = statement
                         break
-                
+
             report = Check_Report_OCI(
                 metadata=self.metadata(),
                 resource=policy,
