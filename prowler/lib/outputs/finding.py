@@ -354,6 +354,9 @@ class Finding(BaseModel):
                     check_output, "resource_line_range", ""
                 )
                 output_data["framework"] = check_output.check_metadata.ServiceName
+                output_data["raw"] = {
+                    "resource_line_range": output_data.get("resource_line_range", ""),
+                }
 
             elif provider.type == "llm":
                 output_data["auth_method"] = provider.auth_method
