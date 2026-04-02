@@ -37,7 +37,7 @@ class identity_storage_service_level_admins_scoped(Check):
             region = policy.region if hasattr(policy, "region") else "global"
 
             has_violation = False
-            offending_statement = None
+            offending_statements = []
             for statement in policy.statements:
                 statement_upper = statement.upper()
                 # Only check groups
@@ -51,7 +51,7 @@ class identity_storage_service_level_admins_scoped(Check):
                 ):
                     if "WHERE" not in statement_upper:
                         has_violation = True
-                        offending_statement = statement
+                        offending_statements.append(statement)
                         break
                 if any(
                     f"MANAGE {base_storage_policy}" in statement_upper
@@ -59,12 +59,12 @@ class identity_storage_service_level_admins_scoped(Check):
                 ):
                     if "WHERE" not in statement_upper:
                         has_violation = True
-                        offending_statement = statement
+                        offending_statements.append(statement)
                         break
                 if "MANAGE ALL-RESOURCES" in statement_upper:
                     if "WHERE" not in statement_upper:
                         has_violation = True
-                        offending_statement = statement
+                        offending_statements.append(statement)
                         break
 
             report = Check_Report_OCI(
@@ -78,7 +78,7 @@ class identity_storage_service_level_admins_scoped(Check):
 
             if has_violation:
                 report.status = "FAIL"
-                report.status_extended = f"Policy '{policy.name}' grants 'manage' permissions with delete. Service-level storage administrators should be created with delete permissions.\n{offending_statement}"
+                report.status_extended = f"Policy '{policy.name}' grants 'manage' permissions with delete. Service-level storage administrators should be created with delete permissions.\n{offending_statements}"
             else:
                 report.status = "PASS"
                 report.status_extended = f"Policy '{policy.name}' does not grant storage service level admins delete permissions."
