@@ -302,7 +302,9 @@
     {
       "Id": "1.15",
       "Description": "Ensure storage service-level admins cannot delete resources they manage",
-      "Checks": [],
+      "Checks": [
+        "identity_storage_service_level_admins_scoped"
+      ],
       "Attributes": [
         {
           "Section": "1. Identity and Access Management",

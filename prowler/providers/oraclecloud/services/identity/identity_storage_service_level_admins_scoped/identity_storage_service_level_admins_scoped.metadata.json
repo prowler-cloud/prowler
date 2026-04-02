@@ -1,0 +1,37 @@
+{
+    "Provider": "oraclecloud",
+    "CheckID": "identity_storage_service_level_admins_scoped",
+    "CheckTitle": "Identity policy does not grant delete to storage service level admins",
+    "CheckType": [],
+    "ServiceName": "identity",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Severity": "high",
+    "ResourceType": "Policy",
+    "ResourceGroup": "IAM",
+    "Description": "**OCI IAM policies** are reviewed for **delete permissions**, specifically statements granting `manage` to storage services without scoping to avoid deletion. Only **active policies** are considered; the default tenant admin policy is excluded.",
+    "Risk": "Creating service-level administrators without the ability to delete the resource they are managing helps in tightly controlling access to Oracle Cloud Infrastructure (OCI) services by implementing the separation of duties security principle.",
+    "RelatedUrl": "",
+    "AdditionalURLs": [
+        "https://docs.oracle.com/en-us/iaas/Content/Identity/Concepts/policygetstarted.htm",
+        "https://docs.oracle.com/en-us/iaas/Content/Identity/getstarted/identity-domains.htm"
+    ],
+    "Remediation": {
+        "Code": {
+            "CLI": "oci iam policy update --policy-id <policy-ocid> --statements '[\"Allow group <GroupName> to manage objects where request.permission!='OBJECT_DELETE'\"]'",
+            "NativeIaC": "",
+            "Other": "1. Login to OCI console.\n2. Go to Identity -> Policies, In the compartment dropdown, choose the compartment.\n3. Open each policy to view the policy statements.\n4. Verify the policies to ensure that the policy statements that grant access to storage service-level administrators have a condition that excludes access to delete the service they are the administrator for.",
+            "Terraform": "```hcl\nresource \"oci_identity_policy\" \"<example_resource_name>\" {\n  compartment_id = \"<example_resource_id>\"\n  name           = \"<example_resource_name>\"\n  description    = \"<policy-description>\"\n\n  # Critical: restrict storage service family to avoid broad deleting'\n  statements = [\n    \"Allow group <GroupName> to manage volumes in compartment <CompartmentName> where request.PERMISSIONS!='VOLUME_DELETE'\"\n  ]\n}\n```"
+        },
+        "Recommendation": {
+            "Text": "Add the appropriate where condition to any policy statement that allows the storage service-level admins to manage the storage service.",
+            "Url": ""
+        }
+    },
+    "Categories": [
+        "identity-access"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}
