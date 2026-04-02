@@ -48,7 +48,6 @@ class identity_storage_service_level_admins_scoped(Check):
             offending_statement = None
             for statement in policy.statements:
                 statement_upper = statement.upper()
-                statement_words = statement_upper.split(" ")
                 # Only check groups
                 if not statement_upper.startswith("ALLOW GROUP"):
                     continue
