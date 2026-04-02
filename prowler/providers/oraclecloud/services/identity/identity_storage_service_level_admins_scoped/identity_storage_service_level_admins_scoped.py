@@ -16,22 +16,13 @@ class identity_storage_service_level_admins_scoped(Check):
         findings = []
 
         storage_policies = {
-            "FILE-FAMILY": [
-                "FILE-SYSTEMS",
-                "MOUNT-TARGETS",
-                "EXPORT-SETS"
-            ],
-            "OBJECT-FAMILY": [
-                "BUCKETS",
-                "OBJECTS"
-            ],
-            "VOLUME-FAMILY": [
-                "VOLUMES",
-                "VOLUME-ATTACHMENTS",
-                "VOLUME-BACKUPS"
-            ]
+            "FILE-FAMILY": ["FILE-SYSTEMS", "MOUNT-TARGETS", "EXPORT-SETS"],
+            "OBJECT-FAMILY": ["BUCKETS", "OBJECTS"],
+            "VOLUME-FAMILY": ["VOLUMES", "VOLUME-ATTACHMENTS", "VOLUME-BACKUPS"],
         }
-        all_base_policies = [item for sublist in storage_policies.values() for item in sublist]
+        all_base_policies = [
+            item for sublist in storage_policies.values() for item in sublist
+        ]
 
         # Check for policies that violate least privilege by granting manage all-resources
         for policy in identity_client.policies:
@@ -54,12 +45,18 @@ class identity_storage_service_level_admins_scoped(Check):
                     continue
 
                 # Check for "allow group ... to manage file service resources without restriction" (not specific to service/compartment)
-                if any(f"MANAGE {global_storage_policy}" in statement_upper for global_storage_policy in storage_policies):
+                if any(
+                    f"MANAGE {global_storage_policy}" in statement_upper
+                    for global_storage_policy in storage_policies
+                ):
                     if "WHERE" not in statement_upper:
                         has_violation = True
                         offending_statement = statement
                         break
-                if any(f"MANAGE {base_storage_policy}" in statement_upper for base_storage_policy in all_base_policies):
+                if any(
+                    f"MANAGE {base_storage_policy}" in statement_upper
+                    for base_storage_policy in all_base_policies
+                ):
                     if "WHERE" not in statement_upper:
                         has_violation = True
                         offending_statement = statement
