@@ -224,3 +224,31 @@ class Test_repository_ruleset_dismisses_stale_reviews:
             assert result[0].status == "MANUAL"
             assert result[0].resource_name == repo_name
             assert "legacy" in result[0].status_extended
+
+    def test_default_branch_none_manual(self):
+        repository_client = mock.MagicMock
+        repo_name = "repo1"
+        repo = make_repo(repo_name, rulesets=[])
+        repo.default_branch = None
+        repository_client.repositories = {1: repo}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.repository.repository_ruleset_dismisses_stale_reviews.repository_ruleset_dismisses_stale_reviews.repository_client",
+                new=repository_client,
+            ),
+        ):
+            from prowler.providers.github.services.repository.repository_ruleset_dismisses_stale_reviews.repository_ruleset_dismisses_stale_reviews import (
+                repository_ruleset_dismisses_stale_reviews,
+            )
+
+            check = repository_ruleset_dismisses_stale_reviews()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert result[0].resource_name == repo_name
+            assert "could not be determined" in result[0].status_extended
