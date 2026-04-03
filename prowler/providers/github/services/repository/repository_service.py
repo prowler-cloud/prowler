@@ -256,6 +256,7 @@ class Repository(GithubService):
             status_checks = False
             enforce_admins = False
             conversation_resolution = False
+            dismiss_stale_reviews = False # additon
             try:
                 branch = repo.get_branch(default_branch)
                 if branch.protected:
@@ -283,6 +284,11 @@ class Repository(GithubService):
                             if require_pr
                             else False
                         )
+                        dismiss_stale_reviews = (  
+                            protection.required_pull_request_reviews.dismiss_stale_reviews
+                            if require_pr
+                            else False
+                        )
                         require_signed_commits = branch.get_required_signatures()
             except Exception as error:
                 # If the branch is not found, it is not protected
@@ -303,6 +309,7 @@ class Repository(GithubService):
                     status_checks = None
                     enforce_admins = None
                     conversation_resolution = None
+                    dismiss_stale_reviews = None
                     logger.error(
                         f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
@@ -363,6 +370,7 @@ class Repository(GithubService):
                     conversation_resolution=conversation_resolution,
                     require_code_owner_reviews=require_code_owner_reviews,
                     require_signed_commits=require_signed_commits,
+                    dismiss_stale_reviews=dismiss_stale_reviews, 
                 ),
                 private=repo.private,
                 archived=repo.archived,
@@ -443,6 +451,7 @@ class Branch(BaseModel):
     require_code_owner_reviews: Optional[bool]
     require_signed_commits: Optional[bool]
     conversation_resolution: Optional[bool]
+    dismiss_stale_reviews: Optional[bool]
 
 
 class Repo(BaseModel):
