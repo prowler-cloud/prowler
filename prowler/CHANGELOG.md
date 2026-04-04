@@ -5,6 +5,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [5.23.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
+- `repository_ruleset_dismisses_stale_reviews` check for GitHub provider to verify stale PR review dismissal via repository rulesets [(#10369)](https://github.com/prowler-cloud/prowler/pull/10369)
 
 - `apikeys_api_restricted_with_gemini_api` and `gemini_api_disabled` checks for GCP provider [(#10280)](https://github.com/prowler-cloud/prowler/pull/10280)
 - `cloudfront_distributions_logging_enabled` detects Standard Logging v2 via CloudWatch Log Delivery [(#10090)](https://github.com/prowler-cloud/prowler/pull/10090)
@@ -64,6 +65,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [5.21.0] (Prowler v5.21.0)
 
 ### 🚀 Added
+- `repository_ruleset_dismisses_stale_reviews` check for GitHub provider to verify stale PR review dismissal via repository rulesets [(#10369)](https://github.com/prowler-cloud/prowler/pull/10369)
 
 - `misconfig` scanner as default for Image provider scans [(#10167)](https://github.com/prowler-cloud/prowler/pull/10167)
 - `entra_conditional_access_policy_device_code_flow_blocked` check for M365 provider [(#10218)](https://github.com/prowler-cloud/prowler/pull/10218)
@@ -101,6 +103,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [5.20.0] (Prowler v5.20.0)
 
 ### 🚀 Added
+- `repository_ruleset_dismisses_stale_reviews` check for GitHub provider to verify stale PR review dismissal via repository rulesets [(#10369)](https://github.com/prowler-cloud/prowler/pull/10369)
 
 - `entra_conditional_access_policy_approved_client_app_required_for_mobile` check for M365 provider [(#10216)](https://github.com/prowler-cloud/prowler/pull/10216)
 - `entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required` check for M365 provider [(#10197)](https://github.com/prowler-cloud/prowler/pull/10197)
@@ -140,6 +143,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [5.19.0] (Prowler v5.19.0)
 
 ### 🚀 Added
+- `repository_ruleset_dismisses_stale_reviews` check for GitHub provider to verify stale PR review dismissal via repository rulesets [(#10369)](https://github.com/prowler-cloud/prowler/pull/10369)
 
 - `entra_authentication_method_sms_voice_disabled` check for M365 provider [(#10212)](https://github.com/prowler-cloud/prowler/pull/10212)
 - `Google Workspace` provider support with Directory service including 1 security check [(#10022)](https://github.com/prowler-cloud/prowler/pull/10022)
@@ -249,6 +253,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [5.18.0] (Prowler v5.18.0)
 
 ### 🚀 Added
+- `repository_ruleset_dismisses_stale_reviews` check for GitHub provider to verify stale PR review dismissal via repository rulesets [(#10369)](https://github.com/prowler-cloud/prowler/pull/10369)
 
 - `entra_emergency_access_exclusion` check for M365 provider [(#9903)](https://github.com/prowler-cloud/prowler/pull/9903)
 - `defender_zap_for_teams_enabled` check for M365 provider [(#9838)](https://github.com/prowler-cloud/prowler/pull/9838)
