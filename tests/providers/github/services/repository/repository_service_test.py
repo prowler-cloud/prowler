@@ -462,3 +462,176 @@ class Test_Repository_ErrorHandling:
                 # Should log rate limit error
                 mock_logger.error.assert_called()
                 assert "Rate limit exceeded" in str(mock_logger.error.call_args)
+
+
+class Test_Repository_Rulesets:
+    def test_get_repository_rulesets_returns_empty_on_404(self):
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo1"
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.provider = provider
+            with patch(
+                "prowler.providers.github.services.repository.repository_service.requests.get"
+            ) as mock_get:
+                mock_response = MagicMock()
+                mock_response.status_code = 404
+                mock_get.return_value = mock_response
+                result = repository_service._get_repository_rulesets(mock_repo)
+                assert result == []
+
+    def test_get_repository_rulesets_returns_empty_on_403(self):
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo1"
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.provider = provider
+            with patch(
+                "prowler.providers.github.services.repository.repository_service.requests.get"
+            ) as mock_get:
+                mock_response = MagicMock()
+                mock_response.status_code = 403
+                mock_get.return_value = mock_response
+                result = repository_service._get_repository_rulesets(mock_repo)
+                assert result == []
+
+    def test_get_repository_rulesets_active_with_pull_request_rule(self):
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo1"
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.provider = provider
+            with patch(
+                "prowler.providers.github.services.repository.repository_service.requests.get"
+            ) as mock_get:
+                list_response = MagicMock()
+                list_response.status_code = 200
+                list_response.json.return_value = [
+                    {"id": 1, "name": "ruleset1", "enforcement": "active", "target": "branch"}
+                ]
+                detail_response = MagicMock()
+                detail_response.status_code = 200
+                detail_response.json.return_value = {
+                    "id": 1,
+                    "name": "ruleset1",
+                    "enforcement": "active",
+                    "target": "branch",
+                    "rules": [
+                        {
+                            "type": "pull_request",
+                            "parameters": {
+                                "dismiss_stale_reviews_on_push": True,
+                                "require_code_owner_review": True,
+                                "required_approving_review_count": 2,
+                                "require_last_push_approval": False,
+                            },
+                        }
+                    ],
+                }
+                mock_get.side_effect = [list_response, detail_response]
+                result = repository_service._get_repository_rulesets(mock_repo)
+                assert len(result) == 1
+                assert result[0].name == "ruleset1"
+                assert result[0].dismiss_stale_reviews_on_push is True
+
+    def test_get_repository_rulesets_skips_inactive(self):
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo1"
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.provider = provider
+            with patch(
+                "prowler.providers.github.services.repository.repository_service.requests.get"
+            ) as mock_get:
+                list_response = MagicMock()
+                list_response.status_code = 200
+                list_response.json.return_value = [
+                    {"id": 1, "name": "ruleset1", "enforcement": "disabled", "target": "branch"}
+                ]
+                mock_get.return_value = list_response
+                result = repository_service._get_repository_rulesets(mock_repo)
+                assert result == []
+
+    def test_get_repository_rulesets_skips_failed_detail(self):
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo1"
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.provider = provider
+            with patch(
+                "prowler.providers.github.services.repository.repository_service.requests.get"
+            ) as mock_get:
+                list_response = MagicMock()
+                list_response.status_code = 200
+                list_response.json.return_value = [
+                    {"id": 1, "name": "ruleset1", "enforcement": "active", "target": "branch"}
+                ]
+                detail_response = MagicMock()
+                detail_response.status_code = 500
+                mock_get.side_effect = [list_response, detail_response]
+                result = repository_service._get_repository_rulesets(mock_repo)
+                assert result == []
+
+    def test_get_repository_rulesets_handles_exception(self):
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo1"
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.provider = provider
+            with patch(
+                "prowler.providers.github.services.repository.repository_service.requests.get"
+            ) as mock_get:
+                mock_get.side_effect = Exception("Connection error")
+                result = repository_service._get_repository_rulesets(mock_repo)
+                assert result == []
+
+    def test_get_repository_rulesets_raise_for_status(self):
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo1"
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.provider = provider
+            with patch(
+                "prowler.providers.github.services.repository.repository_service.requests.get"
+            ) as mock_get:
+                mock_response = MagicMock()
+                mock_response.status_code = 500
+                mock_response.raise_for_status.side_effect = Exception("Server error")
+                mock_get.return_value = mock_response
+                result = repository_service._get_repository_rulesets(mock_repo)
+                assert result == []
