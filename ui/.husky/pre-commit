@@ -6,6 +6,9 @@
 
 set -e
 
+# Ensure git resolves the real repo root, not a pre-commit framework override
+unset GIT_WORK_TREE
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
