@@ -195,3 +195,30 @@ export const revokeInvite = async (formData: FormData) => {
     handleApiError(error);
   }
 };
+
+export const acceptInvitation = async (token: string) => {
+  const headers = await getAuthHeaders({ contentType: true });
+
+  const url = new URL(`${apiBaseUrl}/invitations/accept`);
+
+  const body = JSON.stringify({
+    data: {
+      type: "invitations",
+      attributes: {
+        invitation_token: token,
+      },
+    },
+  });
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers,
+      body,
+    });
+
+    return handleApiResponse(response);
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
