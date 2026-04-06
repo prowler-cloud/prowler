@@ -289,7 +289,10 @@ export const authConfig = {
       // Return NextResponse.redirect to preserve callbackUrl for post-login redirect
       if (!isLoggedIn) {
         const signInUrl = new URL("/sign-in", nextUrl.origin);
-        signInUrl.searchParams.set("callbackUrl", nextUrl.pathname);
+        signInUrl.searchParams.set(
+          "callbackUrl",
+          nextUrl.pathname + nextUrl.search,
+        );
         // Include session error if present (e.g., RefreshAccessTokenError)
         if (sessionError) {
           signInUrl.searchParams.set("error", sessionError);
