@@ -30,10 +30,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `return` statements in `finally` blocks replaced across IAM, Organizations, GCP provider, and custom checks metadata to stop silently swallowing exceptions [(#10102)](https://github.com/prowler-cloud/prowler/pull/10102)
 - `JiraConnection` now includes issue types per project fetched during `test_connection`, fixing `JiraInvalidIssueTypeError` on non-English Jira instances [(#10534)](https://github.com/prowler-cloud/prowler/pull/10534)
 - `--list-checks` and `--list-checks-json` now include `threat-detection` category checks in their output [(#10578)](https://github.com/prowler-cloud/prowler/pull/10578)
+- Missing `__init__.py` in `codebuild_project_uses_allowed_github_organizations` check preventing discovery by `--list-checks` [(#10584)](https://github.com/prowler-cloud/prowler/pull/10584)
 
 ### 🔐 Security
 
 - Sensitive CLI flag values (tokens, keys, passwords) in HTML output "Parameters used" field now redacted to prevent credential leaks [(#10518)](https://github.com/prowler-cloud/prowler/pull/10518)
+- `cryptography` bumped from 44.0.3 to 46.0.6 ([CVE-2026-26007](https://github.com/pyca/cryptography/security/advisories/GHSA-r6ph-v2qm-q3c2), [CVE-2026-34073](https://github.com/pyca/cryptography/security/advisories/GHSA-m959-cc7f-wv43)), `oci` to 2.169.0, and `alibabacloud-tea-openapi` to 0.4.4 [(#10535)](https://github.com/prowler-cloud/prowler/pull/10535)
 
 ---
 
