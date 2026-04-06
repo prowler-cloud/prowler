@@ -2,10 +2,8 @@ import "@/styles/globals.css";
 
 import { GoogleTagManager } from "@next/third-parties/google";
 import { Metadata, Viewport } from "next";
-import { redirect } from "next/navigation";
 import { ReactNode } from "react";
 
-import { auth } from "@/auth.config";
 import { NavigationProgress, Toaster } from "@/components/ui";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
@@ -31,17 +29,11 @@ export const viewport: Viewport = {
   ],
 };
 
-export default async function RootLayout({
+export default function AuthLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const session = await auth();
-
-  if (session?.user) {
-    redirect("/");
-  }
-
   return (
     <html suppressHydrationWarning lang="en">
       <head />
