@@ -1,7 +1,7 @@
 {
     "Provider": "oraclecloud",
     "CheckID": "identity_storage_service_level_admins_scoped",
-    "CheckTitle": "Identity policy does not grant delete to storage service level admins",
+    "CheckTitle": "Ensure storage service-level admins cannot delete resources they manage",
     "CheckType": [],
     "ServiceName": "identity",
     "SubServiceName": "",
@@ -9,19 +9,19 @@
     "Severity": "high",
     "ResourceType": "Policy",
     "ResourceGroup": "IAM",
-    "Description": "**OCI IAM policies** are reviewed for **delete permissions**, specifically statements granting `manage` to storage services without scoping to avoid deletion. Only **active policies** are considered; the default tenant admin policy is excluded.",
+    "Description": "To apply the separation of duties security principle, one can restrict service-level administrators from being able to delete resources they are managing. It means service-level administrators can only manage resources of a specific service but not delete resources for that specific service.",
     "Risk": "Creating service-level administrators without the ability to delete the resource they are managing helps in tightly controlling access to Oracle Cloud Infrastructure (OCI) services by implementing the separation of duties security principle.",
     "RelatedUrl": "",
     "AdditionalURLs": [
-        "https://docs.oracle.com/en-us/iaas/Content/Identity/Concepts/policygetstarted.htm",
-        "https://docs.oracle.com/en-us/iaas/Content/Identity/getstarted/identity-domains.htm"
+        "https://docs.oracle.com/en/solutions/oci-best-practices/protect-data-rest1.html#GUID-939A5EA1-3057-48E0-9E02-ADAFCB82BA3E",
+        "https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/policyreference.htm",
+        "https://docs.oracle.com/en-us/iaas/Content/Block/home.htm",
+        "https://docs.oracle.com/en-us/iaas/Content/File/home.htm",
+        "https://docs.oracle.com/en-us/iaas/Content/Object/home.htm"
     ],
     "Remediation": {
         "Code": {
-            "CLI": "oci iam policy update --policy-id <policy-ocid> --statements '[\"Allow group <GroupName> to manage objects where request.permission!='OBJECT_DELETE'\"]'",
-            "NativeIaC": "",
-            "Other": "1. Login to OCI console.\n2. Go to Identity -> Policies, In the compartment dropdown, choose the compartment.\n3. Open each policy to view the policy statements.\n4. Verify the policies to ensure that the policy statements that grant access to storage service-level administrators have a condition that excludes access to delete the service they are the administrator for.",
-            "Terraform": "```hcl\nresource \"oci_identity_policy\" \"<example_resource_name>\" {\n  compartment_id = \"<example_resource_id>\"\n  name           = \"<example_resource_name>\"\n  description    = \"<policy-description>\"\n\n  # Critical: restrict storage service family to avoid broad deleting'\n  statements = [\n    \"Allow group <GroupName> to manage volumes in compartment <CompartmentName> where request.PERMISSIONS!='VOLUME_DELETE'\"\n  ]\n}\n```"
+            "Console": "1. Login to OCI console.\n2. Go to Identity -> Policies, In the compartment dropdown, choose the compartment.\n3. Open each policy to view the policy statements.\n4. Verify the policies to ensure that the policy statements that grant access to storage service-level administrators have a condition that excludes access to delete the service they are the administrator for.",
         },
         "Recommendation": {
             "Text": "Add the appropriate where condition to any policy statement that allows the storage service-level admins to manage the storage service.",

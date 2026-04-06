@@ -78,7 +78,7 @@ class identity_storage_service_level_admins_scoped(Check):
 
             if has_violation:
                 report.status = "FAIL"
-                report.status_extended = f"Policy '{policy.name}' grants 'manage' permissions with delete. Service-level storage administrators should be created with delete permissions.\n{offending_statements}"
+                report.status_extended = f"Policy '{policy.name}' grants 'manage' permissions with delete. Service-level storage administrators should not be created with delete permissions.\n{offending_statements}"
             else:
                 report.status = "PASS"
                 report.status_extended = f"Policy '{policy.name}' does not grant storage service level admins delete permissions."
