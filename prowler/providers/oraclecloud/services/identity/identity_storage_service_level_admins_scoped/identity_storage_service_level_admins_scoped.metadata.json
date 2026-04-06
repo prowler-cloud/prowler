@@ -1,7 +1,7 @@
 {
     "Provider": "oraclecloud",
     "CheckID": "identity_storage_service_level_admins_scoped",
-    "CheckTitle": "Ensure storage service-level admins cannot delete resources they manage",
+    "CheckTitle": "Identity policy does not grant delete to storage service level admins",
     "CheckType": [],
     "ServiceName": "identity",
     "SubServiceName": "",
@@ -22,6 +22,10 @@
     "Remediation": {
         "Code": {
             "Console": "1. Login to OCI console.\n2. Go to Identity -> Policies, In the compartment dropdown, choose the compartment.\n3. Open each policy to view the policy statements.\n4. Verify the policies to ensure that the policy statements that grant access to storage service-level administrators have a condition that excludes access to delete the service they are the administrator for.",
+            "NativeIaC": "",
+            "CLI": "",
+            "Terraform": "",
+            "Other": ""
         },
         "Recommendation": {
             "Text": "Add the appropriate where condition to any policy statement that allows the storage service-level admins to manage the storage service.",
