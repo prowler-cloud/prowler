@@ -1,1 +1,0 @@
-Placeholder file for custom check folder fixture tests.

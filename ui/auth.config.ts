@@ -300,8 +300,16 @@ export const authConfig = {
       return true;
     },
 
-    jwt: async ({ token, account, user }) => {
+    jwt: async ({ token, account, user, trigger, session }) => {
       const authToken = token as AuthToken;
+
+      // Handle tenant switch: update tokens from client-side useSession().update()
+      if (trigger === "update" && session?.accessToken) {
+        authToken.accessToken = session.accessToken;
+        authToken.refreshToken = session.refreshToken;
+        applyDecodedClaims(authToken, authToken.accessToken, "tenant switch");
+        return authToken;
+      }
 
       applyDecodedClaims(authToken, authToken.accessToken);
 

@@ -82,6 +82,7 @@ const ALLOWED_TOOLS = new Set([
   // Resources
   "prowler_app_list_resources",
   "prowler_app_get_resource",
+  "prowler_app_get_resource_events",
   "prowler_app_get_resources_overview",
   // Attack Paths
   "prowler_app_list_attack_paths_queries",

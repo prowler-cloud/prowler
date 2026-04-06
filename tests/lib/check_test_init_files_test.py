@@ -25,6 +25,19 @@ def test_find_test_init_files_detects_only_test_directories(tmp_path):
     (tmp_path / "api" / "tests" / "performance" / "__init__.py").write_text("")
     (tmp_path / "prowler" / "providers" / "aws").mkdir(parents=True)
     (tmp_path / "prowler" / "providers" / "aws" / "__init__.py").write_text("")
+    (
+        tmp_path / "tests" / "lib" / "check" / "fixtures" / "checks_folder" / "check11"
+    ).mkdir(parents=True)
+    (
+        tmp_path
+        / "tests"
+        / "lib"
+        / "check"
+        / "fixtures"
+        / "checks_folder"
+        / "check11"
+        / "__init__.py"
+    ).write_text("")
 
     matches = guard.find_test_init_files(tmp_path)
 

@@ -38,12 +38,12 @@ Pipeline steps:
    Stale findings from previous scans are cleaned up.
 
 7. Sync the temp database into the tenant database:
-   - Drop the old provider subgraph (matched by _provider_id property).
+   - Drop the old provider subgraph (matched by dynamic _Provider_{uuid} label).
      graph_data_ready is set to False for all scans of this provider while
      the swap happens so the API doesn't serve partial data.
    - Copy nodes and relationships in batches. Every synced node gets a
-     _ProviderResource label and _provider_id / _provider_element_id
-     properties for multi-provider isolation.
+     _ProviderResource label and dynamic _Tenant_{uuid} / _Provider_{uuid}
+     isolation labels, plus a _provider_element_id property for MERGE keys.
    - Set graph_data_ready back to True.
 
 8. Drop the temporary database, mark the AttackPathsScan as COMPLETED.
@@ -62,7 +62,7 @@ from cartography.intel import analysis as cartography_analysis
 from cartography.intel import create_indexes as cartography_create_indexes
 from cartography.intel import ontology as cartography_ontology
 from celery.utils.log import get_task_logger
-from tasks.jobs.attack_paths import db_utils, findings, internet, sync, utils
+from tasks.jobs.attack_paths import db_utils, findings, indexes, internet, sync, utils
 from tasks.jobs.attack_paths.config import get_cartography_ingestion_function
 
 from api.attack_paths import database as graph_database
@@ -165,7 +165,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         ) as tmp_neo4j_session:
             # Indexes creation
             cartography_create_indexes.run(tmp_neo4j_session, tmp_cartography_config)
-            findings.create_findings_indexes(tmp_neo4j_session)
+            indexes.create_findings_indexes(tmp_neo4j_session)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 2)
 
             # The real scan, where iterates over cloud services
@@ -221,8 +221,8 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             cartography_create_indexes.run(
                 tenant_neo4j_session, tenant_cartography_config
             )
-            findings.create_findings_indexes(tenant_neo4j_session)
-            sync.create_sync_indexes(tenant_neo4j_session)
+            indexes.create_findings_indexes(tenant_neo4j_session)
+            indexes.create_sync_indexes(tenant_neo4j_session)
 
         logger.info(f"Deleting existing provider graph in {tenant_database_name}")
         db_utils.set_provider_graph_data_ready(attack_paths_scan, False)

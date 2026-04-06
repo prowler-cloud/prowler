@@ -7,15 +7,31 @@ import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
+EXCLUDED_TEST_INIT_ROOTS = {
+    Path("tests/lib/check/fixtures/checks_folder"),
+}
+
 
 def is_test_init_file(path: Path) -> bool:
     """Return True when the file is a test __init__.py."""
     return path.name == "__init__.py" and "tests" in path.parts
 
 
+def is_excluded_test_init_file(path: Path, root: Path) -> bool:
+    """Return True when the file belongs to an allowed fixture directory."""
+    relative_path = path.relative_to(root)
+    return any(
+        relative_path.is_relative_to(excluded) for excluded in EXCLUDED_TEST_INIT_ROOTS
+    )
+
+
 def find_test_init_files(root: Path) -> list[Path]:
     """Return sorted __init__.py files found under test directories."""
-    return sorted(path for path in root.rglob("__init__.py") if is_test_init_file(path))
+    return sorted(
+        path
+        for path in root.rglob("__init__.py")
+        if is_test_init_file(path) and not is_excluded_test_init_file(path, root)
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

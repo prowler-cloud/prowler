@@ -609,3 +609,34 @@ cloudflare:
   # Maximum number of retries for API requests (default is 2)
   # Set to 0 to disable retries
   max_retries: 3
+
+# Vercel Configuration
+vercel:
+  # vercel.deployment_production_uses_stable_target
+  # Branches considered stable for production deployments
+  stable_branches:
+    - "main"
+    - "master"
+  # vercel.authentication_token_not_expired & vercel.domain_ssl_certificate_valid
+  # Number of days before expiration to flag a token/certificate as about to expire
+  days_to_expire_threshold: 7
+  # vercel.authentication_no_stale_tokens
+  # Number of days of inactivity before a token is considered stale
+  stale_token_threshold_days: 90
+  # vercel.team_no_stale_invitations
+  # Number of days before a pending invitation is considered stale
+  stale_invitation_threshold_days: 30
+  # vercel.team_member_role_least_privilege
+  # Maximum percentage of team members that can have the OWNER role
+  max_owner_percentage: 20
+  # Maximum number of owners allowed (overrides percentage for large teams)
+  max_owners: 3
+  # vercel.project_environment_no_secrets_in_plain_type
+  # Suffixes that identify secret-like environment variable names
+  secret_suffixes:
+    - "_KEY"
+    - "_SECRET"
+    - "_TOKEN"
+    - "_PASSWORD"
+    - "_API_KEY"
+    - "_PRIVATE_KEY"

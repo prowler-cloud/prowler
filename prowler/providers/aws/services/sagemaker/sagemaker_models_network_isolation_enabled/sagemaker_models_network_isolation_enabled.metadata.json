@@ -34,7 +34,8 @@
   "Categories": [
     "trust-boundaries",
     "container-security",
-    "gen-ai"
+    "gen-ai",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

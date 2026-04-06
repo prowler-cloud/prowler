@@ -4,11 +4,11 @@ import re
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
+import defusedxml
 from allauth.socialaccount.models import SocialApp
 from config.custom_logging import BackendLogger
 from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
 from cryptography.fernet import Fernet, InvalidToken
-import defusedxml
 from defusedxml import ElementTree as ET
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
@@ -295,6 +295,7 @@ class Provider(RowLevelSecurityProtectedModel):
         OPENSTACK = "openstack", _("OpenStack")
         IMAGE = "image", _("Image")
         GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
+        VERCEL = "vercel", _("Vercel")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -435,6 +436,15 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="OpenStack provider ID must be a valid project ID (UUID or project name).",
                 code="openstack-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_vercel_uid(value):
+        if not re.match(r"^team_[a-zA-Z0-9]{16,32}$", value):
+            raise ModelValidationError(
+                detail="Vercel provider ID must be a valid Vercel Team ID (e.g., team_xxxxxxxxxxxxxxxxxxxxxxxx).",
+                code="vercel-uid",
                 pointer="/data/attributes/uid",
             )
 
