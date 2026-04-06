@@ -274,7 +274,8 @@
               {
                 "group": "Image",
                 "pages": [
-                  "user-guide/providers/image/getting-started-image"
+                  "user-guide/providers/image/getting-started-image",
+                  "user-guide/providers/image/authentication"
                 ]
               },
               {
