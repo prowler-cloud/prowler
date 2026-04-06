@@ -179,7 +179,6 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "awslambda_function_not_publicly_accessible",
@@ -303,7 +302,6 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_policy_attached_only_to_group_or_roles",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "awslambda_function_not_publicly_accessible",
@@ -385,7 +383,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -417,7 +414,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -449,7 +445,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -481,7 +476,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -513,7 +507,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -545,7 +538,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -577,7 +569,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -609,7 +600,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -640,7 +630,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -672,7 +661,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -693,7 +681,6 @@
       ],
       "Checks": [
         "secretsmanager_automatic_rotation_enabled",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "iam_user_mfa_enabled_console_access",
@@ -736,7 +723,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -768,7 +754,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -800,7 +785,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -829,7 +813,6 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "awslambda_function_not_publicly_accessible",
@@ -923,7 +906,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -971,7 +953,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -1003,7 +984,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -1035,7 +1015,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -1163,7 +1142,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -1562,7 +1540,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -2740,7 +2717,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -2822,7 +2798,6 @@
         "iam_no_root_access_key",
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "kms_cmk_rotation_enabled",
@@ -3081,7 +3056,6 @@
         "iam_no_root_access_key",
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "kms_cmk_rotation_enabled",
@@ -4052,7 +4026,6 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "awslambda_function_not_publicly_accessible",
@@ -5532,7 +5505,6 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"

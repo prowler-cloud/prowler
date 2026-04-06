@@ -33,6 +33,10 @@ class bedrock_access_not_stale(Check):
             "max_unused_bedrock_access_days", 60
         )
 
+        # Lazy-load role last accessed data (only when this check runs)
+        if not iam_client.role_last_accessed_services:
+            iam_client._get_role_last_accessed_services()
+
         # Check IAM users
         for (
             user_data,

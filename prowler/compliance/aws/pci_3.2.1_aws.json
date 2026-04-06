@@ -1527,7 +1527,6 @@
       "Name": "Define and implement policies and procedures to ensure proper user identification management for non-consumer users and administrators",
       "Description": "By ensuring each user is uniquely identified— instead of using one ID for several employees—an organization can maintain individual responsibility for actions and an effective audit trail per employee. This will help speed issue resolution and containment when misuse or malicious intent occurs.",
       "Checks": [
-        "bedrock_access_not_stale",
         "cloudwatch_log_metric_filter_policy_changes",
         "iam_password_policy_reuse_24",
         "iam_user_accesskey_unused",

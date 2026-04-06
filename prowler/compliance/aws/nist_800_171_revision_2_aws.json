@@ -138,7 +138,6 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
@@ -607,7 +606,6 @@
         "iam_password_policy_uppercase",
         "iam_password_policy_reuse_24",
         "iam_password_policy_expires_passwords_within_90_days_or_less",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
@@ -626,7 +624,6 @@
       "Checks": [
         "iam_password_policy_reuse_24",
         "iam_password_policy_expires_passwords_within_90_days_or_less",
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]

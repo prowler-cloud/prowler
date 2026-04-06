@@ -16878,7 +16878,6 @@
       "Description": "Checks if your AWS Identity and Access Management (IAM) users have passwords or active access keys that have not been used within the specified number of days you provided",
       "Name": "iam",
       "Checks": [
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused"
       ],
       "Attributes": [
@@ -16919,7 +16918,6 @@
       "Description": "Checks if your AWS Identity and Access Management (IAM) users have passwords or active access keys that have not been used within the specified number of days you provided",
       "Name": "iam",
       "Checks": [
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused"
       ],
       "Attributes": [
@@ -18576,7 +18574,6 @@
       "Description": "Checks if your AWS Identity and Access Management (IAM) users have passwords or active access keys that have not been used within the specified number of days you provided",
       "Name": "iam",
       "Checks": [
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused"
       ],
       "Attributes": [
@@ -22661,7 +22658,6 @@
       "Description": "Checks if your AWS Identity and Access Management (IAM) users have passwords or active access keys that have not been used within the specified number of days you provided",
       "Name": "iam",
       "Checks": [
-        "bedrock_access_not_stale",
         "iam_user_accesskey_unused"
       ],
       "Attributes": [

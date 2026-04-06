@@ -29,12 +29,15 @@ class Test_bedrock_access_not_stale:
         iam.last_accessed_services = {}
         iam.role_last_accessed_services = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
-            new=iam,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
+                new=iam,
+            ),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale import (
                 bedrock_access_not_stale,
@@ -67,12 +70,15 @@ class Test_bedrock_access_not_stale:
         }
         iam.role_last_accessed_services = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
-            new=iam,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
+                new=iam,
+            ),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale import (
                 bedrock_access_not_stale,
@@ -110,12 +116,15 @@ class Test_bedrock_access_not_stale:
         }
         iam.role_last_accessed_services = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
-            new=iam,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
+                new=iam,
+            ),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale import (
                 bedrock_access_not_stale,
@@ -160,12 +169,15 @@ class Test_bedrock_access_not_stale:
         }
         iam.role_last_accessed_services = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
-            new=iam,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
+                new=iam,
+            ),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale import (
                 bedrock_access_not_stale,
@@ -210,12 +222,15 @@ class Test_bedrock_access_not_stale:
         }
         iam.role_last_accessed_services = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
-            new=iam,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
+                new=iam,
+            ),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale import (
                 bedrock_access_not_stale,
@@ -261,12 +276,15 @@ class Test_bedrock_access_not_stale:
             ]
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
-            new=iam,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
+                new=iam,
+            ),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale import (
                 bedrock_access_not_stale,
@@ -282,6 +300,7 @@ class Test_bedrock_access_not_stale:
             assert IAM_ROLE_NAME in result[0].status_extended
             assert result[0].resource_id == IAM_ROLE_NAME
             assert result[0].resource_arn == IAM_ROLE_ARN
+            assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
     def test_role_bedrock_access_recent(self):
@@ -313,12 +332,15 @@ class Test_bedrock_access_not_stale:
             ]
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
-            new=iam,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
+                new=iam,
+            ),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale import (
                 bedrock_access_not_stale,
@@ -334,6 +356,7 @@ class Test_bedrock_access_not_stale:
             assert IAM_ROLE_NAME in result[0].status_extended
             assert result[0].resource_id == IAM_ROLE_NAME
             assert result[0].resource_arn == IAM_ROLE_ARN
+            assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
     def test_role_bedrock_never_accessed(self):
@@ -363,12 +386,15 @@ class Test_bedrock_access_not_stale:
             ]
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
-            new=iam,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
+                new=iam,
+            ),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale import (
                 bedrock_access_not_stale,
@@ -382,6 +408,7 @@ class Test_bedrock_access_not_stale:
             assert "has never used them" in result[0].status_extended
             assert "Role" in result[0].status_extended
             assert IAM_ROLE_NAME in result[0].status_extended
+            assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
     def test_custom_threshold_via_audit_config(self):
@@ -413,12 +440,15 @@ class Test_bedrock_access_not_stale:
         }
         iam.role_last_accessed_services = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
-            new=iam,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
+                new=iam,
+            ),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale import (
                 bedrock_access_not_stale,
@@ -480,12 +510,15 @@ class Test_bedrock_access_not_stale:
             ]
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
-            new=iam,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
+                new=iam,
+            ),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale import (
                 bedrock_access_not_stale,
@@ -530,12 +563,15 @@ class Test_bedrock_access_not_stale:
         }
         iam.role_last_accessed_services = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
-            new=iam,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
+                new=iam,
+            ),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale import (
                 bedrock_access_not_stale,
@@ -577,12 +613,15 @@ class Test_bedrock_access_not_stale:
         }
         iam.role_last_accessed_services = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
-            new=iam,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
+                new=iam,
+            ),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale import (
                 bedrock_access_not_stale,
@@ -624,12 +663,15 @@ class Test_bedrock_access_not_stale:
         }
         iam.role_last_accessed_services = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
-            new=iam,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
+                new=iam,
+            ),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale import (
                 bedrock_access_not_stale,
@@ -673,12 +715,15 @@ class Test_bedrock_access_not_stale:
         }
         iam.role_last_accessed_services = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
-            new=iam,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
+                new=iam,
+            ),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale import (
                 bedrock_access_not_stale,
@@ -723,12 +768,15 @@ class Test_bedrock_access_not_stale:
             ]
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
-            new=iam,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale.iam_client",
+                new=iam,
+            ),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_access_not_stale.bedrock_access_not_stale import (
                 bedrock_access_not_stale,

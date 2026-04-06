@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsIamUser",
+  "ResourceType": "Other",
   "ResourceGroup": "IAM",
   "Description": "IAM identities (users and roles) granted **Bedrock** permissions are evaluated for recent service usage.\n\nIdentities whose last Bedrock access exceeds the configured threshold (default **60 days**) or that have **never** accessed Bedrock are flagged, indicating stale permissions that should be reviewed.",
   "Risk": "Stale Bedrock permissions widen the **blast radius** of a credential compromise.\n\nAn attacker who gains access to an identity with unused Bedrock permissions can invoke foundation models, exfiltrate data through model responses, or incur significant costs — all without triggering expected usage patterns.",
