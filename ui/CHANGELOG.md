@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - Findings grouped view with drill-down table showing resources per check, resource detail drawer, infinite scroll pagination, and bulk mute support [(#10425)](https://github.com/prowler-cloud/prowler/pull/10425)
+- Resource events tool to Lighthouse AI [(#10412)](https://github.com/prowler-cloud/prowler/pull/10412)
 
 ### 🔄 Changed
 
