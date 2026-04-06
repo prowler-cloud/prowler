@@ -33,6 +33,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🔐 Security
 
 - Sensitive CLI flag values (tokens, keys, passwords) in HTML output "Parameters used" field now redacted to prevent credential leaks [(#10518)](https://github.com/prowler-cloud/prowler/pull/10518)
+- `authlib` bumped from 1.6.5 to 1.6.9 to fix CVE-2026-28802 (JWT `alg: none` validation bypass) [(#10579)](https://github.com/prowler-cloud/prowler/pull/10579)
 
 ---
 
