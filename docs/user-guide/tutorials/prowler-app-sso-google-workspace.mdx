@@ -19,7 +19,7 @@ Google Admin Console requires the ACS URL and Entity ID from Prowler App, while 
 
 ---
 
-## Part A — Google Admin Console
+## Part A - Google Admin Console
 
 ### Step 1: Navigate to Web & Mobile Apps
 
@@ -27,7 +27,7 @@ Google Admin Console requires the ACS URL and Entity ID from Prowler App, while 
 2. In the left sidebar, navigate to **Apps > Web and mobile apps**.
 3. Click "Add app", then select "Add custom SAML app".
 
-![Google Admin Console — Web & mobile apps](/images/prowler-app/saml/saml-sso-gw-1.png)
+![Google Admin Console - Web & mobile apps](/images/prowler-app/saml/saml-sso-gw-1.png)
 
 ### Step 2: Enter App Details
 
@@ -35,7 +35,7 @@ Google Admin Console requires the ACS URL and Entity ID from Prowler App, while 
 2. Optionally, add a description (e.g., `Prowler SAML APP`) and upload a logo.
 3. Click "Continue".
 
-![Add custom SAML app — App details](/images/prowler-app/saml/saml-sso-gw-2.png)
+![Add custom SAML app - App details](/images/prowler-app/saml/saml-sso-gw-2.png)
 
 ### Step 3: Download the IdP Metadata
 
@@ -44,10 +44,10 @@ On the **Google Identity Provider details** screen:
 1. Google displays two options:
    - **Option 1**: Click "Download Metadata" to save the XML file directly. This is the recommended approach.
    - **Option 2**: Manually copy the **SSO URL**, **Entity ID**, and **Certificate**.
-2. Download or save the metadata. This file is required to complete the Prowler App configuration in Part B.
+2. Download the metadata. This file is required to complete the Prowler App configuration in Part B.
 3. Click "Continue".
 
-![Google Identity Provider details — Download metadata](/images/prowler-app/saml/saml-sso-gw-3.png)
+![Google Identity Provider details - Download metadata](/images/prowler-app/saml/saml-sso-gw-3.png)
 
 <Warning>
 **Save the Metadata File**
@@ -69,11 +69,13 @@ Enter the following values obtained from the SAML SSO configuration dialog in Pr
 
 Click "Continue".
 
-![Service provider details — ACS URL, Entity ID, and Name ID configuration](/images/prowler-app/saml/saml-sso-gw-4.png)
+![Service provider details - ACS URL, Entity ID, and Name ID configuration](/images/prowler-app/saml/saml-sso-gw-4.png)
 
 ### Step 5: Configure Attribute Mapping
 
-To correctly provision users, configure the IdP to send the following attributes in the SAML assertion. Click "Add mapping" for each entry:
+To correctly provision users, configure the IdP to send the following attributes in the SAML assertion. The **App Attribute (SAML)** column lists the attribute names that Prowler expects. The **Google Directory Attribute** column shows a recommended source field, but any Google directory attribute can be used as long as it is mapped to the correct Prowler attribute name.
+
+Click "Add mapping" for each entry:
 
 | Google Directory Attribute | App Attribute (SAML) | Required | Notes |
 |----------------------------|----------------------|----------|-------|
@@ -82,9 +84,16 @@ To correctly provision users, configure the IdP to send the following attributes
 | `Employee Details > Department` | `userType` | No | Determines the Prowler role. **Case-sensitive.** |
 | `Employee Details > Organization` | `organization` | No | Company name displayed in Prowler App profile. |
 
+<Info>
+**Remember the Mapped Fields**
+
+Take note of which Google directory attributes are mapped to each Prowler attribute. To update a user's role or organization in Prowler, modify the corresponding field in the user's Google Workspace profile (e.g., **Department** if mapped to `userType`). Changes propagate to Prowler on the next SAML login.
+
+</Info>
+
 Click "Finish" to create the SAML app.
 
-![Attribute mapping — Google Directory attributes to Prowler SAML attributes](/images/prowler-app/saml/saml-sso-gw-5.png)
+![Attribute mapping - Google Directory attributes to Prowler SAML attributes](/images/prowler-app/saml/saml-sso-gw-5.png)
 
 <Info>
 **Dynamic Updates**
@@ -102,7 +111,7 @@ The `userType` attribute controls which Prowler role is assigned to the user:
 - If `userType` does not match any existing role, Prowler App creates a new role with that name **without permissions**.
 - If `userType` is not set, the user receives the `no_permissions` role.
 
-In all cases where the resulting role has no permissions, a Prowler administrator must configure the appropriate permissions through the [RBAC Management](/user-guide/tutorials/prowler-app-rbac) tab. The `userType` value is **case-sensitive** — for example, `Backend` and `backend` are treated as different roles.
+In all cases where the resulting role has no permissions, a Prowler administrator must configure the appropriate permissions through the [RBAC Management](/user-guide/tutorials/prowler-app-rbac) tab. The `userType` value is **case-sensitive** - for example, `Backend` and `backend` are treated as different roles.
 
 </Warning>
 
@@ -115,11 +124,11 @@ By default, newly created SAML apps have user access set to **OFF**. To enable a
 3. Set the service status to **ON for everyone**, or enable it for specific organizational units or groups.
 4. Click "Save".
 
-   ![Service Status — Set to ON for everyone](/images/prowler-app/saml/saml-sso-gw-17.png)
+   ![Service Status - Set to ON for everyone](/images/prowler-app/saml/saml-sso-gw-17.png)
 
 5. Verify in the apps list that the "User access" column displays **"ON for everyone"**.
 
-   ![Web & mobile apps list — User access confirmed as "ON for everyone"](/images/prowler-app/saml/saml-sso-gw-19.png)
+   ![Web & mobile apps list - User access confirmed as "ON for everyone"](/images/prowler-app/saml/saml-sso-gw-19.png)
 
 <Info>
 **Propagation Delay**
@@ -133,13 +142,13 @@ Changes to the app status can take up to 24 hours to propagate across Google Wor
 
 If attempting to use the "Test SAML login" option in Google Admin Console and receiving a "Can't test SAML login" message, click "Allow Access" to enable the app for the organizational unit that includes the admin account. This is the same as setting the service status to **ON** as described above.
 
-![Test SAML login — Allow access prompt](/images/prowler-app/saml/saml-sso-gw-15.png)
+![Test SAML login - Allow access prompt](/images/prowler-app/saml/saml-sso-gw-15.png)
 
 </Info>
 
 ---
 
-## Part B — Prowler App Configuration
+## Part B - Prowler App Configuration
 
 ### Step 1: Open the SAML Configuration Dialog
 
@@ -153,7 +162,7 @@ If attempting to use the "Test SAML login" option in Google Admin Console and re
    - **Name ID Format**: The expected format (`urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`).
    - **Supported Assertion Attributes**: The list of accepted attributes (`firstName`, `lastName`, `userType`, `organization`).
 
-![Prowler App — Configure SAML SSO dialog (initial state)](/images/prowler-app/saml/saml-sso-gw-prowler-1.png)
+![Prowler App - Configure SAML SSO dialog (initial state)](/images/prowler-app/saml/saml-sso-gw-prowler-1.png)
 
 ### Step 2: Enter the Email Domain and Upload Metadata
 
@@ -161,13 +170,13 @@ If attempting to use the "Test SAML login" option in Google Admin Console and re
 2. Upload the **metadata XML file** downloaded in Part A, Step 3.
 3. Click "Save".
 
-![Prowler App — Configure SAML SSO dialog (domain entered and ready to save)](/images/prowler-app/saml/saml-sso-gw-prowler-2.png)
+![Prowler App - Configure SAML SSO dialog (domain entered and ready to save)](/images/prowler-app/saml/saml-sso-gw-prowler-2.png)
 
 ### Step 3: Verify the Enabled Status
 
 The "SAML SSO Integration" card should now display a **"Status: Enabled"** indicator with a checkmark, confirming that the configuration is complete.
 
-![Prowler App — SAML SSO Integration status showing "Enabled"](/images/prowler-app/saml/saml-sso-gw-prowler-3.png)
+![Prowler App - SAML SSO Integration status showing "Enabled"](/images/prowler-app/saml/saml-sso-gw-prowler-3.png)
 
 ---
 
@@ -180,7 +189,7 @@ To verify the integration without affecting existing users, create a dedicated t
 1. Navigate to **Directory > Users** in Google Admin Console.
 2. Click "Add new user".
 
-   ![Google Admin Console — Users directory](/images/prowler-app/saml/saml-sso-gw-7.png)
+   ![Google Admin Console - Users directory](/images/prowler-app/saml/saml-sso-gw-7.png)
 
 3. Fill in the user details (first name, last name, and primary email address in the configured domain).
 
@@ -188,7 +197,7 @@ To verify the integration without affecting existing users, create a dedicated t
 
 4. Complete the user creation. Google Workspace generates temporary credentials for the new account.
 
-   ![User created successfully — Username and temporary password](/images/prowler-app/saml/saml-sso-gw-10.png)
+   ![User created successfully - Username and temporary password](/images/prowler-app/saml/saml-sso-gw-10.png)
 
 ### Optional: Configure User Attributes for Role Mapping
 
@@ -198,7 +207,7 @@ To test the `userType` → role mapping, set the **Department** attribute in the
 2. Click "User details", scroll to **Employee information**, and enter a value in the **Department** field (e.g., `Backend`). This value determines the Prowler role assigned to the user.
 3. Click "Save".
 
-   ![User information — Setting Department to "Backend" for userType mapping](/images/prowler-app/saml/saml-sso-gw-13.png)
+   ![User information - Setting Department to "Backend" for userType mapping](/images/prowler-app/saml/saml-sso-gw-13.png)
 
 ### SP-Initiated SSO (from Prowler)
 
@@ -207,7 +216,7 @@ To test the `userType` → role mapping, set the **Department** attribute in the
 3. Enter an email from the configured domain (e.g., `adrian@prowler.cloud`).
 4. Click "Log in". The browser redirects to Google for authentication and returns to Prowler App upon success.
 
-![Prowler App — Sign in with SAML SSO](/images/prowler-app/saml/saml-sso-gw-prowler-4.png)
+![Prowler App - Sign in with SAML SSO](/images/prowler-app/saml/saml-sso-gw-prowler-4.png)
 
 ### Verify User Profile and Role Mapping
 
@@ -215,9 +224,13 @@ After a successful SSO login, the user profile in Prowler App reflects the attri
 
 - **Name**: Populated from the `firstName` and `lastName` attributes.
 - **Role**: Created automatically from the `userType` attribute (e.g., `Backend`). If the role did not exist previously, it is created with no permissions by default.
-- **Permissions**: A Prowler administrator must assign the appropriate permissions to the new role via the [RBAC Management](/user-guide/tutorials/prowler-app-rbac) tab.
+- **Permissions**: In the screenshot below, the user has no permissions because the `Backend` role did not exist prior to login and was created automatically without any permissions. To resolve this, a Prowler administrator can either:
+  - Assign the appropriate permissions to the new role via the [RBAC Management](/user-guide/tutorials/prowler-app-rbac) tab.
+  - Set the `userType` attribute in the IdP to match an existing Prowler role that already has the desired permissions. The updated role is applied on the next SAML login.
 
-![Prowler App — User profile showing role "Backend" created from userType mapping](/images/prowler-app/saml/saml-sso-gw-prowler-5.png)
+For more details on role assignment behavior and attribute mapping, refer to the [SAML SSO Configuration](/user-guide/tutorials/prowler-app-sso#configure-attribute-mapping-in-the-idp) page.
+
+![Prowler App - User profile showing role "Backend" created from userType mapping](/images/prowler-app/saml/saml-sso-gw-prowler-5.png)
 
 ### IdP-Initiated SSO (from Google)
 
@@ -243,7 +256,7 @@ curl -X DELETE 'https://api.prowler.com/api/v1/saml-config' \
   -H 'Accept: application/vnd.api+json'
 ```
 
-After removal, affected users must reset their password to regain access using standard email and password login. This also applies when SAML is intentionally removed — all SAML-authenticated users need to reset their password. For more details, refer to the [SAML API Reference](/user-guide/tutorials/prowler-app-sso#saml-api-reference). For additional support, contact [Prowler Support](https://docs.prowler.com/user-guide/contact-support).
+After removal, affected users must reset their password to regain access using standard email and password login. This also applies when SAML is intentionally removed - all SAML-authenticated users need to reset their password. For more details, refer to the [SAML API Reference](/user-guide/tutorials/prowler-app-sso#saml-api-reference). For additional support, contact [Prowler Support](https://docs.prowler.com/user-guide/contact-support).
 
 </Warning>
 
