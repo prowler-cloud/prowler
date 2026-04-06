@@ -54,7 +54,11 @@ export function AcceptInvitationClient({
   token: string | null;
 }) {
   const router = useRouter();
-  const [state, setState] = useState<AcceptState>({ kind: "loading" });
+  const [state, setState] = useState<AcceptState>(() => {
+    if (!token) return { kind: "no-token" };
+    if (!isAuthenticated) return { kind: "choose" };
+    return { kind: "loading" };
+  });
   const hasStartedRef = useRef(false);
 
   const doAccept = useCallback(async () => {
