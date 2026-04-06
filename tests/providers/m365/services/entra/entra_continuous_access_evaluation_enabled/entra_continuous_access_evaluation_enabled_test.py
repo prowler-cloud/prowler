@@ -4,8 +4,8 @@ from uuid import uuid4
 from prowler.providers.m365.services.entra.entra_service import (
     ApplicationEnforcedRestrictions,
     ApplicationsConditions,
-    ConditionalAccessEvaluation,
-    ConditionalAccessEvaluationMode,
+    ContinuousAccessEvaluation,
+    ContinuousAccessEvaluationMode,
     ConditionalAccessPolicyState,
     Conditions,
     GrantControlOperator,

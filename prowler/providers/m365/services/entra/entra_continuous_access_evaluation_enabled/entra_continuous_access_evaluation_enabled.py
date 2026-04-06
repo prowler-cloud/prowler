@@ -1,7 +1,7 @@
 from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.entra.entra_client import entra_client
 from prowler.providers.m365.services.entra.entra_service import (
-    ConditionalAccessEvaluationMode,
+    ContinuousAccessEvaluationMode,
     ConditionalAccessPolicyState,
 )
 
