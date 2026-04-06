@@ -33,6 +33,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🔐 Security
 
 - Sensitive CLI flag values (tokens, keys, passwords) in HTML output "Parameters used" field now redacted to prevent credential leaks [(#10518)](https://github.com/prowler-cloud/prowler/pull/10518)
+- `cryptography` bumped from 44.0.3 to 46.0.6 ([CVE-2026-26007](https://github.com/pyca/cryptography/security/advisories/GHSA-r6ph-v2qm-q3c2), [CVE-2026-34073](https://github.com/pyca/cryptography/security/advisories/GHSA-m959-cc7f-wv43)), `oci` to 2.169.0, and `alibabacloud-tea-openapi` to 0.4.4 [(#10535)](https://github.com/prowler-cloud/prowler/pull/10535)
 
 ---
 
