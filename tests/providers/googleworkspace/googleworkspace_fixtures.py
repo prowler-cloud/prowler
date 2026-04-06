@@ -43,6 +43,22 @@ USER_3 = {
 }
 
 
+# Role data for Directory API role tests
+SUPER_ADMIN_ROLE_ID = "13801188331880449"
+
+ROLE_SUPER_ADMIN = {
+    "roleId": SUPER_ADMIN_ROLE_ID,
+    "roleName": "Super Admin",
+    "isSystemRole": True,
+}
+
+ROLE_GROUPS_ADMIN = {
+    "roleId": "13801188331880450",
+    "roleName": "Groups Admin",
+    "isSystemRole": True,
+}
+
+
 def set_mocked_googleworkspace_provider(
     identity: GoogleWorkspaceIdentityInfo = GoogleWorkspaceIdentityInfo(
         domain=DOMAIN,

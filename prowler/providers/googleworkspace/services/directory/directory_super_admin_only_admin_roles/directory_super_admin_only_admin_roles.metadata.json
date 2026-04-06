@@ -9,8 +9,8 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Super admin accounts do not also hold **delegated admin** roles. Each super administrator has a separate, non-admin account for daily activities, following the **principle of least privilege**.",
-  "Risk": "A super admin account that also holds delegated admin roles increases the **attack surface** for phishing and credential theft. Compromising a single dual-role account grants full administrative access, bypassing **separation of duties** and enabling unauthorized changes to users, billing, and security settings.",
+  "Description": "Super admin accounts do not also hold **additional admin roles** such as Groups Admin, User Management Admin, etc. Each super administrator has a separate, non-admin account for daily activities, following the **principle of least privilege**.",
+  "Risk": "A super admin account that also holds additional admin roles increases the **attack surface** for phishing and credential theft. Compromising a single dual-role account grants full administrative access, bypassing **separation of duties** and enabling unauthorized changes to users, billing, and security settings.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://knowledge.workspace.google.com/admin/users/prebuilt-administrator-roles",
@@ -20,7 +20,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Directory** > **Users**\n3. Click on the super admin user who also has delegated admin roles\n4. Click **Admin roles and privileges**\n5. Remove the delegated admin roles from the super admin account\n6. Create a separate account for daily delegated admin tasks",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Directory** > **Users**\n3. Click on the super admin user who also has additional admin roles\n4. Click **Admin roles and privileges**\n5. Remove the additional admin roles from the super admin account\n6. Create a separate account for daily admin tasks",
       "Terraform": ""
     },
     "Recommendation": {

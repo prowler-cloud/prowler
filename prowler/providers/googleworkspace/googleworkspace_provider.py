@@ -64,6 +64,7 @@ class GoogleworkspaceProvider(Provider):
         "https://www.googleapis.com/auth/admin.directory.user.readonly",
         "https://www.googleapis.com/auth/admin.directory.domain.readonly",
         "https://www.googleapis.com/auth/admin.directory.customer.readonly",
+        "https://www.googleapis.com/auth/admin.directory.rolemanagement.readonly",
     ]
 
     def __init__(
