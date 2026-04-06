@@ -317,7 +317,6 @@
         }
       ],
       "Checks": [
-        "bedrock_full_access_policy_attached",
         "iam_rotate_access_key_90_days",
         "iam_user_accesskey_unused",
         "iam_user_with_temporary_credentials",

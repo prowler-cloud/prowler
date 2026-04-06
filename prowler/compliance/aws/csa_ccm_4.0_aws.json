@@ -3206,7 +3206,6 @@
         }
       ],
       "Checks": [
-        "bedrock_full_access_policy_attached",
         "iam_policy_attached_only_to_group_or_roles",
         "iam_securityaudit_role_created",
         "iam_support_role_created"
