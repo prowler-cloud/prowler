@@ -5568,6 +5568,7 @@
         }
       ],
       "Checks": [
+        "bedrock_full_access_policy_attached",
         "iam_policy_allows_privilege_escalation",
         "iam_role_administratoraccess_policy",
         "iam_policy_cloudshell_admin_not_attached",

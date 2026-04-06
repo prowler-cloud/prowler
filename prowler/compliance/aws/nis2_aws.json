@@ -1754,6 +1754,7 @@
       "Id": "11.3.1",
       "Description": "The relevant entities shall maintain policies for management of privileged accounts and system administration accounts as part of the access control policy referred to in point 11.1.",
       "Checks": [
+        "bedrock_full_access_policy_attached",
         "iam_role_administratoraccess_policy"
       ],
       "Attributes": [

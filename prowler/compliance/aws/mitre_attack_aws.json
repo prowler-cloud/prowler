@@ -160,6 +160,7 @@
       "Description": "Adversaries may obtain and abuse credentials of existing accounts as a means of gaining Initial Access, Persistence, Privilege Escalation, or Defense Evasion. Compromised credentials may be used to bypass access controls placed on various resources on systems within the network and may even be used for persistent access to remote systems and externally available services, such as VPNs, Outlook Web Access, network devices, and remote desktop.[1] Compromised credentials may also grant an adversary increased privilege to specific systems or access to restricted areas of the network. Adversaries may choose not to use malware or tools in conjunction with the legitimate access those credentials provide to make it harder to detect their presence.",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1078/",
       "Checks": [
+        "bedrock_full_access_policy_attached",
         "guardduty_is_enabled",
         "config_recorder_all_regions_enabled",
         "iam_administrator_access_with_mfa",
