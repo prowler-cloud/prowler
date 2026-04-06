@@ -29,6 +29,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `return` statements in `finally` blocks replaced across IAM, Organizations, GCP provider, and custom checks metadata to stop silently swallowing exceptions [(#10102)](https://github.com/prowler-cloud/prowler/pull/10102)
 - `JiraConnection` now includes issue types per project fetched during `test_connection`, fixing `JiraInvalidIssueTypeError` on non-English Jira instances [(#10534)](https://github.com/prowler-cloud/prowler/pull/10534)
+- `--list-checks` and `--list-checks-json` now include `threat-detection` category checks in their output [(#10578)](https://github.com/prowler-cloud/prowler/pull/10578)
 
 ### 🔐 Security
 
