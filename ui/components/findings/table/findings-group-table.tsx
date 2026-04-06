@@ -49,6 +49,9 @@ export function FindingsGroupTable({
   const [expandedGroup, setExpandedGroup] = useState<FindingGroupRow | null>(
     null,
   );
+  // Separate display state (updates on keystroke) from committed search (updates on Enter only).
+  // This prevents InlineResourceContainer from remounting on every keystroke.
+  const [resourceSearchInput, setResourceSearchInput] = useState("");
   const [resourceSearch, setResourceSearch] = useState("");
   const [resourceSelection, setResourceSelection] = useState<string[]>([]);
   const inlineRef = useRef<InlineResourceContainerHandle>(null);
@@ -133,6 +136,9 @@ export function FindingsGroupTable({
   };
 
   const handleDrillDown = (checkId: string, group: FindingGroupRow) => {
+    // No impacted resources → nothing to show, skip drill-down
+    if (group.resourcesFail === 0) return;
+
     // Toggle: same group = collapse, different = switch
     if (expandedCheckId === checkId) {
       handleCollapse();
@@ -140,6 +146,7 @@ export function FindingsGroupTable({
     }
     setExpandedCheckId(checkId);
     setExpandedGroup(group);
+    setResourceSearchInput("");
     setResourceSearch("");
     setResourceSelection([]);
   };
@@ -147,6 +154,7 @@ export function FindingsGroupTable({
   const handleCollapse = () => {
     setExpandedCheckId(null);
     setExpandedGroup(null);
+    setResourceSearchInput("");
     setResourceSearch("");
     setResourceSelection([]);
   };
@@ -197,8 +205,9 @@ export function FindingsGroupTable({
         searchPlaceholder={
           expandedCheckId ? "Search resources..." : "Search by name"
         }
-        controlledSearch={expandedCheckId ? resourceSearch : undefined}
-        onSearchChange={expandedCheckId ? setResourceSearch : undefined}
+        controlledSearch={expandedCheckId ? resourceSearchInput : undefined}
+        onSearchChange={expandedCheckId ? setResourceSearchInput : undefined}
+        onSearchCommit={expandedCheckId ? setResourceSearch : undefined}
         searchBadge={
           expandedGroup
             ? { label: expandedGroup.checkTitle, onDismiss: handleCollapse }

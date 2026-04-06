@@ -207,6 +207,7 @@ from api.rls import Tenant
 from api.utils import (
     CustomOAuth2Client,
     get_findings_metadata_no_aggregations,
+    initialize_prowler_integration,
     initialize_prowler_provider,
     validate_invitation,
 )
@@ -235,6 +236,7 @@ from api.v1.serializers import (
     FindingsSeverityOverTimeSerializer,
     IntegrationCreateSerializer,
     IntegrationJiraDispatchSerializer,
+    IntegrationJiraIssueTypesSerializer,
     IntegrationSerializer,
     IntegrationUpdateSerializer,
     InvitationAcceptSerializer,
@@ -6132,7 +6134,7 @@ class IntegrationViewSet(BaseRLSViewSet):
 class IntegrationJiraViewSet(BaseRLSViewSet):
     queryset = Finding.all_objects.all()
     serializer_class = IntegrationJiraDispatchSerializer
-    http_method_names = ["post"]
+    http_method_names = ["get", "post"]
     filter_backends = [CustomDjangoFilterBackend]
     filterset_class = IntegrationJiraFindingsFilter
     # RBAC required permissions
@@ -6141,6 +6143,20 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
     @extend_schema(exclude=True)
     def create(self, request, *args, **kwargs):
         raise MethodNotAllowed(method="POST")
+
+    @extend_schema(exclude=True)
+    def list(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
+
+    def get_serializer_class(self):
+        if self.action == "issue_types":
+            return IntegrationJiraIssueTypesSerializer
+        return super().get_serializer_class()
+
+    def get_filter_backends(self):
+        if self.action == "issue_types":
+            return []
+        return super().get_filter_backends()
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id
@@ -6155,6 +6171,65 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
             )
 
         return queryset
+
+    @extend_schema(
+        tags=["Integration"],
+        summary="Get available issue types for a Jira project",
+        description="Fetch the available issue types from Jira for a given project key and update the integration configuration.",
+        parameters=[
+            OpenApiParameter(
+                name="project_key",
+                type=str,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="The Jira project key to fetch issue types for.",
+            ),
+        ],
+    )
+    @action(detail=False, methods=["get"], url_name="issue-types")
+    def issue_types(self, request, integration_pk=None):
+        integration = get_object_or_404(Integration, pk=integration_pk)
+
+        project_key = request.query_params.get("project_key")
+        if not project_key:
+            raise ValidationError({"project_key": "This query parameter is required."})
+
+        projects = integration.configuration.get("projects", {})
+        if project_key not in projects:
+            raise ValidationError(
+                {
+                    "project_key": "The given project key is not available for this JIRA integration."
+                }
+            )
+
+        try:
+            jira = initialize_prowler_integration(integration)
+            fetched_issue_types = jira.get_available_issue_types(project_key)
+        except Exception as e:
+            logger.error(
+                f"Failed to fetch issue types from Jira for integration {integration_pk}, "
+                f"project {project_key}: {e}"
+            )
+            raise ValidationError(
+                {
+                    "issue_types": "Failed to fetch issue types from Jira. Please check the integration connection."
+                }
+            )
+
+        # Update the integration configuration with the fetched issue types
+        issue_types_config = integration.configuration.get("issue_types", {})
+        if not isinstance(issue_types_config, dict):
+            issue_types_config = {}
+        issue_types_config[project_key] = fetched_issue_types
+
+        with rls_transaction(str(integration.tenant_id), using="default"):
+            integration.configuration["issue_types"] = issue_types_config
+            integration.save(using="default")
+
+        serializer = IntegrationJiraIssueTypesSerializer(
+            {"project_key": project_key, "issue_types": fetched_issue_types}
+        )
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"], url_name="dispatches")
     def dispatches(self, request, integration_pk=None):
