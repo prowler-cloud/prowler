@@ -6153,7 +6153,15 @@ class IntegrationViewSet(BaseRLSViewSet):
         tags=["Integration"],
         summary="Send findings to a Jira integration",
         description="Send a set of filtered findings to the given integration. At least one finding filter must be "
-        "provided.",
+        "provided.\n\n"
+        "## Known Limitations\n\n"
+        "### Issue Types with Required Custom Fields\n\n"
+        "Certain Jira issue types (such as Epic) may require mandatory custom fields that Prowler does not "
+        "currently populate when creating work items. If a selected issue type enforces required fields beyond "
+        'the standard set (e.g., "Team", "Epic Name"), the work item creation will fail.\n\n'
+        "To avoid this, select an issue type that does not require additional custom fields - **Task**, **Bug**, "
+        "or **Story** typically work without restrictions. If unsure which issue types are available for a project, "
+        'Prowler automatically fetches and displays them in the "Issue Type" selector when sending a finding.',
         responses={202: OpenApiResponse(response=TaskSerializer)},
         filters=True,
     )
@@ -6173,6 +6181,10 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
 
     @extend_schema(exclude=True)
     def list(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
+
+    @extend_schema(exclude=True)
+    def retrieve(self, request, *args, **kwargs):
         raise MethodNotAllowed(method="GET")
 
     def get_serializer_class(self):
