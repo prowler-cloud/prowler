@@ -1,0 +1,36 @@
+# Reference: https://pnpm.io/supply-chain-security
+
+packages: []
+
+# --- Level 1: Minimum Release Age ---
+# Packages must be published for at least 1 day before they can be installed.
+# Prevents installing compromised packages during the detection window.
+minimumReleaseAge: 1440
+
+# Bypasses the minimum release age for specific packages.
+# Use ONLY for emergency patches (e.g., critical CVE fixes) that cannot wait 24h.
+# This should be ephemeral — remove the entry once the package meets the age threshold.
+# minimumReleaseAgeExclude:
+
+# --- Level 2: Explicit Build Script Allow-list ---
+# Only these packages may run install/postinstall lifecycle scripts.
+# Any unlisted package with lifecycle scripts will have them silently skipped.
+onlyBuiltDependencies:
+  # sharp: Native image processing (libvips). Installs platform-specific pre-built binary or compiles from source.
+  - sharp
+  # @sentry/cli: Downloads the sentry-cli native binary for the current platform. Validates integrity via SHA256.
+  - "@sentry/cli"
+  # esbuild: Go binary. Downloads the pre-compiled binary matching the current platform/architecture.
+  - esbuild
+  # @heroui/shared-utils: Demi pattern — detects React/Next.js version at install time and copies the compatible bundle (React 18 vs 19).
+  - "@heroui/shared-utils"
+  # unrs-resolver: Rust module resolver (NAPI-RS). Verifies the correct native binding is available for the platform.
+  - unrs-resolver
+
+# --- Level 3: Trust Policy + Exotic Subdeps ---
+# Fail when a package's trust evidence is downgraded (e.g., new publisher).
+trustPolicy: no-downgrade
+trustPolicyExclude: []
+
+# Block transitive dependencies from using exotic specifiers (git URLs, tarballs).
+blockExoticSubdeps: true

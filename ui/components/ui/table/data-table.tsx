@@ -16,7 +16,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { AnimatePresence } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 
 import {
   Table,
@@ -90,12 +91,23 @@ interface DataTableProviderProps<TData, TValue> {
    */
   controlledSearch?: string;
   onSearchChange?: (value: string) => void;
+  /**
+   * Called when the user commits a search by pressing Enter.
+   * Use this alongside onSearchChange to implement "search on Enter" behavior.
+   */
+  onSearchCommit?: (value: string) => void;
   controlledPage?: number;
   controlledPageSize?: number;
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
   /** Show loading state with opacity overlay (for controlled mode) */
   isLoading?: boolean;
+  /** Custom placeholder text for the search input */
+  searchPlaceholder?: string;
+  /** Render additional content after each row (e.g., inline expansion) */
+  renderAfterRow?: (row: Row<TData>) => ReactNode;
+  /** Badge shown inside the search input (e.g., active drill-down group) */
+  searchBadge?: { label: string; onDismiss: () => void };
 }
 
 export function DataTable<TData, TValue>({
@@ -116,11 +128,15 @@ export function DataTable<TData, TValue>({
   paramPrefix = "",
   controlledSearch,
   onSearchChange,
+  onSearchCommit,
   controlledPage,
   controlledPageSize,
   onPageChange,
   onPageSizeChange,
   isLoading = false,
+  searchPlaceholder,
+  renderAfterRow,
+  searchBadge,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -213,6 +229,9 @@ export function DataTable<TData, TValue>({
                 paramPrefix={paramPrefix}
                 controlledValue={controlledSearch}
                 onSearchChange={onSearchChange}
+                onSearchCommit={onSearchCommit}
+                placeholder={searchPlaceholder}
+                badge={searchBadge}
               />
             )}
           </div>
@@ -262,19 +281,19 @@ export function DataTable<TData, TValue>({
                     isSomeSelected={row.getIsSomeSelected()}
                   />
                 ) : (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
+                  <Fragment key={row.id}>
+                    <TableRow data-state={row.getIsSelected() && "selected"}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                    {renderAfterRow?.(row)}
+                  </Fragment>
                 ),
               )
             ) : (

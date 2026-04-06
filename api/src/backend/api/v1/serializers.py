@@ -1573,6 +1573,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = OpenStackCloudsYamlProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.IMAGE.value:
                 serializer = ImageProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.VERCEL.value:
+                serializer = VercelProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1777,6 +1779,13 @@ class ImageProviderSecret(serializers.Serializer):
                     "registry_username is required when registry_password is provided."
                 )
         return attrs
+
+
+class VercelProviderSecret(serializers.Serializer):
+    api_token = serializers.CharField()
+
+    class Meta:
+        resource_name = "provider-secrets"
 
 
 class AlibabaCloudProviderSecret(serializers.Serializer):
@@ -2713,11 +2722,11 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 )
             config_serializer = JiraConfigSerializer
             # Create non-editable configuration for JIRA integration
-            default_jira_issue_types = ["Task"]
+            # issue_types will be populated per project when connection is tested
             configuration.update(
                 {
                     "projects": {},
-                    "issue_types": default_jira_issue_types,
+                    "issue_types": {},
                     "domain": credentials.get("domain"),
                 }
             )
@@ -2932,13 +2941,25 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
         return representation
 
 
+class IntegrationJiraIssueTypesSerializer(BaseSerializerV1):
+    """
+    Serializer for Jira issue types response.
+    """
+
+    project_key = serializers.CharField(read_only=True)
+    issue_types = serializers.ListField(child=serializers.CharField(), read_only=True)
+
+    class JSONAPIMeta:
+        resource_name = "jira-issue-types"
+
+
 class IntegrationJiraDispatchSerializer(BaseSerializerV1):
     """
     Serializer for dispatching findings to JIRA integration.
     """
 
     project_key = serializers.CharField(required=True)
-    issue_type = serializers.ChoiceField(required=True, choices=["Task"])
+    issue_type = serializers.CharField(required=True)
 
     class JSONAPIMeta:
         resource_name = "integrations-jira-dispatches"
@@ -2964,6 +2985,23 @@ class IntegrationJiraDispatchSerializer(BaseSerializerV1):
                 {
                     "project_key": "The given project key is not available for this JIRA integration. Refresh the "
                     "connection if this is an error."
+                }
+            )
+
+        issue_type = attrs.get("issue_type")
+        available_issue_types = integration_instance.configuration.get(
+            "issue_types", {}
+        )
+        # Handle old format where issue_types was a flat list (e.g., ["Task"])
+        if not isinstance(available_issue_types, dict):
+            available_issue_types = {}
+        project_issue_types = available_issue_types.get(project_key, [])
+        if project_issue_types and issue_type not in project_issue_types:
+            raise ValidationError(
+                {
+                    "issue_type": f"The issue type '{issue_type}' is not available for project '{project_key}'. "
+                    f"Available types: {', '.join(project_issue_types)}. "
+                    "Refresh the connection if this is an error."
                 }
             )
 
@@ -4194,6 +4232,7 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
                 "service": {"type": "string"},
                 "region": {"type": "string"},
                 "type": {"type": "string"},
+                "resource_group": {"type": "string"},
             },
         }
     )
@@ -4205,6 +4244,7 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
             "service": obj.get("resource_service", ""),
             "region": obj.get("resource_region", ""),
             "type": obj.get("resource_type", ""),
+            "resource_group": obj.get("resource_group", ""),
         }
 
     @extend_schema_field(

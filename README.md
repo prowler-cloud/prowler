@@ -119,6 +119,7 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 | Image | N/A | N/A | N/A | N/A | Official | CLI, API |
 | Google Workspace | 1 | 1 | 0 | 1 | Official | CLI |
 | OpenStack | 27 | 4 | 0 | 8 | Official | UI, API, CLI |
+| Vercel | 30 | 6 | 0 | 5 | Official | CLI |
 | NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
 
 > [!Note]
@@ -239,9 +240,24 @@ pnpm start
 
 > Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
 
+**Pre-commit Hooks Setup**
+
+Some pre-commit hooks require tools installed on your system:
+
+1. **Install [TruffleHog](https://github.com/trufflesecurity/trufflehog#install)** (secret scanning) — see the [official installation options](https://github.com/trufflesecurity/trufflehog#install).
+
+2. **Install [Safety](https://github.com/pyupio/safety)** (dependency vulnerability checking):
+
+    ```console
+    # Requires a Python environment (e.g. via pyenv)
+    pip install safety
+    ```
+
+3. **Install [Hadolint](https://github.com/hadolint/hadolint#install)** (Dockerfile linting) — see the [official installation options](https://github.com/hadolint/hadolint#install).
+
 ## Prowler CLI
 ### Pip package
-Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/). Consequently, it can be installed using pip with Python >3.9.1, <3.13:
+Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/). Consequently, it can be installed using pip with Python >=3.10, <3.13:
 
 ```console
 pip install prowler
@@ -273,7 +289,7 @@ The container images are available here:
 
 ### From GitHub
 
-Python >3.9.1, <3.13 is required with pip and Poetry:
+Python >=3.10, <3.13 is required with pip and Poetry:
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
