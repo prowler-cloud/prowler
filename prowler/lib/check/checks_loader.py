@@ -20,6 +20,7 @@ def load_checks_to_execute(
     compliance_frameworks: list = None,
     categories: set = None,
     resource_groups: set = None,
+    list_checks: bool = False,
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and the input arguments given"""
     try:
@@ -209,7 +210,8 @@ def load_checks_to_execute(
             ):
                 checks_to_execute.add(check_name)
         # Only execute threat detection checks if threat-detection category is set
-        if (not categories or "threat-detection" not in categories) and not check_list:
+        # Skip this exclusion when listing checks (--list-checks or --list-checks-json)
+        if (not categories or "threat-detection" not in categories) and not check_list and not list_checks:
             for threat_detection_check in check_categories.get("threat-detection", []):
                 checks_to_execute.discard(threat_detection_check)
 
