@@ -2628,7 +2628,6 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             provider_id,
         )
         query_duration = time.monotonic() - start
-        graph_database.clear_cache(database_name)
 
         result_nodes = len(graph.get("nodes", []))
         result_relationships = len(graph.get("relationships", []))
@@ -2696,7 +2695,6 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             provider_id,
         )
         query_duration = time.monotonic() - start
-        graph_database.clear_cache(database_name)
 
         query_length = len(serializer.validated_data["query"])
         result_nodes = len(graph.get("nodes", []))
