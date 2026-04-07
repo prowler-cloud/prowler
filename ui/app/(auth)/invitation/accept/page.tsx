@@ -20,10 +20,7 @@ export default async function AcceptInvitationPage({
 
   return (
     <Suspense>
-      <AcceptInvitationClient
-        isAuthenticated={!!session?.user}
-        token={token}
-      />
+      <AcceptInvitationClient isAuthenticated={!!session?.user} token={token} />
     </Suspense>
   );
 }
