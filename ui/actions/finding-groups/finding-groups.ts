@@ -96,17 +96,10 @@ export const getFindingGroupResources = async ({
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
-  // sort=-status is kept for future-proofing: if the filter[status]=FAIL
-  // constraint is ever relaxed to allow multiple statuses, the sort ensures
-  // FAIL resources still appear first in the result set.
+  // Keep FAIL-first ordering when multiple statuses are returned.
   url.searchParams.append("sort", "-status");
 
   appendSanitizedProviderFilters(url, filters);
-
-  // Use .set() AFTER appendSanitizedProviderFilters so our hardcoded FAIL
-  // always wins, even if the caller passed a different filter[status] value.
-  // Using .set() instead of .append() prevents duplicate filter[status] params.
-  url.searchParams.set("filter[status]", "FAIL");
 
   try {
     const response = await fetch(url.toString(), {
@@ -139,17 +132,10 @@ export const getLatestFindingGroupResources = async ({
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
-  // sort=-status is kept for future-proofing: if the filter[status]=FAIL
-  // constraint is ever relaxed to allow multiple statuses, the sort ensures
-  // FAIL resources still appear first in the result set.
+  // Keep FAIL-first ordering when multiple statuses are returned.
   url.searchParams.append("sort", "-status");
 
   appendSanitizedProviderFilters(url, filters);
-
-  // Use .set() AFTER appendSanitizedProviderFilters so our hardcoded FAIL
-  // always wins, even if the caller passed a different filter[status] value.
-  // Using .set() instead of .append() prevents duplicate filter[status] params.
-  url.searchParams.set("filter[status]", "FAIL");
 
   try {
     const response = await fetch(url.toString(), {
