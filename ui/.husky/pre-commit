@@ -6,8 +6,11 @@
 
 set -e
 
-# Ensure git resolves the real repo root, not a pre-commit framework override
-unset GIT_WORK_TREE
+# The Python pre-commit framework (see .pre-commit-config.yaml, hook "ui-checks")
+# exports GIT_WORK_TREE, GIT_DIR, and GIT_INDEX_FILE pointing to its temp staging
+# area. Unset them so git commands below resolve against the real repo and index.
+# See: https://github.com/prowler-cloud/prowler/pull/10574
+unset GIT_WORK_TREE GIT_DIR GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
 
 # Colors
 RED='\033[0;31m'
