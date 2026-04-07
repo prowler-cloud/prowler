@@ -5,7 +5,7 @@ import { auth } from "@/auth.config";
 const publicRoutes = [
   "/sign-in",
   "/sign-up",
-  "/invitation",
+  "/invitation/accept",
   // In Cloud uncomment the following lines:
   // "/reset-password",
   // "/email-verification",
