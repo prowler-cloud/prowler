@@ -281,9 +281,10 @@ export const authConfig = {
       const sessionError = auth?.error;
       const isSignUpPage = nextUrl.pathname === "/sign-up";
       const isSignInPage = nextUrl.pathname === "/sign-in";
+      const isInvitationPage = nextUrl.pathname.startsWith("/invitation");
 
-      // Allow access to sign-up and sign-in pages
-      if (isSignUpPage || isSignInPage) return true;
+      // Allow access to sign-up, sign-in, and invitation pages
+      if (isSignUpPage || isSignInPage || isInvitationPage) return true;
 
       // For all other routes, require authentication
       // Return NextResponse.redirect to preserve callbackUrl for post-login redirect

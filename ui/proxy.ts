@@ -5,6 +5,7 @@ import { auth } from "@/auth.config";
 const publicRoutes = [
   "/sign-in",
   "/sign-up",
+  "/invitation",
   // In Cloud uncomment the following lines:
   // "/reset-password",
   // "/email-verification",
@@ -18,6 +19,20 @@ const isPublicRoute = (pathname: string): boolean => {
 // NextAuth's auth() wrapper - renamed from middleware to proxy
 export default auth((req: NextRequest & { auth: any }) => {
   const { pathname } = req.nextUrl;
+
+  // Backward compatibility: redirect old invitation links to new smart router
+  if (
+    pathname === "/sign-up" &&
+    req.nextUrl.searchParams.has("invitation_token")
+  ) {
+    const acceptUrl = new URL("/invitation/accept", req.url);
+    acceptUrl.searchParams.set(
+      "invitation_token",
+      req.nextUrl.searchParams.get("invitation_token")!,
+    );
+    return NextResponse.redirect(acceptUrl);
+  }
+
   const user = req.auth?.user;
   const sessionError = req.auth?.error;
 
