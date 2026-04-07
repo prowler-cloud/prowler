@@ -32,10 +32,12 @@ All notable changes to the **Prowler API** are documented in this file.
 - Membership `post_delete` signal using raw FK ids to avoid `DoesNotExist` during cascade deletions [(#10497)](https://github.com/prowler-cloud/prowler/pull/10497)
 - Finding group resources endpoints returning false 404 when filters match no results, and `sort` parameter being ignored [(#10510)](https://github.com/prowler-cloud/prowler/pull/10510)
 - Jira integration failing with `JiraInvalidIssueTypeError` on non-English Jira instances due to hardcoded `"Task"` issue type; now dynamically fetches available issue types per project [(#10534)](https://github.com/prowler-cloud/prowler/pull/10534)
+- Attack Paths: Remove `clear_cache` call from read-only query endpoints; cache clearing belongs to the scan/ingestion flow, not API queries [(#10586)](https://github.com/prowler-cloud/prowler/pull/10586)
 
 ### 🔐 Security
 
 - Pin all unpinned dependencies to exact versions to prevent supply chain attacks and ensure reproducible builds [(#10469)](https://github.com/prowler-cloud/prowler/pull/10469)
+- `authlib` bumped from 1.6.6 to 1.6.9 to fix CVE-2026-28802 (JWT `alg: none` validation bypass) [(#10579)](https://github.com/prowler-cloud/prowler/pull/10579)
 
 ---
 

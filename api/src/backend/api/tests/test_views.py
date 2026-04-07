@@ -4287,7 +4287,6 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value=graph_payload,
             ) as mock_execute,
-            patch("api.v1.views.graph_database.clear_cache") as mock_clear_cache,
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4314,7 +4313,6 @@ class TestAttackPathsScanViewSet:
             prepared_parameters,
             provider_id,
         )
-        mock_clear_cache.assert_called_once_with(expected_db_name)
         result = response.json()["data"]
         attributes = result["attributes"]
         assert attributes["nodes"] == graph_payload["nodes"]
@@ -4369,7 +4367,6 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value=graph_payload,
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4453,7 +4450,6 @@ class TestAttackPathsScanViewSet:
                     "truncated": False,
                 },
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
             patch(
                 "api.v1.views.graph_database.get_database_name", return_value="db-test"
             ),
@@ -4508,7 +4504,6 @@ class TestAttackPathsScanViewSet:
                     "truncated": False,
                 },
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
             patch(
                 "api.v1.views.graph_database.get_database_name", return_value="db-test"
             ),
@@ -4588,7 +4583,6 @@ class TestAttackPathsScanViewSet:
                     "truncated": False,
                 },
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4654,7 +4648,6 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.graph_database.get_database_name",
                 return_value="db-test",
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4711,7 +4704,6 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.graph_database.get_database_name",
                 return_value="db-test",
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4758,7 +4750,6 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.graph_database.get_database_name",
                 return_value="db-test",
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
@@ -5108,9 +5099,6 @@ class TestAttackPathsScanViewSet:
             patch(
                 "api.v1.views.graph_database.get_database_name",
                 return_value="db-test",
-            ),
-            patch(
-                "api.v1.views.graph_database.clear_cache",
             ),
         ):
             for i in range(11):
