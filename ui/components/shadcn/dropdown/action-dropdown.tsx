@@ -1,7 +1,7 @@
 "use client";
 
 import { EllipsisVertical } from "lucide-react";
-import { ComponentProps, ReactNode } from "react";
+import { ComponentProps, ReactNode, useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -43,8 +43,18 @@ export function ActionDropdown({
   ariaLabel = "Open actions menu",
   children,
 }: ActionDropdownProps) {
+  const [open, setOpen] = useState(false);
+
+  // Close dropdown when any ancestor scrolls (capture phase catches all scroll events)
+  useEffect(() => {
+    if (!open) return;
+    const handleScroll = () => setOpen(false);
+    window.addEventListener("scroll", handleScroll, true);
+    return () => window.removeEventListener("scroll", handleScroll, true);
+  }, [open]);
+
   return (
-    <DropdownMenu modal={false}>
+    <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         {trigger ?? (
           <button

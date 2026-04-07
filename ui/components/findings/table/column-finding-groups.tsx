@@ -80,22 +80,28 @@ export function getColumnFindingGroups({
               ? DeltaValues.CHANGED
               : DeltaValues.NONE;
 
+        const canExpand = group.resourcesFail > 0;
+
         return (
           <div className="flex items-center gap-2">
             <NotificationIndicator delta={delta} isMuted={allMuted} />
-            <button
-              type="button"
-              aria-label={`Expand ${group.checkTitle}`}
-              className="hover:bg-bg-neutral-tertiary flex size-4 shrink-0 items-center justify-center rounded-md transition-colors"
-              onClick={() => onDrillDown(group.checkId, group)}
-            >
-              <ChevronRight
-                className={cn(
-                  "text-text-neutral-secondary size-4 transition-transform duration-200",
-                  isExpanded && "rotate-90",
-                )}
-              />
-            </button>
+            {canExpand ? (
+              <button
+                type="button"
+                aria-label={`Expand ${group.checkTitle}`}
+                className="hover:bg-bg-neutral-tertiary flex size-4 shrink-0 items-center justify-center rounded-md transition-colors"
+                onClick={() => onDrillDown(group.checkId, group)}
+              >
+                <ChevronRight
+                  className={cn(
+                    "text-text-neutral-secondary size-4 transition-transform duration-200",
+                    isExpanded && "rotate-90",
+                  )}
+                />
+              </button>
+            ) : (
+              <div className="size-4 shrink-0" />
+            )}
             <Checkbox
               size="sm"
               checked={
@@ -149,15 +155,23 @@ export function getColumnFindingGroups({
       ),
       cell: ({ row }) => {
         const group = row.original;
+        const canExpand = group.resourcesFail > 0;
 
         return (
           <div>
-            <p
-              className="text-text-neutral-primary hover:text-button-tertiary cursor-pointer text-left text-sm break-words whitespace-normal hover:underline"
-              onClick={() => onDrillDown(group.checkId, group)}
-            >
-              {group.checkTitle}
-            </p>
+            {canExpand ? (
+              <button
+                type="button"
+                className="text-text-neutral-primary hover:text-button-tertiary w-full cursor-pointer border-none bg-transparent p-0 text-left text-sm break-words whitespace-normal hover:underline"
+                onClick={() => onDrillDown(group.checkId, group)}
+              >
+                {group.checkTitle}
+              </button>
+            ) : (
+              <span className="text-text-neutral-primary w-full text-left text-sm break-words whitespace-normal">
+                {group.checkTitle}
+              </span>
+            )}
           </div>
         );
       },

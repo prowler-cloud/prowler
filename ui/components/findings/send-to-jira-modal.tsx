@@ -8,11 +8,13 @@ import { z } from "zod";
 
 import {
   getJiraIntegrations,
+  getJiraIssueTypes,
   pollJiraDispatchTask,
   sendFindingToJira,
 } from "@/actions/integrations/jira-dispatch";
 import { Modal } from "@/components/shadcn/modal";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
+import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { useToast } from "@/components/ui";
 import { CustomBanner } from "@/components/ui/custom/custom-banner";
 import { Form, FormField, FormMessage } from "@/components/ui/form";
@@ -34,7 +36,6 @@ const sendToJiraSchema = z.object({
 
 type SendToJiraFormData = z.infer<typeof sendToJiraSchema>;
 
-// The commented code is related to issue types, which are not required for the first implementation, but will be used in the future
 export const SendToJiraModal = ({
   isOpen,
   onOpenChange,
@@ -44,14 +45,17 @@ export const SendToJiraModal = ({
   const { toast } = useToast();
   const [integrations, setIntegrations] = useState<IntegrationProps[]>([]);
   const [isFetchingIntegrations, setIsFetchingIntegrations] = useState(false);
+  const [fetchedIssueTypes, setFetchedIssueTypes] = useState<
+    Record<string, string[]>
+  >({});
+  const [isFetchingIssueTypes, setIsFetchingIssueTypes] = useState(false);
 
   const form = useForm<SendToJiraFormData>({
     resolver: zodResolver(sendToJiraSchema),
     defaultValues: {
       integration: "",
       project: "",
-      // Default to Task while issue types are not fetched/required
-      issueType: "Task",
+      issueType: "",
     },
   });
 
@@ -101,8 +105,9 @@ export const SendToJiraModal = ({
 
       fetchJiraIntegrations();
     } else {
-      // Reset form when modal closes
+      // Reset form and fetched data when modal closes
       form.reset();
+      setFetchedIssueTypes({});
     }
   }, [isOpen, form, toast]);
 
@@ -150,6 +155,8 @@ export const SendToJiraModal = ({
     })();
   };
 
+  const selectedProject = form.watch("project");
+
   const selectedIntegrationData = integrations.find(
     (i) => i.id === selectedIntegration,
   );
@@ -159,6 +166,75 @@ export const SendToJiraModal = ({
     ({} as Record<string, string>);
 
   const projectEntries = Object.entries(projects);
+
+  // Get issue types from config (new dict format), falling back to fetched data
+  const configIssueTypes = selectedIntegrationData?.attributes.configuration
+    .issue_types as Record<string, string[]> | undefined;
+  const issueTypesFromConfig =
+    configIssueTypes &&
+    typeof configIssueTypes === "object" &&
+    !Array.isArray(configIssueTypes)
+      ? (configIssueTypes[selectedProject] ?? [])
+      : [];
+  const issueTypesForProject =
+    issueTypesFromConfig.length > 0
+      ? issueTypesFromConfig
+      : (fetchedIssueTypes[selectedProject] ?? []);
+
+  // Fetch issue types from API when project is selected but no types are available
+  useEffect(() => {
+    let ignore = false;
+
+    if (
+      selectedIntegration &&
+      selectedProject &&
+      issueTypesFromConfig.length === 0 &&
+      !fetchedIssueTypes[selectedProject]
+    ) {
+      const fetchIssueTypes = async () => {
+        setIsFetchingIssueTypes(true);
+        try {
+          const result = await getJiraIssueTypes(
+            selectedIntegration,
+            selectedProject,
+          );
+          if (ignore) return;
+          if (result.success) {
+            setFetchedIssueTypes((prev) => ({
+              ...prev,
+              [selectedProject]: result.issueTypes,
+            }));
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Failed to load issue types",
+              description:
+                result.error || "Unable to fetch issue types for this project",
+            });
+          }
+        } finally {
+          if (!ignore) setIsFetchingIssueTypes(false);
+        }
+      };
+
+      fetchIssueTypes();
+    }
+
+    return () => {
+      ignore = true;
+    };
+  }, [
+    selectedIntegration,
+    selectedProject,
+    issueTypesFromConfig.length,
+    fetchedIssueTypes,
+    toast,
+  ]);
+
+  const issueTypeOptions = issueTypesForProject.map((type) => ({
+    value: type,
+    label: type,
+  }));
 
   const integrationOptions = integrations.map((integration) => ({
     value: integration.id,
@@ -186,8 +262,16 @@ export const SendToJiraModal = ({
           onSubmit={form.handleSubmit(handleSubmit)}
           className="flex flex-col gap-4"
         >
+          {/* Loading skeleton for project selector */}
+          {isFetchingIntegrations && (
+            <div className="flex flex-col gap-1.5">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-12 w-full rounded-md" />
+            </div>
+          )}
+
           {/* Integration Selection */}
-          {integrations.length > 1 && (
+          {!isFetchingIntegrations && integrations.length > 1 && (
             <FormField
               control={form.control}
               name="integration"
@@ -207,7 +291,8 @@ export const SendToJiraModal = ({
                       field.onChange(selectedValue);
                       // Reset dependent fields
                       form.setValue("project", "");
-                      form.setValue("issueType", "Task");
+                      form.setValue("issueType", "");
+                      setFetchedIssueTypes({});
                     }}
                     defaultValue={field.value ? [field.value] : []}
                     placeholder="Select a Jira integration"
@@ -226,31 +311,73 @@ export const SendToJiraModal = ({
           )}
 
           {/* Project Selection */}
-          {selectedIntegration && projectEntries.length > 0 && (
+          {!isFetchingIntegrations &&
+            selectedIntegration &&
+            projectEntries.length > 0 && (
+              <FormField
+                control={form.control}
+                name="project"
+                render={({ field }) => (
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor="jira-project-select"
+                      className="text-text-neutral-secondary text-xs font-light tracking-tight"
+                    >
+                      Project
+                    </label>
+                    <EnhancedMultiSelect
+                      id="jira-project-select"
+                      options={projectOptions}
+                      onValueChange={(values) => {
+                        const selectedValue = values.at(-1) ?? "";
+                        field.onChange(selectedValue);
+                        // Reset issue type when project changes
+                        form.setValue("issueType", "");
+                      }}
+                      defaultValue={field.value ? [field.value] : []}
+                      placeholder="Select a Jira project"
+                      searchable={true}
+                      emptyIndicator="No projects found."
+                      hideSelectAll={true}
+                      maxCount={1}
+                      closeOnSelect={true}
+                      resetOnDefaultValueChange={true}
+                    />
+                    <FormMessage className="text-text-error text-xs" />
+                  </div>
+                )}
+              />
+            )}
+
+          {/* Issue Type Selection */}
+          {selectedProject && (
             <FormField
               control={form.control}
-              name="project"
+              name="issueType"
               render={({ field }) => (
                 <div className="flex flex-col gap-1.5">
                   <label
-                    htmlFor="jira-project-select"
+                    htmlFor="jira-issue-type-select"
                     className="text-text-neutral-secondary text-xs font-light tracking-tight"
                   >
-                    Project
+                    Issue Type
                   </label>
                   <EnhancedMultiSelect
-                    id="jira-project-select"
-                    options={projectOptions}
+                    id="jira-issue-type-select"
+                    options={issueTypeOptions}
                     onValueChange={(values) => {
                       const selectedValue = values.at(-1) ?? "";
                       field.onChange(selectedValue);
-                      // Keep issue type defaulting to Task when project changes
-                      form.setValue("issueType", "Task");
                     }}
                     defaultValue={field.value ? [field.value] : []}
-                    placeholder="Select a Jira project"
+                    placeholder={
+                      isFetchingIssueTypes
+                        ? "Loading issue types..."
+                        : "Select an issue type"
+                    }
                     searchable={true}
-                    emptyIndicator="No projects found."
+                    emptyIndicator="No issue types found."
+                    disabled={isFetchingIssueTypes}
                     hideSelectAll={true}
                     maxCount={1}
                     closeOnSelect={true}
@@ -282,6 +409,7 @@ export const SendToJiraModal = ({
                 !form.formState.isValid ||
                 form.formState.isSubmitting ||
                 isFetchingIntegrations ||
+                isFetchingIssueTypes ||
                 integrations.length === 0 ||
                 !hasConnectedIntegration
               }

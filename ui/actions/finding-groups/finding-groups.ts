@@ -90,12 +90,23 @@ export const getFindingGroupResources = async ({
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  const url = new URL(`${apiBaseUrl}/finding-groups/${checkId}/resources`);
+  const url = new URL(
+    `${apiBaseUrl}/finding-groups/${encodeURIComponent(checkId)}/resources`,
+  );
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
+  // sort=-status is kept for future-proofing: if the filter[status]=FAIL
+  // constraint is ever relaxed to allow multiple statuses, the sort ensures
+  // FAIL resources still appear first in the result set.
+  url.searchParams.append("sort", "-status");
 
   appendSanitizedProviderFilters(url, filters);
+
+  // Use .set() AFTER appendSanitizedProviderFilters so our hardcoded FAIL
+  // always wins, even if the caller passed a different filter[status] value.
+  // Using .set() instead of .append() prevents duplicate filter[status] params.
+  url.searchParams.set("filter[status]", "FAIL");
 
   try {
     const response = await fetch(url.toString(), {
@@ -123,13 +134,22 @@ export const getLatestFindingGroupResources = async ({
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(
-    `${apiBaseUrl}/finding-groups/latest/${checkId}/resources`,
+    `${apiBaseUrl}/finding-groups/latest/${encodeURIComponent(checkId)}/resources`,
   );
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
+  // sort=-status is kept for future-proofing: if the filter[status]=FAIL
+  // constraint is ever relaxed to allow multiple statuses, the sort ensures
+  // FAIL resources still appear first in the result set.
+  url.searchParams.append("sort", "-status");
 
   appendSanitizedProviderFilters(url, filters);
+
+  // Use .set() AFTER appendSanitizedProviderFilters so our hardcoded FAIL
+  // always wins, even if the caller passed a different filter[status] value.
+  // Using .set() instead of .append() prevents duplicate filter[status] params.
+  url.searchParams.set("filter[status]", "FAIL");
 
   try {
     const response = await fetch(url.toString(), {

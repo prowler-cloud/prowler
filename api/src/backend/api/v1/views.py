@@ -207,6 +207,7 @@ from api.rls import Tenant
 from api.utils import (
     CustomOAuth2Client,
     get_findings_metadata_no_aggregations,
+    initialize_prowler_integration,
     initialize_prowler_provider,
     validate_invitation,
 )
@@ -235,6 +236,7 @@ from api.v1.serializers import (
     FindingsSeverityOverTimeSerializer,
     IntegrationCreateSerializer,
     IntegrationJiraDispatchSerializer,
+    IntegrationJiraIssueTypesSerializer,
     IntegrationSerializer,
     IntegrationUpdateSerializer,
     InvitationAcceptSerializer,
@@ -947,7 +949,12 @@ class UserViewSet(BaseUserViewset):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         if self.request.user.is_authenticated:
-            context["role"] = get_role(self.request.user)
+            tenant_id = getattr(self.request, "tenant_id", None)
+            if tenant_id:
+                try:
+                    context["role"] = get_role(self.request.user, tenant_id)
+                except PermissionDenied:
+                    context["role"] = None
         return context
 
     @action(detail=False, methods=["get"], url_name="me")
@@ -1229,28 +1236,44 @@ class TenantViewSet(BaseTenantViewset):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        tenant = serializer.save()
-        Membership.objects.create(
+        tenant = Tenant.objects.using(MainRouter.admin_db).create(
+            **serializer.validated_data
+        )
+        Membership.objects.using(MainRouter.admin_db).create(
             user=self.request.user, tenant=tenant, role=Membership.RoleChoices.OWNER
         )
+        serializer.instance = tenant
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
-        # This will perform validation and raise a 404 if the tenant does not exist
-        tenant_id = kwargs.get("pk")
-        get_object_or_404(Tenant, id=tenant_id)
+        tenant = self.get_object()
+        tenant_id = str(tenant.id)
+
+        # Only owners can delete a tenant
+        membership = Membership.objects.filter(user=request.user, tenant=tenant).first()
+        if not membership or membership.role != Membership.RoleChoices.OWNER:
+            raise PermissionDenied("Only owners can delete a tenant.")
 
         with transaction.atomic():
-            # Delete memberships
+            # Collect user IDs from this tenant's memberships before deleting them
+            tenant_user_ids = set(
+                Membership.objects.using(MainRouter.admin_db)
+                .filter(tenant_id=tenant_id)
+                .values_list("user_id", flat=True)
+            )
+
+            # Delete memberships for this tenant
             Membership.objects.using(MainRouter.admin_db).filter(
                 tenant_id=tenant_id
             ).delete()
 
-            # Delete users without memberships
-            User.objects.using(MainRouter.admin_db).filter(
-                membership__isnull=True
-            ).delete()
-        # Delete tenant in batches
+            # Delete only users that were exclusively in this tenant
+            if tenant_user_ids:
+                User.objects.using(MainRouter.admin_db).filter(
+                    id__in=tenant_user_ids, membership__isnull=True
+                ).delete()
+
+        # Delete tenant data in background
         delete_tenant_task.apply_async(kwargs={"tenant_id": tenant_id})
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -1315,8 +1338,12 @@ class TenantMembersViewSet(BaseTenantViewset):
     http_method_names = ["get", "delete"]
     serializer_class = MembershipSerializer
     queryset = Membership.objects.none()
-    # RBAC required permissions
-    required_permissions = [Permissions.MANAGE_ACCOUNT]
+    # Authorization is handled by get_requesting_membership (owner/member checks),
+    # not by RBAC, since the target tenant differs from the JWT tenant.
+    required_permissions = []
+
+    def set_required_permissions(self):
+        self.required_permissions = []
 
     def get_queryset(self):
         tenant = self.get_tenant()
@@ -1329,8 +1356,10 @@ class TenantMembersViewSet(BaseTenantViewset):
 
     def get_tenant(self):
         tenant_id = self.kwargs.get("tenant_pk")
-        tenant = get_object_or_404(Tenant, id=tenant_id)
-        return tenant
+        return get_object_or_404(
+            Tenant.objects.filter(membership__user=self.request.user),
+            id=tenant_id,
+        )
 
     def get_requesting_membership(self, tenant):
         try:
@@ -1417,7 +1446,7 @@ class ProviderGroupViewSet(BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         # Check if any of the user's roles have UNLIMITED_VISIBILITY
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all provider groups
@@ -1586,7 +1615,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all providers
             queryset = Provider.objects.filter(tenant_id=self.request.tenant_id)
@@ -1841,7 +1870,7 @@ class ScanViewSet(BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_SCANS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all scans
             queryset = Scan.objects.filter(tenant_id=self.request.tenant_id)
@@ -2492,7 +2521,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         base_queryset = AttackPathsScan.objects.filter(tenant_id=self.request.tenant_id)
 
         if user_roles.unlimited_visibility:
@@ -2829,7 +2858,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     required_permissions = []
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all scans
             queryset = Resource.all_objects.filter(tenant_id=self.request.tenant_id)
@@ -3451,7 +3480,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all findings
             queryset = Finding.all_objects.filter(tenant_id=tenant_id)
@@ -4054,9 +4083,9 @@ class RoleViewSet(BaseRLSViewSet):
         )
     )
     def partial_update(self, request, *args, **kwargs):
-        user_role = get_role(request.user)
+        user_role = get_role(request.user, request.tenant_id)
         # If the user is the owner of the role, the manage_account field is not editable
-        if user_role and kwargs["pk"] == str(user_role.id):
+        if kwargs["pk"] == str(user_role.id):
             request.data["manage_account"] = str(user_role.manage_account).lower()
         return super().partial_update(request, *args, **kwargs)
 
@@ -4312,7 +4341,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     required_permissions = []
 
     def get_queryset(self):
-        role = get_role(self.request.user)
+        role = get_role(self.request.user, self.request.tenant_id)
         unlimited_visibility = getattr(
             role, Permissions.UNLIMITED_VISIBILITY.value, False
         )
@@ -4354,7 +4383,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
     def _compliance_summaries_queryset(self, scan_id):
         """Return pre-aggregated summaries constrained by RBAC visibility."""
-        role = get_role(self.request.user)
+        role = get_role(self.request.user, self.request.tenant_id)
         unlimited_visibility = getattr(
             role, Permissions.UNLIMITED_VISIBILITY.value, False
         )
@@ -4896,7 +4925,7 @@ class OverviewViewSet(BaseRLSViewSet):
     required_permissions = []
 
     def get_queryset(self):
-        role = get_role(self.request.user)
+        role = get_role(self.request.user, self.request.tenant_id)
         providers = get_providers(role)
 
         if not role.unlimited_visibility:
@@ -6069,7 +6098,7 @@ class IntegrationViewSet(BaseRLSViewSet):
     allowed_providers = None
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all integrations
             queryset = Integration.objects.filter(tenant_id=self.request.tenant_id)
@@ -6124,7 +6153,15 @@ class IntegrationViewSet(BaseRLSViewSet):
         tags=["Integration"],
         summary="Send findings to a Jira integration",
         description="Send a set of filtered findings to the given integration. At least one finding filter must be "
-        "provided.",
+        "provided.\n\n"
+        "## Known Limitations\n\n"
+        "### Issue Types with Required Custom Fields\n\n"
+        "Certain Jira issue types (such as Epic) may require mandatory custom fields that Prowler does not "
+        "currently populate when creating work items. If a selected issue type enforces required fields beyond "
+        'the standard set (e.g., "Team", "Epic Name"), the work item creation will fail.\n\n'
+        "To avoid this, select an issue type that does not require additional custom fields - **Task**, **Bug**, "
+        "or **Story** typically work without restrictions. If unsure which issue types are available for a project, "
+        'Prowler automatically fetches and displays them in the "Issue Type" selector when sending a finding.',
         responses={202: OpenApiResponse(response=TaskSerializer)},
         filters=True,
     )
@@ -6132,7 +6169,7 @@ class IntegrationViewSet(BaseRLSViewSet):
 class IntegrationJiraViewSet(BaseRLSViewSet):
     queryset = Finding.all_objects.all()
     serializer_class = IntegrationJiraDispatchSerializer
-    http_method_names = ["post"]
+    http_method_names = ["get", "post"]
     filter_backends = [CustomDjangoFilterBackend]
     filterset_class = IntegrationJiraFindingsFilter
     # RBAC required permissions
@@ -6142,9 +6179,27 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
     def create(self, request, *args, **kwargs):
         raise MethodNotAllowed(method="POST")
 
+    @extend_schema(exclude=True)
+    def list(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
+
+    @extend_schema(exclude=True)
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
+
+    def get_serializer_class(self):
+        if self.action == "issue_types":
+            return IntegrationJiraIssueTypesSerializer
+        return super().get_serializer_class()
+
+    def get_filter_backends(self):
+        if self.action == "issue_types":
+            return []
+        return super().get_filter_backends()
+
     def get_queryset(self):
         tenant_id = self.request.tenant_id
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all findings
             queryset = Finding.all_objects.filter(tenant_id=tenant_id)
@@ -6155,6 +6210,65 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
             )
 
         return queryset
+
+    @extend_schema(
+        tags=["Integration"],
+        summary="Get available issue types for a Jira project",
+        description="Fetch the available issue types from Jira for a given project key and update the integration configuration.",
+        parameters=[
+            OpenApiParameter(
+                name="project_key",
+                type=str,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="The Jira project key to fetch issue types for.",
+            ),
+        ],
+    )
+    @action(detail=False, methods=["get"], url_name="issue-types")
+    def issue_types(self, request, integration_pk=None):
+        integration = get_object_or_404(Integration, pk=integration_pk)
+
+        project_key = request.query_params.get("project_key")
+        if not project_key:
+            raise ValidationError({"project_key": "This query parameter is required."})
+
+        projects = integration.configuration.get("projects", {})
+        if project_key not in projects:
+            raise ValidationError(
+                {
+                    "project_key": "The given project key is not available for this JIRA integration."
+                }
+            )
+
+        try:
+            jira = initialize_prowler_integration(integration)
+            fetched_issue_types = jira.get_available_issue_types(project_key)
+        except Exception as e:
+            logger.error(
+                f"Failed to fetch issue types from Jira for integration {integration_pk}, "
+                f"project {project_key}: {e}"
+            )
+            raise ValidationError(
+                {
+                    "issue_types": "Failed to fetch issue types from Jira. Please check the integration connection."
+                }
+            )
+
+        # Update the integration configuration with the fetched issue types
+        issue_types_config = integration.configuration.get("issue_types", {})
+        if not isinstance(issue_types_config, dict):
+            issue_types_config = {}
+        issue_types_config[project_key] = fetched_issue_types
+
+        with rls_transaction(str(integration.tenant_id), using="default"):
+            integration.configuration["issue_types"] = issue_types_config
+            integration.save(using="default")
+
+        serializer = IntegrationJiraIssueTypesSerializer(
+            {"project_key": project_key, "issue_types": fetched_issue_types}
+        )
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"], url_name="dispatches")
     def dispatches(self, request, integration_pk=None):
@@ -6827,7 +6941,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
     def get_queryset(self):
         """Get the base FindingGroupDailySummary queryset with RLS filtering."""
         tenant_id = self.request.tenant_id
-        role = get_role(self.request.user)
+        role = get_role(self.request.user, self.request.tenant_id)
         queryset = FindingGroupDailySummary.objects.filter(tenant_id=tenant_id)
 
         if not role.unlimited_visibility:
@@ -6837,7 +6951,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
     def _get_finding_queryset(self):
         """Get the Finding queryset for resources drill-down (with RBAC)."""
-        role = get_role(self.request.user)
+        role = get_role(self.request.user, self.request.tenant_id)
         providers = get_providers(role)
 
         tenant_id = self.request.tenant_id
