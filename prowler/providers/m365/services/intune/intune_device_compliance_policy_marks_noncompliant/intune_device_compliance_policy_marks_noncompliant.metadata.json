@@ -1,0 +1,36 @@
+{
+  "Provider": "m365",
+  "CheckID": "intune_device_compliance_policy_marks_noncompliant",
+  "CheckTitle": "Built-in Device Compliance Policy marks unmanaged devices as Not compliant",
+  "CheckType": [],
+  "ServiceName": "intune",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "Intune has a built-in Device Compliance Policy that governs how devices without an explicit compliance policy are treated. When set to Compliant (the default), unmanaged devices are incorrectly treated as compliant, potentially granting access to corporate resources. This check verifies the setting is Not compliant (secureByDefault = true).",
+  "Risk": "If the built-in policy marks devices without a compliance policy as Compliant, those devices can bypass Conditional Access policies requiring device compliance, granting unauthorized access to corporate resources from unmanaged or non-compliant endpoints.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://maester.dev/docs/tests/MT.1054"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Intune admin center (intune.microsoft.com)\n2. Go to Devices > Compliance\n3. Select Compliance policy settings\n4. Set 'Mark devices with no compliance policy assigned as' to 'Not compliant'\n5. Save the settings",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set the built-in Device Compliance Policy to mark devices with no compliance policy assigned as Not compliant.",
+      "Url": "https://hub.prowler.com/check/intune_device_compliance_policy_marks_noncompliant"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Equivalent to Maester test MT.1054 (Test-MtDeviceComplianceSettings). The check evaluates the secureByDefault property from the deviceManagement/settings Graph API endpoint."
+}
