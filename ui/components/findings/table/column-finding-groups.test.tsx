@@ -17,11 +17,20 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/components/shadcn", () => ({
   Checkbox: ({
     "aria-label": ariaLabel,
+    onCheckedChange,
     ...props
   }: InputHTMLAttributes<HTMLInputElement> & {
     "aria-label"?: string;
     size?: string;
-  }) => <input type="checkbox" aria-label={ariaLabel} {...props} />,
+    onCheckedChange?: (checked: boolean) => void;
+  }) => (
+    <input
+      type="checkbox"
+      aria-label={ariaLabel}
+      onChange={(event) => onCheckedChange?.(event.target.checked)}
+      {...props}
+    />
+  ),
 }));
 
 vi.mock("@/components/ui/table", () => ({
@@ -145,6 +154,45 @@ function renderImpactedResourcesCell(overrides?: Partial<FindingGroupRow>) {
   render(<div>{CellComponent({ row: { original: group } })}</div>);
 }
 
+function renderSelectCell(overrides?: Partial<FindingGroupRow>) {
+  const toggleSelected = vi.fn();
+  const columns = getColumnFindingGroups({
+    rowSelection: {},
+    selectableRowCount: 1,
+    onDrillDown: vi.fn(),
+  });
+
+  const selectColumn = columns.find(
+    (col) => (col as { id?: string }).id === "select",
+  );
+  if (!selectColumn?.cell) {
+    throw new Error("select column not found");
+  }
+
+  const group = makeGroup(overrides);
+  const CellComponent = selectColumn.cell as (props: {
+    row: {
+      id: string;
+      original: FindingGroupRow;
+      toggleSelected: (selected: boolean) => void;
+    };
+  }) => ReactNode;
+
+  render(
+    <div>
+      {CellComponent({
+        row: {
+          id: "0",
+          original: group,
+          toggleSelected,
+        },
+      })}
+    </div>,
+  );
+
+  return { toggleSelected };
+}
+
 // ---------------------------------------------------------------------------
 // Fix 5: Accessibility — <p onClick> → <button>
 // ---------------------------------------------------------------------------
@@ -263,5 +311,17 @@ describe("column-finding-groups — impacted resources count", () => {
 
     // Then
     expect(screen.getByText("3/5")).toBeInTheDocument();
+  });
+});
+
+describe("column-finding-groups — group selection", () => {
+  it("should disable the row checkbox when the group has zero impacted resources", () => {
+    renderSelectCell({
+      resourcesTotal: 2,
+      resourcesFail: 0,
+      status: "PASS",
+    });
+
+    expect(screen.getByRole("checkbox", { name: "Select row" })).toBeDisabled();
   });
 });

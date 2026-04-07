@@ -325,7 +325,7 @@ describe("getFindingGroupResources — caller filters are preserved", () => {
     expect(allStatusValues[0]).toBe("PASS");
   });
 
-  it("should preserve group filters like status__in, severity and provider_type__in", async () => {
+  it("should translate a single group status__in filter into filter[status] for resources", async () => {
     // Given
     const checkId = "s3_bucket_public_access";
     const filters = {
@@ -340,7 +340,8 @@ describe("getFindingGroupResources — caller filters are preserved", () => {
     // Then
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.get("filter[status__in]")).toBe("PASS");
+    expect(url.searchParams.get("filter[status]")).toBe("PASS");
+    expect(url.searchParams.get("filter[status__in]")).toBeNull();
     expect(url.searchParams.get("filter[severity__in]")).toBe("medium");
     expect(url.searchParams.get("filter[provider_type__in]")).toBe("aws");
   });
@@ -390,7 +391,7 @@ describe("getLatestFindingGroupResources — caller filters are preserved", () =
     expect(allStatusValues[0]).toBe("PASS");
   });
 
-  it("should preserve group filters like status__in, severity and provider_type__in", async () => {
+  it("should translate a single group status__in filter into filter[status] for latest resources", async () => {
     // Given
     const checkId = "iam_user_mfa_enabled";
     const filters = {
@@ -405,7 +406,8 @@ describe("getLatestFindingGroupResources — caller filters are preserved", () =
     // Then
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.get("filter[status__in]")).toBe("PASS");
+    expect(url.searchParams.get("filter[status]")).toBe("PASS");
+    expect(url.searchParams.get("filter[status__in]")).toBeNull();
     expect(url.searchParams.get("filter[severity__in]")).toBe("low");
     expect(url.searchParams.get("filter[provider_type__in]")).toBe("aws");
   });

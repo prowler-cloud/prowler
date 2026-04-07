@@ -25,11 +25,13 @@ import {
 import { getFailingForLabel } from "@/lib/date-utils";
 import { FindingResourceRow } from "@/types";
 
+import { canMuteFindingResource } from "./finding-resource-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import { NotificationIndicator } from "./notification-indicator";
 
 const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
   const resource = row.original;
+  const canMute = canMuteFindingResource(resource);
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
@@ -81,7 +83,7 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
 
   return (
     <>
-      {!resource.isMuted && (
+      {canMute && (
         <MuteFindingsModal
           isOpen={isMuteModalOpen}
           onOpenChange={setIsMuteModalOpen}
@@ -111,7 +113,7 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
               )
             }
             label={isResolving ? "Resolving..." : getMuteLabel()}
-            disabled={resource.isMuted || isResolving}
+            disabled={!canMute || isResolving}
             onSelect={handleMuteClick}
           />
           <ActionDropdownItem
@@ -178,7 +180,7 @@ export function getColumnFindingResources({
           <Checkbox
             size="sm"
             checked={!!rowSelection[row.id]}
-            disabled={row.original.isMuted}
+            disabled={!canMuteFindingResource(row.original)}
             onCheckedChange={(checked) => row.toggleSelected(checked === true)}
             onClick={(e) => e.stopPropagation()}
             aria-label="Select resource"

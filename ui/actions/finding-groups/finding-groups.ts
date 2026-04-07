@@ -23,6 +23,44 @@ function mapSearchFilter(
   return mapped;
 }
 
+function splitCsvFilterValues(value: string | string[] | undefined): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .flatMap((item) => item.split(","))
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function normalizeFindingGroupResourceFilters(
+  filters: Record<string, string | string[] | undefined>,
+): Record<string, string | string[] | undefined> {
+  const normalized = { ...filters };
+  const exactStatusFilter = normalized["filter[status]"];
+
+  if (exactStatusFilter !== undefined) {
+    delete normalized["filter[status__in]"];
+    return normalized;
+  }
+
+  const statusValues = splitCsvFilterValues(normalized["filter[status__in]"]);
+  if (statusValues.length === 1) {
+    normalized["filter[status]"] = statusValues[0];
+    delete normalized["filter[status__in]"];
+  }
+
+  return normalized;
+}
+
 export const getFindingGroups = async ({
   page = 1,
   pageSize = 10,
@@ -89,6 +127,7 @@ export const getFindingGroupResources = async ({
   filters?: Record<string, string | string[] | undefined>;
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
+  const normalizedFilters = normalizeFindingGroupResourceFilters(filters);
 
   const url = new URL(
     `${apiBaseUrl}/finding-groups/${encodeURIComponent(checkId)}/resources`,
@@ -99,7 +138,7 @@ export const getFindingGroupResources = async ({
   // Keep FAIL-first ordering when multiple statuses are returned.
   url.searchParams.append("sort", "-status");
 
-  appendSanitizedProviderFilters(url, filters);
+  appendSanitizedProviderFilters(url, normalizedFilters);
 
   try {
     const response = await fetch(url.toString(), {
@@ -125,6 +164,7 @@ export const getLatestFindingGroupResources = async ({
   filters?: Record<string, string | string[] | undefined>;
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
+  const normalizedFilters = normalizeFindingGroupResourceFilters(filters);
 
   const url = new URL(
     `${apiBaseUrl}/finding-groups/latest/${encodeURIComponent(checkId)}/resources`,
@@ -135,7 +175,7 @@ export const getLatestFindingGroupResources = async ({
   // Keep FAIL-first ordering when multiple statuses are returned.
   url.searchParams.append("sort", "-status");
 
-  appendSanitizedProviderFilters(url, filters);
+  appendSanitizedProviderFilters(url, normalizedFilters);
 
   try {
     const response = await fetch(url.toString(), {
