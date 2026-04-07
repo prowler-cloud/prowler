@@ -1,0 +1,315 @@
+{
+  "Framework": "CISA-SCuBA",
+  "Name": "CISA SCuBA Microsoft Entra ID Secure Configuration Baseline",
+  "Version": "1.0",
+  "Provider": "M365",
+  "Description": "The CISA Secure Cloud Business Applications (SCuBA) project provides secure configuration baselines for Microsoft 365 cloud services. This baseline covers Microsoft Entra ID (formerly Azure Active Directory) and is based on the publicly available guidance from CISA's ScubaGear repository.",
+  "Requirements": [
+    {
+      "Id": "MS.AAD.1.1v1",
+      "Description": "Legacy authentication SHALL be blocked.",
+      "Checks": [
+        "entra_legacy_authentication_blocked"
+      ],
+      "Attributes": [
+        {
+          "Section": "1. Legacy Authentication",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "Legacy authentication SHALL be blocked. Legacy authentication protocols do not support multifactor authentication (MFA) and are a common attack vector.",
+          "RationaleStatement": "Legacy authentication protocols such as POP, SMTP, IMAP, and MAPI do not support MFA, making them a primary target for password spray and credential stuffing attacks.",
+          "ImpactStatement": "Blocking legacy authentication may impact older email clients and applications that rely on these protocols. Organizations should migrate to modern authentication before enforcing this baseline.",
+          "References": "https://github.com/cisagov/ScubaGear:https://www.cisa.gov/resources-tools/services/secure-cloud-business-applications-scuba-project"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.2.1v1",
+      "Description": "Users detected as high risk SHALL be blocked.",
+      "Checks": [
+        "entra_identity_protection_user_risk_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "2. Risk-Based Policies",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "Users detected as high risk SHALL be blocked from signing in. Microsoft Entra ID Identity Protection can detect compromised user accounts based on various signals.",
+          "RationaleStatement": "Blocking high-risk users prevents compromised accounts from accessing organizational resources until the risk is remediated.",
+          "ImpactStatement": "Users flagged as high risk will be unable to sign in until an administrator reviews and resolves the risk. Self-service remediation via password reset can reduce administrative burden.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/id-protection/overview-identity-protection"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.2.3v1",
+      "Description": "Sign-ins detected as high risk SHALL be blocked.",
+      "Checks": [
+        "entra_identity_protection_sign_in_risk_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "2. Risk-Based Policies",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "Sign-ins detected as high risk SHALL be blocked. Identity Protection evaluates each sign-in for risk signals such as impossible travel, anonymous IP, malware-linked IP, and more.",
+          "RationaleStatement": "Blocking high-risk sign-ins prevents attackers from gaining access through stolen or compromised credentials.",
+          "ImpactStatement": "Legitimate users may occasionally be blocked if their sign-in triggers a false positive. They can self-remediate by completing MFA or contacting an administrator.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/id-protection/concept-identity-protection-risks"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.3.1v1",
+      "Description": "Phishing-resistant MFA SHALL be enforced for all users.",
+      "Checks": [
+        "entra_admin_users_phishing_resistant_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3. Strong Authentication and Secure Registration",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "Phishing-resistant MFA SHALL be enforced for all users. FIDO2 security keys and certificate-based authentication are considered phishing-resistant methods. Note: the current prowler check covers admin accounts only.",
+          "RationaleStatement": "Phishing-resistant MFA eliminates the risk of real-time phishing attacks that can intercept OTP codes or push notification approvals.",
+          "ImpactStatement": "Users will need to register phishing-resistant authentication methods such as FIDO2 security keys or Windows Hello for Business. This may require procurement of hardware security keys.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-strengths"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.3.2v2",
+      "Description": "MFA SHALL be enforced for all users.",
+      "Checks": [
+        "entra_users_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3. Strong Authentication and Secure Registration",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "MFA SHALL be enforced for all users via conditional access policy or security defaults.",
+          "RationaleStatement": "MFA significantly reduces the risk of account compromise. Microsoft reports that MFA blocks more than 99.2% of account compromise attacks.",
+          "ImpactStatement": "All users will need to register and use a second authentication factor. Organizations should plan a phased rollout with user communication.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mfa-howitworks"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.3.5v2",
+      "Description": "SMS, Voice Call, and Email OTP SHALL be disabled as authentication methods.",
+      "Checks": [
+        "entra_authentication_method_sms_voice_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3. Strong Authentication and Secure Registration",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "SMS, Voice Call, and Email OTP SHALL be disabled as authentication methods. These are vulnerable to SIM swapping, call forwarding, and interception attacks.",
+          "RationaleStatement": "SMS and voice-based MFA are susceptible to SIM swapping, SS7 interception, and social engineering of carrier support. Email OTP can be intercepted if the email account is compromised.",
+          "ImpactStatement": "Users currently relying on SMS or voice for MFA will need to transition to more secure methods like the Microsoft Authenticator app or FIDO2 security keys.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-methods-manage"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.3.6v1",
+      "Description": "Phishing-resistant MFA SHALL be required for highly privileged roles.",
+      "Checks": [
+        "entra_admin_users_phishing_resistant_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3. Strong Authentication and Secure Registration",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "Phishing-resistant MFA SHALL be required for highly privileged roles including Global Administrator, Privileged Role Administrator, and other sensitive administrative roles.",
+          "RationaleStatement": "Administrative accounts are high-value targets. Requiring phishing-resistant MFA for these roles provides the strongest protection against real-time phishing and MFA bypass attacks.",
+          "ImpactStatement": "All administrators will need to use FIDO2 security keys, Windows Hello for Business, or certificate-based authentication.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-strengths"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.3.7v1",
+      "Description": "Managed devices SHOULD be required for authentication.",
+      "Checks": [
+        "entra_managed_device_required_for_authentication"
+      ],
+      "Attributes": [
+        {
+          "Section": "3. Strong Authentication and Secure Registration",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "Managed devices SHOULD be required for authentication. This ensures that only trusted, organization-managed endpoints can access cloud resources.",
+          "RationaleStatement": "Requiring managed devices ensures endpoints meet organizational security standards before accessing sensitive resources.",
+          "ImpactStatement": "Users on personal or unmanaged devices will be blocked from accessing M365 resources. BYOD scenarios will require device enrollment or alternative access policies.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-compliant-device"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.3.8v1",
+      "Description": "Managed devices SHOULD be required to register MFA.",
+      "Checks": [
+        "entra_managed_device_required_for_mfa_registration"
+      ],
+      "Attributes": [
+        {
+          "Section": "3. Strong Authentication and Secure Registration",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "Managed devices SHOULD be required to register MFA. This prevents attackers from registering their own MFA methods on a compromised account from an unmanaged device.",
+          "RationaleStatement": "If an attacker compromises a password, they could register their own MFA device from an untrusted endpoint. Requiring a managed device for MFA registration blocks this vector.",
+          "ImpactStatement": "Users will only be able to register new MFA methods from organization-managed devices.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-registration"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.3.9v1",
+      "Description": "Device code authentication SHOULD be blocked.",
+      "Checks": [
+        "entra_conditional_access_policy_device_code_flow_blocked"
+      ],
+      "Attributes": [
+        {
+          "Section": "3. Strong Authentication and Secure Registration",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "Device code authentication SHOULD be blocked via conditional access policy. The device code flow is commonly abused in phishing attacks where victims are tricked into entering a code on a legitimate Microsoft login page.",
+          "RationaleStatement": "Device code phishing is a well-documented attack technique where attackers social-engineer users into authenticating on the attacker's behalf via the device code OAuth flow.",
+          "ImpactStatement": "Legitimate device code flow use cases (such as IoT devices or CLI tools on devices without browsers) will need alternative authentication methods.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/identity/conditional-access/how-to-policy-authentication-flows"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.5.1v1",
+      "Description": "Only administrators SHALL be allowed to register third-party applications.",
+      "Checks": [
+        "entra_thirdparty_integrated_apps_not_allowed"
+      ],
+      "Attributes": [
+        {
+          "Section": "5. Application Registration and Consent",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "Only administrators SHALL be allowed to register third-party applications. Unrestricted application registration allows any user to grant OAuth permissions to potentially malicious applications.",
+          "RationaleStatement": "Allowing all users to register applications increases the attack surface by enabling consent phishing and data exfiltration through malicious OAuth apps.",
+          "ImpactStatement": "Users will need to request application registrations through an administrator or an admin consent workflow.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/user-admin-consent-overview"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.5.2v1",
+      "Description": "User consent to applications SHALL be restricted.",
+      "Checks": [
+        "entra_policy_restricts_user_consent_for_apps"
+      ],
+      "Attributes": [
+        {
+          "Section": "5. Application Registration and Consent",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "User consent to applications SHALL be restricted to apps from verified publishers or specific permissions the organization has classified as low impact.",
+          "RationaleStatement": "Unrestricted user consent allows users to inadvertently grant sensitive permissions (such as Mail.Read or Files.ReadWrite) to malicious applications.",
+          "ImpactStatement": "Users may need to submit consent requests for applications that require permissions beyond the low-impact threshold. An admin consent workflow should be configured to handle these requests.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-user-consent"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.5.3v1",
+      "Description": "Admin consent workflow SHALL be configured.",
+      "Checks": [
+        "entra_admin_consent_workflow_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "5. Application Registration and Consent",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "An admin consent workflow SHALL be configured so users can request admin consent for applications. This provides a governed process for granting application permissions.",
+          "RationaleStatement": "Without an admin consent workflow, users who need application access may resort to workarounds that bypass security controls.",
+          "ImpactStatement": "Administrators will receive consent requests and need a process to review and approve or deny them in a timely manner.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-admin-consent-workflow"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.7.1v1",
+      "Description": "A minimum of two and a maximum of eight users SHALL be provisioned with the Global Administrator role.",
+      "Checks": [
+        "admincenter_users_between_two_and_four_global_admins"
+      ],
+      "Attributes": [
+        {
+          "Section": "7. Highly Privileged User Access",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "A minimum of two and a maximum of eight users SHALL be provisioned with the Global Administrator role. Note: the current prowler check enforces a stricter range of 2 to 4 Global Administrators.",
+          "RationaleStatement": "Having fewer than two Global Administrators creates a single point of failure. Having too many increases the attack surface and makes it harder to detect unauthorized administrative activity.",
+          "ImpactStatement": "Organizations may need to add or remove Global Administrators to meet this requirement. Consider using Privileged Identity Management (PIM) for just-in-time access instead of permanent assignments.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.7.3v1",
+      "Description": "Privileged users SHALL be cloud-only accounts.",
+      "Checks": [
+        "entra_admin_users_cloud_only"
+      ],
+      "Attributes": [
+        {
+          "Section": "7. Highly Privileged User Access",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "Privileged users SHALL be cloud-only accounts, not synced from on-premises Active Directory. This ensures that a compromise of on-premises AD does not directly lead to cloud admin compromise.",
+          "RationaleStatement": "Hybrid-synced admin accounts create a bridge between on-premises and cloud environments. If on-premises AD is compromised, synced admin accounts provide a direct path to cloud admin access.",
+          "ImpactStatement": "Organizations with hybrid environments will need to create separate cloud-only accounts for administrative roles and decommission or demote synced admin accounts.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices#9-use-cloud-native-accounts-for-microsoft-entra-roles"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.8.1v1",
+      "Description": "Guest users SHOULD have limited access to directory objects.",
+      "Checks": [
+        "entra_policy_guest_users_access_restrictions"
+      ],
+      "Attributes": [
+        {
+          "Section": "8. Guest User Access",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "Guest users access SHOULD be restricted to properties and memberships of their own directory objects. By default, guest users have broad read access to directory data.",
+          "RationaleStatement": "Restricting guest user access limits the reconnaissance an external collaborator (or attacker using a guest account) can perform against the directory.",
+          "ImpactStatement": "Guest users will have limited visibility into directory data. Some collaboration scenarios may require granting additional permissions on a case-by-case basis.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/identity/users/users-restrict-guest-permissions"
+        }
+      ]
+    },
+    {
+      "Id": "MS.AAD.8.2v1",
+      "Description": "Only users with the Guest Inviter role SHOULD be able to invite guest users.",
+      "Checks": [
+        "entra_policy_guest_invite_only_for_admin_roles"
+      ],
+      "Attributes": [
+        {
+          "Section": "8. Guest User Access",
+          "Profile": "Entra ID",
+          "AssessmentStatus": "Automated",
+          "Description": "Only users with the Guest Inviter role SHOULD be able to invite guest users. Unrestricted guest invitation capabilities increase the risk of unauthorized external access.",
+          "RationaleStatement": "If all members can invite guests, it becomes difficult to maintain oversight of external access. Restricting invitations to a specific role provides centralized control.",
+          "ImpactStatement": "Regular users will not be able to invite external collaborators directly. They will need to request invitations through designated Guest Inviters or administrators.",
+          "References": "https://github.com/cisagov/ScubaGear:https://learn.microsoft.com/en-us/entra/identity/users/users-restrict-guest-permissions"
+        }
+      ]
+    }
+  ]
+}
