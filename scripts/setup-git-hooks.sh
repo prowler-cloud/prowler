@@ -32,20 +32,27 @@ fi
 
 echo ""
 
-# Try to find prek: system-wide first, then Poetry
-if command -v prek &>/dev/null; then
-  echo -e "${GREEN}✓${NC} prek found in PATH"
-  echo -e "${YELLOW}🔗 Installing prek hooks...${NC}"
-  prek install --overwrite
-elif command -v poetry &>/dev/null && [ -f "pyproject.toml" ]; then
+# Full setup requires Poetry for system hooks (pylint, bandit, safety, vulture, trufflehog)
+# These are installed as Python dev dependencies and used by local hooks in .pre-commit-config.yaml
+if command -v poetry &>/dev/null && [ -f "pyproject.toml" ]; then
   if poetry run prek --version &>/dev/null 2>&1; then
-    echo -e "${GREEN}✓${NC} prek found via Poetry"
+    echo -e "${GREEN}✓${NC} prek and dependencies found via Poetry"
   else
     echo -e "${YELLOW}📦 Installing project dependencies (including prek)...${NC}"
     poetry install --with dev
   fi
   echo -e "${YELLOW}🔗 Installing prek hooks...${NC}"
   poetry run prek install --overwrite
+elif command -v prek &>/dev/null; then
+  # prek is available system-wide but without Poetry dev deps
+  echo -e "${GREEN}✓${NC} prek found in PATH"
+  echo -e "${YELLOW}🔗 Installing prek hooks...${NC}"
+  prek install --overwrite
+  echo ""
+  echo -e "${YELLOW}⚠️  Warning: Some hooks require Python tools installed via Poetry:${NC}"
+  echo -e "   pylint, bandit, safety, vulture, trufflehog"
+  echo -e "   These hooks will be skipped unless you install them or run:"
+  echo -e "   ${GREEN}poetry install --with dev${NC}"
 else
   echo -e "${RED}❌ prek is not installed${NC}"
   echo -e "${YELLOW}   Install prek using one of these methods:${NC}"
