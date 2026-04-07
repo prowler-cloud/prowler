@@ -134,9 +134,7 @@ export function AcceptInvitationClient({
               className="text-default-500"
               width={48}
             />
-            <h1 className="text-xl font-semibold">
-              Accepting Invitation...
-            </h1>
+            <h1 className="text-xl font-semibold">Accepting Invitation...</h1>
             <p className="text-default-500">
               Please wait while we process your invitation.
             </p>
@@ -169,11 +167,7 @@ export function AcceptInvitationClient({
             </h1>
             <p className="text-default-500">{state.message}</p>
             <div className="flex gap-3">
-              {state.canRetry && (
-                <Button onClick={doAccept}>
-                  Retry
-                </Button>
-              )}
+              {state.canRetry && <Button onClick={doAccept}>Retry</Button>}
               <Button asChild variant="outline">
                 <Link href="/sign-in">Go to Sign In</Link>
               </Button>
