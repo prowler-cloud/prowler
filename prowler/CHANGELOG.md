@@ -24,10 +24,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Added `internet-exposed` category to 13 AWS checks (CloudFront, CodeArtifact, EC2, EFS, RDS, SageMaker, Shield, VPC) [(#10502)](https://github.com/prowler-cloud/prowler/pull/10502)
 - Minimum Python version from 3.9 to 3.10 and updated classifiers to reflect supported versions (3.10, 3.11, 3.12) [(#10464)](https://github.com/prowler-cloud/prowler/pull/10464)
-- Added `tenancy_id` argument to oci mutelist is_finding_muted to enable mutelist support. Updated `oraclecloud_mutelist_example.yaml` to reflect schema [(#10565)](https://github.com/prowler-cloud/prowler/pull/10566)
 
 ### 🐞 Fixed
 
+- OCI mutelist support: pass `tenancy_id` to `is_finding_muted` and update `oraclecloud_mutelist_example.yaml` to use `Accounts` key [(#10565)](https://github.com/prowler-cloud/prowler/issues/10565)
 - `return` statements in `finally` blocks replaced across IAM, Organizations, GCP provider, and custom checks metadata to stop silently swallowing exceptions [(#10102)](https://github.com/prowler-cloud/prowler/pull/10102)
 - `JiraConnection` now includes issue types per project fetched during `test_connection`, fixing `JiraInvalidIssueTypeError` on non-English Jira instances [(#10534)](https://github.com/prowler-cloud/prowler/pull/10534)
 
