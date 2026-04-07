@@ -91,7 +91,11 @@ class Test_emr_cluster_publicly_accesible:
             ),
             mock.patch(
                 "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
-                new=EC2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1], create_default_organization=False)),
+                new=EC2(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1], create_default_organization=False
+                    )
+                ),
             ),
         ):
             # Test Check
@@ -161,7 +165,11 @@ class Test_emr_cluster_publicly_accesible:
             ),
             mock.patch(
                 "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
-                new=EC2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1], create_default_organization=False)),
+                new=EC2(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1], create_default_organization=False
+                    )
+                ),
             ),
         ):
             # Test Check
@@ -248,7 +256,11 @@ class Test_emr_cluster_publicly_accesible:
             ),
             mock.patch(
                 "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
-                new=EC2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1], create_default_organization=False)),
+                new=EC2(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1], create_default_organization=False
+                    )
+                ),
             ),
         ):
             # Test Check
@@ -338,7 +350,11 @@ class Test_emr_cluster_publicly_accesible:
             ),
             mock.patch(
                 "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
-                new=EC2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1], create_default_organization=False)),
+                new=EC2(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1], create_default_organization=False
+                    )
+                ),
             ),
         ):
             # Test Check
@@ -425,7 +441,11 @@ class Test_emr_cluster_publicly_accesible:
             ),
             mock.patch(
                 "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
-                new=EC2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1], create_default_organization=False)),
+                new=EC2(
+                    set_mocked_aws_provider(
+                        [AWS_REGION_EU_WEST_1], create_default_organization=False
+                    )
+                ),
             ),
         ):
             # Test Check
