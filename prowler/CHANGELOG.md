@@ -13,10 +13,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update M365 SharePoint service metadata to new format [(#9684)](https://github.com/prowler-cloud/prowler/pull/9684)
 - Update M365 Exchange service metadata to new format [(#9683)](https://github.com/prowler-cloud/prowler/pull/9683)
 - Update M365 Teams service metadata to new format [(#9685)](https://github.com/prowler-cloud/prowler/pull/9685)
-- Fix shared report object bug in 6 Azure Key Vault checks causing duplicate/incorrect findings when a vault contains multiple keys, secrets, or diagnostic settings: `keyvault_key_rotation_enabled`, `keyvault_key_expiration_set_in_non_rbac`, `keyvault_rbac_key_expiration_set`, `keyvault_non_rbac_secret_expiration_set`, `keyvault_rbac_secret_expiration_set`, `keyvault_logging_enabled` [(#10332)](https://github.com/prowler-cloud/prowler/pull/10332)
-- Fix `keyvault_key_rotation_enabled` only checking the first lifetime action instead of all actions for a `Rotate` policy [(#10332)](https://github.com/prowler-cloud/prowler/pull/10332)
 - Update M365 Entra ID service metadata to new format [(#9682)](https://github.com/prowler-cloud/prowler/pull/9682)
 - Update ResourceType and Categories for Azure Entra ID service metadata [(#10334)](https://github.com/prowler-cloud/prowler/pull/10334)
+
+### 🐞 Fixed
+
+- Azure Key Vault checks emitting incorrect findings for keys, secrets, and vault logging [(#10332)](https://github.com/prowler-cloud/prowler/pull/10332)
 
 ### 🔐 Security
 
