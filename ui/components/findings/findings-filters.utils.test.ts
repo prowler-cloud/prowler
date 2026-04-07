@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 
+import { ProviderProps } from "@/types/providers";
+import { ScanEntity } from "@/types/scans";
+
 import { getFindingsFilterDisplayValue } from "./findings-filters.utils";
 
-const providers = [
-  {
-    id: "provider-1",
+function makeProvider(
+  overrides: Partial<ProviderProps> & { id: string },
+): ProviderProps {
+  return {
     type: "providers",
     attributes: {
       provider: "aws",
@@ -12,10 +16,7 @@ const providers = [
       alias: "Production Account",
       status: "completed",
       resources: 10,
-      connection: {
-        connected: true,
-        last_checked_at: "2026-04-07T10:00:00Z",
-      },
+      connection: { connected: true, last_checked_at: "2026-04-07T10:00:00Z" },
       scanner_args: {
         only_logs: false,
         excluded_checks: [],
@@ -23,47 +24,38 @@ const providers = [
       },
       inserted_at: "2026-04-07T10:00:00Z",
       updated_at: "2026-04-07T10:00:00Z",
-      created_by: {
-        object: "user",
-        id: "user-1",
-      },
+      created_by: { object: "user", id: "user-1" },
     },
     relationships: {
-      secret: {
-        data: null,
-      },
-      provider_groups: {
-        meta: {
-          count: 0,
-        },
-        data: [],
-      },
+      secret: { data: null },
+      provider_groups: { meta: { count: 0 }, data: [] },
     },
-  },
-] as const;
+    ...overrides,
+  } as ProviderProps;
+}
 
-const scans = [
-  {
-    "scan-1": {
-      id: "scan-1",
-      providerInfo: {
-        provider: "aws",
-        alias: "Scan Account",
-        uid: "123456789012",
-      },
-      attributes: {
-        name: "Nightly scan",
-        completed_at: "2026-04-07T10:00:00Z",
-      },
+function makeScanMap(
+  scanId: string,
+  overrides?: Partial<ScanEntity>,
+): { [scanId: string]: ScanEntity } {
+  return {
+    [scanId]: {
+      id: scanId,
+      providerInfo: { provider: "aws", alias: "Scan Account", uid: "123456789012" },
+      attributes: { name: "Nightly scan", completed_at: "2026-04-07T10:00:00Z" },
+      ...overrides,
     },
-  },
-] as const;
+  };
+}
+
+const providers = [makeProvider({ id: "provider-1" })];
+const scans = [makeScanMap("scan-1")];
 
 describe("getFindingsFilterDisplayValue", () => {
   it("shows the account alias for provider_id filters instead of the raw provider id", () => {
     expect(
       getFindingsFilterDisplayValue("filter[provider_id__in]", "provider-1", {
-        providers: [...providers],
+        providers,
       }),
     ).toBe("Production Account");
   });
@@ -73,15 +65,14 @@ describe("getFindingsFilterDisplayValue", () => {
       getFindingsFilterDisplayValue("filter[provider_id__in]", "provider-2", {
         providers: [
           ...providers,
-          {
-            ...providers[0],
+          makeProvider({
             id: "provider-2",
             attributes: {
               ...providers[0].attributes,
               alias: "",
               uid: "210987654321",
             },
-          },
+          }),
         ],
       }),
     ).toBe("210987654321");
@@ -92,9 +83,7 @@ describe("getFindingsFilterDisplayValue", () => {
       getFindingsFilterDisplayValue(
         "filter[provider_id__in]",
         "missing-provider",
-        {
-          providers: [...providers],
-        },
+        { providers },
       ),
     ).toBe("missing-provider");
   });
@@ -110,19 +99,10 @@ describe("getFindingsFilterDisplayValue", () => {
       getFindingsFilterDisplayValue("filter[scan__in]", "scan-2", {
         scans: [
           ...scans,
-          {
-            "scan-2": {
-              id: "scan-2",
-              providerInfo: {
-                provider: "aws",
-                uid: "210987654321",
-              },
-              attributes: {
-                name: "Weekly scan",
-                completed_at: "2026-04-08T10:00:00Z",
-              },
-            },
-          },
+          makeScanMap("scan-2", {
+            providerInfo: { provider: "aws", uid: "210987654321" },
+            attributes: { name: "Weekly scan", completed_at: "2026-04-08T10:00:00Z" },
+          }),
         ],
       }),
     ).toBe("210987654321");
