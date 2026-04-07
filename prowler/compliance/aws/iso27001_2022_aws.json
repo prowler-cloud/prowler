@@ -1454,6 +1454,7 @@
       "Checks": [
         "awslambda_function_inside_vpc",
         "awslambda_function_vpc_multi_az",
+        "bedrock_vpc_endpoints_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "ec2_transitgateway_auto_accept_vpc_attachments",
         "networkfirewall_in_all_vpc",
@@ -1548,6 +1549,7 @@
       "Checks": [
         "awslambda_function_inside_vpc",
         "awslambda_function_vpc_multi_az",
+        "bedrock_vpc_endpoints_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "ec2_transitgateway_auto_accept_vpc_attachments",
         "networkfirewall_in_all_vpc",
@@ -1642,6 +1644,7 @@
       "Checks": [
         "awslambda_function_inside_vpc",
         "awslambda_function_vpc_multi_az",
+        "bedrock_vpc_endpoints_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "ec2_transitgateway_auto_accept_vpc_attachments",
         "networkfirewall_in_all_vpc",

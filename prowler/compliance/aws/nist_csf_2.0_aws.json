@@ -670,6 +670,7 @@
         "eventbridge_bus_cross_account_access",
         "eventbridge_bus_exposed",
         "route53_dangling_ip_subdomain_takeover",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_peering_routing_tables_with_least_privilege",
         "vpc_endpoint_for_ec2_enabled"
@@ -805,6 +806,7 @@
       "Checks": [
         "vpc_subnet_different_az",
         "vpc_subnet_separate_private_public",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_peering_routing_tables_with_least_privilege",
         "ec2_networkacl_unused",
@@ -1407,6 +1409,7 @@
         "cloudtrail_threat_detection_enumeration",
         "cloudtrail_threat_detection_privilege_escalation",
         "cloudtrail_threat_detection_llm_jacking",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_endpoint_for_ec2_enabled",
         "cloudwatch_log_metric_filter_security_group_changes",

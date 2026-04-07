@@ -1027,6 +1027,7 @@
         "ec2_networkacl_allow_ingress_any_port",
         "vpc_subnet_separate_private_public",
         "vpc_peering_routing_tables_with_least_privilege",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_endpoint_services_allowed_principals_trust_boundaries",
         "elbv2_waf_acl_attached",

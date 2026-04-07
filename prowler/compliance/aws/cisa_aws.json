@@ -132,6 +132,7 @@
         "secretsmanager_automatic_rotation_enabled",
         "securityhub_enabled",
         "sns_topics_kms_encryption_at_rest_enabled",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",

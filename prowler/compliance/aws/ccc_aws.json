@@ -1428,6 +1428,7 @@
         }
       ],
       "Checks": [
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_services_allowed_principals_trust_boundaries",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_endpoint_for_ec2_enabled"
@@ -4214,6 +4215,7 @@
       ],
       "Checks": [
         "organizations_scp_check_deny_regions",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_endpoint_services_allowed_principals_trust_boundaries"
       ]
@@ -4273,6 +4275,7 @@
       ],
       "Checks": [
         "organizations_scp_check_deny_regions",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_services_allowed_principals_trust_boundaries",
         "vpc_endpoint_connections_trust_boundaries"
       ]
@@ -4634,6 +4637,7 @@
         }
       ],
       "Checks": [
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_services_allowed_principals_trust_boundaries",
         "vpc_endpoint_connections_trust_boundaries",
         "s3_bucket_cross_account_access"
@@ -5671,6 +5675,7 @@
         }
       ],
       "Checks": [
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_services_allowed_principals_trust_boundaries",
         "vpc_endpoint_connections_trust_boundaries",
         "iam_role_cross_service_confused_deputy_prevention",
@@ -5738,6 +5743,7 @@
       "Checks": [
         "accessanalyzer_enabled",
         "accessanalyzer_enabled_without_findings",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_endpoint_services_allowed_principals_trust_boundaries",
         "s3_bucket_cross_account_access",
@@ -5824,6 +5830,7 @@
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
         "ec2_securitygroup_default_restrict_traffic",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_services_allowed_principals_trust_boundaries",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_endpoint_for_ec2_enabled"
@@ -5886,6 +5893,7 @@
         }
       ],
       "Checks": [
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_endpoint_services_allowed_principals_trust_boundaries",
         "iam_role_cross_service_confused_deputy_prevention",
