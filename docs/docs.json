@@ -137,6 +137,7 @@
                 "group": "Tutorials",
                 "pages": [
                   "user-guide/tutorials/prowler-app-sso-entra",
+                  "user-guide/tutorials/prowler-app-sso-google-workspace",
                   "user-guide/tutorials/bulk-provider-provisioning",
                   "user-guide/tutorials/aws-organizations-bulk-provisioning"
                 ]
@@ -274,7 +275,8 @@
               {
                 "group": "Image",
                 "pages": [
-                  "user-guide/providers/image/getting-started-image"
+                  "user-guide/providers/image/getting-started-image",
+                  "user-guide/providers/image/authentication"
                 ]
               },
               {

@@ -250,6 +250,16 @@ export const buildAlibabaCloudSecret = (
   return filterEmptyValues(secret);
 };
 
+export const buildVercelSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.VERCEL_API_TOKEN]: getFormValue(
+      formData,
+      ProviderCredentialFields.VERCEL_API_TOKEN,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 export const buildOpenStackSecret = (formData: FormData) => {
   const secret = {
     [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]: getFormValue(
@@ -498,6 +508,10 @@ export const buildSecretConfig = (
     googleworkspace: () => ({
       secretType: "static",
       secret: buildGoogleWorkspaceSecret(formData),
+    }),
+    vercel: () => ({
+      secretType: "static",
+      secret: buildVercelSecret(formData),
     }),
   };
 

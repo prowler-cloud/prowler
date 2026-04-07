@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   adaptFindingsByResourceResponse,
@@ -83,6 +83,14 @@ export function useResourceDetailDrawer({
   const cacheRef = useRef<Map<string, ResourceDrawerFinding[]>>(new Map());
   const checkMetaRef = useRef<CheckMeta | null>(null);
   const fetchControllerRef = useRef<AbortController | null>(null);
+
+  // Abort any in-flight request on unmount to prevent state updates
+  // on an already-unmounted component.
+  useEffect(() => {
+    return () => {
+      fetchControllerRef.current?.abort();
+    };
+  }, []);
 
   const fetchFindings = async (resourceUid: string) => {
     // Abort any in-flight request to prevent stale data from out-of-order responses

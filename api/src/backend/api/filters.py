@@ -434,6 +434,7 @@ class ScanFilter(ProviderRelationshipFilterSet):
     class Meta:
         model = Scan
         fields = {
+            "id": ["exact", "in"],
             "provider": ["exact", "in"],
             "name": ["exact", "icontains"],
             "started_at": ["gte", "lte"],

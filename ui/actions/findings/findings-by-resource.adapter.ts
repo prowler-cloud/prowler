@@ -1,5 +1,5 @@
 import { createDict } from "@/lib";
-import { ProviderType, Severity } from "@/types";
+import type { ProviderType, Severity } from "@/types";
 
 export interface RemediationRecommendation {
   text: string;
@@ -120,48 +120,126 @@ function extractComplianceFrameworks(
 }
 
 /**
+ * Internal shape of a finding item returned by the
+ * `/findings/latest?include=resources,scan.provider` endpoint.
+ */
+interface FindingApiAttributes {
+  uid: string;
+  check_id: string;
+  status: string;
+  severity: string;
+  delta?: string | null;
+  muted?: boolean;
+  muted_reason?: string | null;
+  first_seen_at?: string | null;
+  updated_at?: string | null;
+  status_extended?: string;
+  compliance?: Record<string, string[]>;
+  check_metadata?: Record<string, unknown>;
+}
+
+interface FindingApiItem {
+  id: string;
+  attributes: FindingApiAttributes;
+  relationships?: {
+    resources?: { data?: Array<{ id: string }> };
+    scan?: { data?: { id: string } | null };
+  };
+}
+
+/** Shape of an included JSON:API resource/scan/provider entry returned by createDict. */
+interface IncludedItem {
+  id?: string;
+  attributes?: Record<string, unknown>;
+  relationships?: Record<string, unknown>;
+}
+
+/** Lookup dict returned by createDict(). */
+type IncludedDict = Record<string, IncludedItem>;
+
+/**
  * Transforms the `/findings/latest?include=resources,scan.provider` response
  * into a flat ResourceDrawerFinding array.
  *
  * Uses createDict to build lookup maps from the JSON:API `included` array,
  * then resolves each finding's resource and provider relationships.
  */
+interface JsonApiResponse {
+  data: FindingApiItem[];
+  included?: Record<string, unknown>[];
+}
+
+function isJsonApiResponse(value: unknown): value is JsonApiResponse {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "data" in value &&
+    Array.isArray((value as { data: unknown }).data)
+  );
+}
+
 export function adaptFindingsByResourceResponse(
-  apiResponse: any,
+  apiResponse: unknown,
 ): ResourceDrawerFinding[] {
-  if (!apiResponse?.data || !Array.isArray(apiResponse.data)) {
+  if (!isJsonApiResponse(apiResponse)) {
     return [];
   }
 
-  const resourcesDict = createDict("resources", apiResponse);
-  const scansDict = createDict("scans", apiResponse);
-  const providersDict = createDict("providers", apiResponse);
+  const resourcesDict = createDict("resources", apiResponse) as IncludedDict;
+  const scansDict = createDict("scans", apiResponse) as IncludedDict;
+  const providersDict = createDict("providers", apiResponse) as IncludedDict;
 
-  return apiResponse.data.map((item: any) => {
+  return apiResponse.data.map((item) => {
     const attrs = item.attributes;
-    const meta = attrs.check_metadata || {};
-    const remediation = meta.remediation || {
+    const meta = (attrs.check_metadata || {}) as Record<string, unknown>;
+    const remediationRaw = meta.remediation as
+      | Record<string, unknown>
+      | undefined;
+    const remediation = remediationRaw || {
       recommendation: { text: "", url: "" },
       code: { cli: "", other: "", nativeiac: "", terraform: "" },
     };
 
     // Resolve resource from included
     const resourceRel = item.relationships?.resources?.data?.[0];
-    const resource = resourceRel ? resourcesDict[resourceRel.id] : null;
-    const resourceAttrs = resource?.attributes || {};
+    const resource: IncludedItem | null = resourceRel
+      ? (resourcesDict[resourceRel.id] ?? null)
+      : null;
+    const resourceAttrs = (resource?.attributes || {}) as Record<
+      string,
+      unknown
+    >;
 
     // Resolve provider via scan → provider (include path: scan.provider)
     const scanRel = item.relationships?.scan?.data;
-    const scan = scanRel ? scansDict[scanRel.id] : null;
-    const providerRelId = scan?.relationships?.provider?.data?.id ?? null;
-    const provider = providerRelId ? providersDict[providerRelId] : null;
-    const providerAttrs = provider?.attributes || {};
+    const scan: IncludedItem | null = scanRel
+      ? (scansDict[scanRel.id] ?? null)
+      : null;
+    const scanRels = scan?.relationships as Record<string, unknown> | undefined;
+    const providerRelId =
+      ((
+        (scanRels?.provider as Record<string, unknown> | undefined)?.data as
+          | Record<string, unknown>
+          | undefined
+      )?.id as string | null) ?? null;
+    const provider: IncludedItem | null = providerRelId
+      ? (providersDict[providerRelId] ?? null)
+      : null;
+    const providerAttrs = (provider?.attributes || {}) as Record<
+      string,
+      unknown
+    >;
+
+    const remRec = remediation.recommendation as
+      | Record<string, unknown>
+      | undefined;
+    const remCode = remediation.code as Record<string, unknown> | undefined;
 
     return {
       id: item.id,
       uid: attrs.uid,
       checkId: attrs.check_id,
-      checkTitle: meta.checktitle || attrs.check_id,
+      checkTitle: (meta.checktitle as string | undefined) || attrs.check_id,
       status: attrs.status,
       severity: (attrs.severity || "informational") as Severity,
       delta: attrs.delta || null,
@@ -171,52 +249,59 @@ export function adaptFindingsByResourceResponse(
       updatedAt: attrs.updated_at || null,
       // Resource
       resourceId: resourceRel?.id || "",
-      resourceUid: resourceAttrs.uid || "-",
-      resourceName: resourceAttrs.name || "-",
-      resourceService: resourceAttrs.service || "-",
-      resourceRegion: resourceAttrs.region || "-",
-      resourceType: resourceAttrs.type || "-",
-      resourceGroup: meta.resourcegroup || "-",
+      resourceUid: (resourceAttrs.uid as string | undefined) || "-",
+      resourceName: (resourceAttrs.name as string | undefined) || "-",
+      resourceService: (resourceAttrs.service as string | undefined) || "-",
+      resourceRegion: (resourceAttrs.region as string | undefined) || "-",
+      resourceType: (resourceAttrs.type as string | undefined) || "-",
+      resourceGroup: (meta.resourcegroup as string | undefined) || "-",
       // Provider
-      providerType: (providerAttrs.provider || "aws") as ProviderType,
-      providerAlias: providerAttrs.alias || "",
-      providerUid: providerAttrs.uid || "",
+      providerType: ((providerAttrs.provider as string | undefined) ||
+        "aws") as ProviderType,
+      providerAlias: (providerAttrs.alias as string | undefined) || "",
+      providerUid: (providerAttrs.uid as string | undefined) || "",
       // Check metadata
-      risk: meta.risk || "",
-      description: meta.description || "",
+      risk: (meta.risk as string | undefined) || "",
+      description: (meta.description as string | undefined) || "",
       statusExtended: attrs.status_extended || "",
       complianceFrameworks: extractComplianceFrameworks(
-        meta.compliance ?? meta.Compliance,
+        (meta.compliance ?? meta.Compliance) as unknown,
         attrs.compliance,
       ),
-      categories: meta.categories || [],
+      categories: (meta.categories as string[] | undefined) || [],
       remediation: {
         recommendation: {
-          text: remediation.recommendation?.text || "",
-          url: remediation.recommendation?.url || "",
+          text: (remRec?.text as string | undefined) || "",
+          url: (remRec?.url as string | undefined) || "",
         },
         code: {
-          cli: remediation.code?.cli || "",
-          other: remediation.code?.other || "",
-          nativeiac: remediation.code?.nativeiac || "",
-          terraform: remediation.code?.terraform || "",
+          cli: (remCode?.cli as string | undefined) || "",
+          other: (remCode?.other as string | undefined) || "",
+          nativeiac: (remCode?.nativeiac as string | undefined) || "",
+          terraform: (remCode?.terraform as string | undefined) || "",
         },
       },
-      additionalUrls: meta.additionalurls || [],
+      additionalUrls: (meta.additionalurls as string[] | undefined) || [],
       // Scan
       scan: scan?.attributes
         ? {
-            id: scan.id || "",
-            name: scan.attributes.name || "",
-            trigger: scan.attributes.trigger || "",
-            state: scan.attributes.state || "",
-            uniqueResourceCount: scan.attributes.unique_resource_count || 0,
-            progress: scan.attributes.progress || 0,
-            duration: scan.attributes.duration || 0,
-            startedAt: scan.attributes.started_at || null,
-            completedAt: scan.attributes.completed_at || null,
-            insertedAt: scan.attributes.inserted_at || null,
-            scheduledAt: scan.attributes.scheduled_at || null,
+            id: (scan.id as string | undefined) || "",
+            name: (scan.attributes.name as string | undefined) || "",
+            trigger: (scan.attributes.trigger as string | undefined) || "",
+            state: (scan.attributes.state as string | undefined) || "",
+            uniqueResourceCount:
+              (scan.attributes.unique_resource_count as number | undefined) ||
+              0,
+            progress: (scan.attributes.progress as number | undefined) || 0,
+            duration: (scan.attributes.duration as number | undefined) || 0,
+            startedAt:
+              (scan.attributes.started_at as string | undefined) || null,
+            completedAt:
+              (scan.attributes.completed_at as string | undefined) || null,
+            insertedAt:
+              (scan.attributes.inserted_at as string | undefined) || null,
+            scheduledAt:
+              (scan.attributes.scheduled_at as string | undefined) || null,
           }
         : null,
     };
