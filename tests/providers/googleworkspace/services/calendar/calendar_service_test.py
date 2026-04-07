@@ -146,6 +146,71 @@ class TestCalendarService:
             assert calendar.policies.secondary_calendar_external_sharing is None
             assert calendar.policies.external_invitations_warning is None
 
+    def test_calendar_fetch_policies_build_service_returns_none(self):
+        """Test early return when _build_service fails to construct the client"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.calendar.calendar_service.GoogleWorkspaceService._build_service",
+                return_value=None,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.calendar.calendar_service import (
+                Calendar,
+            )
+
+            calendar = Calendar(mock_provider)
+
+            assert calendar.policies_fetched is False
+            assert calendar.policies.primary_calendar_external_sharing is None
+            assert calendar.policies.secondary_calendar_external_sharing is None
+            assert calendar.policies.external_invitations_warning is None
+
+    def test_calendar_fetch_policies_execute_raises(self):
+        """Test inner except handler when request.execute() raises during pagination"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_request = MagicMock()
+        mock_request.execute.side_effect = Exception("Execute failed")
+        mock_service.policies().list.return_value = mock_request
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.calendar.calendar_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.calendar.calendar_service import (
+                Calendar,
+            )
+
+            calendar = Calendar(mock_provider)
+
+            assert calendar.policies_fetched is False
+            assert calendar.policies.primary_calendar_external_sharing is None
+            assert calendar.policies.secondary_calendar_external_sharing is None
+            assert calendar.policies.external_invitations_warning is None
+
     def test_calendar_policies_model(self):
         """Test CalendarPolicies Pydantic model"""
         from prowler.providers.googleworkspace.services.calendar.calendar_service import (
