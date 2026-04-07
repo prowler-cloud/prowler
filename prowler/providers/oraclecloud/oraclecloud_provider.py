@@ -351,7 +351,6 @@ class OraclecloudProvider(Provider):
 
                 try:
                     config = oci.config.from_file(oci_config_file, profile)
-                    oci.config.validate_config(config)
 
                     # Check if using security token authentication
                     if (
@@ -374,6 +373,9 @@ class OraclecloudProvider(Provider):
                             token=token, private_key=private_key
                         )
                     else:
+                        # Only validate full config for API key auth
+                        # (session auth doesn't require 'user' field)
+                        oci.config.validate_config(config)
                         logger.info(
                             f"Using profile '{profile}' with API key authentication"
                         )
