@@ -80,7 +80,7 @@ export function getColumnFindingGroups({
               ? DeltaValues.CHANGED
               : DeltaValues.NONE;
 
-        const canExpand = group.resourcesFail > 0;
+        const canExpand = group.resourcesTotal > 0;
 
         return (
           <div className="flex items-center gap-2">
@@ -155,7 +155,7 @@ export function getColumnFindingGroups({
       ),
       cell: ({ row }) => {
         const group = row.original;
-        const canExpand = group.resourcesFail > 0;
+        const canExpand = group.resourcesTotal > 0;
 
         return (
           <div>

@@ -136,8 +136,8 @@ export function FindingsGroupTable({
   };
 
   const handleDrillDown = (checkId: string, group: FindingGroupRow) => {
-    // No impacted resources → nothing to show, skip drill-down
-    if (group.resourcesFail === 0) return;
+    // No resources in the group → nothing to show, skip drill-down
+    if (group.resourcesTotal === 0) return;
 
     // Toggle: same group = collapse, different = switch
     if (expandedCheckId === checkId) {
