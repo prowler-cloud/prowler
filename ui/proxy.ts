@@ -21,9 +21,11 @@ export default auth((req: NextRequest & { auth: any }) => {
   const { pathname } = req.nextUrl;
 
   // Backward compatibility: redirect old invitation links to new smart router
+  // Skip redirect when the user explicitly chose "Create an account" from the smart router
   if (
     pathname === "/sign-up" &&
-    req.nextUrl.searchParams.has("invitation_token")
+    req.nextUrl.searchParams.has("invitation_token") &&
+    !req.nextUrl.searchParams.has("action")
   ) {
     const acceptUrl = new URL("/invitation/accept", req.url);
     acceptUrl.searchParams.set(

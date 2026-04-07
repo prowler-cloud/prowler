@@ -215,7 +215,7 @@ export function AcceptInvitationClient({
                 className="w-full"
                 onClick={() => {
                   router.push(
-                    `/sign-up?invitation_token=${encodeURIComponent(token!)}`,
+                    `/sign-up?invitation_token=${encodeURIComponent(token!)}&action=signup`,
                   );
                 }}
               >
