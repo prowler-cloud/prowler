@@ -401,7 +401,7 @@ class Identity(OCIService):
     def __list_dynamic_groups__(self, regional_client):
         """List all dynamic groups in the tenancy."""
         try:
-            # Only use one region for global search
+            # Only use one region for global dynamic groups
             if regional_client.region != self.provider.regions[0].key:
                 return
 
@@ -580,7 +580,9 @@ class Identity(OCIService):
 
     def __search_root_compartment_resources__(self, regional_client):
         """Search for resources in the root compartment using OCI Resource Search."""
-
+        # Only use one region for global search
+        if regional_client.region != self.provider.regions[0].key:
+            return
 
         try:
             logger.info("Identity - Searching for resources in root compartment...")
@@ -626,6 +628,10 @@ class Identity(OCIService):
 
     def __search_active_non_root_compartments__(self, regional_client):
         """Search for active non-root compartments using OCI Resource Search."""
+        # Only use one region for global search
+        if regional_client.region != self.provider.regions[0].key:
+            return
+
         try:
             logger.info("Identity - Searching for active non-root compartments...")
 
