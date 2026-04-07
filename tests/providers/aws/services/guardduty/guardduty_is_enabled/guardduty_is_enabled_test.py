@@ -178,7 +178,9 @@ class Test_guardduty_is_enabled:
 
         detector_id = guardduty_client.create_detector(Enable=False)["DetectorId"]
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+        )
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
