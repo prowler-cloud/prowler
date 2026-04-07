@@ -41,8 +41,15 @@ function makeScanMap(
   return {
     [scanId]: {
       id: scanId,
-      providerInfo: { provider: "aws", alias: "Scan Account", uid: "123456789012" },
-      attributes: { name: "Nightly scan", completed_at: "2026-04-07T10:00:00Z" },
+      providerInfo: {
+        provider: "aws",
+        alias: "Scan Account",
+        uid: "123456789012",
+      },
+      attributes: {
+        name: "Nightly scan",
+        completed_at: "2026-04-07T10:00:00Z",
+      },
       ...overrides,
     },
   };
@@ -101,7 +108,10 @@ describe("getFindingsFilterDisplayValue", () => {
           ...scans,
           makeScanMap("scan-2", {
             providerInfo: { provider: "aws", uid: "210987654321" },
-            attributes: { name: "Weekly scan", completed_at: "2026-04-08T10:00:00Z" },
+            attributes: {
+              name: "Weekly scan",
+              completed_at: "2026-04-08T10:00:00Z",
+            },
           }),
         ],
       }),

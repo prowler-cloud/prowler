@@ -18,7 +18,12 @@ import {
   createProviderDetailsMapping,
   extractProviderUIDs,
 } from "@/lib/provider-helpers";
-import { ExpandedScanData, ProviderProps, ScanProps, SearchParamsProps } from "@/types";
+import {
+  ExpandedScanData,
+  ProviderProps,
+  ScanProps,
+  SearchParamsProps,
+} from "@/types";
 
 export default async function Scans({
   searchParams,
