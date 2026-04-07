@@ -25,25 +25,25 @@ def mock_generate_regional_clients(provider, service):
 class Test_FSx_Service:
     # Test FSx Service
     def test_service(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         fsx = FSx(aws_provider)
         assert fsx.service == "fsx"
 
     # Test FSx Client
     def test_client(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         fsx = FSx(aws_provider)
         assert fsx.client.__class__.__name__ == "FSx"
 
     # Test FSx Session
     def test__get_session__(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         fsx = FSx(aws_provider)
         assert fsx.session.__class__.__name__ == "Session"
 
     # Test FSx Session
     def test_audited_account(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         fsx = FSx(aws_provider)
         assert fsx.audited_account == AWS_ACCOUNT_NUMBER
 

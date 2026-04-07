@@ -55,32 +55,32 @@ def mock_generate_regional_clients(provider, service):
 class Test_DLM_Service:
     # Test DLM Service
     def test_service(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         dlm = DLM(aws_provider)
         assert dlm.service == "dlm"
 
     # Test DLM Client
     def test_client(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         dlm = DLM(aws_provider)
         assert dlm.client.__class__.__name__ == "DLM"
 
     # Test DLM Session
     def test__get_session__(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         dlm = DLM(aws_provider)
         assert dlm.session.__class__.__name__ == "Session"
 
     # Test DLM Session
     def test_audited_account(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         dlm = DLM(aws_provider)
         assert dlm.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test DLM Get DLM Contacts
     def test_get_lifecycle_policies(self):
         # DLM client for this test class
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         dlm = DLM(aws_provider)
         assert dlm.lifecycle_policies == {
             AWS_REGION_US_EAST_1: {

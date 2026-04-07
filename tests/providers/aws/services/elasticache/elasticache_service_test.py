@@ -135,31 +135,31 @@ def mock_generate_regional_clients(provider, service):
 class Test_ElastiCache_Service:
     # Test ElastiCache Service
     def test_service(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         elasticache = ElastiCache(aws_provider)
         assert elasticache.service == "elasticache"
 
     # Test ElastiCache Client]
     def test_client(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         elasticache = ElastiCache(aws_provider)
         assert elasticache.client.__class__.__name__ == "ElastiCache"
 
     # Test ElastiCache Session
     def test__get_session__(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         elasticache = ElastiCache(aws_provider)
         assert elasticache.session.__class__.__name__ == "Session"
 
     # Test ElastiCache Session
     def test_audited_account(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         elasticache = ElastiCache(aws_provider)
         assert elasticache.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test Elasticache Redis cache clusters
     def test_describe_cache_clusters(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         elasticache = ElastiCache(aws_provider)
 
         assert len(elasticache.clusters) == 1
@@ -180,7 +180,7 @@ class Test_ElastiCache_Service:
 
     # Test Elasticache Redis replication_groups
     def test_describe_replication_groups(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         elasticache = ElastiCache(aws_provider)
 
         assert len(elasticache.replication_groups) == 1

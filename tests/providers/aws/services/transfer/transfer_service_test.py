@@ -59,7 +59,7 @@ class Test_transfer_service:
 
     @mock_aws
     def test_get_service(self):
-        transfer = Transfer(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
+        transfer = Transfer(set_mocked_aws_provider())
         assert transfer.service == "transfer"
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)

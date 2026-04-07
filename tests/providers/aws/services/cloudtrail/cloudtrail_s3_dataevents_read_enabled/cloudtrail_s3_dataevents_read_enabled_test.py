@@ -30,7 +30,7 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
 
         with (
             mock.patch(
@@ -75,7 +75,7 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         aws_provider._scan_unused_services = False
 
         with (
@@ -113,7 +113,7 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         aws_provider._scan_unused_services = False
 
         with (
@@ -182,7 +182,7 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
 
         with (
             mock.patch(
@@ -250,7 +250,7 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
 
         with (
             mock.patch(
@@ -315,7 +315,7 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
 
         with (
             mock.patch(
@@ -386,7 +386,7 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
 
         with (
             mock.patch(
@@ -428,7 +428,7 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
 
         with (
             mock.patch(

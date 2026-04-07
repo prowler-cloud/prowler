@@ -206,7 +206,7 @@ class Test_Neptune_Service:
         assert neptune.db_cluster_snapshots[0] == expected_snapshot
 
     def test_describe_db_cluster_snapshot_attributes(self):
-        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         neptune = Neptune(aws_provider)
         neptune.db_cluster_snapshots = [
             ClusterSnapshot(

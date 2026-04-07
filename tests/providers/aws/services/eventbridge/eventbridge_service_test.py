@@ -55,7 +55,7 @@ class Test_EventBridge_Service:
     @mock_aws
     def test_service(self):
         # EventBridge client for this test class
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         eventbridge = EventBridge(aws_provider)
         assert eventbridge.service == "events"
 
@@ -63,7 +63,7 @@ class Test_EventBridge_Service:
     @mock_aws
     def test_client(self):
         # EventBridge client for this test class
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         eventbridge = EventBridge(aws_provider)
         for client_ in eventbridge.regional_clients.values():
             assert client_.__class__.__name__ == "EventBridge"
@@ -72,7 +72,7 @@ class Test_EventBridge_Service:
     @mock_aws
     def test__get_session__(self):
         # EventBridge client for this test class
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         eventbridge = EventBridge(aws_provider)
         assert eventbridge.session.__class__.__name__ == "Session"
 
@@ -80,7 +80,7 @@ class Test_EventBridge_Service:
     @mock_aws
     def test_audited_account(self):
         # EventBridge client for this test class
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         eventbridge = EventBridge(aws_provider)
         assert eventbridge.audited_account == AWS_ACCOUNT_NUMBER
 
@@ -88,7 +88,7 @@ class Test_EventBridge_Service:
     @mock_aws
     def test_schema_service(self):
         # Schema client for this test class
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         schema = Schema(aws_provider)
         assert schema.service == "schemas"
 
@@ -96,7 +96,7 @@ class Test_EventBridge_Service:
     @mock_aws
     def test_schema_client(self):
         # Schema client for this test class
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         schema = Schema(aws_provider)
         for client_ in schema.regional_clients.values():
             assert client_.__class__.__name__ == "Schemas"
@@ -105,7 +105,7 @@ class Test_EventBridge_Service:
     @mock_aws
     def test__schema_get_session__(self):
         # Schema client for this test class
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         schema = Schema(aws_provider)
         assert schema.session.__class__.__name__ == "Session"
 
@@ -113,7 +113,7 @@ class Test_EventBridge_Service:
     @mock_aws
     def test_schema_audited_account(self):
         # Schema client for this test class
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         schema = Schema(aws_provider)
         assert schema.audited_account == AWS_ACCOUNT_NUMBER
 
@@ -133,7 +133,7 @@ class Test_EventBridge_Service:
             Principal="123456789012",
             StatementId="test-statement",
         )
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         eventbridge = EventBridge(aws_provider)
         # Each region has a default bus, plus the "test" bus we created in us-east-1
         assert len(eventbridge.buses) == len(eventbridge.regional_clients) + 1
@@ -161,7 +161,7 @@ class Test_EventBridge_Service:
 
     # Test Schema Registries
     def test_list_policies(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         schema = Schema(aws_provider)
         assert len(schema.registries) == 1
         schema_arn = "arn:aws:schemas:us-east-1:123456789012:registry/test"

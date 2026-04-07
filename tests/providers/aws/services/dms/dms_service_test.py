@@ -116,24 +116,24 @@ def mock_generate_regional_clients(provider, service):
 class Test_DMS_Service:
     # Test DMS Service
     def test_service(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         DMS(aws_provider)
 
     # Test DMS Client
     def test_client(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         dms = DMS(aws_provider)
         assert dms.client.__class__.__name__ == "DatabaseMigrationService"
 
     # Test DMS Account
     def test_audited_account(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         dms = DMS(aws_provider)
         assert dms.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test DMS Replication Instances
     def test_describe_rep_instances(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         dms = DMS(aws_provider)
 
         assert len(dms.instances) == 1
@@ -148,7 +148,7 @@ class Test_DMS_Service:
 
     # Test DMS Endpoints
     def test_describe_endpoints(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         dms = DMS(aws_provider)
 
         assert len(dms.endpoints) == 1
@@ -160,7 +160,7 @@ class Test_DMS_Service:
         assert dms.endpoints[DMS_ENDPOINT_ARN].engine_name == "neptune"
 
     def test_list_tags(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         dms = DMS(aws_provider)
 
         assert dms.instances[0].tags == [

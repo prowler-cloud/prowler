@@ -121,31 +121,31 @@ def mock_generate_regional_clients(provider, service):
 class Test_DocumentDB_Service:
     # Test DocumentDB Service
     def test_service(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         docdb = DocumentDB(aws_provider)
         assert docdb.service == "docdb"
 
     # Test DocumentDB Client
     def test_client(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         docdb = DocumentDB(aws_provider)
         assert docdb.client.__class__.__name__ == "DocDB"
 
     # Test DocumentDB Session
     def test__get_session__(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         docdb = DocumentDB(aws_provider)
         assert docdb.session.__class__.__name__ == "Session"
 
     # Test DocumentDB Session
     def test_audited_account(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         docdb = DocumentDB(aws_provider)
         assert docdb.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test DocumentDB Get DocumentDB Contacts
     def test_describe_db_instances(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         docdb = DocumentDB(aws_provider)
         assert docdb.db_instances == {
             DOC_DB_INSTANCE_ARN: Instance(
@@ -164,7 +164,7 @@ class Test_DocumentDB_Service:
 
     # Test DocumentDB Describe DB Clusters
     def test_describe_db_clusters(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         docdb = DocumentDB(aws_provider)
         assert docdb.db_clusters == {
             DOC_DB_CLUSTER_ARN: DBCluster(
@@ -185,7 +185,7 @@ class Test_DocumentDB_Service:
 
     # Test DocumentDB Describe DB Cluster Snapshots
     def test_describe_db_cluster_snapshots(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         docdb = DocumentDB(aws_provider)
         assert docdb.db_cluster_snapshots == [
             ClusterSnapshot(
@@ -201,7 +201,7 @@ class Test_DocumentDB_Service:
 
     # Test DocumentDB Describe DB Snapshot Attributes
     def test_describe_db_cluster_snapshot_attributes(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         docdb = DocumentDB(aws_provider)
         docdb.db_cluster_snapshots = [
             ClusterSnapshot(

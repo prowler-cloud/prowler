@@ -66,31 +66,31 @@ def mock_generate_regional_clients(provider, service):
 class Test_MemoryDB_Service:
     # Test MemoryDB Service
     def test_service(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         memorydb = MemoryDB(aws_provider)
         assert memorydb.service == "memorydb"
 
     # Test MemoryDB Client
     def test_client(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         memorydb = MemoryDB(aws_provider)
         assert memorydb.client.__class__.__name__ == "MemoryDB"
 
     # Test MemoryDB Session
     def test__get_session__(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         memorydb = MemoryDB(aws_provider)
         assert memorydb.session.__class__.__name__ == "Session"
 
     # Test MemoryDB Session
     def test_audited_account(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         memorydb = MemoryDB(aws_provider)
         assert memorydb.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test MemoryDB Describe Clusters
     def test_describe_clusters(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         memorydb = MemoryDB(aws_provider)
         assert memorydb.clusters == {
             MEM_DB_CLUSTER_ARN: Cluster(
@@ -148,7 +148,7 @@ class Test_MemoryDB_Service_No_Security_Groups:
 
     def test_describe_clusters_no_security_groups(self):
         """Test that clusters without SecurityGroups field are handled correctly"""
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         memorydb = MemoryDB(aws_provider)
         assert memorydb.clusters == {
             MEM_DB_CLUSTER_ARN: Cluster(

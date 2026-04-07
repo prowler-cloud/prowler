@@ -143,7 +143,7 @@ class Test_Glue_Service:
     @mock_aws
     def test_service(self):
         # Glue client for this test class
-        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         assert glue.service == "glue"
 
@@ -151,7 +151,7 @@ class Test_Glue_Service:
     @mock_aws
     def test_client(self):
         # Glue client for this test class
-        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         for regional_client in glue.regional_clients.values():
             assert regional_client.__class__.__name__ == "Glue"
@@ -160,7 +160,7 @@ class Test_Glue_Service:
     @mock_aws
     def test__get_session__(self):
         # Glue client for this test class
-        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         assert glue.session.__class__.__name__ == "Session"
 
@@ -168,14 +168,14 @@ class Test_Glue_Service:
     @mock_aws
     def test_audited_account(self):
         # Glue client for this test class
-        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         assert glue.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test Glue Search Tables
     @mock_aws
     def test_search_tables(self):
-        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         assert len(glue.tables) == 1
         assert glue.tables[0].name == "table"
@@ -186,7 +186,7 @@ class Test_Glue_Service:
     # Test Glue Get Connections
     @mock_aws
     def test_get_connections(self):
-        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         assert len(glue.connections) == 1
         assert glue.connections[0].name == "connection"
@@ -203,7 +203,7 @@ class Test_Glue_Service:
     # Test Glue Get Catalog Encryption
     @mock_aws
     def test_get_data_catalog_encryption_settings(self):
-        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         assert glue.data_catalogs[AWS_REGION_US_EAST_1].encryption_settings
         assert (
@@ -225,7 +225,7 @@ class Test_Glue_Service:
     # Test Glue Get Dev Endpoints
     @mock_aws
     def test_get_dev_endpoints(self):
-        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         assert len(glue.dev_endpoints) == 1
         assert glue.dev_endpoints[0].name == "endpoint"
@@ -235,7 +235,7 @@ class Test_Glue_Service:
     # Test Glue Get Security Configs
     @mock_aws
     def test_get_security_configurations(self):
-        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         assert len(glue.security_configs) == 1
         assert glue.security_configs[0].name == "test"
@@ -247,7 +247,7 @@ class Test_Glue_Service:
     # Test Glue Get Security Configs
     @mock_aws
     def test_get_jobs(self):
-        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         assert len(glue.jobs) == 1
         assert glue.jobs[0].name == "job"
@@ -260,7 +260,7 @@ class Test_Glue_Service:
 
     @mock_aws
     def test_get_ml_transforms(self):
-        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
         arn_transform = f"arn:aws:glue:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:mlTransform/transform1"
 
@@ -274,7 +274,7 @@ class Test_Glue_Service:
 
     @mock_aws
     def test_get_tags(self):
-        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
 
         assert glue.dev_endpoints[0].tags == [{"test_key": "test_value"}]
