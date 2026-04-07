@@ -202,12 +202,10 @@ export function AcceptInvitationClient({
               <Button
                 className="w-full"
                 onClick={() => {
-                  const signInUrl = new URL("/sign-in", window.location.origin);
-                  signInUrl.searchParams.set(
-                    "callbackUrl",
-                    `/invitation/accept?invitation_token=${token}`,
+                  const callbackPath = `/invitation/accept?invitation_token=${encodeURIComponent(token!)}`;
+                  router.push(
+                    `/sign-in?callbackUrl=${encodeURIComponent(callbackPath)}`,
                   );
-                  router.push(signInUrl.toString());
                 }}
               >
                 I have an account — Sign in
@@ -217,7 +215,7 @@ export function AcceptInvitationClient({
                 className="w-full"
                 onClick={() => {
                   router.push(
-                    `/sign-up?invitation_token=${token}`,
+                    `/sign-up?invitation_token=${encodeURIComponent(token!)}`,
                   );
                 }}
               >
