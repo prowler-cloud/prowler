@@ -7,7 +7,7 @@ import {
 } from "@/actions/finding-groups";
 import { getLatestMetadataInfo, getMetadataInfo } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
-import { getScans } from "@/actions/scans";
+import { getScan, getScans } from "@/actions/scans";
 import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
   FindingsGroupTable,
@@ -21,6 +21,7 @@ import {
   extractSortAndKey,
   hasDateOrScanFilter,
 } from "@/lib";
+import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
 import { ScanEntity, ScanProps } from "@/types";
 import { SearchParamsProps } from "@/types/components";
 
@@ -39,15 +40,27 @@ export default async function Findings({
   // TODO: Re-implement deep link support (/findings?id=<uuid>) using the grouped view's resource detail drawer
   // once the legacy FindingDetailsSheet is fully deprecated (still used by /resources and overview dashboard).
 
-  const [metadataInfoData, providersData, scansData] = await Promise.all([
-    (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
-      query,
-      sort: encodedSort,
-      filters,
-    }),
+  const [providersData, scansData] = await Promise.all([
     getProviders({ pageSize: 50 }),
     getScans({ pageSize: 50 }),
   ]);
+
+  const filtersWithScanDates = await resolveFindingScanDateFilters({
+    filters,
+    scans: scansData?.data || [],
+    loadScan: async (scanId: string) => {
+      const response = await getScan(scanId);
+      return response?.data;
+    },
+  });
+
+  const metadataInfoData = await (
+    hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo
+  )({
+    query,
+    sort: encodedSort,
+    filters: filtersWithScanDates,
+  });
 
   // Extract unique regions, services, categories, groups from the new endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
@@ -88,7 +101,10 @@ export default async function Findings({
           />
         </div>
         <Suspense fallback={<SkeletonTableFindings />}>
-          <SSRDataTable searchParams={resolvedSearchParams} />
+          <SSRDataTable
+            searchParams={resolvedSearchParams}
+            filters={filtersWithScanDates}
+          />
         </Suspense>
       </FilterTransitionWrapper>
     </ContentLayout>
@@ -97,8 +113,10 @@ export default async function Findings({
 
 const SSRDataTable = async ({
   searchParams,
+  filters,
 }: {
   searchParams: SearchParamsProps;
+  filters: Record<string, string>;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
@@ -108,8 +126,6 @@ const SSRDataTable = async ({
     ...searchParams,
     sort: searchParams.sort ?? defaultSort,
   });
-
-  const { filters } = extractFiltersAndQuery(searchParams);
   // Check if the searchParams contain any date or scan filter
   const hasDateOrScan = hasDateOrScanFilter(searchParams);
 

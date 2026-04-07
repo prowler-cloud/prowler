@@ -18,4 +18,8 @@ describe("findings page", () => {
   it("still lets an explicit frontend sort override the default order", () => {
     expect(source).toContain("sort: searchParams.sort ?? defaultSort");
   });
+
+  it("normalizes scan filters with the required inserted_at params before fetching historical finding groups", () => {
+    expect(source).toContain("resolveFindingScanDateFilters");
+  });
 });
