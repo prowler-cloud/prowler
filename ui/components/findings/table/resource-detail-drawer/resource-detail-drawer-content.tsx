@@ -428,10 +428,10 @@ export function ResourceDetailDrawerContent({
         )}
       </div>
 
-      {/* Navigation: "Impacted Resource (X of N)" */}
+      {/* Navigation: "Resource (X of N)" */}
       <div className="flex items-center justify-between">
         <Badge variant="tag" className="rounded text-sm">
-          Impacted Resource
+          Resource
           <span className="font-bold">{currentIndex + 1}</span>
           <span className="font-normal">of</span>
           <span className="font-bold">{totalResources}</span>
