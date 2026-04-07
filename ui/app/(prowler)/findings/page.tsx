@@ -102,7 +102,7 @@ const SSRDataTable = async ({
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
-  const defaultSort = "-severity,-fail_count,-last_seen_at";
+  const defaultSort = "-fail_count,-severity,-last_seen_at";
 
   const { encodedSort } = extractSortAndKey({
     ...searchParams,
