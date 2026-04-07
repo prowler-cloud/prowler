@@ -20,6 +20,13 @@ class entra_conditional_access_policy_unknown_device_blocked(Check):
     - FAIL: No CA policy restricts access from unrecognized device platforms.
     """
 
+    @staticmethod
+    def _normalize_platform(platform: object) -> str:
+        normalized_platform = getattr(platform, "value", platform)
+        return (
+            normalized_platform.lower() if isinstance(normalized_platform, str) else ""
+        )
+
     def execute(self) -> list[CheckReportM365]:
         """Execute the check logic.
 
@@ -43,15 +50,29 @@ class entra_conditional_access_policy_unknown_device_blocked(Check):
             if not policy.conditions.platform_conditions:
                 continue
 
-            if (
-                "all"
-                not in policy.conditions.platform_conditions.included_platforms
-            ):
+            included_platforms = {
+                normalized_platform
+                for normalized_platform in map(
+                    self._normalize_platform,
+                    policy.conditions.platform_conditions.include_platforms,
+                )
+                if normalized_platform
+            }
+            excluded_platforms = {
+                normalized_platform
+                for normalized_platform in map(
+                    self._normalize_platform,
+                    policy.conditions.platform_conditions.exclude_platforms,
+                )
+                if normalized_platform
+            }
+
+            if "all" not in included_platforms:
                 continue
 
-            if not KNOWN_PLATFORMS.issubset(
-                set(policy.conditions.platform_conditions.excluded_platforms)
-            ):
+            if not {
+                self._normalize_platform(platform) for platform in KNOWN_PLATFORMS
+            }.issubset(excluded_platforms):
                 continue
 
             if (

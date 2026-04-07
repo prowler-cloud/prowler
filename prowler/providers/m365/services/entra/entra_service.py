@@ -9,7 +9,7 @@ from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
     RunHuntingQueryPostRequestBody,
 )
-from pydantic.v1 import BaseModel
+from pydantic.v1 import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
@@ -823,8 +823,15 @@ class ClientAppType(Enum):
 class PlatformConditions(BaseModel):
     """Model representing device platform conditions for Conditional Access policies."""
 
-    included_platforms: List[str] = []
-    excluded_platforms: List[str] = []
+    include_platforms: List[str] = Field(
+        default_factory=list, alias="included_platforms"
+    )
+    exclude_platforms: List[str] = Field(
+        default_factory=list, alias="excluded_platforms"
+    )
+
+    class Config:
+        allow_population_by_field_name = True
 
 
 class Conditions(BaseModel):

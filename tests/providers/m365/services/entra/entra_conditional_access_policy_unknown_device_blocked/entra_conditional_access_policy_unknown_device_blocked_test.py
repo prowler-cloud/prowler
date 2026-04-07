@@ -19,7 +19,7 @@ from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_conditional_access_policy_unknown_device_blocked.entra_conditional_access_policy_unknown_device_blocked"
 
-KNOWN_PLATFORMS = ["android", "iOS", "windows", "macOS", "linux"]
+KNOWN_PLATFORMS = ["android", "ios", "windows", "macos", "linux"]
 
 
 def _default_session_controls():
@@ -51,7 +51,7 @@ def _default_conditions(**overrides):
         ),
         client_app_types=[],
         platform_conditions=PlatformConditions(
-            included_platforms=["all"],
+            included_platforms=["All"],
             excluded_platforms=KNOWN_PLATFORMS,
         ),
         user_risk_levels=[],
@@ -286,7 +286,7 @@ class Test_entra_conditional_access_policy_unknown_device_blocked:
                     display_name=display_name,
                     conditions=_default_conditions(
                         platform_conditions=PlatformConditions(
-                            included_platforms=["android", "iOS"],
+                            included_platforms=["android", "ios"],
                             excluded_platforms=[],
                         )
                     ),
@@ -337,8 +337,8 @@ class Test_entra_conditional_access_policy_unknown_device_blocked:
                     display_name=display_name,
                     conditions=_default_conditions(
                         platform_conditions=PlatformConditions(
-                            included_platforms=["all"],
-                            excluded_platforms=["android", "iOS", "windows"],
+                            included_platforms=["All"],
+                            excluded_platforms=["android", "ios", "windows"],
                         )
                     ),
                     grant_controls=_default_grant_controls(),
