@@ -7234,6 +7234,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
     _RESOURCE_SORT_MAP = {
         "status": "status_order",
         "severity": "severity_order",
+        "delta": "delta_order",
         "first_seen_at": "first_seen_at",
         "last_seen_at": "last_seen_at",
         "resource.uid": "resource_uid",
@@ -7370,6 +7371,22 @@ class FindingGroupViewSet(BaseRLSViewSet):
                         output_field=IntegerField(),
                     )
                 ),
+                delta_order=Max(
+                    Case(
+                        When(
+                            finding__delta="new",
+                            finding__muted=False,
+                            then=Value(2),
+                        ),
+                        When(
+                            finding__delta="changed",
+                            finding__muted=False,
+                            then=Value(1),
+                        ),
+                        default=Value(0),
+                        output_field=IntegerField(),
+                    )
+                ),
                 first_seen_at=Min("finding__first_seen_at"),
                 last_seen_at=Max("finding__inserted_at"),
                 # Max() on muted_reason / check_metadata is safe because
@@ -7399,6 +7416,22 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     When(finding__severity=severity, then=Value(order))
                     for severity, order in SEVERITY_ORDER.items()
                 ],
+                output_field=IntegerField(),
+            )
+        ),
+        "delta_order": lambda: Max(
+            Case(
+                When(
+                    finding__delta="new",
+                    finding__muted=False,
+                    then=Value(2),
+                ),
+                When(
+                    finding__delta="changed",
+                    finding__muted=False,
+                    then=Value(1),
+                ),
+                default=Value(0),
                 output_field=IntegerField(),
             )
         ),
@@ -7448,6 +7481,14 @@ class FindingGroupViewSet(BaseRLSViewSet):
             else:
                 status = "MUTED"
 
+            delta_order = row.get("delta_order", 0)
+            if delta_order == 2:
+                delta = "new"
+            elif delta_order == 1:
+                delta = "changed"
+            else:
+                delta = None
+
             results.append(
                 {
                     "resource_id": row["resource_id"],
@@ -7463,6 +7504,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     "severity": SEVERITY_ORDER_REVERSE.get(
                         severity_order, "informational"
                     ),
+                    "delta": delta,
                     "first_seen_at": row["first_seen_at"],
                     "last_seen_at": row["last_seen_at"],
                     "muted_reason": row.get("muted_reason"),
