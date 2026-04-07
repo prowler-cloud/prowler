@@ -4,10 +4,6 @@ const providersActionsMock = vi.hoisted(() => ({
   getProviders: vi.fn(),
 }));
 
-const manageGroupsActionsMock = vi.hoisted(() => ({
-  getProviderGroups: vi.fn(),
-}));
-
 const organizationsActionsMock = vi.hoisted(() => ({
   listOrganizationsSafe: vi.fn(),
   listOrganizationUnitsSafe: vi.fn(),
@@ -18,7 +14,6 @@ const scansActionsMock = vi.hoisted(() => ({
 }));
 
 vi.mock("@/actions/providers", () => providersActionsMock);
-vi.mock("@/actions/manage-groups", () => manageGroupsActionsMock);
 vi.mock(
   "@/actions/organizations/organizations",
   () => organizationsActionsMock,
@@ -26,7 +21,6 @@ vi.mock(
 vi.mock("@/actions/scans", () => scansActionsMock);
 
 import { SearchParamsProps } from "@/types";
-import { ProviderGroupsResponse } from "@/types/components";
 import { ProvidersApiResponse } from "@/types/providers";
 import { ProvidersProviderRow } from "@/types/providers-table";
 
@@ -141,47 +135,6 @@ const providersResponse: ProvidersApiResponse = {
       page: 1,
       pages: 1,
       count: 2,
-    },
-    version: "1",
-  },
-};
-
-const providerGroupsResponse: ProviderGroupsResponse = {
-  links: {
-    first: "",
-    last: "",
-    next: null,
-    prev: null,
-  },
-  data: [
-    {
-      id: "group-1",
-      type: "provider-groups",
-      attributes: {
-        name: "AWS Team",
-        inserted_at: "2025-02-13T11:17:00Z",
-        updated_at: "2025-02-13T11:17:00Z",
-      },
-      relationships: {
-        providers: {
-          meta: { count: 1 },
-          data: [{ type: "providers", id: "provider-1" }],
-        },
-        roles: {
-          meta: { count: 0 },
-          data: [],
-        },
-      },
-      links: {
-        self: "",
-      },
-    },
-  ],
-  meta: {
-    pagination: {
-      page: 1,
-      pages: 1,
-      count: 1,
     },
     version: "1",
   },
@@ -666,9 +619,6 @@ describe("loadProvidersAccountsViewData", () => {
   it("does not call organizations endpoints in OSS", async () => {
     // Given
     providersActionsMock.getProviders.mockResolvedValue(providersResponse);
-    manageGroupsActionsMock.getProviderGroups.mockResolvedValue(
-      providerGroupsResponse,
-    );
     scansActionsMock.getScans.mockResolvedValue({ data: [] });
 
     // When
@@ -685,7 +635,7 @@ describe("loadProvidersAccountsViewData", () => {
       organizationsActionsMock.listOrganizationUnitsSafe,
     ).not.toHaveBeenCalled();
     expect(viewData.filters.map((filter) => filter.labelCheckboxGroup)).toEqual(
-      ["Account Groups", "Status"],
+      ["Status"],
     );
   });
 
@@ -712,9 +662,6 @@ describe("loadProvidersAccountsViewData", () => {
         },
       })),
     });
-    manageGroupsActionsMock.getProviderGroups.mockResolvedValue(
-      providerGroupsResponse,
-    );
     organizationsActionsMock.listOrganizationsSafe.mockResolvedValue({
       data: [
         {
@@ -769,7 +716,7 @@ describe("loadProvidersAccountsViewData", () => {
       organizationsActionsMock.listOrganizationUnitsSafe,
     ).toHaveBeenCalledTimes(1);
     expect(viewData.filters.map((filter) => filter.labelCheckboxGroup)).toEqual(
-      ["Organizations", "Account Groups", "Status"],
+      ["Status"],
     );
     expect(viewData.rows[0].rowType).toBe(PROVIDERS_ROW_TYPE.ORGANIZATION);
   });
@@ -777,9 +724,6 @@ describe("loadProvidersAccountsViewData", () => {
   it("falls back to empty cloud grouping data when organizations endpoints fail", async () => {
     // Given
     providersActionsMock.getProviders.mockResolvedValue(providersResponse);
-    manageGroupsActionsMock.getProviderGroups.mockResolvedValue(
-      providerGroupsResponse,
-    );
     organizationsActionsMock.listOrganizationsSafe.mockResolvedValue({
       data: [],
     });
@@ -796,7 +740,7 @@ describe("loadProvidersAccountsViewData", () => {
 
     // Then
     expect(viewData.filters.map((filter) => filter.labelCheckboxGroup)).toEqual(
-      ["Account Groups", "Status"],
+      ["Status"],
     );
     expect(viewData.rows).toHaveLength(2);
     expect(

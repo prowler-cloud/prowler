@@ -1,9 +1,10 @@
+// TODO: Legacy component — used by /resources page and overview dashboard.
+// Migrate those consumers to the new resource-detail-drawer, then delete this file.
 "use client";
 
 import { ExternalLink, Link, VolumeX, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useState } from "react";
-import ReactMarkdown from "react-markdown";
 
 import {
   Button,
@@ -23,6 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
+import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { EntityInfo } from "@/components/ui/entities";
@@ -32,39 +34,18 @@ import {
   FindingStatus,
   StatusFindingBadge,
 } from "@/components/ui/table/status-finding-badge";
+import { formatDuration } from "@/lib/date-utils";
 import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/iac-utils";
 import { cn } from "@/lib/utils";
 import { FindingProps, ProviderType } from "@/types";
 
+import { MarkdownContainer } from "../markdown-container";
 import { MuteFindingsModal } from "../mute-findings-modal";
 import { Muted } from "../muted";
 import { DeltaIndicator } from "./delta-indicator";
 
-const MarkdownContainer = ({ children }: { children: string }) => {
-  return (
-    <div className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-normal">
-      <ReactMarkdown>{children}</ReactMarkdown>
-    </div>
-  );
-};
-
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
-};
-
-// Add new utility function for duration formatting
-const formatDuration = (seconds: number) => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = seconds % 60;
-
-  const parts = [];
-  if (hours > 0) parts.push(`${hours}h`);
-  if (minutes > 0) parts.push(`${minutes}m`);
-  if (remainingSeconds > 0 || parts.length === 0)
-    parts.push(`${remainingSeconds}s`);
-
-  return parts.join(" ");
 };
 
 interface FindingDetailProps {
@@ -172,12 +153,13 @@ export const FindingDetail = ({
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="general" className="w-full">
+      <Tabs key={findingDetails.id} defaultValue="general" className="w-full">
         <div className="mb-4 flex items-center justify-between">
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="resources">Resources</TabsTrigger>
             <TabsTrigger value="scans">Scans</TabsTrigger>
+            <TabsTrigger value="events">Events</TabsTrigger>
           </TabsList>
 
           {!attributes.muted && (
@@ -469,6 +451,14 @@ export const FindingDetail = ({
               Scan information is not available.
             </p>
           )}
+        </TabsContent>
+
+        {/* Events Tab */}
+        <TabsContent value="events" className="flex flex-col gap-4">
+          <EventsTimeline
+            resourceId={finding.relationships?.resource?.id}
+            isAwsProvider={providerDetails?.provider === "aws"}
+          />
         </TabsContent>
       </Tabs>
     </div>

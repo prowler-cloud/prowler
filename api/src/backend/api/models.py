@@ -1,14 +1,15 @@
 import json
 import logging
 import re
-import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
+import defusedxml
 from allauth.socialaccount.models import SocialApp
 from config.custom_logging import BackendLogger
 from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
 from cryptography.fernet import Fernet, InvalidToken
+from defusedxml import ElementTree as ET
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
@@ -294,6 +295,7 @@ class Provider(RowLevelSecurityProtectedModel):
         OPENSTACK = "openstack", _("OpenStack")
         IMAGE = "image", _("Image")
         GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
+        VERCEL = "vercel", _("Vercel")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -434,6 +436,15 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="OpenStack provider ID must be a valid project ID (UUID or project name).",
                 code="openstack-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_vercel_uid(value):
+        if not re.match(r"^team_[a-zA-Z0-9]{16,32}$", value):
+            raise ModelValidationError(
+                detail="Vercel provider ID must be a valid Vercel Team ID (e.g., team_xxxxxxxxxxxxxxxxxxxxxxxx).",
+                code="vercel-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -1783,6 +1794,15 @@ class FindingGroupDailySummary(RowLevelSecurityProtectedModel):
                 fields=["tenant_id", "provider", "inserted_at"],
                 name="fgds_tenant_prov_ins_idx",
             ),
+            # Trigram indexes for case-insensitive search
+            GinIndex(
+                OpClass(Upper("check_id"), name="gin_trgm_ops"),
+                name="fgds_check_id_trgm_idx",
+            ),
+            GinIndex(
+                OpClass(Upper("check_title"), name="gin_trgm_ops"),
+                name="fgds_check_title_trgm_idx",
+            ),
         ]
 
     class JSONAPIMeta:
@@ -2058,6 +2078,8 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             root = ET.fromstring(self.metadata_xml)
         except ET.ParseError as e:
             raise ValidationError({"metadata_xml": f"Invalid XML: {e}"})
+        except defusedxml.DefusedXmlException as e:
+            raise ValidationError({"metadata_xml": f"Unsafe XML content rejected: {e}"})
 
         # Entity ID
         entity_id = root.attrib.get("entityID")

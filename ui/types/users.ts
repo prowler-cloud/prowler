@@ -150,6 +150,11 @@ export interface TenantDetailData {
   };
 }
 
+export interface TenantOption {
+  id: string;
+  name: string;
+}
+
 export type IncludedItem = RoleDetail | MembershipDetailData | TenantDetailData;
 
 export interface UserProfileResponse {

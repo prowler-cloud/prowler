@@ -224,6 +224,7 @@ class IacProvider(Provider):
                     },
                 },
                 "Categories": [],
+                "AdditionalURLs": [],
                 "DependsOn": [],
                 "RelatedTo": [],
                 "Notes": "",

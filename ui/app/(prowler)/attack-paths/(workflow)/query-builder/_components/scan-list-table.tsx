@@ -7,6 +7,7 @@ import { Button } from "@/components/shadcn/button/button";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { DataTable, DataTableColumnHeader } from "@/components/ui/table";
+import { formatDuration } from "@/lib/date-utils";
 import type { MetaDataProps, ProviderType } from "@/types";
 import type { AttackPathScan, ScanState } from "@/types/attack-paths";
 import { SCAN_STATES } from "@/types/attack-paths";
@@ -32,21 +33,16 @@ const parsePageParam = (value: string | null, fallback: number) => {
   return Number.isNaN(parsedValue) || parsedValue < 1 ? fallback : parsedValue;
 };
 
-const formatDuration = (duration: number | null) => {
+const formatNullableDuration = (duration: number | null) => {
   if (!duration) return "-";
-
-  return `${Math.floor(duration / 60)}m ${duration % 60}s`;
+  return formatDuration(duration);
 };
 
 const isSelectDisabled = (
   scan: AttackPathScan,
   selectedScanId: string | null,
 ) => {
-  return (
-    !scan.attributes.graph_data_ready ||
-    scan.attributes.state === SCAN_STATES.FAILED ||
-    selectedScanId === scan.id
-  );
+  return !scan.attributes.graph_data_ready || selectedScanId === scan.id;
 };
 
 const getSelectButtonLabel = (
@@ -164,7 +160,7 @@ const getColumns = ({
     ),
     cell: ({ row }) => (
       <span className="text-sm">
-        {formatDuration(row.original.attributes.duration)}
+        {formatNullableDuration(row.original.attributes.duration)}
       </span>
     ),
     enableSorting: false,

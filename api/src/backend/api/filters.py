@@ -15,6 +15,7 @@ from django_filters.rest_framework import (
 from rest_framework_json_api.django_filters.backends import DjangoFilterBackend
 from rest_framework_json_api.serializers import ValidationError
 
+from api.constants import SEVERITY_ORDER
 from api.db_utils import (
     FindingDeltaEnumField,
     InvitationStateEnumField,
@@ -43,6 +44,7 @@ from api.models import (
     ProviderGroup,
     ProviderSecret,
     Resource,
+    ResourceFindingMapping,
     ResourceTag,
     Role,
     Scan,
@@ -196,17 +198,13 @@ class CommonFindingFilters(FilterSet):
         field_name="resource_services", lookup_expr="icontains"
     )
 
-    resource_uid = CharFilter(field_name="resources__uid")
-    resource_uid__in = CharInFilter(field_name="resources__uid", lookup_expr="in")
-    resource_uid__icontains = CharFilter(
-        field_name="resources__uid", lookup_expr="icontains"
-    )
+    resource_uid = CharFilter(method="filter_resource_uid")
+    resource_uid__in = CharInFilter(method="filter_resource_uid_in")
+    resource_uid__icontains = CharFilter(method="filter_resource_uid_icontains")
 
-    resource_name = CharFilter(field_name="resources__name")
-    resource_name__in = CharInFilter(field_name="resources__name", lookup_expr="in")
-    resource_name__icontains = CharFilter(
-        field_name="resources__name", lookup_expr="icontains"
-    )
+    resource_name = CharFilter(method="filter_resource_name")
+    resource_name__in = CharInFilter(method="filter_resource_name_in")
+    resource_name__icontains = CharFilter(method="filter_resource_name_icontains")
 
     resource_type = CharFilter(method="filter_resource_type")
     resource_type__in = CharInFilter(field_name="resource_types", lookup_expr="overlap")
@@ -263,6 +261,52 @@ class CommonFindingFilters(FilterSet):
                 resources__tags__value__icontains=tag_value,
             )
         return queryset.filter(overall_query).distinct()
+
+    def filter_check_title_icontains(self, queryset, name, value):
+        # Resolve from the summary table (has check_title column + trigram
+        # GIN index) instead of scanning JSON in the findings table.
+        matching_check_ids = (
+            FindingGroupDailySummary.objects.filter(
+                check_title__icontains=value,
+            )
+            .values_list("check_id", flat=True)
+            .distinct()
+        )
+        return queryset.filter(check_id__in=matching_check_ids)
+
+    # --- Resource subquery filters ---
+    # Resolve resource → RFM → finding_ids first, then filter findings
+    # by id__in.  This avoids a 3-way JOIN driven from the (huge)
+    # findings side and lets PostgreSQL start from the resources
+    # unique-constraint index instead.
+
+    @staticmethod
+    def _finding_ids_for_resources(**lookup):
+        return ResourceFindingMapping.objects.filter(
+            resource__in=Resource.objects.filter(**lookup).values("id")
+        ).values("finding_id")
+
+    def filter_resource_uid(self, queryset, name, value):
+        return queryset.filter(id__in=self._finding_ids_for_resources(uid=value))
+
+    def filter_resource_uid_in(self, queryset, name, value):
+        return queryset.filter(id__in=self._finding_ids_for_resources(uid__in=value))
+
+    def filter_resource_uid_icontains(self, queryset, name, value):
+        return queryset.filter(
+            id__in=self._finding_ids_for_resources(uid__icontains=value)
+        )
+
+    def filter_resource_name(self, queryset, name, value):
+        return queryset.filter(id__in=self._finding_ids_for_resources(name=value))
+
+    def filter_resource_name_in(self, queryset, name, value):
+        return queryset.filter(id__in=self._finding_ids_for_resources(name__in=value))
+
+    def filter_resource_name_icontains(self, queryset, name, value):
+        return queryset.filter(
+            id__in=self._finding_ids_for_resources(name__icontains=value)
+        )
 
 
 class TenantFilter(FilterSet):
@@ -390,6 +434,7 @@ class ScanFilter(ProviderRelationshipFilterSet):
     class Meta:
         model = Scan
         fields = {
+            "id": ["exact", "in"],
             "provider": ["exact", "in"],
             "name": ["exact", "icontains"],
             "started_at": ["gte", "lte"],
@@ -803,11 +848,15 @@ class FindingGroupFilter(CommonFindingFilters):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+    check_title__icontains = CharFilter(method="filter_check_title_icontains")
+    scan = UUIDFilter(field_name="scan_id", lookup_expr="exact")
+    scan__in = UUIDInFilter(field_name="scan_id", lookup_expr="in")
 
     class Meta:
         model = Finding
         fields = {
             "check_id": ["exact", "in", "icontains"],
+            "scan": ["exact", "in"],
         }
 
     def filter_queryset(self, queryset):
@@ -895,15 +944,31 @@ class LatestFindingGroupFilter(CommonFindingFilters):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+    check_title__icontains = CharFilter(method="filter_check_title_icontains")
+    scan = UUIDFilter(field_name="scan_id", lookup_expr="exact")
+    scan__in = UUIDInFilter(field_name="scan_id", lookup_expr="in")
 
     class Meta:
         model = Finding
         fields = {
             "check_id": ["exact", "in", "icontains"],
+            "scan": ["exact", "in"],
         }
 
 
-class FindingGroupSummaryFilter(FilterSet):
+class _CheckTitleToCheckIdMixin:
+    """Resolve check_title search to check_ids so all provider rows are kept."""
+
+    def filter_check_title_to_check_ids(self, queryset, name, value):
+        matching_check_ids = (
+            queryset.filter(check_title__icontains=value)
+            .values_list("check_id", flat=True)
+            .distinct()
+        )
+        return queryset.filter(check_id__in=matching_check_ids)
+
+
+class FindingGroupSummaryFilter(_CheckTitleToCheckIdMixin, FilterSet):
     """
     Filter for FindingGroupDailySummary queries.
 
@@ -926,6 +991,7 @@ class FindingGroupSummaryFilter(FilterSet):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+    check_title__icontains = CharFilter(method="filter_check_title_to_check_ids")
 
     # Provider filters
     provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
@@ -1013,7 +1079,7 @@ class FindingGroupSummaryFilter(FilterSet):
         return dt
 
 
-class LatestFindingGroupSummaryFilter(FilterSet):
+class LatestFindingGroupSummaryFilter(_CheckTitleToCheckIdMixin, FilterSet):
     """
     Filter for FindingGroupDailySummary /latest endpoint.
 
@@ -1025,6 +1091,7 @@ class LatestFindingGroupSummaryFilter(FilterSet):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+    check_title__icontains = CharFilter(method="filter_check_title_to_check_ids")
 
     # Provider filters
     provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
@@ -1040,6 +1107,98 @@ class LatestFindingGroupSummaryFilter(FilterSet):
             "check_id": ["exact", "in", "icontains"],
             "provider_id": ["exact", "in"],
         }
+
+
+class FindingGroupAggregatedComputedFilter(FilterSet):
+    """Filter aggregated finding-group rows by computed status/severity/muted."""
+
+    STATUS_CHOICES = (
+        ("FAIL", "Fail"),
+        ("PASS", "Pass"),
+        ("MUTED", "Muted"),
+    )
+
+    status = ChoiceFilter(method="filter_status", choices=STATUS_CHOICES)
+    status__in = CharInFilter(method="filter_status_in", lookup_expr="in")
+    severity = ChoiceFilter(method="filter_severity", choices=SeverityChoices)
+    severity__in = CharInFilter(method="filter_severity_in", lookup_expr="in")
+    include_muted = BooleanFilter(method="filter_include_muted")
+
+    def filter_status(self, queryset, name, value):
+        return queryset.filter(aggregated_status=value)
+
+    def filter_status_in(self, queryset, name, value):
+        values = value
+        if isinstance(value, str):
+            values = [part.strip() for part in value.split(",") if part.strip()]
+
+        allowed = {choice[0] for choice in self.STATUS_CHOICES}
+        invalid = [
+            status_value for status_value in values if status_value not in allowed
+        ]
+        if invalid:
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"invalid status filter: {invalid[0]}",
+                        "status": "400",
+                        "source": {"pointer": "/data"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        if not values:
+            return queryset
+
+        return queryset.filter(aggregated_status__in=values)
+
+    def filter_severity(self, queryset, name, value):
+        severity_order = SEVERITY_ORDER.get(value)
+        if severity_order is None:
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"invalid severity filter: {value}",
+                        "status": "400",
+                        "source": {"pointer": "/data"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+        return queryset.filter(severity_order=severity_order)
+
+    def filter_severity_in(self, queryset, name, value):
+        values = value
+        if isinstance(value, str):
+            values = [part.strip() for part in value.split(",") if part.strip()]
+
+        orders = []
+        for severity_value in values:
+            severity_order = SEVERITY_ORDER.get(severity_value)
+            if severity_order is None:
+                raise ValidationError(
+                    [
+                        {
+                            "detail": f"invalid severity filter: {severity_value}",
+                            "status": "400",
+                            "source": {"pointer": "/data"},
+                            "code": "invalid",
+                        }
+                    ]
+                )
+            orders.append(severity_order)
+
+        if not orders:
+            return queryset
+
+        return queryset.filter(severity_order__in=orders)
+
+    def filter_include_muted(self, queryset, name, value):
+        if value is True:
+            return queryset
+        # include_muted=false: exclude fully-muted groups
+        return queryset.exclude(fail_count=0, pass_count=0, muted_count__gt=0)
 
 
 class ProviderSecretFilter(FilterSet):

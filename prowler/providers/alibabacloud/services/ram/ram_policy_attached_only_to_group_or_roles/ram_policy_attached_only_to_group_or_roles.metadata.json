@@ -9,8 +9,8 @@
   "Severity": "low",
   "ResourceType": "ALIYUN::RAM::ManagedPolicy",
   "ResourceGroup": "IAM",
-  "Description": "**Alibaba Cloud RAM** users, groups, and roles have no access to resources by default. RAM policies are the means by which privileges are granted to users, groups, or roles. It is recommended that RAM policies be applied directly to **groups and roles** but not to individual users. This simplifies access management and reduces the likelihood of granting unintended permissions as the number of users grows.",
-  "Risk": "Assigning privileges directly to individual users instead of **groups or roles** increases the complexity of access management. As the number of users grows, this complexity can lead to principals inadvertently receiving or retaining **excessive privileges**, threatening the **confidentiality** and **integrity** of cloud resources. It also makes auditing and compliance reviews significantly more difficult.",
+  "Description": "**Alibaba Cloud RAM** users, groups, and roles have no access by default. RAM policies grant privileges to these principals. It is recommended to apply policies to **groups and roles** rather than individual users, simplifying access management and reducing unintended permissions as the number of users grows.",
+  "Risk": "Assigning privileges directly to users instead of **groups or roles** increases access management complexity. As users grow, this can lead to principals receiving **excessive privileges**, threatening **confidentiality** and **integrity** of cloud resources. It also makes auditing and compliance reviews significantly harder.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/doc-detail/116820.htm",

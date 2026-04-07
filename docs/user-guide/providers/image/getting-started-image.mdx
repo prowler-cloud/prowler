@@ -9,17 +9,68 @@ Prowler's Image provider enables comprehensive container image security scanning
 ## How It Works
 
 * **Trivy integration:** Prowler leverages [Trivy](https://trivy.dev/) to scan container images for vulnerabilities, secrets, misconfigurations, and license issues.
-* **Trivy required:** Trivy must be installed and available in the system PATH before running any scan.
 * **Authentication:** No registry authentication is required for public images. For private registries, credentials can be provided via environment variables or manual `docker login`.
+  * Check the [Image Authentication](/user-guide/providers/image/authentication) page for more details.
+* **Mutelist logic:** [Filtering](https://trivy.dev/latest/docs/configuration/filtering/) is handled by Trivy, not Prowler.
 * **Output formats:** Results are output in the same formats as other Prowler providers (CSV, JSON, HTML, etc.).
+
+<CardGroup cols={2}>
+  <Card title="Prowler Cloud" icon="cloud" href="#prowler-cloud">
+    Scan container images using Prowler Cloud
+  </Card>
+  <Card title="Prowler CLI" icon="terminal" href="#prowler-cli">
+    Scan container images using Prowler CLI
+  </Card>
+</CardGroup>
+
+## Prowler Cloud
+
+<VersionBadge version="5.21.0" />
+
+### Supported Scanners
+
+Prowler Cloud does not support scanner selection. The vulnerability, secret, and misconfiguration scanners run automatically during each scan.
+
+### Step 1: Access Prowler Cloud
+
+1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app)
+2. Navigate to "Configuration" > "Cloud Providers"
+
+    ![Cloud Providers Page](/images/prowler-app/cloud-providers-page.png)
+
+3. Click "Add Cloud Provider"
+
+    ![Add a Cloud Provider](/images/prowler-app/add-cloud-provider.png)
+
+4. Select "Container Registry"
+
+    ![Select Container Registry](/user-guide/img/select-container-registry.png)
+
+5. Enter the container registry URL (e.g., `docker.io/myorg` or `myregistry.io`) and an optional alias, then click "Next"
+
+    ![Add Container Registry URL](/user-guide/img/add-registry-url.png)
+
+### Step 2: Enter Authentication and Scan Filters
+
+6. Optionally provide [authentication](/user-guide/providers/image/authentication) credentials for private registries, then configure the following scan filters to control which images are scanned:
+
+    * **Image filter:** A regex pattern to filter repositories by name (e.g., `^prod/.*`)
+    * **Tag filter:** A regex pattern to filter tags within repositories (e.g., `^(latest|v\d+\.\d+\.\d+)$`)
+
+    Then click "Next"
+
+    ![Image Authentication and Filters](/user-guide/img/image-authentication-filters.png)
+
+### Step 3: Verify Connection & Start Scan
+
+7. Review the provider configuration and click "Launch scan" to initiate the scan
+
+    ![Verify Connection & Start Scan](/user-guide/img/image-verify-connection.png)
+
 
 ## Prowler CLI
 
 <VersionBadge version="5.19.0" />
-
-<Note>
-The Image provider is currently available in Prowler CLI only.
-</Note>
 
 ### Install Trivy
 
@@ -55,7 +106,7 @@ Prowler CLI supports the following scanners:
 * [Misconfiguration](https://trivy.dev/docs/latest/guide/scanner/misconfiguration/)
 * [License](https://trivy.dev/docs/latest/guide/scanner/license/)
 
-By default, only vulnerability and secret scanners run during a scan. To specify which scanners to use, refer to the [Specify Scanners](#specify-scanners) section below.
+By default, vulnerability, secret, and misconfiguration scanners run during a scan. To specify which scanners to use, refer to the [Specify Scanners](#specify-scanners) section below.
 
 ### Scan Container Images
 
@@ -112,7 +163,7 @@ Valid examples:
 
 #### Specify Scanners
 
-To select which scanners Trivy runs, use the `--scanners` option. By default, Prowler enables `vuln` and `secret` scanners:
+To select which scanners Trivy runs, use the `--scanners` option:
 
 ```bash
 # Vulnerability scanning only
@@ -272,7 +323,7 @@ To scan images from private registries, the Image provider supports three authen
 
 #### 1. Basic Authentication (Environment Variables)
 
-To authenticate with a username and password, set the `REGISTRY_USERNAME` and `REGISTRY_PASSWORD` environment variables. Prowler automatically runs `docker login`, pulls the image, and performs a `docker logout` after the scan completes:
+To authenticate with a username and password, set the `REGISTRY_USERNAME` and `REGISTRY_PASSWORD` environment variables. Prowler passes these credentials to Trivy, which handles authentication with the registry transparently:
 
 ```bash
 export REGISTRY_USERNAME="myuser"
@@ -281,7 +332,7 @@ export REGISTRY_PASSWORD="mypassword"
 prowler image -I myregistry.io/myapp:v1.0
 ```
 
-Both variables must be set for this method to activate. Prowler handles the full lifecycle — login, pull, scan, and cleanup — without any manual Docker commands.
+Both variables must be set for this method to activate.
 
 #### 2. Token-Based Authentication
 
@@ -306,7 +357,7 @@ prowler image -I myregistry.io/myapp:v1.0
 ```
 
 <Note>
-When basic authentication is active (method 1), Prowler automatically logs out from all authenticated registries after the scan completes. Manual `docker login` sessions (method 3) are not affected by this cleanup.
+Credentials provided via environment variables are only passed to the Trivy subprocess and are not persisted beyond the scan.
 </Note>
 
 ### Troubleshooting Common Scan Errors

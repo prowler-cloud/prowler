@@ -9,6 +9,7 @@ import {
   ERROR_PREFIX,
   LIGHTHOUSE_AGENT_TAG,
   META_TOOLS,
+  SKILL_PREFIX,
   STREAM_MESSAGE_ID,
 } from "@/lib/lighthouse/constants";
 import type { ChainOfThoughtData, StreamEvent } from "@/lib/lighthouse/types";
@@ -17,9 +18,34 @@ import type { ChainOfThoughtData, StreamEvent } from "@/lib/lighthouse/types";
 export { CHAIN_OF_THOUGHT_ACTIONS, ERROR_PREFIX, STREAM_MESSAGE_ID };
 
 /**
+ * Safely parses the JSON string nested inside a meta-tool's input wrapper.
+ * In tool stream events, meta-tools receive their arguments as `{ input: "<JSON string>" }`.
+ * Note: In chat_model_end events, args are pre-parsed by LangChain (see handleChatModelEndEvent).
+ *
+ * @returns The parsed object, or null if parsing fails
+ */
+function parseMetaToolInput(
+  toolInput: unknown,
+): Record<string, unknown> | null {
+  try {
+    if (
+      toolInput &&
+      typeof toolInput === "object" &&
+      "input" in toolInput &&
+      typeof toolInput.input === "string"
+    ) {
+      return JSON.parse(toolInput.input) as Record<string, unknown>;
+    }
+  } catch {
+    // Failed to parse
+  }
+  return null;
+}
+
+/**
  * Extracts the actual tool name from meta-tool input.
  *
- * Meta-tools (describe_tool, execute_tool) wrap actual tool calls.
+ * Meta-tools (describe_tool, execute_tool, load_skill) wrap actual tool calls.
  * This function parses the input to extract the real tool name.
  *
  * @param metaToolName - The name of the meta-tool or actual tool
@@ -30,26 +56,19 @@ export function extractActualToolName(
   metaToolName: string,
   toolInput: unknown,
 ): string | null {
-  // Check if this is a meta-tool
   if (
     metaToolName === META_TOOLS.DESCRIBE ||
     metaToolName === META_TOOLS.EXECUTE
   ) {
-    // Meta-tool: Parse the JSON string in input.input
-    try {
-      if (
-        toolInput &&
-        typeof toolInput === "object" &&
-        "input" in toolInput &&
-        typeof toolInput.input === "string"
-      ) {
-        const parsedInput = JSON.parse(toolInput.input);
-        return parsedInput.toolName || null;
-      }
-    } catch {
-      // Failed to parse, return null
-      return null;
-    }
+    const parsed = parseMetaToolInput(toolInput);
+    return (parsed?.toolName as string) || null;
+  }
+
+  if (metaToolName === META_TOOLS.LOAD_SKILL) {
+    const parsed = parseMetaToolInput(toolInput);
+    return parsed?.skillId
+      ? `${SKILL_PREFIX}${parsed.skillId as string}`
+      : null;
   }
 
   // Actual tool execution: use the name directly
@@ -172,11 +191,18 @@ export function handleChatModelEndEvent(
       const metaToolName = toolCall.name;
       const toolArgs = toolCall.args;
 
-      // Extract actual tool name from toolArgs.toolName (camelCase)
-      const actualToolName =
-        toolArgs && typeof toolArgs === "object" && "toolName" in toolArgs
-          ? (toolArgs.toolName as string)
-          : null;
+      // Extract actual tool name from toolArgs
+      let actualToolName: string | null = null;
+      if (toolArgs && typeof toolArgs === "object") {
+        if ("toolName" in toolArgs) {
+          actualToolName = toolArgs.toolName as string;
+        } else if (
+          metaToolName === META_TOOLS.LOAD_SKILL &&
+          "skillId" in toolArgs
+        ) {
+          actualToolName = `${SKILL_PREFIX}${toolArgs.skillId as string}`;
+        }
+      }
 
       controller.enqueue(
         createChainOfThoughtEvent({

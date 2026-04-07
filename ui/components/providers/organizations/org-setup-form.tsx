@@ -8,22 +8,29 @@ import { FormEvent, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { AWSProviderBadge } from "@/components/icons/providers-badge";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
 } from "@/components/providers/wizard/steps/footer-controls";
+import {
+  ORG_WIZARD_INTENT,
+  OrgWizardIntent,
+} from "@/components/providers/wizard/types";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
-import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { useToast } from "@/components/ui";
 import { Form } from "@/components/ui/form";
 import {
   getAWSCredentialsTemplateLinks,
   PROWLER_CF_TEMPLATE_URL,
   STACKSET_CONSOLE_URL,
 } from "@/lib";
+import { useOrgSetupStore } from "@/store/organizations/store";
 import { ORG_SETUP_PHASE, OrgSetupPhase } from "@/types/organizations";
 
 import { useOrgSetupSubmission } from "./hooks/use-org-setup-submission";
@@ -53,23 +60,36 @@ const orgSetupSchema = z.object({
 
 type OrgSetupFormData = z.infer<typeof orgSetupSchema>;
 
+interface OrgSetupFormInitialValues {
+  organizationName: string;
+  awsOrgId: string;
+}
+
 interface OrgSetupFormProps {
   onBack: () => void;
+  onClose?: () => void;
   onNext: () => void;
   onFooterChange: (config: WizardFooterConfig) => void;
   onPhaseChange: (phase: OrgSetupPhase) => void;
   initialPhase?: OrgSetupPhase;
+  initialValues?: OrgSetupFormInitialValues;
+  intent?: OrgWizardIntent;
 }
 
 export function OrgSetupForm({
   onBack,
+  onClose,
   onNext,
   onFooterChange,
   onPhaseChange,
   initialPhase = ORG_SETUP_PHASE.DETAILS,
+  initialValues,
+  intent = ORG_WIZARD_INTENT.FULL,
 }: OrgSetupFormProps) {
   const { data: session } = useSession();
   const stackSetExternalId = session?.tenantId ?? "";
+  const { organizationId } = useOrgSetupStore();
+  const { toast } = useToast();
   const { copied: isExternalIdCopied, copy: copyExternalId } = useClipboard({
     timeout: 1500,
   });
@@ -77,15 +97,18 @@ export function OrgSetupForm({
     timeout: 1500,
   });
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
+  const [isSaving, setIsSaving] = useState(false);
   const formId = "org-wizard-setup-form";
+
+  const isReadOnlyOrgId = Boolean(initialValues?.awsOrgId);
 
   const form = useForm<OrgSetupFormData>({
     resolver: zodResolver(orgSetupSchema),
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
-      organizationName: "",
-      awsOrgId: "",
+      organizationName: initialValues?.organizationName ?? "",
+      awsOrgId: initialValues?.awsOrgId ?? "",
       roleArn: "",
       stackSetDeployed: false,
     },
@@ -120,21 +143,23 @@ export function OrgSetupForm({
 
   useEffect(() => {
     if (setupPhase === ORG_SETUP_PHASE.DETAILS) {
+      const isEditName = intent === ORG_WIZARD_INTENT.EDIT_NAME;
       onFooterChange({
         showBack: true,
         backLabel: "Back",
         onBack,
         showAction: true,
-        actionLabel: "Next",
-        actionDisabled: !isOrgIdValid,
+        actionLabel: isEditName ? "Save" : "Next",
+        actionDisabled: isEditName ? isSaving : !isOrgIdValid,
         actionType: WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
         actionFormId: formId,
       });
       return;
     }
 
+    const isEditCredentials = intent === ORG_WIZARD_INTENT.EDIT_CREDENTIALS;
     onFooterChange({
-      showBack: true,
+      showBack: !isEditCredentials,
       backLabel: "Back",
       backDisabled: isSubmitting,
       onBack: () => setSetupPhase(ORG_SETUP_PHASE.DETAILS),
@@ -146,7 +171,9 @@ export function OrgSetupForm({
     });
   }, [
     formId,
+    intent,
     isOrgIdValid,
+    isSaving,
     isSubmitting,
     isValid,
     onBack,
@@ -170,9 +197,42 @@ export function OrgSetupForm({
     setSetupPhase(ORG_SETUP_PHASE.ACCESS);
   };
 
+  const handleSaveNameOnly = async () => {
+    if (!organizationId) return;
+    setIsSaving(true);
+    const name = form.getValues("organizationName")?.trim() || "";
+
+    const result = await updateOrganizationName(organizationId, name);
+
+    setIsSaving(false);
+
+    if (result?.error || result?.errors) {
+      const errorMsg =
+        result.errors?.[0]?.detail ?? result.error ?? "Failed to update name";
+      toast({
+        variant: "destructive",
+        title: "Oops! Something went wrong",
+        description: errorMsg,
+      });
+      return;
+    }
+
+    toast({
+      title: "Success!",
+      description: "Organization name updated successfully.",
+    });
+    onClose?.();
+  };
+
   const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
     if (setupPhase === ORG_SETUP_PHASE.DETAILS) {
       event.preventDefault();
+
+      if (intent === ORG_WIZARD_INTENT.EDIT_NAME) {
+        void handleSaveNameOnly();
+        return;
+      }
+
       handleContinueToAccess();
       return;
     }
@@ -224,7 +284,7 @@ export function OrgSetupForm({
         {setupPhase === ORG_SETUP_PHASE.ACCESS && isSubmitting && (
           <div className="flex min-h-[220px] items-center justify-center">
             <div className="flex items-center gap-3 py-2">
-              <TreeSpinner className="size-6" />
+              <Spinner className="size-6" />
               <p className="text-sm font-medium">Gathering AWS Accounts...</p>
             </div>
           </div>
@@ -251,6 +311,8 @@ export function OrgSetupForm({
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
+              isReadOnly={isReadOnlyOrgId}
+              isDisabled={isReadOnlyOrgId}
             />
 
             <WizardInputField

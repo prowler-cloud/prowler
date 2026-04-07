@@ -12,7 +12,7 @@
   "ResourceType": "AwsCodePipelinePipeline",
   "ResourceGroup": "devops",
   "Description": "**CodePipeline pipeline** should configure its **source stage** to use a **private repository** with authenticated connection rather than a public GitHub or GitLab repository. This ensures deployment configurations, build artifacts, and CI/CD logic remain protected from unauthorized access.",
-  "Risk": "Using **public repositories** as pipeline sources exposes deployment configurations, infrastructure code, and CI/CD workflows to anyone on the internet. \n\nThis increases the risk of **supply chain attacks**, **credential exposure**, and **intellectual property theft**. Adversaries can study deployment patterns, identify security gaps, inject malicious code, or leverage exposed secrets to compromise **confidentiality**, **integrity**, and **availability** of production systems.",
+  "Risk": "Using **public repositories** as pipeline sources exposes deployment configurations and CI/CD workflows to the internet, increasing risk of **supply chain attacks**, **credential exposure**, and **intellectual property theft**. Adversaries can inject malicious code or leverage exposed secrets to compromise production systems.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/codepipeline/latest/userguide/welcome.html",
@@ -31,8 +31,8 @@
     }
   },
   "Categories": [
-    "supply-chain-security",
-    "secrets-management"
+    "software-supply-chain",
+    "secrets"
   ],
   "DependsOn": [],
   "RelatedTo": [],

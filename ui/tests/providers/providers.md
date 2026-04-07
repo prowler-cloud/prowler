@@ -948,3 +948,67 @@
 - Organization ID must follow AWS format (e.g., o-abc123def4)
 - Role ARN must belong to the StackSet deployment for Organizations flow
 - Provider cleanup is executed before test run to avoid unique constraint conflicts
+
+---
+
+## Test Case: `PROVIDER-E2E-017` - Add Google Workspace Provider with Service Account Credentials
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @googleworkspace
+
+**Description/Objective:** Validates the complete flow of adding a new Google Workspace provider using Service Account authentication with Customer ID, Service Account JSON, and delegated user email.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_GOOGLEWORKSPACE_CUSTOMER_ID, E2E_GOOGLEWORKSPACE_SERVICE_ACCOUNT_JSON, E2E_GOOGLEWORKSPACE_DELEGATED_USER
+- Remove any existing provider with the same Customer ID before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Customer ID not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select Google Workspace provider type
+4. Fill provider details (customer ID and alias)
+5. Verify Google Workspace credentials page is loaded
+6. Fill Google Workspace credentials (customer ID, service account JSON, delegated user email)
+7. Launch initial scan
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result:
+
+- Google Workspace provider successfully added with Service Account credentials
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays Google Workspace option
+- Provider details form accepts customer ID (format: C[0-9a-zA-Z]+) and alias
+- Credentials page loads with customer ID, service account JSON textarea, and delegated user email fields
+- Customer ID help text is visible with instructions on finding the Customer ID
+- Service account JSON field accepts multi-line formatted JSON
+- Delegated user email field validates email format
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by customer ID)
+- Scan name field contains "scheduled scan"
+
+### Notes:
+
+- Test uses environment variables for Google Workspace credentials
+- Service Account JSON is provided as multi-line JSON string (not base64 encoded)
+- Customer ID must start with 'C' followed by alphanumeric characters (e.g., C01234abc)
+- Delegated user email must be a super admin in the Google Workspace domain
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid Google Workspace account with Service Account having domain-wide delegation enabled
+- Service Account must have appropriate Google Workspace API scopes for security scanning

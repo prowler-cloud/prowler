@@ -345,11 +345,19 @@ class TestJiraIntegration:
         "get_projects",
         return_value={"PROJ1": "Project One", "PROJ2": "Project Two"},
     )
-    def test_test_connection_successful(self, mock_get_projects, mock_get_auth):
+    @patch.object(
+        Jira,
+        "get_available_issue_types",
+        side_effect=lambda pk: ["Task", "Bug"] if pk == "PROJ1" else ["Story"],
+    )
+    def test_test_connection_successful(
+        self, mock_get_issue_types, mock_get_projects, mock_get_auth
+    ):
         """Test that a successful connection returns an active Connection object with projects."""
         # To disable vulture
         mock_get_projects = mock_get_projects
         mock_get_auth = mock_get_auth
+        mock_get_issue_types = mock_get_issue_types
 
         connection = Jira.test_connection(
             redirect_uri=self.redirect_uri,
@@ -360,6 +368,10 @@ class TestJiraIntegration:
         assert connection.is_connected
         assert connection.error is None
         assert connection.projects == {"PROJ1": "Project One", "PROJ2": "Project Two"}
+        assert connection.issue_types == {
+            "PROJ1": ["Task", "Bug"],
+            "PROJ2": ["Story"],
+        }
 
     @patch.object(Jira, "get_basic_auth", return_value=None)
     @patch.object(
@@ -367,13 +379,19 @@ class TestJiraIntegration:
         "get_projects",
         return_value={"PROJ1": "Project One", "PROJ2": "Project Two"},
     )
+    @patch.object(
+        Jira,
+        "get_available_issue_types",
+        side_effect=lambda pk: ["Task", "Bug"] if pk == "PROJ1" else ["Story"],
+    )
     def test_test_connection_successful_basic_auth(
-        self, mock_get_projects, mock_get_basic_auth
+        self, mock_get_issue_types, mock_get_projects, mock_get_basic_auth
     ):
         """Test that a successful connection returns an active Connection object with projects."""
         # To disable vulture
         mock_get_projects = mock_get_projects
         mock_get_basic_auth = mock_get_basic_auth
+        mock_get_issue_types = mock_get_issue_types
 
         connection = Jira.test_connection(
             user_mail=self.user_mail,
@@ -384,6 +402,10 @@ class TestJiraIntegration:
         assert connection.is_connected
         assert connection.error is None
         assert connection.projects == {"PROJ1": "Project One", "PROJ2": "Project Two"}
+        assert connection.issue_types == {
+            "PROJ1": ["Task", "Bug"],
+            "PROJ2": ["Story"],
+        }
 
     @patch.object(
         Jira,

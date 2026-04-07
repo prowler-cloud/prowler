@@ -241,6 +241,39 @@ class OracleCloudCISModel(BaseModel):
     Name: str
 
 
+class GoogleWorkspaceCISModel(BaseModel):
+    """
+    GoogleWorkspaceCISModel generates a finding's output in Google Workspace CIS Compliance format.
+    """
+
+    Provider: str
+    Description: str
+    Domain: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Description: str
+    Requirements_Attributes_Section: str
+    Requirements_Attributes_SubSection: str
+    Requirements_Attributes_Profile: str
+    Requirements_Attributes_AssessmentStatus: str
+    Requirements_Attributes_Description: str
+    Requirements_Attributes_RationaleStatement: str
+    Requirements_Attributes_ImpactStatement: str
+    Requirements_Attributes_RemediationProcedure: str
+    Requirements_Attributes_AuditProcedure: str
+    Requirements_Attributes_AdditionalInformation: str
+    Requirements_Attributes_DefaultValue: str
+    Requirements_Attributes_References: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    ResourceName: str
+    CheckId: str
+    Muted: bool
+    Framework: str
+    Name: str
+
+
 class AlibabaCloudCISModel(BaseModel):
     """
     AlibabaCloudCISModel generates a finding's output in Alibaba Cloud CIS Compliance format.
@@ -284,6 +317,7 @@ CIS_M365 = M365CISModel
 CIS_Github = GithubCISModel
 CIS_OracleCloud = OracleCloudCISModel
 CIS_AlibabaCloud = AlibabaCloudCISModel
+CIS_GoogleWorkspace = GoogleWorkspaceCISModel
 
 
 # TODO: Create a parent class for the common fields of CIS and have the specific classes from each provider to inherit from it.

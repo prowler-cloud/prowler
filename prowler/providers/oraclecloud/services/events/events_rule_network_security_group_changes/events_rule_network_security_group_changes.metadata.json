@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "EventRule",
   "ResourceGroup": "messaging",
-  "Description": "**OCI Events rules** targeting **Network Security Group (NSG)** changes are evaluated for the presence of **notification actions**. Monitored event types: `com.oraclecloud.virtualnetwork.createnetworksecuritygroup`, `com.oraclecloud.virtualnetwork.updatenetworksecuritygroup`, `com.oraclecloud.virtualnetwork.deletenetworksecuritygroup`, `com.oraclecloud.virtualnetwork.changenetworksecuritygroupcompartment`.",
+  "Description": "**OCI Events rules** targeting **Network Security Group (NSG)** changes are evaluated for **notification actions**. Monitored events: `createnetworksecuritygroup`, `updatenetworksecuritygroup`, `deletenetworksecuritygroup`, and `changenetworksecuritygroupcompartment` under `com.oraclecloud.virtualnetwork`.",
   "Risk": "Absent notifications for NSG changes enable silent policy drift.\n- **Confidentiality**: permissive edits can expose services and drive data exfiltration.\n- **Integrity**: attackers can reroute traffic or bypass micro-segmentation.\n- **Availability**: deletions/misconfigurations may isolate workloads or widen DDoS exposure.",
   "RelatedUrl": "",
   "AdditionalURLs": [

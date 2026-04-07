@@ -19,6 +19,8 @@ from prowler.providers.common.arguments import (
     validate_provider_arguments,
 )
 
+SENSITIVE_ARGUMENTS = frozenset({"--shodan"})
+
 
 class ProwlerArgumentParser:
     # Set the default parser
@@ -27,10 +29,10 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,dashboard,iac,image} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel,dashboard,iac,image} ...",
             epilog="""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes,m365,github,googleworkspace,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack}
+  {aws,azure,gcp,kubernetes,m365,github,googleworkspace,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
@@ -47,6 +49,7 @@ Available Cloud Providers:
     image               Container Image Provider
     nhn                 NHN Provider (Unofficial)
     mongodbatlas        MongoDB Atlas Provider (Beta)
+    vercel              Vercel Provider
 
 Available components:
     dashboard           Local dashboard
@@ -322,6 +325,13 @@ Detailed documentation at https://docs.prowler.com
             default=[],
             # TODO: Pending validate choices
         )
+        group.add_argument(
+            "--resource-group",
+            "--resource-groups",
+            nargs="+",
+            help="List of resource groups to be executed.",
+            default=[],
+        )
         common_checks_parser.add_argument(
             "--checks-folder",
             "-x",
@@ -332,7 +342,7 @@ Detailed documentation at https://docs.prowler.com
     def __init_list_checks_parser__(self):
         # List checks options
         list_checks_parser = self.common_providers_parser.add_argument_group(
-            "List checks/services/categories/compliance-framework checks"
+            "List checks/services/categories/resource-groups/compliance-framework checks"
         )
         list_group = list_checks_parser.add_mutually_exclusive_group()
         list_group.add_argument(
@@ -364,6 +374,11 @@ Detailed documentation at https://docs.prowler.com
             "--list-categories",
             action="store_true",
             help="List the available check's categories",
+        )
+        list_group.add_argument(
+            "--list-resource-groups",
+            action="store_true",
+            help="List the available check's resource groups",
         )
         list_group.add_argument(
             "--list-fixer",

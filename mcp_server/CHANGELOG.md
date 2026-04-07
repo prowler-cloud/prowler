@@ -2,6 +2,20 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
+## [0.6.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Resource events tool to get timeline for a resource (who, what, when) [(#10412)](https://github.com/prowler-cloud/prowler/pull/10412)
+
+---
+
+## [0.5.0] (Prowler v5.21.0)
+
+### 🚀 Added
+
+- Attack Path tool to get Neo4j DB schema [(#10321)](https://github.com/prowler-cloud/prowler/pull/10321)
+
 ## [0.4.0] (Prowler v5.19.0)
 
 ### 🚀 Added

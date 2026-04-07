@@ -9,7 +9,7 @@
     "Software and Configuration Checks/Vulnerabilities/CVE",
     "Software and Configuration Checks/Patch Management",
     "Software and Configuration Checks/AWS Security Best Practices",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "inspector2",
   "SubServiceName": "",

@@ -1,3 +1,4 @@
+import { formatDuration } from "@/lib/date-utils";
 import { MetaDataProps } from "@/types";
 import { AttackPathScan, AttackPathScansResponse } from "@/types/attack-paths";
 
@@ -59,18 +60,6 @@ export function adaptAttackPathScansResponse(
     : undefined;
 
   return { data: enrichedData, metadata };
-}
-
-/**
- * Format duration in seconds to human-readable format
- *
- * @param seconds - Duration in seconds
- * @returns Formatted duration string (e.g., "2m 30s")
- */
-function formatDuration(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes}m ${remainingSeconds}s`;
 }
 
 /**
