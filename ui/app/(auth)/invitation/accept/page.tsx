@@ -1,5 +1,3 @@
-import { Suspense } from "react";
-
 import { auth } from "@/auth.config";
 import { SearchParamsProps } from "@/types";
 
@@ -19,8 +17,6 @@ export default async function AcceptInvitationPage({
       : null;
 
   return (
-    <Suspense>
-      <AcceptInvitationClient isAuthenticated={!!session?.user} token={token} />
-    </Suspense>
+    <AcceptInvitationClient isAuthenticated={!!session?.user} token={token} />
   );
 }

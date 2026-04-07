@@ -2,7 +2,7 @@ import "@/styles/globals.css";
 
 import { GoogleTagManager } from "@next/third-parties/google";
 import { Metadata, Viewport } from "next";
-import { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 
 import { NavigationProgress, Toaster } from "@/components/ui";
 import { fontSans } from "@/config/fonts";
@@ -41,7 +41,9 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <NavigationProgress />
+          <Suspense>
+            <NavigationProgress />
+          </Suspense>
           {children}
           <Toaster />
           <GoogleTagManager
