@@ -62,7 +62,7 @@ class Identity(OCIService):
         """
         try:
             # Only use one region for global users
-            if regional_client.region is not self.provider.regions[0].key:
+            if regional_client.region != self.provider.regions[0].key:
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -313,7 +313,7 @@ class Identity(OCIService):
         """List all IAM groups."""
         try:
             # Only use one region for global groups
-            if regional_client.region is not self.provider.regions[0].key:
+            if regional_client.region != self.provider.regions[0].key:
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -357,7 +357,7 @@ class Identity(OCIService):
         """List all IAM policies."""
         try:
             # Only use one region for global policies
-            if regional_client.region is not self.provider.regions[0].key:
+            if regional_client.region != self.provider.regions[0].key:
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -401,8 +401,8 @@ class Identity(OCIService):
     def __list_dynamic_groups__(self, regional_client):
         """List all dynamic groups in the tenancy."""
         try:
-            # Only use one region for global dynamic groups
-            if regional_client.region is not self.provider.regions[0].key:
+            # Only use one region for global search
+            if regional_client.region != self.provider.regions[0].key:
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -554,10 +554,7 @@ class Identity(OCIService):
         """Get the password policy for the tenancy."""
         try:
             # Only use one region for global password policies
-            if regional_client.region is not self.provider.regions[0].key:
-                logger.info(
-                    f"Skipping {regional_client.region} as its not {self.provider.regions[0]}"
-                )
+            if regional_client.region != self.provider.regions[0].key:
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -583,6 +580,8 @@ class Identity(OCIService):
 
     def __search_root_compartment_resources__(self, regional_client):
         """Search for resources in the root compartment using OCI Resource Search."""
+
+
         try:
             logger.info("Identity - Searching for resources in root compartment...")
 
