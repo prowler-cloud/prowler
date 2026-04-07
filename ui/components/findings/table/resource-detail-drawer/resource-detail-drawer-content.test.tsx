@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
@@ -104,10 +105,30 @@ vi.mock("@/components/shadcn/card/card", () => ({
 }));
 
 vi.mock("@/components/shadcn/dropdown", () => ({
-  ActionDropdown: ({ children }: { children: ReactNode }) => (
-    <div>{children}</div>
+  ActionDropdown: ({
+    children,
+    ariaLabel,
+  }: {
+    children: ReactNode;
+    ariaLabel?: string;
+  }) => (
+    <div role="menu" aria-label={ariaLabel}>
+      {children}
+    </div>
   ),
-  ActionDropdownItem: () => null,
+  ActionDropdownItem: ({
+    label,
+    disabled,
+    onSelect,
+  }: {
+    label: string;
+    disabled?: boolean;
+    onSelect?: () => void;
+  }) => (
+    <button type="button" disabled={disabled} onClick={onSelect}>
+      {label}
+    </button>
+  ),
 }));
 
 vi.mock("@/components/shadcn/skeleton/skeleton", () => ({
@@ -125,7 +146,25 @@ vi.mock("@/components/shadcn/tooltip", () => ({
 }));
 
 vi.mock("@/components/findings/mute-findings-modal", () => ({
-  MuteFindingsModal: () => null,
+  MuteFindingsModal: ({
+    isOpen,
+    findingIds,
+    onComplete,
+  }: {
+    isOpen: boolean;
+    findingIds: string[];
+    onComplete?: () => void;
+  }) =>
+    isOpen
+      ? globalThis.document?.body &&
+        // Render into body to mirror the real modal portal behavior.
+        createPortal(
+          <button type="button" onClick={onComplete}>
+            {`Confirm mute ${findingIds.join(",")}`}
+          </button>,
+          globalThis.document.body,
+        )
+      : null,
 }));
 
 vi.mock("@/components/findings/send-to-jira-modal", () => ({
@@ -665,5 +704,53 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
     expect(mockRouterPush).toHaveBeenCalledWith(
       "/compliance/PCI-DSS?complianceId=compliance-2&version=4.0&scanId=scan-from-finding&scanData=%7B%22id%22%3A%22scan-from-finding%22%2C%22providerInfo%22%3A%7B%22provider%22%3A%22aws%22%2C%22alias%22%3A%22prod%22%2C%22uid%22%3A%22123456789%22%7D%2C%22attributes%22%3A%7B%22name%22%3A%22Nightly+scan%22%2C%22completed_at%22%3A%222026-03-30T10%3A05%3A00Z%22%7D%7D",
     );
+  });
+});
+
+describe("ResourceDetailDrawerContent — other findings mute refresh", () => {
+  it("should update only the muted other-finding row without refreshing the current finding group", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onMuteComplete = vi.fn();
+    const otherFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      id: "finding-2",
+      uid: "uid-2",
+      checkId: "ec2_check",
+      checkTitle: "EC2 Check",
+      updatedAt: "2026-03-30T10:05:00Z",
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[otherFinding]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={onMuteComplete}
+      />,
+    );
+
+    // When
+    const row = screen.getByText("EC2 Check").closest("tr");
+    expect(row).not.toBeNull();
+
+    await user.click(
+      within(row as HTMLElement).getByRole("button", { name: "Mute" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Confirm mute finding-2" }),
+    );
+
+    // Then
+    expect(
+      within(row as HTMLElement).getByRole("button", { name: "Muted" }),
+    ).toBeDisabled();
+    expect(onMuteComplete).not.toHaveBeenCalled();
   });
 });
