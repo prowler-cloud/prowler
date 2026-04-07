@@ -83,6 +83,11 @@ const GoogleWorkspaceProviderBadge = lazy(() =>
     default: m.GoogleWorkspaceProviderBadge,
   })),
 );
+const VercelProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.VercelProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -149,6 +154,10 @@ const PROVIDER_DATA: Record<
   openstack: {
     label: "OpenStack",
     icon: OpenStackProviderBadge,
+  },
+  vercel: {
+    label: "Vercel",
+    icon: VercelProviderBadge,
   },
 };
 
@@ -222,7 +231,11 @@ export const ProviderTypeSelector = ({
         // .filter((p) => p.attributes.connection?.connected)
         .map((p) => p.attributes.provider),
     ),
-  ).filter((type): type is ProviderType => type in PROVIDER_DATA);
+  )
+    .filter((type): type is ProviderType => type in PROVIDER_DATA)
+    .sort((a, b) =>
+      PROVIDER_DATA[a].label.localeCompare(PROVIDER_DATA[b].label),
+    );
 
   const renderIcon = (providerType: ProviderType) => {
     const IconComponent = PROVIDER_DATA[providerType].icon;

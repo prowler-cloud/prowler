@@ -1,0 +1,108 @@
+---
+title: "Getting Started With Vercel on Prowler"
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+Prowler for Vercel scans teams and projects for security misconfigurations, including deployment protection, environment variable exposure, WAF rules, domain configuration, team access controls, and more.
+
+## Prerequisites
+
+Set up authentication for Vercel with the [Vercel Authentication](/user-guide/providers/vercel/authentication) guide before starting:
+
+- Create a Vercel API Token with access to the target team
+- Identify the Team ID (optional, required to scope the scan to a single team)
+
+## Prowler CLI
+
+<VersionBadge version="5.22.0" />
+
+### Step 1: Set Up Authentication
+
+Follow the [Vercel Authentication](/user-guide/providers/vercel/authentication) guide to create an API Token, then export it:
+
+```console
+export VERCEL_TOKEN="your-api-token-here"
+```
+
+Optionally, scope the scan to a specific team:
+
+```console
+export VERCEL_TEAM="team_yourteamid"
+```
+
+### Step 2: Run the First Scan
+
+Run a baseline scan after credentials are configured:
+
+```console
+prowler vercel
+```
+
+Prowler automatically discovers all teams accessible with the provided token and runs security checks against them.
+
+### Step 3: Filter the Scan Scope (Optional)
+
+#### Filter by Team
+
+To scan a specific team, set the `VERCEL_TEAM` environment variable with the Team ID or slug:
+
+```console
+export VERCEL_TEAM="team_yourteamid"
+prowler vercel
+```
+
+<Note>
+When no team is specified, Prowler auto-discovers all teams the authenticated user belongs to and scans each one.
+</Note>
+
+#### Filter by Project
+
+To scan only specific projects, use the `--project` argument:
+
+```console
+prowler vercel --project my-project-name
+```
+
+Multiple projects can be specified:
+
+```console
+prowler vercel --project my-project-name another-project
+```
+
+Project IDs are also supported:
+
+```console
+prowler vercel --project prj_abc123def456
+```
+
+### Step 4: Use a Custom Configuration (Optional)
+
+Prowler uses a configuration file to customize provider behavior. The Vercel configuration includes:
+
+```yaml
+vercel:
+  # Maximum number of retries for API requests (default is 3)
+  max_retries: 3
+```
+
+To use a custom configuration:
+
+```console
+prowler vercel --config-file /path/to/config.yaml
+```
+
+---
+
+## Supported Services
+
+Prowler for Vercel includes security checks across the following services:
+
+| Service | Description |
+|---------|-------------|
+| **Authentication** | Token expiration and staleness checks |
+| **Deployment** | Preview deployment access and production stability |
+| **Domain** | DNS configuration, SSL certificates, and wildcard exposure |
+| **Project** | Deployment protection, environment variable security, fork protection, and skew protection |
+| **Security** | Web Application Firewall (WAF), rate limiting, IP blocking, and managed rulesets |
+| **Team** | SSO enforcement, directory sync, member access, and invitation hygiene |

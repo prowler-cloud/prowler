@@ -1,5 +1,7 @@
 import re
 
+SENSITIVE_ARGUMENTS = frozenset({"--personal-access-token", "--oauth-app-token"})
+
 SCANNERS_CHOICES = [
     "vuln",
     "misconfig",

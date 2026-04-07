@@ -1,0 +1,38 @@
+{
+  "Provider": "vercel",
+  "CheckID": "authentication_token_not_expired",
+  "CheckTitle": "Vercel API tokens have not expired",
+  "CheckType": [],
+  "ServiceName": "authentication",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Vercel API tokens** are assessed for **expiration status** to identify expired tokens or those about to expire within a configurable threshold (default: 7 days). Tokens about to expire are flagged proactively so they can be rotated before causing disruptions. Tokens without an expiration date are considered valid.",
+  "Risk": "Expired tokens indicate poor **token lifecycle management**. Tokens about to expire risk **imminent service disruption** if not rotated in time. Integrations or **CI/CD pipelines** relying on expired or soon-to-expire tokens will fail silently.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/rest-api#authentication"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Vercel dashboard\n2. Navigate to Account Settings > Tokens\n3. Identify any expired tokens\n4. Delete expired tokens that are no longer needed\n5. Create new tokens with appropriate expiration dates to replace expired ones\n6. Update any integrations or CI/CD pipelines that used the expired tokens",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove expired tokens and create new ones with appropriate expiration dates. Implement a token rotation schedule to ensure tokens are refreshed before they expire. Update all integrations and automation that depend on the replaced tokens.",
+      "Url": "https://hub.prowler.com/checks/vercel/authentication_token_not_expired"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "authentication_no_stale_tokens"
+  ],
+  "Notes": "Tokens without an expiration date (expires_at is None) are treated as valid since they have no defined expiry. The days_to_expire_threshold is configurable via audit_config (default: 7 days). Tokens expiring within the threshold are reported with medium severity; already expired tokens are reported with high severity."
+}

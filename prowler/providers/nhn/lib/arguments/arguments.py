@@ -1,3 +1,6 @@
+SENSITIVE_ARGUMENTS = frozenset({"--nhn-password"})
+
+
 def init_parser(self):
     """Init the NHN Provider CLI parser"""
     nhn_parser = self.subparsers.add_parser(
