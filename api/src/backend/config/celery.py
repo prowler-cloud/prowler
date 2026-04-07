@@ -1,7 +1,6 @@
 import warnings
 
 from celery import Celery, Task
-
 from config.env import env
 
 # Suppress specific warnings from django-rest-auth: https://github.com/iMerica/dj-rest-auth/issues/684
@@ -17,7 +16,11 @@ celery_app.config_from_object("django.conf:settings", namespace="CELERY")
 celery_app.conf.update(result_extended=True, result_expires=None)
 
 celery_app.conf.broker_transport_options = {
-    "visibility_timeout": BROKER_VISIBILITY_TIMEOUT
+    "visibility_timeout": BROKER_VISIBILITY_TIMEOUT,
+    "health_check_interval": 30,
+    "socket_keepalive": True,
+    "socket_connect_timeout": 10,
+    "retry_on_timeout": True,
 }
 celery_app.conf.result_backend_transport_options = {
     "visibility_timeout": BROKER_VISIBILITY_TIMEOUT
