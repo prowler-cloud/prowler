@@ -246,14 +246,7 @@ Some pre-commit hooks require tools installed on your system:
 
 1. **Install [TruffleHog](https://github.com/trufflesecurity/trufflehog#install)** (secret scanning) — see the [official installation options](https://github.com/trufflesecurity/trufflehog#install).
 
-2. **Install [Safety](https://github.com/pyupio/safety)** (dependency vulnerability checking):
-
-    ```console
-    # Requires a Python environment (e.g. via pyenv)
-    pip install safety
-    ```
-
-3. **Install [Hadolint](https://github.com/hadolint/hadolint#install)** (Dockerfile linting) — see the [official installation options](https://github.com/hadolint/hadolint#install).
+2. **Install [Hadolint](https://github.com/hadolint/hadolint#install)** (Dockerfile linting) — see the [official installation options](https://github.com/hadolint/hadolint#install).
 
 ## Prowler CLI
 ### Pip package
