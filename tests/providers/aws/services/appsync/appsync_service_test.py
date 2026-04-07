@@ -25,25 +25,25 @@ def mock_generate_regional_clients(provider, service):
 class Test_AppSync_Service:
     # Test AppSync Service
     def test_service(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         appsync = AppSync(aws_provider)
         assert appsync.service == "appsync"
 
     # Test AppSync Client
     def test_client(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         appsync = AppSync(aws_provider)
         assert appsync.client.__class__.__name__ == "AppSync"
 
     # Test AppSync Session
     def test__get_session__(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         appsync = AppSync(aws_provider)
         assert appsync.session.__class__.__name__ == "Session"
 
     # Test AppSync Session
     def test_audited_account(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         appsync = AppSync(aws_provider)
         assert appsync.audited_account == AWS_ACCOUNT_NUMBER
 

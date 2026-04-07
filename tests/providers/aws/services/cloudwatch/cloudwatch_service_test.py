@@ -18,7 +18,8 @@ class Test_CloudWatch_Service:
     def test_service(self):
         # CloudWatch client for this test class
         aws_provider = set_mocked_aws_provider(
-            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+            audited_regions=[AWS_REGION_US_EAST_1],
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
         )
         cloudwatch = CloudWatch(aws_provider)
         assert cloudwatch.service == "cloudwatch"
@@ -28,7 +29,8 @@ class Test_CloudWatch_Service:
     def test_client(self):
         # CloudWatch client for this test class
         aws_provider = set_mocked_aws_provider(
-            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+            audited_regions=[AWS_REGION_US_EAST_1],
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
         )
         cloudwatch = CloudWatch(aws_provider)
         for client_ in cloudwatch.regional_clients.values():
@@ -39,7 +41,8 @@ class Test_CloudWatch_Service:
     def test__get_session__(self):
         # CloudWatch client for this test class
         aws_provider = set_mocked_aws_provider(
-            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+            audited_regions=[AWS_REGION_US_EAST_1],
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
         )
         cloudwatch = CloudWatch(aws_provider)
         assert cloudwatch.session.__class__.__name__ == "Session"
@@ -49,7 +52,8 @@ class Test_CloudWatch_Service:
     def test_audited_account(self):
         # CloudWatch client for this test class
         aws_provider = set_mocked_aws_provider(
-            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+            audited_regions=[AWS_REGION_US_EAST_1],
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
         )
         cloudwatch = CloudWatch(aws_provider)
         assert cloudwatch.audited_account == AWS_ACCOUNT_NUMBER
@@ -59,7 +63,8 @@ class Test_CloudWatch_Service:
     def test_logs_service(self):
         # Logs client for this test class
         aws_provider = set_mocked_aws_provider(
-            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+            audited_regions=[AWS_REGION_US_EAST_1],
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
         )
         logs = Logs(aws_provider)
         assert logs.service == "logs"
@@ -69,7 +74,8 @@ class Test_CloudWatch_Service:
     def test_logs_client(self):
         # Logs client for this test class
         aws_provider = set_mocked_aws_provider(
-            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+            audited_regions=[AWS_REGION_US_EAST_1],
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
         )
         logs = Logs(aws_provider)
         for client_ in logs.regional_clients.values():
@@ -80,7 +86,8 @@ class Test_CloudWatch_Service:
     def test__logs_get_session__(self):
         # Logs client for this test class
         aws_provider = set_mocked_aws_provider(
-            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+            audited_regions=[AWS_REGION_US_EAST_1],
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
         )
         logs = Logs(aws_provider)
         assert logs.session.__class__.__name__ == "Session"
@@ -90,7 +97,8 @@ class Test_CloudWatch_Service:
     def test_logs_audited_account(self):
         # Logs client for this test class
         aws_provider = set_mocked_aws_provider(
-            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+            audited_regions=[AWS_REGION_US_EAST_1],
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
         )
         logs = Logs(aws_provider)
         assert logs.audited_account == AWS_ACCOUNT_NUMBER
@@ -119,7 +127,8 @@ class Test_CloudWatch_Service:
             ActionsEnabled=True,
         )
         aws_provider = set_mocked_aws_provider(
-            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+            audited_regions=[AWS_REGION_US_EAST_1],
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
         )
         cloudwatch = CloudWatch(aws_provider)
         assert len(cloudwatch.metric_alarms) == 1
@@ -155,7 +164,8 @@ class Test_CloudWatch_Service:
             ],
         )
         aws_provider = set_mocked_aws_provider(
-            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+            audited_regions=[AWS_REGION_US_EAST_1],
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
         )
         logs = Logs(aws_provider)
         assert len(logs.metric_filters) == 1
@@ -179,7 +189,8 @@ class Test_CloudWatch_Service:
             logGroupName="/log-group/test", retentionInDays=400
         )
         aws_provider = set_mocked_aws_provider(
-            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+            audited_regions=[AWS_REGION_US_EAST_1],
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
         )
         arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
         logs = Logs(aws_provider)
@@ -203,7 +214,8 @@ class Test_CloudWatch_Service:
         )
 
         aws_provider = set_mocked_aws_provider(
-            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+            audited_regions=[AWS_REGION_US_EAST_1],
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
         )
         arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
         logs = Logs(aws_provider)

@@ -96,7 +96,7 @@ class AwsProvider(Provider):
     _audit_resources: list = []
     _audit_config: dict
     _scan_unused_services: bool = False
-    _enabled_regions: set = set()
+    _enabled_regions: set = None
     _mutelist: AWSMutelist
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
@@ -747,7 +747,7 @@ class AwsProvider(Provider):
             )
 
             # Get the regions enabled for the account and get the intersection with the service available regions
-            if self._enabled_regions:
+            if self._enabled_regions is not None:
                 enabled_regions = service_regions.intersection(self._enabled_regions)
             else:
                 enabled_regions = service_regions
@@ -1131,7 +1131,7 @@ class AwsProvider(Provider):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return set()
+            return None
 
     # TODO: review this function
     # Maybe this should be done within the AwsProvider and not in __main__.py

@@ -4,7 +4,7 @@ from unittest.mock import patch
 import botocore
 
 from prowler.providers.aws.services.fms.fms_service import FMS
-from tests.providers.aws.utils import set_mocked_aws_provider
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 POLICY_ARN = "arn:aws:fms:us-east-1:123456789012:policy/MyFMSManagedPolicy"
 POLICY_ID = "12345678-1234-1234-1234-123456789012"
@@ -62,17 +62,17 @@ def mock_make_api_call(self, operation_name, kwargs):
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_FMS_Service:
     def test_get_client(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         fms = FMS(aws_provider)
         assert fms.client.__class__.__name__ == "FMS"
 
     def test__get_service__(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         fms = FMS(aws_provider)
         assert fms.service == "fms"
 
     def test_list_policies(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         fms = FMS(aws_provider)
         assert len(fms.fms_policies) == 1
         assert fms.fms_admin_account is True
@@ -88,7 +88,7 @@ class Test_FMS_Service:
         )
 
     def test_list_compliance_status(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         fms = FMS(aws_provider)
         assert len(fms.fms_policies) == 1
         assert fms.fms_policies[0].compliance_status[0].status == "COMPLIANT"

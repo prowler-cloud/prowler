@@ -312,7 +312,7 @@ class Test_awslambda_function_not_publicly_accessible:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1]),
             ),
             mock.patch(
                 "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.awslambda_client",
@@ -552,7 +552,7 @@ class Test_awslambda_function_not_publicly_accessible:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1]),
             ),
             mock.patch(
                 "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.awslambda_client",
@@ -615,7 +615,7 @@ class Test_awslambda_function_not_publicly_accessible:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1]),
             ),
             mock.patch(
                 "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.awslambda_client",
@@ -690,7 +690,7 @@ class Test_awslambda_function_not_publicly_accessible:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1]),
             ),
             mock.patch(
                 "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.awslambda_client",

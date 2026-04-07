@@ -143,7 +143,9 @@ def set_mocked_aws_provider(
     # Mock Configiration
     provider._scan_unused_services = scan_unused_services
     provider._enabled_regions = (
-        enabled_regions if enabled_regions else set(audited_regions)
+        enabled_regions
+        if enabled_regions is not None
+        else (set(audited_regions) if audited_regions else None)
     )
     # TODO: we can create the organizations metadata here with moto
     provider._organizations_metadata = None

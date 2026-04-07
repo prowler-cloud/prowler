@@ -97,7 +97,7 @@ class Test_ACM_Service:
     # @mock_acm
     def test_service(self):
         # ACM client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         acm = ACM(aws_provider)
         assert acm.service == "acm"
 
@@ -105,7 +105,7 @@ class Test_ACM_Service:
     # @mock_acm
     def test_client(self):
         # ACM client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         acm = ACM(aws_provider)
         for regional_client in acm.regional_clients.values():
             assert regional_client.__class__.__name__ == "ACM"
@@ -114,7 +114,7 @@ class Test_ACM_Service:
     # @mock_acm
     def test__get_session__(self):
         # ACM client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         acm = ACM(aws_provider)
         assert acm.session.__class__.__name__ == "Session"
 
@@ -122,7 +122,7 @@ class Test_ACM_Service:
     # @mock_acm
     def test_audited_account(self):
         # ACM client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         acm = ACM(aws_provider)
         assert acm.audited_account == AWS_ACCOUNT_NUMBER
 
@@ -137,7 +137,7 @@ class Test_ACM_Service:
         # )
 
         # ACM client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         acm = ACM(aws_provider)
         assert len(acm.certificates) == 1
         assert acm.certificates[CERTIFICATE_ARN].arn == CERTIFICATE_ARN
@@ -161,7 +161,7 @@ class Test_ACM_Service:
         # )
 
         # ACM client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         acm = ACM(aws_provider)
         assert len(acm.certificates) == 1
         assert acm.certificates[CERTIFICATE_ARN].tags == [

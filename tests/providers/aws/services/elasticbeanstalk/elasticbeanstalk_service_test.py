@@ -59,7 +59,7 @@ class Test_ElasticBeanstalk_Service:
     # Test ElasticBeanstalk Client
     @mock_aws
     def test_get_client(self):
-        elasticbeanstalk = ElasticBeanstalk(set_mocked_aws_provider())
+        elasticbeanstalk = ElasticBeanstalk(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert (
             elasticbeanstalk.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
             == "ElasticBeanstalk"
@@ -68,13 +68,13 @@ class Test_ElasticBeanstalk_Service:
     # Test ElasticBeanstalk Session
     @mock_aws
     def test__get_session__(self):
-        elasticbeanstalk = ElasticBeanstalk(set_mocked_aws_provider())
+        elasticbeanstalk = ElasticBeanstalk(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert elasticbeanstalk.session.__class__.__name__ == "Session"
 
     # Test ElasticBeanstalk Service
     @mock_aws
     def test__get_service__(self):
-        elasticbeanstalk = ElasticBeanstalk(set_mocked_aws_provider())
+        elasticbeanstalk = ElasticBeanstalk(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert elasticbeanstalk.service == "elasticbeanstalk"
 
     # Test _describe_environments
@@ -90,7 +90,7 @@ class Test_ElasticBeanstalk_Service:
             EnvironmentName="test-env",
         )
         # ElasticBeanstalk Class
-        elasticbeanstalk = ElasticBeanstalk(set_mocked_aws_provider())
+        elasticbeanstalk = ElasticBeanstalk(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
 
         assert len(elasticbeanstalk.environments) == 1
         assert (
@@ -125,7 +125,7 @@ class Test_ElasticBeanstalk_Service:
             EnvironmentName="test-env",
         )
         # ElasticBeanstalk Class
-        elasticbeanstalk = ElasticBeanstalk(set_mocked_aws_provider())
+        elasticbeanstalk = ElasticBeanstalk(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert (
             elasticbeanstalk.environments[
                 environment["EnvironmentArn"]
@@ -158,7 +158,7 @@ class Test_ElasticBeanstalk_Service:
             Tags=[{"Key": "test-key", "Value": "test-value"}],
         )
         # ElasticBeanstalk Class
-        elasticbeanstalk = ElasticBeanstalk(set_mocked_aws_provider())
+        elasticbeanstalk = ElasticBeanstalk(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert elasticbeanstalk.environments[environment["EnvironmentArn"]].tags == [
             {"Key": "test-key", "Value": "test-value"}
         ]

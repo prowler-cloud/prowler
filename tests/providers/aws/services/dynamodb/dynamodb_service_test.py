@@ -14,7 +14,7 @@ class Test_DynamoDB_Service:
     @mock_aws
     def test_service(self):
         # Dynamo client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
         dynamodb = DynamoDB(aws_provider)
         assert dynamodb.service == "dynamodb"
 
@@ -22,7 +22,7 @@ class Test_DynamoDB_Service:
     @mock_aws
     def test_client(self):
         # Dynamo client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
         dynamodb = DynamoDB(aws_provider)
         for regional_client in dynamodb.regional_clients.values():
             assert regional_client.__class__.__name__ == "DynamoDB"
@@ -31,7 +31,7 @@ class Test_DynamoDB_Service:
     @mock_aws
     def test__get_session__(self):
         # Dynamo client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
         dynamodb = DynamoDB(aws_provider)
         assert dynamodb.session.__class__.__name__ == "Session"
 
@@ -39,7 +39,7 @@ class Test_DynamoDB_Service:
     @mock_aws
     def test_audited_account(self):
         # Dynamo client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
         dynamodb = DynamoDB(aws_provider)
         assert dynamodb.audited_account == AWS_ACCOUNT_NUMBER
 
@@ -75,7 +75,7 @@ class Test_DynamoDB_Service:
             ProvisionedThroughput={"ReadCapacityUnits": 5, "WriteCapacityUnits": 5},
         )["TableDescription"]["TableArn"]
         # DynamoDB client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
         dynamo = DynamoDB(aws_provider)
         assert len(dynamo.tables) == 2
         table_names = [table.name for table in dynamo.tables.values()]
@@ -109,7 +109,7 @@ class Test_DynamoDB_Service:
             DeletionProtectionEnabled=True,
         )["TableDescription"]
         # DynamoDB client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
         dynamo = DynamoDB(aws_provider)
         assert len(dynamo.tables) == 1
         tables_arn, tables = next(iter(dynamo.tables.items()))
@@ -142,7 +142,7 @@ class Test_DynamoDB_Service:
             PointInTimeRecoverySpecification={"PointInTimeRecoveryEnabled": True},
         )
         # DynamoDB client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
         dynamo = DynamoDB(aws_provider)
         assert len(dynamo.tables) == 1
         tables_arn, tables = next(iter(dynamo.tables.items()))
@@ -180,7 +180,7 @@ class Test_DynamoDB_Service:
             ],
         )
         # DAX client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
         dax = DAX(aws_provider)
         assert len(dax.clusters) == 2
 

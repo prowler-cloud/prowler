@@ -184,24 +184,24 @@ class Test_CloudFront_Service:
     # Test CloudFront Client
     @mock_aws
     def test_get_client(self):
-        cloudfront = CloudFront(set_mocked_aws_provider())
+        cloudfront = CloudFront(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert cloudfront.client.__class__.__name__ == "CloudFront"
 
     # Test CloudFront Session
     @mock_aws
     def test__get_session__(self):
-        cloudfront = CloudFront(set_mocked_aws_provider())
+        cloudfront = CloudFront(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert cloudfront.session.__class__.__name__ == "Session"
 
     # Test CloudFront Service
     @mock_aws
     def test__get_service__(self):
-        cloudfront = CloudFront(set_mocked_aws_provider())
+        cloudfront = CloudFront(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert cloudfront.service == "cloudfront"
 
     @mock_aws
     def test_list_distributionszero(self):
-        cloudfront = CloudFront(set_mocked_aws_provider())
+        cloudfront = CloudFront(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
 
         assert len(cloudfront.distributions) == 0
 

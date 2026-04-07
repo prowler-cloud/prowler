@@ -401,7 +401,7 @@ class Test_EC2_Service:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
             ),
             mock.patch(
                 "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
@@ -480,7 +480,7 @@ class Test_EC2_Service:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
             ),
             mock.patch(
                 "prowler.providers.aws.services.ec2.ec2_client.ec2_client",

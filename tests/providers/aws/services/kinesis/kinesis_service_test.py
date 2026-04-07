@@ -63,7 +63,7 @@ class Test_Kinesis_Service:
     # Test Kinesis Service
     @mock_aws
     def test__get_service__(self):
-        kinesis = Kinesis(set_mocked_aws_provider())
+        kinesis = Kinesis(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert kinesis.service == "kinesis"
 
     @mock_aws

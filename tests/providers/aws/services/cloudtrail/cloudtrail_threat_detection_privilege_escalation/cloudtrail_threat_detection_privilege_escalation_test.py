@@ -53,7 +53,7 @@ class Test_cloudtrail_threat_detection_privilege_escalation:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
             ),
             mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_privilege_escalation.cloudtrail_threat_detection_privilege_escalation.cloudtrail_client",
@@ -103,7 +103,7 @@ class Test_cloudtrail_threat_detection_privilege_escalation:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
             ),
             mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_privilege_escalation.cloudtrail_threat_detection_privilege_escalation.cloudtrail_client",
@@ -156,7 +156,7 @@ class Test_cloudtrail_threat_detection_privilege_escalation:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
             ),
             mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_privilege_escalation.cloudtrail_threat_detection_privilege_escalation.cloudtrail_client",
@@ -209,7 +209,7 @@ class Test_cloudtrail_threat_detection_privilege_escalation:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
             ),
             mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_privilege_escalation.cloudtrail_threat_detection_privilege_escalation.cloudtrail_client",
@@ -262,7 +262,7 @@ class Test_cloudtrail_threat_detection_privilege_escalation:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
             ),
             mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_privilege_escalation.cloudtrail_threat_detection_privilege_escalation.cloudtrail_client",

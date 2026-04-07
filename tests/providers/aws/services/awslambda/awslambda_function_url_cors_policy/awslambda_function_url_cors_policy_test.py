@@ -24,7 +24,7 @@ class Test_awslambda_function_url_cors_policy:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1]),
             ),
             mock.patch(
                 "prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy.awslambda_client",
@@ -64,7 +64,7 @@ class Test_awslambda_function_url_cors_policy:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1]),
             ),
             mock.patch(
                 "prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy.awslambda_client",
@@ -113,7 +113,7 @@ class Test_awslambda_function_url_cors_policy:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1]),
             ),
             mock.patch(
                 "prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy.awslambda_client",
@@ -164,7 +164,7 @@ class Test_awslambda_function_url_cors_policy:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1]),
             ),
             mock.patch(
                 "prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy.awslambda_client",
