@@ -9,7 +9,7 @@ from tests.providers.azure.azure_fixtures import (
 
 
 class Test_keyvault_logging_enabled:
-    def test_keyvault_logging_enabled(self):
+    def test_no_key_vaults(self):
         keyvault_client = mock.MagicMock
         keyvault_client.key_vaults = {}
 
@@ -27,7 +27,6 @@ class Test_keyvault_logging_enabled:
                 new=keyvault_client,
             ),
         ):
-
             from prowler.providers.azure.services.keyvault.keyvault_logging_enabled.keyvault_logging_enabled import (
                 keyvault_logging_enabled,
             )
@@ -84,10 +83,12 @@ class Test_keyvault_logging_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"There are no diagnostic settings capturing audit logs for Key Vault name_keyvault in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"Key Vault name_keyvault in subscription {AZURE_SUBSCRIPTION_ID} does not have a diagnostic setting with audit logging."
             )
+            assert result[0].resource_name == "name_keyvault"
+            assert result[0].resource_id == "id"
 
-    def test_diagnostic_settings_configured(self):
+    def test_diagnostic_setting_without_audit_logging(self):
         keyvault_client = mock.MagicMock
 
         with (
@@ -130,7 +131,7 @@ class Test_keyvault_logging_enabled:
                         secrets=[],
                         monitor_diagnostic_settings=[
                             DiagnosticSetting(
-                                id="id/id",
+                                id="id/ds1",
                                 logs=[
                                     mock.MagicMock(
                                         category_group="audit",
@@ -143,42 +144,9 @@ class Test_keyvault_logging_enabled:
                                         enabled=False,
                                     ),
                                 ],
-                                storage_account_name="storage_account_name",
-                                storage_account_id="storage_account_id",
-                                name="name_diagnostic_setting",
-                            ),
-                        ],
-                    ),
-                    KeyVaultInfo(
-                        id="id2",
-                        name="name_keyvault2",
-                        location="eastus",
-                        resource_group="resource_group2",
-                        properties=VaultProperties(
-                            tenant_id="tenantid",
-                            sku="sku",
-                            enable_rbac_authorization=False,
-                        ),
-                        keys=[],
-                        secrets=[],
-                        monitor_diagnostic_settings=[
-                            DiagnosticSetting(
-                                id="id2/id2",
-                                logs=[
-                                    mock.MagicMock(
-                                        category_group="audit",
-                                        category="None",
-                                        enabled=True,
-                                    ),
-                                    mock.MagicMock(
-                                        category_group="allLogs",
-                                        category="None",
-                                        enabled=True,
-                                    ),
-                                ],
-                                storage_account_name="storage_account_name2",
-                                storage_account_id="storage_account_id2",
-                                name="name_diagnostic_setting2",
+                                storage_account_name="sa1",
+                                storage_account_id="sa_id1",
+                                name="ds_incomplete",
                             ),
                         ],
                     ),
@@ -186,27 +154,16 @@ class Test_keyvault_logging_enabled:
             }
             check = keyvault_logging_enabled()
             result = check.execute()
-            assert len(result) == 2
+            assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == "name_diagnostic_setting"
-            assert result[0].resource_id == "id/id"
-            assert result[0].location == "westeurope"
             assert (
                 result[0].status_extended
-                == f"Diagnostic setting name_diagnostic_setting for Key Vault name_keyvault in subscription {AZURE_SUBSCRIPTION_ID} does not have audit logging."
+                == f"Key Vault name_keyvault in subscription {AZURE_SUBSCRIPTION_ID} does not have a diagnostic setting with audit logging."
             )
-            assert result[1].status == "PASS"
-            assert result[1].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[1].resource_name == "name_diagnostic_setting2"
-            assert result[1].resource_id == "id2/id2"
-            assert result[1].location == "eastus"
-            assert (
-                result[1].status_extended
-                == f"Diagnostic setting name_diagnostic_setting2 for Key Vault name_keyvault2 in subscription {AZURE_SUBSCRIPTION_ID} has audit logging."
-            )
+            assert result[0].resource_name == "name_keyvault"
+            assert result[0].resource_id == "id"
 
-    def test_multiple_diagnostic_settings_per_vault(self):
+    def test_diagnostic_setting_with_audit_logging(self):
         keyvault_client = mock.MagicMock
 
         with (
@@ -264,10 +221,67 @@ class Test_keyvault_logging_enabled:
                                 ],
                                 storage_account_name="sa1",
                                 storage_account_id="sa_id1",
-                                name="ds_pass",
+                                name="ds_compliant",
                             ),
+                        ],
+                    ),
+                ]
+            }
+            check = keyvault_logging_enabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Key Vault name_keyvault in subscription {AZURE_SUBSCRIPTION_ID} has a diagnostic setting with audit logging."
+            )
+            assert result[0].resource_name == "name_keyvault"
+            assert result[0].resource_id == "id"
+
+    def test_multiple_diagnostic_settings_one_compliant(self):
+        keyvault_client = mock.MagicMock
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=mock.MagicMock(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.keyvault.keyvault_logging_enabled.keyvault_logging_enabled.keyvault_client",
+                new=keyvault_client,
+            ),
+        ):
+            from prowler.providers.azure.services.keyvault.keyvault_logging_enabled.keyvault_logging_enabled import (
+                keyvault_logging_enabled,
+            )
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVaultInfo,
+            )
+            from prowler.providers.azure.services.monitor.monitor_service import (
+                DiagnosticSetting,
+            )
+
+            keyvault_client.key_vaults = {
+                AZURE_SUBSCRIPTION_ID: [
+                    KeyVaultInfo(
+                        id="id",
+                        name="name_keyvault",
+                        location="westeurope",
+                        resource_group="resource_group",
+                        properties=VaultProperties(
+                            tenant_id="tenantid",
+                            sku="sku",
+                            enable_rbac_authorization=False,
+                        ),
+                        keys=[],
+                        secrets=[],
+                        monitor_diagnostic_settings=[
                             DiagnosticSetting(
-                                id="id/ds2",
+                                id="id/ds1",
                                 logs=[
                                     mock.MagicMock(
                                         category_group="audit",
@@ -280,9 +294,131 @@ class Test_keyvault_logging_enabled:
                                         enabled=False,
                                     ),
                                 ],
+                                storage_account_name="sa1",
+                                storage_account_id="sa_id1",
+                                name="ds_noncompliant",
+                            ),
+                            DiagnosticSetting(
+                                id="id/ds2",
+                                logs=[
+                                    mock.MagicMock(
+                                        category_group="audit",
+                                        category="None",
+                                        enabled=True,
+                                    ),
+                                    mock.MagicMock(
+                                        category_group="allLogs",
+                                        category="None",
+                                        enabled=True,
+                                    ),
+                                ],
                                 storage_account_name="sa2",
                                 storage_account_id="sa_id2",
-                                name="ds_fail",
+                                name="ds_compliant",
+                            ),
+                        ],
+                    ),
+                ]
+            }
+            check = keyvault_logging_enabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].resource_name == "name_keyvault"
+            assert result[0].resource_id == "id"
+
+    def test_multiple_vaults_mixed(self):
+        keyvault_client = mock.MagicMock
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=mock.MagicMock(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.keyvault.keyvault_logging_enabled.keyvault_logging_enabled.keyvault_client",
+                new=keyvault_client,
+            ),
+        ):
+            from prowler.providers.azure.services.keyvault.keyvault_logging_enabled.keyvault_logging_enabled import (
+                keyvault_logging_enabled,
+            )
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVaultInfo,
+            )
+            from prowler.providers.azure.services.monitor.monitor_service import (
+                DiagnosticSetting,
+            )
+
+            keyvault_client.key_vaults = {
+                AZURE_SUBSCRIPTION_ID: [
+                    KeyVaultInfo(
+                        id="id1",
+                        name="vault_fail",
+                        location="westeurope",
+                        resource_group="resource_group",
+                        properties=VaultProperties(
+                            tenant_id="tenantid",
+                            sku="sku",
+                            enable_rbac_authorization=False,
+                        ),
+                        keys=[],
+                        secrets=[],
+                        monitor_diagnostic_settings=[
+                            DiagnosticSetting(
+                                id="id1/ds1",
+                                logs=[
+                                    mock.MagicMock(
+                                        category_group="audit",
+                                        category="None",
+                                        enabled=True,
+                                    ),
+                                    mock.MagicMock(
+                                        category_group="allLogs",
+                                        category="None",
+                                        enabled=False,
+                                    ),
+                                ],
+                                storage_account_name="sa1",
+                                storage_account_id="sa_id1",
+                                name="ds_incomplete",
+                            ),
+                        ],
+                    ),
+                    KeyVaultInfo(
+                        id="id2",
+                        name="vault_pass",
+                        location="eastus",
+                        resource_group="resource_group2",
+                        properties=VaultProperties(
+                            tenant_id="tenantid",
+                            sku="sku",
+                            enable_rbac_authorization=False,
+                        ),
+                        keys=[],
+                        secrets=[],
+                        monitor_diagnostic_settings=[
+                            DiagnosticSetting(
+                                id="id2/ds2",
+                                logs=[
+                                    mock.MagicMock(
+                                        category_group="audit",
+                                        category="None",
+                                        enabled=True,
+                                    ),
+                                    mock.MagicMock(
+                                        category_group="allLogs",
+                                        category="None",
+                                        enabled=True,
+                                    ),
+                                ],
+                                storage_account_name="sa2",
+                                storage_account_id="sa_id2",
+                                name="ds_compliant",
                             ),
                         ],
                     ),
@@ -291,8 +427,9 @@ class Test_keyvault_logging_enabled:
             check = keyvault_logging_enabled()
             result = check.execute()
             assert len(result) == 2
-            assert result[0] is not result[1]
-            assert result[0].status == "PASS"
-            assert result[0].resource_name == "ds_pass"
-            assert result[1].status == "FAIL"
-            assert result[1].resource_name == "ds_fail"
+            assert result[0].status == "FAIL"
+            assert result[0].resource_name == "vault_fail"
+            assert result[0].resource_id == "id1"
+            assert result[1].status == "PASS"
+            assert result[1].resource_name == "vault_pass"
+            assert result[1].resource_id == "id2"
