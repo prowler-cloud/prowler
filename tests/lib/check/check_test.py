@@ -1090,6 +1090,37 @@ class TestCheck:
 
         assert not errors, "\n\n".join(errors)
 
+    def test_execute_oraclecloud_mutelist_passes_tenancy_id(self):
+        """Test that execute() passes tenancy_id to is_finding_muted for OCI provider."""
+        tenancy_id = "ocid1.tenancy.oc1..aaaaaaaexample"
+
+        finding = Mock()
+        finding.status = "PASS"
+        finding.muted = False
+
+        check = Mock()
+        check.CheckID = "oci_test_check"
+        check.execute = Mock(return_value=[finding])
+
+        provider = mock.MagicMock()
+        provider.type = "oraclecloud"
+        provider.identity.tenancy_id = tenancy_id
+        provider.mutelist.mutelist = {"Accounts": {tenancy_id: {}}}
+        provider.mutelist.is_finding_muted = Mock(return_value=True)
+
+        findings = execute(
+            check=check,
+            global_provider=provider,
+            custom_checks_metadata=None,
+            output_options=None,
+        )
+
+        provider.mutelist.is_finding_muted.assert_called_once_with(
+            tenancy_id=tenancy_id,
+            finding=finding,
+        )
+        assert findings[0].muted is True
+
     def test_execute_check_exception_only_logs(self, caplog):
         caplog.set_level(ERROR)
 
