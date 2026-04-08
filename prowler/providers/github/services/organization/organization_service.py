@@ -76,6 +76,8 @@ class Organization(GithubService):
                                             id=user.id,
                                             name=user.login,
                                             mfa_required=None,  # Users don't have MFA requirements like orgs
+                                            members_can_delete_repositories=None,
+                                            is_verified=None,
                                         )
                                         logger.info(
                                             f"Added user '{user.login}' as organization for checks"
@@ -188,6 +190,9 @@ class Organization(GithubService):
         repo_creation_settings["members_allowed_repository_creation_type"] = (
             _extract_flag("members_allowed_repository_creation_type", str)
         )
+        members_can_delete_repositories = _extract_flag(
+            "members_can_delete_repositories", bool
+        )
 
         base_permission_raw = _extract_flag("default_repository_permission", str)
         base_permission = (
@@ -195,11 +200,12 @@ class Organization(GithubService):
             if isinstance(base_permission_raw, str)
             else None
         )
-
+        is_verified = _extract_flag("is_verified", bool)
         organizations[org.id] = Org(
             id=org.id,
             name=org.login,
             mfa_required=require_mfa,
+            members_can_delete_repositories=members_can_delete_repositories,
             members_can_create_repositories=repo_creation_settings[
                 "members_can_create_repositories"
             ],
@@ -216,6 +222,7 @@ class Organization(GithubService):
                 "members_allowed_repository_creation_type"
             ],
             base_permission=base_permission,
+            is_verified=is_verified,
         )
 
 
@@ -225,9 +232,11 @@ class Org(BaseModel):
     id: int
     name: str
     mfa_required: Optional[bool] = False
+    members_can_delete_repositories: Optional[bool] = None
     members_can_create_repositories: Optional[bool] = None
     members_can_create_public_repositories: Optional[bool] = None
     members_can_create_private_repositories: Optional[bool] = None
     members_can_create_internal_repositories: Optional[bool] = None
     members_allowed_repository_creation_type: Optional[str] = None
     base_permission: Optional[str] = None
+    is_verified: Optional[bool] = None

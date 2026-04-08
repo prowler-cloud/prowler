@@ -1,0 +1,41 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "calendar_external_invitations_warning",
+  "CheckTitle": "External invitation warnings are enabled for Google Calendar",
+  "CheckType": [],
+  "ServiceName": "calendar",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Google Calendar **warns users** when they invite guests from outside the organization to an event. This prompt gives users a chance to reconsider before sharing meeting details with external parties, reducing the likelihood of **accidental information disclosure** through calendar invitations.",
+  "Risk": "Without external invitation warnings, users may unintentionally include **external guests** in internal meetings, exposing **confidential meeting details**, agendas, and internal attendee lists to unauthorized parties. This is a common vector for inadvertent data leakage through everyday calendar actions.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/6329284",
+    "https://knowledge.workspace.google.com/admin/calendar/set-google-calendar-sharing-options",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Calendar**\n3. Click **Sharing settings**\n4. Under **External invitations**, check **Warn users when inviting guests outside of the domain**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable external invitation warnings so users are notified whenever a meeting invitation includes guests outside the organization. This simple prompt helps prevent accidental disclosure of meeting details to unintended recipients.",
+      "Url": "https://hub.prowler.com/check/calendar_external_invitations_warning"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "calendar_external_sharing_primary_calendar",
+    "calendar_external_sharing_secondary_calendar"
+  ],
+  "Notes": ""
+}

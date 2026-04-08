@@ -18,7 +18,7 @@
   "Risk": "Direct internet access from notebooks weakens **egress control**, risking **confidentiality** and **integrity**.\n\nAdversaries or unvetted code can exfiltrate data, download malware, or run command-and-control. Public package installs bypass inspection, enabling supply-chain tampering and **lateral movement** from compromised sessions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-direct-internet-access.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/SageMaker/notebook-direct-internet-access.html",
     "https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html"
   ],
   "Remediation": {

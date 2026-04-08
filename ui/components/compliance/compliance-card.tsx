@@ -3,14 +3,13 @@
 import { Progress } from "@heroui/progress";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
 
 import { Card, CardContent } from "@/components/shadcn/card/card";
-import { DownloadIconButton, toast } from "@/components/ui";
-import { downloadComplianceCsv } from "@/lib/helper";
+import { getReportTypeForFramework } from "@/lib/compliance/compliance-report-types";
 import { ScanEntity } from "@/types/scans";
 
 import { getComplianceIcon } from "../icons";
+import { ComplianceDownloadContainer } from "./compliance-download-container";
 
 interface ComplianceCardProps {
   title: string;
@@ -38,7 +37,6 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   const searchParams = useSearchParams();
   const router = useRouter();
   const hasRegionFilter = searchParams.has("filter[region__in]");
-  const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   const formatTitle = (title: string) => {
     return title.split("-").join(" ");
@@ -84,14 +82,6 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     }
 
     router.push(`${path}?${params.toString()}`);
-  };
-  const handleDownload = async () => {
-    setIsDownloading(true);
-    try {
-      await downloadComplianceCsv(scanId, complianceId, toast);
-    } finally {
-      setIsDownloading(false);
-    }
   };
 
   return (
@@ -143,15 +133,15 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
                     e.stopPropagation();
                   }
                 }}
-                role="button"
+                role="group"
                 tabIndex={0}
               >
-                <DownloadIconButton
-                  paramId={complianceId}
-                  onDownload={handleDownload}
-                  textTooltip="Download compliance CSV report"
-                  isDisabled={hasRegionFilter}
-                  isDownloading={isDownloading}
+                <ComplianceDownloadContainer
+                  compact
+                  scanId={scanId}
+                  complianceId={complianceId}
+                  reportType={getReportTypeForFramework(title)}
+                  disabled={hasRegionFilter}
                 />
               </div>
             </div>

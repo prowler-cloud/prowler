@@ -67,6 +67,45 @@ resource "aws_iam_role_policy_attachment" "prowler_scan_viewonly_policy_attachme
   policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/job-function/ViewOnlyAccess"
 }
 
+# Organizations Policy (management account only)
+###################################
+data "aws_iam_policy_document" "prowler_organizations_policy" {
+  count = var.enable_organizations ? 1 : 0
+
+  statement {
+    sid    = "AllowOrganizationsReadOnly"
+    effect = "Allow"
+    actions = [
+      "organizations:DescribeAccount",
+      "organizations:DescribeOrganization",
+      "organizations:ListAccounts",
+      "organizations:ListAccountsForParent",
+      "organizations:ListOrganizationalUnitsForParent",
+      "organizations:ListRoots",
+      "organizations:ListTagsForResource",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "AllowStackSetManagement"
+    effect = "Allow"
+    actions = [
+      "organizations:RegisterDelegatedAdministrator",
+      "iam:CreateServiceLinkedRole",
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_role_policy" "prowler_organizations_policy" {
+  count = var.enable_organizations ? 1 : 0
+
+  name   = "ProwlerOrganizations"
+  role   = aws_iam_role.prowler_scan.name
+  policy = data.aws_iam_policy_document.prowler_organizations_policy[0].json
+}
+
 # S3 Integration Module
 ###################################
 module "s3_integration" {

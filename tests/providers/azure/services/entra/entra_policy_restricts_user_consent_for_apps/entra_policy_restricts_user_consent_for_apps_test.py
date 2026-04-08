@@ -30,6 +30,7 @@ class Test_entra_policy_restricts_user_consent_for_apps:
 
     def test_entra_tenant_empty(self):
         entra_client = mock.MagicMock
+        id = str(uuid4())
 
         with (
             mock.patch(
@@ -44,8 +45,20 @@ class Test_entra_policy_restricts_user_consent_for_apps:
             from prowler.providers.azure.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps import (
                 entra_policy_restricts_user_consent_for_apps,
             )
+            from prowler.providers.azure.services.entra.entra_service import (
+                AuthorizationPolicy,
+            )
 
-            entra_client.authorization_policy = {DOMAIN: {}}
+            # Policy with no default user role permissions
+            entra_client.authorization_policy = {
+                DOMAIN: AuthorizationPolicy(
+                    id=id,
+                    name="Authorization Policy",
+                    description="Default policy",
+                    guest_invite_settings="none",
+                    guest_user_role_id=uuid4(),
+                )
+            }
 
             check = entra_policy_restricts_user_consent_for_apps()
             result = check.execute()
@@ -53,7 +66,7 @@ class Test_entra_policy_restricts_user_consent_for_apps:
             assert result[0].status == "FAIL"
             assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Authorization Policy"
-            assert result[0].resource_id == "authorizationPolicy"
+            assert result[0].resource_id == id
             assert (
                 result[0].status_extended
                 == "Entra allows users to consent apps accessing company data on their behalf"

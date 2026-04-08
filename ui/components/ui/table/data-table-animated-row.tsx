@@ -7,6 +7,10 @@ import { cn } from "@/lib/utils";
 
 interface DataTableAnimatedRowProps<TData> {
   row: Row<TData>;
+  /** Pass explicitly to break React Compiler memoization when selection changes */
+  isSelected?: boolean;
+  /** Pass explicitly to break React Compiler memoization for partial selection */
+  isSomeSelected?: boolean;
 }
 
 /**
@@ -24,7 +28,12 @@ interface DataTableAnimatedRowProps<TData> {
  */
 export function DataTableAnimatedRow<TData>({
   row,
+  isSelected,
+  isSomeSelected,
 }: DataTableAnimatedRowProps<TData>) {
+  "use no memo";
+  void isSomeSelected;
+
   return (
     <motion.tr
       initial="collapsed"
@@ -35,7 +44,7 @@ export function DataTableAnimatedRow<TData>({
         collapsed: { opacity: 0 },
       }}
       transition={{ duration: 0.2 }}
-      data-state={row.getIsSelected() ? "selected" : undefined}
+      data-state={isSelected ? "selected" : undefined}
       className={cn(
         "transition-colors",
         "[&>td:first-child]:rounded-l-full [&>td:last-child]:rounded-r-full",
@@ -46,6 +55,12 @@ export function DataTableAnimatedRow<TData>({
       {row.getVisibleCells().map((cell: Cell<TData, unknown>, index, cells) => {
         const isFirst = index === 0;
         const isLast = index === cells.length - 1;
+        const cellDef = cell.column.columnDef.cell;
+        const cellContext = cell.getContext();
+        const cellContent =
+          typeof cellDef === "function"
+            ? cellDef(cellContext)
+            : flexRender(cellDef, cellContext);
 
         return (
           <td key={cell.id} className="overflow-hidden p-0">
@@ -80,7 +95,7 @@ export function DataTableAnimatedRow<TData>({
                   isLast && "pr-3",
                 )}
               >
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                {cellContent}
               </div>
             </motion.div>
           </td>

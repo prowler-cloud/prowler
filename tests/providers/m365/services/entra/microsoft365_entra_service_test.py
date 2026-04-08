@@ -6,13 +6,17 @@ from prowler.providers.m365.models import M365IdentityInfo
 from prowler.providers.m365.services.entra.entra_service import (
     AdminConsentPolicy,
     AdminRoles,
+    ApplicationEnforcedRestrictions,
     ApplicationsConditions,
+    AppManagementRestrictions,
     AuthorizationPolicy,
     AuthPolicyRoles,
     ConditionalAccessGrantControl,
     ConditionalAccessPolicy,
     ConditionalAccessPolicyState,
     Conditions,
+    CredentialRestriction,
+    DefaultAppManagementPolicy,
     DefaultUserRolePermissions,
     Entra,
     GrantControlOperator,
@@ -87,6 +91,9 @@ async def mock_entra_get_conditional_access_policies(_):
                     type=SignInFrequencyType.HOURS,
                     interval=SignInFrequencyInterval.TIME_BASED,
                 ),
+                application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                    is_enabled=False
+                ),
             ),
             state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
         )
@@ -152,6 +159,39 @@ async def mock_entra_get_organization(_):
             on_premises_sync_enabled=True,
         )
     ]
+
+
+async def mock_entra_get_default_app_management_policy(_):
+    return DefaultAppManagementPolicy(
+        id="00000000-0000-0000-0000-000000000000",
+        name="Default app management tenant policy",
+        description="Default tenant policy that enforces app management restrictions.",
+        is_enabled=True,
+        application_restrictions=AppManagementRestrictions(
+            password_credentials=[
+                CredentialRestriction(
+                    restriction_type="passwordAddition",
+                    state="enabled",
+                ),
+                CredentialRestriction(
+                    restriction_type="passwordLifetime",
+                    state="enabled",
+                    max_lifetime="P365D",
+                ),
+                CredentialRestriction(
+                    restriction_type="customPasswordAddition",
+                    state="enabled",
+                ),
+            ],
+            key_credentials=[
+                CredentialRestriction(
+                    restriction_type="asymmetricKeyLifetime",
+                    state="enabled",
+                    max_lifetime="P365D",
+                ),
+            ],
+        ),
+    )
 
 
 class Test_Entra_Service:
@@ -238,6 +278,9 @@ class Test_Entra_Service:
                         type=SignInFrequencyType.HOURS,
                         interval=SignInFrequencyInterval.TIME_BASED,
                     ),
+                    application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                        is_enabled=False
+                    ),
                 ),
                 state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
             )
@@ -283,6 +326,50 @@ class Test_Entra_Service:
         assert entra_client.organizations[0].id == "org1"
         assert entra_client.organizations[0].name == "Organization 1"
         assert entra_client.organizations[0].on_premises_sync_enabled
+
+    @patch(
+        "prowler.providers.m365.services.entra.entra_service.Entra._get_default_app_management_policy",
+        new=mock_entra_get_default_app_management_policy,
+    )
+    def test_get_default_app_management_policy(self):
+        with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+            entra_client = Entra(set_mocked_m365_provider())
+        assert (
+            entra_client.default_app_management_policy.id
+            == "00000000-0000-0000-0000-000000000000"
+        )
+        assert (
+            entra_client.default_app_management_policy.name
+            == "Default app management tenant policy"
+        )
+        assert (
+            entra_client.default_app_management_policy.description
+            == "Default tenant policy that enforces app management restrictions."
+        )
+        assert entra_client.default_app_management_policy.is_enabled is True
+        app_restrictions = (
+            entra_client.default_app_management_policy.application_restrictions
+        )
+        assert len(app_restrictions.password_credentials) == 3
+        assert (
+            app_restrictions.password_credentials[0].restriction_type
+            == "passwordAddition"
+        )
+        assert (
+            app_restrictions.password_credentials[1].restriction_type
+            == "passwordLifetime"
+        )
+        assert app_restrictions.password_credentials[1].max_lifetime == "P365D"
+        assert (
+            app_restrictions.password_credentials[2].restriction_type
+            == "customPasswordAddition"
+        )
+        assert len(app_restrictions.key_credentials) == 1
+        assert (
+            app_restrictions.key_credentials[0].restriction_type
+            == "asymmetricKeyLifetime"
+        )
+        assert app_restrictions.key_credentials[0].max_lifetime == "P365D"
 
     @patch(
         "prowler.providers.m365.services.entra.entra_service.Entra._get_users",
@@ -399,8 +486,16 @@ class Test_Entra_Service:
 
         registration_details_response = SimpleNamespace(
             value=[
-                SimpleNamespace(id="user-1", is_mfa_capable=True),
-                SimpleNamespace(id="user-6", is_mfa_capable=True),
+                SimpleNamespace(
+                    id="user-1",
+                    is_mfa_capable=True,
+                    methods_registered=["fido2SecurityKey"],
+                ),
+                SimpleNamespace(
+                    id="user-6",
+                    is_mfa_capable=True,
+                    methods_registered=["mobilePhone"],
+                ),
             ],
             odata_next_link=None,
         )
@@ -433,19 +528,31 @@ class Test_Entra_Service:
         assert users["user-6"].account_enabled is False
         assert users["user-1"].is_mfa_capable is True
         assert users["user-2"].is_mfa_capable is False
+        assert users["user-1"].authentication_methods == ["fido2SecurityKey"]
+        assert users["user-6"].authentication_methods == ["mobilePhone"]
+        assert users["user-2"].authentication_methods == []
 
     def test__get_user_registration_details_handles_pagination(self):
         entra_service = Entra.__new__(Entra)
 
         registration_response_page_one = SimpleNamespace(
             value=[
-                SimpleNamespace(id="user-1", is_mfa_capable=True),
+                SimpleNamespace(
+                    id="user-1",
+                    is_mfa_capable=True,
+                    methods_registered=[
+                        "fido2SecurityKey",
+                        "microsoftAuthenticatorPush",
+                    ],
+                ),
             ],
             odata_next_link="next-link",
         )
         registration_response_page_two = SimpleNamespace(
             value=[
-                SimpleNamespace(id="user-2", is_mfa_capable=False),
+                SimpleNamespace(
+                    id="user-2", is_mfa_capable=False, methods_registered=[]
+                ),
             ],
             odata_next_link=None,
         )
@@ -470,7 +577,19 @@ class Test_Entra_Service:
             entra_service._get_user_registration_details()
         )
 
-        assert registration_details == {"user-1": True, "user-2": False}
+        assert registration_details == {
+            "user-1": {
+                "is_mfa_capable": True,
+                "authentication_methods": [
+                    "fido2SecurityKey",
+                    "microsoftAuthenticatorPush",
+                ],
+            },
+            "user-2": {
+                "is_mfa_capable": False,
+                "authentication_methods": [],
+            },
+        }
         registration_builder.get.assert_awaited()
         registration_builder.with_url.assert_called_once_with("next-link")
         registration_builder_next.get.assert_awaited()

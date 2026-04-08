@@ -2,12 +2,154 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.20.0] (Prowler UNRELEASED)
+## [1.24.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Pin all unpinned dependencies to exact versions to prevent supply chain attacks and ensure reproducible builds [(#10469)](https://github.com/prowler-cloud/prowler/pull/10469)
+- Filter RBAC role lookup by `tenant_id` to prevent cross-tenant privilege leak [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
+- `VALKEY_SCHEME`, `VALKEY_USERNAME`, and `VALKEY_PASSWORD` environment variables to configure Celery broker TLS/auth connection details for Valkey/ElastiCache [(#10420)](https://github.com/prowler-cloud/prowler/pull/10420)
+- `Vercel` provider support [(#10190)](https://github.com/prowler-cloud/prowler/pull/10190)
+- Finding groups list and latest endpoints support `sort=delta`, ordering by `new_count` then `changed_count` so groups with the most new findings rank highest [(#10606)](https://github.com/prowler-cloud/prowler/pull/10606)
+
+### 🔄 Changed
+
+- Attack Paths: Periodic cleanup of stale scans with dead-worker detection via Celery inspect, marking orphaned `EXECUTING` scans as `FAILED` and recovering `graph_data_ready` [(#10387)](https://github.com/prowler-cloud/prowler/pull/10387)
+- Attack Paths: Replace `_provider_id` property with `_Provider_{uuid}` label for provider isolation, add regex-based label injection for custom queries [(#10402)](https://github.com/prowler-cloud/prowler/pull/10402)
+
+### 🐞 Fixed
+
+- Finding groups list/latest now apply computed status/severity filters and finding-level prefilters (delta, region, service, category, resource group, scan, resource type), plus `check_title` support for sort/filter consistency [(#10428)](https://github.com/prowler-cloud/prowler/pull/10428)
+- Populate compliance data inside `check_metadata` for findings, which was always returned as `null` [(#10449)](https://github.com/prowler-cloud/prowler/pull/10449)
+- 403 error for admin users listing tenants due to roles query not using the admin database connection [(#10460)](https://github.com/prowler-cloud/prowler/pull/10460)
+- Filter transient Neo4j defunct connection logs in Sentry `before_send` to suppress false-positive alerts handled by `RetryableSession` retries [(#10452)](https://github.com/prowler-cloud/prowler/pull/10452)
+- `MANAGE_ACCOUNT` permission no longer required for listing and creating tenants [(#10468)](https://github.com/prowler-cloud/prowler/pull/10468)
+- Finding groups muted filter, counters, metadata extraction and mute reaggregation [(#10477)](https://github.com/prowler-cloud/prowler/pull/10477)
+- Finding groups `check_title__icontains` resolution, `name__icontains` resource filter and `resource_group` field in `/resources` response [(#10486)](https://github.com/prowler-cloud/prowler/pull/10486)
+- Membership `post_delete` signal using raw FK ids to avoid `DoesNotExist` during cascade deletions [(#10497)](https://github.com/prowler-cloud/prowler/pull/10497)
+- Finding group resources endpoints returning false 404 when filters match no results, and `sort` parameter being ignored [(#10510)](https://github.com/prowler-cloud/prowler/pull/10510)
+- Jira integration failing with `JiraInvalidIssueTypeError` on non-English Jira instances due to hardcoded `"Task"` issue type; now dynamically fetches available issue types per project [(#10534)](https://github.com/prowler-cloud/prowler/pull/10534)
+- Finding group `first_seen_at` now reflects when a new finding appeared in the scan instead of the oldest carry-forward date across all unchanged findings [(#10595)](https://github.com/prowler-cloud/prowler/pull/10595)
+- Attack Paths: Remove `clear_cache` call from read-only query endpoints; cache clearing belongs to the scan/ingestion flow, not API queries [(#10586)](https://github.com/prowler-cloud/prowler/pull/10586)
+
+### 🔐 Security
+
+- Pin all unpinned dependencies to exact versions to prevent supply chain attacks and ensure reproducible builds [(#10469)](https://github.com/prowler-cloud/prowler/pull/10469)
+- `authlib` bumped from 1.6.6 to 1.6.9 to fix CVE-2026-28802 (JWT `alg: none` validation bypass) [(#10579)](https://github.com/prowler-cloud/prowler/pull/10579)
+
+---
+
+## [1.23.0] (Prowler v5.22.0)
+
+### 🚀 Added
+
+- Finding groups support `check_title` substring filtering [(#10377)](https://github.com/prowler-cloud/prowler/pull/10377)
+
+### 🐞 Fixed
+
+- Finding groups latest endpoint now aggregates the latest snapshot per provider before check-level totals, keeping impacted resources aligned across providers [(#10419)](https://github.com/prowler-cloud/prowler/pull/10419)
+- Mute rule creation now triggers finding-group summary re-aggregation after historical muting, keeping stats in sync after mute operations [(#10419)](https://github.com/prowler-cloud/prowler/pull/10419)
+- Attack Paths: Deduplicate nodes before ProwlerFinding lookup in Attack Paths Cypher queries, reducing execution time [(#10424)](https://github.com/prowler-cloud/prowler/pull/10424)
+
+### 🔐 Security
+
+- Replace stdlib XML parser with `defusedxml` in SAML metadata parsing to prevent XML bomb (billion laughs) DoS attacks [(#10165)](https://github.com/prowler-cloud/prowler/pull/10165)
+- Bump `flask` to 3.1.3 (CVE-2026-27205) and `werkzeug` to 3.1.6 (CVE-2026-27199) [(#10430)](https://github.com/prowler-cloud/prowler/pull/10430)
+
+---
+
+## [1.22.1] (Prowler v5.21.1)
+
+### 🐞 Fixed
+
+- Threat score aggregation query to eliminate unnecessary JOINs and `COUNT(DISTINCT)` overhead [(#10394)](https://github.com/prowler-cloud/prowler/pull/10394)
+
+---
+
+## [1.22.0] (Prowler v5.21.0)
+
+### 🚀 Added
+
+- `CORS_ALLOWED_ORIGINS` configurable via environment variable [(#10355)](https://github.com/prowler-cloud/prowler/pull/10355)
+- Attack Paths: Tenant and provider related labels to the nodes so they can be easily filtered on custom queries [(#10308)](https://github.com/prowler-cloud/prowler/pull/10308)
+
+### 🔄 Changed
+
+- Attack Paths: Complete migration to private graph labels and properties, removing deprecated dual-write support [(#10268)](https://github.com/prowler-cloud/prowler/pull/10268)
+- Attack Paths: Reduce sync and findings memory usage with smaller batches, cursor iteration, and sequential sessions [(#10359)](https://github.com/prowler-cloud/prowler/pull/10359)
+
+### 🐞 Fixed
+
+- Attack Paths: Recover `graph_data_ready` flag when scan fails during graph swap, preventing query endpoints from staying blocked until the next successful scan [(#10354)](https://github.com/prowler-cloud/prowler/pull/10354)
+
+### 🔐 Security
+
+- Use `psycopg2.sql` to safely compose DDL in `PostgresEnumMigration`, preventing SQL injection via f-string interpolation [(#10166)](https://github.com/prowler-cloud/prowler/pull/10166)
+- Replace stdlib XML parser with `defusedxml` in SAML metadata parsing to prevent XML bomb (billion laughs) DoS attacks [(#10165)](https://github.com/prowler-cloud/prowler/pull/10165)
+
+---
+
+## [1.21.0] (Prowler v5.20.0)
+
+### 🔄 Changed
+
+- Attack Paths: Migrate network exposure queries from APOC to standard openCypher for Neo4j and Neptune compatibility [(#10266)](https://github.com/prowler-cloud/prowler/pull/10266)
+- `POST /api/v1/providers` returns `409 Conflict` if already exists [(#10293)](https://github.com/prowler-cloud/prowler/pull/10293)
+
+### 🐞 Fixed
+
+- Attack Paths: Security hardening for custom query endpoint (Cypher blocklist, input validation, rate limiting, Helm lockdown) [(#10238)](https://github.com/prowler-cloud/prowler/pull/10238)
+- Attack Paths: Missing logging for query execution and exception details in scan error handling [(#10269)](https://github.com/prowler-cloud/prowler/pull/10269)
+- Attack Paths: Upgrade Cartography from 0.129.0 to 0.132.0, fixing `exposed_internet` not set on ELB/ELBv2 nodes [(#10272)](https://github.com/prowler-cloud/prowler/pull/10272)
+
+---
+
+## [1.20.0] (Prowler v5.19.0)
+
+### 🚀 Added
+
+- Finding group summaries and resources endpoints for hierarchical findings views [(#9961)](https://github.com/prowler-cloud/prowler/pull/9961)
+- OpenStack provider support [(#10003)](https://github.com/prowler-cloud/prowler/pull/10003)
+- PDF report for the CSA CCM compliance framework [(#10088)](https://github.com/prowler-cloud/prowler/pull/10088)
+- `image` provider support for container image scanning [(#10128)](https://github.com/prowler-cloud/prowler/pull/10128)
+- Attack Paths: Custom query and Cartography schema endpoints (temporarily blocked) [(#10149)](https://github.com/prowler-cloud/prowler/pull/10149)
+- `googleworkspace` provider support [(#10247)](https://github.com/prowler-cloud/prowler/pull/10247)
 
 ### 🔄 Changed
 
 - Attack Paths: Queries definition now has short description and attribution [(#9983)](https://github.com/prowler-cloud/prowler/pull/9983)
 - Attack Paths: Internet node is created while scan [(#9992)](https://github.com/prowler-cloud/prowler/pull/9992)
+- Attack Paths: Add full paths set from [pathfinding.cloud](https://pathfinding.cloud/) [(#10008)](https://github.com/prowler-cloud/prowler/pull/10008)
+- Attack Paths: Mark attack Paths scan as failed when Celery task fails outside job error handling [(#10065)](https://github.com/prowler-cloud/prowler/pull/10065)
+- Attack Paths: Remove legacy per-scan `graph_database` and `is_graph_database_deleted` fields from AttackPathsScan model [(#10077)](https://github.com/prowler-cloud/prowler/pull/10077)
+- Attack Paths: Add `graph_data_ready` field to decouple query availability from scan state [(#10089)](https://github.com/prowler-cloud/prowler/pull/10089)
+- Attack Paths: Upgrade Cartography from fork 0.126.1 to upstream 0.129.0 and Neo4j driver from 5.x to 6.x [(#10110)](https://github.com/prowler-cloud/prowler/pull/10110)
+- Attack Paths: Query results now filtered by provider, preventing future cross-tenant and cross-provider data leakage [(#10118)](https://github.com/prowler-cloud/prowler/pull/10118)
+- Attack Paths: Add private labels and properties in Attack Paths graphs for avoiding future overlapping with Cartography's ones [(#10124)](https://github.com/prowler-cloud/prowler/pull/10124)
+- Attack Paths: Query endpoint executes them in read only mode [(#10140)](https://github.com/prowler-cloud/prowler/pull/10140)
+- Attack Paths: `Accept` header query endpoints also accepts `text/plain`, supporting compact plain-text format for LLM consumption [(#10162)](https://github.com/prowler-cloud/prowler/pull/10162)
+- Bump Trivy from 0.69.1 to 0.69.2 [(#10210)](https://github.com/prowler-cloud/prowler/pull/10210)
+
+### 🐞 Fixed
+
+- PDF compliance reports consistency with UI: exclude resourceless findings and fix ENS MANUAL status handling [(#10270)](https://github.com/prowler-cloud/prowler/pull/10270)
+- Attack Paths: Orphaned temporary Neo4j databases are now cleaned up on scan failure and provider deletion [(#10101)](https://github.com/prowler-cloud/prowler/pull/10101)
+- Attack Paths: scan no longer raises `DatabaseError` when provider is deleted mid-scan [(#10116)](https://github.com/prowler-cloud/prowler/pull/10116)
+- Tenant compliance summaries recalculated after provider deletion [(#10172)](https://github.com/prowler-cloud/prowler/pull/10172)
+- Security Hub export retries transient replica conflicts without failing integrations [(#10144)](https://github.com/prowler-cloud/prowler/pull/10144)
+
+### 🔐 Security
+
+- Bump `Pillow` to 12.1.1 (CVE-2021-25289) [(#10027)](https://github.com/prowler-cloud/prowler/pull/10027)
+- Remove safety ignore for CVE-2026-21226 (84420), fixed via `azure-core` 1.38.x [(#10110)](https://github.com/prowler-cloud/prowler/pull/10110)
+
+---
+
+## [1.19.3] (Prowler v5.18.3)
+
+### 🐞 Fixed
+
+- GCP provider UID validation regex to allow domain prefixes [(#10078)](https://github.com/prowler-cloud/prowler/pull/10078)
 
 ---
 

@@ -1,0 +1,105 @@
+name: 'SDK: Refresh OCI Regions'
+
+on:
+  schedule:
+    - cron: '0 9 * * 1' # Every Monday at 09:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  refresh-oci-regions:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      pull-requests: write
+      contents: write
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: 'master'
+          persist-credentials: false
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install oci
+
+      - name: Update OCI regions
+        env:
+          OCI_CLI_USER: ${{ secrets.E2E_OCI_USER_ID }}
+          OCI_CLI_FINGERPRINT: ${{ secrets.E2E_OCI_FINGERPRINT }}
+          OCI_CLI_TENANCY: ${{ secrets.E2E_OCI_TENANCY_ID }}
+          OCI_CLI_KEY_CONTENT: ${{ secrets.E2E_OCI_KEY_CONTENT }}
+          OCI_CLI_REGION: ${{ secrets.E2E_OCI_REGION }}
+        run: python util/update_oci_regions.py
+
+      - name: Create pull request
+        id: create-pr
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        with:
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          author: 'prowler-bot <179230569+prowler-bot@users.noreply.github.com>'
+          committer: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+          commit-message: 'feat(oraclecloud): update commercial regions'
+          branch: 'oci-regions-update-${{ github.run_number }}'
+          title: 'feat(oraclecloud): Update commercial regions'
+          labels: |
+            status/waiting-for-revision
+            no-changelog
+          body: |
+            ### Description
+
+            Automated update of OCI commercial regions from the official Oracle Cloud Infrastructure Identity service.
+
+            **Trigger:** ${{ github.event_name == 'schedule' && 'Scheduled (weekly)' || github.event_name == 'workflow_dispatch' && 'Manual' || 'Workflow update' }}
+            **Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ### Changes
+
+            This PR updates the `OCI_COMMERCIAL_REGIONS` dictionary in `prowler/providers/oraclecloud/config.py` with the latest regions fetched from the OCI Identity API (`list_regions()`).
+
+            - Government regions (`OCI_GOVERNMENT_REGIONS`) are preserved unchanged
+            - DOD regions (`OCI_US_DOD_REGIONS`) are preserved unchanged
+            - Region display names are mapped from Oracle's official documentation
+
+            ### Checklist
+
+            - [x] This is an automated update from OCI official sources
+            - [x] Government regions (us-langley-1, us-luke-1) and DOD regions (us-gov-ashburn-1, us-gov-phoenix-1, us-gov-chicago-1) are preserved
+            - [x] No manual review of region data required
+
+            ### License
+
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+
+      - name: PR creation result
+        run: |
+          if [[ "${STEPS_CREATE_PR_OUTPUTS_PULL_REQUEST_NUMBER}" ]]; then
+            echo "✓ Pull request #${STEPS_CREATE_PR_OUTPUTS_PULL_REQUEST_NUMBER} created successfully"
+            echo "URL: ${STEPS_CREATE_PR_OUTPUTS_PULL_REQUEST_URL}"
+          else
+            echo "✓ No changes detected - OCI regions are up to date"
+          fi
+
+        env:
+          STEPS_CREATE_PR_OUTPUTS_PULL_REQUEST_NUMBER: ${{ steps.create-pr.outputs.pull-request-number }}
+
+          STEPS_CREATE_PR_OUTPUTS_PULL_REQUEST_URL: ${{ steps.create-pr.outputs.pull-request-url }}

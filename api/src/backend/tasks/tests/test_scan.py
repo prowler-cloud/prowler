@@ -1411,7 +1411,9 @@ class TestProcessFindingMicroBatch:
         assert created_finding.status == StatusChoices.PASS
         assert created_finding.delta == Finding.DeltaChoices.NEW
         assert created_finding.muted is False
-        assert created_finding.check_metadata == finding.metadata
+        expected_metadata = {**finding.metadata, "compliance": finding.compliance}
+        assert created_finding.check_metadata == expected_metadata
+        assert created_finding.check_metadata["compliance"] == finding.compliance
         assert created_finding.resource_regions == [finding.region]
         assert created_finding.resource_services == [finding.service_name]
         assert created_finding.resource_types == [finding.resource_type]
@@ -4092,6 +4094,10 @@ class TestUpdateProviderComplianceScores:
         scan = scans_fixture[1]
         tenant_id = str(tenant.id)
         scan_id = str(scan.id)
+
+        scan.state = StateChoices.AVAILABLE
+        scan.completed_at = None
+        scan.save()
 
         result = update_provider_compliance_scores(tenant_id, scan_id)
 

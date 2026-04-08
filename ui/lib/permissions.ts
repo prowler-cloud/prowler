@@ -1,5 +1,9 @@
 import { RolePermissionAttributes } from "@/types/users";
 
+/**
+ * Check if a user is owner of any organization and has manage_account permission.
+ * Currently unused — kept as a utility for future use outside the profile page.
+ */
 export const isUserOwnerAndHasManageAccount = (
   roles: any[],
   memberships: any[],

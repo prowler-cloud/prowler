@@ -11,7 +11,7 @@ class entra_non_privileged_user_has_mfa(Check):
 
         for tenant_domain, users in entra_client.users.items():
             for user in users.values():
-                if not is_privileged_user(
+                if user.account_enabled and not is_privileged_user(
                     user, entra_client.directory_roles[tenant_domain]
                 ):
                     report = Check_Report_Azure(metadata=self.metadata(), resource=user)

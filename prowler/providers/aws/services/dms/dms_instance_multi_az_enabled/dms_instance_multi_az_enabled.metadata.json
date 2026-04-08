@@ -17,7 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_ReplicationInstance.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DMS/multi-az.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/DMS/multi-az.html"
   ],
   "Remediation": {
     "Code": {

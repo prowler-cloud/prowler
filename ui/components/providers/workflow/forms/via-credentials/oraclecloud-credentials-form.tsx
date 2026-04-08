@@ -1,6 +1,9 @@
 import { Control, Controller } from "react-hook-form";
 
-import { CustomInput, CustomTextarea } from "@/components/ui/custom";
+import {
+  WizardInputField,
+  WizardTextareaField,
+} from "@/components/providers/workflow/forms/fields";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { OCICredentials } from "@/types";
 
@@ -25,7 +28,7 @@ export const OracleCloudCredentialsForm = ({
         name={ProviderCredentialFields.OCI_TENANCY}
         render={({ field }) => <input type="hidden" {...field} />}
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.OCI_USER}
         type="text"
@@ -35,7 +38,7 @@ export const OracleCloudCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.OCI_FINGERPRINT}
         type="text"
@@ -45,7 +48,7 @@ export const OracleCloudCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.OCI_REGION}
         type="text"
@@ -55,7 +58,7 @@ export const OracleCloudCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <CustomTextarea
+      <WizardTextareaField
         control={control}
         name={ProviderCredentialFields.OCI_KEY_CONTENT}
         label="Private Key Content"
@@ -65,7 +68,7 @@ export const OracleCloudCredentialsForm = ({
         minRows={6}
         isRequired
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.OCI_PASS_PHRASE}
         type="password"

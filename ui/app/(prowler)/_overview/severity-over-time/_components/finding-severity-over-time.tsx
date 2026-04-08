@@ -29,6 +29,25 @@ export const FindingSeverityOverTime = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Sync data when SSR re-delivers filtered results (e.g. provider/account filter change).
+  // Uses the "set state during render" pattern so the update is synchronous — no flash of stale data.
+  const [prevInitialData, setPrevInitialData] = useState(initialData);
+  if (initialData !== prevInitialData) {
+    setPrevInitialData(initialData);
+    setData(initialData);
+    setError(null);
+    setTimeRange(DEFAULT_TIME_RANGE);
+  }
+
+  const getActiveProviderFilters = (): Record<string, string> => {
+    const filters: Record<string, string> = {};
+    const providerType = searchParams.get("filter[provider_type__in]");
+    const providerId = searchParams.get("filter[provider_id__in]");
+    if (providerType) filters["filter[provider_type__in]"] = providerType;
+    if (providerId) filters["filter[provider_id__in]"] = providerId;
+    return filters;
+  };
+
   const handlePointClick = ({
     point,
     dataKey,
@@ -59,14 +78,9 @@ export const FindingSeverityOverTime = ({
     }
 
     // Preserve provider filters from overview
-    const providerType = searchParams.get("filter[provider_type__in]");
-    const providerId = searchParams.get("filter[provider_id__in]");
-
-    if (providerType) {
-      params.set("filter[provider_type__in]", providerType);
-    }
-    if (providerId) {
-      params.set("filter[provider_id__in]", providerId);
+    const providerFilters = getActiveProviderFilters();
+    for (const [key, value] of Object.entries(providerFilters)) {
+      params.set(key, value);
     }
 
     router.push(`/findings?${params.toString()}`);
@@ -80,6 +94,7 @@ export const FindingSeverityOverTime = ({
     try {
       const result = await getSeverityTrendsByTimeRange({
         timeRange: newRange,
+        filters: getActiveProviderFilters(),
       });
 
       if (result.status === "success") {

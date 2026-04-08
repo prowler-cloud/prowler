@@ -529,6 +529,9 @@ postgresql:
 valkey:
   # If enabled, it will create a Secret with the following.
   # Otherwise, create a secret with
+  # - VALKEY_SCHEME
+  # - VALKEY_USERNAME
+  # - VALKEY_PASSWORD
   # - VALKEY_HOST
   # - VALKEY_PORT
   # - VALKEY_DB
@@ -558,9 +561,9 @@ neo4j:
   # Neo4j Configuration (yaml format)
   config:
     dbms_security_procedures_allowlist: "apoc.*"
-    dbms_security_procedures_unrestricted: "apoc.*"
+    dbms_security_procedures_unrestricted: ""
 
   apoc_config:
-    apoc.export.file.enabled: "true"
-    apoc.import.file.enabled: "true"
+    apoc.export.file.enabled: "false"
+    apoc.import.file.enabled: "false"
     apoc.import.file.use_neo4j_config: "true"

@@ -19,7 +19,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html#describe-ssl-policies",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/security-policy.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/ELBv2/security-policy.html"
   ],
   "Remediation": {
     "Code": {

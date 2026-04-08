@@ -12,9 +12,12 @@ from tasks.jobs.attack_paths import (
     attack_paths_scan,
     can_provider_run_attack_paths_scan,
 )
+from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
+from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
     backfill_daily_severity_summaries,
+    backfill_finding_group_summaries,
     backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
     backfill_scan_category_summaries,
@@ -47,6 +50,7 @@ from tasks.jobs.report import generate_compliance_reports_job
 from tasks.jobs.scan import (
     aggregate_attack_surface,
     aggregate_daily_severity,
+    aggregate_finding_group_summaries,
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
@@ -144,6 +148,9 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
         group(
             aggregate_daily_severity_task.si(tenant_id=tenant_id, scan_id=scan_id),
+            aggregate_finding_group_summaries_task.si(
+                tenant_id=tenant_id, scan_id=scan_id
+            ),
             generate_outputs_task.si(
                 scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
             ),
@@ -359,12 +366,30 @@ def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
 
 
+class AttackPathsScanRLSTask(RLSTask):
+    """
+    RLS task that marks the `AttackPathsScan` DB row as `FAILED` when the Celery task fails.
+
+    Covers failures that happen outside the job's own try/except (e.g. provider lookup,
+    SDK initialization, or Neo4j configuration errors during setup).
+    """
+
+    def on_failure(self, exc, task_id, args, kwargs, _einfo):
+        tenant_id = kwargs.get("tenant_id")
+        scan_id = kwargs.get("scan_id")
+
+        if tenant_id and scan_id:
+            logger.error(f"Attack paths scan task {task_id} failed: {exc}")
+            attack_paths_db_utils.fail_attack_paths_scan(tenant_id, scan_id, str(exc))
+
+
 @shared_task(
-    base=RLSTask,
+    base=AttackPathsScanRLSTask,
     bind=True,
     name="attack-paths-scan-perform",
     queue="attack-paths-scans",
 )
+@handle_provider_deletion
 def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
     """
     Execute an Attack Paths scan for the given provider within the current tenant RLS context.
@@ -380,6 +405,11 @@ def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
     return attack_paths_scan(
         tenant_id=tenant_id, scan_id=scan_id, task_id=self.request.id
     )
+
+
+@shared_task(name="attack-paths-cleanup-stale-scans", queue="attack-paths-scans")
+def cleanup_stale_attack_paths_scans_task():
+    return cleanup_stale_attack_paths_scans()
 
 
 @shared_task(name="tenant-deletion", queue="deletion", autoretry_for=(Exception,))
@@ -623,6 +653,12 @@ def backfill_daily_severity_summaries_task(tenant_id: str, days: int = None):
     return backfill_daily_severity_summaries(tenant_id=tenant_id, days=days)
 
 
+@shared_task(name="backfill-finding-group-summaries", queue="backfill")
+def backfill_finding_group_summaries_task(tenant_id: str, days: int = None):
+    """Backfill FindingGroupDailySummary from historical scans. Use days param to limit scope."""
+    return backfill_finding_group_summaries(tenant_id=tenant_id, days=days)
+
+
 @shared_task(name="backfill-scan-category-summaries", queue="backfill")
 @handle_provider_deletion
 def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
@@ -720,6 +756,41 @@ def update_provider_compliance_scores_task(tenant_id: str, scan_id: str):
 def aggregate_daily_severity_task(tenant_id: str, scan_id: str):
     """Aggregate scan severity into DailySeveritySummary for findings_severity/timeseries endpoint."""
     return aggregate_daily_severity(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(base=RLSTask, name="scan-finding-group-summaries", queue="overview")
+@set_tenant(keep_tenant=True)
+@handle_provider_deletion
+def aggregate_finding_group_summaries_task(tenant_id: str, scan_id: str):
+    """Aggregate findings by check_id into FindingGroupDailySummary for finding-groups endpoint."""
+    return aggregate_finding_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(
+    base=RLSTask, name="reaggregate-all-finding-group-summaries", queue="overview"
+)
+@set_tenant(keep_tenant=True)
+def reaggregate_all_finding_group_summaries_task(tenant_id: str):
+    """Reaggregate finding group summaries for all providers' latest completed scans."""
+    latest_scan_ids = list(
+        Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+        .order_by("provider_id", "-completed_at", "-inserted_at")
+        .distinct("provider_id")
+        .values_list("id", flat=True)
+    )
+    if latest_scan_ids:
+        logger.info(
+            "Reaggregating finding group summaries for %d scans: %s",
+            len(latest_scan_ids),
+            latest_scan_ids,
+        )
+        group(
+            aggregate_finding_group_summaries_task.si(
+                tenant_id=tenant_id, scan_id=str(scan_id)
+            )
+            for scan_id in latest_scan_ids
+        ).apply_async()
+    return {"scans_reaggregated": len(latest_scan_ids)}
 
 
 @shared_task(base=RLSTask, name="lighthouse-connection-check")
@@ -888,11 +959,11 @@ def jira_integration_task(
 @handle_provider_deletion
 def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: str):
     """
-    Optimized task to generate ThreatScore, ENS, and NIS2 reports with shared queries.
+    Optimized task to generate ThreatScore, ENS, NIS2, and CSA CCM reports with shared queries.
 
     This task is more efficient than running separate report tasks because it reuses database queries:
-    - Provider object fetched once (instead of three times)
-    - Requirement statistics aggregated once (instead of three times)
+    - Provider object fetched once (instead of multiple times)
+    - Requirement statistics aggregated once (instead of multiple times)
     - Can reduce database load by up to 50-70%
 
     Args:
@@ -910,6 +981,7 @@ def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: 
         generate_threatscore=True,
         generate_ens=True,
         generate_nis2=True,
+        generate_csa=True,
     )
 
 

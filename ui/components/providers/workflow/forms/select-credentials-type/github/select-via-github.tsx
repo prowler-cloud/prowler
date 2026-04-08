@@ -9,9 +9,13 @@ import { RadioGroupGitHubViaCredentialsTypeForm } from "./radio-group-github-via
 
 interface SelectViaGitHubProps {
   initialVia?: string;
+  onViaChange?: (via: string) => void;
 }
 
-export const SelectViaGitHub = ({ initialVia }: SelectViaGitHubProps) => {
+export const SelectViaGitHub = ({
+  initialVia,
+  onViaChange,
+}: SelectViaGitHubProps) => {
   const router = useRouter();
   const form = useForm({
     defaultValues: {
@@ -20,6 +24,11 @@ export const SelectViaGitHub = ({ initialVia }: SelectViaGitHubProps) => {
   });
 
   const handleSelectionChange = (value: string) => {
+    if (onViaChange) {
+      onViaChange(value);
+      return;
+    }
+
     const url = new URL(window.location.href);
     url.searchParams.set("via", value);
     router.push(url.toString());

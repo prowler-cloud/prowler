@@ -16,7 +16,7 @@
   "Risk": "Without a VPC, notebooks lose **network isolation**. Traffic to AWS services may traverse the public internet, limiting **egress control** and **private endpoints**, enabling data exfiltration and interception, and easing lateral movement-impacting **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-instance-in-vpc.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/SageMaker/notebook-instance-in-vpc.html",
     "https://docs.aws.amazon.com/sagemaker/latest/dg/studio-notebooks-and-internet-access.html"
   ],
   "Remediation": {

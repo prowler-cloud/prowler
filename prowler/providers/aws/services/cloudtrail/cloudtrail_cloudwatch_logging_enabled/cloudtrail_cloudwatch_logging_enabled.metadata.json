@@ -17,7 +17,6 @@
   "Risk": "Missing or stale CloudWatch delivery weakens visibility and delays detection, impacting confidentiality and integrity. Adversaries can:\n- Hide **privilege escalation**\n- Perform unauthorized **resource changes**\n- Exfiltrate data via API misuse",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_4#aws-console",
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html"
   ],
   "Remediation": {

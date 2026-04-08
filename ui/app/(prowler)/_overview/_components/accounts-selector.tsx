@@ -1,19 +1,24 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
 
 import {
   AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
+  CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
+  GoogleWorkspaceProviderBadge,
   IacProviderBadge,
+  ImageProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
+  OpenStackProviderBadge,
   OracleCloudProviderBadge,
+  VercelProviderBadge,
 } from "@/components/icons/providers-badge";
 import {
   MultiSelect,
@@ -22,7 +27,12 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
-import type { ProviderProps, ProviderType } from "@/types/providers";
+import { useUrlFilters } from "@/hooks/use-url-filters";
+import {
+  getProviderDisplayName,
+  type ProviderProps,
+  type ProviderType,
+} from "@/types/providers";
 
 const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   aws: <AWSProviderBadge width={18} height={18} />,
@@ -31,68 +41,85 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   kubernetes: <KS8ProviderBadge width={18} height={18} />,
   m365: <M365ProviderBadge width={18} height={18} />,
   github: <GitHubProviderBadge width={18} height={18} />,
+  googleworkspace: <GoogleWorkspaceProviderBadge width={18} height={18} />,
   iac: <IacProviderBadge width={18} height={18} />,
+  image: <ImageProviderBadge width={18} height={18} />,
   oraclecloud: <OracleCloudProviderBadge width={18} height={18} />,
   mongodbatlas: <MongoDBAtlasProviderBadge width={18} height={18} />,
   alibabacloud: <AlibabaCloudProviderBadge width={18} height={18} />,
+  cloudflare: <CloudflareProviderBadge width={18} height={18} />,
+  openstack: <OpenStackProviderBadge width={18} height={18} />,
+  vercel: <VercelProviderBadge width={18} height={18} />,
 };
 
-interface AccountsSelectorProps {
+/** Common props shared by both batch and instant modes. */
+interface AccountsSelectorBaseProps {
   providers: ProviderProps[];
+  /**
+   * Currently selected provider types (from the pending ProviderTypeSelector state).
+   * Used only for contextual description/empty-state messaging — does NOT narrow
+   * the list of available accounts, which remains independent of provider selection.
+   */
+  selectedProviderTypes?: string[];
 }
 
-export function AccountsSelector({ providers }: AccountsSelectorProps) {
-  const router = useRouter();
+/** Batch mode: caller controls both pending state and notification callback (all-or-nothing). */
+interface AccountsSelectorBatchProps extends AccountsSelectorBaseProps {
+  /**
+   * Called instead of navigating immediately.
+   * Use this on pages that batch filter changes (e.g. Findings).
+   *
+   * @param filterKey - The raw filter key without "filter[]" wrapper, e.g. "provider_id__in"
+   * @param values - The selected values array
+   */
+  onBatchChange: (filterKey: string, values: string[]) => void;
+  /**
+   * Pending selected values controlled by the parent.
+   * Reflects pending state before Apply is clicked.
+   */
+  selectedValues: string[];
+}
+
+/** Instant mode: URL-driven — neither callback nor controlled value. */
+interface AccountsSelectorInstantProps extends AccountsSelectorBaseProps {
+  onBatchChange?: never;
+  selectedValues?: never;
+}
+
+type AccountsSelectorProps =
+  | AccountsSelectorBatchProps
+  | AccountsSelectorInstantProps;
+
+export function AccountsSelector({
+  providers,
+  onBatchChange,
+  selectedValues,
+  selectedProviderTypes,
+}: AccountsSelectorProps) {
   const searchParams = useSearchParams();
+  const { navigateWithParams } = useUrlFilters();
 
   const filterKey = "filter[provider_id__in]";
   const current = searchParams.get(filterKey) || "";
-  const selectedTypes = searchParams.get("filter[provider_type__in]") || "";
-  const selectedTypesList = selectedTypes
-    ? selectedTypes.split(",").filter(Boolean)
-    : [];
-  const selectedIds = current ? current.split(",").filter(Boolean) : [];
-  const visibleProviders = providers
-    // .filter((p) => p.attributes.connection?.connected)
-    .filter((p) =>
-      selectedTypesList.length > 0
-        ? selectedTypesList.includes(p.attributes.provider)
-        : true,
-    );
+  const urlSelectedIds = current ? current.split(",").filter(Boolean) : [];
+
+  // In batch mode, use the parent-controlled pending values; otherwise, use URL state.
+  const selectedIds = onBatchChange ? selectedValues : urlSelectedIds;
+  const visibleProviders = providers;
+  // .filter((p) => p.attributes.connection?.connected)
 
   const handleMultiValueChange = (ids: string[]) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete(filterKey);
-
-    if (ids.length > 0) {
-      params.set(filterKey, ids.join(","));
+    if (onBatchChange) {
+      onBatchChange("provider_id__in", ids);
+      return;
     }
+    navigateWithParams((params) => {
+      params.delete(filterKey);
 
-    // Auto-deselect provider types that no longer have any selected accounts
-    if (selectedTypesList.length > 0) {
-      // Get provider types of currently selected accounts
-      const selectedProviders = providers.filter((p) => ids.includes(p.id));
-      const selectedProviderTypes = new Set(
-        selectedProviders.map((p) => p.attributes.provider),
-      );
-
-      // Keep only provider types that still have selected accounts
-      const remainingProviderTypes = selectedTypesList.filter((type) =>
-        selectedProviderTypes.has(type as ProviderType),
-      );
-
-      // Update provider_type__in filter
-      if (remainingProviderTypes.length > 0) {
-        params.set(
-          "filter[provider_type__in]",
-          remainingProviderTypes.join(","),
-        );
-      } else {
-        params.delete("filter[provider_type__in]");
+      if (ids.length > 0) {
+        params.set(filterKey, ids.join(","));
       }
-    }
-
-    router.push(`?${params.toString()}`, { scroll: false });
+    });
   };
 
   const selectedLabel = () => {
@@ -107,9 +134,12 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
     );
   };
 
+  // Build a contextual description based on currently selected provider types.
+  // This is purely for user guidance (aria label + empty state) and does NOT
+  // narrow the list of available accounts — all providers remain selectable.
   const filterDescription =
-    selectedTypesList.length > 0
-      ? `Showing accounts for ${selectedTypesList.join(", ")} providers`
+    selectedProviderTypes && selectedProviderTypes.length > 0
+      ? `Accounts for ${selectedProviderTypes.map(getProviderDisplayName).join(", ")}`
       : "All connected cloud provider accounts";
 
   return (
@@ -168,8 +198,8 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
             </>
           ) : (
             <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-              {selectedTypesList.length > 0
-                ? "No accounts available for selected providers"
+              {selectedProviderTypes && selectedProviderTypes.length > 0
+                ? `No accounts available for ${selectedProviderTypes.map(getProviderDisplayName).join(", ")}`
                 : "No connected accounts available"}
             </div>
           )}

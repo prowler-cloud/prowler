@@ -14,11 +14,13 @@ from tasks.jobs.backfill import (
 from api.models import (
     ComplianceOverviewSummary,
     Finding,
+    ProviderComplianceScore,
     ResourceScanSummary,
     Scan,
     ScanCategorySummary,
     ScanGroupSummary,
     StateChoices,
+    StatusChoices,
 )
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
@@ -364,12 +366,29 @@ class TestBackfillProviderComplianceScores:
 
     def test_no_scans_to_process(self, tenants_fixture, scans_fixture):
         tenant = tenants_fixture[0]
-        scan = scans_fixture[0]
-        scan.completed_at = None
-        scan.save()
+        scan1, scan2, _ = scans_fixture
+
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            scan=scan1,
+            provider=scan1.provider,
+            compliance_id="aws_cis_1.0",
+            requirement_id="1.1",
+            requirement_status=StatusChoices.PASS,
+            scan_completed_at=scan1.completed_at,
+        )
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            scan=scan2,
+            provider=scan2.provider,
+            compliance_id="aws_cis_1.0",
+            requirement_id="1.1",
+            requirement_status=StatusChoices.PASS,
+            scan_completed_at=scan2.completed_at,
+        )
 
         result = backfill_provider_compliance_scores(str(tenant.id))
-        assert result == {"status": "no completed scans"}
+        assert result == {"status": "no scans to process"}
 
     @patch("tasks.jobs.backfill.psycopg_connection")
     def test_successful_backfill_executes_sql_queries(
@@ -383,10 +402,14 @@ class TestBackfillProviderComplianceScores:
         settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
+        scan2 = scans_fixture[1]
 
         # Set completed_at to make the scan eligible for backfill
         scan.completed_at = datetime.now(timezone.utc)
         scan.save()
+        scan2.state = StateChoices.AVAILABLE
+        scan2.completed_at = None
+        scan2.save()
 
         connection = MagicMock()
         cursor = MagicMock()

@@ -19,7 +19,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/default-bucket-encryption.html",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/encrypted-with-kms-customer-master-keys.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement-staging/knowledge-base/aws/S3/encrypted-with-kms-customer-master-keys.html",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html"
   ],
   "Remediation": {

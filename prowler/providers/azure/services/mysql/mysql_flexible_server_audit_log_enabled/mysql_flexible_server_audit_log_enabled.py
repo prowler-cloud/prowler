@@ -21,7 +21,7 @@ class mysql_flexible_server_audit_log_enabled(Check):
                         "audit_log_enabled"
                     ].resource_id
 
-                    if server.configurations["audit_log_enabled"].value == "ON":
+                    if server.configurations["audit_log_enabled"].value.lower() == "on":
                         report.status = "PASS"
                         report.status_extended = f"Audit log is enabled for server {server.name} in subscription {subscription_name}."
 

@@ -12,8 +12,9 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { updateRole } from "@/actions/roles/roles";
+import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
-import { CustomDropdownSelection, CustomInput } from "@/components/ui/custom";
+import { CustomInput } from "@/components/ui/custom";
 import { Form, FormButtons } from "@/components/ui/form";
 import { getErrorMessage, permissionFormFields } from "@/lib";
 import { ApiError, editRoleFormSchema } from "@/types";
@@ -250,15 +251,21 @@ export const EditRoleForm = ({
               name="groups"
               control={form.control}
               render={({ field }) => (
-                <CustomDropdownSelection
-                  label="Select Groups"
-                  name="groups"
-                  values={groups}
-                  selectedKeys={field.value}
-                  onChange={(name, selectedValues) => {
-                    field.onChange(selectedValues);
-                  }}
-                />
+                <div className="flex flex-col gap-2">
+                  <EnhancedMultiSelect
+                    options={groups.map((group) => ({
+                      label: group.name,
+                      value: group.id,
+                    }))}
+                    onValueChange={field.onChange}
+                    defaultValue={field.value || []}
+                    placeholder="Select groups"
+                    searchable={true}
+                    hideSelectAll={true}
+                    emptyIndicator="No results found"
+                    resetOnDefaultValueChange={true}
+                  />
+                </div>
               )}
             />
 

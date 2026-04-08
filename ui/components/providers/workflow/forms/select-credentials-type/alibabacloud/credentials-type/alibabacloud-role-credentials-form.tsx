@@ -1,7 +1,7 @@
-import { Divider } from "@heroui/divider";
 import { Control } from "react-hook-form";
 
-import { CustomInput } from "@/components/ui/custom";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
+import { Separator } from "@/components/shadcn/separator/separator";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { AlibabaCloudCredentialsRole } from "@/types";
 
@@ -26,7 +26,7 @@ export const AlibabaCloudRoleCredentialsForm = ({
         RAM Role to Assume
       </span>
 
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.ALIBABACLOUD_ROLE_ARN}
         type="text"
@@ -37,13 +37,13 @@ export const AlibabaCloudRoleCredentialsForm = ({
         isRequired
       />
 
-      <Divider />
+      <Separator />
 
       <span className="text-default-500 text-xs font-bold">
         Credentials for Role Assumption
       </span>
 
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID}
         type="text"
@@ -53,7 +53,7 @@ export const AlibabaCloudRoleCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET}
         type="password"
@@ -66,7 +66,7 @@ export const AlibabaCloudRoleCredentialsForm = ({
 
       <span className="text-default-500 text-xs">Optional fields</span>
 
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.ALIBABACLOUD_ROLE_SESSION_NAME}
         type="text"

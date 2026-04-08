@@ -3,7 +3,7 @@ from unittest.mock import call, patch
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import IntegrityError
+from django.db import DatabaseError, IntegrityError
 
 from api.db_utils import POSTGRES_TENANT_VAR, SET_CONFIG_QUERY
 from api.decorators import handle_provider_deletion, set_tenant
@@ -164,6 +164,46 @@ class TestHandleProviderDeletionDecorator:
 
         with pytest.raises(ProviderDeletedException):
             task_func(tenant_id=str(tenant.id), provider_id=deleted_provider_id)
+
+    @patch("api.decorators.rls_transaction")
+    @patch("api.decorators.Provider.objects.filter")
+    def test_database_error_provider_deleted(
+        self, mock_filter, mock_rls, tenants_fixture
+    ):
+        """Raises ProviderDeletedException on DatabaseError when provider deleted."""
+        tenant = tenants_fixture[0]
+        deleted_provider_id = str(uuid.uuid4())
+
+        mock_rls.return_value.__enter__ = lambda s: None
+        mock_rls.return_value.__exit__ = lambda s, *args: None
+        mock_filter.return_value.exists.return_value = False
+
+        @handle_provider_deletion
+        def task_func(**kwargs):
+            raise DatabaseError("Save with update_fields did not affect any rows")
+
+        with pytest.raises(ProviderDeletedException):
+            task_func(tenant_id=str(tenant.id), provider_id=deleted_provider_id)
+
+    @patch("api.decorators.rls_transaction")
+    @patch("api.decorators.Provider.objects.filter")
+    def test_database_error_provider_exists_reraises(
+        self, mock_filter, mock_rls, tenants_fixture, providers_fixture
+    ):
+        """Re-raises original DatabaseError when provider still exists."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        mock_rls.return_value.__enter__ = lambda s: None
+        mock_rls.return_value.__exit__ = lambda s, *args: None
+        mock_filter.return_value.exists.return_value = True
+
+        @handle_provider_deletion
+        def task_func(**kwargs):
+            raise DatabaseError("Save with update_fields did not affect any rows")
+
+        with pytest.raises(DatabaseError):
+            task_func(tenant_id=str(tenant.id), provider_id=str(provider.id))
 
     def test_missing_provider_and_scan_raises_assertion(self, tenants_fixture):
         """Raises AssertionError when neither provider_id nor scan_id in kwargs."""

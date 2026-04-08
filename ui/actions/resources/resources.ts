@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getResources = async ({
@@ -17,7 +18,7 @@ export const getResources = async ({
   page?: number;
   query?: string;
   sort?: string;
-  filters?: Record<string, string>;
+  filters?: Record<string, string | string[] | undefined>;
   pageSize?: number;
   include?: string;
   fields?: string[];
@@ -38,9 +39,7 @@ export const getResources = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const response = await fetch(url.toString(), {
@@ -66,7 +65,7 @@ export const getLatestResources = async ({
   page?: number;
   query?: string;
   sort?: string;
-  filters?: Record<string, string>;
+  filters?: Record<string, string | string[] | undefined>;
   pageSize?: number;
   include?: string;
   fields?: string[];
@@ -87,9 +86,7 @@ export const getLatestResources = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const response = await fetch(url.toString(), {
@@ -107,6 +104,10 @@ export const getMetadataInfo = async ({
   query = "",
   sort = "",
   filters = {},
+}: {
+  query?: string;
+  sort?: string;
+  filters?: Record<string, string | string[] | undefined>;
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -115,9 +116,7 @@ export const getMetadataInfo = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const response = await fetch(url.toString(), {
@@ -135,6 +134,10 @@ export const getLatestMetadataInfo = async ({
   query = "",
   sort = "",
   filters = {},
+}: {
+  query?: string;
+  sort?: string;
+  filters?: Record<string, string | string[] | undefined>;
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -143,9 +146,7 @@ export const getLatestMetadataInfo = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const response = await fetch(url.toString(), {
@@ -156,6 +157,64 @@ export const getLatestMetadataInfo = async ({
   } catch (error) {
     console.error("Error fetching latest metadata info:", error);
     return undefined;
+  }
+};
+
+const SAFE_RESOURCE_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
+export const getResourceEvents = async (
+  resourceId: string,
+  {
+    includeReadEvents = false,
+    lookbackDays = 90,
+    pageSize = 50,
+  }: {
+    includeReadEvents?: boolean;
+    lookbackDays?: number;
+    pageSize?: number;
+  } = {},
+) => {
+  if (!SAFE_RESOURCE_ID_PATTERN.test(resourceId)) {
+    return { error: "Invalid resource ID format." };
+  }
+
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const url = new URL(`${apiBaseUrl}/resources/${resourceId}/events`);
+  url.searchParams.append("include_read_events", String(includeReadEvents));
+  url.searchParams.append("lookback_days", String(lookbackDays));
+  url.searchParams.append("page[size]", String(pageSize));
+
+  try {
+    const response = await fetch(url.toString(), { headers });
+
+    if (!response.ok) {
+      const rawText = await response.text().catch(() => "");
+      const defaultError = "An error occurred while fetching events.";
+      try {
+        const errorData = rawText ? JSON.parse(rawText) : null;
+        return {
+          error:
+            errorData?.errors?.[0]?.detail ||
+            errorData?.error ||
+            errorData?.message ||
+            rawText ||
+            response.statusText ||
+            defaultError,
+          status: response.status,
+        };
+      } catch {
+        return {
+          error: rawText || response.statusText || defaultError,
+          status: response.status,
+        };
+      }
+    }
+
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error("Error fetching resource events:", error);
+    return { error: "An unexpected error occurred." };
   }
 };
 

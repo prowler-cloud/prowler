@@ -10,7 +10,7 @@ Complete reference guide for all tools available in the Prowler MCP Server. Tool
 |----------|------------|------------------------|
 | Prowler Hub | 10 tools | No |
 | Prowler Documentation | 2 tools | No |
-| Prowler Cloud/App | 24 tools | Yes |
+| Prowler Cloud/App | 29 tools | Yes |
 
 ## Tool Naming Convention
 
@@ -60,6 +60,7 @@ Tools for searching, viewing, and analyzing cloud resources discovered by Prowle
 
 - **`prowler_app_list_resources`** - List and filter cloud resources with advanced filtering options (provider, region, service, resource type, tags)
 - **`prowler_app_get_resource`** - Get comprehensive details about a specific resource including configuration, metadata, and finding relationships
+- **`prowler_app_get_resource_events`** - Get the timeline of cloud API actions performed on a resource (AWS CloudTrail). Shows who did what and when, with full request/response payloads
 - **`prowler_app_get_resources_overview`** - Get aggregate statistics about cloud resources as a markdown report
 
 ### Muting Management
@@ -79,6 +80,15 @@ Tools for managing finding muting, including pattern-based bulk muting (mutelist
 - **`prowler_app_create_mute_rule`** - Create a new mute rule to mute specific findings with documentation and audit trail
 - **`prowler_app_update_mute_rule`** - Update a mute rule's name, reason, or enabled status
 - **`prowler_app_delete_mute_rule`** - Delete a mute rule from the system
+
+### Attack Paths Analysis
+
+Tools for analyzing privilege escalation chains and security misconfigurations using graph-based analysis. Attack Paths maps relationships between cloud resources, permissions, and security findings to detect how privileges can be escalated and how misconfigurations can be exploited.
+
+- **`prowler_app_list_attack_paths_scans`** - List Attack Paths scans with filtering by provider, provider type, and scan state (available, scheduled, executing, completed, failed, cancelled)
+- **`prowler_app_list_attack_paths_queries`** - Discover available Attack Paths queries for a completed scan, including query names, descriptions, and required parameters
+- **`prowler_app_run_attack_paths_query`** - Execute an Attack Paths query against a completed scan and retrieve graph results with nodes (cloud resources, findings, virtual nodes) and relationships (access paths, role assumptions, security group memberships)
+- **`prowler_app_get_attack_paths_cartography_schema`** - Retrieve the Cartography graph schema (node labels, relationships, properties) for writing accurate custom openCypher queries
 
 ### Compliance Management
 

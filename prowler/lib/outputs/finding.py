@@ -34,10 +34,13 @@ class Finding(BaseModel):
     auth_method: str
     timestamp: Union[int, datetime]
     account_uid: str
+    provider_uid: Optional[str] = None
     account_name: Optional[str] = None
     account_email: Optional[str] = None
     account_organization_uid: Optional[str] = None
     account_organization_name: Optional[str] = None
+    account_ou_uid: Optional[str] = None
+    account_ou_name: Optional[str] = None
     metadata: CheckMetadata
     account_tags: dict = Field(default_factory=dict)
     uid: str
@@ -154,6 +157,12 @@ class Finding(BaseModel):
                 output_data["account_tags"] = get_nested_attribute(
                     provider, "organizations_metadata.account_tags"
                 )
+                output_data["account_ou_uid"] = get_nested_attribute(
+                    provider, "organizations_metadata.account_ou_id"
+                )
+                output_data["account_ou_name"] = get_nested_attribute(
+                    provider, "organizations_metadata.account_ou_name"
+                )
                 output_data["partition"] = get_nested_attribute(
                     provider, "identity.partition"
                 )
@@ -244,6 +253,7 @@ class Finding(BaseModel):
                 output_data["account_uid"] = get_nested_attribute(
                     provider, "identity.cluster"
                 )
+                output_data["provider_uid"] = provider.identity.context
                 output_data["region"] = f"namespace: {check_output.namespace}"
 
             elif provider.type == "github":
@@ -251,15 +261,22 @@ class Finding(BaseModel):
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
 
+                owner = getattr(check_output, "owner", None)
+
                 if isinstance(provider.identity, GithubIdentityInfo):
                     # GithubIdentityInfo (Personal Access Token, OAuth)
-                    output_data["account_name"] = provider.identity.account_name
-                    output_data["account_uid"] = provider.identity.account_id
+                    output_data["account_name"] = (
+                        owner or provider.identity.account_name
+                    )
+                    output_data["account_uid"] = owner or provider.identity.account_name
                     output_data["account_email"] = provider.identity.account_email
                 elif isinstance(provider.identity, GithubAppIdentityInfo):
                     # GithubAppIdentityInfo (GitHub App)
-                    output_data["account_name"] = provider.identity.app_name
-                    output_data["account_uid"] = provider.identity.app_id
+                    output_data["account_name"] = owner or provider.identity.app_name
+                    output_data["account_uid"] = owner or provider.identity.app_name
+                    output_data["account_organization_uid"] = str(
+                        provider.identity.app_id
+                    )
                     output_data["installations"] = provider.identity.installations
 
                 output_data["region"] = check_output.owner
@@ -269,10 +286,27 @@ class Finding(BaseModel):
                     f"{provider.identity.identity_type}: {provider.identity.identity_id}"
                 )
                 output_data["account_uid"] = get_nested_attribute(
-                    provider, "identity.tenant_id"
+                    provider, "identity.tenant_domain"
                 )
                 output_data["account_name"] = get_nested_attribute(
                     provider, "identity.tenant_domain"
+                )
+                output_data["account_organization_uid"] = get_nested_attribute(
+                    provider, "identity.tenant_id"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
+
+            elif provider.type == "googleworkspace":
+                output_data["auth_method"] = (
+                    f"service_account: {provider.identity.delegated_user}"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.customer_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.domain"
                 )
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
@@ -307,8 +341,9 @@ class Finding(BaseModel):
 
             elif provider.type == "iac":
                 output_data["auth_method"] = provider.auth_method
-                output_data["account_uid"] = "iac"
-                output_data["account_name"] = "iac"
+                provider_uid = getattr(provider, "provider_uid", None)
+                output_data["account_uid"] = provider_uid if provider_uid else "iac"
+                output_data["account_name"] = provider_uid if provider_uid else "iac"
                 output_data["resource_name"] = getattr(
                     check_output, "resource_name", ""
                 )
@@ -344,11 +379,47 @@ class Finding(BaseModel):
 
             elif provider.type == "cloudflare":
                 output_data["auth_method"] = "api_token"
-                output_data["account_uid"] = check_output.account_id
-                output_data["account_name"] = check_output.account_id
+                account_id = check_output.account_id
+                if not account_id:
+                    audited_accounts = (
+                        get_nested_attribute(provider, "identity.audited_accounts")
+                        or []
+                    )
+                    if audited_accounts:
+                        account_id = audited_accounts[0]
+
+                account_name = account_id
+                if account_id:
+                    accounts = get_nested_attribute(provider, "identity.accounts") or []
+                    for account in accounts:
+                        if getattr(account, "id", None) == account_id and getattr(
+                            account, "name", None
+                        ):
+                            account_name = account.name
+                            break
+
+                output_data["account_uid"] = account_id or ""
+                output_data["account_name"] = account_name or account_id or ""
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.zone_name
+
+            elif provider.type == "vercel":
+                output_data["auth_method"] = "api_token"
+                team = get_nested_attribute(provider, "identity.team")
+                output_data["account_uid"] = (
+                    team.id
+                    if team
+                    else get_nested_attribute(provider, "identity.user_id")
+                )
+                output_data["account_name"] = (
+                    team.name
+                    if team
+                    else get_nested_attribute(provider, "identity.username")
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = "global"
 
             elif provider.type == "alibabacloud":
                 output_data["auth_method"] = get_nested_attribute(
@@ -380,6 +451,25 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.region
 
+            elif provider.type == "image":
+                output_data["auth_method"] = provider.auth_method
+                output_data["account_uid"] = "image"
+                output_data["account_name"] = "image"
+                image_name = getattr(check_output, "resource_name", "")
+                image_sha = getattr(check_output, "image_sha", "")
+                output_data["resource_name"] = image_name
+                output_data["resource_uid"] = (
+                    f"{image_name}:{image_sha}" if image_sha else image_name
+                )
+                output_data["region"] = getattr(check_output, "region", "container")
+                output_data["package_name"] = getattr(check_output, "package_name", "")
+                output_data["installed_version"] = getattr(
+                    check_output, "installed_version", ""
+                )
+                output_data["fixed_version"] = getattr(
+                    check_output, "fixed_version", ""
+                )
+
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are findings without resource_name
@@ -387,6 +477,9 @@ class Finding(BaseModel):
                 f"prowler-{provider.type}-{check_output.check_metadata.CheckID}-{output_data['account_uid']}-"
                 f"{output_data['region']}-{output_data['resource_name']}"
             )
+
+            if provider.type == "iac" and output_data.get("resource_line_range"):
+                output_data["uid"] += f"-{output_data['resource_line_range']}"
 
             if not output_data["resource_uid"]:
                 logger.error(

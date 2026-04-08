@@ -53,6 +53,13 @@ export const ProviderCredentialFields = {
   REPOSITORY_URL: "repository_url",
   ACCESS_TOKEN: "access_token",
 
+  // Image (Container Registry) fields
+  REGISTRY_USERNAME: "registry_username",
+  REGISTRY_PASSWORD: "registry_password",
+  REGISTRY_TOKEN: "registry_token",
+  IMAGE_FILTER: "image_filter",
+  TAG_FILTER: "tag_filter",
+
   // OCI fields
   OCI_USER: "user",
   OCI_FINGERPRINT: "fingerprint",
@@ -67,6 +74,23 @@ export const ProviderCredentialFields = {
   ALIBABACLOUD_ACCESS_KEY_SECRET: "access_key_secret",
   ALIBABACLOUD_ROLE_ARN: "role_arn",
   ALIBABACLOUD_ROLE_SESSION_NAME: "role_session_name",
+
+  // Cloudflare fields
+  CLOUDFLARE_API_TOKEN: "api_token",
+  CLOUDFLARE_API_KEY: "api_key",
+  CLOUDFLARE_API_EMAIL: "api_email",
+
+  // OpenStack fields
+  OPENSTACK_CLOUDS_YAML_CONTENT: "clouds_yaml_content",
+  OPENSTACK_CLOUDS_YAML_CLOUD: "clouds_yaml_cloud",
+
+  // Google Workspace fields
+  GOOGLEWORKSPACE_CUSTOMER_ID: "customer_id",
+  GOOGLEWORKSPACE_CREDENTIALS_CONTENT: "credentials_content",
+  GOOGLEWORKSPACE_DELEGATED_USER: "delegated_user",
+
+  // Vercel fields
+  VERCEL_API_TOKEN: "api_token",
 } as const;
 
 // Type for credential field values
@@ -97,6 +121,11 @@ export const ErrorPointers = {
   GITHUB_APP_KEY: "/data/attributes/secret/github_app_key_content",
   REPOSITORY_URL: "/data/attributes/secret/repository_url",
   ACCESS_TOKEN: "/data/attributes/secret/access_token",
+  REGISTRY_USERNAME: "/data/attributes/secret/registry_username",
+  REGISTRY_PASSWORD: "/data/attributes/secret/registry_password",
+  REGISTRY_TOKEN: "/data/attributes/secret/registry_token",
+  IMAGE_FILTER: "/data/attributes/secret/image_filter",
+  TAG_FILTER: "/data/attributes/secret/tag_filter",
   CERTIFICATE_CONTENT: "/data/attributes/secret/certificate_content",
   OCI_USER: "/data/attributes/secret/user",
   OCI_FINGERPRINT: "/data/attributes/secret/fingerprint",
@@ -111,6 +140,16 @@ export const ErrorPointers = {
   ALIBABACLOUD_ACCESS_KEY_SECRET: "/data/attributes/secret/access_key_secret",
   ALIBABACLOUD_ROLE_ARN: "/data/attributes/secret/role_arn",
   ALIBABACLOUD_ROLE_SESSION_NAME: "/data/attributes/secret/role_session_name",
+  CLOUDFLARE_API_TOKEN: "/data/attributes/secret/api_token",
+  CLOUDFLARE_API_KEY: "/data/attributes/secret/api_key",
+  CLOUDFLARE_API_EMAIL: "/data/attributes/secret/api_email",
+  OPENSTACK_CLOUDS_YAML_CONTENT: "/data/attributes/secret/clouds_yaml_content",
+  OPENSTACK_CLOUDS_YAML_CLOUD: "/data/attributes/secret/clouds_yaml_cloud",
+  GOOGLEWORKSPACE_CUSTOMER_ID: "/data/attributes/secret/customer_id",
+  GOOGLEWORKSPACE_CREDENTIALS_CONTENT:
+    "/data/attributes/secret/credentials_content",
+  GOOGLEWORKSPACE_DELEGATED_USER: "/data/attributes/secret/delegated_user",
+  VERCEL_API_TOKEN: "/data/attributes/secret/api_token",
 } as const;
 
 export type ErrorPointer = (typeof ErrorPointers)[keyof typeof ErrorPointers];

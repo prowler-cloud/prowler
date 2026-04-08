@@ -31,7 +31,10 @@
     {
       "Id": "1.1.2",
       "Description": "Emergency access or 'break glass' accounts are limited for emergency scenarios where normal administrative accounts are unavailable. They are not assigned to a specific user and will have a combination of physical and technical controls to prevent them from being accessed outside a true emergency. Ensure two Emergency Access accounts have been defined.",
-      "Checks": [],
+      "Checks": [
+        "entra_break_glass_account_fido2_security_key_registered",
+        "entra_emergency_access_exclusion"
+      ],
       "Attributes": [
         {
           "Section": "1 Microsoft 365 admin center",
@@ -339,7 +342,9 @@
     {
       "Id": "2.1.1",
       "Description": "Safe Links for Office Applications is a feature in Microsoft 365 that provides URL scanning and rewriting of inbound email messages in mail flow, and time-of-click verification of URLs and links in email messages, other Microsoft 365 applications such as Teams, and other locations such as SharePoint Online. It can help protect organizations from malicious links used in phishing and other attacks.",
-      "Checks": [],
+      "Checks": [
+        "defender_safelinks_policy_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",
@@ -404,7 +409,9 @@
     {
       "Id": "2.1.4",
       "Description": "The Safe Attachments policy helps protect users from malware in email attachments by scanning attachments for viruses, malware, and other malicious content. When an email attachment is received by a user, Safe Attachments will scan the attachment in a secure environment and provide a verdict on whether the attachment is safe or not.",
-      "Checks": [],
+      "Checks": [
+        "defender_safe_attachments_policy_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",
@@ -425,7 +432,9 @@
     {
       "Id": "2.1.5",
       "Description": "Safe Attachments for SharePoint, OneDrive, and Microsoft Teams scans these services for malicious files.",
-      "Checks": [],
+      "Checks": [
+        "defender_atp_safe_attachments_and_docs_configured"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",
@@ -1209,6 +1218,7 @@
       "Id": "5.1.5.1",
       "Description": "User consent to apps accessing company data on their behalf allows users to grant permissions to applications without administrator involvement. The recommended state is Do not allow user consent.",
       "Checks": [
+        "entra_app_registration_no_unused_privileged_permissions",
         "entra_policy_restricts_user_consent_for_apps"
       ],
       "Attributes": [
@@ -1437,7 +1447,8 @@
       "Id": "5.2.2.5",
       "Description": "Authentication strength is a Conditional Access control that allows administrators to specify which combination of authentication methods can be used to access a resource. Ensure administrator roles are using a CA policy with Phishing-resistant MFA strength.",
       "Checks": [
-        "entra_admin_users_phishing_resistant_mfa_enabled"
+        "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_break_glass_account_fido2_security_key_registered"
       ],
       "Attributes": [
         {
@@ -1573,7 +1584,7 @@
       "Id": "5.2.2.11",
       "Description": "Sign-in frequency defines the time period before a user is asked to sign in again when attempting to access a resource. Ensure sign-in frequency for Intune Enrollment is set to 'Every time'.",
       "Checks": [
-        "entra_admin_users_sign_in_frequency_enabled"
+        "entra_intune_enrollment_sign_in_frequency_every_time"
       ],
       "Attributes": [
         {
@@ -1595,7 +1606,9 @@
     {
       "Id": "5.2.2.12",
       "Description": "The Microsoft identity platform supports the device authorization grant, which allows users to sign in to input-constrained devices such as a smart TV, IoT device, or a printer. Ensure the device code sign-in flow is blocked.",
-      "Checks": [],
+      "Checks": [
+        "entra_conditional_access_policy_device_code_flow_blocked"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",

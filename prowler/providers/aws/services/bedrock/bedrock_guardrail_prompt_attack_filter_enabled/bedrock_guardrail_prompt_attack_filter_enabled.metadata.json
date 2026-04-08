@@ -17,7 +17,7 @@
   "Risk": "Without **HIGH** prompt-attack filtering, models are exposed to **prompt injection/jailbreaks**:\n- Confidentiality: coerced disclosure of sensitive data\n- Integrity: policy evasion and manipulated outputs\n- Operations: unintended tool execution and workflow tampering",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/prompt-attack-strength.html",
+    "https://trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Bedrock/prompt-attack-strength.html",
     "https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-injection.html",
     "https://support.icompaas.com/support/solutions/articles/62000233535-ensure-prompt-attack-filter-is-configured-at-highest-strength-for-amazon-bedrock-guardrails",
     "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html"

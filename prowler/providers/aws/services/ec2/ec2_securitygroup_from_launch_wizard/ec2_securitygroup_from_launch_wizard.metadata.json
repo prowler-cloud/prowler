@@ -15,7 +15,7 @@
   "Risk": "Wizard-generated groups often include **overly permissive rules** (e.g., `0.0.0.0/0` to admin ports), expanding exposure. Attackers can run **port scans** and **brute-force** to gain entry, then **lateral movement** and **data exfiltration**, impacting **confidentiality** and **integrity**; broad egress aids command-and-control.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/security-group-prefixed-with-launch-wizard.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/EC2/security-group-prefixed-with-launch-wizard.html",
     "https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html"
   ],
   "Remediation": {

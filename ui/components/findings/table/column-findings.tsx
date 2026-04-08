@@ -1,3 +1,5 @@
+// TODO: Legacy columns — used by overview dashboard (column-new-findings-to-date.tsx).
+// Migrate that consumer to grouped view columns, then delete this file.
 "use client";
 
 import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
@@ -33,20 +35,14 @@ const getResourceData = (
   row: { original: FindingProps },
   field: keyof FindingProps["relationships"]["resource"]["attributes"],
 ) => {
-  return (
-    row.original.relationships?.resource?.attributes?.[field] ||
-    `No ${field} found in resource`
-  );
+  return row.original.relationships?.resource?.attributes?.[field] || "-";
 };
 
 const getProviderData = (
   row: { original: FindingProps },
   field: keyof FindingProps["relationships"]["provider"]["attributes"],
 ) => {
-  return (
-    row.original.relationships?.provider?.attributes?.[field] ||
-    `No ${field} found in provider`
-  );
+  return row.original.relationships?.provider?.attributes?.[field] || "-";
 };
 
 // Component for finding title that opens the detail drawer
@@ -185,6 +181,10 @@ export function getColumnFindings(
       ),
       cell: ({ row }) => {
         const resourceName = getResourceData(row, "name");
+
+        if (resourceName === "-") {
+          return <p className="text-text-neutral-primary text-sm">-</p>;
+        }
 
         return (
           <CodeSnippet

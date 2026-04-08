@@ -24,6 +24,8 @@ Use these skills for detailed patterns on-demand:
 | `zod-4` | New API (z.email(), z.uuid()) | [SKILL.md](skills/zod-4/SKILL.md) |
 | `zustand-5` | Persist, selectors, slices | [SKILL.md](skills/zustand-5/SKILL.md) |
 | `ai-sdk-5` | UIMessage, streaming, LangChain | [SKILL.md](skills/ai-sdk-5/SKILL.md) |
+| `vitest` | Unit testing, React Testing Library | [SKILL.md](skills/vitest/SKILL.md) |
+| `tdd` | Test-Driven Development workflow | [SKILL.md](skills/tdd/SKILL.md) |
 
 ### Prowler-Specific Skills
 | Skill | Description | URL |
@@ -44,7 +46,10 @@ Use these skills for detailed patterns on-demand:
 | `prowler-commit` | Professional commits (conventional-commits) | [SKILL.md](skills/prowler-commit/SKILL.md) |
 | `prowler-pr` | Pull request conventions | [SKILL.md](skills/prowler-pr/SKILL.md) |
 | `prowler-docs` | Documentation style guide | [SKILL.md](skills/prowler-docs/SKILL.md) |
+| `django-migration-psql` | Django migration best practices for PostgreSQL | [SKILL.md](skills/django-migration-psql/SKILL.md) |
+| `postgresql-indexing` | PostgreSQL indexing, EXPLAIN, monitoring, maintenance | [SKILL.md](skills/postgresql-indexing/SKILL.md) |
 | `prowler-attack-paths-query` | Create Attack Paths openCypher queries | [SKILL.md](skills/prowler-attack-paths-query/SKILL.md) |
+| `gh-aw` | GitHub Agentic Workflows (gh-aw) | [SKILL.md](skills/gh-aw/SKILL.md) |
 | `skill-creator` | Create new AI agent skills | [SKILL.md](skills/skill-creator/SKILL.md) |
 
 ### Auto-invoke Skills
@@ -56,16 +61,18 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Add changelog entry for a PR or feature | `prowler-changelog` |
 | Adding DRF pagination or permissions | `django-drf` |
 | Adding new providers | `prowler-provider` |
-| Adding services to existing providers | `prowler-provider` |
 | Adding privilege escalation detection queries | `prowler-attack-paths-query` |
+| Adding services to existing providers | `prowler-provider` |
 | After creating/modifying a skill | `skill-sync` |
 | App Router / Server Actions | `nextjs-15` |
 | Building AI chat features | `ai-sdk-5` |
 | Committing changes | `prowler-commit` |
+| Configuring MCP servers in agentic workflows | `gh-aw` |
 | Create PR that requires changelog entry | `prowler-changelog` |
 | Create a PR with gh pr create | `prowler-pr` |
 | Creating API endpoints | `jsonapi` |
 | Creating Attack Paths queries | `prowler-attack-paths-query` |
+| Creating GitHub Agentic Workflows | `gh-aw` |
 | Creating ViewSets, serializers, or filters in api/ | `django-drf` |
 | Creating Zod schemas | `zod-4` |
 | Creating a git commit | `prowler-commit` |
@@ -75,31 +82,42 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Creating/modifying models, views, serializers | `prowler-api` |
 | Creating/updating compliance frameworks | `prowler-compliance` |
 | Debug why a GitHub Actions job is failing | `prowler-ci` |
+| Debugging gh-aw compilation errors | `gh-aw` |
 | Fill .github/pull_request_template.md (Context/Description/Steps to review/Checklist) | `prowler-pr` |
+| Fixing bug | `tdd` |
 | General Prowler development questions | `prowler` |
 | Implementing JSON:API endpoints | `django-drf` |
+| Implementing feature | `tdd` |
+| Importing Copilot Custom Agents into workflows | `gh-aw` |
 | Inspect PR CI checks and gates (.github/workflows/*) | `prowler-ci` |
 | Inspect PR CI workflows (.github/workflows/*): conventional-commit, pr-check-changelog, pr-conflict-checker, labeler | `prowler-pr` |
 | Mapping checks to compliance controls | `prowler-compliance` |
 | Mocking AWS with moto in tests | `prowler-test-sdk` |
 | Modifying API responses | `jsonapi` |
+| Modifying component | `tdd` |
+| Modifying gh-aw workflow frontmatter or safe-outputs | `gh-aw` |
+| Refactoring code | `tdd` |
 | Regenerate AGENTS.md Auto-invoke tables (sync.sh) | `skill-sync` |
 | Review PR requirements: template, title conventions, changelog gate | `prowler-pr` |
 | Review changelog format and conventions | `prowler-changelog` |
 | Reviewing JSON:API compliance | `jsonapi` |
 | Reviewing compliance framework PRs | `prowler-compliance-review` |
 | Testing RLS tenant isolation | `prowler-test-api` |
+| Testing hooks or utilities | `vitest` |
 | Troubleshoot why a skill is missing from AGENTS.md auto-invoke | `skill-sync` |
 | Understand CODEOWNERS/labeler-based automation | `prowler-ci` |
 | Understand PR title conventional-commit validation | `prowler-ci` |
 | Understand changelog gate and no-changelog label behavior | `prowler-ci` |
 | Understand review ownership with CODEOWNERS | `prowler-pr` |
 | Update CHANGELOG.md in any component | `prowler-changelog` |
+| Updating README.md provider statistics table | `prowler-readme-table` |
+| Updating checks, services, compliance, or categories count in README.md | `prowler-readme-table` |
 | Updating existing Attack Paths queries | `prowler-attack-paths-query` |
 | Updating existing checks and metadata | `prowler-sdk-check` |
 | Using Zustand stores | `zustand-5` |
 | Working on MCP server tools | `prowler-mcp` |
 | Working on Prowler UI structure (actions/adapters/types/hooks) | `prowler-ui` |
+| Working on task | `tdd` |
 | Working with Prowler UI test helpers/pages | `prowler-test-ui` |
 | Working with Tailwind classes | `tailwind-4` |
 | Writing Playwright E2E tests | `playwright` |
@@ -107,9 +125,12 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Writing Prowler SDK tests | `prowler-test-sdk` |
 | Writing Prowler UI E2E tests | `prowler-test-ui` |
 | Writing Python tests with pytest | `pytest` |
+| Writing React component tests | `vitest` |
 | Writing React components | `react-19` |
 | Writing TypeScript types/interfaces | `typescript` |
+| Writing Vitest tests | `vitest` |
 | Writing documentation | `prowler-docs` |
+| Writing unit tests for UI | `vitest` |
 
 ---
 
@@ -119,7 +140,7 @@ Prowler is an open-source cloud security assessment tool supporting AWS, Azure, 
 
 | Component | Location | Tech Stack |
 |-----------|----------|------------|
-| SDK | `prowler/` | Python 3.9+, Poetry |
+| SDK | `prowler/` | Python 3.10+, Poetry |
 | API | `api/` | Django 5.1, DRF, Celery |
 | UI | `ui/` | Next.js 15, React 19, Tailwind 4 |
 | MCP Server | `mcp_server/` | FastMCP, Python 3.12+ |

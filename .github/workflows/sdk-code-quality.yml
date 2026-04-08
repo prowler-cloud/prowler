@@ -1,0 +1,103 @@
+name: 'SDK: Code Quality'
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'v5.*'
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sdk-code-quality:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        python-version:
+          - '3.10'
+          - '3.11'
+          - '3.12'
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            pypi.org:443
+            files.pythonhosted.org:443
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # zizmor: ignore[artipacked]
+          persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
+
+      - name: Check for SDK changes
+        id: check-changes
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
+        with:
+          files: ./**
+          files_ignore: |
+            .github/**
+            prowler/CHANGELOG.md
+            docs/**
+            permissions/**
+            api/**
+            ui/**
+            dashboard/**
+            mcp_server/**
+            skills/**
+            README.md
+            mkdocs.yml
+            .backportrc.json
+            .env
+            docker-compose*
+            examples/**
+            .gitignore
+            contrib/**
+            **/AGENTS.md
+
+      - name: Install Poetry
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: pipx install poetry==2.1.1
+
+      - name: Set up Python ${{ matrix.python-version }}
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+
+      - name: Install dependencies
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: |
+          poetry install --no-root
+          poetry run pip list
+
+      - name: Check Poetry lock file
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry check --lock
+
+      - name: Lint with flake8
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib,ui,api,skills
+
+      - name: Check format with black
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry run black --exclude "api|ui|skills" --check .
+
+      - name: Lint with pylint
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry run pylint --disable=W,C,R,E -j 0 -rn -sn prowler/

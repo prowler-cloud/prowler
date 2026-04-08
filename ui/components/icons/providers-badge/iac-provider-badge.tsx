@@ -15,30 +15,23 @@ export const IacProviderBadge: React.FC<IconSvgProps> = ({
     focusable="false"
     height={size || height}
     role="presentation"
-    viewBox="0 0 24 24"
+    viewBox="0 0 256 256"
     width={size || width}
     {...props}
   >
-    <path
-      d="M13 21L17 3"
-      stroke="currentColor"
-      strokeWidth="2"
+    <rect width="256" height="256" fill="#e8eaed" rx="60" />
+    <g
+      stroke="#5f6368"
+      strokeWidth="14"
       strokeLinecap="round"
       strokeLinejoin="round"
-    />
-    <path
-      d="M7 8L3 12L7 16"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M17 8L21 12L17 16"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+    >
+      {/* Slash: / */}
+      <path d="M112 205L148 51" />
+      {/* Left bracket: < */}
+      <path d="M85 85L45 128L85 171" />
+      {/* Right bracket: > */}
+      <path d="M171 85L211 128L171 171" />
+    </g>
   </svg>
 );
