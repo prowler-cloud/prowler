@@ -22,8 +22,6 @@ class Directory(GoogleWorkspaceService):
                 logger.error("Failed to build Directory service")
                 return users
 
-            # Fetch users using the Directory API
-            # Reference: https://developers.google.com/admin-sdk/directory/reference/rest/v1/users/list
             request = self._service.users().list(
                 customer=self.provider.identity.customer_id,
                 maxResults=500,  # Max allowed by API
@@ -38,13 +36,9 @@ class Directory(GoogleWorkspaceService):
                         user = User(
                             id=user_data.get("id"),
                             email=user_data.get("primaryEmail"),
-                            is_admin=user_data.get("isAdmin", False),
-                            is_delegated_admin=user_data.get("isDelegatedAdmin", False),
                         )
                         users[user.id] = user
-                        logger.debug(
-                            f"Processed user: {user.email} (Admin: {user.is_admin})"
-                        )
+                        logger.debug(f"Processed user: {user.email}")
 
                     request = self._service.users().list_next(request, response)
 
@@ -83,7 +77,14 @@ class Directory(GoogleWorkspaceService):
                         role_id = str(role_data.get("roleId", ""))
                         role_name = role_data.get("roleName", "")
                         if role_id and role_name:
-                            roles[role_id] = role_name
+                            roles[role_id] = Role(
+                                id=role_id,
+                                name=role_name,
+                                description=role_data.get("roleDescription", ""),
+                                is_super_admin_role=role_data.get(
+                                    "isSuperAdminRole", False
+                                ),
+                            )
 
                     request = self._service.roles().list_next(request, response)
 
@@ -105,47 +106,54 @@ class Directory(GoogleWorkspaceService):
         return roles
 
     def _populate_role_assignments(self):
-        logger.info("Directory - Fetching Role Assignments for super admins...")
+        logger.info("Directory - Fetching Role Assignments...")
 
         if not self._service:
             return
 
-        super_admins = [user for user in self.users.values() if user.is_admin]
+        try:
+            request = self._service.roleAssignments().list(
+                customer=self.provider.identity.customer_id,
+            )
 
-        for user in super_admins:
-            try:
-                request = self._service.roleAssignments().list(
-                    customer=self.provider.identity.customer_id,
-                    userKey=user.id,
-                )
+            while request is not None:
+                try:
+                    response = request.execute()
 
-                while request is not None:
-                    try:
-                        response = request.execute()
+                    for assignment in response.get("items", []):
+                        user_id = str(assignment.get("assignedTo", ""))
+                        role_id = str(assignment.get("roleId", ""))
+                        user = self.users.get(user_id)
+                        role = self._roles.get(role_id)
+                        if user and role:
+                            user.role_assignments.append(role)
+                            if role.is_super_admin_role:
+                                user.is_admin = True
 
-                        for assignment in response.get("items", []):
-                            role_id = str(assignment.get("roleId", ""))
-                            role_name = self._roles.get(role_id, f"Unknown ({role_id})")
-                            user.role_assignments.append(role_name)
+                    request = self._service.roleAssignments().list_next(
+                        request, response
+                    )
 
-                        request = self._service.roleAssignments().list_next(
-                            request, response
-                        )
+                except Exception as error:
+                    self._handle_api_error(
+                        error,
+                        "listing role assignments",
+                        self.provider.identity.customer_id,
+                    )
+                    break
 
-                    except Exception as error:
-                        self._handle_api_error(
-                            error,
-                            "listing role assignments",
-                            user.email,
-                        )
-                        break
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
-                logger.debug(f"User {user.email} has roles: {user.role_assignments}")
 
-            except Exception as error:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+class Role(BaseModel):
+
+    id: str
+    name: str
+    description: str = ""
+    is_super_admin_role: bool = False
 
 
 class User(BaseModel):
@@ -153,5 +161,4 @@ class User(BaseModel):
     id: str
     email: str
     is_admin: bool = False
-    is_delegated_admin: bool = False
-    role_assignments: list[str] = []
+    role_assignments: list[Role] = []

@@ -22,7 +22,9 @@ class directory_super_admin_only_admin_roles(Check):
             for user in directory_client.users.values():
                 if user.is_admin:
                     extra_roles = [
-                        r for r in user.role_assignments if r != "Super Admin"
+                        r.description or r.name
+                        for r in user.role_assignments
+                        if not r.is_super_admin_role
                     ]
                     if extra_roles:
                         dual_role_admins[user.email] = extra_roles
