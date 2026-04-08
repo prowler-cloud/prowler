@@ -41,11 +41,7 @@ def display_compliance_table(
         None
     """
     # Filter out findings with dynamic CheckIDs not present in bulk_checks_metadata
-    findings = [
-        f
-        for f in findings
-        if f.check_metadata.CheckID in bulk_checks_metadata
-    ]
+    findings = [f for f in findings if f.check_metadata.CheckID in bulk_checks_metadata]
 
     try:
         if "ens_" in compliance_framework:
