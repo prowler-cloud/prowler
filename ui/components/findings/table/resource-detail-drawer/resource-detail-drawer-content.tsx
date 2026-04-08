@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { getCompliancesOverview } from "@/actions/compliances";
@@ -84,7 +84,87 @@ function normalizeComplianceFrameworkName(framework: string): string {
   return framework
     .trim()
     .toLowerCase()
-    .replace(/[\s_]+/g, "-");
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+function stripComplianceVersionSuffix(framework: string): string {
+  return framework.replace(/-\d+(?:\.\d+)*$/g, "");
+}
+
+function canonicalComplianceKey(framework: string): string {
+  return stripComplianceVersionSuffix(
+    normalizeComplianceFrameworkName(framework),
+  )
+    .replace(/[^a-z0-9]+/g, "")
+    .trim();
+}
+
+function complianceTokens(framework: string): string[] {
+  return stripComplianceVersionSuffix(
+    normalizeComplianceFrameworkName(framework),
+  )
+    .split("-")
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .filter((token) => !/^\d+(?:\.\d+)*$/.test(token));
+}
+
+function complianceMatchScore(
+  sourceFramework: string,
+  targetFramework: string,
+): number {
+  const normalizedSource = normalizeComplianceFrameworkName(sourceFramework);
+  const normalizedTarget = normalizeComplianceFrameworkName(targetFramework);
+
+  if (normalizedSource === normalizedTarget) {
+    return 5;
+  }
+
+  const canonicalSource = canonicalComplianceKey(sourceFramework);
+  const canonicalTarget = canonicalComplianceKey(targetFramework);
+
+  if (canonicalSource === canonicalTarget) {
+    return 4;
+  }
+
+  if (
+    canonicalSource &&
+    canonicalTarget &&
+    (canonicalTarget.startsWith(canonicalSource) ||
+      canonicalSource.startsWith(canonicalTarget))
+  ) {
+    return 3;
+  }
+
+  const sourceTokens = complianceTokens(sourceFramework);
+  const targetTokens = complianceTokens(targetFramework);
+  if (!sourceTokens.length || !targetTokens.length) {
+    return 0;
+  }
+
+  const sourceMatchesTarget = sourceTokens.every((token) =>
+    targetTokens.includes(token),
+  );
+  const targetMatchesSource = targetTokens.every((token) =>
+    sourceTokens.includes(token),
+  );
+
+  if (sourceMatchesTarget || targetMatchesSource) {
+    return 2;
+  }
+
+  if (
+    sourceTokens.some((token) => targetTokens.includes(token)) &&
+    canonicalSource &&
+    canonicalTarget &&
+    (canonicalTarget.includes(canonicalSource) ||
+      canonicalSource.includes(canonicalTarget))
+  ) {
+    return 1;
+  }
+
+  return 0;
 }
 
 function parseSelectedScanIds(scanFilterValue: string | null): string[] {
@@ -110,12 +190,13 @@ function resolveComplianceMatch(
     return null;
   }
 
-  const normalizedFramework = normalizeComplianceFrameworkName(framework);
-  const match = compliances.find(
-    (compliance) =>
-      normalizeComplianceFrameworkName(compliance.attributes.framework) ===
-      normalizedFramework,
-  );
+  const match = compliances
+    .map((compliance) => ({
+      compliance,
+      score: complianceMatchScore(framework, compliance.attributes.framework),
+    }))
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score)[0]?.compliance;
 
   if (!match) {
     return null;
@@ -202,7 +283,6 @@ export function ResourceDetailDrawerContent({
   onNavigateNext,
   onMuteComplete,
 }: ResourceDetailDrawerContentProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
@@ -284,7 +364,7 @@ export function ResourceDetailDrawerContent({
         return;
       }
 
-      router.push(
+      window.open(
         buildComplianceDetailHref({
           complianceId: complianceMatch.complianceId,
           framework: complianceMatch.framework,
@@ -294,6 +374,8 @@ export function ResourceDetailDrawerContent({
           currentFinding: f,
           includeScanData: f?.scan?.id === complianceScanId,
         }),
+        "_blank",
+        "noopener,noreferrer",
       );
     } catch (error) {
       console.error("Error resolving compliance detail:", error);
@@ -477,7 +559,7 @@ export function ResourceDetailDrawerContent({
                 />
                 <EntityInfo
                   nameIcon={<Container className="size-4" />}
-                  entityAlias={f.resourceGroup}
+                  entityAlias={f.resourceName}
                   entityId={f.resourceUid}
                   idLabel="UID"
                 />
@@ -505,7 +587,9 @@ export function ResourceDetailDrawerContent({
                 <InfoField label="Failing for" variant="compact">
                   {getFailingForLabel(f.firstSeenAt) || "-"}
                 </InfoField>
-                <div className="hidden md:block" />
+                <InfoField label="Group" variant="compact">
+                  {f.resourceGroup || "-"}
+                </InfoField>
 
                 {/* Row 3: IDs */}
                 <InfoField label="Check ID" variant="compact">
@@ -528,6 +612,11 @@ export function ResourceDetailDrawerContent({
                     transparent
                     className="max-w-full text-sm"
                   />
+                </InfoField>
+
+                {/* Row 4: Resource metadata */}
+                <InfoField label="Resource type" variant="compact">
+                  {f.resourceType || "-"}
                 </InfoField>
               </div>
 

@@ -138,6 +138,7 @@ export function adaptFindingGroupResourcesResponse(
     providerAlias: item.attributes.provider?.alias || "",
     providerUid: item.attributes.provider?.uid || "",
     resourceName: item.attributes.resource?.name || "-",
+    resourceType: item.attributes.resource?.type || "-",
     resourceGroup: item.attributes.resource?.resource_group || "-",
     resourceUid: item.attributes.resource?.uid || "-",
     service: item.attributes.resource?.service || "-",
@@ -146,7 +147,6 @@ export function adaptFindingGroupResourcesResponse(
     status: item.attributes.status,
     delta: item.attributes.delta || null,
     isMuted: item.attributes.status === "MUTED",
-    // TODO: remove fallback once the API returns muted_reason in finding-group-resources
     mutedReason: item.attributes.muted_reason || undefined,
     firstSeenAt: item.attributes.first_seen_at,
     lastSeenAt: item.attributes.last_seen_at,
