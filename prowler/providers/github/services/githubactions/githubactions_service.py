@@ -20,6 +20,7 @@ class GithubActions(GithubService):
         super().__init__(__class__.__name__, provider)
 
         self.findings: dict[int, list[GithubActionsWorkflowFinding]] = {}
+        self.scan_enabled = False
 
         if not getattr(provider, "github_actions_enabled", True):
             logger.info(
@@ -33,6 +34,8 @@ class GithubActions(GithubService):
                 "Install zizmor from https://github.com/woodruffw/zizmor"
             )
             return
+
+        self.scan_enabled = True
 
         self._scan_repositories(provider)
 

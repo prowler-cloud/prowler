@@ -64,6 +64,37 @@ def _make_finding(
 
 
 class Test_githubactions_workflow_security_scan:
+    def test_scan_disabled(self):
+        repo = _make_repo()
+        repository_client = mock.MagicMock()
+        repository_client.repositories = {1: repo}
+
+        githubactions_client = mock.MagicMock()
+        githubactions_client.scan_enabled = False
+        githubactions_client.findings = {1: [_make_finding()]}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.githubactions.githubactions_workflow_security_scan.githubactions_workflow_security_scan.repository_client",
+                new=repository_client,
+            ),
+            mock.patch(
+                "prowler.providers.github.services.githubactions.githubactions_workflow_security_scan.githubactions_workflow_security_scan.githubactions_client",
+                new=githubactions_client,
+            ),
+        ):
+            from prowler.providers.github.services.githubactions.githubactions_workflow_security_scan.githubactions_workflow_security_scan import (
+                githubactions_workflow_security_scan,
+            )
+
+            check = githubactions_workflow_security_scan()
+            result = check.execute()
+            assert len(result) == 0
+
     def test_no_repositories(self):
         repository_client = mock.MagicMock()
         repository_client.repositories = {}

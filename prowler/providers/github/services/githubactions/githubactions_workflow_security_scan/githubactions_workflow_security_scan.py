@@ -14,6 +14,9 @@ class githubactions_workflow_security_scan(Check):
     def execute(self) -> List[CheckReportGithub]:
         findings = []
 
+        if not githubactions_client.scan_enabled:
+            return findings
+
         for repo_id, repo in repository_client.repositories.items():
             repo_findings = githubactions_client.findings.get(repo_id, [])
 
