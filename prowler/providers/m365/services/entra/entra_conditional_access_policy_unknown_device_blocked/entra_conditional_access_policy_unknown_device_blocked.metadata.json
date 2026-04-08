@@ -7,14 +7,14 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Conditional Access Policy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "Conditional Access policy that includes **all device platforms** and excludes the five known platforms (`android`, `iOS`, `windows`, `macOS`, `linux`) with a **block** grant control prevents sign-ins from unrecognized or unsupported devices.",
   "Risk": "Without blocking unknown device platforms, attackers can sign in from **unmanaged or spoofed devices** that bypass compliance and security controls.\n\nThis increases the risk of **unauthorized access** and makes it harder to enforce device-based security policies.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-condition-device-platforms",
-    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-policy-unknown-unsupported-device"
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-conditions",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-device-unknown-unsupported"
   ],
   "Remediation": {
     "Code": {
@@ -32,8 +32,6 @@
     "identity-access"
   ],
   "DependsOn": [],
-  "RelatedTo": [
-    "entra_managed_device_required_for_authentication"
-  ],
+  "RelatedTo": [],
   "Notes": "Device platform detection relies on user agent strings, which can be spoofed. This policy should be paired with device compliance policies for stronger security."
 }
