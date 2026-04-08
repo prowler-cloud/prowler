@@ -1,0 +1,37 @@
+flowchart TB
+    user([User / Security Team])
+    cli([Prowler CLI])
+
+    subgraph APP["Prowler App"]
+        ui["Prowler UI<br/>(Next.js)"]
+        api["Prowler API<br/>(Django REST Framework)"]
+        worker["API Worker<br/>(Celery)"]
+        beat["API Scheduler<br/>(Celery Beat)"]
+        mcp["Prowler MCP Server<br/>(Lighthouse AI tools)"]
+    end
+
+    sdk["Prowler SDK<br/>(Python)"]
+
+    subgraph DATA["Data Layer"]
+        pg[("PostgreSQL")]
+        valkey[("Valkey / Redis")]
+        neo4j[("Neo4j")]
+    end
+
+    providers["Providers"]
+
+    user --> ui
+    user --> cli
+    ui -->|REST| api
+    api --> pg
+    api --> valkey
+    beat -->|enqueue jobs| valkey
+    valkey -->|dispatch| worker
+    worker --> pg
+    worker -->|Attack Paths| neo4j
+    worker -->|invokes| sdk
+    cli --> sdk
+    api -. AI tools .-> mcp
+    mcp -. context .-> api
+
+    sdk --> providers

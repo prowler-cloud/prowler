@@ -1824,7 +1824,9 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
                     filter=Q(status="FAIL", muted=False),
                 ),
                 # Use prefixed names to avoid conflict with model field names
-                agg_first_seen_at=Min("first_seen_at"),
+                agg_first_seen_at=Min(
+                    "first_seen_at", filter=Q(delta="new", muted=False)
+                ),
                 agg_last_seen_at=Max("inserted_at"),
                 agg_failing_since=Min(
                     "first_seen_at", filter=Q(status="FAIL", muted=False)

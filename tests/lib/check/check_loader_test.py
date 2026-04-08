@@ -629,3 +629,49 @@ class TestCheckLoader:
                 provider=self.provider,
             )
         assert exc_info.value.code == 1
+
+    def test_list_checks_includes_threat_detection(self):
+        """Test that list_checks=True includes threat-detection checks (fixes #10576)"""
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata(),
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata(),
+        }
+
+        result = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            provider=self.provider,
+            list_checks=True,
+        )
+        assert CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME in result
+        assert S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME in result
+
+    def test_list_checks_with_service_includes_threat_detection(self):
+        """Test that list_checks=True with service filter includes threat-detection checks (fixes #10576)"""
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata(),
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata(),
+        }
+        service_list = ["cloudtrail"]
+
+        result = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            service_list=service_list,
+            provider=self.provider,
+            list_checks=True,
+        )
+        assert CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME in result
+        assert S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME not in result
+
+    def test_scan_still_excludes_threat_detection_by_default(self):
+        """Test that without list_checks, threat-detection checks are still excluded"""
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata(),
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata(),
+        }
+
+        result = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            provider=self.provider,
+        )
+        assert CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME not in result
+        assert S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME in result

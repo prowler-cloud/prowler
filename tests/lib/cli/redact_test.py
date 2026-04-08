@@ -1,8 +1,14 @@
+import logging
 from unittest.mock import patch
 
 import pytest
 
-from prowler.lib.cli.redact import REDACTED_VALUE, get_sensitive_arguments, redact_argv
+from prowler.lib.cli.redact import (
+    REDACTED_VALUE,
+    get_sensitive_arguments,
+    redact_argv,
+    warn_sensitive_argument_values,
+)
 
 
 @pytest.fixture
@@ -85,6 +91,62 @@ class TestRedactArgv:
     def test_non_sensitive_flag_with_equals(self, mock_sensitive_args):
         argv = ["aws", "--region=us-east-1"]
         assert redact_argv(argv) == "aws --region=us-east-1"
+
+
+class TestWarnSensitiveArgumentValues:
+    def test_no_warning_without_sensitive_flags(self, caplog, mock_sensitive_args):
+        with caplog.at_level(logging.WARNING):
+            warn_sensitive_argument_values(["aws", "--region", "eu-west-1"])
+        assert caplog.text == ""
+
+    def test_no_warning_flag_without_value(self, caplog, mock_sensitive_args):
+        with caplog.at_level(logging.WARNING):
+            warn_sensitive_argument_values(["github", "--personal-access-token"])
+        assert caplog.text == ""
+
+    def test_no_warning_flag_followed_by_another_flag(
+        self, caplog, mock_sensitive_args
+    ):
+        with caplog.at_level(logging.WARNING):
+            warn_sensitive_argument_values(
+                ["github", "--personal-access-token", "--region", "eu-west-1"]
+            )
+        assert caplog.text == ""
+
+    def test_warning_flag_with_value(self, caplog, mock_sensitive_args):
+        with caplog.at_level(logging.WARNING):
+            warn_sensitive_argument_values(
+                ["github", "--personal-access-token", "ghp_secret"]
+            )
+        assert "--personal-access-token" in caplog.text
+        assert "not recommended" in caplog.text
+
+    def test_warning_flag_with_equals_syntax(self, caplog, mock_sensitive_args):
+        with caplog.at_level(logging.WARNING):
+            warn_sensitive_argument_values(["aws", "--shodan=key123"])
+        assert "--shodan" in caplog.text
+        assert "not recommended" in caplog.text
+
+    def test_warning_multiple_flags(self, caplog, mock_sensitive_args):
+        with caplog.at_level(logging.WARNING):
+            warn_sensitive_argument_values(
+                [
+                    "github",
+                    "--personal-access-token",
+                    "ghp_secret",
+                    "--shodan",
+                    "key",
+                ]
+            )
+        assert "--personal-access-token" in caplog.text
+        assert "--shodan" in caplog.text
+
+    def test_no_color_output(self, caplog, mock_sensitive_args):
+        with caplog.at_level(logging.WARNING):
+            warn_sensitive_argument_values(["--no-color", "aws", "--shodan", "key123"])
+        assert "not recommended" in caplog.text
+        # Should not contain ANSI escape codes
+        assert "\033[" not in caplog.text
 
 
 class TestGetSensitiveArguments:

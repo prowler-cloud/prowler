@@ -949,7 +949,12 @@ class UserViewSet(BaseUserViewset):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         if self.request.user.is_authenticated:
-            context["role"] = get_role(self.request.user)
+            tenant_id = getattr(self.request, "tenant_id", None)
+            if tenant_id:
+                try:
+                    context["role"] = get_role(self.request.user, tenant_id)
+                except PermissionDenied:
+                    context["role"] = None
         return context
 
     @action(detail=False, methods=["get"], url_name="me")
@@ -1231,28 +1236,44 @@ class TenantViewSet(BaseTenantViewset):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        tenant = serializer.save()
-        Membership.objects.create(
+        tenant = Tenant.objects.using(MainRouter.admin_db).create(
+            **serializer.validated_data
+        )
+        Membership.objects.using(MainRouter.admin_db).create(
             user=self.request.user, tenant=tenant, role=Membership.RoleChoices.OWNER
         )
+        serializer.instance = tenant
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
-        # This will perform validation and raise a 404 if the tenant does not exist
-        tenant_id = kwargs.get("pk")
-        get_object_or_404(Tenant, id=tenant_id)
+        tenant = self.get_object()
+        tenant_id = str(tenant.id)
+
+        # Only owners can delete a tenant
+        membership = Membership.objects.filter(user=request.user, tenant=tenant).first()
+        if not membership or membership.role != Membership.RoleChoices.OWNER:
+            raise PermissionDenied("Only owners can delete a tenant.")
 
         with transaction.atomic():
-            # Delete memberships
+            # Collect user IDs from this tenant's memberships before deleting them
+            tenant_user_ids = set(
+                Membership.objects.using(MainRouter.admin_db)
+                .filter(tenant_id=tenant_id)
+                .values_list("user_id", flat=True)
+            )
+
+            # Delete memberships for this tenant
             Membership.objects.using(MainRouter.admin_db).filter(
                 tenant_id=tenant_id
             ).delete()
 
-            # Delete users without memberships
-            User.objects.using(MainRouter.admin_db).filter(
-                membership__isnull=True
-            ).delete()
-        # Delete tenant in batches
+            # Delete only users that were exclusively in this tenant
+            if tenant_user_ids:
+                User.objects.using(MainRouter.admin_db).filter(
+                    id__in=tenant_user_ids, membership__isnull=True
+                ).delete()
+
+        # Delete tenant data in background
         delete_tenant_task.apply_async(kwargs={"tenant_id": tenant_id})
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -1317,8 +1338,12 @@ class TenantMembersViewSet(BaseTenantViewset):
     http_method_names = ["get", "delete"]
     serializer_class = MembershipSerializer
     queryset = Membership.objects.none()
-    # RBAC required permissions
-    required_permissions = [Permissions.MANAGE_ACCOUNT]
+    # Authorization is handled by get_requesting_membership (owner/member checks),
+    # not by RBAC, since the target tenant differs from the JWT tenant.
+    required_permissions = []
+
+    def set_required_permissions(self):
+        self.required_permissions = []
 
     def get_queryset(self):
         tenant = self.get_tenant()
@@ -1331,8 +1356,10 @@ class TenantMembersViewSet(BaseTenantViewset):
 
     def get_tenant(self):
         tenant_id = self.kwargs.get("tenant_pk")
-        tenant = get_object_or_404(Tenant, id=tenant_id)
-        return tenant
+        return get_object_or_404(
+            Tenant.objects.filter(membership__user=self.request.user),
+            id=tenant_id,
+        )
 
     def get_requesting_membership(self, tenant):
         try:
@@ -1419,7 +1446,7 @@ class ProviderGroupViewSet(BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         # Check if any of the user's roles have UNLIMITED_VISIBILITY
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all provider groups
@@ -1588,7 +1615,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all providers
             queryset = Provider.objects.filter(tenant_id=self.request.tenant_id)
@@ -1843,7 +1870,7 @@ class ScanViewSet(BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_SCANS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all scans
             queryset = Scan.objects.filter(tenant_id=self.request.tenant_id)
@@ -2494,7 +2521,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         base_queryset = AttackPathsScan.objects.filter(tenant_id=self.request.tenant_id)
 
         if user_roles.unlimited_visibility:
@@ -2601,7 +2628,6 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             provider_id,
         )
         query_duration = time.monotonic() - start
-        graph_database.clear_cache(database_name)
 
         result_nodes = len(graph.get("nodes", []))
         result_relationships = len(graph.get("relationships", []))
@@ -2669,7 +2695,6 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             provider_id,
         )
         query_duration = time.monotonic() - start
-        graph_database.clear_cache(database_name)
 
         query_length = len(serializer.validated_data["query"])
         result_nodes = len(graph.get("nodes", []))
@@ -2831,7 +2856,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     required_permissions = []
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all scans
             queryset = Resource.all_objects.filter(tenant_id=self.request.tenant_id)
@@ -3453,7 +3478,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all findings
             queryset = Finding.all_objects.filter(tenant_id=tenant_id)
@@ -4056,9 +4081,9 @@ class RoleViewSet(BaseRLSViewSet):
         )
     )
     def partial_update(self, request, *args, **kwargs):
-        user_role = get_role(request.user)
+        user_role = get_role(request.user, request.tenant_id)
         # If the user is the owner of the role, the manage_account field is not editable
-        if user_role and kwargs["pk"] == str(user_role.id):
+        if kwargs["pk"] == str(user_role.id):
             request.data["manage_account"] = str(user_role.manage_account).lower()
         return super().partial_update(request, *args, **kwargs)
 
@@ -4314,7 +4339,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     required_permissions = []
 
     def get_queryset(self):
-        role = get_role(self.request.user)
+        role = get_role(self.request.user, self.request.tenant_id)
         unlimited_visibility = getattr(
             role, Permissions.UNLIMITED_VISIBILITY.value, False
         )
@@ -4356,7 +4381,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
     def _compliance_summaries_queryset(self, scan_id):
         """Return pre-aggregated summaries constrained by RBAC visibility."""
-        role = get_role(self.request.user)
+        role = get_role(self.request.user, self.request.tenant_id)
         unlimited_visibility = getattr(
             role, Permissions.UNLIMITED_VISIBILITY.value, False
         )
@@ -4898,7 +4923,7 @@ class OverviewViewSet(BaseRLSViewSet):
     required_permissions = []
 
     def get_queryset(self):
-        role = get_role(self.request.user)
+        role = get_role(self.request.user, self.request.tenant_id)
         providers = get_providers(role)
 
         if not role.unlimited_visibility:
@@ -6071,7 +6096,7 @@ class IntegrationViewSet(BaseRLSViewSet):
     allowed_providers = None
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all integrations
             queryset = Integration.objects.filter(tenant_id=self.request.tenant_id)
@@ -6126,7 +6151,15 @@ class IntegrationViewSet(BaseRLSViewSet):
         tags=["Integration"],
         summary="Send findings to a Jira integration",
         description="Send a set of filtered findings to the given integration. At least one finding filter must be "
-        "provided.",
+        "provided.\n\n"
+        "## Known Limitations\n\n"
+        "### Issue Types with Required Custom Fields\n\n"
+        "Certain Jira issue types (such as Epic) may require mandatory custom fields that Prowler does not "
+        "currently populate when creating work items. If a selected issue type enforces required fields beyond "
+        'the standard set (e.g., "Team", "Epic Name"), the work item creation will fail.\n\n'
+        "To avoid this, select an issue type that does not require additional custom fields - **Task**, **Bug**, "
+        "or **Story** typically work without restrictions. If unsure which issue types are available for a project, "
+        'Prowler automatically fetches and displays them in the "Issue Type" selector when sending a finding.',
         responses={202: OpenApiResponse(response=TaskSerializer)},
         filters=True,
     )
@@ -6148,6 +6181,10 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
     def list(self, request, *args, **kwargs):
         raise MethodNotAllowed(method="GET")
 
+    @extend_schema(exclude=True)
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
+
     def get_serializer_class(self):
         if self.action == "issue_types":
             return IntegrationJiraIssueTypesSerializer
@@ -6160,7 +6197,7 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request.tenant_id)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all findings
             queryset = Finding.all_objects.filter(tenant_id=tenant_id)
@@ -6902,7 +6939,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
     def get_queryset(self):
         """Get the base FindingGroupDailySummary queryset with RLS filtering."""
         tenant_id = self.request.tenant_id
-        role = get_role(self.request.user)
+        role = get_role(self.request.user, self.request.tenant_id)
         queryset = FindingGroupDailySummary.objects.filter(tenant_id=tenant_id)
 
         if not role.unlimited_visibility:
@@ -6912,7 +6949,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
     def _get_finding_queryset(self):
         """Get the Finding queryset for resources drill-down (with RBAC)."""
-        role = get_role(self.request.user)
+        role = get_role(self.request.user, self.request.tenant_id)
         providers = get_providers(role)
 
         tenant_id = self.request.tenant_id
@@ -7182,6 +7219,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
         "check_id": "check_id",
         "check_title": "check_title",
         "severity": "severity_order",
+        "delta": "delta_order",
         "fail_count": "fail_count",
         "pass_count": "pass_count",
         "muted_count": "muted_count",
@@ -7197,6 +7235,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
     _RESOURCE_SORT_MAP = {
         "status": "status_order",
         "severity": "severity_order",
+        "delta": "delta_order",
         "first_seen_at": "first_seen_at",
         "last_seen_at": "last_seen_at",
         "resource.uid": "resource_uid",
@@ -7333,6 +7372,22 @@ class FindingGroupViewSet(BaseRLSViewSet):
                         output_field=IntegerField(),
                     )
                 ),
+                delta_order=Max(
+                    Case(
+                        When(
+                            finding__delta="new",
+                            finding__muted=False,
+                            then=Value(2),
+                        ),
+                        When(
+                            finding__delta="changed",
+                            finding__muted=False,
+                            then=Value(1),
+                        ),
+                        default=Value(0),
+                        output_field=IntegerField(),
+                    )
+                ),
                 first_seen_at=Min("finding__first_seen_at"),
                 last_seen_at=Max("finding__inserted_at"),
                 # Max() on muted_reason / check_metadata is safe because
@@ -7362,6 +7417,22 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     When(finding__severity=severity, then=Value(order))
                     for severity, order in SEVERITY_ORDER.items()
                 ],
+                output_field=IntegerField(),
+            )
+        ),
+        "delta_order": lambda: Max(
+            Case(
+                When(
+                    finding__delta="new",
+                    finding__muted=False,
+                    then=Value(2),
+                ),
+                When(
+                    finding__delta="changed",
+                    finding__muted=False,
+                    then=Value(1),
+                ),
+                default=Value(0),
                 output_field=IntegerField(),
             )
         ),
@@ -7411,6 +7482,14 @@ class FindingGroupViewSet(BaseRLSViewSet):
             else:
                 status = "MUTED"
 
+            delta_order = row.get("delta_order", 0)
+            if delta_order == 2:
+                delta = "new"
+            elif delta_order == 1:
+                delta = "changed"
+            else:
+                delta = None
+
             results.append(
                 {
                     "resource_id": row["resource_id"],
@@ -7426,6 +7505,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     "severity": SEVERITY_ORDER_REVERSE.get(
                         severity_order, "informational"
                     ),
+                    "delta": delta,
                     "first_seen_at": row["first_seen_at"],
                     "last_seen_at": row["last_seen_at"],
                     "muted_reason": row.get("muted_reason"),
@@ -7490,7 +7570,20 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 sort_param, self._FINDING_GROUP_SORT_MAP
             )
             if ordering:
-                aggregated_queryset = aggregated_queryset.order_by(*ordering)
+                # delta_order is a virtual sort field: expand it to a
+                # lexicographic ordering by (new_count, changed_count) so groups
+                # with more new findings rank higher, with changed_count as the
+                # tie-breaker (preserves the "new > changed" priority used by
+                # the resources endpoint, but driven by the actual counters).
+                expanded_ordering = []
+                for field in ordering:
+                    if field.lstrip("-") == "delta_order":
+                        sign = "-" if field.startswith("-") else ""
+                        expanded_ordering.append(f"{sign}new_count")
+                        expanded_ordering.append(f"{sign}changed_count")
+                    else:
+                        expanded_ordering.append(field)
+                aggregated_queryset = aggregated_queryset.order_by(*expanded_ordering)
         else:
             aggregated_queryset = aggregated_queryset.order_by(
                 "-fail_count", "-severity_order", "check_id"
