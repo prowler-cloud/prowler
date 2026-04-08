@@ -12,9 +12,6 @@ class elbv2_unhealthy_host_count_monitored(Check):
         # Iterate over all load balancers
         for lb_arn, lb in elbv2_client.loadbalancersv2.items():
             report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
-            report.region = lb.region
-            report.resource_id = lb.name
-            report.resource_arn = lb_arn
             report.resource_tags = lb.tags
             report.status = "FAIL"
             report.status_extended = f"Load Balancer {lb.name} does not have monitoring for unhealthy host count."
