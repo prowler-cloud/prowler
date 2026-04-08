@@ -5,6 +5,8 @@ import { Container, CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
 import { useContext, useState } from "react";
 
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
+import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
+import { JiraIcon } from "@/components/icons/services/IconServices";
 import { Checkbox } from "@/components/shadcn";
 import {
   ActionDropdown,
@@ -29,6 +31,7 @@ import { NotificationIndicator } from "./notification-indicator";
 const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
   const resource = row.original;
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
+  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
 
@@ -86,6 +89,12 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
           onComplete={handleMuteComplete}
         />
       )}
+      <SendToJiraModal
+        isOpen={isJiraModalOpen}
+        onOpenChange={setIsJiraModalOpen}
+        findingId={resource.findingId}
+        findingTitle={resource.checkId}
+      />
       <div
         className="flex items-center justify-end"
         onClick={(e) => e.stopPropagation()}
@@ -104,6 +113,11 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
             label={isResolving ? "Resolving..." : getMuteLabel()}
             disabled={resource.isMuted || isResolving}
             onSelect={handleMuteClick}
+          />
+          <ActionDropdownItem
+            icon={<JiraIcon size={20} />}
+            label="Send to Jira"
+            onSelect={() => setIsJiraModalOpen(true)}
           />
         </ActionDropdown>
       </div>

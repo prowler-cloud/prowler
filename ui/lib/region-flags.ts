@@ -56,8 +56,10 @@ const REGION_FLAG_RULES: [RegExp, string][] = [
     /\bap[-_]?south[-_]?1|india|centralindia|southindia|westindia|mumbai|hyderabad/i,
     "🇮🇳",
   ],
-  // Hong Kong
-  [/\bap[-_]?east[-_]?1|hongkong/i, "🇭🇰"],
+  // Taiwan — GCP asia-east1 (must come BEFORE Hong Kong rule)
+  [/\basia[-_]east[-_]?1\b/i, "🇹🇼"],
+  // Hong Kong — GCP asia-east2 (ap-east-1 is AWS HK)
+  [/\bap[-_]?east[-_]?1|\basia[-_]east[-_]?2\b|hongkong/i, "🇭🇰"],
   // Indonesia
   [/\bap[-_]?southeast[-_]?3|indonesia|jakarta/i, "🇮🇩"],
   // China

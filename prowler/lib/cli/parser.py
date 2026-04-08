@@ -19,6 +19,8 @@ from prowler.providers.common.arguments import (
     validate_provider_arguments,
 )
 
+SENSITIVE_ARGUMENTS = frozenset({"--shodan"})
+
 
 class ProwlerArgumentParser:
     # Set the default parser
@@ -27,10 +29,10 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,dashboard,iac,image,llm} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel,dashboard,iac,image,llm} ...",
             epilog="""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes,m365,github,googleworkspace,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack}
+  {aws,azure,gcp,kubernetes,m365,github,googleworkspace,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
@@ -47,6 +49,7 @@ Available Cloud Providers:
     image               Container Image Provider
     nhn                 NHN Provider (Unofficial)
     mongodbatlas        MongoDB Atlas Provider (Beta)
+    vercel              Vercel Provider
 
 Available components:
     dashboard           Local dashboard

@@ -14,6 +14,9 @@ const FINDING_IDS_RESOLUTION_CONCURRENCY = 4;
 const FINDING_GROUP_RESOURCES_RESOLUTION_PAGE_SIZE = 500;
 const FINDING_FIELDS = "uid";
 
+/** Explicit upper bound for page[size] in resource-finding resolution requests. */
+const MAX_RESOURCE_FINDING_PAGE_SIZE = 500;
+
 interface ResolveFindingIdsByCheckIdsParams {
   checkIds: string[];
   filters?: Record<string, string>;
@@ -117,9 +120,16 @@ function createResourceFindingResolutionUrl({
   url.searchParams.append("filter[check_id]", checkId);
   url.searchParams.append("filter[resource_uid__in]", resourceUids.join(","));
   url.searchParams.append("filter[muted]", "false");
-  url.searchParams.append("page[size]", resourceUids.length.toString());
+  url.searchParams.append(
+    "page[size]",
+    Math.min(resourceUids.length, MAX_RESOURCE_FINDING_PAGE_SIZE).toString(),
+  );
 
   appendSanitizedProviderTypeFilters(url, filters);
+
+  // Hardcoded FAIL filter AFTER appendSanitizedProviderTypeFilters — .set()
+  // guarantees this wins even if the caller passes filter[status] in filters.
+  url.searchParams.set("filter[status]", "FAIL");
 
   return url;
 }
