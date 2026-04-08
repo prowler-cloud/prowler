@@ -251,7 +251,6 @@ class Test_identity_password_policy_expires_within_365_days:
             assert result[0].status == "PASS"
             assert result[0].resource_id == POLICY_ID
 
-
     def test_non_home_domains_excluded(self):
         """Identity domains should not be scanned outside their home region
 
