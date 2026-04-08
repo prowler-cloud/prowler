@@ -98,7 +98,9 @@
     {
       "Id": "3.1.1.1.1",
       "Description": "Ensure external sharing options for primary calendars are configured",
-      "Checks": [],
+      "Checks": [
+        "calendar_external_sharing_primary_calendar"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -140,7 +142,9 @@
     {
       "Id": "3.1.1.1.3",
       "Description": "Ensure external invitation warnings for Google Calendar are configured",
-      "Checks": [],
+      "Checks": [
+        "calendar_external_invitations_warning"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -161,7 +165,9 @@
     {
       "Id": "3.1.1.2.1",
       "Description": "Ensure external sharing options for secondary calendars are configured",
-      "Checks": [],
+      "Checks": [
+        "calendar_external_sharing_secondary_calendar"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
