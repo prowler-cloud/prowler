@@ -30,7 +30,7 @@ class githubactions_workflow_security_scan(Check):
                     metadata_dict = {
                         "Provider": "github",
                         "CheckID": f.finding_id,
-                        "CheckTitle": f"GitHub Actions workflow {f.ident} detected by zizmor",
+                        "CheckTitle": f"GitHub Actions workflow {f.ident}",
                         "CheckType": [],
                         "ServiceName": "githubactions",
                         "SubServiceName": "",
