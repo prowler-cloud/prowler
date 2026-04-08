@@ -33,6 +33,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `--list-checks` and `--list-checks-json` now include `threat-detection` category checks in their output [(#10578)](https://github.com/prowler-cloud/prowler/pull/10578)
 - Missing `__init__.py` in `codebuild_project_uses_allowed_github_organizations` check preventing discovery by `--list-checks` [(#10584)](https://github.com/prowler-cloud/prowler/pull/10584)
 - Azure Key Vault checks emitting incorrect findings for keys, secrets, and vault logging [(#10332)](https://github.com/prowler-cloud/prowler/pull/10332)
+- `_enabled_regions` empty-set bug in `AwsProvider.generate_regional_clients` creating boto3 clients for all 36 AWS regions instead of the audited ones, causing random CI timeouts and slow test runs [(#10598)](https://github.com/prowler-cloud/prowler/pull/10598)
 - Retrieve only the latest version from a package in AWS CodeArtifact [(#10243)](https://github.com/prowler-cloud/prowler/pull/10243)
 
 ### 🔐 Security
