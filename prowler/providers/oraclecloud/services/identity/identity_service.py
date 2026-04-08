@@ -362,7 +362,7 @@ class Identity(OCIService):
 
             identity_client = self.__get_client__(regional_client.region)
 
-            logger.info(f"Identity - Listing Policies in {regional_client.region}...")
+            logger.info("Identity - Listing Policies...")
 
             for compartment in self.audited_compartments:
                 try:
@@ -580,11 +580,11 @@ class Identity(OCIService):
 
     def __search_root_compartment_resources__(self, regional_client):
         """Search for resources in the root compartment using OCI Resource Search."""
-        # Only use one region for global search
-        if regional_client.region != self.provider.regions[0].key:
-            return
-
         try:
+            # Only use one region for global search
+            if regional_client.region != self.provider.regions[0].key:
+                return
+
             logger.info("Identity - Searching for resources in root compartment...")
 
             # Create search client using the helper method for proper authentication
@@ -628,11 +628,10 @@ class Identity(OCIService):
 
     def __search_active_non_root_compartments__(self, regional_client):
         """Search for active non-root compartments using OCI Resource Search."""
-        # Only use one region for global search
-        if regional_client.region != self.provider.regions[0].key:
-            return
-
         try:
+            # Only use one region for global search
+            if regional_client.region != self.provider.regions[0].key:
+                return
             logger.info("Identity - Searching for active non-root compartments...")
 
             # Create search client using the helper method for proper authentication
