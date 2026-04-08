@@ -16,6 +16,7 @@ function makeResource(
     providerAlias: "prod",
     providerUid: "123456789012",
     resourceName: "bucket-a",
+    resourceType: "Bucket",
     resourceGroup: "bucket-a",
     resourceUid: "arn:aws:s3:::bucket-a",
     service: "s3",

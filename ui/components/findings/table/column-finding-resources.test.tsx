@@ -87,7 +87,7 @@ vi.mock("@/lib/date-utils", () => ({
   getFailingForLabel: () => "2d",
 }));
 
-const notificationIndicatorMock = vi.fn(() => null);
+const notificationIndicatorMock = vi.fn((_props: unknown) => null);
 
 vi.mock("./notification-indicator", () => ({
   NotificationIndicator: (props: unknown) => {
