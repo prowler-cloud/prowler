@@ -1,7 +1,15 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 
 import { MutedIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/shadcn/popover";
 import {
   Tooltip,
   TooltipContent,
@@ -29,28 +37,11 @@ export const NotificationIndicator = ({
   isMuted = false,
   mutedReason,
 }: NotificationIndicatorProps) => {
-  // Muted takes precedence over delta
+  // Muted takes precedence over delta.
+  // Uses Popover (not Tooltip) because the content has an interactive link.
+  // Radix Tooltip does not support interactive content — clicks fall through.
   if (isMuted) {
-    const ruleName = mutedReason || "Unknown rule";
-
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="ml-1 flex cursor-pointer items-center justify-center">
-            <MutedIcon className="text-bg-data-muted size-2" />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <Link
-            href="/mutelist"
-            className="text-button-tertiary hover:text-button-tertiary-hover flex items-center gap-1 text-xs underline-offset-4"
-          >
-            <span className="text-text-neutral-primary">Mute rule:</span>
-            <span className="max-w-[150px] truncate">{ruleName}</span>
-          </Link>
-        </TooltipContent>
-      </Tooltip>
-    );
+    return <MutedIndicator mutedReason={mutedReason} />;
   }
 
   // Show dot with tooltip for new or changed findings
@@ -59,13 +50,18 @@ export const NotificationIndicator = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <div
-            className={cn(
-              "ml-1 size-1.5 cursor-pointer rounded-full",
-              delta === DeltaValues.NEW
-                ? "bg-system-severity-high"
-                : "bg-system-severity-low",
-            )}
-          />
+            onClick={(e) => e.stopPropagation()}
+            className="flex w-2 shrink-0 cursor-pointer items-center justify-center"
+          >
+            <div
+              className={cn(
+                "size-1.5 rounded-full",
+                delta === DeltaValues.NEW
+                  ? "bg-system-severity-high"
+                  : "bg-system-severity-low",
+              )}
+            />
+          </div>
         </TooltipTrigger>
         <TooltipContent>
           <div className="flex items-center gap-1 text-xs">
@@ -96,5 +92,51 @@ export const NotificationIndicator = ({
   }
 
   // No indicator - return minimal width placeholder
-  return <div className="w-2" />;
+  return <div className="w-2 shrink-0" />;
 };
+
+/** Muted indicator with hover-triggered Popover for interactive link. */
+function MutedIndicator({ mutedReason }: { mutedReason?: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex w-4 shrink-0 cursor-pointer items-center justify-center bg-transparent p-0"
+          onClick={(e) => e.stopPropagation()}
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+        >
+          <MutedIcon className="text-bg-data-muted size-2" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="border-border-neutral-tertiary bg-bg-neutral-tertiary w-auto rounded-lg px-2 py-1.5 shadow-lg"
+        sideOffset={4}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Link
+          href="/mutelist"
+          onClick={(e) => e.stopPropagation()}
+          className="text-button-tertiary hover:text-button-tertiary-hover flex items-center gap-1 text-xs underline-offset-4"
+        >
+          {mutedReason ? (
+            <>
+              <span className="text-text-neutral-primary">Mute rule:</span>
+              <span className="max-w-[150px] truncate">{mutedReason}</span>
+            </>
+          ) : (
+            <>
+              <span className="text-text-neutral-primary">Mute rule:</span>
+              <span>view rules</span>
+            </>
+          )}
+        </Link>
+      </PopoverContent>
+    </Popover>
+  );
+}

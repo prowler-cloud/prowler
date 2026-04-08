@@ -31,7 +31,8 @@ class vm_backup_enabled(Check):
                     for backup_item in vault.backup_protected_items.values():
                         if (
                             backup_item.workload_type == DataSourceType.VM
-                            and backup_item.name.split(";")[-1] == vm.resource_name
+                            and backup_item.name.split(";")[-1].lower()
+                            == vm.resource_name.lower()
                         ):
                             found = True
                             found_vault_name = vault.name

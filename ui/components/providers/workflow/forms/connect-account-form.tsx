@@ -9,10 +9,10 @@ import { z } from "zod";
 
 import { addProvider } from "@/actions/providers/providers";
 import { AwsMethodSelector } from "@/components/providers/organizations/aws-method-selector";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
 import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { addProviderFormSchema, ApiError, ProviderType } from "@/types";
 
@@ -81,6 +81,11 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
         label: "Repository URL",
         placeholder: "e.g. https://github.com/user/repo",
       };
+    case "image":
+      return {
+        label: "Registry URL",
+        placeholder: "e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com",
+      };
     case "oraclecloud":
       return {
         label: "Tenancy OCID",
@@ -106,6 +111,16 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
         label: "Project ID",
         placeholder: "e.g. a1b2c3d4-e5f6-7890-abcd-ef1234567890",
       };
+    case "googleworkspace":
+      return {
+        label: "Customer ID",
+        placeholder: "e.g. C01234abc",
+      };
+    case "vercel":
+      return {
+        label: "Team ID",
+        placeholder: "e.g. team_xxxxxxxxxxxxxxxxxxxxxxxx",
+      };
     default:
       return {
         label: "Provider UID",
@@ -123,27 +138,31 @@ function applyBackStep({
 }: {
   prevStep: number;
   awsMethod: "single" | null;
-  form: Pick<UseFormReturn<FormValues>, "setValue">;
+  form: Pick<UseFormReturn<FormValues>, "setValue" | "clearErrors">;
   setPrevStep: Dispatch<SetStateAction<number>>;
   setAwsMethod: Dispatch<SetStateAction<"single" | null>>;
 }) {
   // If in UID form after choosing single, go back to method selector
   if (prevStep === 2 && awsMethod === "single") {
     setAwsMethod(null);
-    form.setValue("providerUid", "");
-    form.setValue("providerAlias", "");
+    form.setValue("providerUid", "", { shouldValidate: false });
+    form.setValue("providerAlias", "", { shouldValidate: false });
     return;
   }
 
   setPrevStep((prev) => prev - 1);
   // Deselect the providerType if the user is going back to the first step
   if (prevStep === 2) {
-    form.setValue("providerType", undefined as unknown as ProviderType);
+    form.setValue("providerType", undefined as unknown as ProviderType, {
+      shouldValidate: false,
+    });
     setAwsMethod(null);
   }
   // Reset the providerUid and providerAlias fields when going back
-  form.setValue("providerUid", "");
-  form.setValue("providerAlias", "");
+  form.setValue("providerUid", "", { shouldValidate: false });
+  form.setValue("providerAlias", "", { shouldValidate: false });
+  // Clear all validation errors so the radio buttons don't show red borders
+  form.clearErrors();
 }
 
 export const ConnectAccountForm = ({
@@ -346,7 +365,7 @@ export const ConnectAccountForm = ({
           (providerType !== "aws" || awsMethod === "single") && (
             <>
               <ProviderTitleDocs providerType={providerType} />
-              <CustomInput
+              <WizardInputField
                 control={form.control}
                 name="providerUid"
                 type="text"
@@ -356,7 +375,7 @@ export const ConnectAccountForm = ({
                 variant="bordered"
                 isRequired
               />
-              <CustomInput
+              <WizardInputField
                 control={form.control}
                 name="providerAlias"
                 type="text"

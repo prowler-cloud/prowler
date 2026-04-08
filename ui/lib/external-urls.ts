@@ -8,6 +8,18 @@ export const DOCS_URLS = {
     "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
 } as const;
 
+// CloudFormation template URL for the ProwlerScan role.
+// Also used (URL-encoded) as the templateURL param in cloudformationQuickLink
+// and cloudformationOrgQuickLink below — keep both in sync.
+export const PROWLER_CF_TEMPLATE_URL =
+  "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml";
+
+// AWS Console URL for creating a new StackSet.
+// Hardcoded to us-east-1 — StackSets are typically managed from this region.
+// Users in AWS GovCloud or China partitions would need different URLs.
+export const STACKSET_CONSOLE_URL =
+  "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacksets/create";
+
 export const getProviderHelpText = (provider: string) => {
   switch (provider) {
     case "aws":
@@ -45,6 +57,11 @@ export const getProviderHelpText = (provider: string) => {
         text: "Need help scanning your Infrastructure as Code repository?",
         link: "https://goto.prowler.com/provider-iac",
       };
+    case "image":
+      return {
+        text: "Need help scanning your container registry?",
+        link: "https://goto.prowler.com/provider-image",
+      };
     case "oraclecloud":
       return {
         text: "Need help connecting your Oracle Cloud account?",
@@ -70,6 +87,16 @@ export const getProviderHelpText = (provider: string) => {
         text: "Need help connecting your OpenStack cloud?",
         link: "https://goto.prowler.com/provider-openstack",
       };
+    case "googleworkspace":
+      return {
+        text: "Need help connecting your Google Workspace account?",
+        link: "https://goto.prowler.com/provider-googleworkspace",
+      };
+    case "vercel":
+      return {
+        text: "Need help connecting your Vercel team?",
+        link: "https://goto.prowler.com/provider-vercel",
+      };
     default:
       return {
         text: "How to setup a provider?",
@@ -86,6 +113,7 @@ export const getAWSCredentialsTemplateLinks = (
   cloudformation: string;
   terraform: string;
   cloudformationQuickLink: string;
+  cloudformationOrgQuickLink: string;
 } => {
   let links = {};
 
@@ -107,11 +135,24 @@ export const getAWSCredentialsTemplateLinks = (
     };
   }
 
+  const encodedTemplateUrl = encodeURIComponent(PROWLER_CF_TEMPLATE_URL);
+  const cfBaseUrl =
+    "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate";
+  const s3Params = bucketName
+    ? `&param_EnableS3Integration=true&param_S3IntegrationBucketName=${bucketName}`
+    : "";
+
   return {
     ...(links as {
       cloudformation: string;
       terraform: string;
     }),
-    cloudformationQuickLink: `https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=Prowler&param_ExternalId=${externalId}${bucketName ? `&param_EnableS3Integration=true&param_S3IntegrationBucketName=${bucketName}` : ""}`,
+    cloudformationQuickLink:
+      `${cfBaseUrl}?templateURL=${encodedTemplateUrl}` +
+      `&stackName=Prowler&param_ExternalId=${externalId}${s3Params}`,
+    cloudformationOrgQuickLink:
+      `${cfBaseUrl}?templateURL=${encodedTemplateUrl}` +
+      `&stackName=Prowler&param_ExternalId=${externalId}` +
+      `&param_EnableOrganizations=true${s3Params}`,
   };
 };

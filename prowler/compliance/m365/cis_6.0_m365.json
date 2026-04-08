@@ -1584,7 +1584,7 @@
       "Id": "5.2.2.11",
       "Description": "Sign-in frequency defines the time period before a user is asked to sign in again when attempting to access a resource. Ensure sign-in frequency for Intune Enrollment is set to 'Every time'.",
       "Checks": [
-        "entra_admin_users_sign_in_frequency_enabled"
+        "entra_intune_enrollment_sign_in_frequency_every_time"
       ],
       "Attributes": [
         {
@@ -1606,7 +1606,9 @@
     {
       "Id": "5.2.2.12",
       "Description": "The Microsoft identity platform supports the device authorization grant, which allows users to sign in to input-constrained devices such as a smart TV, IoT device, or a printer. Ensure the device code sign-in flow is blocked.",
-      "Checks": [],
+      "Checks": [
+        "entra_conditional_access_policy_device_code_flow_blocked"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",

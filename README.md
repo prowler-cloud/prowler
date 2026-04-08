@@ -3,7 +3,7 @@
   <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png#gh-dark-mode-only" width="50%" height="50%">
 </p>
 <p align="center">
-  <b><i>Prowler</b> is the Open Cloud Security platform trusted by thousands to automate security and compliance in any cloud environment. With hundreds of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
+  <b><i>Prowler</b> is the Open Cloud Security Platform trusted by thousands to automate security and compliance in any cloud environment. With hundreds of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
 </p>
 <p align="center">
 <b>Secure ANY cloud at AI Speed at <a href="https://prowler.com">prowler.com</i></b>
@@ -41,7 +41,7 @@
 
 # Description
 
-**Prowler** is the world’s most widely used _open-source cloud security platform_ that automates security and compliance across **any cloud environment**. With hundreds of ready-to-use security checks, remediation guidance, and compliance frameworks, Prowler is built to _“Secure ANY cloud at AI Speed”_. Prowler delivers **AI-driven**, **customizable**, and **easy-to-use** assessments, dashboards, reports, and integrations, making cloud security **simple**, **scalable**, and **cost-effective** for organizations of any size.
+**Prowler** is the world’s most widely used _Open-Source Cloud Security Platform_ that automates security and compliance across **any cloud environment**. With hundreds of ready-to-use security checks, remediation guidance, and compliance frameworks, Prowler is built to _“Secure ANY Cloud at AI Speed”_. Prowler delivers **AI-driven**, **customizable**, and **easy-to-use** assessments, dashboards, reports, and integrations, making cloud security **simple**, **scalable**, and **cost-effective** for organizations of any size.
 
 Prowler includes hundreds of built-in controls to ensure compliance with standards and frameworks, including:
 
@@ -109,14 +109,17 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 | GCP | 100 | 13 | 15 | 11 | Official | UI, API, CLI |
 | Kubernetes | 83 | 7 | 7 | 9 | Official | UI, API, CLI |
 | GitHub | 21 | 2 | 1 | 2 | Official | UI, API, CLI |
-| M365 | 75 | 7 | 4 | 4 | Official | UI, API, CLI |
-| OCI | 51 | 13 | 3 | 12 | Official | UI, API, CLI |
+| M365 | 89 | 9 | 4 | 5 | Official | UI, API, CLI |
+| OCI | 48 | 13 | 3 | 10 | Official | UI, API, CLI |
 | Alibaba Cloud | 61 | 9 | 3 | 9 | Official | UI, API, CLI |
-| Cloudflare | 29 | 2 | 0 | 5 | Official | CLI, API |
+| Cloudflare | 29 | 2 | 0 | 5 | Official | UI, API, CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
-| MongoDB Atlas | 10 | 3 | 0 | 3 | Official | UI, API, CLI |
+| MongoDB Atlas | 10 | 3 | 0 | 8 | Official | UI, API, CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
-| OpenStack | 1 | 1 | 0 | 2 | Official | CLI |
+| Image | N/A | N/A | N/A | N/A | Official | CLI, API |
+| Google Workspace | 1 | 1 | 0 | 1 | Official | CLI |
+| OpenStack | 27 | 4 | 0 | 8 | Official | UI, API, CLI |
+| Vercel | 30 | 6 | 0 | 5 | Official | CLI |
 | NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
 
 > [!Note]
@@ -237,9 +240,24 @@ pnpm start
 
 > Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
 
+**Pre-commit Hooks Setup**
+
+Some pre-commit hooks require tools installed on your system:
+
+1. **Install [TruffleHog](https://github.com/trufflesecurity/trufflehog#install)** (secret scanning) — see the [official installation options](https://github.com/trufflesecurity/trufflehog#install).
+
+2. **Install [Safety](https://github.com/pyupio/safety)** (dependency vulnerability checking):
+
+    ```console
+    # Requires a Python environment (e.g. via pyenv)
+    pip install safety
+    ```
+
+3. **Install [Hadolint](https://github.com/hadolint/hadolint#install)** (Dockerfile linting) — see the [official installation options](https://github.com/hadolint/hadolint#install).
+
 ## Prowler CLI
 ### Pip package
-Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/). Consequently, it can be installed using pip with Python >3.9.1, <3.13:
+Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/). Consequently, it can be installed using pip with Python >=3.10, <3.13:
 
 ```console
 pip install prowler
@@ -271,7 +289,7 @@ The container images are available here:
 
 ### From GitHub
 
-Python >3.9.1, <3.13 is required with pip and Poetry:
+Python >=3.10, <3.13 is required with pip and Poetry:
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler

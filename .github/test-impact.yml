@@ -177,6 +177,14 @@ modules:
       - tests/providers/llm/**
     e2e: []
 
+  - name: sdk-vercel
+    match:
+      - prowler/providers/vercel/**
+      - prowler/compliance/vercel/**
+    tests:
+      - tests/providers/vercel/**
+    e2e: []
+
   # ============================================
   # SDK - Lib modules
   # ============================================
@@ -224,8 +232,24 @@ modules:
     tests:
       - api/src/backend/api/tests/test_views.py
     e2e:
-      # API view changes can break UI
-      - ui/tests/**
+      # All E2E test suites (explicit to avoid triggering auth setups in tests/setups/)
+      - ui/tests/auth/**
+      - ui/tests/sign-in/**
+      - ui/tests/sign-up/**
+      - ui/tests/sign-in-base/**
+      - ui/tests/scans/**
+      - ui/tests/providers/**
+      - ui/tests/findings/**
+      - ui/tests/compliance/**
+      - ui/tests/invitations/**
+      - ui/tests/roles/**
+      - ui/tests/users/**
+      - ui/tests/integrations/**
+      - ui/tests/resources/**
+      - ui/tests/profile/**
+      - ui/tests/lighthouse/**
+      - ui/tests/home/**
+      - ui/tests/attack-paths/**
 
   - name: api-serializers
     match:
@@ -234,8 +258,24 @@ modules:
     tests:
       - api/src/backend/api/tests/**
     e2e:
-      # Serializer changes affect API responses → UI
-      - ui/tests/**
+      # All E2E test suites (explicit to avoid triggering auth setups in tests/setups/)
+      - ui/tests/auth/**
+      - ui/tests/sign-in/**
+      - ui/tests/sign-up/**
+      - ui/tests/sign-in-base/**
+      - ui/tests/scans/**
+      - ui/tests/providers/**
+      - ui/tests/findings/**
+      - ui/tests/compliance/**
+      - ui/tests/invitations/**
+      - ui/tests/roles/**
+      - ui/tests/users/**
+      - ui/tests/integrations/**
+      - ui/tests/resources/**
+      - ui/tests/profile/**
+      - ui/tests/lighthouse/**
+      - ui/tests/home/**
+      - ui/tests/attack-paths/**
 
   - name: api-filters
     match:
@@ -407,8 +447,24 @@ modules:
       - ui/components/ui/**
     tests: []
     e2e:
-      # Shared components can affect any E2E
-      - ui/tests/**
+      # All E2E test suites (explicit to avoid triggering auth setups in tests/setups/)
+      - ui/tests/auth/**
+      - ui/tests/sign-in/**
+      - ui/tests/sign-up/**
+      - ui/tests/sign-in-base/**
+      - ui/tests/scans/**
+      - ui/tests/providers/**
+      - ui/tests/findings/**
+      - ui/tests/compliance/**
+      - ui/tests/invitations/**
+      - ui/tests/roles/**
+      - ui/tests/users/**
+      - ui/tests/integrations/**
+      - ui/tests/resources/**
+      - ui/tests/profile/**
+      - ui/tests/lighthouse/**
+      - ui/tests/home/**
+      - ui/tests/attack-paths/**
 
   - name: ui-attack-paths
     match:

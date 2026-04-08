@@ -2,11 +2,29 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
+## [0.6.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Resource events tool to get timeline for a resource (who, what, when) [(#10412)](https://github.com/prowler-cloud/prowler/pull/10412)
+
+### 🔐 Security
+
+- `authlib` bumped from 1.6.5 to 1.6.9 to fix CVE-2026-28802 (JWT `alg: none` validation bypass) [(#10579)](https://github.com/prowler-cloud/prowler/pull/10579)
+
+---
+
+## [0.5.0] (Prowler v5.21.0)
+
+### 🚀 Added
+
+- Attack Path tool to get Neo4j DB schema [(#10321)](https://github.com/prowler-cloud/prowler/pull/10321)
+
 ## [0.4.0] (Prowler v5.19.0)
 
 ### 🚀 Added
 
-- MCP Server tools for Prowler Attack Paths [(#10145)](https://github.com/prowler-cloud/prowler/pull/10145)
+- Attack Paths tools to list scans, discover queries, and run Cypher queries against Neo4j [(#10145)](https://github.com/prowler-cloud/prowler/pull/10145)
 
 ---
 

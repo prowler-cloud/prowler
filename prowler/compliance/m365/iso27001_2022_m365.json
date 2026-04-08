@@ -20,6 +20,7 @@
       "Checks": [
         "defender_antiphishing_policy_configured",
         "defender_antispam_policy_inbound_no_allowed_domains",
+        "entra_conditional_access_policy_block_o365_elevated_insider_risk",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_identity_protection_user_risk_enabled"
       ]
@@ -120,6 +121,8 @@
         "defenderxdr_endpoint_privileged_user_exposed_credentials",
         "defender_identity_health_issues_no_open",
         "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_conditional_access_policy_block_elevated_insider_risk",
+        "entra_conditional_access_policy_block_o365_elevated_insider_risk",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_identity_protection_user_risk_enabled"
       ]
@@ -203,6 +206,7 @@
         "admincenter_users_admins_reduced_license_footprint",
         "entra_admin_portals_access_restriction",
         "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_conditional_access_policy_block_o365_elevated_insider_risk",
         "entra_policy_guest_users_access_restrictions",
         "entra_seamless_sso_disabled"
       ]
@@ -243,6 +247,9 @@
         "entra_break_glass_account_fido2_security_key_registered",
         "entra_default_app_management_policy_enabled",
         "entra_all_apps_conditional_access_coverage",
+        "entra_conditional_access_policy_device_registration_mfa_required",
+        "entra_intune_enrollment_sign_in_frequency_every_time",
+        "entra_conditional_access_policy_device_code_flow_blocked",
         "entra_legacy_authentication_blocked",
         "entra_managed_device_required_for_authentication",
         "entra_seamless_sso_disabled",
@@ -464,6 +471,7 @@
         "defender_malware_policy_common_attachments_filter_enabled",
         "defender_malware_policy_comprehensive_attachments_filter_applied",
         "defender_malware_policy_notifications_internal_users_malware_enabled",
+        "entra_conditional_access_policy_device_code_flow_blocked",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_identity_protection_user_risk_enabled",
         "entra_legacy_authentication_blocked",
@@ -616,7 +624,10 @@
       "Checks": [
         "defenderxdr_endpoint_privileged_user_exposed_credentials",
         "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_conditional_access_policy_approved_client_app_required_for_mobile",
         "entra_conditional_access_policy_app_enforced_restrictions",
+        "entra_conditional_access_policy_device_registration_mfa_required",
+        "entra_intune_enrollment_sign_in_frequency_every_time",
         "entra_managed_device_required_for_authentication",
         "entra_managed_device_required_for_mfa_registration",
         "entra_users_mfa_capable",
@@ -671,7 +682,10 @@
       ],
       "Checks": [
         "entra_admin_portals_access_restriction",
+        "entra_conditional_access_policy_approved_client_app_required_for_mobile",
         "entra_conditional_access_policy_app_enforced_restrictions",
+        "entra_conditional_access_policy_block_elevated_insider_risk",
+        "entra_conditional_access_policy_block_o365_elevated_insider_risk",
         "entra_policy_guest_users_access_restrictions",
         "sharepoint_external_sharing_restricted"
       ]
@@ -692,7 +706,11 @@
         "entra_admin_users_mfa_enabled",
         "entra_admin_users_sign_in_frequency_enabled",
         "entra_all_apps_conditional_access_coverage",
+        "entra_conditional_access_policy_device_registration_mfa_required",
+        "entra_intune_enrollment_sign_in_frequency_every_time",
         "entra_break_glass_account_fido2_security_key_registered",
+        "entra_conditional_access_policy_approved_client_app_required_for_mobile",
+        "entra_conditional_access_policy_device_code_flow_blocked",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_managed_device_required_for_authentication",
         "entra_seamless_sso_disabled",
@@ -758,7 +776,9 @@
         "defender_antiphishing_policy_configured",
         "defender_safelinks_policy_enabled",
         "entra_admin_users_phishing_resistant_mfa_enabled",
-        "entra_conditional_access_policy_app_enforced_restrictions"
+        "entra_conditional_access_policy_app_enforced_restrictions",
+        "entra_conditional_access_policy_block_elevated_insider_risk",
+        "entra_conditional_access_policy_block_o365_elevated_insider_risk"
       ]
     },
     {

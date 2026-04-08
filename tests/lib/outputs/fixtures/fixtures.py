@@ -25,14 +25,14 @@ def generate_finding_output(
     partition: str = "aws",
     description: str = "check description",
     risk: str = "test-risk",
-    related_url: str = "test-url",
+    related_url: str = "",
     remediation_recommendation_text: str = "",
     remediation_recommendation_url: str = "",
     remediation_code_nativeiac: str = "",
     remediation_code_terraform: str = "",
     remediation_code_cli: str = "",
     remediation_code_other: str = "",
-    categories: list[str] = ["test-category"],
+    categories: list[str] = ["encryption"],
     depends_on: list[str] = ["test-dependency"],
     related_to: list[str] = ["test-related-to"],
     notes: str = "test-notes",
@@ -43,9 +43,19 @@ def generate_finding_output(
     service_name: str = "service",
     check_id: str = "service_test_check_id",
     check_title: str = "service_test_check_id",
-    check_type: list[str] = ["test-type"],
+    check_type: list[str] = None,
     provider_uid: str = None,
+    account_ou_uid: str = "ou-abc1-12345678",
+    account_ou_name: str = "Production/WebServices",
 ) -> Finding:
+    if check_type is None:
+        check_type = (
+            [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ]
+            if provider == "aws"
+            else []
+        )
     return Finding(
         auth_method="profile: default",
         timestamp=timestamp if timestamp else datetime.now(),
@@ -56,6 +66,8 @@ def generate_finding_output(
         account_organization_uid="test-organization-id",
         account_organization_name="test-organization",
         account_tags={"test-tag": "test-value"},
+        account_ou_uid=account_ou_uid,
+        account_ou_name=account_ou_name,
         uid="test-unique-finding",
         status=status,
         status_extended=status_extended,

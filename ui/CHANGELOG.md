@@ -2,6 +2,89 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.23.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Multi-tenant organization management: create, switch, edit, and delete organizations from the profile page [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
+- Findings grouped view with drill-down table showing resources per check, resource detail drawer, infinite scroll pagination, and bulk mute support [(#10425)](https://github.com/prowler-cloud/prowler/pull/10425)
+- Resource events tool to Lighthouse AI [(#10412)](https://github.com/prowler-cloud/prowler/pull/10412)
+- Vercel provider: connect Vercel teams via API token, scan deployments, domains, projects, and team settings [(#10191)](https://github.com/prowler-cloud/prowler/pull/10191)
+
+### 🔄 Changed
+
+- Attack Paths custom openCypher queries now use a code editor with syntax highlighting and line numbers [(#10445)](https://github.com/prowler-cloud/prowler/pull/10445)
+- Filter summary strip: removed redundant "Clear all" link next to pills (use top-bar Clear Filters instead) and switched chip variant from `outline` to `tag` for consistency [(#10481)](https://github.com/prowler-cloud/prowler/pull/10481)
+
+### 🐞 Fixed
+
+- Deleting the active organization now switches to the target org before deleting, preventing JWT rejection from the backend [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
+- Clear Filters now resets all filters including muted findings and auto-applies, Clear all in pills only removes pill-visible sub-filters, and the discard icon is now an Undo text button [(#10446)](https://github.com/prowler-cloud/prowler/pull/10446)
+- Send to Jira modal now dynamically fetches and displays available issue types per project instead of hardcoding `"Task"`, fixing failures on non-English Jira instances [(#10534)](https://github.com/prowler-cloud/prowler/pull/10534)
+
+---
+
+## [1.22.0] (Prowler v5.22.0)
+
+### 🚀 Added
+
+- Attack Paths custom openCypher queries with Cartography schema guidance and clearer execution errors [(#10397)](https://github.com/prowler-cloud/prowler/pull/10397)
+
+### 🔄 Changed
+
+- Findings filters now use a batch-apply pattern with an Apply Filters button, filter summary strip, and independent filter options instead of triggering API calls on every selection [(#10388)](https://github.com/prowler-cloud/prowler/pull/10388)
+
+---
+
+## [1.21.0] (Prowler v5.21.0)
+
+### 🚀 Added
+
+- Attack Paths custom openCypher queries with Cartography schema guidance and clearer execution errors [(#10397)](https://github.com/prowler-cloud/prowler/pull/10397)
+
+---
+
+## [1.21.0] (Prowler v5.21.0)
+
+### 🚀 Added
+
+- Skill system to Lighthouse AI [(#10322)](https://github.com/prowler-cloud/prowler/pull/10322)
+- Skill for creating custom queries on Attack Paths [(#10323)](https://github.com/prowler-cloud/prowler/pull/10323)
+
+### 🔄 Changed
+
+- Google Workspace provider support [(#10333)](https://github.com/prowler-cloud/prowler/pull/10333)
+- Image (Container Registry) provider support in UI: badge icon, credentials form, and provider-type filtering [(#10167)](https://github.com/prowler-cloud/prowler/pull/10167)
+- Events tab in Findings and Resource detail cards showing an AWS CloudTrail timeline with expandable event rows, actor info, request/response JSON payloads, and error details [(#10320)](https://github.com/prowler-cloud/prowler/pull/10320)
+- AWS Organization and organizational unit row actions (Edit Name, Update Credentials, Test Connections, Delete) in providers table dropdown [(#10317)](https://github.com/prowler-cloud/prowler/pull/10317)
+
+---
+
+## [1.20.0] (Prowler v5.20.0)
+
+### 🚀 Added
+
+- Mute button in the finding detailed view, allowing users to mute findings directly without going back to the table [(#10303)](https://github.com/prowler-cloud/prowler/pull/10303)
+
+### 🔄 Changed
+
+- Attack Paths: Improved error handling for server errors (5xx) and network failures with user-friendly messages instead of raw internal errors and layout changes [(#10249)](https://github.com/prowler-cloud/prowler/pull/10249)
+- Refactor simple providers with new components and styles [(#10259)](https://github.com/prowler-cloud/prowler/pull/10259)
+- Providers page redesigned with cloud organization hierarchy, HeroUI-to-shadcn migration, organization and account group filters, and row selection for bulk actions [(#10292)](https://github.com/prowler-cloud/prowler/pull/10292)
+- AWS Organizations onboarding now uses a clearer 3-step flow: deploy the ProwlerScan role in the management account via CloudFormation Stack, deploy to member accounts via StackSet with a copyable template URL, and confirm with the Role ARN [(#10274)](https://github.com/prowler-cloud/prowler/pull/10274)
+
+### 🐞 Fixed
+
+- Provider wizard now closes after updating credentials instead of incorrectly advancing to the Launch Scan step, which caused API errors for providers with existing scheduled scans [(#10278)](https://github.com/prowler-cloud/prowler/pull/10278)
+- Attack Paths query builder sending stale parameters from previous query selections due to validation schema and default values being recreated on every render [(#10306)](https://github.com/prowler-cloud/prowler/pull/10306)
+- Finding detail drawer crashing when resource, scan, or provider relationships are missing from the API response [(#10314)](https://github.com/prowler-cloud/prowler/pull/10314)
+
+### 🔐 Security
+
+- npm transitive dependencies patched to resolve 11 Dependabot alerts (6 HIGH, 4 MEDIUM, 1 LOW): hono, @hono/node-server, fast-xml-parser, serialize-javascript, minimatch [(#10267)](https://github.com/prowler-cloud/prowler/pull/10267)
+
+---
+
 ## [1.19.0] (Prowler v5.19.0)
 
 ### 🚀 Added

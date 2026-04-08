@@ -39,6 +39,8 @@ class Finding(BaseModel):
     account_email: Optional[str] = None
     account_organization_uid: Optional[str] = None
     account_organization_name: Optional[str] = None
+    account_ou_uid: Optional[str] = None
+    account_ou_name: Optional[str] = None
     metadata: CheckMetadata
     account_tags: dict = Field(default_factory=dict)
     uid: str
@@ -154,6 +156,12 @@ class Finding(BaseModel):
                 )
                 output_data["account_tags"] = get_nested_attribute(
                     provider, "organizations_metadata.account_tags"
+                )
+                output_data["account_ou_uid"] = get_nested_attribute(
+                    provider, "organizations_metadata.account_ou_id"
+                )
+                output_data["account_ou_name"] = get_nested_attribute(
+                    provider, "organizations_metadata.account_ou_name"
                 )
                 output_data["partition"] = get_nested_attribute(
                     provider, "identity.partition"
@@ -395,6 +403,23 @@ class Finding(BaseModel):
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.zone_name
+
+            elif provider.type == "vercel":
+                output_data["auth_method"] = "api_token"
+                team = get_nested_attribute(provider, "identity.team")
+                output_data["account_uid"] = (
+                    team.id
+                    if team
+                    else get_nested_attribute(provider, "identity.user_id")
+                )
+                output_data["account_name"] = (
+                    team.name
+                    if team
+                    else get_nested_attribute(provider, "identity.username")
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = "global"
 
             elif provider.type == "alibabacloud":
                 output_data["auth_method"] = get_nested_attribute(

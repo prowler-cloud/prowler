@@ -435,14 +435,16 @@ class AwsProvider(Provider):
                 f"Getting AWS Organizations metadata for account {aws_account_id}"
             )
 
-            organizations_metadata, list_tags_for_resource = get_organizations_metadata(
-                aws_account_id=aws_account_id,
-                session=organizations_session,
+            organizations_metadata, list_tags_for_resource, ou_metadata = (
+                get_organizations_metadata(
+                    aws_account_id=aws_account_id,
+                    session=organizations_session,
+                )
             )
 
             if organizations_metadata:
                 organizations_metadata = parse_organizations_metadata(
-                    organizations_metadata, list_tags_for_resource
+                    organizations_metadata, list_tags_for_resource, ou_metadata
                 )
                 logger.info(
                     f"AWS Organizations metadata retrieved for account {aws_account_id}"
@@ -940,20 +942,23 @@ class AwsProvider(Provider):
             )
             raise error
 
-    def get_default_region(self, service: str) -> str:
-        """get_default_region returns the default region based on the profile and audited service regions
+    def get_default_region(self, service: str, global_service: bool = False) -> str:
+        """get_default_region returns the default region based on the profile and audited service regions.
+
+        For global services (CloudFront, Route53, Shield, FMS) the partition's
+        global region is always returned, ignoring profile and audited regions.
 
         Args:
             - service: The AWS service name
+            - global_service: If True, return the partition's global region directly
 
         Returns:
             - str: The default region for the given service
-
-        Example:
-            service = "ec2"
-            default_region = get_default_region(service)
         """
         try:
+            if global_service:
+                return self.get_global_region()
+
             service_regions = AwsProvider.get_available_aws_service_regions(
                 service, self._identity.partition, self._identity.audited_regions
             )

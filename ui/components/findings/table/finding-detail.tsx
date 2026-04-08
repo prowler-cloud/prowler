@@ -1,11 +1,13 @@
+// TODO: Legacy component — used by /resources page and overview dashboard.
+// Migrate those consumers to the new resource-detail-drawer, then delete this file.
 "use client";
 
-import { ExternalLink, Link, X } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
-import type { ReactNode } from "react";
-import ReactMarkdown from "react-markdown";
+import { ExternalLink, Link, VolumeX, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { type ReactNode, useState } from "react";
 
 import {
+  Button,
   Drawer,
   DrawerClose,
   DrawerContent,
@@ -22,6 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
+import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { EntityInfo } from "@/components/ui/entities";
@@ -31,38 +34,18 @@ import {
   FindingStatus,
   StatusFindingBadge,
 } from "@/components/ui/table/status-finding-badge";
+import { formatDuration } from "@/lib/date-utils";
 import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/iac-utils";
 import { cn } from "@/lib/utils";
 import { FindingProps, ProviderType } from "@/types";
 
+import { MarkdownContainer } from "../markdown-container";
+import { MuteFindingsModal } from "../mute-findings-modal";
 import { Muted } from "../muted";
 import { DeltaIndicator } from "./delta-indicator";
 
-const MarkdownContainer = ({ children }: { children: string }) => {
-  return (
-    <div className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-normal">
-      <ReactMarkdown>{children}</ReactMarkdown>
-    </div>
-  );
-};
-
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
-};
-
-// Add new utility function for duration formatting
-const formatDuration = (seconds: number) => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = seconds % 60;
-
-  const parts = [];
-  if (hours > 0) parts.push(`${hours}h`);
-  if (minutes > 0) parts.push(`${minutes}m`);
-  if (remainingSeconds > 0 || parts.length === 0)
-    parts.push(`${remainingSeconds}s`);
-
-  return parts.join(" ");
 };
 
 interface FindingDetailProps {
@@ -82,11 +65,13 @@ export const FindingDetail = ({
 }: FindingDetailProps) => {
   const finding = findingDetails;
   const attributes = finding.attributes;
-  const resource = finding.relationships.resource.attributes;
-  const scan = finding.relationships.scan.attributes;
-  const providerDetails = finding.relationships.provider.attributes;
+  const resource = finding.relationships?.resource?.attributes;
+  const scan = finding.relationships?.scan?.attributes;
+  const providerDetails = finding.relationships?.provider?.attributes;
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
 
   const copyFindingUrl = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -97,7 +82,7 @@ export const FindingDetail = ({
 
   // Build Git URL for IaC findings
   const gitUrl =
-    providerDetails.provider === "iac"
+    providerDetails?.provider === "iac" && resource
       ? buildGitFileUrl(
           providerDetails.uid,
           resource.name,
@@ -105,6 +90,21 @@ export const FindingDetail = ({
           resource.region,
         )
       : null;
+
+  const handleMuteComplete = () => {
+    setIsMuteModalOpen(false);
+    onOpenChange?.(false);
+    router.refresh();
+  };
+
+  const muteModal = !attributes.muted && (
+    <MuteFindingsModal
+      isOpen={isMuteModalOpen}
+      onOpenChange={setIsMuteModalOpen}
+      findingIds={[findingDetails.id]}
+      onComplete={handleMuteComplete}
+    />
+  );
 
   const content = (
     <div className="flex min-w-0 flex-col gap-4 rounded-lg">
@@ -153,30 +153,45 @@ export const FindingDetail = ({
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="general" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="resources">Resources</TabsTrigger>
-          <TabsTrigger value="scans">Scans</TabsTrigger>
-        </TabsList>
+      <Tabs key={findingDetails.id} defaultValue="general" className="w-full">
+        <div className="mb-4 flex items-center justify-between">
+          <TabsList>
+            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="resources">Resources</TabsTrigger>
+            <TabsTrigger value="scans">Scans</TabsTrigger>
+            <TabsTrigger value="events">Events</TabsTrigger>
+          </TabsList>
 
-        <p className="text-text-neutral-primary mb-4 text-sm">
-          Here is an overview of this finding:
-        </p>
+          {!attributes.muted && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsMuteModalOpen(true)}
+            >
+              <VolumeX className="size-4" />
+              Mute
+            </Button>
+          )}
+        </div>
 
         {/* General Tab */}
         <TabsContent value="general" className="flex flex-col gap-4">
+          <p className="text-text-neutral-primary text-sm">
+            Here is an overview of this finding:
+          </p>
           <div className="flex flex-wrap gap-4">
-            <EntityInfo
-              cloudProvider={providerDetails.provider as ProviderType}
-              entityAlias={providerDetails.alias}
-              entityId={providerDetails.uid}
-              showConnectionStatus={providerDetails.connection.connected}
-            />
+            {providerDetails && (
+              <EntityInfo
+                cloudProvider={providerDetails.provider as ProviderType}
+                entityAlias={providerDetails.alias}
+                entityId={providerDetails.uid}
+                showConnectionStatus={providerDetails.connection.connected}
+              />
+            )}
             <InfoField label="Service">
               {attributes.check_metadata.servicename}
             </InfoField>
-            <InfoField label="Region">{resource.region}</InfoField>
+            <InfoField label="Region">{resource?.region ?? "-"}</InfoField>
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -305,119 +320,145 @@ export const FindingDetail = ({
 
         {/* Resources Tab */}
         <TabsContent value="resources" className="flex flex-col gap-4">
-          {providerDetails.provider === "iac" && gitUrl && (
-            <div className="flex justify-end">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a
-                    href={gitUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-bg-data-info inline-flex items-center gap-1 text-sm"
-                    aria-label="Open resource in repository"
-                  >
-                    <ExternalLink size={16} />
-                    View in Repository
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Go to Resource in the Repository
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          )}
+          {resource ? (
+            <>
+              {providerDetails?.provider === "iac" && gitUrl && (
+                <div className="flex justify-end">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={gitUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-bg-data-info inline-flex items-center gap-1 text-sm"
+                        aria-label="Open resource in repository"
+                      >
+                        <ExternalLink size={16} />
+                        View in Repository
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Go to Resource in the Repository
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              )}
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Resource Name">
-              {renderValue(resource.name)}
-            </InfoField>
-            <InfoField label="Resource Type">
-              {renderValue(resource.type)}
-            </InfoField>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Service">
-              {renderValue(resource.service)}
-            </InfoField>
-            <InfoField label="Region">{renderValue(resource.region)}</InfoField>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Partition">
-              {renderValue(resource.partition)}
-            </InfoField>
-            <InfoField label="Details">
-              {renderValue(resource.details)}
-            </InfoField>
-          </div>
-
-          <InfoField label="Resource ID" variant="simple">
-            <CodeSnippet value={resource.uid} />
-          </InfoField>
-
-          {resource.tags && Object.entries(resource.tags).length > 0 && (
-            <div className="flex flex-col gap-4">
-              <h4 className="text-text-neutral-secondary text-sm font-bold">
-                Tags
-              </h4>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {Object.entries(resource.tags).map(([key, value]) => (
-                  <InfoField key={key} label={key}>
-                    {renderValue(value)}
-                  </InfoField>
-                ))}
+                <InfoField label="Resource Name">
+                  {renderValue(resource.name)}
+                </InfoField>
+                <InfoField label="Resource Type">
+                  {renderValue(resource.type)}
+                </InfoField>
               </div>
-            </div>
-          )}
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Created At">
-              <DateWithTime inline dateTime={resource.inserted_at || "-"} />
-            </InfoField>
-            <InfoField label="Last Updated">
-              <DateWithTime inline dateTime={resource.updated_at || "-"} />
-            </InfoField>
-          </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <InfoField label="Service">
+                  {renderValue(resource.service)}
+                </InfoField>
+                <InfoField label="Region">
+                  {renderValue(resource.region)}
+                </InfoField>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <InfoField label="Partition">
+                  {renderValue(resource.partition)}
+                </InfoField>
+                <InfoField label="Details">
+                  {renderValue(resource.details)}
+                </InfoField>
+              </div>
+
+              <InfoField label="Resource ID" variant="simple">
+                <CodeSnippet value={resource.uid} />
+              </InfoField>
+
+              {resource.tags && Object.entries(resource.tags).length > 0 && (
+                <div className="flex flex-col gap-4">
+                  <h4 className="text-text-neutral-secondary text-sm font-bold">
+                    Tags
+                  </h4>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {Object.entries(resource.tags).map(([key, value]) => (
+                      <InfoField key={key} label={key}>
+                        {renderValue(value)}
+                      </InfoField>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <InfoField label="Created At">
+                  <DateWithTime inline dateTime={resource.inserted_at || "-"} />
+                </InfoField>
+                <InfoField label="Last Updated">
+                  <DateWithTime inline dateTime={resource.updated_at || "-"} />
+                </InfoField>
+              </div>
+            </>
+          ) : (
+            <p className="text-text-neutral-tertiary text-sm">
+              Resource information is not available.
+            </p>
+          )}
         </TabsContent>
 
         {/* Scans Tab */}
         <TabsContent value="scans" className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <InfoField label="Scan Name">{scan.name || "N/A"}</InfoField>
-            <InfoField label="Resources Scanned">
-              {scan.unique_resource_count}
-            </InfoField>
-            <InfoField label="Progress">{scan.progress}%</InfoField>
-          </div>
+          {scan ? (
+            <>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <InfoField label="Scan Name">{scan.name || "N/A"}</InfoField>
+                <InfoField label="Resources Scanned">
+                  {scan.unique_resource_count}
+                </InfoField>
+                <InfoField label="Progress">{scan.progress}%</InfoField>
+              </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <InfoField label="Trigger">{scan.trigger}</InfoField>
-            <InfoField label="State">{scan.state}</InfoField>
-            <InfoField label="Duration">
-              {formatDuration(scan.duration)}
-            </InfoField>
-          </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <InfoField label="Trigger">{scan.trigger}</InfoField>
+                <InfoField label="State">{scan.state}</InfoField>
+                <InfoField label="Duration">
+                  {formatDuration(scan.duration)}
+                </InfoField>
+              </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Started At">
-              <DateWithTime inline dateTime={scan.started_at || "-"} />
-            </InfoField>
-            <InfoField label="Completed At">
-              <DateWithTime inline dateTime={scan.completed_at || "-"} />
-            </InfoField>
-          </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <InfoField label="Started At">
+                  <DateWithTime inline dateTime={scan.started_at || "-"} />
+                </InfoField>
+                <InfoField label="Completed At">
+                  <DateWithTime inline dateTime={scan.completed_at || "-"} />
+                </InfoField>
+              </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Launched At">
-              <DateWithTime inline dateTime={scan.inserted_at || "-"} />
-            </InfoField>
-            {scan.scheduled_at && (
-              <InfoField label="Scheduled At">
-                <DateWithTime inline dateTime={scan.scheduled_at} />
-              </InfoField>
-            )}
-          </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <InfoField label="Launched At">
+                  <DateWithTime inline dateTime={scan.inserted_at || "-"} />
+                </InfoField>
+                {scan.scheduled_at && (
+                  <InfoField label="Scheduled At">
+                    <DateWithTime inline dateTime={scan.scheduled_at} />
+                  </InfoField>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="text-text-neutral-tertiary text-sm">
+              Scan information is not available.
+            </p>
+          )}
+        </TabsContent>
+
+        {/* Events Tab */}
+        <TabsContent value="events" className="flex flex-col gap-4">
+          <EventsTimeline
+            resourceId={finding.relationships?.resource?.id}
+            isAwsProvider={providerDetails?.provider === "aws"}
+          />
         </TabsContent>
       </Tabs>
     </div>
@@ -425,29 +466,37 @@ export const FindingDetail = ({
 
   // If no trigger, render content directly (inline mode)
   if (!trigger) {
-    return content;
+    return (
+      <>
+        {muteModal}
+        {content}
+      </>
+    );
   }
 
-  // With trigger, wrap in Drawer
+  // With trigger, wrap in Drawer — modal rendered outside to avoid nested overlay issues
   return (
-    <Drawer
-      direction="right"
-      open={open}
-      defaultOpen={defaultOpen}
-      onOpenChange={onOpenChange}
-    >
-      <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-      <DrawerContent className="minimal-scrollbar 3xl:w-1/3 h-full w-full overflow-x-hidden overflow-y-auto p-6 md:w-1/2 md:max-w-none">
-        <DrawerHeader className="sr-only">
-          <DrawerTitle>Finding Details</DrawerTitle>
-          <DrawerDescription>View the finding details</DrawerDescription>
-        </DrawerHeader>
-        <DrawerClose className="ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none">
-          <X className="size-4" />
-          <span className="sr-only">Close</span>
-        </DrawerClose>
-        {content}
-      </DrawerContent>
-    </Drawer>
+    <>
+      {muteModal}
+      <Drawer
+        direction="right"
+        open={open}
+        defaultOpen={defaultOpen}
+        onOpenChange={onOpenChange}
+      >
+        <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+        <DrawerContent className="minimal-scrollbar 3xl:w-1/3 h-full w-full overflow-x-hidden overflow-y-auto p-6 md:w-1/2 md:max-w-none">
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>Finding Details</DrawerTitle>
+            <DrawerDescription>View the finding details</DrawerDescription>
+          </DrawerHeader>
+          <DrawerClose className="ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none">
+            <X className="size-4" />
+            <span className="sr-only">Close</span>
+          </DrawerClose>
+          {content}
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 };

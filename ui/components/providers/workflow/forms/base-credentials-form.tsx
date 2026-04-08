@@ -1,11 +1,11 @@
 "use client";
 
-import { Divider } from "@heroui/divider";
 import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { Control, UseFormSetValue } from "react-hook-form";
 
 import { Button } from "@/components/shadcn";
+import { Separator } from "@/components/shadcn/separator/separator";
 import { Form } from "@/components/ui/form";
 import { useCredentialsForm } from "@/hooks/use-credentials-form";
 import { getAWSCredentialsTemplateLinks } from "@/lib";
@@ -22,7 +22,9 @@ import {
   CloudflareTokenCredentials,
   GCPDefaultCredentials,
   GCPServiceAccountKey,
+  GoogleWorkspaceCredentials,
   IacCredentials,
+  ImageCredentials,
   KubernetesCredentials,
   M365CertificateCredentials,
   M365ClientSecretCredentials,
@@ -30,6 +32,7 @@ import {
   OCICredentials,
   OpenStackCredentials,
   ProviderType,
+  VercelCredentials,
 } from "@/types";
 
 import { ProviderTitleDocs } from "../provider-title-docs";
@@ -51,11 +54,14 @@ import {
 } from "./select-credentials-type/m365";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
+import { GoogleWorkspaceCredentialsForm } from "./via-credentials/googleworkspace-credentials-form";
 import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
+import { ImageCredentialsForm } from "./via-credentials/image-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { MongoDBAtlasCredentialsForm } from "./via-credentials/mongodbatlas-credentials-form";
 import { OpenStackCredentialsForm } from "./via-credentials/openstack-credentials-form";
 import { OracleCloudCredentialsForm } from "./via-credentials/oraclecloud-credentials-form";
+import { VercelCredentialsForm } from "./via-credentials/vercel-credentials-form";
 
 type BaseCredentialsFormProps = {
   providerType: ProviderType;
@@ -149,7 +155,7 @@ export const BaseCredentialsForm = ({
 
         <ProviderTitleDocs providerType={providerType} />
 
-        <Divider />
+        <Separator />
 
         {providerType === "aws" && effectiveVia === "role" && (
           <AWSRoleCredentialsForm
@@ -211,6 +217,11 @@ export const BaseCredentialsForm = ({
             control={form.control as unknown as Control<IacCredentials>}
           />
         )}
+        {providerType === "image" && (
+          <ImageCredentialsForm
+            control={form.control as unknown as Control<ImageCredentials>}
+          />
+        )}
         {providerType === "oraclecloud" && (
           <OracleCloudCredentialsForm
             control={form.control as unknown as Control<OCICredentials>}
@@ -254,6 +265,18 @@ export const BaseCredentialsForm = ({
         {providerType === "openstack" && (
           <OpenStackCredentialsForm
             control={form.control as unknown as Control<OpenStackCredentials>}
+          />
+        )}
+        {providerType === "googleworkspace" && (
+          <GoogleWorkspaceCredentialsForm
+            control={
+              form.control as unknown as Control<GoogleWorkspaceCredentials>
+            }
+          />
+        )}
+        {providerType === "vercel" && (
+          <VercelCredentialsForm
+            control={form.control as unknown as Control<VercelCredentials>}
           />
         )}
 

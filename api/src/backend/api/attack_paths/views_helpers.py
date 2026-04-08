@@ -3,16 +3,26 @@ import logging
 from typing import Any, Iterable
 
 import neo4j
+
 from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 
 from api.attack_paths import database as graph_database, AttackPathsQueryDefinition
+from api.attack_paths.cypher_sanitizer import (
+    inject_provider_label,
+    validate_custom_query,
+)
 from api.attack_paths.queries.schema import (
-    CARTOGRAPHY_SCHEMA_METADATA,
     GITHUB_SCHEMA_URL,
     RAW_SCHEMA_URL,
+    get_cartography_schema_query,
 )
 from config.custom_logging import BackendLogger
-from tasks.jobs.attack_paths.config import INTERNAL_LABELS, INTERNAL_PROPERTIES
+from tasks.jobs.attack_paths.config import (
+    INTERNAL_LABELS,
+    INTERNAL_PROPERTIES,
+    get_provider_label,
+    is_dynamic_isolation_label,
+)
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -66,7 +76,6 @@ def prepare_parameters(
 
     clean_parameters = {
         "provider_uid": str(provider_uid),
-        "provider_id": str(provider_id),
     }
 
     for definition_parameter in definition.parameters:
@@ -135,6 +144,16 @@ def execute_custom_query(
     cypher: str,
     provider_id: str,
 ) -> dict[str, Any]:
+    # Defense-in-depth for custom queries:
+    # 1. neo4j.READ_ACCESS — prevents mutations at the driver level
+    # 2. inject_provider_label() — regex-based label injection scopes node patterns
+    # 3. _serialize_graph() — post-query filter drops nodes without the provider label
+    #
+    # Layer 2 is best-effort (regex can't fully parse Cypher);
+    # layer 3 is the safety net that guarantees provider isolation.
+    validate_custom_query(cypher)
+    cypher = inject_provider_label(cypher, provider_id)
+
     try:
         graph = graph_database.execute_read_query(
             database=database_name,
@@ -142,6 +161,9 @@ def execute_custom_query(
         )
         serialized = _serialize_graph(graph, provider_id)
         return _truncate_graph(serialized)
+
+    except graph_database.ClientStatementException as exc:
+        raise ValidationError({"query": exc.message})
 
     except graph_database.WriteQueryNotAllowedException:
         raise PermissionDenied(
@@ -165,10 +187,7 @@ def get_cartography_schema(
         with graph_database.get_session(
             database_name, default_access_mode=neo4j.READ_ACCESS
         ) as session:
-            result = session.run(
-                CARTOGRAPHY_SCHEMA_METADATA,
-                {"provider_id": provider_id},
-            )
+            result = session.run(get_cartography_schema_query(provider_id))
             record = result.single()
     except graph_database.GraphDatabaseQueryException as exc:
         logger.error(f"Cartography schema query failed: {exc}")
@@ -212,10 +231,12 @@ def _truncate_graph(graph: dict[str, Any]) -> dict[str, Any]:
 
 
 def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
+    provider_label = get_provider_label(provider_id)
+
     nodes = []
     kept_node_ids = set()
     for node in graph.nodes:
-        if node._properties.get("provider_id") != provider_id:
+        if provider_label not in node.labels:
             continue
 
         kept_node_ids.add(node.element_id)
@@ -227,11 +248,14 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
             },
         )
 
+    filtered_count = len(graph.nodes) - len(nodes)
+    if filtered_count > 0:
+        logger.debug(
+            f"Filtered {filtered_count} nodes without provider label {provider_label}"
+        )
+
     relationships = []
     for relationship in graph.relationships:
-        if relationship._properties.get("provider_id") != provider_id:
-            continue
-
         if (
             relationship.start_node.element_id not in kept_node_ids
             or relationship.end_node.element_id not in kept_node_ids
@@ -257,7 +281,11 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
 
 
 def _filter_labels(labels: Iterable[str]) -> list[str]:
-    return [label for label in labels if label not in INTERNAL_LABELS]
+    return [
+        label
+        for label in labels
+        if label not in INTERNAL_LABELS and not is_dynamic_isolation_label(label)
+    ]
 
 
 def _serialize_properties(properties: dict[str, Any]) -> dict[str, Any]:

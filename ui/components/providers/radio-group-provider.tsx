@@ -15,12 +15,15 @@ import {
   CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
+  GoogleWorkspaceProviderBadge,
   IacProviderBadge,
+  ImageProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
   OpenStackProviderBadge,
   OracleCloudProviderBadge,
+  VercelProviderBadge,
 } from "../icons/providers-badge";
 import { FormMessage } from "../ui/form";
 
@@ -61,9 +64,19 @@ const PROVIDERS = [
     badge: GitHubProviderBadge,
   },
   {
+    value: "googleworkspace",
+    label: "Google Workspace",
+    badge: GoogleWorkspaceProviderBadge,
+  },
+  {
     value: "iac",
     label: "Infrastructure as Code",
     badge: IacProviderBadge,
+  },
+  {
+    value: "image",
+    label: "Container Registry",
+    badge: ImageProviderBadge,
   },
   {
     value: "oraclecloud",
@@ -84,6 +97,11 @@ const PROVIDERS = [
     value: "openstack",
     label: "OpenStack",
     badge: OpenStackProviderBadge,
+  },
+  {
+    value: "vercel",
+    label: "Vercel",
+    badge: VercelProviderBadge,
   },
 ] as const;
 
@@ -176,7 +194,7 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
           </div>
 
           {errorMessage && (
-            <FormMessage className="text-text-error">
+            <FormMessage className="text-text-error-primary">
               {errorMessage}
             </FormMessage>
           )}
