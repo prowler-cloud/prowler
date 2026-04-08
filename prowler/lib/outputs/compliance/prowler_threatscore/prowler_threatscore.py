@@ -31,8 +31,6 @@ def get_prowler_threatscore_table(
     max_score_per_pillar = {}
     counted_findings_per_pillar = {}
     for index, finding in enumerate(findings):
-        if finding.check_metadata.CheckID not in bulk_checks_metadata:
-            continue
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
         for compliance in check_compliances:
