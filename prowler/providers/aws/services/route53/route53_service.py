@@ -95,8 +95,10 @@ class Route53(AWSService):
         region, so we need to query all enabled regions to avoid false positives.
         """
         logger.info("Route53 - Gathering Elastic IPs from all regions...")
-        all_regions = self.provider._enabled_regions or set(
-            self.provider._identity.audited_regions
+        all_regions = (
+            self.provider._enabled_regions
+            if self.provider._enabled_regions is not None
+            else set(self.provider._identity.audited_regions)
         )
 
         for region in all_regions:
