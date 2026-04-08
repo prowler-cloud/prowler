@@ -130,6 +130,7 @@
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "sagemaker_notebook_instance_encryption_enabled",
         "secretsmanager_automatic_rotation_enabled",
+        "bedrock_access_private_connectivity_enforced",
         "securityhub_enabled",
         "sns_topics_kms_encryption_at_rest_enabled",
         "vpc_endpoint_connections_trust_boundaries",

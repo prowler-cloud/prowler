@@ -803,6 +803,7 @@
         }
       ],
       "Checks": [
+        "bedrock_access_private_connectivity_enforced",
         "vpc_subnet_different_az",
         "vpc_subnet_separate_private_public",
         "vpc_endpoint_connections_trust_boundaries",

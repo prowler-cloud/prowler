@@ -7208,6 +7208,7 @@
         }
       ],
       "Checks": [
+        "bedrock_access_private_connectivity_enforced",
         "workspaces_vpc_2private_1public_subnets_nat",
         "vpc_endpoint_connections_trust_boundaries",
         "networkfirewall_multi_az"

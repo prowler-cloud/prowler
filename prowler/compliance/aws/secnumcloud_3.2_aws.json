@@ -1025,6 +1025,7 @@
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
         "ec2_networkacl_allow_ingress_any_port",
+        "bedrock_access_private_connectivity_enforced",
         "vpc_subnet_separate_private_public",
         "vpc_peering_routing_tables_with_least_privilege",
         "vpc_endpoint_connections_trust_boundaries",

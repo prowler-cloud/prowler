@@ -4981,6 +4981,7 @@
         }
       ],
       "Checks": [
+        "bedrock_access_private_connectivity_enforced",
         "ec2_securitygroup_default_restrict_traffic",
         "vpc_subnet_separate_private_public",
         "vpc_peering_routing_tables_with_least_privilege",

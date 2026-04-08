@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_access_private_connectivity_enforced",
+  "CheckTitle": "VPC has an Amazon Bedrock Runtime VPC endpoint to enforce private connectivity",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+  ],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2VpcEndpointService",
+  "ResourceGroup": "network",
+  "Description": "**Amazon VPCs** are evaluated for an **interface VPC endpoint** to the **Amazon Bedrock Runtime API** (`bedrock-runtime`). Its presence indicates private Bedrock API connectivity over **AWS PrivateLink** within the VPC, keeping model invocation traffic off the public Internet.",
+  "Risk": "Without a private Bedrock Runtime endpoint, model invocation traffic exits via IGW/NAT. This expands exposure to network path threats (e.g., DNS hijack, MITM) and weakens egress isolation. It also creates an Internet egress dependency for API access, reducing **availability** if NAT/edge paths fail and weakening **confidentiality** of inference data in transit.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/usingVPC.html",
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/vpc-interface-endpoints.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 create-vpc-endpoint --vpc-id <VPC_ID> --service-name com.amazonaws.<REGION>.bedrock-runtime --vpc-endpoint-type Interface --subnet-ids <SUBNET_ID>",
+      "NativeIaC": "```yaml\n# CloudFormation: create a Bedrock Runtime interface VPC endpoint\nResources:\n  BedrockRuntimeEndpoint:\n    Type: AWS::EC2::VPCEndpoint\n    Properties:\n      VpcId: \"<example_resource_id>\"                              # CRITICAL: target VPC\n      ServiceName: !Sub \"com.amazonaws.${AWS::Region}.bedrock-runtime\"  # CRITICAL: Bedrock Runtime endpoint service\n      VpcEndpointType: Interface                                   # CRITICAL: interface endpoint\n      SubnetIds:                                                   # CRITICAL: subnets for endpoint ENIs\n        - \"<example_resource_id>\"\n```",
+      "Other": "1. In the AWS console, go to VPC > Endpoints\n2. Click Create endpoint\n3. For Service category, choose AWS services and select Service name com.amazonaws.<region>.bedrock-runtime\n4. Select your VPC and at least one subnet\n5. Click Create endpoint",
+      "Terraform": "```hcl\n# Create a Bedrock Runtime interface VPC endpoint\nresource \"aws_vpc_endpoint\" \"<example_resource_name>\" {\n  vpc_id            = \"<example_resource_id>\"                      # CRITICAL: target VPC\n  service_name      = \"com.amazonaws.<region>.bedrock-runtime\"     # CRITICAL: Bedrock Runtime endpoint service\n  vpc_endpoint_type = \"Interface\"                                  # CRITICAL: interface endpoint\n  subnet_ids        = [\"<example_resource_id>\"]                    # CRITICAL: subnet(s) for endpoint ENIs\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Use an **interface VPC endpoint** for the Bedrock Runtime service in each VPC that requires Bedrock API access.\n- Enable **private DNS** to keep calls on the AWS network\n- Apply restrictive endpoint policies (**least privilege**)\n- Reduce reliance on public egress and layer controls for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/bedrock_access_private_connectivity_enforced"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

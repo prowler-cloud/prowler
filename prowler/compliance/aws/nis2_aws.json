@@ -1368,6 +1368,7 @@
       "Id": "6.8.2.a",
       "Description": "consider the functional, logical and physical relationship, including location, between trustworthy systems and services;",
       "Checks": [
+        "bedrock_access_private_connectivity_enforced",
         "iam_role_cross_service_confused_deputy_prevention",
         "vpc_endpoint_services_allowed_principals_trust_boundaries",
         "vpc_endpoint_connections_trust_boundaries"

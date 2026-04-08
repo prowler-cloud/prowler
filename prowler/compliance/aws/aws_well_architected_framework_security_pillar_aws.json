@@ -664,6 +664,7 @@
         "opensearch_service_domains_not_publicly_accessible",
         "awslambda_function_not_publicly_accessible",
         "apigateway_restapi_waf_acl_attached",
+        "bedrock_access_private_connectivity_enforced",
         "cloudfront_distributions_using_waf",
         "eks_cluster_not_publicly_accessible",
         "sagemaker_models_network_isolation_enabled",
