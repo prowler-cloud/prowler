@@ -128,13 +128,16 @@ function complianceMatchScore(
     return 4;
   }
 
-  if (
-    canonicalSource &&
-    canonicalTarget &&
-    (canonicalTarget.startsWith(canonicalSource) ||
-      canonicalSource.startsWith(canonicalTarget))
-  ) {
-    return 3;
+  if (canonicalSource && canonicalTarget) {
+    const sourceTokens = canonicalSource.split("-");
+    const targetTokens = canonicalTarget.split("-");
+    if (
+      sourceTokens.length !== targetTokens.length &&
+      (sourceTokens.every((t) => targetTokens.includes(t)) ||
+        targetTokens.every((t) => sourceTokens.includes(t)))
+    ) {
+      return 3;
+    }
   }
 
   const sourceTokens = complianceTokens(sourceFramework);
@@ -289,6 +292,9 @@ export function ResourceDetailDrawerContent({
   const [resolvingFramework, setResolvingFramework] = useState<string | null>(
     null,
   );
+  const [optimisticallyMutedIds, setOptimisticallyMutedIds] = useState<
+    Set<string>
+  >(new Set());
 
   // Initial load — no check metadata yet
   if (!checkMeta && isLoading) {
@@ -846,10 +852,7 @@ export function ResourceDetailDrawerContent({
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between">
-                  <h4 className="text-text-neutral-primary text-sm font-medium">
-                    Failed Findings For This Resource
-                  </h4>
+                <div className="flex items-center justify-end">
                   <span className="text-text-neutral-tertiary text-sm">
                     {otherFindings.length} Total Entries
                   </span>
@@ -885,7 +888,18 @@ export function ResourceDetailDrawerContent({
                   <TableBody>
                     {otherFindings.length > 0 ? (
                       otherFindings.map((finding) => (
-                        <OtherFindingRow key={finding.id} finding={finding} />
+                        <OtherFindingRow
+                          key={finding.id}
+                          finding={finding}
+                          isOptimisticallyMuted={optimisticallyMutedIds.has(
+                            finding.id,
+                          )}
+                          onMuted={() =>
+                            setOptimisticallyMutedIds((prev) =>
+                              new Set(prev).add(finding.id),
+                            )
+                          }
+                        />
                       ))
                     ) : (
                       <TableRow>
@@ -997,11 +1011,18 @@ export function ResourceDetailDrawerContent({
   );
 }
 
-function OtherFindingRow({ finding }: { finding: ResourceDrawerFinding }) {
+function OtherFindingRow({
+  finding,
+  isOptimisticallyMuted,
+  onMuted,
+}: {
+  finding: ResourceDrawerFinding;
+  isOptimisticallyMuted: boolean;
+  onMuted: () => void;
+}) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
-  const [isMutedOptimistic, setIsMutedOptimistic] = useState(finding.isMuted);
-  const isMuted = finding.isMuted || isMutedOptimistic;
+  const isMuted = finding.isMuted || isOptimisticallyMuted;
 
   const findingUrl = `/findings?filter%5Bcheck_id__in%5D=${encodeURIComponent(finding.checkId)}&filter%5Bmuted%5D=include`;
 
@@ -1014,7 +1035,7 @@ function OtherFindingRow({ finding }: { finding: ResourceDrawerFinding }) {
           findingIds={[finding.id]}
           onComplete={() => {
             setIsMuteModalOpen(false);
-            setIsMutedOptimistic(true);
+            onMuted();
           }}
         />
       )}
